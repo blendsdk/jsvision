@@ -4,7 +4,7 @@
 
 Typed columns, editing, sorting, filtering, selection, variants, and windowing.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/datagrid`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## AggregateFn
 
@@ -182,6 +182,14 @@ interface CurrencyFormatOptions {
 }
 ```
 
+## DATAGRID_ACCELERATOR_MANIFEST
+
+Co-visible action groups owned by `@jsvision/datagrid`.
+
+```ts
+const DATAGRID_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
 ## DEFAULT_AUTOFIT_MAX
 
 The default upper bound for auto-fit when a column declares no `maxWidth` (generous but bounded).
@@ -250,6 +258,7 @@ new EditableDataGrid<T>(opts: EditableDataGridOptions<T>)   // extends Group
 rows: EditableGridRows<T>
 overlay: Group
 popupOverlay: Group
+i18n: I18n
 isDirty(rowKey: string | number, columnId: string): boolean
 isRowDirty(rowKey: string | number): boolean
 isGridDirty(): boolean
@@ -305,6 +314,7 @@ Construction options for EditableDataGrid.
 interface EditableDataGridOptions<T> {
   columns: GridColumn<T>[];   // The typed columns (authored with `column()`); adapted to the engine internally.
   source: GridDataSource<T>;   // The data source (carries the required `rowKey`).
+  i18n?: I18n;   // Translation service for package-owned text; defaults to an isolated English service.
   zebra?: boolean;   // Stripe odd rows for readability (default `false`).
   selectionMode?: SelectionMode;   // Row selection mode (default `'multi'`). `'single'` keeps at most one row selected — each pick replaces the prior; `'multi'` accumulates (`Space`/`Ctrl`+click toggle, `Shift` extends a range). Selection gestures are always live; the checkbox column and row-number gutter are separately opt-in.
   checkboxColumn?: boolean;   // Show a leading **selection checkbox column** (default `false`): a per-row `[ ]`/`[x]` box plus a tri-state header box (none/some/all of the displayed rows). It is a fixed-width, left-pinned cell — not a sortable/filterable column and never reached by the `←`/`→` cursor. A per-row click toggles the row; the header box selects/clears all displayed rows.
@@ -442,6 +452,7 @@ interface FilterPopupConfig<T> {
   columnId: string;   // The column id — reported back through `onApply`/`onClear`.
   current?: ColumnFilter;   // The column's existing filter, pre-filling the operator + operands when reopening.
   filterType: FilterType;   // The resolved filter type — selects the operator set and operand editors.
+  i18n?: I18n;   // Translation service for package-owned labels; defaults to isolated English text.
   distinct?: () => Promise<DistinctResult>;   // When present, embeds the value-list section (added in a later phase).
   onApply: (columnId: string, filter: ColumnFilter) => void;   // Reports an applied condition filter for the column.
   onClear: (columnId: string) => void;   // Reports that the column's filter should be cleared.
@@ -944,6 +955,7 @@ interface ValueListConfig {
   current?: ReadonlySet<string>;   // The currently-selected labels, checked on reopen; when omitted, every label starts checked.
   onApply: (selected: ReadonlySet<string>) => void;   // Reports the checked label set (the container turns it into a `{ kind: 'set' }` filter).
   buttonWidth?: number;   // Forced Select All / Apply width, so a popup can size all its buttons alike; omit to self-size.
+  i18n?: I18n;   // Translation service for package-owned labels; defaults to isolated English text.
 }
 ```
 
@@ -1023,7 +1035,7 @@ commitCell<T, V>(args: {
 The sorted distinct formatted labels for a column over a row snapshot — the grid-owned client distinct enumeration.
 
 ```ts
-computeDistinct<T>(rows: readonly T[], col: GridColumn<T>): string[]
+computeDistinct<T>(rows: readonly T[], col: GridColumn<T>, i18n?: I18n): string[]
 ```
 
 ## createCellEditor
@@ -1063,7 +1075,7 @@ createMemoryVariantStore(initial?: readonly GridVariant[]): VariantStore
 Keep the rows that satisfy EVERY active column filter (they combine with AND).
 
 ```ts
-filterRows<T>(rows: readonly T[], model: FilterModel, columns: ReadonlyMap<string, GridColumn<T>>): T[]
+filterRows<T>(rows: readonly T[], model: FilterModel, columns: ReadonlyMap<string, GridColumn<T>>, i18n?: I18n): T[]
 ```
 
 ## fmt
@@ -1071,7 +1083,7 @@ filterRows<T>(rows: readonly T[], model: FilterModel, columns: ReadonlyMap<strin
 The column-formatter registry.
 
 ```ts
-const fmt: { number: (o?: NumberFormatOptions) => InvertibleFormat<number>; currency: (o: CurrencyFormatOptions) => InvertibleFormat<number>; percent: (o?: NumberFormatOptions) => InvertibleFormat<number>; date: (o?: { locale?: string; style?: DateOnlyStyle; }) => DisplayFormat<CalendarDate>; datetime: (o?: { locale?: string; dateStyle?: Intl.DateTimeFormatOptions["dateStyle"]; timeStyle?: Intl.DateTimeFormatOptions["timeStyle"]; }) => DisplayFormat<Date>; boolean: (labels?: { true: string; false: string; }) => DisplayFormat<boolean>; enumLabel: (labels: Record<string, string>) => DisplayFormat<string>; lookupLabel: (items: readonly LookupItem[]) => DisplayFormat<string>; }
+const fmt: { number: (o?: NumberFormatOptions) => InvertibleFormat<number>; currency: (o: CurrencyFormatOptions) => InvertibleFormat<number>; percent: (o?: NumberFormatOptions) => InvertibleFormat<number>; date: (o?: { locale?: string; style?: DateOnlyStyle; }) => DisplayFormat<CalendarDate>; datetime: (o?: { locale?: string; dateStyle?: Intl.DateTimeFormatOptions["dateStyle"]; timeStyle?: Intl.DateTimeFormatOptions["timeStyle"]; }) => DisplayFormat<Date>; boolean: (labels?: { true: string; false: string; }, i18n?: I18n) => DisplayFormat<boolean>; enumLabel: (labels: Record<string, string>) => DisplayFormat<string>; lookupLabel: (items: readonly LookupItem[]) => DisplayFormat<string>; }
 ```
 
 ## foldAggregate

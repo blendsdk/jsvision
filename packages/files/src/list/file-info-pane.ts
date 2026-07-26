@@ -8,12 +8,27 @@
  * This is the info pane embedded in {@link FileDialog}; use it directly only when composing a custom
  * file picker.
  */
-import { View } from '@jsvision/ui';
+import type { I18n } from '@jsvision/i18n';
+import { stringWidth, View } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
+import { createEnglishFilesI18n, FILES_ENGLISH_CATALOG } from '../i18n/catalog.js';
 
-/** 3-letter month names, 0-indexed to match `Date.getMonth()`. */
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Month message keys, 0-indexed to match `Date.getMonth()`. */
+const MONTH_KEYS = [
+  'files.info.month.january.short',
+  'files.info.month.february.short',
+  'files.info.month.march.short',
+  'files.info.month.april.short',
+  'files.info.month.may.short',
+  'files.info.month.june.short',
+  'files.info.month.july.short',
+  'files.info.month.august.short',
+  'files.info.month.september.short',
+  'files.info.month.october.short',
+  'files.info.month.november.short',
+  'files.info.month.december.short',
+] as const;
 /** Two-digit, zero-padded. */
 const pad2 = (n: number): string => (n < 10 ? `0${n}` : String(n));
 
@@ -27,6 +42,8 @@ export interface FileInfoPaneOptions {
   wildcard: () => string;
   /** The focused entry shown on row 1, or `undefined` when the list is empty. */
   focusedEntry: () => DirEntry | undefined;
+  /** Translation service for package-owned metadata; defaults to isolated English text. */
+  i18n?: I18n;
 }
 
 /**
@@ -58,6 +75,7 @@ export class FileInfoPane extends View {
   private readonly directory: () => string;
   private readonly wildcard: () => string;
   private readonly focusedEntry: () => DirEntry | undefined;
+  private readonly i18n: I18n;
 
   constructor(opts: FileInfoPaneOptions) {
     super();
@@ -65,6 +83,7 @@ export class FileInfoPane extends View {
     this.directory = opts.directory;
     this.wildcard = opts.wildcard;
     this.focusedEntry = opts.focusedEntry;
+    this.i18n = opts.i18n ?? createEnglishFilesI18n();
     // Repaint when the path, wildcard, or focused entry changes (draw() is not auto-tracked).
     this.onMount(() => {
       this.bind(() => {
@@ -91,8 +110,17 @@ export class FileInfoPane extends View {
       // A broken link shows only its name; the size/date/time fields also need enough width to fit.
       if (!entry.broken && w >= 39) {
         const d = entry.mtime;
+        const monthKey = MONTH_KEYS[d.getMonth()];
+        const month =
+          monthKey === undefined
+            ? ''
+            : this.i18n.t(monthKey, {
+                defaultMessage: FILES_ENGLISH_CATALOG.messages[monthKey],
+              });
         ctx.text(w - 38, 1, String(entry.size), style);
-        ctx.text(w - 22, 1, MONTHS[d.getMonth()] ?? '', style);
+        // Keep the month right-aligned at its historical boundary so translated abbreviations can
+        // expand left without overwriting the fixed-width day and year fields.
+        ctx.text(w - 19 - stringWidth(month), 1, month, style);
         ctx.text(w - 18, 1, pad2(d.getDate()), style);
         ctx.text(w - 16, 1, ',', style);
         ctx.text(w - 15, 1, String(d.getFullYear()), style);
@@ -103,7 +131,15 @@ export class FileInfoPane extends View {
         ctx.text(w - 9, 1, pad2(hour), style);
         ctx.text(w - 7, 1, ':', style);
         ctx.text(w - 6, 1, pad2(d.getMinutes()), style);
-        ctx.text(w - 4, 1, pm ? 'pm' : 'am', style);
+        const periodKey = pm ? 'files.info.time.pm' : 'files.info.time.am';
+        ctx.text(
+          w - 4,
+          1,
+          this.i18n.t(periodKey, {
+            defaultMessage: FILES_ENGLISH_CATALOG.messages[periodKey],
+          }),
+          style,
+        );
       }
     }
 

@@ -12,6 +12,12 @@
  */
 export { VERSION } from './version.js';
 
+// Browser-safe translation authoring and service APIs are available from the UI package so an
+// application can use one import surface. Node catalog loading stays isolated at
+// `@jsvision/i18n/node` and is intentionally not re-exported here.
+export * from '@jsvision/i18n';
+export { UI_ACCELERATOR_MANIFEST } from './i18n/scopes.js';
+
 // Core essentials — the handful of `@jsvision/core` symbols a UI developer needs, re-exported so a
 // hello-world app imports from one package: terminal capability detection (`createApplication`
 // auto-detects, but a power user can resolve a profile to override it), the chord `createKeymap`

@@ -95,6 +95,12 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
   interactive command shortcut (label + emitted command + accelerator) or a passive live label
   (accessor text, no command). Drop it into `statusLine([...])`; `StatusLine` drives its interaction.
 
+## Internationalization
+
+- **I18nError** — a stable, structured error raised by translation validation and catalog-loading
+  boundaries. Inspect its `code` and `issues` fields when an application needs to report invalid
+  locale data without depending on error-message wording.
+
 ## The escape hatch
 
 - **View** — the abstract base of every widget. Subclass it to author a custom widget when nothing

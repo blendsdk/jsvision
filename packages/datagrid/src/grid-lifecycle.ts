@@ -6,8 +6,10 @@
  * from the {@link LifecycleController}; the empty state is rendered by the body itself (it draws the
  * resolved empty message at zero rows), so `ready` here covers both a populated and an empty grid.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Group, Spinner, Text, Button, signal, col, grow, fixed } from '@jsvision/ui';
 import type { View, Signal } from '@jsvision/ui';
+import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 
 /**
  * The grid's lifecycle status, driven by the caller's reactive `status` getter. String shorthands
@@ -60,15 +62,31 @@ function safeStatus(status: (() => GridStatus) | undefined): GridStatus {
  * @param emptyText The caller's empty message, or `undefined` for the default.
  * @param filteredCount The current displayed row count.
  * @param totalCount The pre-filter row count.
+ * @param i18n Translation service for built-in empty messages.
  * @returns The empty message to draw.
  * @example
  * import { emptyMessage } from './grid-lifecycle.js';
  * emptyMessage('No lines', 0, 5); // 'No matching rows' — a filter hid all 5
  * emptyMessage('No lines', 0, 0); // 'No lines' — a truly empty source
  */
-export function emptyMessage(emptyText: string | undefined, filteredCount: number, totalCount: number): string {
-  if (filteredCount < totalCount) return 'No matching rows';
-  return emptyText ?? 'No rows';
+export function emptyMessage(
+  emptyText: string | undefined,
+  filteredCount: number,
+  totalCount: number,
+  i18n?: I18n,
+): string {
+  const service = i18n ?? createEnglishDatagridI18n();
+  if (filteredCount < totalCount) {
+    return service.t('datagrid.empty.filtered', {
+      defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.empty.filtered'],
+    });
+  }
+  return (
+    emptyText ??
+    service.t('datagrid.empty', {
+      defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.empty'],
+    })
+  );
 }
 
 /** A full-region column of centered content — the shell every placeholder view shares. */
@@ -82,19 +100,29 @@ function placeholderShell(children: View[]): Group {
 }
 
 /** The loading placeholder — a spinner with a `Loading…` label. Static first frame paints without a clock. */
-function spinnerView(frame: Signal<number>): View {
-  const spinner = new Spinner({ frame, label: 'Loading…' });
+function spinnerView(frame: Signal<number>, i18n: I18n): View {
+  const spinner = new Spinner({
+    frame,
+    label: i18n.t('datagrid.lifecycle.loading', {
+      defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.lifecycle.loading'],
+    }),
+  });
   fixed(spinner, 1);
   return placeholderShell([spinner]);
 }
 
 /** The error placeholder — the message in the error severity, plus a Retry button when `retry` is provided. */
-function errorView(message: string, retry?: () => void): View {
+function errorView(message: string, i18n: I18n, retry?: () => void): View {
   const text = new Text(message, { severity: 'error' });
   fixed(text, 1);
   const children: View[] = [text];
   if (retry !== undefined) {
-    const button = new Button('Retry', { onClick: retry });
+    const button = new Button(
+      i18n.t('datagrid.lifecycle.retry', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.lifecycle.retry'],
+      }),
+      { onClick: retry },
+    );
     fixed(button, 2); // a button needs a content row + a shadow row
     children.push(button);
   }
@@ -169,16 +197,17 @@ export function applyLifecycleSwap(
  * lifecycle.placeholder(); // the spinner/error view, or null when ready
  * ```
  */
-export function createLifecycleController(deps: { status?: () => GridStatus }): LifecycleController {
+export function createLifecycleController(deps: { status?: () => GridStatus; i18n?: I18n }): LifecycleController {
   const frame = signal(0);
+  const i18n = deps.i18n ?? createEnglishDatagridI18n();
   return {
     state(): LifecycleState {
       return classify(safeStatus(deps.status)).state;
     },
     placeholder(): View | null {
       const c = classify(safeStatus(deps.status));
-      if (c.state === 'loading') return spinnerView(frame);
-      if (c.state === 'error') return errorView(c.message ?? '', c.retry);
+      if (c.state === 'loading') return spinnerView(frame, i18n);
+      if (c.state === 'error') return errorView(c.message ?? '', i18n, c.retry);
       return null; // ready → the grid body shows
     },
   };

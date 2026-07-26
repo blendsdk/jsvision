@@ -8,8 +8,11 @@
  * tall enough for however many lines the message wraps to at that width. A long message is therefore
  * shown in full rather than truncated at the first row.
  */
-import { Dialog, Text, okButton, col, cover, fixed, grow, row, wrapText } from '@jsvision/ui';
-import type { View, EventLoop, Desktop } from '@jsvision/ui';
+import type { I18n } from '@jsvision/i18n';
+import { Button, Commands, Dialog, Text, col, cover, fixed, grow, row, wrapText } from '@jsvision/ui';
+import type { EventLoop, Desktop } from '@jsvision/ui';
+import { createEnglishFilesI18n, FILES_ENGLISH_CATALOG } from '../i18n/catalog.js';
+import { filesAcceleratorLabel } from '../i18n/label.js';
 
 /**
  * The minimal host a modal needs: an event loop that can run a view modally and a desktop to mount it
@@ -17,6 +20,8 @@ import type { View, EventLoop, Desktop } from '@jsvision/ui';
  * mount it, callers add it to the desktop, run it, then remove it in a `finally`.
  */
 export interface ExecHost {
+  /** Translation service used for framework- and package-owned modal chrome. */
+  readonly i18n?: I18n;
   /** Runs a view modally, resolving to the command that closed it. */
   loop: Pick<EventLoop, 'execView'>;
   /** The desktop the modal is mounted into (added before, removed after). */
@@ -40,20 +45,31 @@ export interface ExecHost {
  * await errorBox(app, "Invalid file name: 'a/b'");
  */
 export async function errorBox(host: ExecHost, message: string): Promise<void> {
+  const i18n = host.i18n ?? createEnglishFilesI18n();
   const width = Math.min(60, Math.max(24, message.length + 6));
   // The dialog's padded frame interior is two columns narrower than the box, so wrap to that to learn
   // how many rows the message really needs. Measuring it here rather than letting the text view
   // self-size is deliberate: a view reports its unwrapped line count, which would size the box for one
   // row and silently clip everything past the first line.
   const height = wrapText(message, width - 2).length + 4; // + frame (2) + button band (2)
-  const dlg = new Dialog({ title: 'Error', width, height, centered: true });
+  const dlg = new Dialog({
+    title: i18n.t('files.dialog.error.title', {
+      defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.error.title'],
+    }),
+    width,
+    height,
+    centered: true,
+  });
 
-  const ok = okButton();
+  const ok = new Button(filesAcceleratorLabel(i18n, 'files.action.ok', '~O~K'), {
+    command: Commands.ok,
+    default: true,
+  });
   dlg.add(cover(col(grow(new Text(message)), fixed(row({ justify: 'center' }, ok), 2))));
 
   host.desktop.addWindow(dlg);
   try {
-    await host.loop.execView<string>(dlg as unknown as View);
+    await host.loop.execView<string>(dlg);
   } finally {
     host.desktop.removeWindow(dlg);
   }

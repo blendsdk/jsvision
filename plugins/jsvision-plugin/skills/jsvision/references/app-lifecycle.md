@@ -28,6 +28,8 @@ All options are optional:
   concrete profile only for tests or to force a color depth.
 - **`viewport`** — initial size in cells (defaults to the terminal size, or 80×24).
 - **`theme`** — a preset or a `createTheme(...)` result (see `theming.md`).
+- **`i18n`** — one application-owned translation service. Omit it for isolated English defaults;
+  see [i18n.md](i18n.md) when loading framework and application catalogs.
 - **`menuBar`** / **`statusLine`** — chrome rows (see `component-catalog.md`).
 - **`requireTty`** (default `true`) — `run()` asserts an interactive terminal and throws otherwise.
   Pass `false` for headless/piped runs.

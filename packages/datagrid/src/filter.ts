@@ -9,6 +9,7 @@
  * which match the FORMATTED display label — what the user sees and types — so a "contains" search
  * behaves like a spreadsheet's quick filter rather than matching a raw object or number.
  */
+import type { I18n } from '@jsvision/i18n';
 import type { CalendarDate } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 
@@ -95,13 +96,15 @@ function dateOrdinal(v: unknown): number | null {
  * custom calls the supplied predicate with the typed value and the row. A `between` with `b` omitted
  * is a degenerate one-point range (`b` defaults to `a`).
  */
-function filterPredicate<T>(filter: ColumnFilter, col: GridColumn<T>): (row: T) => boolean {
+function filterPredicate<T>(filter: ColumnFilter, col: GridColumn<T>, i18n?: I18n): (row: T) => boolean {
   switch (filter.kind) {
     case 'text': {
-      const needle = filter.value.toLowerCase();
+      const fold = (value: string): string =>
+        i18n === undefined ? value.toLowerCase() : value.normalize('NFC').toLocaleLowerCase(i18n.locale);
+      const needle = fold(filter.value);
       const { op } = filter;
       return (row) => {
-        const hay = displayLabel(col.value(row), row, col).toLowerCase();
+        const hay = fold(displayLabel(col.value(row), row, col));
         if (op === 'contains') return hay.includes(needle);
         if (op === 'startsWith') return hay.startsWith(needle);
         if (op === 'endsWith') return hay.endsWith(needle);
@@ -153,6 +156,7 @@ function filterPredicate<T>(filter: ColumnFilter, col: GridColumn<T>): (row: T) 
  * @param model The active per-column filters, keyed by `GridColumn.id`.
  * @param columns The column model, keyed by `GridColumn.id`, providing each filter's `value` accessor
  *   and optional `format`.
+ * @param i18n Optional explicit service for NFC normalization and locale-aware text casing.
  * @returns A new array of the surviving rows, in source order.
  * @example
  * ```ts
@@ -178,11 +182,12 @@ export function filterRows<T>(
   rows: readonly T[],
   model: FilterModel,
   columns: ReadonlyMap<string, GridColumn<T>>,
+  i18n?: I18n,
 ): T[] {
   const active: ((row: T) => boolean)[] = [];
   for (const [columnId, filter] of model) {
     const col = columns.get(columnId);
-    if (col !== undefined) active.push(filterPredicate(filter, col)); // unknown column → dropped
+    if (col !== undefined) active.push(filterPredicate(filter, col, i18n)); // unknown column → dropped
   }
   if (active.length === 0) return [...rows];
   return rows.filter((row) => active.every((pass) => pass(row)));
@@ -196,6 +201,7 @@ export function filterRows<T>(
  *
  * @param rows The row snapshot to scan.
  * @param col The column whose distinct labels to enumerate.
+ * @param i18n Optional explicit service for locale-aware ordering.
  * @returns The distinct labels, sorted case-insensitively.
  * @example
  * ```ts
@@ -206,10 +212,12 @@ export function filterRows<T>(
  * const labels = computeDistinct(rows, region); // e.g. ['east', 'north', 'west']
  * ```
  */
-export function computeDistinct<T>(rows: readonly T[], col: GridColumn<T>): string[] {
+export function computeDistinct<T>(rows: readonly T[], col: GridColumn<T>, i18n?: I18n): string[] {
   const labels = new Set<string>();
   for (const row of rows) labels.add(displayLabel(col.value(row), row, col));
-  return [...labels].sort((a, b) => collator().compare(a, b));
+  return [...labels].sort((a, b) =>
+    i18n === undefined ? collator().compare(a, b) : i18n.compare(a, b, { sensitivity: 'accent', numeric: false }),
+  );
 }
 
 /**

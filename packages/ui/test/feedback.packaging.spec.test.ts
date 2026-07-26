@@ -72,9 +72,9 @@ test('ST-12: each src/feedback/ source file is ≤ 500 lines', () => {
 });
 
 // ST-12 / AC-12 — the package declares no third-party/native runtime dependency (check:deps clean).
-test('ST-12: @jsvision/ui declares only the workspace @jsvision/core runtime dependency', () => {
+test('ST-12: @jsvision/ui declares only the workspace Core and i18n runtime dependencies', () => {
   const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
-  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core']);
+  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core', '@jsvision/i18n']);
 });

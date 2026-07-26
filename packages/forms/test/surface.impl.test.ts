@@ -1,10 +1,10 @@
 /**
  * Implementation test — barrel surface lock for @jsvision/forms.
  *
- * The package's public surface is exactly six runtime values: `createForm`, `bindField`,
- * `bindRadio`, `bindCheck`, `FormFieldError`, and `formDialog`. This test fails the instant an
- * internal helper is accidentally re-exported (or a public one is dropped) — the regression guard for
- * "importing anything not in the list fails". The type-only exports (`Form`, `Field`,
+ * The package's public surface is exactly the form API plus its public accelerator manifest. This
+ * test fails the instant an internal helper is accidentally re-exported (or a public one is
+ * dropped) — the regression guard for "importing anything not in the list fails". The type-only
+ * exports (`Form`, `Field`,
  * `CreateFormOptions`, `AsyncValidator`, `FormDialogOptions`) are compile-time and carry no runtime
  * key, so they are intentionally absent here; the type surface is held by `typecheck`, not this
  * assertion.
@@ -16,6 +16,14 @@ import * as forms from '../src/index.js';
 
 test('the barrel exports exactly the specified runtime surface', () => {
   expect(Object.keys(forms).sort()).toEqual(
-    ['FormFieldError', 'bindCheck', 'bindField', 'bindRadio', 'createForm', 'formDialog'].sort(),
+    [
+      'FORMS_ACCELERATOR_MANIFEST',
+      'FormFieldError',
+      'bindCheck',
+      'bindField',
+      'bindRadio',
+      'createForm',
+      'formDialog',
+    ].sort(),
   );
 });

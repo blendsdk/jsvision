@@ -4,7 +4,7 @@
 
 Application, desktop, windows, menus, status line, and the event loop.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## Application
 
@@ -12,6 +12,7 @@ A ready-to-run terminal application.
 
 ```ts
 interface Application {
+  i18n: I18n;   // Translation service used by framework-owned UI and modal helpers.
   desktop: Desktop | undefined;   // The desktop window manager, or `undefined` when the app was created with a custom `content` body (a router app manages its own body and registers no window commands). A no-`content` app always has one — and `createApplication` returns the precise DesktopApplication type there, so you never need a null check for the default case.
   loop: EventLoop;   // The underlying event loop. Use it to emit commands, manage focus, or run modals.
   onCommand(command: string, handler: () => void): () => void;   // Register an app-wide handler for a named command; returns a function that unregisters it. Every handler registered for a command runs when that command is emitted, and a handled command is consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the modal-open caveat.
@@ -28,6 +29,7 @@ Options for createApplication.
 
 ```ts
 interface ApplicationOptions {
+  i18n?: I18n;   // Translation service shared by framework-owned UI. The exact supplied instance is exposed on the returned application. Omit it to create an isolated English service for this application.
   content?: View;   // The app body: the single view that fills the middle of the shell (below the menu bar, above the status line). Defaults to a Desktop window manager — the classic overlapping-windows shape. Pass any view (e.g. a router) for a full-screen, non-windowed app; when you do, the app exposes no `desktop` and does not register the window-management commands.
   caps?: CapabilityProfile | 'auto';   // Terminal capability profile that drives color-depth encoding for every painted frame. Defaults to `'auto'`, which detects the running terminal's capabilities via `resolveCapabilities()`. Pass an explicit profile to override the detection (used verbatim, no re-resolution).
   viewport?: Size2D;   // Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown.
