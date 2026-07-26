@@ -5,12 +5,14 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const REVIEW_MANIFEST_URL = new URL('../tools/i18n-translation-reviews.json', import.meta.url);
-const REVIEWED_PACKAGES = ['ui', 'forms', 'files', 'datagrid'];
-const REVIEWED_LOCALES = ['nl', 'de', 'fr', 'es', 'it', 'pt-PT', 'pl', 'ro', 'sv'];
+const LOCALE_CONFIG_URL = new URL('../tools/i18n-locale-exports.json', import.meta.url);
 const APPROVED_STATUS = 'approved';
 const PROFICIENT_ATTESTATION = 'proficient';
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
 const REVIEW_DATE = /^\d{4}-\d{2}-\d{2}$/u;
+const SAFE_PACKAGE = /^[a-z][a-z0-9-]*$/u;
+const SAFE_SYMBOL = /^[a-z][A-Za-z0-9]*$/u;
+const SAFE_LOCALE = /^[a-z]{2}(?:-[A-Z]{2})?$/u;
 
 /**
  * Convert JSON-compatible data into a stable representation independent of object insertion
@@ -186,6 +188,33 @@ function localeSuffix(locale) {
     .join('');
 }
 
+/** Validate configured path segments before resolving built catalog modules. */
+function validateLocaleConfig(config) {
+  if (
+    config === null ||
+    typeof config !== 'object' ||
+    !Array.isArray(config.packages) ||
+    !Array.isArray(config.locales) ||
+    config.packages.length === 0 ||
+    config.locales.length === 0 ||
+    config.packages.some(
+      (entry) =>
+        entry === null ||
+        typeof entry !== 'object' ||
+        typeof entry.name !== 'string' ||
+        !SAFE_PACKAGE.test(entry.name) ||
+        typeof entry.symbolPrefix !== 'string' ||
+        !SAFE_SYMBOL.test(entry.symbolPrefix),
+    ) ||
+    config.locales.some((locale) => typeof locale !== 'string' || !SAFE_LOCALE.test(locale)) ||
+    new Set(config.packages.map((entry) => entry.name)).size !== config.packages.length ||
+    new Set(config.locales).size !== config.locales.length
+  ) {
+    throw new Error('Invalid i18n locale export configuration.');
+  }
+  return config;
+}
+
 /**
  * Load every official non-English catalog from built package output.
  *
@@ -193,15 +222,15 @@ function localeSuffix(locale) {
  *   schema: number,
  *   locale: string,
  *   messages: Readonly<Record<string, unknown>>
- * } }[]>} All 36 release-reviewed catalog descriptors.
+ * } }[]>} All configured non-English catalog descriptors.
  */
-async function loadOfficialCatalogs() {
+async function loadOfficialCatalogs(config) {
   const catalogs = [];
-  for (const packageName of REVIEWED_PACKAGES) {
-    for (const locale of REVIEWED_LOCALES) {
+  for (const { name: packageName, symbolPrefix } of config.packages) {
+    for (const locale of config.locales.filter((candidate) => candidate !== 'en')) {
       const url = new URL(`../packages/${packageName}/dist/locales/${locale}.js`, import.meta.url);
       const module = await import(url.href);
-      const exportName = `${packageName}${localeSuffix(locale)}`;
+      const exportName = `${symbolPrefix}${localeSuffix(locale)}`;
       const catalog = module[exportName];
       if (catalog === null || typeof catalog !== 'object') {
         throw new Error(`Built catalog export ${exportName} is missing.`);
@@ -215,12 +244,14 @@ async function loadOfficialCatalogs() {
 /** Run the repository release-review check and return a process exit code. */
 async function main() {
   const manifest = JSON.parse(await readFile(REVIEW_MANIFEST_URL, 'utf8'));
+  const config = validateLocaleConfig(JSON.parse(await readFile(LOCALE_CONFIG_URL, 'utf8')));
   const issues = verifyTranslationReviews({
-    catalogs: await loadOfficialCatalogs(),
+    catalogs: await loadOfficialCatalogs(config),
     manifest,
   });
   if (issues.length === 0) {
-    process.stdout.write('Verified 36 digest-bound translation reviews.\n');
+    const reviewCount = config.packages.length * config.locales.filter((locale) => locale !== 'en').length;
+    process.stdout.write(`Verified ${reviewCount} digest-bound translation reviews.\n`);
     return 0;
   }
   for (const entry of issues) {

@@ -56,10 +56,10 @@ import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 import { createEnglishDatagridI18n } from './i18n/catalog.js';
 
 /**
- * The filter popup's width, and the **worst-case** height it mounts at — wide enough for the operator
- * selector and operands, tall enough for the condition section plus a full value-list. The popup then
- * auto-sizes down to its actual content, so it only ever shrinks from this height and never needs
- * re-clamping to stay on-screen. It clips against a short grid; a taller viewport shows it whole.
+ * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
+ * immediately replaces it with the built-in popup's translated content geometry and re-clamps on
+ * later operator or distinct-value changes. Custom popups without `desiredSize()` retain this mount
+ * contract unless they supply their own absolute size.
  */
 const FILTER_POPUP_WIDTH = 34;
 const FILTER_POPUP_HEIGHT = 26;
@@ -1534,6 +1534,7 @@ export class EditableDataGrid<T> extends Group {
         current: this.filters().get(columnId),
         i18n: this.comparisonI18n,
         distinct: () => this.distinctFor(columnId), // embeds the value-list section
+        availableWidth: this.bounds.width,
         onApply: (id, next) => this.setFilter(id, next),
         onClear: (id) => this.clearFilter(id),
         onClose: () => this.closeFilterPopup(),

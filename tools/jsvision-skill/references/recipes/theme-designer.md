@@ -59,14 +59,15 @@ import {
   Dialog,
   ListBox,
   Text,
+  buttonGroup,
   cancelButton,
   col,
   createRoot,
   effect,
   fixed,
   grow,
+  measureButtonGroup,
   okButton,
-  row,
   signal,
   type Application,
 } from '@jsvision/ui';
@@ -89,13 +90,16 @@ export async function designTheme(app: Application, previous: Theme): Promise<Th
     const choice = choices[focused()] ?? choices[0]!;
     return `Source: ${choice.name} ${choice.color}\nArrows preview • Enter applies`;
   });
-  const buttons = row({ gap: 2, justify: 'center' }, fixed(okButton(), 10), fixed(cancelButton(), 12));
+  const actionButtons = [okButton(), cancelButton()];
+  const actionOptions = { minimumButtonWidth: 10, gap: 2 } as const;
+  const actionMetrics = measureButtonGroup(actionButtons, actionOptions);
+  const buttons = buttonGroup(actionButtons, actionOptions);
   const dialog = new Dialog({
     title: 'Material Theme',
     width: Math.min(46, Math.max(1, app.desktop.bounds.width - 2)),
     height: Math.min(14, app.desktop.bounds.height),
   });
-  dialog.add(col({ gap: 1, fill: true }, fixed(summary, 2), grow(list), fixed(buttons, 2)));
+  dialog.add(col({ gap: 1, fill: true }, fixed(summary, 2), grow(list), fixed(buttons, actionMetrics.height)));
 
   const disposePreview = createRoot((dispose) => {
     effect(() => {

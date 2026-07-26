@@ -48,6 +48,13 @@ export interface CodeEditorOverlayPresentation {
   readonly items: readonly string[];
   /** Zero-based row selected by chooser-style overlays. */
   readonly selected: number;
+  /** Locale-neutral diagnostic wrapper retained until the final view projection. */
+  readonly diagnostic?: {
+    /** Stable severity used to select the localized editor-owned label. */
+    readonly severity: 'error' | 'warning' | 'information' | 'hint';
+    /** Sanitized external detail that must never be translated as a template. */
+    readonly detail: string;
+  };
 }
 
 /** Assistance state exposed by a controller without retaining terminal views. */

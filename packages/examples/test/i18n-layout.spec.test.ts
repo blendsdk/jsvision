@@ -23,7 +23,7 @@ import {
 } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 
-const PACKAGE_NAMES = ['ui', 'forms', 'files', 'datagrid'] as const;
+const PACKAGE_NAMES = ['ui', 'forms', 'files', 'datagrid', 'code-editor'] as const;
 const LOCALES = ['en', 'nl', 'de', 'fr', 'es', 'it', 'pt-PT', 'pl', 'ro', 'sv'] as const;
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 

@@ -5,6 +5,7 @@ last.
 
 ```ts
 import { datagridNl } from '@jsvision/datagrid/locales/nl';
+import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
 import { filesNl } from '@jsvision/files/locales/nl';
 import { formsNl } from '@jsvision/forms/locales/nl';
 import { createI18n, defineCatalog, plural } from '@jsvision/i18n';
@@ -25,7 +26,7 @@ const appCatalog = defineCatalog({
 
 const i18n = createI18n({
   locale: 'nl',
-  catalogs: [uiNl, formsNl, filesNl, datagridNl, appCatalog],
+  catalogs: [uiNl, formsNl, filesNl, datagridNl, codeEditorNl, appCatalog],
 });
 
 const app = createApplication({ i18n });

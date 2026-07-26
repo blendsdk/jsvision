@@ -56,3 +56,16 @@
 - [`@jsvision/datagrid/locales/pl`](/api/datagrid-locales/variables/datagridPl) — `datagridPl`
 - [`@jsvision/datagrid/locales/ro`](/api/datagrid-locales/variables/datagridRo) — `datagridRo`
 - [`@jsvision/datagrid/locales/sv`](/api/datagrid-locales/variables/datagridSv) — `datagridSv`
+
+## @jsvision/code-editor
+
+- [`@jsvision/code-editor/locales/en`](/api/code-editor-locales/variables/codeEditorEn) — `codeEditorEn`
+- [`@jsvision/code-editor/locales/nl`](/api/code-editor-locales/variables/codeEditorNl) — `codeEditorNl`
+- [`@jsvision/code-editor/locales/de`](/api/code-editor-locales/variables/codeEditorDe) — `codeEditorDe`
+- [`@jsvision/code-editor/locales/fr`](/api/code-editor-locales/variables/codeEditorFr) — `codeEditorFr`
+- [`@jsvision/code-editor/locales/es`](/api/code-editor-locales/variables/codeEditorEs) — `codeEditorEs`
+- [`@jsvision/code-editor/locales/it`](/api/code-editor-locales/variables/codeEditorIt) — `codeEditorIt`
+- [`@jsvision/code-editor/locales/pt-PT`](/api/code-editor-locales/variables/codeEditorPtPT) — `codeEditorPtPT`
+- [`@jsvision/code-editor/locales/pl`](/api/code-editor-locales/variables/codeEditorPl) — `codeEditorPl`
+- [`@jsvision/code-editor/locales/ro`](/api/code-editor-locales/variables/codeEditorRo) — `codeEditorRo`
+- [`@jsvision/code-editor/locales/sv`](/api/code-editor-locales/variables/codeEditorSv) — `codeEditorSv`

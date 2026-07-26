@@ -9,7 +9,7 @@ import { describe, expect, test } from 'vitest';
 import { validateCatalog } from '../src/index.js';
 import type { AcceleratorManifest, Catalog, Message } from '../src/index.js';
 
-const PACKAGE_NAMES = ['ui', 'forms', 'files', 'datagrid'] as const;
+const PACKAGE_NAMES = ['ui', 'forms', 'files', 'datagrid', 'code-editor'] as const;
 const LOCALES = ['en', 'nl', 'de', 'fr', 'es', 'it', 'pt-PT', 'pl', 'ro', 'sv'] as const;
 const PACKAGES_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -21,6 +21,7 @@ const MANIFEST_EXPORTS: Readonly<Record<PackageName, string>> = {
   forms: 'FORMS_ACCELERATOR_MANIFEST',
   files: 'FILES_ACCELERATOR_MANIFEST',
   datagrid: 'DATAGRID_ACCELERATOR_MANIFEST',
+  'code-editor': 'CODE_EDITOR_ACCELERATOR_MANIFEST',
 };
 
 /** Load the only catalog value exported by one public locale subpath. */
@@ -114,7 +115,11 @@ describe.each(PACKAGE_NAMES)('@jsvision/%s locale exports', (packageName) => {
   test('rejects collisions inside every public accelerator scope', async () => {
     const english = await loadCatalog(packageName, 'en');
     const acceleratorManifest = await loadAcceleratorManifest(packageName);
-    expect(acceleratorManifest.scopes.length).toBeGreaterThan(0);
+    if (packageName === 'code-editor') {
+      expect(acceleratorManifest.scopes).toEqual([]);
+    } else {
+      expect(acceleratorManifest.scopes.length).toBeGreaterThan(0);
+    }
     for (const scope of acceleratorManifest.scopes) {
       expect(scope.keys.length, scope.name).toBeGreaterThan(1);
       const [first, second] = scope.keys;

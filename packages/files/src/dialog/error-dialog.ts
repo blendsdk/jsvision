@@ -9,7 +9,20 @@
  * shown in full rather than truncated at the first row.
  */
 import type { I18n } from '@jsvision/i18n';
-import { Button, Commands, Dialog, Text, col, cover, fixed, grow, row, wrapText } from '@jsvision/ui';
+import {
+  Button,
+  Commands,
+  Dialog,
+  Text,
+  buttonGroup,
+  col,
+  cover,
+  fixed,
+  frameTitleMinimumWidth,
+  grow,
+  stringWidth,
+  wrapText,
+} from '@jsvision/ui';
 import type { EventLoop, Desktop } from '@jsvision/ui';
 import { createEnglishFilesI18n, FILES_ENGLISH_CATALOG } from '../i18n/catalog.js';
 import { filesAcceleratorLabel } from '../i18n/label.js';
@@ -46,26 +59,32 @@ export interface ExecHost {
  */
 export async function errorBox(host: ExecHost, message: string): Promise<void> {
   const i18n = host.i18n ?? createEnglishFilesI18n();
-  const width = Math.min(60, Math.max(24, message.length + 6));
+  const ok = new Button(filesAcceleratorLabel(i18n, 'files.action.ok', '~O~K'), {
+    command: Commands.ok,
+    default: true,
+  });
+  const title = i18n.t('files.dialog.error.title', {
+    defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.error.title'],
+  });
+  const width = Math.max(
+    24,
+    Math.min(60, stringWidth(message) + 6),
+    ok.measure().width + 4,
+    frameTitleMinimumWidth(title),
+  );
   // The dialog's padded frame interior is two columns narrower than the box, so wrap to that to learn
   // how many rows the message really needs. Measuring it here rather than letting the text view
   // self-size is deliberate: a view reports its unwrapped line count, which would size the box for one
   // row and silently clip everything past the first line.
   const height = wrapText(message, width - 2).length + 4; // + frame (2) + button band (2)
   const dlg = new Dialog({
-    title: i18n.t('files.dialog.error.title', {
-      defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.error.title'],
-    }),
+    title,
     width,
     height,
     centered: true,
   });
 
-  const ok = new Button(filesAcceleratorLabel(i18n, 'files.action.ok', '~O~K'), {
-    command: Commands.ok,
-    default: true,
-  });
-  dlg.add(cover(col(grow(new Text(message)), fixed(row({ justify: 'center' }, ok), 2))));
+  dlg.add(cover(col(grow(new Text(message)), fixed(buttonGroup([ok]), 2))));
 
   host.desktop.addWindow(dlg);
   try {

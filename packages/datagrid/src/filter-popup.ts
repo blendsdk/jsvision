@@ -17,6 +17,7 @@ import {
   DatePicker,
   RadioGroup,
   Button,
+  buttonColumn,
   Text,
   col,
   spacer,
@@ -24,6 +25,7 @@ import {
   filter,
   grow,
   fixed,
+  stringWidth,
 } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent, CalendarDate } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
@@ -79,6 +81,8 @@ export interface FilterPopupConfig<T> {
   i18n?: I18n;
   /** When present, embeds the value-list section (added in a later phase). */
   distinct?: () => Promise<DistinctResult>;
+  /** Host width used to select a complete horizontal or stacked action arrangement. */
+  availableWidth?: number;
   /** Reports an applied condition filter for the column. */
   onApply: (columnId: string, filter: ColumnFilter) => void;
   /** Reports that the column's filter should be cleared. */
@@ -159,6 +163,10 @@ export class FilterPopup<T> extends Group {
   private readonly operandBView?: View;
   /** The embedded value-list, if any — its wanted height drives the popup's auto-sizing. */
   private readonly valueListView?: ValueList;
+  /** Non-reactive condition-section width; the value-list may increase it reactively. */
+  private readonly conditionWidth: number;
+  /** Rows consumed by the Apply/Clear group in its host-width arrangement. */
+  private readonly actionHeight: number;
 
   /** Operand A as raw text (text/number filters read this). */
   readonly operandA: Signal<string>;
@@ -207,11 +215,12 @@ export class FilterPopup<T> extends Group {
       }
     }
 
+    const operatorLabels = ops.map((operator) => {
+      const key = OP_MESSAGE_KEYS[operator] ?? 'datagrid.filter.operator.equals';
+      return this.text(key);
+    });
     this.operatorGroup = new RadioGroup({
-      labels: ops.map((operator) => {
-        const key = OP_MESSAGE_KEYS[operator] ?? 'datagrid.filter.operator.equals';
-        return this.text(key);
-      }),
+      labels: operatorLabels,
       value: this.operatorIndex,
     });
     fixed(this.operatorGroup, 4);
@@ -251,7 +260,23 @@ export class FilterPopup<T> extends Group {
     const applyBtn = new Button(this.action('datagrid.filter.action.apply'), { onClick: () => this.apply() });
     const clearBtn = new Button(this.action('datagrid.filter.action.clear'), { onClick: () => this.clear() });
     const buttonWidth = Math.max(buttonCellWidth([applyBtn, clearBtn]), valueListButtonWidth(this.i18n));
-    const buttons = buttonRow([applyBtn, clearBtn], buttonWidth);
+    const horizontalActionWidth = buttonWidth * 2 + 3;
+    const stackActions = cfg.availableWidth !== undefined && horizontalActionWidth > cfg.availableWidth;
+    const buttons = stackActions
+      ? buttonColumn([applyBtn, clearBtn], { minimumButtonWidth: buttonWidth, gap: 1 })
+      : buttonRow([applyBtn, clearBtn], buttonWidth);
+    this.actionHeight = stackActions ? 5 : 2;
+    const fieldLabels = [
+      this.text('datagrid.filter.field.value'),
+      this.text('datagrid.filter.field.from'),
+      this.text('datagrid.filter.field.to'),
+    ];
+    this.conditionWidth = Math.max(
+      34,
+      ...operatorLabels.map((label) => stringWidth(label) + 6),
+      ...fieldLabels.map((label) => stringWidth(label) + 2),
+      stackActions ? buttonWidth + 2 : horizontalActionWidth,
+    );
 
     // The Excel value-list section, below the condition section, when a distinct thunk is supplied. It
     // applies a `{ kind: 'set' }` filter of the checked labels — last-writer-wins with the condition
@@ -264,6 +289,7 @@ export class FilterPopup<T> extends Group {
         current: currentSet,
         i18n: this.i18n,
         buttonWidth,
+        availableWidth: cfg.availableWidth === undefined ? undefined : Math.max(0, cfg.availableWidth - 2),
         onApply: (selected) => {
           this.onApply(this.columnId, { kind: 'set', selected });
           this.onClose();
@@ -295,18 +321,6 @@ export class FilterPopup<T> extends Group {
           { relayout: true },
         );
       }
-      // Auto-size the overlay to its content — the fixed condition rows plus the value-list's wanted
-      // height. It shrinks/grows as the second operand reveals or the distinct set loads/filters. The
-      // grid mounts it at the worst-case height, so from here it only shrinks and never needs
-      // re-clamping to stay on-screen (the anchored top does not move).
-      this.bind(
-        () => this.contentHeight(),
-        (h) => {
-          const rect = this.layout.rect;
-          if (rect !== undefined && rect.height !== h) this.setLayout({ rect: { ...rect, height: h } });
-        },
-        { relayout: true },
-      );
     });
   }
 
@@ -329,9 +343,22 @@ export class FilterPopup<T> extends Group {
    * changes.
    */
   private contentHeight(): number {
-    // top padding(1) + selector(4) + operand field(2) + second operand(2, `between` only) + gap(1) + buttons(2)
-    const condition = 1 + 4 + 2 + (this.needsSecondOperand() ? 2 : 0) + 1 + 2;
+    // Top padding, selector, operand fields, gap, and the host-width action arrangement.
+    const condition = 1 + 4 + 2 + (this.needsSecondOperand() ? 2 : 0) + 1 + this.actionHeight;
     return condition + (this.valueListView?.desiredHeight() ?? 0);
+  }
+
+  /**
+   * Reactive intrinsic popup geometry in terminal cells.
+   *
+   * The overlay mount reads this method in an effect, so changing to `between`, loading distinct
+   * values, narrowing the value list, or revealing a status re-sizes and re-clamps the same popup.
+   */
+  desiredSize(): { readonly width: number; readonly height: number } {
+    return {
+      width: Math.max(this.conditionWidth, (this.valueListView?.desiredWidth() ?? 0) + 2),
+      height: this.contentHeight(),
+    };
   }
 
   /** The operator choices for this popup's filter type (the op values a filter uses). */

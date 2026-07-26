@@ -18,12 +18,13 @@ import type { Signal } from '../reactive/index.js';
 import { Input, picture } from '../controls/index.js';
 import { openAnchoredPopup, absoluteRect, drawDropdownIcon } from '../dropdown/index.js';
 import { Calendar } from './calendar.js';
-import { metricsFor } from './calendar-metrics.js';
+import { localizedCalendarMetrics } from './calendar-localization.js';
 import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
 import type { CalendarDate } from './calendar-date.js';
 import { compare } from './calendar-date.js';
 import { dateFormat } from './date-format.js';
 import type { DateFormat, DateFormatSpec } from './date-format.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
 /**
  * The trailing 3-cell dropdown button drawing the shared `▐↓▌` icon. Not focusable — the field is the
@@ -132,7 +133,7 @@ export class DatePicker extends Group {
     this.firstDayOfWeek = opts.firstDayOfWeek;
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
     this.density = opts.density ?? 'comfortable';
-    this.metrics = metricsFor(this.density, this.showWeekNumbers);
+    this.metrics = localizedCalendarMetrics(opts.i18n ?? createEnglishUiI18n(), this.density, this.showWeekNumbers);
 
     const initial = this.value();
     this.text = signal(initial !== null ? this.spec.serialize(initial) : '');

@@ -3059,7 +3059,7 @@
         "redEvidence:Vitest could not resolve the intentionally absent packages/i18n/src/index.js public entry"
       ],
       "id": "TEST-01",
-      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
+      "revision": "sha256:22db4ff739c3d15231c78b59ed96822bd220232cee152d4789f8ecad9b52c713",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3078,7 +3078,7 @@
     {
       "edges": [],
       "id": "TEST-02",
-      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
+      "revision": "sha256:22db4ff739c3d15231c78b59ed96822bd220232cee152d4789f8ecad9b52c713",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3102,7 +3102,7 @@
         }
       ],
       "id": "TEST-03",
-      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
+      "revision": "sha256:22db4ff739c3d15231c78b59ed96822bd220232cee152d4789f8ecad9b52c713",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3121,7 +3121,7 @@
     {
       "edges": [],
       "id": "TEST-04",
-      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
+      "revision": "sha256:22db4ff739c3d15231c78b59ed96822bd220232cee152d4789f8ecad9b52c713",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5576,8 +5576,405 @@
       "title": "Verify Phase 1 package and repository gates",
       "type": "task",
       "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "i18n/CRIT-LAYOUT-QA"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-BUTTON-GROUP"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-SURFACE-GEOMETRY"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-QA-HARNESS"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-DOCS-PLUGIN"
+        }
+      ],
+      "evidence": [
+        "summary:GitHub issue 185 and the user's complete-sweep decision define the owning requirements and acceptance criteria."
+      ],
+      "id": "REQ-LAYOUT-QA",
+      "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translated layout and multilingual QA requirements",
+      "type": "requirement",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:The public UI contract defines cell-correct metrics, stable composition, and Datagrid compatibility."
+      ],
+      "id": "SPEC-BUTTON-GROUP",
+      "revision": "sha256:5611c6040f8820421191916fe90c0d86b9b2c17240d41a4e2a0c7d3744c46e8d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/03-01-button-group-contract.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Shared Button-group geometry specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:The migration specification covers UI, Forms, Files, Calendar, Datagrid, and the full localized call-site sweep."
+      ],
+      "id": "SPEC-SURFACE-GEOMETRY",
+      "revision": "sha256:5ab005a0bf16652c6bd484f05c55c8f5819e2e463f9a8d4dde0959f5fc78b08b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/03-02-translated-surface-migration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translated framework surface geometry specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:The QA specification defines a typed story registry and fresh Application reconstruction boundary."
+      ],
+      "id": "SPEC-QA-HARNESS",
+      "revision": "sha256:cc58b07dd8b4a03ef64976f77da9a81cd7b30bda37deeb8298dd76ce7f5b6602",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/03-03-multilingual-qa-harness.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Multilingual QA harness specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:The release specification owns consumer docs, localized examples, canonical skill guidance, and generated plugin parity."
+      ],
+      "id": "SPEC-DOCS-PLUGIN",
+      "revision": "sha256:7bf681c0512f414af0e22465c17f42bfacaa17d65cecdca183a66c29836c9820",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/03-04-docs-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translated layout documentation and plugin specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "i18n/TEST-LAYOUT-QA"
+        }
+      ],
+      "evidence": [
+        "summary:Acceptance requires one shared metric, a complete surface sweep, fresh reconstruction, the ten-locale matrix, and passing repository/plugin gates."
+      ],
+      "id": "CRIT-LAYOUT-QA",
+      "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translated layout and multilingual QA acceptance",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Specification-first coverage is planned across the public contract, migrated surfaces, registry lifecycle, locale matrix, docs, and plugin."
+      ],
+      "id": "TEST-LAYOUT-QA",
+      "revision": "sha256:536895a822e49f15936b983a802c0e268b49f2ead93ffc4a739c24dd5fc2bd08",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Translated layout and multilingual QA specification coverage",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AMB-LAYOUT-QA",
+      "revision": "sha256:440fddd73a9adab0f74bd2923ce4789d28480d3de13b8c5f65205cbe1a947bdc",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Translated layout and multilingual QA design decisions",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Phase 1 will implement the shared UI Button geometry and compatible Datagrid delegates.",
+        "summary:Shared Button geometry and compatible Datagrid delegates are implemented.",
+        "verificationEvidence:UI Button-group 19/19 and Datagrid compatibility/composition 9/9 focused cases pass; package typechecks, plugin integrity, and full yarn verify pass; independent challenger and auditor report no critical or major findings."
+      ],
+      "id": "TASK-LAYOUT-QA-PHASE-1",
+      "revision": "sha256:7c0081da9648122efc4f4407cf447d4ff0916894072c1dbf3666da1434731b63",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 1: Shared Button geometry"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Implement shared Button geometry",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "quality:Independent Phase 2 review findings and resolutions are recorded in the Phase 2 quality review.",
+        "summary:Phase 2 translated framework surfaces were implemented and committed before Phase 3.",
+        "summary:Phase 2 will migrate and certify every catalog-backed framework surface.",
+        "verificationEvidence:UI, Forms, Files, and Datagrid package suites, plugin integrity, and the authoritative Phase 2 yarn verify passed."
+      ],
+      "id": "TASK-LAYOUT-QA-PHASE-2",
+      "revision": "sha256:59031992d0bd7cf071ffc1f4a5f6c8bf651a795d39c05210ad6b1c1ad0e6c900",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 2: Complete translated-surface migration"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Migrate translated framework surfaces",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "lifecycle:Focused UI and multilingual specifications, complete UI and Examples package suites, interactive terminal smoke, plugin update/check, and the authoritative 248-second yarn verify pass.",
+        "quality:Independent reviewer and auditor report no unresolved critical or major findings; all rulings are recorded in the Phase 3 quality review.",
+        "summary:Phase 3 multilingual QA registry, reconstruction lifecycle, interactive shell, and implementation-edge coverage are implemented.",
+        "summary:Phase 3 will implement the interactive and headless multilingual QA registry.",
+        "verificationEvidence:The multilingual QA matrix passed 46 focused cases and all 376 Examples cases; UI passed all 1,932 cases; yarn verify and plugin integrity passed."
+      ],
+      "id": "TASK-LAYOUT-QA-PHASE-3",
+      "revision": "sha256:885693221ebb71166e4ffe0d555861e5faf8845dd993432bc21cffbd9db820a2",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 3: Multilingual QA application and matrix"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Implement multilingual QA application",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "lifecycle:Focused documentation and canonical skill specifications, complete Docs-site and Examples package suites, locale generation/check, API/plugin regeneration, and the authoritative final yarn verify passed.",
+        "quality:Independent reviewer and API-surface auditor findings were fixed; the single re-review reports no unresolved critical or major findings.",
+        "summary:Phase 4 consumer documentation, canonical skill guidance, generated plugin output, responsive worked examples, and release evidence are implemented.",
+        "summary:Phase 4 will update docs and plugin surfaces and close the repository release gates.",
+        "verificationEvidence:Focused guidance passed 12 cases; Docs-site passed 102 cases; Examples passed 376 cases; 50 locale entry points and plugin integrity passed; final yarn verify passed in 101.78 seconds."
+      ],
+      "id": "TASK-LAYOUT-QA-PHASE-4",
+      "revision": "sha256:a405080b7df40e475c93080e26b5ad6eba6854527f6e84b703ea1d3e6674cac4",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 4: Documentation, plugin, and release closure"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Document and release translated layout support",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "affected-by",
+          "target": "i18n/AMB-LAYOUT-QA"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/CRIT-LAYOUT-QA"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-LAYOUT-QA-PHASE-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-LAYOUT-QA-PHASE-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-LAYOUT-QA-PHASE-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-LAYOUT-QA-PHASE-4"
+        }
+      ],
+      "evidence": [
+        "summary:Phase 1 completion updates execution evidence without changing the approved remaining design.",
+        "summary:The user approved automatic design and execution for issues 184 and 185 after completing Code Editor internationalization first.",
+        "summary:Zero-Ambiguity Gate passed, independent architecture challenges converged, and the user delegated automatic design and execution."
+      ],
+      "id": "PLAN-LAYOUT-QA",
+      "revision": "sha256:15da25c37c06d6ef43e90fc183320c53de443a2df9e11dc3ede294f1b7885d67",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/translated-layout-qa/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translated layout and multilingual QA plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
+          "upstream": "i18n/CRIT-LAYOUT-QA",
+          "validatedAt": "2026-07-26T11:40:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
+          "upstream": "i18n/CRIT-LAYOUT-QA",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:7c0081da9648122efc4f4407cf447d4ff0916894072c1dbf3666da1434731b63",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-1",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:59031992d0bd7cf071ffc1f4a5f6c8bf651a795d39c05210ad6b1c1ad0e6c900",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-2",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:885693221ebb71166e4ffe0d555861e5faf8845dd993432bc21cffbd9db820a2",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-3",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:a405080b7df40e475c93080e26b5ad6eba6854527f6e84b703ea1d3e6674cac4",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-4",
+          "validatedAt": "2026-07-26T16:11:00Z"
+        }
+      ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-26T00:03:34.000Z"
+  "updated": "2026-07-26T11:31:00.000Z"
 }

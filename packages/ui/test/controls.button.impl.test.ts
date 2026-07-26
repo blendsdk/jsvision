@@ -1,5 +1,5 @@
 /**
- * Implementation tests — RD-06 `Button` edge cases (03-03).
+ * Implementation tests for `Button` activation and disabled-state edge cases.
  *
  * Release-outside cancels (the down/up press model), command + onClick both fire, a non-default
  * button ignores Enter, and a reactive `disabled` getter re-greys/-enables. Press-model edges are
@@ -78,6 +78,22 @@ test('both command and onClick fire on a single activation', () => {
   btn.onEvent(envelope(key('space'), emitted));
   expect(emitted).toEqual(['ok']);
   expect(clicks).toBe(1);
+});
+
+test('activation metadata reports actual visible label and bound behavior without invoking it', () => {
+  let clicks = 0;
+  const callback = () => (clicks += 1);
+  const commandAndCallback = new Button('~S~ave', { command: 'file.save', onClick: callback });
+  const callbackOnly = new Button('~A~pply', { onClick: callback });
+  const inert = new Button('~H~elp');
+
+  expect(commandAndCallback.activation).toEqual({ label: 'Save', command: 'file.save', hasCallback: true });
+  expect(callbackOnly.activation).toEqual({ label: 'Apply', command: null, hasCallback: true });
+  expect(inert.activation).toEqual({ label: 'Help', command: null, hasCallback: false });
+  expect(Object.isFrozen(commandAndCallback.activation)).toBe(true);
+  expect(Object.isFrozen(callbackOnly.activation)).toBe(true);
+  expect(Object.isFrozen(inert.activation)).toBe(true);
+  expect(clicks).toBe(0);
 });
 
 test('a non-default button ignores Enter', () => {

@@ -24,13 +24,17 @@ import {
   History,
   Label,
   ScrollBar,
+  buttonColumn,
+  measureButtonGroup,
   col,
   cover,
   fixed,
+  frameTitleMinimumWidth,
   grow,
   row,
   signal,
   spacer,
+  stringWidth,
 } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { nodeFileSystem } from '../fs/node-fs.js';
@@ -71,6 +75,51 @@ export interface FileDialogOptions {
 
 /** The default recent-path history id — distinct from the chdir dialog so their lists don't mix. */
 const FILE_HISTORY_ID = 0x0f11;
+
+/** Resolve the complete mode-specific action label set before dialog geometry is chosen. */
+function fileActionLabels(i18n: I18n, save: boolean): string[] {
+  const keys: Array<keyof typeof FILES_ENGLISH_CATALOG.messages> = save
+    ? ['files.action.ok', 'files.action.replace', 'files.action.clear', 'files.action.cancel', 'files.action.help']
+    : ['files.action.open', 'files.action.cancel', 'files.action.help'];
+  return keys.map((key) => {
+    const english = FILES_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+    return filesAcceleratorLabel(i18n, key, english);
+  });
+}
+
+/** Resolve one Files label before geometry is chosen. */
+function fileLabel(i18n: I18n, key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+  const english = FILES_ENGLISH_CATALOG.messages[key];
+  if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+  return filesAcceleratorLabel(i18n, key, english);
+}
+
+/** Minimum width needed by fixed-position translated metadata in the two-row information pane. */
+function infoPaneMinimumWidth(i18n: I18n): number {
+  const monthKeys = [
+    'files.info.month.january.short',
+    'files.info.month.february.short',
+    'files.info.month.march.short',
+    'files.info.month.april.short',
+    'files.info.month.may.short',
+    'files.info.month.june.short',
+    'files.info.month.july.short',
+    'files.info.month.august.short',
+    'files.info.month.september.short',
+    'files.info.month.october.short',
+    'files.info.month.november.short',
+    'files.info.month.december.short',
+  ] as const;
+  const widestMonth = Math.max(
+    ...monthKeys.map((key) => stringWidth(i18n.t(key, { defaultMessage: FILES_ENGLISH_CATALOG.messages[key] }))),
+  );
+  const widestPeriod = Math.max(
+    stringWidth(i18n.t('files.info.time.am', { defaultMessage: FILES_ENGLISH_CATALOG.messages['files.info.time.am'] })),
+    stringWidth(i18n.t('files.info.time.pm', { defaultMessage: FILES_ENGLISH_CATALOG.messages['files.info.time.pm'] })),
+  );
+  return 49 + Math.max(0, widestMonth - 3) + Math.max(0, widestPeriod - 2);
+}
 
 /**
  * The modal open/save file dialog.
@@ -123,23 +172,40 @@ export class FileDialog extends Dialog {
 
   constructor(opts: FileDialogOptions) {
     const i18n = opts.i18n ?? createEnglishFilesI18n();
+    const save = opts.save === true;
+    const title =
+      opts.title ??
+      (save
+        ? i18n.t('files.dialog.save-as.title', {
+            defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.save-as.title'],
+          })
+        : i18n.t('files.dialog.open.title', {
+            defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.open.title'],
+          }));
+    const inputLabelText = opts.inputName ?? fileLabel(i18n, 'files.field.name');
+    const filesLabelText = fileLabel(i18n, 'files.field.list');
+    const actionLabels = fileActionLabels(i18n, save);
+    const actionMetrics = measureButtonGroup(
+      actionLabels.map((label) => new Button(label)),
+      { minimumButtonWidth: 11, maxColumns: 1, rowGap: 1 },
+    );
+    const width = Math.max(
+      49,
+      actionMetrics.buttonWidth + 27,
+      frameTitleMinimumWidth(title),
+      stringWidth(inputLabelText) + 6,
+      stringWidth(filesLabelText) + 6,
+      infoPaneMinimumWidth(i18n),
+    );
     super({
-      title:
-        opts.title ??
-        (opts.save
-          ? i18n.t('files.dialog.save-as.title', {
-              defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.save-as.title'],
-            })
-          : i18n.t('files.dialog.open.title', {
-              defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.open.title'],
-            })),
-      width: 49,
+      title,
+      width,
       height: 19,
     });
     // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
     // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
-    this.minWidth = 49;
+    this.minWidth = width;
     this.minHeight = 19;
     this.i18n = i18n;
     this.fs = opts.fs ?? nodeFileSystem;
@@ -170,8 +236,8 @@ export class FileDialog extends Dialog {
     });
     this.history = new History({ link: this.fileInput, historyId: opts.historyId ?? FILE_HISTORY_ID });
 
-    const inputLabel = new Label(opts.inputName ?? this.label('files.field.name'), this.fileInput);
-    const filesLabel = new Label(this.label('files.field.list'), this.fileList.rows);
+    const inputLabel = new Label(inputLabelText, this.fileInput);
+    const filesLabel = new Label(filesLabelText, this.fileList.rows);
 
     this.fileInfoPane = new FileInfoPane({
       fs: this.fs,
@@ -181,7 +247,7 @@ export class FileDialog extends Dialog {
       i18n: this.i18n,
     });
 
-    this.buildButtons(opts.save === true);
+    this.buildButtons(save, actionLabels);
 
     // Every child below that cannot measure itself carries an explicit `fixed`/`grow` size. That is
     // not decoration: only `Text` and `Button` know their own intrinsic size, so any other widget
@@ -201,8 +267,11 @@ export class FileDialog extends Dialog {
       fixed(this.listBar, 1),
     );
     // The buttons start one row below the filename field, matching the field's own top inset.
-    const buttonCol = col({ padding: { top: 1, right: 0, bottom: 0, left: 0 }, gap: 1 }, ...this.buttons);
-    const buttonWidth = Math.max(11, ...this.buttons.map((button) => button.measure().width));
+    const buttonCol = col(
+      { padding: { top: 1, right: 0, bottom: 0, left: 0 } },
+      buttonColumn(this.buttons, { minimumButtonWidth: 11, gap: 1 }),
+    );
+    const buttonWidth = actionMetrics.buttonWidth;
 
     // The outer column is unpadded so the info pane can span the full frame interior; the inner one
     // carries the side inset the rest of the content needs.
@@ -238,32 +307,27 @@ export class FileDialog extends Dialog {
   }
 
   /** Build the mode-appropriate button strip; the layout below places and sizes it. */
-  private buildButtons(save: boolean): void {
-    const specs: Array<{ label: string; command?: string; default?: boolean; onClick?: () => void }> = save
+  private buildButtons(save: boolean, labels: readonly string[]): void {
+    const specs: Array<{ command?: string; default?: boolean; onClick?: () => void }> = save
       ? [
-          { label: this.label('files.action.ok'), command: Commands.ok, default: true },
-          { label: this.label('files.action.replace'), onClick: () => this.replace() },
-          { label: this.label('files.action.clear'), onClick: () => this.clear() },
-          { label: this.label('files.action.cancel'), command: Commands.cancel },
-          { label: this.label('files.action.help') },
+          { command: Commands.ok, default: true },
+          { onClick: () => this.replace() },
+          { onClick: () => this.clear() },
+          { command: Commands.cancel },
+          {},
         ]
-      : [
-          { label: this.label('files.action.open'), command: Commands.ok, default: true },
-          { label: this.label('files.action.cancel'), command: Commands.cancel },
-          { label: this.label('files.action.help') },
-        ];
-    specs.forEach((s) => {
-      const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
+      : [{ command: Commands.ok, default: true }, { command: Commands.cancel }, {}];
+    specs.forEach((spec, index) => {
+      const label = labels[index];
+      if (label === undefined) throw new RangeError('File dialog action labels must match the selected mode.');
+      const btn = new Button(label, {
+        command: spec.command,
+        default: spec.default,
+        onClick: spec.onClick,
+      });
       this.buttons.push(btn);
-      this.buttonLabels.push(s.label);
+      this.buttonLabels.push(label);
     });
-  }
-
-  /** Resolve one Files-owned accelerator label with its canonical English fallback. */
-  private label(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
-    const english = FILES_ENGLISH_CATALOG.messages[key];
-    if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
-    return filesAcceleratorLabel(this.i18n, key, english);
   }
 
   /** Resolve one Files-owned message with its canonical English fallback. */

@@ -15,7 +15,9 @@ const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(PACKAGE_ROOT, '..', '..');
 const GUIDE_PATH = join(PACKAGE_ROOT, 'guide', 'i18n.md');
 const EXAMPLE_PATH = join(PACKAGE_ROOT, 'examples', 'i18n-theme-designer.ts');
+const CODE_EDITOR_EXAMPLE_PATH = join(PACKAGE_ROOT, 'test', 'fixtures', 'code-editor-i18n.ts');
 const REFERENCE_PATH = join(PACKAGE_ROOT, 'reference', 'i18n.md');
+const ENTRY_POINT_REFERENCE_PATH = join(PACKAGE_ROOT, 'reference', 'i18n-entry-points.md');
 const CONFIG_PATH = join(PACKAGE_ROOT, '.vitepress', 'config.ts');
 const API_PACKAGES_PATH = join(PACKAGE_ROOT, 'src', 'api', 'packages.mjs');
 
@@ -92,6 +94,13 @@ describe('generated internationalization API navigation', () => {
     expect(apiPackages).toMatch(
       /\{\s*name:\s*['"]i18n['"],\s*entry:\s*['"]\.\.\/i18n\/src\/index\.ts['"],\s*tsconfig:\s*['"]\.\.\/i18n\/tsconfig\.json['"]\s*\}/u,
     );
+    expect(apiPackages).toMatch(
+      /\{\s*name:\s*['"]code-editor['"],\s*entry:\s*['"]\.\.\/code-editor\/src\/index\.ts['"],\s*tsconfig:\s*['"]\.\.\/code-editor\/tsconfig\.json['"],?\s*\}/u,
+    );
+    const apiGenerator = readRequired(join(PACKAGE_ROOT, 'scripts', 'gen-api.mjs'));
+    expect(apiGenerator).toMatch(
+      /\{\s*name:\s*['"]code-editor-locales['"],\s*entry:\s*['"]\.\.\/code-editor\/src\/i18n\/locales\.ts['"],\s*tsconfig:\s*['"]\.\.\/code-editor\/tsconfig\.json['"],?\s*\}/u,
+    );
 
     const entryPath = join(REPO_ROOT, 'packages', 'i18n', 'src', 'index.ts');
     const program = ts.createProgram([entryPath], {
@@ -124,8 +133,14 @@ describe('generated internationalization API navigation', () => {
     expect(reference).toMatch(/\/api\/i18n\//u);
     expect(config).toMatch(/\/guide\/i18n/u);
     expect(config).toMatch(/\/reference\/i18n/u);
-    for (const packageName of ['ui', 'forms', 'files', 'datagrid']) {
+    for (const packageName of ['ui', 'forms', 'files', 'datagrid', 'code-editor']) {
       expect(reference).toContain(`@jsvision/${packageName}/locales/`);
     }
+    expect(readRequired(ENTRY_POINT_REFERENCE_PATH)).toContain('/api/code-editor-locales/variables/codeEditorNl');
+    const codeEditorExample = readRequired(CODE_EDITOR_EXAMPLE_PATH);
+    expect(codeEditorExample).toContain('codeEditorNl');
+    expect(codeEditorExample).toMatch(/catalogs:\s*\[\s*codeEditorNl,\s*overrides\s*\]/u);
+    expect(readRequired(join(REPO_ROOT, 'packages', 'code-editor', 'README.md'))).toContain('CodeEditor');
+    expect(readRequired(join(REPO_ROOT, 'packages', 'docs-site', 'guide', 'code-editor.md'))).toContain('i18n');
   });
 });
