@@ -73,6 +73,20 @@ test('rejects unsupported locale, story, and viewport inputs before mounting a s
   ).rejects.toThrow(/viewport/i);
 });
 
+test('uses an explicit interactive viewport and preserves it across reconstruction', async () => {
+  const supervisor = createI18nDemoSupervisor({ locale: 'en', storyId: firstStoryId() });
+  const first = await supervisor.construct({ viewport: { width: 111, height: 37 } });
+  const firstRows = first.application.loop.renderRoot.buffer().rows();
+  expect(firstRows).toHaveLength(37);
+  expect(firstRows[0]).toHaveLength(111);
+
+  const transitioned = await supervisor.transition(first, { locale: 'nl', storyId: firstStoryId() });
+  const nextRows = transitioned.session.application.loop.renderRoot.buffer().rows();
+  expect(nextRows).toHaveLength(37);
+  expect(nextRows[0]).toHaveLength(111);
+  await transitioned.session.story.close();
+});
+
 test('validates application overrides through the catalog safety boundary', async () => {
   await expect(
     constructHeadlessI18nStory({

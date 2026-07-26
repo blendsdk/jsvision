@@ -3,6 +3,7 @@ import { createApplication, statusItem, statusLine } from '@jsvision/ui';
 import { createFrameworkI18n, isOfficialI18nLocale, OFFICIAL_I18N_LOCALES } from './catalogs.js';
 import { freshI18nStoryDefinitions, I18N_STORY_DEFINITIONS, storyDefinition } from './stories.js';
 import type {
+  ConstructI18nDemoSessionOptions,
   ConstructHeadlessI18nStoryOptions,
   HeadlessI18nStory,
   I18nDemoSelection,
@@ -77,6 +78,12 @@ function copyCallerData(value: Uint8Array | undefined): Uint8Array | undefined {
   return value?.slice();
 }
 
+/** Read the active event-loop viewport without reaching into private renderer state. */
+function sessionViewport(session: I18nDemoSession): I18nDemoViewport {
+  const rows = session.application.loop.renderRoot.buffer().rows();
+  return Object.freeze({ width: rows[0]?.length ?? 1, height: Math.max(1, rows.length) });
+}
+
 /** Construct one fresh session from validated serializable inputs. */
 async function constructSession(
   selection: I18nDemoSelection,
@@ -143,13 +150,18 @@ export function createI18nDemoSupervisor(selection: I18nDemoSelection): I18nDemo
   const validated = requestedSelection(selection);
   return Object.freeze({
     selection: validated,
-    construct: (options?: { readonly callerData?: Uint8Array }) =>
-      constructSession(validated, { width: 80, height: 24 }, options?.callerData),
+    construct: (options?: ConstructI18nDemoSessionOptions) =>
+      constructSession(
+        validated,
+        validatedViewport(options?.viewport ?? { width: 80, height: 24 }),
+        options?.callerData,
+      ),
     transition: async (previous: I18nDemoSession, requested: I18nDemoSelection) => {
       const next = createI18nDemoSupervisor(requested);
       const callerData = copyCallerData(previous.callerData);
+      const viewport = sessionViewport(previous);
       await previous.story.close();
-      const session = await next.construct({ callerData });
+      const session = await next.construct({ callerData, viewport });
       return Object.freeze({ supervisor: next, session });
     },
     toJSON: () => Object.freeze({ ...validated }),

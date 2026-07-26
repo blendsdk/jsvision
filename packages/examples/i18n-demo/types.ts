@@ -81,6 +81,17 @@ export interface I18nDemoSelection {
   readonly storyId: string;
 }
 
+/** Optional non-serializable inputs used to construct one fresh demo session. */
+export interface ConstructI18nDemoSessionOptions {
+  /** Opaque application-owned bytes copied into the new session. */
+  readonly callerData?: Uint8Array;
+  /**
+   * Initial terminal viewport. Interactive callers should pass the real TTY dimensions; tests may
+   * omit it to retain the deterministic 80×24 baseline.
+   */
+  readonly viewport?: I18nDemoViewport;
+}
+
 /** Story state and teardown owned by one freshly constructed application. */
 export interface I18nStoryLifecycle {
   readonly root: View;
@@ -119,7 +130,7 @@ export interface ConstructHeadlessI18nStoryOptions {
 /** Serializable supervisor that reconstructs framework state for every selection change. */
 export interface I18nDemoSupervisor {
   readonly selection: I18nDemoSelection;
-  construct(options?: { readonly callerData?: Uint8Array }): Promise<I18nDemoSession>;
+  construct(options?: ConstructI18nDemoSessionOptions): Promise<I18nDemoSession>;
   transition(
     previous: I18nDemoSession,
     requested: I18nDemoSelection,
