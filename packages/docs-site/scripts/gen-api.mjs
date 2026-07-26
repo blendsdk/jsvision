@@ -34,6 +34,11 @@ const auxiliaryPackages = [
     entry: '../datagrid/src/i18n/locales.ts',
     tsconfig: '../datagrid/tsconfig.json',
   },
+  {
+    name: 'code-editor-locales',
+    entry: '../code-editor/src/i18n/locales.ts',
+    tsconfig: '../code-editor/tsconfig.json',
+  },
 ];
 const generatedPackages = [...PACKAGES, ...auxiliaryPackages];
 

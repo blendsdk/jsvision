@@ -12,7 +12,16 @@
  * inert) so no concurrent close can pop the modal mid-await. The sync `valid()` is repurposed to an
  * optimistic `form.isValid()` app-quit veto.
  */
-import { Dialog, Button, Commands, cover, at, row, fixed } from '@jsvision/ui';
+import {
+  Dialog,
+  Button,
+  Commands,
+  cover,
+  at,
+  buttonGroup,
+  frameTitleMinimumWidth,
+  measureButtonGroup,
+} from '@jsvision/ui';
 import type { View, DispatchEvent, ModalDialogHost } from '@jsvision/ui';
 import type { z } from 'zod';
 import type { AsyncValidator, Form } from './types.js';
@@ -194,16 +203,33 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       asyncValidators: options.asyncValidators,
       asyncDebounceMs: options.asyncDebounceMs,
     });
-    const dlg = new FormDialog<S, I>(
-      { title: options.title, width: options.width, height: options.height },
-      form,
-      options.onSubmit,
-    );
     const ok = new Button(options.okText ?? formsAcceleratorLabel(host.i18n, 'forms.action.ok', '~O~K'), {
       command: Commands.ok,
       default: true,
       disabled: () => form.submitting(), // greyed + inert while a submit runs
     });
+    const cancel = new Button(formsAcceleratorLabel(host.i18n, 'forms.action.cancel', '~C~ancel'), {
+      command: Commands.cancel,
+    });
+    cancel.grabsFocus = false;
+    const actions = [ok, cancel];
+    const unwrapped = measureButtonGroup(actions, { minimumButtonWidth: BUTTON.width, gap: GAP });
+    const titleWidth = options.title === undefined ? 0 : frameTitleMinimumWidth(options.title);
+    const desiredWidth = Math.max(options.width, unwrapped.width + 4, titleWidth);
+    const width = Math.max(1, Math.min(desiredWidth, host.desktop.bounds.width));
+    const buttonColumns = unwrapped.width + 4 <= width ? actions.length : 1;
+    const actionOptions = {
+      minimumButtonWidth: BUTTON.width,
+      gap: GAP,
+      rowGap: 1,
+      maxColumns: buttonColumns,
+    };
+    const actionMetrics = measureButtonGroup(actions, actionOptions);
+    const height = Math.max(
+      1,
+      Math.min(options.height + Math.max(0, actionMetrics.height - BUTTON.height), host.desktop.bounds.height),
+    );
+    const dlg = new FormDialog<S, I>({ title: options.title, width, height }, form, options.onSubmit);
     let mounted = false;
     try {
       const body = options.body(form); // caller-built — may throw synchronously (e.g. form.field('typo'))
@@ -217,24 +243,18 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       // Cancel must not steal focus from the body on click: a click-to-focus would blur the field
       // being edited, and a blur-driven error reveal (bindField / an Input validator) would flash the
       // validation red for one frame before the dialog closes. Cancel stays Tab-reachable + Esc works.
-      const cancel = new Button(formsAcceleratorLabel(host.i18n, 'forms.action.cancel', '~C~ancel'), {
-        command: Commands.cancel,
-      });
-      cancel.grabsFocus = false;
-      const buttonWidth = Math.max(BUTTON.width, ok.measure().width, cancel.measure().width);
-      const pairWidth = buttonWidth + GAP + buttonWidth;
       // The pair rides a band on the row above the bottom frame. The band is sized to the pair rather
       // than to the dialog: a full-width band would sit over the body overlay and swallow clicks aimed
       // at whatever the caller placed on those rows. It is added after the body so it paints on top,
       // and both edges are floored so a very small dialog pushes the buttons inward instead of onto
       // the frame.
-      const band = row({ gap: GAP }, fixed(ok, buttonWidth), fixed(cancel, buttonWidth));
+      const band = buttonGroup(actions, actionOptions);
       dlg.add(
         at(band, {
-          x: Math.max(2, Math.trunc((options.width - pairWidth) / 2)),
-          y: Math.max(2, options.height - BUTTON.height - 1),
-          width: pairWidth,
-          height: BUTTON.height,
+          x: Math.max(2, Math.trunc((width - actionMetrics.width) / 2)),
+          y: Math.max(2, height - actionMetrics.height - 1),
+          width: actionMetrics.width,
+          height: actionMetrics.height,
         }),
       );
       host.desktop.addWindow(dlg);

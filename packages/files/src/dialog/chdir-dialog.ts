@@ -16,13 +16,17 @@ import {
   Label,
   Input,
   History,
+  buttonColumn,
+  measureButtonGroup,
   col,
   cover,
   fixed,
+  frameTitleMinimumWidth,
   grow,
   row,
   signal,
   spacer,
+  stringWidth,
   Commands,
 } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
@@ -34,6 +38,19 @@ import { DirList } from '../list/dir-list.js';
 
 /** The default recent-path history id — distinct from the file dialog so their lists don't mix. */
 const DIR_HISTORY_ID = 0x0f12;
+
+/** Resolve one Files label before dialog construction so geometry and controls share the same text. */
+function localizedLabel(i18n: I18n, key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+  const english = FILES_ENGLISH_CATALOG.messages[key];
+  if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+  return filesAcceleratorLabel(i18n, key, english);
+}
+
+/** Resolve the complete change-directory action set before choosing the dialog width. */
+function changeDirectoryActionLabels(i18n: I18n): string[] {
+  const keys = ['files.action.ok', 'files.action.chdir', 'files.action.revert', 'files.action.help'] as const;
+  return keys.map((key) => localizedLabel(i18n, key));
+}
 
 /** Construction options for {@link ChDirDialog}. */
 export interface ChDirDialogOptions {
@@ -99,19 +116,35 @@ export class ChDirDialog extends Dialog {
 
   constructor(opts: ChDirDialogOptions) {
     const i18n = opts.i18n ?? createEnglishFilesI18n();
+    const title =
+      opts.title ??
+      i18n.t('files.dialog.change-directory.title', {
+        defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.change-directory.title'],
+      });
+    const actionLabels = changeDirectoryActionLabels(i18n);
+    const actionMetrics = measureButtonGroup(
+      actionLabels.map((label) => new Button(label)),
+      { minimumButtonWidth: 10, maxColumns: 1, rowGap: 1 },
+    );
+    const fieldLabels = [
+      localizedLabel(i18n, 'files.field.directory-name'),
+      localizedLabel(i18n, 'files.field.directory-tree'),
+    ];
+    const width = Math.max(
+      48,
+      actionMetrics.buttonWidth + 38,
+      frameTitleMinimumWidth(title),
+      ...fieldLabels.map((label) => stringWidth(label) + 6),
+    );
     super({
-      title:
-        opts.title ??
-        i18n.t('files.dialog.change-directory.title', {
-          defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.change-directory.title'],
-        }),
-      width: 48,
+      title,
+      width,
       height: 18,
     });
     // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
     // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
-    this.minWidth = 48;
+    this.minWidth = width;
     this.minHeight = 18;
     this.i18n = i18n;
     this.fs = opts.fs ?? nodeFileSystem;
@@ -123,12 +156,12 @@ export class ChDirDialog extends Dialog {
 
     this.pathInput = new Input({ value: this.path });
     this.history = new History({ link: this.pathInput, historyId: opts.historyId ?? DIR_HISTORY_ID });
-    const nameLabel = new Label(this.label('files.field.directory-name'), this.pathInput);
+    const nameLabel = new Label(fieldLabels[0], this.pathInput);
 
     this.dirList = new DirList({ fs: this.fs, directory: this.directory, onChangeDir: (p) => this.directory.set(p) });
-    const treeLabel = new Label(this.label('files.field.directory-tree'), this.dirList.rows);
+    const treeLabel = new Label(fieldLabels[1], this.dirList.rows);
 
-    this.buildButtons();
+    this.buildButtons(actionLabels);
 
     // Every child below that cannot measure itself carries an explicit `fixed`/`grow` size. That is
     // not decoration: only `Text` and `Button` know their own intrinsic size, so any other widget
@@ -139,8 +172,8 @@ export class ChDirDialog extends Dialog {
     // the control it labels. That is a more forgiving target, and it paints identically as long as
     // the label and dialog backgrounds match — which every shipped theme keeps in step.
     const pathRow = row(grow(this.pathInput), fixed(this.history, 3));
-    const buttonCol = col({ gap: 1 }, ...this.buttons);
-    const buttonWidth = Math.max(10, ...this.buttons.map((button) => button.measure().width));
+    const buttonCol = buttonColumn(this.buttons, { minimumButtonWidth: actionMetrics.buttonWidth, gap: 1 });
+    const buttonWidth = actionMetrics.buttonWidth;
 
     // One padded column suffices here — unlike the file dialog, nothing spans the full frame width.
     this.add(
@@ -182,12 +215,12 @@ export class ChDirDialog extends Dialog {
     this.directory.set(this.startDir);
   }
 
-  private buildButtons(): void {
+  private buildButtons(labels: readonly string[]): void {
     const specs: Array<{ label: string; command?: string; default?: boolean; onClick?: () => void }> = [
-      { label: this.label('files.action.ok'), command: Commands.ok, default: true },
-      { label: this.label('files.action.chdir'), onClick: () => this.chdir() },
-      { label: this.label('files.action.revert'), onClick: () => this.revert() },
-      { label: this.label('files.action.help') },
+      { label: labels[0] ?? '', command: Commands.ok, default: true },
+      { label: labels[1] ?? '', onClick: () => this.chdir() },
+      { label: labels[2] ?? '', onClick: () => this.revert() },
+      { label: labels[3] ?? '' },
     ];
     specs.forEach((s) => {
       const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
@@ -199,13 +232,6 @@ export class ChDirDialog extends Dialog {
   /** Resolve one Files-owned message with its canonical English fallback. */
   private text(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
     return this.i18n.t(key, { defaultMessage: FILES_ENGLISH_CATALOG.messages[key] });
-  }
-
-  /** Resolve one Files-owned accelerator label with its canonical English fallback. */
-  private label(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
-    const english = FILES_ENGLISH_CATALOG.messages[key];
-    if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
-    return filesAcceleratorLabel(this.i18n, key, english);
   }
 
   /**

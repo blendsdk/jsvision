@@ -17,3 +17,22 @@ export function inspectInvisibleCharacters(text: string): readonly InvisibleChar
     return Object.freeze({ offset: match.index, codePoint, label: `warning ${codePoint}` });
   });
 }
+
+/**
+ * Formats an invisible-character warning without changing detected source text.
+ *
+ * @param warning - Existing detector warning.
+ * @param i18n - Optional locale service.
+ * @returns Localized warning text or the compatible safe label.
+ * @example
+ * ```ts
+ * const warning = inspectInvisibleCharacters('name\u202E')[0];
+ * const label = warning === undefined ? undefined : formatInvisibleCharacterWarning(warning);
+ * ```
+ */
+export function formatInvisibleCharacterWarning(warning: InvisibleCharacterWarning, i18n?: I18n): string {
+  return formatWarning(warning, i18n);
+}
+import type { I18n } from '@jsvision/i18n';
+
+import { formatInvisibleCharacterWarning as formatWarning } from '../i18n/presentation.js';

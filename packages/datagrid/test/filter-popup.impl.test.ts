@@ -142,7 +142,9 @@ test('a funnel click opens the popup anchored below the funnel; an outside click
   const popup = descendants(grid.popupOverlay).find((v): v is FilterPopup<Sale> => v instanceof FilterPopup);
   expect(popup).toBeDefined();
   expect(popup!.bounds.x).toBe(14); // anchored at the funnel column
-  expect(popup!.bounds.y).toBe(1); // one row below the header
+  // The desired popup is taller than this deliberately short grid, so the two-axis clamp uses the
+  // whole viewport and pins it to the top instead of allowing its bottom edge to overflow.
+  expect(popup!.bounds.y).toBe(0);
 
   // An outside mouse-down (x=2 is left of the popup at x≥14) hits the click-away catcher and closes it.
   loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 3, y: 4 });
