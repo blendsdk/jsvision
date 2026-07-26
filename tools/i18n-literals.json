@@ -205,7 +205,7 @@
       "key": "ui.switch.on"
     },
     {
-      "path": "packages/ui/src/date/calendar.ts",
+      "path": "packages/ui/src/date/calendar-localization.ts",
       "context": "default-message",
       "literal": "Today",
       "disposition": "localized",
