@@ -4,7 +4,7 @@
 
 Scroll bars, scrollers, list views, dialogs, dropdowns, tabs, and split panes.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## ComboBox
 
@@ -170,10 +170,11 @@ interface MessageBoxOptions {
 
 ## ModalDialogHost
 
-The minimal host a modal helper needs: an event loop to run the modal and a desktop to mount it into.
+The minimal host a modal helper needs: an event loop to run the modal, a desktop to mount it into, and the service that owns framework text.
 
 ```ts
 interface ModalDialogHost {
+  i18n: I18n;   // Translation service for package-owned dialog text.
   loop: Pick<EventLoop, 'execView'>;   // Runs a view modally, resolving to the command that closed it.
   desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // The desktop the modal mounts into (and whose extent bounds it).
 }
@@ -313,7 +314,7 @@ interface TabViewOptions {
 A Cancel button — emits `Commands.cancel` (the same command Esc and the frame close-box resolve to).
 
 ```ts
-cancelButton(): Button
+cancelButton(i18n?: I18n): Button
 ```
 
 ## clearHistory
@@ -385,7 +386,7 @@ messageBox(host: ModalDialogHost, o: MessageBoxOptions): Promise<'ok' | 'cancel'
 A No button — emits `Commands.no` when activated.
 
 ```ts
-noButton(): Button
+noButton(i18n?: I18n): Button
 ```
 
 ## okButton
@@ -393,7 +394,7 @@ noButton(): Button
 An OK button — the dialog default; emits `Commands.ok` when activated.
 
 ```ts
-okButton(): Button
+okButton(i18n?: I18n): Button
 ```
 
 ## okCancelButtons
@@ -401,7 +402,7 @@ okButton(): Button
 The OK + Cancel pair, in tab/z order (OK first).
 
 ```ts
-okCancelButtons(): [Button, Button]
+okCancelButtons(i18n?: I18n): [Button, Button]
 ```
 
 ## yesButton
@@ -409,7 +410,7 @@ okCancelButtons(): [Button, Button]
 A Yes button — the dialog default; emits `Commands.yes` when activated.
 
 ```ts
-yesButton(): Button
+yesButton(i18n?: I18n): Button
 ```
 
 ## yesNoButtons
@@ -417,5 +418,5 @@ yesButton(): Button
 The Yes + No pair, in tab/z order (Yes first).
 
 ```ts
-yesNoButtons(): [Button, Button]
+yesNoButtons(i18n?: I18n): [Button, Button]
 ```

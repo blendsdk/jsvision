@@ -23,7 +23,12 @@ export declare function detectDrift(roots?: DriftRoots): DriftFinding[];
 
 export declare function checkArchetypesValid(archetypesDir: string): string[];
 
-export declare function checkBarrelCoverage(classNames: string[], catalogText: string, denylist: string[]): string[];
+export declare function checkBarrelCoverage(
+  classNames: string[],
+  catalogText: string,
+  denylist: string[],
+  additionalClassNames?: string[],
+): string[];
 
 export declare function checkDrift(mdContent: string, regionText: string): string[];
 

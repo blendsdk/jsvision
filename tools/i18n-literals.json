@@ -1,0 +1,237 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "path": "packages/datagrid/src/value-list-popup.ts",
+      "context": "default-message",
+      "literal": "Apply",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "datagrid.filter.action.apply"
+    },
+    {
+      "path": "packages/datagrid/src/value-list-popup.ts",
+      "context": "default-message",
+      "literal": "Select All",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "datagrid.filter.action.select-all"
+    },
+    {
+      "path": "packages/files/src/dialog/error-dialog.ts",
+      "context": "default-message",
+      "literal": "~O~K",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "files.action.ok"
+    },
+    {
+      "path": "packages/forms/src/form-dialog.ts",
+      "context": "default-message",
+      "literal": "~C~ancel",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "forms.action.cancel"
+    },
+    {
+      "path": "packages/forms/src/form-dialog.ts",
+      "context": "default-message",
+      "literal": "~O~K",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "forms.action.ok"
+    },
+    {
+      "path": "packages/ui/src/controls/switch.ts",
+      "context": "default-message",
+      "literal": "Off",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.switch.off"
+    },
+    {
+      "path": "packages/ui/src/controls/switch.ts",
+      "context": "default-message",
+      "literal": "On",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.switch.on"
+    },
+    {
+      "path": "packages/ui/src/date/calendar.ts",
+      "context": "default-message",
+      "literal": "Today",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.calendar.today"
+    },
+    {
+      "path": "packages/ui/src/dialog/buttons.ts",
+      "context": "default-message",
+      "literal": "~C~ancel",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.action.cancel"
+    },
+    {
+      "path": "packages/ui/src/dialog/buttons.ts",
+      "context": "default-message",
+      "literal": "~N~o",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.action.no"
+    },
+    {
+      "path": "packages/ui/src/dialog/buttons.ts",
+      "context": "default-message",
+      "literal": "~O~K",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.action.ok"
+    },
+    {
+      "path": "packages/ui/src/dialog/buttons.ts",
+      "context": "default-message",
+      "literal": "~Y~es",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.action.yes"
+    },
+    {
+      "path": "packages/ui/src/dialog/message-box.ts",
+      "context": "default-message",
+      "literal": "Confirm",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.dialog.confirm.title"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "${name} has been modified. Save?",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.save-modified"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Error creating file ${name}.",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.create-error"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Error reading file ${name}.",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.read-error"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Error writing file ${name}.",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.write-error"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Find",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.find.title"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Not enough memory for this operation.",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.out-of-memory"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Replace",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.replace.title"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Replace this occurence?",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.replace-occurrence"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Save untitled file?",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.save-untitled"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Search string not found.",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.search-not-found"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "Case ~s~ensitive",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.case-sensitive"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "~N~ew text",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.replace.label"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "~P~rompt on replace",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.prompt-on-replace"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "~R~eplace all",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.replace-all"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "~T~ext to find",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.find.label"
+    },
+    {
+      "path": "packages/ui/src/editor/dialogs.ts",
+      "context": "default-message",
+      "literal": "~W~hole words only",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "ui.editor.whole-words"
+    }
+  ]
+}

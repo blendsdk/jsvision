@@ -11,9 +11,11 @@
  * `nl-NL` amount whose group separator is `.` parses back correctly. A non-parseable string is a
  * validation failure: `parse` returns the {@link PARSE_FAILED} sentinel, never a silent `NaN`.
  */
+import type { I18n } from '@jsvision/i18n';
 import type { CalendarDate } from '@jsvision/ui';
 import { toDate } from '@jsvision/ui';
 import type { LookupItem } from './cell-editor.js';
+import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 
 /**
  * The sentinel an inverse `parse` returns for a string it cannot convert — distinct from a valid value
@@ -156,10 +158,24 @@ export const fmt = {
     });
     return { format: (v) => df.format(v) };
   },
-  /** Boolean → label; default `{ true: 'Yes', false: 'No' }`. Display-only. */
-  boolean: (labels?: { true: string; false: string }): DisplayFormat<boolean> => {
-    const t = labels?.true ?? 'Yes';
-    const f = labels?.false ?? 'No';
+  /**
+   * Boolean → label; explicit labels win, otherwise labels come from the supplied service or English.
+   *
+   * @param labels Optional caller-owned labels.
+   * @param i18n Optional translation service for absent labels.
+   */
+  boolean: (labels?: { true: string; false: string }, i18n?: I18n): DisplayFormat<boolean> => {
+    const service = i18n ?? createEnglishDatagridI18n();
+    const t =
+      labels?.true ??
+      service.t('datagrid.boolean.yes', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.boolean.yes'],
+      });
+    const f =
+      labels?.false ??
+      service.t('datagrid.boolean.no', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.boolean.no'],
+      });
     return { format: (v) => (v ? t : f) };
   },
   /** value → label via a record map. An unknown key falls back to `String(value)`. Display-only. */

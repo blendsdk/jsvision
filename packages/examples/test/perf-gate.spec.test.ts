@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'vitest';
@@ -32,6 +33,18 @@ test('the serial performance command uses the cross-platform authoritative runne
     'utf8',
   );
   expect(codeEditorPolicy).toContain("perfBudgetMode(process.env) === 'assert'");
+});
+
+test('CI skips the serial wall-clock performance command before starting benchmark processes', () => {
+  const result = spawnSync(process.execPath, [resolve(monorepoRoot, 'scripts/check-performance.mjs')], {
+    encoding: 'utf8',
+    env: { ...process.env, CI: '1' },
+    timeout: 10_000,
+  });
+
+  expect(result.status).toBe(0);
+  expect(result.stderr).toBe('');
+  expect(result.stdout).toContain('perf:check skipped');
 });
 
 test('the acceptance gate runs the serial performance check after parallel verification', () => {

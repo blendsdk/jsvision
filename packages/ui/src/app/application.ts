@@ -8,6 +8,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
+import type { I18n } from '@jsvision/i18n';
 import type { Size2D } from '../layout/index.js';
 import { CLEARED_LAYOUT } from '../layout/index.js';
 import { Group } from '../view/index.js';
@@ -22,9 +23,15 @@ import type { StatusLine } from '../status/index.js';
 import type { ChromeHost, ChromeHostAware, FocusHostAware } from '../router/types.js';
 import { runApplication } from './run.js';
 import type { QuitState } from './run.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
 /** Options for {@link createApplication}. Everything is optional — an app starts with no arguments. */
 export interface ApplicationOptions {
+  /**
+   * Translation service shared by framework-owned UI. The exact supplied instance is exposed on
+   * the returned application. Omit it to create an isolated English service for this application.
+   */
+  readonly i18n?: I18n;
   /**
    * The app body: the single view that fills the middle of the shell (below the menu bar, above the
    * status line). Defaults to a {@link Desktop} window manager — the classic overlapping-windows
@@ -106,6 +113,8 @@ export interface ApplicationOptions {
 
 /** A ready-to-run terminal application. Populate `desktop`/`loop`, then call `run()`. */
 export interface Application {
+  /** Translation service used by framework-owned UI and modal helpers. */
+  readonly i18n: I18n;
   /**
    * The desktop window manager, or `undefined` when the app was created with a custom `content` body
    * (a router app manages its own body and registers no window commands). A no-`content` app always
@@ -340,8 +349,8 @@ export function syncOverlayVisible(overlay: Group): void {
  * The whole view tree is built and mounted in one pass; the menu bar and status line are wired to the
  * loop after it exists. Populate the returned `desktop` with windows and call `run()` to start.
  *
- * @param opts All optional: `content` (the body — a Desktop by default), `caps` (auto-detected),
- *   viewport/theme/logger/keymap/menu/status/runtime/streams.
+ * @param opts All optional: the shared translation service, `content` (the body — a Desktop by
+ *   default), `caps` (auto-detected), viewport/theme/logger/keymap/menu/status/runtime/streams.
  * @returns The assembled application. With no `content` it is a {@link DesktopApplication} (so
  *   `app.desktop` is a `Desktop`, no null check); with a `content` view it is a
  *   {@link RouterApplication} (`app.desktop` is `undefined`).
@@ -366,6 +375,7 @@ export function syncOverlayVisible(overlay: Group): void {
 export function createApplication<O extends ApplicationOptions = ApplicationOptions>(
   opts: O = {} as O,
 ): CreatedApplication<O> {
+  const i18n = opts.i18n ?? createEnglishUiI18n();
   const caps = resolveCaps(opts.caps); // a concrete profile from here down — 'auto' never leaks past this
   const viewport = resolveViewport(opts);
 
@@ -487,6 +497,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
 
   const app: Application = {
     desktop: isDesktop ? (body as Desktop) : undefined,
+    i18n,
     loop,
     onCommand: (command, handler) => loop.onCommand(command, handler),
     setTheme: (theme) => loop.setTheme(theme), // forwards to the loop seam so the swap repaints from any call site

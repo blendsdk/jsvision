@@ -4,7 +4,7 @@
 
 Leaf input widgets and the `Input` validators.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## Button
 
@@ -166,6 +166,7 @@ Construction options for a Switch.
 
 ```ts
 interface SwitchOptions {
+  i18n?: I18n;   // Explicit translation service for default state words.
   value: Signal<boolean>;   // Two-way bound on/off state: reading renders the knob; an external write repaints.
   label?: string;   // Optional caption drawn left of the track; `~X~` marks an `Alt`+hotkey.
   onLabel?: string;   // Text shown right of the track when on (default `'On'`); `''` hides it.

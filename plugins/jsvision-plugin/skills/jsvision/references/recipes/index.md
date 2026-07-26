@@ -11,5 +11,6 @@ Pick the closest archetype, copy its module, and adapt it.
 | File & text tools            | [file-text.md](file-text.md)           | `recipes/file-tools.ts`     |
 | Live / dashboard (+ browser) | [live-dashboard.md](live-dashboard.md) | `recipes/live-dashboard.ts` |
 | Runtime theme designer       | [theme-designer.md](theme-designer.md) | Adaptable pattern           |
+| Localized application        | [i18n-app.md](i18n-app.md)             | Adaptable pattern           |
 
 To author a custom widget instead, see [../widget-authoring.md](../widget-authoring.md).
