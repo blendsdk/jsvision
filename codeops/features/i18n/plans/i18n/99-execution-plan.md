@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 01:12
-> **Progress**: 56/66 tasks (85%)
+> **Last Updated**: 2026-07-26 02:03
+> **Progress**: 65/66 tasks (98%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -187,32 +187,34 @@ repository/plugin gates. See [08-phase-4-quality-review](08-phase-4-quality-revi
 
 ## Phase 5: Documentation, plugin, quality, and release
 
-> **Phase baseline tree**: _(recorded at execution)_
+> **Phase baseline tree**: 93861d173212caaee94cf80e5d5a02d797c58bf2
 
 ### Step 5.1: Specification tests
 
 **Reference**: [03-04](03-04-locales-docs-plugin.md) · AR-42–AR-44
 
-- [ ] 5.1.1 [spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49–ST-55 — `packages/i18n/test/reviews.spec.test.ts`, `packages/docs-site/test/i18n-docs.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
-- [ ] 5.1.2 Run Phase 5 spec suites and record expected missing docs/plugin/review failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 5.1.1 [spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49–ST-55 — `packages/i18n/test/reviews.spec.test.ts`, `packages/docs-site/test/i18n-docs.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` ✅ (completed: 2026-07-26 01:25)
+- [x] 5.1.2 Run Phase 5 spec suites and record expected missing docs/plugin/review failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` ✅ (completed: 2026-07-26 01:28)
+  - Red evidence: review evidence 5 failed; docs/API 3 failed; plugin/recipe 3 failed; performance integration 1 failed and the standalone measurement oracle passed.
 
 ### Step 5.2: Implementation
 
 **Reference**: [03-04](03-04-locales-docs-plugin.md) · AR-43, AR-44
 
-- [ ] 5.2.1 Implement normalized catalog digests and strict translation-review manifest verification — `scripts/check-i18n-reviews.mjs`, `tools/i18n-translation-reviews.json`, `package.json`
-- [ ] 5.2.2 Add the consumer i18n guide, Theme Designer recipe, and executable snippet fixtures — `packages/docs-site/guide/i18n.md`, `packages/docs-site/examples/i18n-theme-designer.ts`, `packages/docs-site/.vitepress/config.mts`
-- [ ] 5.2.3 Add i18n API generation/navigation and package migration/attribution documentation — `packages/docs-site/scripts/gen-api.mjs`, `packages/docs-site/reference/i18n.md`, `packages/i18n/README.md`
-- [ ] 5.2.4 Teach the canonical JSVision skill i18n decisions, API, and recipes — `tools/jsvision-skill/SKILL.md`, `tools/jsvision-skill/references/i18n.md`, `tools/jsvision-skill/references/recipes/i18n-app.md`
-- [ ] 5.2.5 Map SDK impact, add localized app recipe validation, and regenerate the distributed plugin — `tools/jsvision-plugin-impact.json`, `scripts/update-plugin.mjs`, `plugins/jsvision-plugin/skills/jsvision/`
-- [ ] 5.2.6 Add fixed cold/warm benchmarks and run Phase 5 non-review spec tests green — `packages/i18n/bench/i18n-bench.mjs`, `packages/i18n/test/performance.spec.test.ts`, `scripts/check-performance.mjs`
+- [x] 5.2.1 Implement normalized catalog digests and strict translation-review manifest verification — `scripts/check-i18n-reviews.mjs`, `tools/i18n-translation-reviews.json`, `package.json` ✅ (completed: 2026-07-26 01:36)
+- [x] 5.2.2 Add the consumer i18n guide, Theme Designer recipe, and executable snippet fixtures — `packages/docs-site/guide/i18n.md`, `packages/docs-site/examples/i18n-theme-designer.ts`, `packages/docs-site/.vitepress/config.ts` ✅ (completed: 2026-07-26 01:42)
+- [x] 5.2.3 Add i18n API generation/navigation and package migration/attribution documentation — `packages/docs-site/scripts/gen-api.mjs`, `packages/docs-site/reference/i18n.md`, `packages/i18n/README.md` ✅ (completed: 2026-07-26 01:48)
+- [x] 5.2.4 Teach the canonical JSVision skill i18n decisions, API, and recipes — `tools/jsvision-skill/SKILL.md`, `tools/jsvision-skill/references/i18n.md`, `tools/jsvision-skill/references/app-lifecycle.md`, `tools/jsvision-skill/references/recipes/index.md`, `tools/jsvision-skill/references/recipes/i18n-app.md` ✅ (completed: 2026-07-26 01:56)
+- [x] 5.2.5 Map SDK impact, add localized app recipe validation, and regenerate the distributed plugin — `tools/jsvision-plugin-impact.json`, `scripts/gen-plugin-api.mjs`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`, `plugins/jsvision-plugin/skills/jsvision/` ✅ (completed: 2026-07-26 02:02)
+- [x] 5.2.6 Add fixed cold/warm benchmarks and run Phase 5 non-review spec tests green — `packages/i18n/bench/i18n-bench.mjs`, `packages/i18n/test/performance.spec.test.ts`, `scripts/check-performance.mjs`, `package.json` ✅ (completed: 2026-07-26 02:03)
 
 ### Step 5.3: Hardening and release verification
 
 **Reference**: [03-04](03-04-locales-docs-plugin.md) · AR-42, AR-44
 
-- [ ] 5.3.1 Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 5.3.1 Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` ✅ (completed: 2026-07-26 02:03)
 - [ ] 5.3.2 Obtain proficient-speaker approvals for every non-English catalog digest and pass the review verifier — `tools/i18n-translation-reviews.json`
+  - External blocker: 36 package/locale catalogs still need digest-bound proficient approval; the verifier reports one `MISSING_REVIEW` issue for each.
 
 ## Dependencies
 
