@@ -84,6 +84,11 @@ test('reverse-z overlap resolves to the top-most sibling', () => {
   root.bounds = { x: 0, y: 0, width: 20, height: 10 };
   for (const v of [a, b, c]) v.bounds = { x: 0, y: 0, width: 5, height: 5 };
 
+  expect(loop.viewAt({ x: 1, y: 1 })).toBe(c);
+  expect(a.events).toEqual([]);
+  expect(b.events).toEqual([]);
+  expect(c.events).toEqual([]);
+
   loop.dispatch(mouseDown(2, 2));
   expect(c.events.length).toBe(1);
   expect(a.events.length).toBe(0);
@@ -105,6 +110,7 @@ test('a hidden subtree is skipped in the hit-test', () => {
   back.bounds = { x: 0, y: 0, width: 5, height: 5 };
   front.bounds = { x: 0, y: 0, width: 5, height: 5 };
 
+  expect(loop.viewAt({ x: 1, y: 1 })).toBe(back);
   loop.dispatch(mouseDown(2, 2));
   expect(front.events.length).toBe(0); // hidden, never tested
   expect(back.events.length).toBe(1); // the back view receives it

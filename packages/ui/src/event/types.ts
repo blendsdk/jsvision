@@ -142,10 +142,11 @@ export interface EventLoop {
   stop(): void;
   /**
    * Tear the loop down for a host that detaches a still-live app: stop the out-of-tick painter (as
-   * {@link EventLoop.stop}) **and** unmount the view tree, so every view's `onCleanup` runs and
-   * releases the timers and subscriptions it holds. Idempotent. `run()` does not need this — the
-   * process exits — but a long-lived host that mounts and unmounts many apps (the browser `mountApp`)
-   * calls it on teardown so nothing leaks between one app and the next.
+   * {@link EventLoop.stop}), unmount the view tree, clear focus and pointer capture, and release all
+   * application command handlers. Every view's `onCleanup` runs, so timers, subscriptions, and
+   * closures from the detached app cannot leak into a later one. Idempotent. `run()` does not need
+   * this — the process exits — but a long-lived host that mounts and unmounts many apps (the browser
+   * `mountApp`) calls it on teardown so nothing survives between apps.
    *
    * @example
    * import { createEventLoop } from '@jsvision/ui';
@@ -155,7 +156,7 @@ export interface EventLoop {
    * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
    *
    * // When a host detaches a still-live app (e.g. the browser mountApp teardown):
-   * loop.dispose(); // stop the painter + unmount the tree (fires every view's onCleanup)
+   * loop.dispose(); // detach the tree and release routed state plus application handlers
    */
   dispose(): void;
   /** Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick. */
@@ -201,6 +202,28 @@ export interface EventLoop {
   focusInto(view: View): void;
   /** The currently focused view, or `null` if nothing is focused. */
   getFocused(): View | null;
+  /**
+   * Return the topmost enabled, visible view at a zero-based terminal cell without dispatching an
+   * event. The query uses the same active modal scope, clipping, and z-order traversal as pointer
+   * routing, but has no focus, selection, callback, or paint side effects.
+   *
+   * @param point The zero-based terminal cell to inspect.
+   * @returns The frontmost view at the cell, or `null` outside the active routing scope.
+   * @example
+   * import { at, Button, createEventLoop, Group } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const saveButton = new Button('Save');
+   * const root = new Group();
+   * root.add(at(saveButton, 2, 1, 10, 2));
+   * const loop = createEventLoop({ width: 20, height: 6 }, { caps });
+   * loop.mount(root);
+   *
+   * const target = loop.viewAt({ x: 4, y: 2 });
+   * if (target === saveButton) console.log('Save is reachable at that cell');
+   */
+  viewAt(point: Point): View | null;
   /** Emit a command, routing it to any handler. Dropped silently if the command is disabled. */
   emitCommand(command: string, arg?: unknown): void;
   /** Enable or disable a command. While disabled, `emitCommand` for it is dropped. */
@@ -214,10 +237,11 @@ export interface EventLoop {
    */
   commandsVersion(): number;
   /**
-   * Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that
-   * resolves with the value passed to {@link endModal}. `await` it to run a dialog and read its result.
+   * Open `view` as a modal: input is captured to its subtree until it closes. The promise resolves
+   * with the value passed to {@link endModal}, or `undefined` if the event loop is permanently
+   * disposed while the modal is active. `await` it to run a dialog and read its result.
    */
-  execView<R>(view: View): Promise<R>;
+  execView<R>(view: View): Promise<R | undefined>;
   /** Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`. */
   endModal<R>(result: R): void;
   /**

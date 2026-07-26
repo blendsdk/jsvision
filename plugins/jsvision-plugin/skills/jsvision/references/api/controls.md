@@ -12,6 +12,20 @@ A focusable command button.
 
 ```ts
 new Button(text: string, opts: ButtonOptions = {})   // extends View
+// methods & signals:
+activation: ButtonActivation
+```
+
+## ButtonActivation
+
+Read-only activation metadata for a Button.
+
+```ts
+interface ButtonActivation {
+  label: string;   // Visible label after accelerator markers have been removed.
+  command: string | null;   // Configured command, or `null` when activation is callback-only.
+  hasCallback: boolean;   // Whether activation invokes an application callback in addition to any command.
+}
 ```
 
 ## ButtonColumnOptions

@@ -1,8 +1,8 @@
 # Translated layout and multilingual QA — ambiguity register
 
 > **CodeOps Artifact Schema**: 1
-> **Status**: ✅ GATE PASSED — all 20 items resolved
-> **Last Updated**: 2026-07-26 11:31 UTC
+> **Status**: ✅ GATE PASSED — all 21 items resolved
+> **Last Updated**: 2026-07-26 15:13 UTC
 > **Planning target**: `i18n/PLAN-LAYOUT-QA`
 > **Context artifacts**: GitHub issues #184 and #185, completed i18n and Code Editor plans,
 > current UI/Forms/Files/Datagrid/Code Editor/examples/docs/plugin source, and the existing
@@ -33,6 +33,7 @@
 | AR-18 | Compatibility | Whether public Datagrid helpers and fixed-layout consumers break | Remove existing helpers / additive delegation and escape hatch | Keep existing Datagrid APIs as delegates, preserve absolute placement as an explicit hard-bound escape hatch, and make framework migrations behavior-additive | ✅ Resolved |
 | AR-19 | Documentation & plugin | Which examples and generated guidance migrate | Every fixed demo / localized consumer guidance and mapped plugin references | Update localized docs examples and canonical recipes, review all plugin-impact reports, regenerate the distributed skill, and leave intentional non-localized fixture geometry alone | ✅ Resolved |
 | AR-20 | Exclusions | Adjacent i18n work that could expand this plan | Include RTL, mutable locale, and caller-data translation / retain issue exclusions | Exclude RTL (#30), mutable global locale, caller-owned data translation, and proficient-speaker attestations | ✅ Resolved |
+| AR-21 | Verification · runtime | How the harness proves actual Button activation and z-ordered hit geometry without firing destructive modal callbacks during inspection | Dispatch every activation and tolerate story mutation / expose read-only Button activation metadata plus side-effect-free EventLoop hit inspection | Add documented, read-only Button activation metadata and a side-effect-free EventLoop topmost-view query; derive action identity from actual Buttons, retain existing behavioral activation tests, and verify every claimed hit cell through the production hit-test traversal | ✅ Resolved |
 
 ## Resolution notes
 
@@ -169,6 +170,43 @@
   `yarn verify`. Preserve caller-owned content and leave RTL, mutable locale, and external human
   translation attestations outside this implementation.
 
+### AR-21 — Non-mutating activation and hit-test evidence
+
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Additive inspection API and test mechanics within the already approved
+  multilingual QA acceptance contract. The decision changes no user-visible action behavior,
+  compatibility policy, or product scope.
+- **Objective**: Make the headless oracle report actual Button configuration and production
+  z-order while leaving modal state untouched so every action can be inspected in one fresh story.
+- **Decision**: Expose an immutable Button activation descriptor containing its parsed visible
+  label, configured command, and whether a callback is bound. Add an EventLoop query which returns
+  the topmost enabled, visible view at a zero-based terminal cell using the same scope, clipping,
+  visibility, and z-order traversal as pointer dispatch. The harness derives action IDs and labels
+  from those descriptors, publishes command-or-callback evidence without placeholders, and checks
+  every cell in the claimed face against the production query. Existing Button behavioral tests
+  remain the executable proof that keyboard and pointer activation emit the described command and
+  invoke the described callback.
+- **Evidence**: Button commands and callbacks are protected implementation fields, so the harness
+  currently substitutes unrelated command names and calls handlers directly. Pointer dispatch
+  shares one internal topmost-view traversal, but repeated activation can close dialogs, launch
+  nested work, or mutate Files and Datagrid state before later actions are inspected.
+- **Rejected alternatives**: Dispatching every action in one mounted story is not deterministic
+  because the first callback may close or mutate the surface. Reimplementing z-order inside the
+  examples package would duplicate production hit-testing and could pass while actual routing is
+  broken. Returning mutable callback functions would unnecessarily expose invocation authority.
+- **Strongest counterargument**: Two small public inspection seams increase the SDK surface. Both
+  are read-only, behavior-additive, independently useful for headless UI testing, and avoid a
+  harness-only backdoor into protected fields.
+- **Confidence**: High — the required data already exists on Button and the production hit-test
+  traversal is already pure before delivery.
+- **Hardening**: The independent Phase 3 reviewer and auditor both rejected synthetic commands and
+  local one-point probes. This design directly addresses both findings while preventing the
+  callback mutation they also identified.
+- **Policy version**: 1.
+- **Root invocation ID**: `i18n-layout-qa-2026-07-26`.
+- **Reopen triggers**: The read-only metadata cannot describe a shipped action, the hit query
+  diverges from pointer routing, or public API review finds a compatibility break.
+
 ## Category scan
 
 | Required category | Resolution |
@@ -183,5 +221,5 @@
 | Error handling and edge cases | AR-6, AR-11, AR-12, AR-15, AR-17 |
 | Non-functional requirements | AR-4, AR-6, AR-15 |
 | Compatibility and migration | AR-7, AR-9, AR-18, AR-19 |
-| Verification and acceptance | AR-15, AR-16, AR-19 |
+| Verification and acceptance | AR-15, AR-16, AR-19, AR-21 |
 | Naming and terminology | AR-3 through AR-5, AR-13 |

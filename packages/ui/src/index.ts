@@ -150,6 +150,7 @@ export {
 export type {
   TextOptions,
   TextSeverity,
+  ButtonActivation,
   ButtonOptions,
   ButtonColumnOptions,
   ButtonGroupMetrics,

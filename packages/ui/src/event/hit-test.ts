@@ -87,6 +87,34 @@ function absoluteOrigin(view: View): Point {
   return { x, y };
 }
 
+/** Resolve one terminal cell against the active scope using production clipping and z-order. */
+function topMostAt(scopeRoot: View | null, point: Point): Hit | null {
+  if (scopeRoot === null) return null;
+  const origin = absoluteOrigin(scopeRoot);
+  const rootRect: Rect = {
+    x: origin.x,
+    y: origin.y,
+    width: scopeRoot.bounds.width,
+    height: scopeRoot.bounds.height,
+  };
+  return topMost(scopeRoot, origin.x, origin.y, rootRect, point.x, point.y);
+}
+
+/**
+ * Return the topmost enabled, visible view at a zero-based terminal cell without dispatching input.
+ *
+ * The query shares the exact scope, clipping, and z-order traversal used by pointer routing. It is
+ * side-effect free, so a headless inspector can validate a destructive control such as a dialog
+ * action without activating it.
+ *
+ * @param scopeRoot The active routing scope, or `null` when nothing is mounted.
+ * @param point The zero-based terminal cell to inspect.
+ * @returns The frontmost view at the cell, or `null` when the cell is outside the active scope.
+ */
+export function hitTestViewAt(scopeRoot: View | null, point: Point): View | null {
+  return topMostAt(scopeRoot, point)?.view ?? null;
+}
+
 /**
  * Climb from the hit view to the nearest focusable view and focus into it; if there is none, leave
  * focus as it was. Focusing *into* (not merely *onto*) matters when the nearest focusable is a
@@ -154,18 +182,7 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
   }
 
   const scopeRoot = ctx.scopeRoot;
-  if (scopeRoot === null) return;
-  // The scope root's bounds are relative to its parent, so hit-testing must start from its absolute
-  // origin — otherwise a scope root sitting below a menu bar shifts every click by that offset and
-  // mis-delivers clicks near its edges.
-  const origin = absoluteOrigin(scopeRoot);
-  const rootRect: Rect = {
-    x: origin.x,
-    y: origin.y,
-    width: scopeRoot.bounds.width,
-    height: scopeRoot.bounds.height,
-  };
-  const hit = topMost(scopeRoot, origin.x, origin.y, rootRect, x, y);
+  const hit = topMostAt(scopeRoot, { x, y });
   if (hit === null) return; // clicked empty space (or outside an open modal) — ignore
 
   // A mouse-down is handled in three steps: raise the owning window (so it comes to the front even if
