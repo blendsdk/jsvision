@@ -1,11 +1,15 @@
+import type { I18n } from '@jsvision/i18n';
 import { ScrollBar, Text, Window } from '@jsvision/ui';
 import { offsetToPosition } from '../document/positions.js';
 import type { CodeEditorController } from '../controller.js';
+import { createEnglishCodeEditorI18n } from '../i18n/catalog.js';
 import { CodeEditor } from './code-editor.js';
 
 /** Construction options for standard window composition around a code editor. */
 export interface CodeEditorWindowOptions {
   readonly controller: CodeEditorController;
+  /** Locale-bound service shared by the window chrome and its editor. Defaults to isolated English. */
+  readonly i18n?: I18n;
   readonly title?: string;
   /** Shows the editor's optional fixed line-number gutter. Defaults to `false`. */
   readonly lineNumbers?: boolean;
@@ -22,6 +26,8 @@ export interface CodeEditorWindowOptions {
  * ```
  */
 export class CodeEditorWindow extends Window {
+  /** Exact locale-bound service shared by this window and its editor. */
+  public readonly i18n: I18n;
   public readonly editor: CodeEditor;
   public readonly horizontalScrollBar: ScrollBar;
   public readonly verticalScrollBar: ScrollBar;
@@ -33,9 +39,12 @@ export class CodeEditorWindow extends Window {
   });
 
   public constructor(options: CodeEditorWindowOptions) {
-    super(options.title ?? 'Code Editor');
+    const i18n = options.i18n ?? createEnglishCodeEditorI18n();
+    super(options.title ?? i18n.t('code-editor.window.title', { defaultMessage: 'Code Editor' }));
+    this.i18n = i18n;
     this.editor = new CodeEditor({
       controller: options.controller,
+      i18n,
       ...(options.lineNumbers === undefined ? {} : { lineNumbers: options.lineNumbers }),
       ...(options.onDocumentChange === undefined ? {} : { onDocumentChange: options.onDocumentChange }),
     });
@@ -44,7 +53,9 @@ export class CodeEditorWindow extends Window {
     this.statusView = new Text(() => {
       void this.editor.interactionRevision;
       const status = this.status;
-      return `${status.language}  Ln ${status.line}, Col ${status.column}`;
+      const line = i18n.t('code-editor.status.line', { defaultMessage: 'Ln' });
+      const column = i18n.t('code-editor.status.column', { defaultMessage: 'Col' });
+      return `${status.language}  ${line} ${i18n.number(status.line)}, ${column} ${i18n.number(status.column)}`;
     });
     this.add(this.editor);
     this.add(this.horizontalScrollBar);

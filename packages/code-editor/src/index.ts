@@ -13,6 +13,8 @@ export type CodeEditorLanguageId = 'plain' | 'javascript' | 'typescript' | 'post
  */
 export const plainLanguageId: CodeEditorLanguageId = 'plain';
 
+export { CODE_EDITOR_ACCELERATOR_MANIFEST } from './i18n/catalog.js';
+
 export { HARD_CODE_EDITOR_LIMITS, classifyDocumentSize, resolveCodeEditorLimits } from './limits.js';
 export type {
   CodeEditorDocumentFeatureState,

@@ -1,9 +1,11 @@
 import type { CapabilityProfile } from '@jsvision/core';
+import type { I18n } from '@jsvision/i18n';
 import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController, CodeEditorControllerEvent } from '../controller.js';
 import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
+import { createEnglishCodeEditorI18n } from '../i18n/catalog.js';
 import type {
   CodeEditorTheme,
   CodeEditorThemeResolutionReport,
@@ -32,6 +34,8 @@ import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.j
 /** Construction options for a terminal-native code editor view. */
 export interface CodeEditorOptions {
   readonly controller: CodeEditorController;
+  /** Locale-bound service used for editor-owned presentation. Defaults to isolated English. */
+  readonly i18n?: I18n;
   readonly keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
   /** Exact existing commands that explicitly authorize canonical custom-binding collisions. */
   readonly keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;
@@ -60,6 +64,8 @@ export interface CodeEditorKeyRoute {
 export class CodeEditor extends Group {
   public override focusable = true;
   public readonly controller: CodeEditorController;
+  /** Exact locale-bound service used by this editor instance. */
+  public readonly i18n: I18n;
   /** Whether this editor projects the optional line-number gutter. */
   public readonly lineNumbers: boolean;
   public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: false });
@@ -100,6 +106,7 @@ export class CodeEditor extends Group {
   public constructor(options: CodeEditorOptions) {
     super();
     this.controller = options.controller;
+    this.i18n = options.i18n ?? createEnglishCodeEditorI18n();
     this.#lastSelectionHead = Number(this.controller.document.selection.head);
     this.lineNumbers = options.lineNumbers === true;
     this.assistanceView = new CodeEditorAssistanceView({
