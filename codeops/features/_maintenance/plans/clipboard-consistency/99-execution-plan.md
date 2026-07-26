@@ -4,8 +4,8 @@
 > **Feature-Set**: `_maintenance`
 > **Status**: Plan Created
 > **Created**: 2026-07-26
-> **Last Updated**: 2026-07-27 00:50
-> **Progress**: 2/6 tasks complete
+> **Last Updated**: 2026-07-27 00:54
+> **Progress**: 3/6 tasks complete
 > **Phase baseline tree**: a803e702a4ee5f0309b1a3cedbab29ca5c79827a
 > **CodeOps Artifact Schema**: 1
 
@@ -104,7 +104,7 @@ generation and integrity checks passed for the changed public application-shell 
 
 ### T-03.3 — Connect browser and native host adapters
 
-- [ ] T-03.3 Connect browser and native host adapters.
+- [x] T-03.3 Connect browser and native host adapters. ✅ (completed: 2026-07-27 00:54)
 
 - Wire browser mounts to the existing Clipboard API bridge rather than writing OSC 52 back
       into xterm.js.
@@ -125,6 +125,10 @@ yarn workspace @jsvision/web typecheck
 yarn workspace @jsvision/web test
 yarn workspace @jsvision/core test
 ```
+
+**Verification evidence**: web typecheck passed; web 12 test files and 46 tests passed; core 119
+test files and 768 tests passed. Plugin generation, integrity, formatting, and web documentation
+checks passed.
 
 ### T-03.4 — Align every editable control
 
