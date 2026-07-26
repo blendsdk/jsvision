@@ -5760,7 +5760,7 @@
     {
       "edges": [],
       "id": "AMB-LAYOUT-QA",
-      "revision": "sha256:35d700f88281d97d5116406ec8a06c26b3b6b76cef4d26695db8fd40d6d571fa",
+      "revision": "sha256:440fddd73a9adab0f74bd2923ce4789d28480d3de13b8c5f65205cbe1a947bdc",
       "risk": "high",
       "semanticSources": [
         {
@@ -5808,7 +5808,7 @@
         "summary:Phase 2 will migrate and certify every catalog-backed framework surface."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-2",
-      "revision": "sha256:f142d684c7833fc27875497240ad8c3b2fd36f94381f071c8dc2d7d1effbc63b",
+      "revision": "sha256:59031992d0bd7cf071ffc1f4a5f6c8bf651a795d39c05210ad6b1c1ad0e6c900",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5828,10 +5828,14 @@
     {
       "edges": [],
       "evidence": [
-        "summary:Phase 3 will implement the interactive and headless multilingual QA registry."
+        "lifecycle:Focused UI and multilingual specifications, complete UI and Examples package suites, interactive terminal smoke, plugin update/check, and the authoritative 248-second yarn verify pass.",
+        "quality:Independent reviewer and auditor report no unresolved critical or major findings; all rulings are recorded in the Phase 3 quality review.",
+        "summary:Phase 3 multilingual QA registry, reconstruction lifecycle, interactive shell, and implementation-edge coverage are implemented.",
+        "summary:Phase 3 will implement the interactive and headless multilingual QA registry.",
+        "verificationEvidence:The multilingual QA matrix passed 46 focused cases and all 376 Examples cases; UI passed all 1,932 cases; yarn verify and plugin integrity passed."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-3",
-      "revision": "sha256:22b8eb42b672d2871693defd928e15ea12bc21a91ba085e473deb8c768d0aef0",
+      "revision": "sha256:885693221ebb71166e4ffe0d555861e5faf8845dd993432bc21cffbd9db820a2",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5843,7 +5847,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement multilingual QA application",
       "type": "task",
       "validations": []

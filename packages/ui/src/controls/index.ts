@@ -12,7 +12,7 @@ export { Text } from './text.js';
 export type { TextOptions, TextSeverity } from './text.js';
 export { Label } from './label.js';
 export { Button } from './button.js';
-export type { ButtonOptions } from './button.js';
+export type { ButtonActivation, ButtonOptions } from './button.js';
 export { buttonColumn, buttonGroup, measureButtonGroup } from './button-group.js';
 export type { ButtonColumnOptions, ButtonGroupMetrics, ButtonGroupOptions } from './button-group.js';
 export { Input } from './input.js';

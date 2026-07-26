@@ -177,7 +177,7 @@ export function frameworkDialogGeometry(
 export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<string> {
   host.desktop.addWindow(dlg);
   try {
-    return await host.loop.execView<string>(dlg as unknown as View);
+    return (await host.loop.execView<string>(dlg as unknown as View)) ?? 'cancel';
   } finally {
     host.desktop.removeWindow(dlg);
   }

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 13:46 UTC
-> **Progress**: 14/27 tasks (52%)
+> **Last Updated**: 2026-07-26 15:34 UTC
+> **Progress**: 21/27 tasks (78%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -73,19 +73,19 @@ specification-first ordering and each phase receives independent reviewer and au
 
 ## Phase 3: Multilingual QA application and matrix
 
-> **Phase baseline tree**: Phase 2 verified commit plus unrelated `yarn.lock`
+> **Phase baseline tree**: `a316c917344167160365daed56d8bfa4316cd597`
 > **Expected modification set**: Examples registry/supervisor/stories/command and multilingual
 > specification/implementation tests
 
 **Reference**: 03-03 · AC-9 through AC-12 · AR-13 through AR-17
 
-- [ ] 3.1.1 `[spec-author]` Expand the existing multilingual layout oracle for five catalogs, all required story categories, 80×24, declared narrow boundaries, long overrides, Unicode, focus/hit bounds, and caller-data preservation
-- [ ] 3.1.2 `[spec-author]` Add fresh-reconstruction and registry/command specifications proving identity, disposal, state allowlisting, fallback validation, and Code Editor integration
-- [ ] 3.1.3 Run focused Phase 3 specifications and record expected red failures before harness changes
-- [ ] 3.2.1 Implement typed registry, five-catalog loader, headless story construction, and complete UI/Forms/Files/Datagrid/formatting/override/Unicode/Code Editor stories
-- [ ] 3.2.2 Implement the serializable supervisor transition and deterministic modal/application teardown with fresh `I18n`, Application, registry, and story state
-- [ ] 3.2.3 Add the interactive `demo:i18n` entry command and terminal-native locale/story selection shell
-- [ ] 3.3.1 Confirm Phase 3 specifications green, add invalid selection/repeated transition implementation edges, run examples/package checks and `yarn verify`, then complete reviewer/auditor quality loop
+- [x] 3.1.1 `[spec-author]` Expand the existing multilingual layout oracle for five catalogs, all required story categories, 80×24, declared narrow boundaries, long overrides, Unicode, focus/hit bounds, and caller-data preservation *(completed 2026-07-26 13:54 UTC: the existing package oracle composes all five catalogs, and the new registry-driven matrix covers ten locales, declared narrow/infeasible bounds, five action arrangements, long/malformed overrides, Unicode, focus/hit geometry, and caller-byte preservation)*
+- [x] 3.1.2 `[spec-author]` Add fresh-reconstruction and registry/command specifications proving identity, disposal, state allowlisting, fallback validation, and Code Editor integration *(completed 2026-07-26 13:54 UTC: immutable registry/lifecycle cases cover required metadata and surfaces, five-catalog identity, strict supervisor allowlisting, saved-ID fallback, fresh locale/story reconstruction, deterministic disposal, Code Editor coverage, and the interactive command)*
+- [x] 3.1.3 Run focused Phase 3 specifications and record expected red failures before harness changes *(verified 2026-07-26 13:56 UTC: 37 focused cases ran; 11 existing five-catalog dialog cases pass and 26 fail only because the planned harness module and `demo:i18n` command do not yet exist; examples typecheck and diff validation pass)*
+- [x] 3.2.1 Implement typed registry, five-catalog loader, headless story construction, and complete UI/Forms/Files/Datagrid/formatting/override/Unicode/Code Editor stories *(verified 2026-07-26 14:04 UTC: all 17 registry-driven layout cases pass across ten locales, narrow/infeasible bounds, overrides, Unicode, and action arrangements; examples typecheck passes)*
+- [x] 3.2.2 Implement the serializable supervisor transition and deterministic modal/application teardown with fresh `I18n`, Application, registry, and story state *(verified 2026-07-26 14:04 UTC: all eight registry/reconstruction cases pass for strict state allowlisting, saved-ID fallback, fresh five-catalog/application/story identity, repeated transition disposal, and caller-byte preservation)*
+- [x] 3.2.3 Add the interactive `demo:i18n` entry command and terminal-native locale/story selection shell *(verified 2026-07-26 14:05 UTC: `demo:i18n` is published with the established TS runner, the terminal status line exposes locale/story/quit commands, all 37 focused specifications and examples typecheck pass)*
+- [x] 3.3.1 Confirm Phase 3 specifications green, add invalid selection/repeated transition implementation edges, run examples/package checks and `yarn verify`, then complete reviewer/auditor quality loop *(verified 2026-07-26 15:34 UTC: 46 focused multilingual cases, all 376 Examples cases, all 1,932 UI cases, package typechecks/docs, interactive 80×24 shell, plugin update/check, and the 248-second authoritative `yarn verify` pass; final reviewer and auditor report no unresolved critical or major findings, with all rulings recorded in `09-phase-3-quality-review.md`)*
 
 **Deliverables**: Interactive multilingual kitchen sink and reusable headless registry/matrix.
 

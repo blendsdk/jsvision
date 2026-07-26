@@ -31,9 +31,16 @@ export interface ModalManager {
   /** The top modal's subtree root (where input is confined), or `null` when none is open. */
   topView(): View | null;
   /** Open `view` as a modal: save the current focus, push it, and focus into it. */
-  begin<R>(view: View, resolve: (result: R) => void): void;
+  begin<R>(view: View, resolve: (result: R | undefined) => void): void;
   /** Close the top modal: restore the saved focus and resolve its promise. A no-op when none is open. */
   end<R>(result: R): void;
+  /**
+   * Permanently release every modal frame during loop disposal.
+   *
+   * Pending modal promises resolve with `undefined` because their host has been detached and can no
+   * longer produce a user result. Focus is not restored into the tree being torn down.
+   */
+  dispose(): void;
 }
 
 /**
@@ -52,7 +59,7 @@ export function createModalManager(focus: ModalFocus): ModalManager {
     return top !== undefined ? top.view : null;
   };
 
-  const begin = <R>(view: View, resolve: (result: R) => void): void => {
+  const begin = <R>(view: View, resolve: (result: R | undefined) => void): void => {
     const savedFocus = focus.getFocused();
     // Each modal on the stack resolves with its own result type; erase the resolver to `unknown`
     // here and pass the caller's result back through it in `end`.
@@ -68,5 +75,9 @@ export function createModalManager(focus: ModalFocus): ModalManager {
     frame.resolve(result);
   };
 
-  return { isActive, topView, begin, end };
+  const dispose = (): void => {
+    for (const frame of stack.splice(0).reverse()) frame.resolve(undefined);
+  };
+
+  return { isActive, topView, begin, end, dispose };
 }
