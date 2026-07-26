@@ -22,6 +22,6 @@ When you already know which widget you want, open its category page and copy the
 - [@jsvision/i18n — catalogs, translation & formatting](./i18n.md) — Catalog authoring, plurals, loading, validation, diagnostics, and locale formatting. (37 exports)
 - [@jsvision/forms — form state & validation](./forms.md) — Typed form state, field bindings, validation, and form dialogs. (12 exports)
 - [@jsvision/datagrid — editable enterprise grids](./datagrid.md) — Typed columns, editing, sorting, filtering, selection, variants, and windowing. (115 exports)
-- [@jsvision/code-editor — terminal-native source editing](./code-editor.md) — The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability. (141 exports)
+- [@jsvision/code-editor — terminal-native source editing](./code-editor.md) — The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability. (147 exports)
 - [@jsvision/web — browser runtime](./web.md) — Mount an app in an xterm.js terminal; the in-memory browser file system. (17 exports)
 - [@jsvision/files — file dialogs & editor](./files.md) — File/dir dialogs, the file-system seam, and the openers. (35 exports)

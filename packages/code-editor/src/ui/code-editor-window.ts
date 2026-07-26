@@ -3,6 +3,7 @@ import { ScrollBar, Text, Window } from '@jsvision/ui';
 import { offsetToPosition } from '../document/positions.js';
 import type { CodeEditorController } from '../controller.js';
 import { createEnglishCodeEditorI18n } from '../i18n/catalog.js';
+import { formatCodeEditorStatus } from '../i18n/presentation.js';
 import { CodeEditor } from './code-editor.js';
 
 /** Construction options for standard window composition around a code editor. */
@@ -53,9 +54,8 @@ export class CodeEditorWindow extends Window {
     this.statusView = new Text(() => {
       void this.editor.interactionRevision;
       const status = this.status;
-      const line = i18n.t('code-editor.status.line', { defaultMessage: 'Ln' });
-      const column = i18n.t('code-editor.status.column', { defaultMessage: 'Col' });
-      return `${status.language}  ${line} ${i18n.number(status.line)}, ${column} ${i18n.number(status.column)}`;
+      const width = Math.max(0, (this.layout.rect?.width ?? 2_002) - 2);
+      return formatCodeEditorStatus(status, i18n, width);
     });
     this.add(this.editor);
     this.add(this.horizontalScrollBar);

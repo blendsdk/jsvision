@@ -6,6 +6,7 @@ import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
 import { createEnglishCodeEditorI18n } from '../i18n/catalog.js';
+import { formatCodeEditorDiagnosticOverlay } from '../i18n/presentation.js';
 import type {
   CodeEditorTheme,
   CodeEditorThemeResolutionReport,
@@ -28,6 +29,7 @@ import { registerCodeEditorKeyBindings } from './keybindings.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
 import { codeEditorVisibleRows } from './folding.js';
 import { CodeEditorSearchSession, type CodeEditorSearchState } from './search-session.js';
+import { projectCodeEditorSearchPresentation } from './search-presentation.js';
 import { CodeEditorThemeState } from './theme-state.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
@@ -128,6 +130,8 @@ export class CodeEditor extends Group {
       finishSelectionChange: () => this.#finishSelectionChange(false, true),
       changed: () => {
         this.#touchInteraction();
+        const rect = this.layout.rect;
+        if (rect !== undefined) this.resizeViewport(rect.width, rect.height);
         this.invalidate();
       },
     });
@@ -271,8 +275,12 @@ export class CodeEditor extends Group {
     ) {
       throw new RangeError('Invalid editor viewport dimension.');
     }
+    const documentHeight = Math.max(
+      0,
+      height - projectCodeEditorSearchPresentation(this.#search.state, this.i18n, width).rowCount,
+    );
     const gutterWidth = codeEditorGutterWidth(width, this.controller.document.snapshot.lineCount, this.lineNumbers);
-    if (this.#viewport.resize(width, height, gutterWidth)) this.#touchInteraction();
+    if (this.#viewport.resize(width, documentHeight, gutterWidth)) this.#touchInteraction();
   }
 
   /** Opens a validated completion list without changing the document selection. */
@@ -415,6 +423,7 @@ export class CodeEditor extends Group {
     this.#lastFrame = projectCodeEditor({
       controller: this.controller,
       ...options,
+      height: this.#viewport.metrics.height,
       theme: this.#themeState.theme,
       themeName: this.#themeState.fingerprint,
       scrollX: this.scroll.x(),
@@ -502,6 +511,14 @@ export class CodeEditor extends Group {
           );
       }
     }
+    const search = projectCodeEditorSearchPresentation(this.#search.state, this.i18n, context.size.width);
+    const searchStyle = context.color('statusBar');
+    for (let index = 0; index < search.rows.length; index += 1) {
+      const y = context.size.height - search.rowCount + index;
+      if (y < 0 || y >= context.size.height) continue;
+      context.fillRect(0, y, context.size.width, 1, ' ', searchStyle);
+      context.text(0, y, search.rows[index] ?? '', searchStyle);
+    }
   }
 
   /** Exposes the projected caret to the terminal event loop. */
@@ -551,6 +568,18 @@ export class CodeEditor extends Group {
   }
 
   #routeMouseEvent(event: DispatchEvent): void {
+    const layoutHeight = this.layout.rect?.height ?? this.#viewport.metrics.height;
+    if (
+      this.#search.state.open &&
+      event.event.type === 'mouse' &&
+      event.event.kind === 'down' &&
+      event.local !== undefined &&
+      event.local.y >= this.#viewport.metrics.height &&
+      event.local.y < layoutHeight
+    ) {
+      event.handled = true;
+      return;
+    }
     if (
       event.event.type === 'mouse' &&
       event.event.kind === 'down' &&
@@ -636,7 +665,11 @@ export class CodeEditor extends Group {
     }
     if (this.#assistanceSource !== overlay.items) {
       this.#assistanceSource = overlay.items;
-      this.assistanceView.show(overlay.items);
+      this.assistanceView.show(
+        overlay.diagnostic === undefined
+          ? overlay.items
+          : formatCodeEditorDiagnosticOverlay(overlay, this.i18n, this.controller.limits.popupWidth),
+      );
     }
     this.assistanceView.selected = overlay.selected;
     this.#positionAssistance();

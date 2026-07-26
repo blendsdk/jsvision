@@ -57,19 +57,19 @@ and additive compatibility.
 
 ## Phase 2: Structured presentation and search chrome
 
-> **Phase baseline tree**: _(recorded by exec-plan before the first task)_
+> **Phase baseline tree**: `5cfe67a50` plus the pre-existing `yarn.lock` modification
 > **Expected modification set**: Code Editor presentation, overlay, degradation, invisible-warning,
 > assistance/search/status modules, and focused specification/implementation tests
 
 **Reference**: 03-02 · ST-9 through ST-19 · AR-2, AR-3, AR-5, AR-7, AR-8, AR-11
 
-- [ ] 2.1.1 `[spec-author]` Write immutable wrapper, external-content, search, display-cell, hostile-input, and reconstruction specifications for ST-9 through ST-19 — `packages/code-editor/src/ui/i18n-presentation.spec.test.ts`
-- [ ] 2.1.2 Run the focused Phase 2 specifications and record expected red failures before production changes
-- [ ] 2.2.1 Add additive structured diagnostic metadata and pure diagnostic/degradation/invisible-warning projectors while retaining legacy English fields — `packages/code-editor/src/presentation.ts`, `packages/code-editor/src/controller-overlay.ts`, `packages/code-editor/src/i18n/presentation.ts`
-- [ ] 2.2.2 Route localized diagnostic rows and cell-aware assistance sizing/clipping through the final view seam — `packages/code-editor/src/ui/code-editor.ts`, `packages/code-editor/src/ui/assistance.ts`
-- [ ] 2.2.3 Implement bounded localized one-/two-row search presentation and reserve its viewport rows without changing search state or commands — `packages/code-editor/src/ui/search-presentation.ts`, `packages/code-editor/src/ui/code-editor.ts`
-- [ ] 2.2.4 Localize and cell-clip status/degradation/invisible accessible presentation, export host projectors, and verify clean locale reconstruction/disposal — `packages/code-editor/src/ui/code-editor-window.ts`, `packages/code-editor/src/degradation.ts`, `packages/code-editor/src/languages/invisibles.ts`, `packages/code-editor/src/index.ts`
-- [ ] 2.3.1 Confirm Phase 2 specifications green, add boundary/priority/invalid-input implementation coverage, run regression suites and `yarn verify` — `packages/code-editor/src/ui/i18n-presentation.impl.test.ts`
+- [x] 2.1.1 `[spec-author]` Write immutable wrapper, external-content, search, display-cell, hostile-input, and reconstruction specifications for ST-9 through ST-19 — `packages/code-editor/src/ui/i18n-presentation.spec.test.ts` *(completed 2026-07-26 10:20 UTC)*
+- [x] 2.1.2 Run the focused Phase 2 specifications and record expected red failures before production changes *(verified red 2026-07-26 10:20 UTC: suite failed because the planned presentation module did not exist)*
+- [x] 2.2.1 Add additive structured diagnostic metadata and pure diagnostic/degradation/invisible-warning projectors while retaining legacy English fields — `packages/code-editor/src/presentation.ts`, `packages/code-editor/src/controller-overlay.ts`, `packages/code-editor/src/i18n/presentation.ts` *(completed 2026-07-26 10:29 UTC)*
+- [x] 2.2.2 Route localized diagnostic rows and cell-aware assistance sizing/clipping through the final view seam — `packages/code-editor/src/ui/code-editor.ts`, `packages/code-editor/src/ui/assistance.ts` *(completed 2026-07-26 10:29 UTC)*
+- [x] 2.2.3 Implement bounded localized one-/two-row search presentation and reserve its viewport rows without changing search state or commands — `packages/code-editor/src/ui/search-presentation.ts`, `packages/code-editor/src/ui/code-editor.ts` *(completed 2026-07-26 10:29 UTC)*
+- [x] 2.2.4 Localize and cell-clip status/degradation/invisible accessible presentation, export host projectors, and verify clean locale reconstruction/disposal — `packages/code-editor/src/ui/code-editor-window.ts`, `packages/code-editor/src/degradation.ts`, `packages/code-editor/src/languages/invisibles.ts`, `packages/code-editor/src/index.ts` *(completed 2026-07-26 10:29 UTC)*
+- [x] 2.3.1 Confirm Phase 2 specifications green, add boundary/priority/invalid-input implementation coverage, run regression suites and `yarn verify` — `packages/code-editor/src/ui/i18n-presentation.impl.test.ts` *(verified 2026-07-26 10:47 UTC after independent review corrections; focused Phase 2 suites 15/15 green; Code Editor 364/364 green; `yarn verify` passed 38/38 Turbo tasks, all performance gates, and plugin integrity)*
 
 **Deliverables**:
 

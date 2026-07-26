@@ -1,4 +1,6 @@
-import { View, type DrawContext, type Point } from '@jsvision/ui';
+import { stringWidth, View, type DrawContext, type Point } from '@jsvision/ui';
+
+import { clipCodeEditorDisplayText } from '../i18n/presentation.js';
 
 export type { CodeEditorCompletionItem } from '../presentation.js';
 
@@ -15,7 +17,7 @@ export class CodeEditorAssistanceView extends View {
   public selected = 0;
 
   readonly #maxItems: number;
-  readonly #maxLabelCharacters: number;
+  readonly #maxLabelCells: number;
   readonly #maxVisibleRows: number;
   #contentWidth = 20;
   #contentHeight = 3;
@@ -25,7 +27,7 @@ export class CodeEditorAssistanceView extends View {
   ) {
     super();
     this.#maxItems = bounded(options.maxItems, 12, 512);
-    this.#maxLabelCharacters = bounded(options.maxWidth, 32, 240);
+    this.#maxLabelCells = bounded(options.maxWidth, 32, 240);
     this.#maxVisibleRows = bounded(options.maxHeight, 8, 100);
     this.state.visible = false;
     this.setLayout({
@@ -36,12 +38,14 @@ export class CodeEditorAssistanceView extends View {
 
   /** Replaces popup rows with validated inert labels. */
   public show(items: readonly string[]): void {
-    this.items = Object.freeze(items.slice(0, this.#maxItems).map((item) => item.slice(0, this.#maxLabelCharacters)));
+    this.items = Object.freeze(
+      items.slice(0, this.#maxItems).map((item) => clipCodeEditorDisplayText(item, this.#maxLabelCells)),
+    );
     this.selected = 0;
     this.state.visible = this.items.length > 0;
     if (this.items.length > 0) {
-      const longestLabel = this.items.reduce((longest, item) => Math.max(longest, item.length), 0);
-      this.#contentWidth = Math.max(3, Math.min(this.#maxLabelCharacters + 2, Math.max(18, longestLabel) + 2));
+      const longestLabel = this.items.reduce((longest, item) => Math.max(longest, stringWidth(item)), 0);
+      this.#contentWidth = Math.max(3, Math.min(this.#maxLabelCells + 2, Math.max(18, longestLabel) + 2));
       this.#contentHeight = Math.max(3, Math.min(this.#maxVisibleRows + 2, this.items.length + 2));
       this.#setRect({ x: 0, y: 1, width: this.#contentWidth, height: this.#contentHeight });
     }
