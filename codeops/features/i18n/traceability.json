@@ -5805,7 +5805,10 @@
     {
       "edges": [],
       "evidence": [
-        "summary:Phase 2 will migrate and certify every catalog-backed framework surface."
+        "quality:Independent Phase 2 review findings and resolutions are recorded in the Phase 2 quality review.",
+        "summary:Phase 2 translated framework surfaces were implemented and committed before Phase 3.",
+        "summary:Phase 2 will migrate and certify every catalog-backed framework surface.",
+        "verificationEvidence:UI, Forms, Files, and Datagrid package suites, plugin integrity, and the authoritative Phase 2 yarn verify passed."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-2",
       "revision": "sha256:59031992d0bd7cf071ffc1f4a5f6c8bf651a795d39c05210ad6b1c1ad0e6c900",
@@ -5820,7 +5823,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Migrate translated framework surfaces",
       "type": "task",
       "validations": []
@@ -5855,10 +5858,14 @@
     {
       "edges": [],
       "evidence": [
-        "summary:Phase 4 will update docs and plugin surfaces and close the repository release gates."
+        "lifecycle:Focused documentation and canonical skill specifications, complete Docs-site and Examples package suites, locale generation/check, API/plugin regeneration, and the authoritative final yarn verify passed.",
+        "quality:Independent reviewer and API-surface auditor findings were fixed; the single re-review reports no unresolved critical or major findings.",
+        "summary:Phase 4 consumer documentation, canonical skill guidance, generated plugin output, responsive worked examples, and release evidence are implemented.",
+        "summary:Phase 4 will update docs and plugin surfaces and close the repository release gates.",
+        "verificationEvidence:Focused guidance passed 12 cases; Docs-site passed 102 cases; Examples passed 376 cases; 50 locale entry points and plugin integrity passed; final yarn verify passed in 101.78 seconds."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-4",
-      "revision": "sha256:2118fc11d4471f9e21cb818ab65fd5ed01ebec563bf60c54de382c7f88895a38",
+      "revision": "sha256:a405080b7df40e475c93080e26b5ad6eba6854527f6e84b703ea1d3e6674cac4",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5870,7 +5877,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Document and release translated layout support",
       "type": "task",
       "validations": []
@@ -5929,6 +5936,41 @@
           "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
           "upstream": "i18n/CRIT-LAYOUT-QA",
           "validatedAt": "2026-07-26T11:40:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:e8c15a59c4e51ca540392f5c284e9fc5fe449d4353bbaf2fc0714ebeea2b4c8a",
+          "upstream": "i18n/CRIT-LAYOUT-QA",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:7c0081da9648122efc4f4407cf447d4ff0916894072c1dbf3666da1434731b63",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-1",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:59031992d0bd7cf071ffc1f4a5f6c8bf651a795d39c05210ad6b1c1ad0e6c900",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-2",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:885693221ebb71166e4ffe0d555861e5faf8845dd993432bc21cffbd9db820a2",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-3",
+          "validatedAt": "2026-07-26T15:35:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:a405080b7df40e475c93080e26b5ad6eba6854527f6e84b703ea1d3e6674cac4",
+          "upstream": "i18n/TASK-LAYOUT-QA-PHASE-4",
+          "validatedAt": "2026-07-26T16:11:00Z"
         }
       ]
     }

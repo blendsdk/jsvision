@@ -80,8 +80,46 @@ A disabled button ignores every one of these — it is fully inert and never tak
 
 ## Sizing & layout
 
-Like every view, a `Button` has **no intrinsic size** — placed with no bounds it collapses to `0×0`
-and paints nothing. Give it space one of two ways:
+`Button.measure()` reports the natural translated caption width in terminal display cells, including
+face padding and shadow but excluding the `~accelerator~` markup itself. That means wide glyphs and
+combining characters are measured by what they occupy on screen, not by JavaScript string length.
+An absolute rectangle is still a hard bound: if the terminal cannot provide the measured size, the
+caption clips rather than escaping its parent.
+
+For a single button, use its measured size or place it in a sizing layout parent. For an action set,
+measure the complete set first. `measureButtonGroup()` makes every sibling as wide as the widest
+button (subject to `minimumButtonWidth`), while `buttonGroup()` composes those same Buttons in
+row-major order. `maxColumns` wraps equal-width buttons across multiple rows; `buttonColumn()` is
+the vertical one-column shorthand.
+
+```ts
+import { Button, Dialog, at, buttonGroup, measureButtonGroup } from '@jsvision/ui';
+
+const actions = [
+  new Button('~S~peichern', { command: 'save', default: true }),
+  new Button('~A~bbrechen', { command: 'cancel' }),
+  new Button('Als ~E~ntwurf speichern', { command: 'save-draft' }),
+];
+const options = { minimumButtonWidth: 10, gap: 2, maxColumns: 2 } as const;
+const metrics = measureButtonGroup(actions, options);
+const actionGroup = buttonGroup(actions, options);
+const dialog = new Dialog({
+  title: 'Aktionen',
+  // Dialog padding consumes one cell on every edge, outside the content-area metrics.
+  width: metrics.width + 2,
+  height: metrics.height + 2,
+});
+dialog.add(at(actionGroup, 0, 0, metrics.width, metrics.height));
+```
+
+The Buttons passed to a composer must be unattached: one live `Button` can have only a single parent.
+Create a fresh action set when rebuilding a dialog instead of reusing already-mounted controls.
+Treat `metrics.width` and `metrics.height` as preferred **content-area** minima: add the parent
+Dialog's border/padding when negotiating its outer dimensions, expand the container when possible,
+wrap with `maxColumns` when width is constrained, and accept clipping only at the terminal's
+absolute hard bound.
+
+You can also give a button space directly:
 
 - an **absolute rect** (the usual choice inside a dialog):
   `button.setLayout({ position: 'absolute', rect: { x, y, width, height } })`;
@@ -91,8 +129,7 @@ Two hard limits to budget for:
 
 - The face needs at least **2×2 cells** — below that, `draw()` bails and nothing shows.
 - The **drop shadow** occupies the rightmost column and the bottom row, so a one-line button is
-  **2 rows** tall (one content row plus one shadow row). A comfortable default is `height: 2` and a
-  width a couple of cells wider than the label.
+  **2 rows** tall (one content row plus one shadow row).
 
 ## Best practices
 
