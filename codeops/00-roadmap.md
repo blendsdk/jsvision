@@ -20,6 +20,7 @@
 
 | Feature | Roadmap | Completed | Last Updated |
 |---------|---------|-----------|--------------|
+| code-editor | [→](_archive/code-editor/00-roadmap.md) | Legacy draft archived before implementation; 0/4 RDs completed | 2026-07-23 |
 | jsvision-ui | [→](_archive/jsvision-ui/00-roadmap.md) | 22/22 RDs | 2026-07-08 |
 | theme-designer | [→](_archive/theme-designer/00-roadmap.md) | 1/1 RDs | 2026-07-09 |
 | jsvision-ui-enhancements | [→](_archive/jsvision-ui-enhancements/00-roadmap.md) | 1/1 RDs | 2026-07-09 |
