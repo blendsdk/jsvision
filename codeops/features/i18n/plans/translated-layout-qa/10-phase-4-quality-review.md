@@ -58,3 +58,15 @@ major issue.
 | Documentation/plugin | `yarn docs:api`, `yarn plugin:update`, and `yarn plugin:check` passed |
 | External proficient review | Truthfully unmet for 45 package/locale pairs; no attestation fabricated |
 | Full gate | `yarn verify` passed after the review fixes in 101.78 seconds |
+
+## Post-review visual correction
+
+A manual run in a terminal larger than 80×24 exposed that the interactive command still passed the
+headless baseline viewport into `createApplication`. The first frame therefore occupied only an
+80×24 region even when the real TTY was larger.
+
+The interactive entry point now reads the current TTY columns and rows for every reconstruction.
+The supervisor accepts a validated viewport, preserves the active viewport across its transition
+API, and retains 80×24 only as the deterministic headless fallback. An implementation test proves a
+111×37 session and its reconstructed successor both remain 111×37. A real 120×35 PTY smoke filled
+the complete shell and exited normally through Alt+Q.
