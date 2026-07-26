@@ -13,7 +13,14 @@
 
 // The public surface is assembled here as each subsystem lands (browser host, caps builder, mountApp,
 // virtual FileSystem, key-chord reclaim, clipboard bridge).
-export { createBrowserHost, type BrowserHost, type BrowserHostOptions, type CaretCell } from './host.js';
+export {
+  createBrowserHost,
+  type BrowserHost,
+  type BrowserHostOptions,
+  type BrowserKeyEvent,
+  type CaretCell,
+  type TerminalLike,
+} from './host.js';
 export { buildBrowserCaps, type BrowserCapsOptions } from './caps.js';
 export { mountApp, type MountAppOptions, type MountedApp } from './mount.js';
 export { createBrowserFileSystem, type BrowserFileSystemOptions, type FileTree } from './virtual-fs.js';

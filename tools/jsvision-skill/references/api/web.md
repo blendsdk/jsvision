@@ -53,6 +53,22 @@ interface BrowserHostOptions {
 }
 ```
 
+## BrowserKeyEvent
+
+The browser-key fields needed to recognize a host clipboard gesture without importing DOM types.
+
+```ts
+interface BrowserKeyEvent {
+  type: string;   // Browser event phase, normally `keydown` or `keyup`.
+  key: string;   // Layout-resolved key value, such as `C`.
+  code: string;   // Physical key code, such as `KeyC`.
+  ctrlKey: boolean;   // Whether Control is held.
+  shiftKey: boolean;   // Whether Shift is held.
+  altKey: boolean;   // Whether Alt/Option is held.
+  metaKey: boolean;   // Whether Command/Meta is held.
+}
+```
+
 ## CaretCell
 
 A 0-based absolute caret cell, matching the event loop's `onCaret` payload.
@@ -105,6 +121,7 @@ interface MountAppOptions {
   caps: CapabilityProfile;   // The capability profile (build one with `buildBrowserCaps`).
   term?: TerminalLike;   // A ready terminal to drive. A test passes an `@xterm/headless` `Terminal`; a browser app passes an opened `@xterm/xterm` one. Provide this **or** createTerminal.
   createTerminal?: () => TerminalLike;   // A factory used when `term` is omitted, e.g. `() => { const t = new Terminal({…}); t.open(el); return t; }`. Keeps the `@xterm/xterm` value-import in the caller's bundle.
+  clipboard?: ClipboardBridge;   // Browser clipboard bridge used for outbound copy/cut. Defaults to `navigator.clipboard` when available. Inject a bridge for non-DOM hosts and deterministic permission/error tests.
 }
 ```
 
@@ -117,6 +134,21 @@ interface MountedApp {
   term: TerminalLike;   // The terminal the app was mounted onto.
   host: BrowserHost;   // The browser host driving the terminal.
   dispose(): void;   // Tear down the resize listener and the terminal.
+}
+```
+
+## TerminalLike
+
+The narrow slice of an xterm.js terminal the host (and `mountApp`) actually touch, declared as a local structural interface so that **both** a real `@xterm/xterm` terminal **and** an `@xterm/headless` terminal satisfy it.
+
+```ts
+interface TerminalLike {
+  write(data: string): void;   // Write a string (ANSI/text) to the terminal.
+  onData(handler: (data: string) => void): { dispose(): void };   // Subscribe to input bytes the terminal produced; returns a disposer.
+  onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };   // Subscribe to terminal resize; returns a disposer.
+  attachCustomKeyEventHandler(handler: (event: BrowserKeyEvent) => boolean): void;   // Install a DOM-key filter before xterm.js translates the key to terminal input. Browser terminals provide this hook; headless terminals may omit it. Returning `false` consumes the key.
+  focus(): void;   // Present on a DOM terminal, absent on `@xterm/headless` — always call it optionally.
+  dispose(): void;   // Present on a DOM terminal — tear the terminal down.
 }
 ```
 
