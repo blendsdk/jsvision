@@ -16,6 +16,7 @@ const MIT_COMPATIBLE_LICENSES = new Set([
 const APPROVED_RUNTIME_PACKAGES = new Set([
   '@codemirror/state',
   '@jsvision/core',
+  '@jsvision/i18n',
   '@jsvision/ui',
   '@lezer/common',
   '@lezer/highlight',

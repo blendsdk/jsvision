@@ -186,6 +186,9 @@ export type { EditableGridRowsConfig } from './editable-grid-rows.js';
 export { EditableDataGrid } from './grid.js';
 export type { EditableDataGridOptions } from './grid.js';
 
+// Localization validation metadata for strict application-catalog checks.
+export { DATAGRID_ACCELERATOR_MANIFEST } from './i18n/catalog.js';
+
 // Keymap model — the remappable input surface: the `GridAction` vocabulary, the frozen `DEFAULT_KEYMAP`
 // chord→action table, `resolveGridAction` (a key→action lookup), and `mergeKeymap` (layer a caller's
 // overrides over the default; unknown actions and malformed chords are dropped, never thrown). Pass a

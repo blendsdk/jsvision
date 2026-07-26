@@ -9,7 +9,7 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { Group, Button, Text, Input, Label, signal } from '@jsvision/ui';
+import { Group, Button, Text, Input, Label, createI18n, signal } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { formDialog, bindField } from '@jsvision/forms';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ export const formsDialogStory: Story = {
       // ctx.execView is non-generic, so re-expose it as the generic method formDialog calls.
       const exec = ctx.execView;
       const host = {
+        i18n: createI18n(),
         loop: { execView: <R>(view: View): Promise<R> => (exec as (m: View) => Promise<R>)(view) },
         desktop: {
           addWindow: (): void => {},

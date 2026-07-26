@@ -6,7 +6,16 @@
  * the requirements + the 03-XX specs, never from the implementation.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal, effect, createRoot, Commands } from '@jsvision/ui';
+import {
+  Group,
+  createEventLoop,
+  createI18n,
+  resolveCapabilities,
+  signal,
+  effect,
+  createRoot,
+  Commands,
+} from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
@@ -25,6 +34,7 @@ function makeHost(w = 70, h = 24) {
   const added: View[] = [];
   const removed: View[] = [];
   const host = {
+    i18n: createI18n(),
     loop,
     desktop: {
       addWindow: (v: View) => {

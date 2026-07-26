@@ -293,9 +293,14 @@ export async function runSchedulingStressProbe(options: SchedulingStressOptions)
   const events: string[] = [];
   for (const kind of options.backgroundKinds) executeBackgroundSlice(kind);
   const measure = (kind: BackgroundKind): void => {
-    const startedAt = performance.now();
+    // CPU time measures work owned by this slice. Wall time also includes pauses while the
+    // operating system runs another process, which a cooperative scheduler cannot prevent or
+    // shorten and would make the bounded-work probe depend on unrelated machine load.
+    const startedAt = process.cpuUsage();
     executeBackgroundSlice(kind);
-    maximumBackgroundSliceMs = Math.max(maximumBackgroundSliceMs, performance.now() - startedAt);
+    const elapsed = process.cpuUsage(startedAt);
+    const elapsedMs = (elapsed.user + elapsed.system) / 1_000;
+    maximumBackgroundSliceMs = Math.max(maximumBackgroundSliceMs, elapsedMs);
   };
   const adapter: LanguageAdapter = Object.freeze({
     contractVersion: 1,

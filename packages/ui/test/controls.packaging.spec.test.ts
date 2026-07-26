@@ -67,9 +67,9 @@ test('ST-13: each src/controls file is ≤ 500 lines', () => {
 
 // ST-13 / AC-11 — the package declares no third-party/native runtime dependency (only the workspace
 // JS engine `@jsvision/core`); the `check:deps` gate enforces the native-dep ban in CI.
-test('ST-13: @jsvision/ui declares only the workspace @jsvision/core runtime dependency', () => {
+test('ST-13: @jsvision/ui declares only the workspace Core and i18n runtime dependencies', () => {
   const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
-  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core']);
+  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core', '@jsvision/i18n']);
 });
