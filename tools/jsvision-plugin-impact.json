@@ -54,14 +54,29 @@
         "packages/i18n/src",
         "packages/ui/src/app",
         "packages/ui/src/i18n",
+        "packages/ui/src/controls",
+        "packages/ui/src/dialog",
+        "packages/ui/src/editor",
+        "packages/ui/src/date",
         "packages/forms/src",
         "packages/files/src",
         "packages/datagrid/src",
-        "packages/code-editor/src"
+        "packages/code-editor/src",
+        "packages/examples/package.json",
+        "packages/examples/i18n-demo"
       ],
       "references": [
+        "references/layout.md",
         "references/i18n.md",
+        "references/running-and-testing.md",
         "references/recipes/i18n-app.md",
+        "references/recipes/forms-dialogs.md",
+        "references/recipes/theme-designer.md",
+        "references/api/controls.md",
+        "references/api/forms.md",
+        "references/api/files.md",
+        "references/api/datagrid.md",
+        "references/api/code-editor.md",
         "references/api/i18n.md",
         "references/app-lifecycle.md"
       ]
@@ -131,12 +146,12 @@
     "ui-layout-and-views": "b1a4e071f18dfc140df433a6f189e9ec30a2bfd850bd7b8297f0343bb15004dd",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
     "ui-application-shell": "d2bb8465213534c4578018043432ee83e6d153fb05ba880bc062e03824c09aa7",
-    "internationalization": "57f209e301ee8c98b659caab53837271365228c3b2730696055822aa6436be89",
+    "internationalization": "6744a8895aeef1b1432eee1fb132e1a5e81336ad0c92abc94e6a066bd9fe5e6b",
     "forms": "028366f0307468207cae41ebe4be54eaa66a1e533883bd4d42c50c159ec7729a",
     "datagrid": "0da1693fde29dd5c332e571c9560f0b53640041a5e5746aecc1803c5d3af7800",
     "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
     "web": "82550341aebec9f42314b72956efe9e4dbbd7a7ffe6b898ed73599e96e73ef25",
     "code-editor": "4ff9b284459e9033933570abe64f4e5fb6955e501d10504d55cd48625632a260",
-    "executable-recipes": "9e4c6120d39b7ccd6cbcbf5354147a64b8e5f4a8526b07ce81bdbbc4a370bcf6"
+    "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
   }
 }

@@ -56,9 +56,38 @@ Two ways to be safe:
 - Give the child an explicit `fixed`/`grow` size (the common case) — no `measure()` needed.
 - Or implement `measure()` on a custom leaf so `auto` works (see `widget-authoring.md`).
 
-Built-in leaves are not uniform here — several (e.g. `Text`, `Button`, `Input`) have no `measure()`,
-so **size them with `fixed`/`grow`** rather than relying on `auto`. `ProgressBar` and container
-widgets measure themselves.
+Built-in leaves are not uniform here. `Button.measure()` reports its natural caption face, while
+some leaves still require an explicit `fixed`/`grow` size. `ProgressBar` and container widgets also
+measure themselves.
+
+## Translated Button groups
+
+Measure a complete translated action set before choosing the dialog or viewport minimum. A
+Button's natural caption width counts terminal display cells, including wide glyphs and combining
+characters, while excluding `~accelerator~` markup. `measureButtonGroup()` compares every natural
+width with `minimumButtonWidth` and assigns all siblings the widest result.
+
+```ts
+import { Button, buttonGroup, measureButtonGroup } from '@jsvision/ui';
+
+const actions = [
+  new Button('~S~peichern', { command: 'save', default: true }),
+  new Button('~A~bbrechen', { command: 'cancel' }),
+  new Button('Als ~E~ntwurf speichern', { command: 'save-draft' }),
+];
+const options = { minimumButtonWidth: 10, gap: 2, maxColumns: 2 } as const;
+const metrics = measureButtonGroup(actions, options);
+const buttons = buttonGroup(actions, options);
+```
+
+`buttonGroup()` preserves row-major order and `maxColumns` wraps equal-width buttons across
+multiple rows. Use `buttonColumn()` for a vertical group. Pass the same unattached Buttons to
+measurement and composition: one live Button has a single parent and cannot be reused across
+groups.
+
+Treat `metrics.width` and `metrics.height` as preferred viewport minima. Expand the parent when
+possible, then wrap by reducing `maxColumns`; an absolute rectangle or terminal edge is a hard
+bound that clips content when even the vertical form cannot fit.
 
 ## Container props
 
@@ -71,11 +100,8 @@ The optional first argument to `col`/`row`/`stack` sets how the container arrang
 - **`align`** — cross-axis: `'stretch'` (default) · `'start'` · `'center'` · `'end'`.
 - **`background`** — a theme role filled behind the children (e.g. `'desktop'`).
 
-```ts
-import { row, fixed } from '@jsvision/ui';
-// A centered button pair.
-const buttons = row({ gap: 2, justify: 'center' }, fixed(okButton(), 10), fixed(cancelButton(), 12));
-```
+Use the shared Button-group composers above for action rows instead of assigning caption widths
+individually.
 
 ## Overlays: `stack` (instead of absolute rects)
 
