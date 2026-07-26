@@ -51,7 +51,7 @@ describe('consumer internationalization guide', () => {
     for (const pattern of requiredSubstance) {
       expect(guide, `missing guide substance ${pattern}`).toMatch(pattern);
     }
-    expect(guide).toMatch(/i18n-theme-designer\.ts/u);
+    expect(guide).toMatch(/\]\(\.\.\/components\/theming\/i18n-theme-designer\)/u);
   });
 
   test('typechecks the localized Theme Designer and runs its public headless build contract', async () => {

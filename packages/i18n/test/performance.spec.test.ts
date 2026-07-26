@@ -16,6 +16,13 @@ const WARM_MEDIAN_BUDGET_MS = 250;
 const WARM_P95_BUDGET_MS = 250;
 let sink = 0;
 
+/**
+ * CI runners have variable CPU contention, so they cannot produce actionable wall-clock evidence.
+ * Register the benchmark as skipped there instead of doing the expensive work and ignoring only its
+ * final threshold. Deliberate local performance runs continue to execute the complete workload.
+ */
+const timingTest = process.env.CI || process.env.TUI_SKIP_PERF ? test.skip : test;
+
 function percentile(samples: readonly number[], fraction: number): number {
   const sorted = [...samples].sort((left, right) => left - right);
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * fraction) - 1))] ?? Infinity;
@@ -29,7 +36,7 @@ function median(samples: readonly number[]): number {
     : (sorted[middle] ?? Infinity);
 }
 
-test('publishes fixed cold and warm median/p95 measurements within the warm threshold', () => {
+timingTest('publishes fixed cold and warm median/p95 measurements within the warm threshold', () => {
   const catalog = defineCatalog({
     schema: 1,
     locale: 'en',
@@ -65,7 +72,7 @@ test('publishes fixed cold and warm median/p95 measurements within the warm thre
   expect(JSON.stringify(result)).toContain('"medianMs"');
   expect(JSON.stringify(result)).toContain('"p95Ms"');
   if (sink < 0) throw new Error('unreachable benchmark sink');
-  if (process.env.CI || process.env.TURBO_HASH || process.env.TUI_SKIP_PERF) return;
+  if (process.env.TURBO_HASH) return;
   expect(result.warm.medianMs).toBeLessThanOrEqual(result.thresholds.warmMedianMs);
   expect(result.warm.p95Ms).toBeLessThanOrEqual(result.thresholds.warmP95Ms);
 });
