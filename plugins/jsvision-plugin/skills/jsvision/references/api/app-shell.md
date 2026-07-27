@@ -259,7 +259,7 @@ interface MenuLoopSeam {
   commandsVersion(): number;   // A tick that changes on any command-enablement change; the bar binds it so greying repaints live.
   focusView(view: View): void;   // Focus a view — used to restore the pre-menu focus when the menu closes.
   getFocused(): View | null;   // The currently-focused view, captured when a menu opens so it can be restored on close.
-  dismissAccelerators(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
+  dismissAccelerators?(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
 }
 ```
 

@@ -161,10 +161,18 @@ export interface DispatchEvent {
    */
   readonly hasCapture?: (view: View) => boolean;
   /**
-   * Write `text` to the system clipboard — used by `Input` copy/cut. A no-op when the terminal has no
-   * clipboard support; the control never touches I/O directly.
+   * Commit `text` to the canonical application clipboard and offer it to the host adapter. Host
+   * synchronization may be unavailable, but the canonical write still succeeds.
    */
   readonly setClipboard?: (text: string) => void;
+  /**
+   * Observe canonical clipboard writes made during this dispatch.
+   *
+   * The subscription lasts only for the current routed event. A pre-processing view can use it to
+   * refresh a visible clipboard projection after any focused control calls {@link setClipboard},
+   * without becoming another clipboard owner.
+   */
+  readonly observeClipboardWrite?: (listener: (text: string) => void) => void;
   /**
    * Read the application's in-app clipboard buffer (the last text copied or cut within the app). Used
    * by editable controls for in-app paste without reading the external OS clipboard. Returns `''` when

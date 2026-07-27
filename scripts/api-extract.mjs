@@ -169,7 +169,10 @@ function extractInterface(decl, name, checker) {
     } else if (ts.isMethodSignature(m)) {
       const params = m.parameters.map((p) => p.getText()).join(', ');
       const ret = m.type?.getText();
-      fields.push({ sig: `${m.name.getText()}(${params})${ret ? `: ${ret}` : ''}`, doc: memberDoc(m, checker) });
+      fields.push({
+        sig: `${m.name.getText()}${m.questionToken ? '?' : ''}(${params})${ret ? `: ${ret}` : ''}`,
+        doc: memberDoc(m, checker),
+      });
     }
   }
   return { kind: 'interface', title: `${name}${typeParams(decl)}`, fields };

@@ -146,9 +146,9 @@ interface TerminalLike {
   write(data: string): void;   // Write a string (ANSI/text) to the terminal.
   onData(handler: (data: string) => void): { dispose(): void };   // Subscribe to input bytes the terminal produced; returns a disposer.
   onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };   // Subscribe to terminal resize; returns a disposer.
-  attachCustomKeyEventHandler(handler: (event: BrowserKeyEvent) => boolean): void;   // Install a DOM-key filter before xterm.js translates the key to terminal input. Browser terminals provide this hook; headless terminals may omit it. Returning `false` consumes the key.
-  focus(): void;   // Present on a DOM terminal, absent on `@xterm/headless` — always call it optionally.
-  dispose(): void;   // Present on a DOM terminal — tear the terminal down.
+  attachCustomKeyEventHandler?(handler: (event: BrowserKeyEvent) => boolean): void;   // Install a DOM-key filter before xterm.js translates the key to terminal input. Browser terminals provide this hook; headless terminals may omit it. Returning `false` consumes the key.
+  focus?(): void;   // Present on a DOM terminal, absent on `@xterm/headless` — always call it optionally.
+  dispose?(): void;   // Present on a DOM terminal — tear the terminal down.
 }
 ```
 

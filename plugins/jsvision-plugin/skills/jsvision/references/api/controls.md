@@ -209,7 +209,7 @@ A rule that constrains what an Input accepts.
 interface Validator {
   isValidInput(s: string): boolean;   // Live per-keystroke gate: may this string exist mid-edit? Must accept partial input.
   isValid(s: string): boolean;   // Blocking gate run on completion / focus-leave: is the finished value acceptable?
-  fill(s: string): string;   // Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing applies. Only picture implements it; the other validators omit it. Never throws.
+  fill?(s: string): string;   // Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing applies. Only picture implements it; the other validators omit it. Never throws.
   error?: string;   // Optional message describing the invalid state, for you to surface to the user.
 }
 ```

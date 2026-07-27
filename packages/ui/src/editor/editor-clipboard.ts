@@ -1,27 +1,35 @@
 /**
  * Clipboard (cut/copy/paste) and undo/redo operations over an {@link Editor}.
  *
- * The clipboard is itself an `Editor` — Copy fills it with exactly the copied text (left selected),
- * Cut is a copy plus a delete recorded as one undo step, and Paste inserts whatever is selected in
- * the clipboard editor. When the clipboard editor is absent or empty, Paste falls back to the
- * app-local buffer shared across widgets (so text copied elsewhere still pastes here); system paste
- * still arrives separately as a bracketed paste event. Copy/Cut also mirror one write to the host's
- * OS clipboard when the terminal supports it. Undo/redo apply the undo stack's inverse steps.
+ * The event loop's raw-text value is the canonical clipboard. An optional clipboard `Editor` is a
+ * visible projection of that value, never a competing paste source. Copy and Cut commit through the
+ * loop and refresh the projection; Paste reads the loop and refreshes the projection before
+ * inserting. Undo/redo apply the undo stack's inverse steps.
  */
 import { convertNewEdit } from './buffer/index.js';
 import type { Editor } from './editor.js';
 
-/** Copy the selection into the clipboard editor (left selected) and mirror it to the OS clipboard. No selection is a no-op. */
+/**
+ * Refresh the optional visible clipboard editor from canonical raw text.
+ *
+ * The projection keeps the full value selected so it remains easy to inspect or explicitly copy.
+ * Updating it never writes back to the event loop; users can make edited projection text canonical
+ * by copying it normally.
+ */
+export function syncEditorClipboardProjection(ed: Editor, text: string): void {
+  const clip = ed.options.clipboard;
+  if (clip === undefined || clip === ed) return;
+  clip.isClipboardRole = true;
+  clip.setText(text);
+  clip.setSelect(0, text.length, false);
+}
+
+/** Copy the selection to the canonical clipboard and refresh its visible projection. No selection is a no-op. */
 export function editorCopy(ed: Editor): void {
   if (ed.selStartP === ed.selEndP) return;
   const text = ed.selectionText();
-  const clip = ed.options.clipboard;
-  if (clip !== undefined && clip !== ed) {
-    clip.isClipboardRole = true; // the clipboard editor's own edits never mark it modified
-    clip.setText(text);
-    clip.setSelect(0, text.length, false); // hold the copied range selected so Paste can read it
-  }
-  ed.mirrorSink?.(text); // mirror to the OS clipboard when the host/terminal supports it
+  syncEditorClipboardProjection(ed, text);
+  ed.mirrorSink?.(text);
 }
 
 /** Cut = copy the selection, then delete it, recorded as a single undo step. No selection is a no-op. */
@@ -32,15 +40,10 @@ export function editorCut(ed: Editor): void {
   ed.trackCursor(false);
 }
 
-/**
- * Paste at the caret, replacing any selection, as one undo step. Prefers the injected clipboard
- * editor's selection; when that is absent or empty, falls back to the app-local buffer shared across
- * the app (so text copied in another widget, e.g. an `Input`, pastes here). A no-op when both are empty.
- */
+/** Paste the canonical event-loop clipboard at the caret as one undo step. An empty value is a no-op. */
 export function editorPaste(ed: Editor): void {
-  const clip = ed.options.clipboard;
-  let text = clip !== undefined && clip !== ed ? clip.selectionText() : '';
-  if (text === '') text = ed.clipboardRead?.() ?? ''; // cross-widget fallback: the shared app-local buffer
+  const text = ed.clipboardRead?.() ?? '';
+  syncEditorClipboardProjection(ed, text);
   if (text === '') return;
   ed.insertRaw(convertNewEdit(text, ed.eolKind), false);
   ed.trackCursor(false);
