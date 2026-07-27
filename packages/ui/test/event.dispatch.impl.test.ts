@@ -150,3 +150,33 @@ test('a disabled bound key drops with no plain-key fall-through', () => {
   expect(quitCommands).toBe(0); // disabled command dropped
   expect(plainKeys).toBe(0); // raw key consumed — no fall-through
 });
+
+test('clipboard-write observers run after the canonical commit and isolate a throwing observer', () => {
+  const observed: string[] = [];
+  class ClipboardObserver extends View {
+    override preProcess = true;
+    draw(_ctx: DrawContext): void {}
+    override onEvent(ev: DispatchEvent): void {
+      ev.observeClipboardWrite?.(() => {
+        throw new Error('projection failed');
+      });
+      ev.observeClipboardWrite?.((text) => observed.push(text));
+    }
+  }
+  class ClipboardWriter extends View {
+    draw(_ctx: DrawContext): void {}
+    override onEvent(ev: DispatchEvent): void {
+      ev.setClipboard?.('copied');
+      expect(ev.readClipboard?.()).toBe('copied');
+      ev.handled = true;
+    }
+  }
+  const observer = new ClipboardObserver();
+  const writer = new ClipboardWriter();
+  const loop = createEventLoop({ width: 10, height: 3 }, { caps });
+  mountWith(loop, [observer, writer], writer);
+
+  loop.dispatch(keyEvent('x'));
+
+  expect(observed).toEqual(['copied']);
+});

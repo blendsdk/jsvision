@@ -125,11 +125,12 @@ test('modern default: Ctrl+X cuts the selection out of the editor', () => {
   expect(clipboard.getText()).toBe('hello');
 });
 
-test('modern default: Ctrl+V pastes the clipboard selection at the caret', () => {
+test('modern default: Ctrl+V pastes the canonical clipboard at the caret', () => {
   const clipboard = new Editor();
-  clipboard.setText('world');
-  clipboard.setSelect(0, 5, false); // the clipboard holds 'world' selected (the copy invariant)
   const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('world');
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true }));
   ed.setText('');
   loop.dispatch(key('v', { ctrl: true }));
   expect(ed.getText()).toBe('world');

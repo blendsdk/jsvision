@@ -2,10 +2,10 @@
 
 > **Type**: Maintenance bug fix
 > **Feature-Set**: `_maintenance`
-> **Status**: Plan Created
+> **Status**: Complete
 > **Created**: 2026-07-26
-> **Last Updated**: 2026-07-27 01:55
-> **Progress**: 5/6 tasks complete
+> **Last Updated**: 2026-07-27 03:15
+> **Progress**: 6/6 tasks complete
 > **Phase baseline tree**: a803e702a4ee5f0309b1a3cedbab29ca5c79827a
 > **CodeOps Artifact Schema**: 1
 
@@ -186,7 +186,8 @@ typecheck and 341 tests passed. The source-impact snapshot and assembled Codex s
 
 ### T-03.6 — Run the cross-platform release gate
 
-- [ ] T-03.6 Run the cross-platform release gate.
+- [x] T-03.6 Run the cross-platform release gate.
+  ✅ (completed: 2026-07-27 03:15)
 
 - Run focused clipboard suites after all implementation and documentation changes.
 - Run the authoritative repository verification gate.
@@ -200,6 +201,33 @@ typecheck and 341 tests passed. The source-impact snapshot and assembled Codex s
 ```sh
 yarn verify
 ```
+
+**Verification evidence**: `yarn verify` passed in 212.08 seconds with 38/38 workspace tasks.
+UI passed 327 files and 1,901 tests; CodeEditor passed 49 files and 346 tests. Serial performance
+budgets, documentation checks, and plugin integrity passed. The CI matrix remains Node 22 and 24
+across Ubuntu, macOS, and Windows. Unsupported host clipboard paths retain the canonical in-memory
+clipboard and are covered by capability and rejection regressions.
+
+## Quality review
+
+| Finding | Severity | Resolution |
+|---------|----------|------------|
+| RV-001 | Major | Resolved: Editor paste reads only the canonical event-loop clipboard; stale visible projection text cannot override Input or host-origin data. |
+| RV-002 | Minor | Resolved: generated interface method signatures preserve `?`, with generator regression coverage and refreshed canonical/distributed references. |
+| RV-003 | Minor | Resolved after the scoped re-review: canonical copy/cut writes notify event-scoped projection observers, so Input and CodeEditor refresh visible projections immediately; observer failures are isolated. |
+
+- **Authority**: User — the user explicitly authorized fixing the review findings as completely as
+  practical.
+- **Hardening**: One independent phase review identified RV-001 and RV-002. The single permitted
+  scoped re-review confirmed both resolved and identified RV-003. RV-003 was then fixed and covered
+  by focused Input, CodeEditor, canonical-commit, and observer-failure tests; the final full gate
+  passed. No further re-review was run because the review budget was exhausted.
+- **Confidence**: High — the behavior is grounded in one canonical ownership boundary, immutable
+  cross-control specifications, focused implementation regressions, the full repository gate, and
+  the six-platform CI matrix.
+- **Reopen triggers**: A new editable control bypasses `DispatchEvent.setClipboard`, a host adapter
+  writes terminal-ready data into the canonical buffer, or a mainstream host cannot deliver its
+  documented copy/paste gesture.
 
 ## Completion Criteria
 

@@ -118,6 +118,7 @@ function focusChain(leaf: View | null, scopeRoot: View): View[] {
 export function route(ev: DispatchEvent, ctx: RouteContext): void {
   const scopeRoot = ctx.scopeRoot;
   if (scopeRoot === null) return; // nothing mounted
+  const clipboardWriteListeners = new Set<(text: string) => void>();
 
   const inner = ev.event;
 
@@ -187,7 +188,19 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     setCapture: ctx.setCapture,
     releaseCapture: ctx.releaseCapture,
     hasCapture: ctx.hasCapture,
-    setClipboard: ctx.setClipboard,
+    setClipboard: (text) => {
+      ctx.setClipboard(text);
+      for (const listener of clipboardWriteListeners) {
+        try {
+          listener(text);
+        } catch {
+          // Projection failures must not roll back the canonical value or block sibling projections.
+          // Never include the clipboard text in this diagnostic.
+          devWarn('clipboard', 'a clipboard-write observer threw; the canonical value remains available');
+        }
+      }
+    },
+    observeClipboardWrite: (listener) => clipboardWriteListeners.add(listener),
     readClipboard: ctx.readClipboard,
     getFocused: ctx.getFocused,
     popupHost: ctx.popupHost,

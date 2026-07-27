@@ -50,8 +50,8 @@ export const SM_TRIPLE = 0x04;
  * A focusable, scrollable multiline text editor. Add it to a `Group`, give it a size, and drive it
  * via the event loop or programmatically ({@link setText}/{@link getText}/{@link insertText}/
  * {@link execute}). The reactive signals ({@link curPos}, {@link modified}, {@link canUndo}, …)
- * drive a status line/indicator. Share Cut/Copy/Paste by passing one `Editor` as the `clipboard` of
- * each (see {@link EditorOptions}); for scroll bars + a line/column indicator use `EditWindow`.
+ * drive a status line/indicator. The loop shares Cut/Copy/Paste; use an optional `clipboard`
+ * projection for visibility and `EditWindow` for scroll bars (see {@link EditorOptions}).
  *
  * @example
  * import { Group, Editor, createEventLoop, effect } from '@jsvision/ui';
@@ -123,9 +123,9 @@ export class Editor extends View {
   readonly undoStack: UndoStack;
   /** @internal Set by single-character typing/deleting so the next edit merges into one undo step. */
   coalesceNextEdit = false;
-  /** @internal Sink that mirrors copied/cut text to the OS clipboard, captured per event. */
+  /** @internal Sink that commits copied/cut text to the event loop and its host adapter, captured per event. */
   mirrorSink: ((text: string) => void) | undefined;
-  /** @internal Reads the app-local clipboard buffer, captured per event; the paste fallback when no clipboard editor holds text. */
+  /** @internal Reads the event loop's canonical clipboard, captured per event. */
   clipboardRead: (() => string) | undefined;
 
   /** @internal Attached scroll bars + indicator (see {@link attachGadgets}). */
@@ -279,17 +279,17 @@ export class Editor extends View {
     return editorDoSearchReplace(this);
   }
 
-  /** Copy the selection to the shared clipboard editor (and the OS clipboard when supported). */
+  /** Copy the selection to the canonical clipboard and refresh any visible clipboard projection. */
   copy(): void {
     editorCopy(this);
   }
 
-  /** Cut the selection to the shared clipboard editor, as one undo step. */
+  /** Cut the selection to the canonical clipboard as one undo step. */
   cut(): void {
     editorCut(this);
   }
 
-  /** Paste the shared clipboard editor's selection at the caret, as one undo step. */
+  /** Paste the canonical clipboard at the caret as one undo step. */
   paste(): void {
     editorPaste(this);
   }

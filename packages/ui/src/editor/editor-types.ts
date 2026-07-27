@@ -22,11 +22,12 @@ export interface EditorCommandSeam {
 /** Construction options for {@link Editor}. Every field is optional — a bare `new Editor()` is fully usable. */
 export interface EditorOptions {
   /**
-   * An optional editor that exposes or customizes clipboard contents.
+   * An optional editor that exposes clipboard contents.
    *
    * The application event loop owns the canonical clipboard, so ordinary in-app Cut/Copy/Paste
-   * works without this option. Pass the same `Editor` instance when an application needs the
-   * clipboard to remain visible or editable, as in the editor demonstration.
+   * works without this option. Pass the same `Editor` instance when an application needs a visible
+   * projection, as in the editor demonstration. Editing the projection does not replace the
+   * canonical value until the edited text is explicitly copied.
    */
   clipboard?: Editor;
   /** Handler for find/replace/save prompts. Defaults to a handler that cancels every prompt. */

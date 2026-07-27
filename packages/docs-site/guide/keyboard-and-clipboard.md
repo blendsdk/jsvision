@@ -9,7 +9,8 @@ description: Selection and clipboard support across editable JSVision controls, 
 
 A text editor with the clipboard made visible. Select something in the top window and copy it — it
 appears in the **Clipboard** window below. The application event loop owns the canonical plain-text
-value; this example projects that value into an editor so you can inspect and change it.
+value; this example projects that value into an editor so you can inspect it. To make edited
+projection text canonical, select and copy it normally.
 
 <PlayExample id="apps/editor" title="Editor & clipboard" blurb="A cut-down text editor beside the shared clipboard, shown live as you cut, copy, and paste." />
 
