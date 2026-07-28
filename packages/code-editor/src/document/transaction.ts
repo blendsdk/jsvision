@@ -1,4 +1,4 @@
-import { ChangeSet } from '@codemirror/state';
+import { ChangeSet, Text } from '@codemirror/state';
 
 import type { ResolvedDocumentLimits } from './limits.js';
 import type {
@@ -98,7 +98,14 @@ export function applyDocumentTransaction(
   }
   const { afterByteLength, retainedBytes } = validation;
   const forward = ChangeSet.of(
-    normalized.edits.map((edit) => ({ from: edit.from, to: edit.to, insert: edit.text })),
+    // Passing a string lets CodeMirror normalize CRLF/CR before the document model can apply its
+    // own line-ending policy. Build Text explicitly with LF as the structural separator so carriage
+    // returns remain ordinary retained code units and the applied length matches validated offsets.
+    normalized.edits.map((edit) => ({
+      from: edit.from,
+      to: edit.to,
+      insert: Text.of(edit.text.split('\n')),
+    })),
     storage.length,
   );
   const inverse = forward.invert(storage.asText());

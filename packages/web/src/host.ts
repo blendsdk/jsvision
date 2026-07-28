@@ -50,10 +50,37 @@ export interface TerminalLike {
   onData(handler: (data: string) => void): { dispose(): void };
   /** Subscribe to terminal resize; returns a disposer. */
   onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };
+  /**
+   * Install a DOM-key filter before xterm.js translates the key to terminal input. Browser
+   * terminals provide this hook; headless terminals may omit it. Returning `false` consumes the key.
+   */
+  attachCustomKeyEventHandler?(handler: (event: BrowserKeyEvent) => boolean): void;
   /** Present on a DOM terminal, absent on `@xterm/headless` — always call it optionally. */
   focus?(): void;
   /** Present on a DOM terminal — tear the terminal down. */
   dispose?(): void;
+}
+
+/**
+ * The browser-key fields needed to recognize a host clipboard gesture without importing DOM types.
+ *
+ * A real `KeyboardEvent` satisfies this structural interface.
+ */
+export interface BrowserKeyEvent {
+  /** Browser event phase, normally `keydown` or `keyup`. */
+  readonly type: string;
+  /** Layout-resolved key value, such as `C`. */
+  readonly key: string;
+  /** Physical key code, such as `KeyC`. */
+  readonly code: string;
+  /** Whether Control is held. */
+  readonly ctrlKey: boolean;
+  /** Whether Shift is held. */
+  readonly shiftKey: boolean;
+  /** Whether Alt/Option is held. */
+  readonly altKey: boolean;
+  /** Whether Command/Meta is held. */
+  readonly metaKey: boolean;
 }
 
 /**

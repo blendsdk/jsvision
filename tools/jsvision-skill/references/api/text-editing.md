@@ -26,7 +26,7 @@ Options for EditWindow.
 interface EditWindowOptions {
   rect?: Rect;   // The initial window rect. Prefer setting it here rather than assigning `layout.rect` after construction: the window pins its scroll bars against this rect on the first layout, and a post-construction assignment can leave one stale frame painted before the window re-pins.
   editor?: Editor;   // The editor to host (e.g. a file-backed editor, or the shared clipboard editor). Omit for a plain `Editor`.
-  clipboard?: Editor;   // The shared clipboard editor — passed to a default-constructed editor, and used for the "Clipboard" title.
+  clipboard?: Editor;   // The visible clipboard projection passed to a default editor and used for the `"Clipboard"` title.
   editorDialog?: EditorDialogHandler;   // The find/replace/save dialog handler for a default-constructed editor.
 }
 ```
@@ -205,7 +205,7 @@ Construction options for Editor.
 
 ```ts
 interface EditorOptions {
-  clipboard?: Editor;   // The shared clipboard editor. There is no implicit default: without one, in-app Cut/Copy/Paste between editors is a no-op. Pass the same `Editor` instance to every editor that should share a clipboard (typically a single hidden editor).
+  clipboard?: Editor;   // An optional editor that exposes clipboard contents. The application event loop owns the canonical clipboard, so ordinary in-app Cut/Copy/Paste works without this option. Pass the same `Editor` instance when an application needs a visible projection, as in the editor demonstration. Editing the projection does not replace the canonical value until the edited text is explicitly copied.
   editorDialog?: EditorDialogHandler;   // Handler for find/replace/save prompts. Defaults to a handler that cancels every prompt.
   undoDepth?: number;   // Maximum retained undo steps (default 1000).
   autoIndent?: boolean;   // Copy the previous line's leading whitespace when pressing Enter (default false).

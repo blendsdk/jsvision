@@ -78,8 +78,8 @@ export function editorUpdateCommands(ed: Editor): void {
   if (!ed.isClipboardRole) {
     seam.enable(Commands.cut, hasSel);
     seam.enable(Commands.copy, hasSel);
-    // Paste is enabled only when a shared clipboard editor exists and holds a selection.
-    seam.enable(Commands.paste, ed.options.clipboard !== undefined && ed.options.clipboard.hasSelection());
+    // The optional Editor is only a projection; enable Paste from the canonical loop value.
+    seam.enable(Commands.paste, (ed.clipboardRead?.() ?? '') !== '');
   }
   seam.enable(Commands.undo, ed.canUndo());
   seam.enable(Commands.redo, ed.canRedo());
