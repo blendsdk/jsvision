@@ -1,19 +1,21 @@
-# Release Notes — v1.2.1
+# Release Notes — v1.3.0
 
-**Released**: 2026-07-23
+**Released**: 2026-07-28
 
-Release Notes for Version 1.2.1
+We are excited to announce the release of version 1.3.0, featuring significant enhancements to user experience, internationalization, and performance across multiple packages.
 
-We are excited to announce version 1.2.1, packed with important updates that enhance the overall performance and functionality of our software. This release brings optimizations that improve efficiency across several core modules, ensuring a smoother experience for all users.
+This update primarily focuses on improving the clipboard functionality across applications, ensuring users can easily copy and paste content without issues. These adjustments follow user feedback and a commitment to making interactions smoother and more intuitive. Alongside this, our internationalization tools have been expanded and refined, allowing better support for multilingual users and ensuring that applications can cater to a global audience.
 
-Highlights:
+Key Highlights:
 
-- Performance Improvements: In this version, we focused on isolating performance budgets from parallel processes. This ensures that each part of the application operates more effectively without being bogged down by others. As a result, users will notice quicker response times and a more reliable experience when using our system.
+- **Enhanced Clipboard Functionality:** Users will benefit from an improved clipboard experience that supports native operations by default, making copying and pasting easier across different platforms.
+  
+- **Internationalization Improvements:** The release includes completed tools and documentation for translating the user interface, making it accessible to a wider audience. We’ve also localized various presentation surfaces, helping users interact with the software in their preferred language.
 
-- Package Updates: Key components of our platform—such as the core functionality, data handling, user interface, and documentation site—have all been updated. These updates contribute to a more cohesive and efficient user experience while interacting with our software.
+- **Performance Refinements:** The latest version addresses several quality and performance metrics, contributing to a more responsive experience when using the code editor and related interfaces.
 
-- Documentation Updates: As we continue to enhance our platform, we have also updated our documentation site. Users will find improved clarity and guidance, making it easier to navigate and utilize the features of our software.
+- **Updated Guides and Documentation:** To assist users further, our documentation site has been aligned with these new features, providing clear guidelines on how to utilize the improvements effectively.
 
-- Example Updates: We've adjusted our example projects to align with these improvements, ensuring that users can see firsthand how the latest updates work in real-time scenarios. This not only aids in understanding but also demonstrates best practices for utilizing the software effectively.
+- **General Bug Fixes and Usability Enhancements:** We've focused on overall decreasing friction within the user experience. This includes ensuring smoother navigation and improved interaction across all platforms.
 
-Overall, version 1.2.1 is a step towards providing our users with a faster, more streamlined experience. We encourage everyone to explore these enhancements and leverage them to boost productivity in their projects. Thank you for your continued support!
+Version 1.3.0 represents our ongoing commitment to enhancing usability and accessibility in our software. We encourage all users to update to this release to take full advantage of the new features and improvements.

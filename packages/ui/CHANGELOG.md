@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+## Added
+- Enable native clipboard by default with a lazy ordered system clipboard adapter for Application.run.
+- Add host-neutral native paste by exposing optional clipboard reader and writer callbacks through the UI application shell.
+- Add shared translated button geometry for precise button group measurement and composition.
+- Integrate first-party internationalization (i18n) to localize UI components like buttons and modals.
+
+## Changed
+- Align host integration guidance for the event-loop clipboard as the canonical raw-text source and document permission requirements.
+
+## Fixed
+- Harden bounded paste handling to preserve exact source prefixes for malformed UTF-16 input and manage oversized custom caps.
+- Enforce canonical editor ownership to synchronize clipboard operations and maintain visible projections across components.
+- Establish a canonical clipboard pipeline to adopt host paste into the clipboard while isolating write failures.
+
 ## [1.2.1] - 2026-07-23
 
 Added:

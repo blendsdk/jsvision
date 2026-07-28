@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+Added:
+- Mirror raw copy text through the browser Clipboard API.
+
+Changed:
+- Route Ctrl+Shift+C once through the canonical JSVision command path.
+- Updated clipboard handling logic in host, index, and mount modules for consistency across browsers.
+
+Fixed:
+- Defined consistent host clipboard behavior with new tests for the clipboard functionality.
+
 ## [1.1.0] - 2026-07-23
 
 Changed: Dropped `@xterm/xterm` optional peer dependency as it was not used in the codebase.  

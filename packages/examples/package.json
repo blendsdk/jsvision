@@ -1,7 +1,7 @@
 {
   "name": "@jsvision/examples",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Dev-only runnable examples + probe harness for @jsvision/core (never published)",
   "license": "MIT",
   "repository": {
@@ -55,13 +55,13 @@
     "playground": "tsx --watch playground/main.ts"
   },
   "dependencies": {
-    "@jsvision/core": "1.2.1",
-    "@jsvision/code-editor": "1.2.1",
-    "@jsvision/datagrid": "1.2.1",
-    "@jsvision/files": "1.2.1",
-    "@jsvision/forms": "1.2.1",
-    "@jsvision/ui": "1.2.1",
-    "@jsvision/web": "1.2.1",
+    "@jsvision/core": "1.3.0",
+    "@jsvision/code-editor": "1.3.0",
+    "@jsvision/datagrid": "1.3.0",
+    "@jsvision/files": "1.3.0",
+    "@jsvision/forms": "1.3.0",
+    "@jsvision/ui": "1.3.0",
+    "@jsvision/web": "1.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

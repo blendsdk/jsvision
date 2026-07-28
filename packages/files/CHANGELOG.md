@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+Changed:
+- Updated package.json for improved dependency management.  
+- Refactored chdir-dialog.ts for better usability and performance.  
+- Enhanced error-dialog.ts with additional error handling features.  
+- Improved file-dialog.ts layout for a more intuitive user experience.  
+- Updated i18n catalog.ts and label.ts for better internationalization support.  
+- Added new locale files for Italian and Portuguese (PT) to expand language options.  
+- Enhanced file-info-pane.ts to display additional file metadata.  
+- Improved openers.ts for better handling of file opener logic.  
+- Revised test files for file-info-pane, i18n, and dialog layouts to ensure better coverage and reliability.
+
 ## [1.0.0] - 2026-07-22
 
 Changed:

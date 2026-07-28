@@ -5,6 +5,35 @@ All notable changes to this package will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+### Added
+- Enable native clipboard by default by installing a lazy ordered system clipboard adapter for Application.run.
+- Export a UTF-8-safe bounded paste-text helper from core.
+- Add localized diagnostic, degradation, invisible warnings, status, and search projectors.
+- Add ten-locale catalogs and isolated I18n injection for the editor/window chrome.
+- Handle shared clipboard command events for copy, cut, paste, and select-all.
+- Add selection-aware indent and dedent with smart tab stops and auto-indent.
+- Implement terminal editor UI with controller-backed commands and styled terminal cells.
+- Add bounded live language journeys, host lifecycle controls, and isolated peer editors.
+  
+### Changed
+- Preserve explicit opt-out, custom host callbacks, and teardown finality.
+- Merge develop into feature branch; integrate i18n package changes and preserve API catalog coverage.
+
+### Fixed
+- Enforce canonical editor ownership ensuring synchronization of visible projections.
+- Route host paste through the editor transaction and clipboard pipeline.
+- Restore viewport and mouse interaction, maintaining caret and scroll state.
+- Harden keyboard navigation for Unicode-aware Ctrl+word progress and smart Tab alignment.
+- Make assistance caret-aware by anchoring popups to projected caret geometry.
+
+### Deprecated
+- Remove the TextMate fallback, supporting only Lezer grammars for language features. 
+
+### Security
+- Centralize runtime limits, degradation, observability, and retained-resource disposal, enhancing overall security guarantees.
+
 ## [Unreleased]
 
 ### Added
