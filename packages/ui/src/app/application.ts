@@ -80,6 +80,22 @@ export interface ApplicationOptions {
    */
   readonly readClipboardText?: ClipboardTextReader;
   /**
+   * Enable automatic operating-system text clipboard integration when {@link Application.run}
+   * starts and no custom clipboard callbacks were supplied.
+   *
+   * Defaults to `true`. Pass `false` when an application must stay isolated from the desktop
+   * clipboard; app-local copy/paste, terminal bracketed paste, and capability-gated OSC 52 output
+   * remain available.
+   *
+   * @example
+   * ```ts
+   * import { createApplication } from '@jsvision/ui';
+   *
+   * const app = createApplication({ systemClipboard: false });
+   * ```
+   */
+  readonly systemClipboard?: boolean;
+  /**
    * Portable F-key fallback for terminals or browsers that reserve physical function keys.
    * Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve
    * those Alt chords literally.
@@ -534,6 +550,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
         adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
         requireTty: opts.requireTty,
+        systemClipboard: opts.systemClipboard,
         logger: opts.logger,
         quitState,
       }),

@@ -33,6 +33,10 @@ All options are optional:
 - **`menuBar`** / **`statusLine`** — chrome rows (see `component-catalog.md`).
 - **`requireTty`** (default `true`) — `run()` asserts an interactive terminal and throws otherwise.
   Pass `false` for headless/piped runs.
+- **`systemClipboard`** (default `true`) — `run()` lazily enables operating-system text copy and
+  paste. Pass `false` to keep clipboard operations app-local, bracketed-paste-driven, or OSC 52
+  outbound only. Explicit `readClipboardText` / `writeClipboardText` callbacks override the
+  automatic pair.
 
 ## Commands
 

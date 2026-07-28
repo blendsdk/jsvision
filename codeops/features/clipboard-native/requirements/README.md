@@ -15,10 +15,10 @@ browser or capability-gated terminal hosts. Native terminal applications still c
 in stock GNOME Terminal.
 
 This feature adds optional raw-text host callbacks, ordered focus-safe asynchronous reads, and a
-`clipboardy` adapter owned only by the private `tvedit` example. SDK consumers that configure
-nothing retain the merged PR #190 behavior. Terminal bracketed paste remains an independent direct
-`PasteEvent` route, including the CodeEditor behavior tracked by issue #188. *(AR-01–AR-05,
-AR-10–AR-14)*
+lazy `clipboardy` adapter installed automatically by native `Application.run()`. Applications can
+pass `systemClipboard: false` to opt out, while explicit callbacks override the automatic pair.
+Terminal bracketed paste remains an independent direct `PasteEvent` route, including the CodeEditor
+behavior tracked by issue #188. *(AR-01–AR-05, AR-10–AR-14)*
 
 ## Selected domain lenses
 
@@ -69,14 +69,14 @@ verification concerns also apply.
 |---|---|---|---|
 | **AR** | [Ambiguity Register](00-ambiguity-register.md) | Product decisions and delegated technical design | — |
 | **RD-01** | [Host-neutral clipboard adapters](RD-01-host-neutral-clipboard-adapters.md) | Public callbacks, canonical state, ordered focus-safe reads, UTF-8 bounds, lifecycle | — |
-| **RD-02** | [`tvedit` native adapter](RD-02-tvedit-native-adapter.md) | Example-owned `clipboardy` integration and platform behavior | RD-01 |
+| **RD-02** | [Automatic native application clipboard](RD-02-tvedit-native-adapter.md) | Default-on lazy `clipboardy`, opt-out, and platform behavior | RD-01 |
 | **RD-03** | [Quality, compatibility, and release governance](RD-03-quality-compatibility-release.md) | Security, performance, tests, docs, plugin synchronization, manual evidence | RD-01, RD-02 |
 
 ## Dependency graph
 
 ```text
 RD-01 Host-neutral clipboard adapters
-  └── RD-02 tvedit native adapter
+  └── RD-02 automatic native application clipboard
         └── RD-03 Quality, compatibility, and release governance
 RD-01 ────────────────────────────────────────────────────────┘
 ```
@@ -86,7 +86,7 @@ RD-01 ────────────────────────�
 | Phase | Documents | Description |
 |---|---|---|
 | **A: Framework** | RD-01 | Specify and implement the bounded host-neutral pipeline and async invariants. |
-| **B: Native demonstration** | RD-02 | Inject `clipboardy` into `tvedit` without leaking it into SDK packages. |
+| **B: Native runtime** | RD-02 | Enable `clipboardy` automatically for native `Application.run()` with an opt-out. |
 | **C: Release evidence** | RD-03 | Complete parity, security, docs/plugin, focused gates, and manual matrix reporting. |
 
 ## Key architecture decisions
@@ -97,12 +97,12 @@ RD-01 ────────────────────────�
 | Target safety | Route, generation, lifecycle, and mount-incarnation continuity | AR-06, AR-08 |
 | Delivery | Existing `PasteEvent` route after an atomic synchronous guard | AR-05, AR-06 |
 | Byte safety | Core-owned bounded `TextEncoder.encodeInto` helper | AR-09 |
-| Dependency ownership | `clipboardy` only in private examples | AR-10, AR-11 |
+| Dependency ownership | Optional `clipboardy` dependency in published UI runtime | AR-10, AR-11 |
 | Degradation | Canonical local fallback; no polling, retries, prompts, or installs | AR-04, AR-05, AR-14, AR-17 |
 
 ## User journeys
 
-1. A local `tvedit` user selects Unicode text and presses `Ctrl+C`. JSVision commits the raw
+1. A local native-application user selects Unicode text and presses `Ctrl+C`. JSVision commits the raw
    selection locally, then the native writer makes it available to desktop applications.
 2. The user copies text in another application and presses `Ctrl+V` in a focused JSVision editor.
    JSVision captures the destination, reads asynchronously, bounds the result, revalidates the

@@ -281,8 +281,8 @@ test('Application run preserves its configured writer instead of installing OSC 
   await runPromise;
 });
 
-// An Application with no writer still installs the capability-gated OSC fallback during run.
-test('Application run without a writer retains capability-gated OSC fallback', async () => {
+// An Application that opts out of the system clipboard retains the capability-gated OSC fallback.
+test('Application run with system clipboard disabled retains capability-gated OSC fallback', async () => {
   const value = signal('terminal fallback');
   const inputView = new Input({ value });
   const runtime = new FakeRuntimeAdapter();
@@ -290,6 +290,7 @@ test('Application run without a writer retains capability-gated OSC fallback', a
   const output = new CaptureStream();
   const app = createApplication({
     caps: clipboardCaps,
+    systemClipboard: false,
     content: inputView,
     viewport: { width: 30, height: 4 },
     runtime,

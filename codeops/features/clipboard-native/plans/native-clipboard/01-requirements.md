@@ -9,7 +9,7 @@
 | Requirement | Plan ownership | Acceptance summary |
 |---|---|---|
 | [RD-01](../../requirements/RD-01-host-neutral-clipboard-adapters.md) | 03-01, 03-02, 03-03 | Optional raw-text seams; canonical write/read; ordering; destination continuity; lifecycle and UTF-8 bounds |
-| [RD-02](../../requirements/RD-02-tvedit-native-adapter.md) | 03-04 | Private examples dependency, async `clipboardy` mapping, injection, headless degradation |
+| [RD-02](../../requirements/RD-02-tvedit-native-adapter.md) | 03-04, 99 Phase 5 | Automatic lazy UI adapter, opt-out, custom precedence, headless degradation |
 | [RD-03](../../requirements/RD-03-quality-compatibility-release.md) | 03-05, 07, 99 | Immutable specs, compatibility/security coverage, docs/plugin sync, automated and manual evidence |
 
 ## Plan-level acceptance criteria
@@ -24,8 +24,8 @@
 5. Direct native strings are bounded to `PASTE_CAP_BYTES` without splitting a Unicode code point.
 6. Empty success clears canonical state and performs no edit; failure falls back once to the
    canonical value at ordered delivery.
-7. `clipboardy` is a private examples runtime dependency and automated tests use injected fakes,
-   never the machine clipboard.
+7. `clipboardy` is an optional UI runtime dependency loaded on first use; automated tests use
+   injected or mocked methods, never the machine clipboard.
 8. Clipboard contents, derived previews, thrown host values, stderr, and helper details are absent
    from logs.
 9. Consumer documentation and every impacted canonical/generated plugin surface are synchronized.

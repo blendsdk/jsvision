@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 20:15 UTC
-> **Progress**: 26/26 tasks (100%)
+> **Last Updated**: 2026-07-28 21:27 UTC
+> **Progress**: 30/30 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -21,7 +21,8 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 | 2 | Host-neutral API and ordered focus-safe read pipeline | 9 |
 | 3 | Private `tvedit` `clipboardy` adapter | 5 |
 | 4 | Documentation, plugin, and release evidence | 6 |
-|  | **Total** | **26** |
+| 5 | Default-on application clipboard amendment | 4 |
+|  | **Total** | **30** |
 
 ## Phase 1: Core bounding and widget parity
 
@@ -165,6 +166,34 @@ evidence.
 
 **Verify**: `yarn verify`
 
+## Phase 5: Default-on application clipboard amendment
+
+> **Trigger**: Interactive stock-Ubuntu validation proved the `tvedit` adapter, then exposed that
+> the kitchen-sink application did not receive it. The user required system-wide automatic behavior
+> with an opt-out.
+> **Expected modification set**: UI application runtime/options/tests/package manifest, removal of
+> the superseded example-only adapter, consumer/skill/plugin docs, dependency and release evidence
+
+- [x] 5.1.1 Add specifications for zero-configuration native copy/paste, explicit
+  `systemClipboard: false`, custom callback precedence, lazy loading, exact text, ordering, and
+  rejection recovery; record the expected red default-on case.
+  ✅ (completed: 2026-07-28 20:33; default app produced no native write before implementation)
+- [x] 5.2.1 Move the ordered async adapter into the application runtime, install it lazily by
+  default, retain OSC 52 on opt-out, and move `clipboardy` to the UI optional dependency surface.
+  ✅ (completed: 2026-07-28 20:40; UI 2003/2003 tests pass)
+- [x] 5.3.1 Remove `tvedit`-specific wiring, update public docs/requirements/skill guidance,
+  regenerate plugin artifacts, and prove the browser production build remains valid.
+  ✅ (completed: 2026-07-28 20:43; plugin integrity and VitePress production build pass)
+- [x] 5.4.1 Run authoritative `yarn verify`, review the complete diff and dependency ownership,
+  update final evidence, then commit and push the PR amendment.
+  ✅ (completed: 2026-07-28 21:27; `yarn verify` passed with 38/38 package tasks, 2008 UI tests,
+  all serial performance gates, and plugin integrity; independent quality findings fixed)
+
+**Deliverable**: Every native application using `Application.run()` receives the system text
+clipboard automatically, with explicit opt-out and custom-host override paths.
+
+**Verify**: `yarn verify`
+
 ## Dependencies
 
 ```text
@@ -175,11 +204,13 @@ Phase 2 framework API and scheduler
 Phase 3 native example integration
     ↓
 Phase 4 docs/plugin/release closure
+    ↓
+Phase 5 default-on application amendment
 ```
 
 ## Completion criteria
 
-1. All 26 tasks are verified in specification-first order.
+1. All 30 tasks are verified in specification-first order.
 2. RD-01, RD-02, and RD-03 acceptance criteria pass without weakening immutable specifications.
 3. No unresolved critical or major reviewer/auditor finding remains.
 4. `yarn plugin:check` and authoritative `yarn verify` pass.
