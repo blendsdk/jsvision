@@ -22,9 +22,12 @@ export interface EditorCommandSeam {
 /** Construction options for {@link Editor}. Every field is optional — a bare `new Editor()` is fully usable. */
 export interface EditorOptions {
   /**
-   * The shared clipboard editor. There is no implicit default: without one, in-app Cut/Copy/Paste
-   * between editors is a no-op. Pass the same `Editor` instance to every editor that should share a
-   * clipboard (typically a single hidden editor).
+   * An optional editor that exposes clipboard contents.
+   *
+   * The application event loop owns the canonical clipboard, so ordinary in-app Cut/Copy/Paste
+   * works without this option. Pass the same `Editor` instance when an application needs a visible
+   * projection, as in the editor demonstration. Editing the projection does not replace the
+   * canonical value until the edited text is explicitly copied.
    */
   clipboard?: Editor;
   /** Handler for find/replace/save prompts. Defaults to a handler that cancels every prompt. */

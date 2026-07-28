@@ -181,6 +181,8 @@ class EventLoopImpl implements EventLoop {
   onCaret?: (cell: Point | null) => void;
   /** Called with a clipboard sequence on copy/cut; wired to the host by `run()`. See {@link EventLoop.writeClipboard}. */
   writeClipboard?: (seq: string) => void;
+  /** Called with raw clipboard text on copy/cut. See {@link EventLoop.writeClipboardText}. */
+  writeClipboardText?: (text: string) => void | Promise<void>;
   /** Called on resize after reflow; wired by the app. See {@link EventLoop.onResize}. */
   onResize?: (size: Size2D) => void;
   /** Host for anchored dropdown popups; wired by the app. See {@link EventLoop.popupHost}. */
@@ -283,6 +285,9 @@ class EventLoopImpl implements EventLoop {
   dispatch(event: AppEvent): void {
     this.runTick(() => {
       const routedEvent = event.type === 'key' ? normalizeFunctionKey(event, this.functionKeyFallback) : event;
+      // Host paste is another entry into the same clipboard pipeline. Adopt it before routing so
+      // every editable control inserts the event and a later Ctrl+V repeats the same host text.
+      if (routedEvent.type === 'paste') this.clipboardText = routedEvent.text;
       // Compute the consecutive same-cell click count for a mouse-down and attach it to the event as
       // `clickCount`, so a view can tell a single click from a double-click. Only mouse-downs carry
       // it; every other event queues with `clickCount` undefined.
@@ -544,12 +549,15 @@ class EventLoopImpl implements EventLoop {
       // A view checks this to detect that its capture was lost externally (a modal opened, the target
       // unmounted). The stale-target release above means this reflects the live capture.
       hasCapture: (view) => this.captureTarget === view,
-      // Clipboard write a control requests from its onEvent (Input/Editor copy/cut). A dual sink: it
-      // fills the app-local buffer (which powers in-app paste, unconditional so it works even when the
-      // OS write is a headless no-op) AND encodes/sanitizes the text for the terminal, handing it to
-      // the host writer.
+      // Clipboard write a control requests from its onEvent (Input/Editor copy/cut). Commit locally
+      // first, then offer raw text to a modern host adapter. Direct terminal integrations that still
+      // use the legacy sink receive a capability-gated OSC 52 sequence instead.
       setClipboard: (text) => {
-        this.clipboardText = text; // app-local buffer — independent of terminal capability
+        this.clipboardText = text;
+        if (this.writeClipboardText !== undefined) {
+          this.mirrorClipboardText(text);
+          return;
+        }
         const seq = setClipboard(text, this.caps);
         if (seq !== '') this.writeClipboard?.(seq);
       },
@@ -579,6 +587,25 @@ class EventLoopImpl implements EventLoop {
           deliver: (view, mouseEv) => this.deliver(view, mouseEv),
         }),
     };
+  }
+
+  /**
+   * Notify the raw-text host sink without allowing host failures to affect local clipboard state.
+   *
+   * Clipboard payloads are deliberately absent from diagnostics. A browser permission error may
+   * include host-controlled text, so logging the thrown value could disclose clipboard contents.
+   */
+  private mirrorClipboardText(text: string): void {
+    const sink = this.writeClipboardText;
+    if (sink === undefined) return;
+    try {
+      const pending = sink(text);
+      if (pending !== undefined) {
+        void pending.catch(() => this.logger.warn('clipboard', 'host clipboard write failed'));
+      }
+    } catch {
+      this.logger.warn('clipboard', 'host clipboard write failed');
+    }
   }
 
   /**

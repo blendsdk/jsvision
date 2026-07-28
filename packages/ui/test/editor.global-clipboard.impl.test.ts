@@ -1,11 +1,10 @@
 /**
- * Implementation tests — global clipboard, Editor internals & edges: the paste-source precedence (an
- * injected clipboard editor wins over the app-local buffer when both hold text) and paste recorded as
- * a single undo step. Complements the ST-19/22/23 oracles in the spec file.
+ * Implementation tests — global clipboard, Editor internals, visible projection synchronization,
+ * and paste recorded as a single undo step. Complements the public clipboard specification.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import type { KeyEvent, CapabilityProfile } from '@jsvision/core';
+import type { KeyEvent, PasteEvent, CapabilityProfile } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
@@ -18,6 +17,11 @@ const capsClip: CapabilityProfile = { ...base, osc: { ...base.osc, clipboard52: 
 
 function key(k: string, mods: Partial<Pick<KeyEvent, 'alt' | 'ctrl' | 'shift'>> = {}): KeyEvent {
   return { type: 'key', key: k, ctrl: false, alt: false, shift: false, ...mods };
+}
+
+/** Create an untruncated external paste event. */
+function paste(text: string): PasteEvent {
+  return { type: 'paste', text, truncated: false };
 }
 
 /** Mount an `Editor` (optional injected clipboard editor) and an `Input` sharing one loop's buffer. */
@@ -38,7 +42,7 @@ function mount(edText: string, inputText: string, clipboard?: Editor) {
   return { loop, ed, input };
 }
 
-test('an injected clipboard editor with text wins over the app-local buffer', () => {
+test('the canonical clipboard replaces stale projected text before Editor paste', () => {
   const clip = new Editor();
   clip.setText('FROM_CLIP');
   clip.setSelect(0, 'FROM_CLIP'.length, false); // the clipboard editor holds its text selected
@@ -48,10 +52,30 @@ test('an injected clipboard editor with text wins over the app-local buffer', ()
   loop.focusView(input);
   loop.dispatch(key('a', { ctrl: true }));
   loop.dispatch(key('c', { ctrl: true })); // buffer := "FROM_BUFFER"
+  expect(clip.getText()).toBe('FROM_BUFFER');
+  expect(clip.selectionText()).toBe('FROM_BUFFER');
 
   loop.focusView(ed);
-  loop.dispatch(key('v', { ctrl: true })); // paste — the injected clipboard editor takes precedence
-  expect(ed.getText()).toBe('FROM_CLIP');
+  loop.dispatch(key('v', { ctrl: true }));
+  expect(ed.getText()).toBe('FROM_BUFFER');
+  expect(clip.getText()).toBe('FROM_BUFFER');
+  expect(clip.selectionText()).toBe('FROM_BUFFER');
+});
+
+test('external paste refreshes the visible projection and remains repeatable in Editor', () => {
+  const clip = new Editor();
+  clip.setText('STALE');
+  clip.setSelect(0, 'STALE'.length, false);
+  const { loop, ed, input } = mount('', '', clip);
+
+  loop.focusView(input);
+  loop.dispatch(paste('host\r\ntext'));
+  expect(clip.getText()).toBe('host\r\ntext');
+  expect(clip.selectionText()).toBe('host\r\ntext');
+
+  loop.focusView(ed);
+  loop.dispatch(key('v', { ctrl: true }));
+  expect(ed.getText()).toBe('host\ntext');
 });
 
 test('a cross-widget paste into the Editor is a single undo step', () => {

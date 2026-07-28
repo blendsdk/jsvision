@@ -177,7 +177,8 @@ interface EventLoop {
   onCaret?: (cell: Point | null) => void;   // Called right after onFrame at every frame with the focused view's absolute caret cell, or `null` when nothing is focused or the focused view wants no visible caret. Wire it to move the terminal's hardware cursor. It reads the persisted view origin, so the caret position stays correct even on a partial repaint that skips the focused view. `undefined` ⇒ no caret output.
   onResize?: (size: Size2D) => void;   // Called inside resize after the reflow settles the new geometry, so a handler can re-anchor viewport-sized chrome against fresh bounds (the app uses it to re-fit maximized windows and re-anchor the open menu). The loop repaints once more afterward so the adjustment is visible. `undefined` ⇒ resize only reflows.
   refreshCaret(): void;   // Re-send the current caret cell to onCaret out of band. `run()` calls it once after the first frame (which is painted directly, not through a tick) to position the initial cursor. A no-op when `onCaret` is unset.
-  writeClipboard?: (seq: string) => void;   // Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the loop encodes and sanitizes it for you). Wire it to your output stream. `undefined` ⇒ clipboard writes are dropped, so copy/cut is a safe no-op headlessly.
+  writeClipboard?: (seq: string) => void;   // Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the loop encodes and sanitizes it for you). This legacy sink remains available for direct terminal integrations. New hosts should prefer writeClipboardText, which receives raw text before host-specific encoding. When both sinks are set, only `writeClipboardText` is called.
+  writeClipboardText?: (text: string) => void | Promise<void>;   // Called with raw plain text after copy or cut commits it to the loop's canonical clipboard. The host owns any required conversion: browser hosts call the Clipboard API, while native terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or rejected promise is isolated and never rolls back the canonical clipboard value.
   popupHost?: PopupHost;   // The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into. `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a dropdown is a safe no-op; a standalone `Dialog` can supply its own.
 }
 ```
@@ -259,7 +260,7 @@ interface MenuLoopSeam {
   commandsVersion(): number;   // A tick that changes on any command-enablement change; the bar binds it so greying repaints live.
   focusView(view: View): void;   // Focus a view — used to restore the pre-menu focus when the menu closes.
   getFocused(): View | null;   // The currently-focused view, captured when a menu opens so it can be restored on close.
-  dismissAccelerators(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
+  dismissAccelerators?(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
 }
 ```
 

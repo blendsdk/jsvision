@@ -47,7 +47,7 @@ export const inputStory: Story = {
     );
     g.add(
       at(
-        new Text('Shift+←/→ select · Ctrl+Ins copy · Shift+Ins paste · Shift+Del cut · the caret shows.'),
+        new Text('Shift+←/→ select · Ctrl+C/X/V copy/cut/paste · host paste updates the same clipboard.'),
         1,
         7,
         width,

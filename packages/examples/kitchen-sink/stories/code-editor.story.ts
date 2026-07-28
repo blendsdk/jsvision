@@ -38,6 +38,7 @@ export const codeEditorStory: Story & {
   stateEcho: 'TypeScript · Ln 1, Col 1 · ready · writable',
   interactionHints: Object.freeze([
     'Type to edit',
+    'Ctrl+C/X/V clipboard',
     'Ctrl-F search',
     'Ctrl-Space completion',
     'Ctrl-[ fold',
