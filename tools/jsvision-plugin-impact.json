@@ -139,6 +139,16 @@
       "references": [
         "references/recipes"
       ]
+    },
+    {
+      "name": "native-clipboard-example",
+      "paths": [
+        "packages/examples/tvedit-demo"
+      ],
+      "references": [
+        "references/architecture.md",
+        "references/gotchas.md"
+      ]
     }
   ],
   "fingerprints": {
@@ -152,6 +162,7 @@
     "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
     "web": "9c6e81ba56a4be69593dd9dac339c4653273f33ad26b8c183dec4d2e2d562407",
     "code-editor": "0405c87179c8e093f46dd1669f07b309620e8f62a8a10ecc949993d600c92ac0",
-    "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
+    "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4",
+    "native-clipboard-example": "8912ef41ae049caa2779042900332fc0688ffe4f7836aee71ab8b0e9aa9d9ee4"
   }
 }

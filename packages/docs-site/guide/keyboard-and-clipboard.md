@@ -34,32 +34,91 @@ control inserts it, so a later `Ctrl+V` repeats the same text. **`Ctrl+Shift+C`*
 when the host delivers it to JSVision; the browser mount routes it deliberately because terminal
 frontends commonly reserve that chord for terminal selection.
 
+Bracketed paste is a separate direct input path. A decoded bracketed-paste event never calls a
+configured native reader, and it retains the terminal decoder's truncation metadata.
+
 ## Host behavior
 
 The clipboard model is portable across Windows, macOS, and Linux, but host synchronization depends
 on the hosting environment:
 
-- Browser mounts write raw text through the browser Clipboard API. Browsers may require focus,
-  a user gesture, a secure context, or clipboard permission. A rejection leaves the JSVision
-  clipboard intact.
-- Native terminal applications write an OSC 52 sequence only when terminal capabilities advertise
-  support. Terminal emulators, multiplexers, and security policies may disable it.
-- JSVision does not run platform-specific clipboard executables and does not read the native
-  operating-system clipboard directly. Native host paste arrives through the terminal's paste
-  event.
+- Browser mounts are outbound-only: they write raw text through the browser Clipboard API but do
+  not install a native reader. Browsers may require focus, a user gesture, a secure context, or
+  clipboard permission. A rejection leaves the JSVision clipboard intact.
+- OSC 52 is a capability-gated outbound copy path for native terminals. Terminal emulators,
+  multiplexers, and security policies may disable it; OSC 52 does not provide native reads here.
+- A native host can inject raw reader and writer callbacks. The UI SDK does not choose platform
+  helpers or run clipboard executables itself.
 
 This means `Ctrl+C`/`Ctrl+V` is the consistent application command set. Host gestures are aliases
-into the same pipeline, not a second clipboard implementation.
+into the same pipeline, not a second clipboard implementation. Terminals commonly own
+`Ctrl+Shift+C` and `Ctrl+Shift+V`, so applications must not rely on receiving those shifted
+shortcuts.
 
-The application shell installs this by default. Choose which chord sets are bound with
+## Configure a host adapter
+
+`writeClipboardText` receives exact raw text after copy or cut commits it to the canonical
+app-local clipboard. `readClipboardText` returns exact raw text for an otherwise-unhandled paste
+command. Neither callback should normalize Unicode or line endings.
+
+```ts
+import { createApplication, createEventLoop } from '@jsvision/ui';
+
+const hostClipboard = {
+  read: async (): Promise<string> => nativeClipboard.read(),
+  write: async (text: string): Promise<void> => nativeClipboard.write(text),
+};
+
+const app = createApplication({
+  readClipboardText: hostClipboard.read,
+  writeClipboardText: hostClipboard.write,
+});
+
+const loop = createEventLoop(
+  { width: 80, height: 24 },
+  {
+    caps,
+    readClipboardText: hostClipboard.read,
+    writeClipboardText: hostClipboard.write,
+  },
+);
+```
+
+Copy and cut are canonical-first: local state commits before host synchronization begins. A host
+failure never rolls it back. Native reads start one at a time in gesture order without blocking
+input or rendering. A result is delivered only while the original focus route remains continuously
+valid. Focus or modal changes, unmount/remount, stop, and dispose make the result stale and discard
+it.
+
+Successful native text is bounded to a 1 MiB UTF-8 byte prefix without splitting a code point; an
+over-cap paste reports truncation. A successful empty read clears canonical state but is a no-op
+without editing the focused widget. A read failure emits one payload-free warning and delivers the
+current app-local canonical value as the ordered fallback. Clipboard payloads and host error
+details are never logged.
+
+The private `tvedit` example demonstrates this boundary with `clipboardy`, which is owned only by
+the examples package:
+
+- macOS uses the helpers selected by `clipboardy`, such as `pbcopy` and `pbpaste`.
+- Windows uses its PowerShell/native helper path.
+- Linux supports X11 and Wayland when the required desktop/session helpers are available.
+- Headless and SSH sessions may have no system clipboard. A missing helper leaves the app usable
+  through canonical fallback.
+
+JSVision does not install platform helpers, alter permissions, retry, or poll. The native adapter
+has no timeout; a hung host operation holds later native operations in order while input, rendering,
+and application stop remain non-blocking.
+
+## Choose clipboard chords
+
+The application shell installs clipboard chords by default. Choose which sets are bound with
 `clipboardKeys` on `createApplication` (or `createEventLoop`):
 
 ```ts
 import { createApplication } from '@jsvision/ui';
 
 // 'both' (default) = modern Ctrl+A/C/X/V + the classic Ins/Del aliases.
-// Use 'modern', 'classic', or 'none' to free keys for your own bindings — e.g. an
-// control that needs Ctrl-letter chords sets clipboardKeys: 'none'.
+// Use 'modern', 'classic', or 'none' to free keys for your own bindings.
 const app = createApplication({ clipboardKeys: 'both' });
 ```
 

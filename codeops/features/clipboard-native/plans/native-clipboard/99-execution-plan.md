@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:51 UTC
-> **Progress**: 22/26 tasks (85%)
+> **Last Updated**: 2026-07-28 19:58 UTC
+> **Progress**: 24/26 tasks (92%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -143,13 +143,17 @@ native paste.
 - [x] 4.1.2 Run focused Phase 4 specifications and record expected failures before documentation
   changes.
   ✅ (completed: 2026-07-28 19:51; seven semantic documentation/plugin checks failed as expected)
-- [~] 4.2.1 Complete public JSDoc and consumer docs/examples; regenerate API documentation and run
+- [x] 4.2.1 Complete public JSDoc and consumer docs/examples; regenerate API documentation and run
   docs checks.
-  ⏳ (started: 2026-07-28 19:51)
-- [ ] 4.2.2 Run source-impact analysis, update every reported canonical skill reference/recipe and
+  ✅ (completed: 2026-07-28 19:58; API generation, docs typecheck, 102 tests, and VitePress build
+  pass)
+- [x] 4.2.2 Run source-impact analysis, update every reported canonical skill reference/recipe and
   mapping when necessary, run `yarn plugin:update`, and inspect all generated output.
-- [ ] 4.3.1 Turn docs/plugin specifications green; run `yarn plugin:check`; finish and truthfully
+  ✅ (completed: 2026-07-28 19:58; canonical architecture/gotchas and tvedit impact route updated;
+  generated plugin inspected and integrity passes)
+- [~] 4.3.1 Turn docs/plugin specifications green; run `yarn plugin:check`; finish and truthfully
   record the available OS/terminal/headless manual matrix.
+  ⏳ (started: 2026-07-28 19:58)
 - [ ] 4.3.2 Run final focused suites and `yarn verify`; synchronize traceability/execution evidence;
   complete reviewer/auditor quality loop and report issue #191 acceptance without mutating GitHub.
 

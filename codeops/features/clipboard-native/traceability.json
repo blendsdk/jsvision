@@ -1698,6 +1698,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Consumer clipboard guide completed and public API documentation regenerated",
+        "verificationEvidence:Docs API generation, docs-site typecheck, 102 unit tests, and VitePress production build pass"
+      ],
       "id": "TASK-4-2-1",
       "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
       "semanticSources": [
@@ -1710,13 +1714,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Documentation, plugin, and release task 4-2-1",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Canonical clipboard guidance and dedicated tvedit impact routing updated; generated plugin synchronized",
+        "verificationEvidence:Seven semantic documentation/plugin specifications and yarn plugin:check pass after generator-owned synchronization"
+      ],
       "id": "TASK-4-2-2",
       "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
       "semanticSources": [
@@ -1729,7 +1737,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Documentation, plugin, and release task 4-2-2",
       "type": "task",
       "validations": []
