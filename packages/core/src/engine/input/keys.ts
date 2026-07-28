@@ -383,7 +383,16 @@ function decodeSingle(buf: Uint8Array, i: number): KeyDecode {
       end: i + 1,
     };
   }
-  // Other C0 controls (0x00, 0x1c–0x1f) are dropped (no defined key).
+  // Classic terminals encode Ctrl+/ (also historically Ctrl+_) as Unit Separator. Expose the
+  // modern source-editor chord while keeping every other otherwise-unassigned C0 byte dropped.
+  if (b === 0x1f) {
+    return {
+      status: 'event',
+      event: { type: 'key', key: '/', ctrl: true, alt: false, shift: false },
+      end: i + 1,
+    };
+  }
+  // Other C0 controls (0x00, 0x1c–0x1e) are dropped (no defined key).
   if (b < 0x20) {
     return { status: 'drop', end: i + 1 };
   }

@@ -1,0 +1,410 @@
+{
+  "schema": 2,
+  "reviews": [
+    {
+      "package": "ui",
+      "locale": "nl",
+      "digest": "d9aa80cb4d3f3cde2a38b24d99c58cb24731769688a60f384eaa388f4c23f391",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "de",
+      "digest": "e085b2650ec150d739e6e898a86f4b70e7ad17e3c321d33c4e21d421797bc6e4",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "fr",
+      "digest": "217b63b6ad43d99bae7cb81d79eca92a473c85b07334f2a6d610e77b9d44382f",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "es",
+      "digest": "e69fdb82ef55cf1514a186e5d931cbd0dfa62d334e8048b9f47c9982a872ae75",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "it",
+      "digest": "95122858c6c2ca3df92616abd5ec627733b46ab7dde66f2a22fa6972701055ee",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "pt-PT",
+      "digest": "e9a43a5e4abd365bcb65ad846533cf40a6c6f06a8f460897c32046193f2f8bba",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "pl",
+      "digest": "be1231c215c531ee904683f63451d552e682cc693d52559257e0f98493ff9f80",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "ro",
+      "digest": "10d9e3ff615fad258f3a4450c6c4d08f16c418281449d7b95312d93861d4e6aa",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "ui",
+      "locale": "sv",
+      "digest": "325275c7ddce72d0c03df42aea477a5be5b2421e2358b0a4c6b71ae3c06c85ee",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "nl",
+      "digest": "857dab6d83bafa69834154bff9f468921e84602a22e67f3cb567a09e257c30fb",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "de",
+      "digest": "4ac6e458a260ccacdd410143dd0207ed6b69c3f44ff0766dc400ec824d61a766",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "fr",
+      "digest": "c3752a3c79bdc17da0d1c375dec973759dfe8b9ef19846204a9365b78a1e3f9e",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "es",
+      "digest": "eae3de37228385e2c3a2dc6f1f092246c70e179ad3309916e2f0205b0a88b96d",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "it",
+      "digest": "dc94b648be169b0a1c777c9b504b0854dd66c3871f353706e2401b6b0c22759c",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "pt-PT",
+      "digest": "78f832fe5e1fa625519ad0965f19d12f053801742eff61e545ade32af192e0b6",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "pl",
+      "digest": "543016c486bae673251cf836790e7ce9a15bcb5615466af2285d5ab3965582cd",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "ro",
+      "digest": "0430cb388df2f6820f6a6acd65d7076d2e5b21442e3142bab1166fe87b5d56c6",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "forms",
+      "locale": "sv",
+      "digest": "3b5eec75e767e7f1971f4e59d00e2409a127857f720b9b6ebd9835265e71a896",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "nl",
+      "digest": "f9f5f641a9e6880195b5960c10f2ae14c1fac0c6dfc932825c1ad2d8c8b7a881",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "de",
+      "digest": "1e663e501ee25dcbe1776be023a899b0397e0beda78529dfcb81ba24149caaa3",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "fr",
+      "digest": "d08d3a6688bc67ca4f5dd7b8b4d0440312e105b0756ce26bc312bedc648fa3d7",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "es",
+      "digest": "c70079501ef68ed577be3f849357e2d1491ff8f148f2f6340a3cd893eb490ba2",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "it",
+      "digest": "21c486722cec197d5ee8a2261f217b974bca405322999d92653266c6d8038bf4",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "pt-PT",
+      "digest": "bba04b7f4172f482ed78017ffa36a19d7086b073bac55c87bdfd8ce2283279ee",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "pl",
+      "digest": "e4f9683b1901d63e54ccfbed921daea261234c3c16e3683763a3d3da185a6109",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "ro",
+      "digest": "dc430e20e1e1eda3dff1483b7766410ec4526517c8f80b4857abbc377cf41d70",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "files",
+      "locale": "sv",
+      "digest": "4865c2c8d1cf53cd265b5e5689dc31a33cac96c136a9f0b4a1f67b7e6ca4a4c5",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "nl",
+      "digest": "c24415d961b455cd95134cfc2cdcf9491fdc6bed99ac18ec0aeb4baaf4b8c2f7",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "de",
+      "digest": "87da2d6505c12db2088be513eb7ff341dbe5d646d335fedb1c9b1656668c188d",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "fr",
+      "digest": "356a6866ccf801e565b534788b85a7751eb344466b0f23286b922f94658c9d1c",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "es",
+      "digest": "81da8001bb12563e42be34f75edcebd5f04c3d54648f62175963dace5e5bc070",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "it",
+      "digest": "da427966ba8b94ed090926983fc4c6d4c1e6c9b47a9e774ab7e53ef63bb934d0",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "pt-PT",
+      "digest": "c2b05cc86ac28335f0f6d9c7fbc92edae6ef323ec8998a5326f63c5d118b4c03",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "pl",
+      "digest": "1ad3972fd1710066bab923782ce95e9dbf90d74c082614a38174e6e4c64734ea",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "ro",
+      "digest": "7c332211d34bfaedc5b7127efc7291337d27b4b9fa6781d618b75f887d59948c",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "datagrid",
+      "locale": "sv",
+      "digest": "8127404ab0517154b1707287662bde7bcc89962d8377d716cdcc0f613c29e79f",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "nl",
+      "digest": "2e8b94cc356bb4ac28207045185eaa57113e02fb8d37834feab935981395cf7f",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "de",
+      "digest": "ed2a7df0bee79d08bbf76d2fee188d24c3543e725d636daf2c88146a8bb73d9a",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "fr",
+      "digest": "707b4ebc731f1ade722d21871423b168e00eb1e4a8fed2ed5daa3b7e60dfa92b",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "es",
+      "digest": "80244d9a76690499726ceb094f34578ea28cefaeeb797b5229e66083efe00431",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "it",
+      "digest": "167a80f9ff3463668b4b6c9654551e30696bdb9f5f73e04ce9012f433ebb5598",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "pt-PT",
+      "digest": "fc58a1f776f65813194f5da7d198556f6b84c53dfdfc1a312c0d78d6080a8c7d",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "pl",
+      "digest": "7d1df6619caf6391b4aea51ce6b33cc6a2979b40120a67d62124605d8ae17855",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "ro",
+      "digest": "29d5e437b09c1b189cba27a530bfb351fbad01ba0dfe5e829bf2c45d1db82278",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    },
+    {
+      "package": "code-editor",
+      "locale": "sv",
+      "digest": "56dab28e97c38fc613638ad43ad54e6275aa03659ba5e5f7875a4efd0d86c418",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-07-28",
+      "status": "approved"
+    }
+  ]
+}

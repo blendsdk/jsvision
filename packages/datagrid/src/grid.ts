@@ -12,6 +12,7 @@
  * builds a multi-key priority sort); the body reflects the container's live sort model. An absolute
  * overlay on top hosts the cell editor while an edit is open.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal, cover } from '@jsvision/ui';
 import type { Column, DispatchEvent, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
@@ -52,12 +53,13 @@ import { buildMessageBand, createRowGate } from './validation.js';
 import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
+import { createEnglishDatagridI18n } from './i18n/catalog.js';
 
 /**
- * The filter popup's width, and the **worst-case** height it mounts at — wide enough for the operator
- * selector and operands, tall enough for the condition section plus a full value-list. The popup then
- * auto-sizes down to its actual content, so it only ever shrinks from this height and never needs
- * re-clamping to stay on-screen. It clips against a short grid; a taller viewport shows it whole.
+ * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
+ * immediately replaces it with the built-in popup's translated content geometry and re-clamps on
+ * later operator or distinct-value changes. Custom popups without `desiredSize()` retain this mount
+ * contract unless they supply their own absolute size.
  */
 const FILTER_POPUP_WIDTH = 34;
 const FILTER_POPUP_HEIGHT = 26;
@@ -68,6 +70,8 @@ export interface EditableDataGridOptions<T> {
   readonly columns: GridColumn<T>[];
   /** The data source (carries the required `rowKey`). */
   readonly source: GridDataSource<T>;
+  /** Translation service for package-owned text; defaults to an isolated English service. */
+  readonly i18n?: I18n;
   /** Stripe odd rows for readability (default `false`). */
   readonly zebra?: boolean;
   /**
@@ -447,6 +451,10 @@ export class EditableDataGrid<T> extends Group {
   // `source`, `columnMap`, and `display` are instance fields (not constructor locals) because the sort
   // API methods below — `applySort`/`sortBy`/`addSort` — read them.
   private readonly source: GridDataSource<T>;
+  /** Translation service used by package-owned grid surfaces. */
+  readonly i18n: I18n;
+  /** Explicit service for locale-sensitive data affordances; omission preserves ambient behavior. */
+  private readonly comparisonI18n?: I18n;
   private readonly columnMap: ReadonlyMap<string, GridColumn<T>>;
   private readonly display: () => T[];
   // Computed once at construction: a windowed source (one exposing `ensureRange`) takes the lazy read
@@ -468,6 +476,8 @@ export class EditableDataGrid<T> extends Group {
    */
   constructor(opts: EditableDataGridOptions<T>) {
     super();
+    this.i18n = opts.i18n ?? createEnglishDatagridI18n();
+    this.comparisonI18n = opts.i18n;
     const engineCols: Column<T>[] = opts.columns.map((c) => toEngineColumn(c));
     this.engineCols = engineCols;
     this.columnIndex = new Map(opts.columns.map((c, i) => [c.id, i]));
@@ -495,7 +505,7 @@ export class EditableDataGrid<T> extends Group {
       this.source.revision?.(); // windowed: a landed page bumps this → fresh identity → repaint
       if (this.windowed) return windowedView(this.source); // length-correct lazy view; no materialize/client sort/filter
       let rows = materialize(this.source);
-      if (!this.source.setFilter) rows = filterRows(rows, this.filters(), this.columnMap);
+      if (!this.source.setFilter) rows = filterRows(rows, this.filters(), this.columnMap, this.comparisonI18n);
       if (!this.source.setSort) rows = sortRowsMulti(rows, this.sortKeys(), this.columnMap);
       return rows;
     });
@@ -625,10 +635,10 @@ export class EditableDataGrid<T> extends Group {
     // Lifecycle: the controller drives the body-region swap (loading/error) from the caller `status`; the
     // empty state is rendered by the body via `emptyResolver` (filter-aware). A grid with neither `status`
     // nor `emptyText` gets no swap host and no resolver — its zero-row body stays the plain `<empty>`.
-    this.lifecycle = createLifecycleController({ status: opts.status });
+    this.lifecycle = createLifecycleController({ status: opts.status, i18n: this.i18n });
     const emptyResolver =
       opts.status !== undefined || opts.emptyText !== undefined
-        ? (): string => emptyMessage(opts.emptyText, this.filteredCount(), this.totalCount())
+        ? (): string => emptyMessage(opts.emptyText, this.filteredCount(), this.totalCount(), this.i18n)
         : undefined;
 
     this._bodyDeps = {
@@ -1454,7 +1464,10 @@ export class EditableDataGrid<T> extends Group {
       devWarn('windowed-distinct', `column "${columnId}" needs source.distinct for a value-list on a windowed source.`);
       return Promise.resolve({ values: [], truncated: false });
     }
-    return Promise.resolve({ values: computeDistinct(materialize(this.source), col), truncated: false });
+    return Promise.resolve({
+      values: computeDistinct(materialize(this.source), col, this.comparisonI18n),
+      truncated: false,
+    });
   }
 
   /**
@@ -1519,7 +1532,9 @@ export class EditableDataGrid<T> extends Group {
         columnId,
         filterType,
         current: this.filters().get(columnId),
+        i18n: this.comparisonI18n,
         distinct: () => this.distinctFor(columnId), // embeds the value-list section
+        availableWidth: this.bounds.width,
         onApply: (id, next) => this.setFilter(id, next),
         onClear: (id) => this.clearFilter(id),
         onClose: () => this.closeFilterPopup(),

@@ -26,14 +26,23 @@ export interface ModalFocus {
 
 /** The open-modal stack. While `isActive()`, input is confined to `topView()`. */
 export interface ModalManager {
+  /** Monotonic counter incremented whenever the active modal stack changes. */
+  version(): number;
   /** Whether any modal is open. */
   isActive(): boolean;
   /** The top modal's subtree root (where input is confined), or `null` when none is open. */
   topView(): View | null;
   /** Open `view` as a modal: save the current focus, push it, and focus into it. */
-  begin<R>(view: View, resolve: (result: R) => void): void;
+  begin<R>(view: View, resolve: (result: R | undefined) => void): void;
   /** Close the top modal: restore the saved focus and resolve its promise. A no-op when none is open. */
   end<R>(result: R): void;
+  /**
+   * Permanently release every modal frame during loop disposal.
+   *
+   * Pending modal promises resolve with `undefined` because their host has been detached and can no
+   * longer produce a user result. Focus is not restored into the tree being torn down.
+   */
+  dispose(): void;
 }
 
 /**
@@ -44,6 +53,7 @@ export interface ModalManager {
  */
 export function createModalManager(focus: ModalFocus): ModalManager {
   const stack: ModalFrame[] = [];
+  let generation = 0;
 
   const isActive = (): boolean => stack.length > 0;
 
@@ -52,21 +62,28 @@ export function createModalManager(focus: ModalFocus): ModalManager {
     return top !== undefined ? top.view : null;
   };
 
-  const begin = <R>(view: View, resolve: (result: R) => void): void => {
+  const begin = <R>(view: View, resolve: (result: R | undefined) => void): void => {
     const savedFocus = focus.getFocused();
     // Each modal on the stack resolves with its own result type; erase the resolver to `unknown`
     // here and pass the caller's result back through it in `end`.
     stack.push({ view, savedFocus, resolve: resolve as (result: unknown) => void });
+    generation += 1;
     focus.focusInto(view); // focus the modal's first focusable child (or the one it last had)
   };
 
   const end = <R>(result: R): void => {
     const frame = stack.pop();
     if (frame === undefined) return; // nothing open — ignore
+    generation += 1;
     // Restore the focus that was saved when this modal opened; a no-op if that view is gone.
     if (frame.savedFocus !== null) focus.focusView(frame.savedFocus);
     frame.resolve(result);
   };
 
-  return { isActive, topView, begin, end };
+  const dispose = (): void => {
+    if (stack.length > 0) generation += 1;
+    for (const frame of stack.splice(0).reverse()) frame.resolve(undefined);
+  };
+
+  return { version: () => generation, isActive, topView, begin, end, dispose };
 }

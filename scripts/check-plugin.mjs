@@ -31,9 +31,10 @@ const RECIPE_DIR = join(ROOT, 'packages', 'examples', 'recipes');
 const TEMPLATES_DIR = join(PLUGIN_ROOT, 'templates', 'app-skeleton');
 const ARCHETYPES_DIR = join(PLUGIN_ROOT, 'templates', 'archetypes');
 const UI_BARREL = join(ROOT, 'packages', 'ui', 'src', 'index.ts');
+const I18N_BARREL = join(ROOT, 'packages', 'i18n', 'src', 'index.ts');
 
 const PLUGIN_NAME = 'jsvision-plugin';
-const REQUIRED_GOTCHAS = 16;
+const REQUIRED_GOTCHAS = 17;
 const TEMPLATE_FILES = [
   'package.json.tmpl',
   'tsconfig.json.tmpl',
@@ -290,17 +291,20 @@ export function checkArchetypesValid(archetypesDir) {
 
 /**
  * Barrel-coverage: every `@jsvision/ui` widget class (minus a small base-class denylist) must be
- * documented in the component catalog, and every class the catalog names must still be an export.
+ * documented in the component catalog, and every class the catalog names must still be a public
+ * JSVision export.
  *
  * @param {string[]} classNames All `@jsvision/ui` class value exports.
  * @param {string} catalogText The component-catalog markdown.
  * @param {string[]} denylist Class names that need not be documented (abstract bases, errors).
+ * @param {string[]} additionalClassNames Public classes from other packages that the catalog
+ *   intentionally documents without requiring every class from those packages to appear.
  * @returns {string[]} Errors for undocumented exports and catalog-named non-exports.
  */
-export function checkBarrelCoverage(classNames, catalogText, denylist) {
+export function checkBarrelCoverage(classNames, catalogText, denylist, additionalClassNames = []) {
   const errors = [];
   const deny = new Set(denylist);
-  const known = new Set(classNames);
+  const known = new Set([...classNames, ...additionalClassNames]);
   for (const cls of classNames) {
     if (deny.has(cls)) continue;
     if (!new RegExp(`\\b${cls}\\b`).test(catalogText)) {
@@ -309,10 +313,36 @@ export function checkBarrelCoverage(classNames, catalogText, denylist) {
   }
   for (const m of catalogText.matchAll(/\*\*([A-Z][A-Za-z0-9]+)\*\*/g)) {
     if (!known.has(m[1])) {
-      errors.push(`component-catalog.md: names "${m[1]}", which is not a @jsvision/ui class export`);
+      errors.push(`component-catalog.md: names "${m[1]}", which is not a public JSVision class export`);
     }
   }
   return errors;
+}
+
+/**
+ * Extract class value export names from one TypeScript package barrel.
+ *
+ * @param {string} barrel Absolute path to the package's public TypeScript entry point.
+ * @returns {string[]} Sorted class export names, following re-export aliases.
+ */
+function extractClassExports(barrel) {
+  const program = ts.createProgram([barrel], {
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    module: ts.ModuleKind.NodeNext,
+    target: ts.ScriptTarget.ESNext,
+    strict: true,
+    noEmit: true,
+    skipLibCheck: true,
+  });
+  const checker = program.getTypeChecker();
+  const moduleSymbol = checker.getSymbolAtLocation(program.getSourceFile(barrel));
+  const names = [];
+  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+    let sym = exported;
+    if (sym.flags & ts.SymbolFlags.Alias) sym = checker.getAliasedSymbol(sym);
+    if (sym.flags & ts.SymbolFlags.Class) names.push(exported.getName());
+  }
+  return names.sort();
 }
 
 /**
@@ -337,14 +367,7 @@ function buildUiProgram() {
 }
 
 export function extractUiClassExports() {
-  const { checker, moduleSymbol } = buildUiProgram();
-  const names = [];
-  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
-    let sym = exported;
-    if (sym.flags & ts.SymbolFlags.Alias) sym = checker.getAliasedSymbol(sym);
-    if (sym.flags & ts.SymbolFlags.Class) names.push(exported.getName());
-  }
-  return names.sort();
+  return extractClassExports(UI_BARREL);
 }
 
 /**
@@ -508,7 +531,15 @@ export function runAllChecks() {
   add('archetypes', checkArchetypesValid(ARCHETYPES_DIR));
 
   // 5. barrel-coverage + gotchas completeness
-  add('barrel', checkBarrelCoverage(extractUiClassExports(), readFileSync(CATALOG, 'utf8'), CATALOG_DENYLIST));
+  add(
+    'barrel',
+    checkBarrelCoverage(
+      extractUiClassExports(),
+      readFileSync(CATALOG, 'utf8'),
+      CATALOG_DENYLIST,
+      extractClassExports(I18N_BARREL),
+    ),
+  );
   add('gotchas', checkGotchas(readFileSync(GOTCHAS, 'utf8'), REQUIRED_GOTCHAS));
 
   // 6. generated API reference — the committed pages must equal a fresh generation from the source.

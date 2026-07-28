@@ -21,3 +21,5 @@ design choices.
 ## Guides
 
 Building an application? Start with [Install & packages](/guide/install-and-packages) in the Guide.
+For localization APIs and explicit framework locale entry points, see the
+[internationalization reference](/reference/i18n).

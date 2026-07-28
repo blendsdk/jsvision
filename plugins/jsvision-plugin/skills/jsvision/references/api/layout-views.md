@@ -4,7 +4,7 @@
 
 The `col`/`row`/`stack` DSL, `View`/`Group`, layout props, and the render root.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## Align
 
@@ -57,7 +57,8 @@ interface DispatchEvent {
   setCapture?: (view: View) => void;   // Capture the pointer to `view`: while captured, all mouse/wheel events route to `view` until releaseCapture. Used for drag gestures such as dragging a scrollbar thumb.
   releaseCapture?: () => void;   // Release the pointer capture; a no-op if none is set. Pairs with setCapture.
   hasCapture?: (view: View) => boolean;   // Whether `view` currently holds the pointer capture. A view mid-gesture (a window drag, a status press) checks this before applying a move, so if the capture was lost externally (a modal opened or closed mid-drag) the gesture aborts cleanly instead of jumping to the cursor.
-  setClipboard?: (text: string) => void;   // Write `text` to the system clipboard — used by `Input` copy/cut. A no-op when the terminal has no clipboard support; the control never touches I/O directly.
+  setClipboard?: (text: string) => void;   // Commit `text` to the canonical application clipboard and offer it to the host adapter. Host synchronization may be unavailable, but the canonical write still succeeds.
+  observeClipboardWrite?: (listener: (text: string) => void) => void;   // Observe canonical clipboard writes made during this dispatch. The subscription lasts only for the current routed event. A pre-processing view can use it to refresh a visible clipboard projection after any focused control calls setClipboard, without becoming another clipboard owner.
   readClipboard?: () => string;   // Read the application's in-app clipboard buffer (the last text copied or cut within the app). Used by editable controls for in-app paste without reading the external OS clipboard. Returns `''` when nothing has been copied yet, and is `undefined` on an event that was not routed through the loop (e.g. one constructed directly in a test) — always call it optional-chained.
   getFocused?: () => View | null;   // The currently-focused view. A dropdown control saves it before opening its popup and restores it on dismiss.
   popupHost?: PopupHost;   // The overlay host a dropdown control mounts its anchored popup into. Present when an app shell (or a `Dialog`) has provided one; `undefined` in a headless/no-shell setup.

@@ -9,6 +9,7 @@
  * popup. The field and calendar share the picker's `value` and stay in sync. With no overlay host
  * available (headless), opening is a no-op.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
@@ -17,12 +18,13 @@ import type { Signal } from '../reactive/index.js';
 import { Input, picture } from '../controls/index.js';
 import { openAnchoredPopup, absoluteRect, drawDropdownIcon } from '../dropdown/index.js';
 import { Calendar } from './calendar.js';
-import { metricsFor } from './calendar-metrics.js';
+import { localizedCalendarMetrics } from './calendar-localization.js';
 import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
 import type { CalendarDate } from './calendar-date.js';
 import { compare } from './calendar-date.js';
 import { dateFormat } from './date-format.js';
 import type { DateFormat, DateFormatSpec } from './date-format.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
 /**
  * The trailing 3-cell dropdown button drawing the shared `▐↓▌` icon. Not focusable — the field is the
@@ -53,6 +55,8 @@ class DateButton extends View {
 
 /** Options for a {@link DatePicker}. */
 export interface DatePickerOptions {
+  /** Explicit translation service forwarded to the popup calendar. */
+  readonly i18n?: I18n;
   /** Two-way selected day (`null` = none). */
   value: Signal<CalendarDate | null>;
   /** Field format (default ISO `YYYY-MM-DD`). */
@@ -100,6 +104,7 @@ export class DatePicker extends Group {
   readonly input: Input;
 
   protected readonly spec: DateFormatSpec;
+  protected readonly i18n?: I18n;
   protected readonly text: Signal<string>;
   protected readonly button: DateButton;
   protected readonly today?: CalendarDate;
@@ -113,11 +118,12 @@ export class DatePicker extends Group {
   protected readonly metrics: CalendarMetrics;
 
   /**
-   * @param opts The two-way `value` plus optional `format` and the options forwarded to the dropdown
-   *   `Calendar`.
+   * @param opts The two-way `value`, optional translation service and format, plus the date and
+   *   layout options forwarded to the dropdown `Calendar`.
    */
   constructor(opts: DatePickerOptions) {
     super();
+    this.i18n = opts.i18n;
     this.value = opts.value;
     this.spec = dateFormat(opts.format);
     this.today = opts.today;
@@ -127,7 +133,7 @@ export class DatePicker extends Group {
     this.firstDayOfWeek = opts.firstDayOfWeek;
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
     this.density = opts.density ?? 'comfortable';
-    this.metrics = metricsFor(this.density, this.showWeekNumbers);
+    this.metrics = localizedCalendarMetrics(opts.i18n ?? createEnglishUiI18n(), this.density, this.showWeekNumbers);
 
     const initial = this.value();
     this.text = signal(initial !== null ? this.spec.serialize(initial) : '');
@@ -195,6 +201,7 @@ export class DatePicker extends Group {
       anchor: absoluteRect(this),
       buildContent: (commit) =>
         new Calendar({
+          i18n: this.i18n,
           value: this.value,
           today: this.today,
           min: this.min,

@@ -179,14 +179,13 @@ async function main(): Promise<number> {
       override: { mouse: { sgr: true }, unicode: { utf8: true } },
     })
   ).profile;
-
   const app = createApplication({
     caps,
     menuBar: buildMenuBar(),
     statusLine: buildStatusLine(),
     keymap: buildKeymap(),
   });
-  const host = { loop: app.loop, desktop: app.desktop };
+  const host = { i18n: app.i18n, loop: app.loop, desktop: app.desktop };
   const editorDialog = wireEditorDialogs(host, {
     saveAs: (name) =>
       openFile(host, { save: true, title: 'Save file as', directory: name === '' ? undefined : fs.dirname(name) }),

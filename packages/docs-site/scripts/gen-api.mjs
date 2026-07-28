@@ -22,7 +22,25 @@ import { PACKAGES } from '../src/api/packages.mjs';
 
 const require = createRequire(import.meta.url);
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/docs-site
+const repoRoot = join(siteRoot, '..', '..');
 const apiDir = join(siteRoot, 'api');
+const auxiliaryPackages = [
+  { name: 'i18n-node', entry: '../i18n/src/node/index.ts', tsconfig: '../i18n/tsconfig.json' },
+  { name: 'ui-locales', entry: '../ui/src/i18n/locales.ts', tsconfig: '../ui/tsconfig.json' },
+  { name: 'forms-locales', entry: '../forms/src/i18n/locales.ts', tsconfig: '../forms/tsconfig.json' },
+  { name: 'files-locales', entry: '../files/src/i18n/locales.ts', tsconfig: '../files/tsconfig.json' },
+  {
+    name: 'datagrid-locales',
+    entry: '../datagrid/src/i18n/locales.ts',
+    tsconfig: '../datagrid/tsconfig.json',
+  },
+  {
+    name: 'code-editor-locales',
+    entry: '../code-editor/src/i18n/locales.ts',
+    tsconfig: '../code-editor/tsconfig.json',
+  },
+];
+const generatedPackages = [...PACKAGES, ...auxiliaryPackages];
 
 // `web` lists only its main barrel — the throwing `browser-stubs` subpath is not an
 // entry point (see PACKAGES), so it never appears in the reference.
@@ -53,12 +71,12 @@ function generate(bin, pkg) {
 }
 
 /**
- * Fold the four per-package sidebars into one array VitePress config reads for the
+ * Fold the per-package sidebars into one array VitePress config reads for the
  * /api/ route, each package a collapsible top-level group. The intermediate
  * per-package sidebar files are removed so the merged file is the only sidebar.
  */
 function mergeSidebars() {
-  const merged = PACKAGES.map((pkg) => {
+  const merged = generatedPackages.map((pkg) => {
     const file = join(apiDir, pkg.name, 'typedoc-sidebar.json');
     const items = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : [];
     if (existsSync(file)) rmSync(file);
@@ -102,7 +120,7 @@ function walkMd(dir) {
  * across the whole reference.
  */
 function qualifyTitles() {
-  for (const pkg of PACKAGES) {
+  for (const pkg of generatedPackages) {
     for (const file of walkMd(join(apiDir, pkg.name))) {
       const md = readFileSync(file, 'utf8');
       if (md.startsWith('---\n')) continue; // already has frontmatter
@@ -117,8 +135,42 @@ function qualifyTitles() {
   }
 }
 
+/** Convert a locale tag into the suffix used by official catalog exports. */
+function localeSuffix(locale) {
+  return locale
+    .split('-')
+    .map((part) => `${part[0].toUpperCase()}${part.slice(1)}`)
+    .join('');
+}
+
+/** Write the generated index that maps every public i18n-related subpath to its API symbol page. */
+function writeI18nEntryPointIndex() {
+  const localeConfig = JSON.parse(readFileSync(join(repoRoot, 'tools', 'i18n-locale-exports.json'), 'utf8'));
+  const lines = [
+    '<!-- GENERATED FILE — regenerate with `yarn docs:api`. -->',
+    '',
+    '# Internationalization entry points',
+    '',
+    '- [`@jsvision/i18n`](/api/i18n/) — browser-safe engine, catalog, validation, and formatting API.',
+    '- [`@jsvision/i18n/node`](/api/i18n-node/) — Node JSON-file catalog source.',
+    '',
+  ];
+  for (const { name, symbolPrefix } of localeConfig.packages) {
+    lines.push(`## @jsvision/${name}`, '');
+    for (const locale of localeConfig.locales) {
+      const symbol = `${symbolPrefix}${localeSuffix(locale)}`;
+      lines.push(
+        `- [\`@jsvision/${name}/locales/${locale}\`](/api/${name}-locales/variables/${symbol}) — \`${symbol}\``,
+      );
+    }
+    lines.push('');
+  }
+  writeFileSync(join(siteRoot, 'reference', 'i18n-entry-points.md'), `${lines.join('\n').trim()}\n`);
+}
+
 const bin = typedocBin();
-for (const pkg of PACKAGES) generate(bin, pkg);
+for (const pkg of generatedPackages) generate(bin, pkg);
 injectBackLinks();
 qualifyTitles();
 mergeSidebars();
+writeI18nEntryPointIndex();

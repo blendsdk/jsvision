@@ -4,7 +4,7 @@
 
 Application, desktop, windows, menus, status line, and the event loop.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## Application
 
@@ -12,6 +12,7 @@ A ready-to-run terminal application.
 
 ```ts
 interface Application {
+  i18n: I18n;   // Translation service used by framework-owned UI and modal helpers.
   desktop: Desktop | undefined;   // The desktop window manager, or `undefined` when the app was created with a custom `content` body (a router app manages its own body and registers no window commands). A no-`content` app always has one — and `createApplication` returns the precise DesktopApplication type there, so you never need a null check for the default case.
   loop: EventLoop;   // The underlying event loop. Use it to emit commands, manage focus, or run modals.
   onCommand(command: string, handler: () => void): () => void;   // Register an app-wide handler for a named command; returns a function that unregisters it. Every handler registered for a command runs when that command is emitted, and a handled command is consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the modal-open caveat.
@@ -28,6 +29,7 @@ Options for createApplication.
 
 ```ts
 interface ApplicationOptions {
+  i18n?: I18n;   // Translation service shared by framework-owned UI. The exact supplied instance is exposed on the returned application. Omit it to create an isolated English service for this application.
   content?: View;   // The app body: the single view that fills the middle of the shell (below the menu bar, above the status line). Defaults to a Desktop window manager — the classic overlapping-windows shape. Pass any view (e.g. a router) for a full-screen, non-windowed app; when you do, the app exposes no `desktop` and does not register the window-management commands.
   caps?: CapabilityProfile | 'auto';   // Terminal capability profile that drives color-depth encoding for every painted frame. Defaults to `'auto'`, which detects the running terminal's capabilities via `resolveCapabilities()`. Pass an explicit profile to override the detection (used verbatim, no re-resolution).
   viewport?: Size2D;   // Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown.
@@ -35,6 +37,9 @@ interface ApplicationOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `draw()`/`onEvent()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`) applied across the whole app.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). Any `keymap` you supply merges on top and wins on a conflicting chord. Use `'none'` to bind no clipboard chords (e.g. an app hosting a WordStar-mode `Editor`) and supply your own keymap instead.
+  writeClipboardText?: ClipboardTextWriter;   // Write exact raw text to the host clipboard after a copy or cut commits it locally. Host failures are reported without payload details and never roll back canonical state.
+  readClipboardText?: ClipboardTextReader;   // Read exact raw text from the host clipboard for otherwise-unhandled paste commands. The loop serializes calls, bounds successful text, and discards results whose original focus destination is no longer continuously valid.
+  systemClipboard?: boolean;   // Enable automatic operating-system text clipboard integration when Application.run starts and no custom clipboard callbacks were supplied. Defaults to `true`. Pass `false` when an application must stay isolated from the desktop clipboard; app-local copy/paste, terminal bracketed paste, and capability-gated OSC 52 output remain available.
   functionKeyFallback?: FunctionKeyFallback;   // Portable F-key fallback for terminals or browsers that reserve physical function keys. Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve those Alt chords literally.
   menuBar?: MenuBar;   // Optional menu bar shown as the top row. Build one with `menuBar(...)`.
   statusLine?: StatusLine;   // Optional status line shown as the bottom row. Build one with `statusLine(...)`.
@@ -54,6 +59,22 @@ Which clipboard key set the framework binds by default. - `'modern'` — Ctrl+A 
 
 ```ts
 type ClipboardKeys = 'modern' | 'classic' | 'both' | 'none'
+```
+
+## ClipboardTextReader
+
+Read exact plain text from a host clipboard.
+
+```ts
+type ClipboardTextReader = () => string | Promise<string>
+```
+
+## ClipboardTextWriter
+
+Write exact plain text to a host clipboard.
+
+```ts
+type ClipboardTextWriter = (text: string) => void | Promise<void>
 ```
 
 ## CommandName
@@ -151,7 +172,7 @@ interface EventLoop {
   renderRoot: RenderRoot;   // The render root the loop builds and owns — read `renderRoot.buffer()` to inspect the composed frame.
   mount(root: View): void;   // Mount a view tree as the loop's root and paint the first frame. Call once before dispatching.
   stop(): void;   // Stop the loop's out-of-tick painter. After `stop()`, a mutation that would normally schedule a deferred repaint — a timer, a promise continuation, a direct call between ticks — is ignored, and any already-queued deferred paint is skipped, so a late callback during or after teardown never writes to a stopped host. Idempotent. In-tick painting (a `dispatch`/`resize`/command) is unaffected: a running loop never calls this, and `run()` calls it once during shutdown. It does not dispose the mounted view tree.
-  dispose(): void;   // Tear the loop down for a host that detaches a still-live app: stop the out-of-tick painter (as EventLoop.stop) **and** unmount the view tree, so every view's `onCleanup` runs and releases the timers and subscriptions it holds. Idempotent. `run()` does not need this — the process exits — but a long-lived host that mounts and unmounts many apps (the browser `mountApp`) calls it on teardown so nothing leaks between one app and the next.
+  dispose(): void;   // Tear the loop down for a host that detaches a still-live app: stop the out-of-tick painter (as EventLoop.stop), unmount the view tree, clear focus and pointer capture, and release all application command handlers. Every view's `onCleanup` runs, so timers, subscriptions, and closures from the detached app cannot leak into a later one. Idempotent. `run()` does not need this — the process exits — but a long-lived host that mounts and unmounts many apps (the browser `mountApp`) calls it on teardown so nothing survives between apps.
   dispatch(event: AppEvent): void;   // Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick.
   resize(size: Size2D): void;   // Resize the viewport: reflow the tree and paint exactly one frame.
   focusNext(): void;   // Move focus to the next focusable view in **document (tree) order**, bounded by the active scope (the open modal's subtree while a modal is up, else the mounted root). Focus descends through nested groups and, at a group's end, crosses into the parent's next focusable sibling, wrapping at the scope — so a dialog built from nested `col`/`row` containers is fully traversable and Tab never escapes an open modal. Continuous Tab is pure tree order (a wrap re-enters at the tree start, not the last-visited child); container **restore** memory applies only to a non-Tab entry (a click, `focusView`, a window switch, opening/closing a dialog).
@@ -159,11 +180,12 @@ interface EventLoop {
   focusView(view: View): void;   // Focus exactly `view`. A no-op if `view` is not currently focusable.
   focusInto(view: View): void;   // Focus **into** a container: restore its last-focused child, or focus its first focusable descendant.
   getFocused(): View | null;   // The currently focused view, or `null` if nothing is focused.
+  viewAt(point: Point): View | null;   // Return the topmost enabled, visible view at a zero-based terminal cell without dispatching an event. The query uses the same active modal scope, clipping, and z-order traversal as pointer routing, but has no focus, selection, callback, or paint side effects.
   emitCommand(command: string, arg?: unknown): void;   // Emit a command, routing it to any handler. Dropped silently if the command is disabled.
   enableCommand(command: string, on: boolean): void;   // Enable or disable a command. While disabled, `emitCommand` for it is dropped.
   isCommandEnabled(command: string): boolean;   // Whether a command is currently enabled. Commands are enabled by default until disabled.
   commandsVersion(): number;   // A version counter that changes whenever any command's enablement changes via enableCommand. Read it inside a view's `bind` to repaint on greying — the shell's status line and menu bar do exactly this so a disabled command greys live with no manual invalidate.
-  execView(view: View): Promise<R>;   // Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that resolves with the value passed to endModal. `await` it to run a dialog and read its result.
+  execView(view: View): Promise<R | undefined>;   // Open `view` as a modal: input is captured to its subtree until it closes. The promise resolves with the value passed to endModal, or `undefined` if the event loop is permanently disposed while the modal is active. `await` it to run a dialog and read its result.
   endModal(result: R): void;   // Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`.
   setAcceleratorMode(on: boolean): void;   // Turn accelerator mode on or off. When on, every reachable `~X~` hotkey is underlined and a bare letter fires the matching accelerator like `Alt`+letter. The reveal key (default `F12`) toggles this for you; call it directly to arm/dismiss the mode programmatically. A no-op when the feature is disabled (`revealKey: null`).
   setTheme(theme: Theme): void;   // Replace the active theme and repaint every view with the new colors in one coalesced frame. Safe to call from anywhere — a command handler, an async callback, or a bare imperative call between input ticks — because the swap runs inside the loop's own tick and reuses its trailing flush + `onFrame`, so the repainted frame reaches the host even outside a dispatch.
@@ -174,7 +196,9 @@ interface EventLoop {
   onCaret?: (cell: Point | null) => void;   // Called right after onFrame at every frame with the focused view's absolute caret cell, or `null` when nothing is focused or the focused view wants no visible caret. Wire it to move the terminal's hardware cursor. It reads the persisted view origin, so the caret position stays correct even on a partial repaint that skips the focused view. `undefined` ⇒ no caret output.
   onResize?: (size: Size2D) => void;   // Called inside resize after the reflow settles the new geometry, so a handler can re-anchor viewport-sized chrome against fresh bounds (the app uses it to re-fit maximized windows and re-anchor the open menu). The loop repaints once more afterward so the adjustment is visible. `undefined` ⇒ resize only reflows.
   refreshCaret(): void;   // Re-send the current caret cell to onCaret out of band. `run()` calls it once after the first frame (which is painted directly, not through a tick) to position the initial cursor. A no-op when `onCaret` is unset.
-  writeClipboard?: (seq: string) => void;   // Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the loop encodes and sanitizes it for you). Wire it to your output stream. `undefined` ⇒ clipboard writes are dropped, so copy/cut is a safe no-op headlessly.
+  writeClipboard?: (seq: string) => void;   // Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the loop encodes and sanitizes it for you). This legacy sink remains available for direct terminal integrations. New hosts should prefer writeClipboardText, which receives raw text before host-specific encoding. When both sinks are set, only `writeClipboardText` is called.
+  writeClipboardText?: ClipboardTextWriter;   // Called with raw plain text after copy or cut commits it to the loop's canonical clipboard. The host owns any required conversion: browser hosts call the Clipboard API, while native terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or rejected promise is isolated and never rolls back the canonical clipboard value.
+  readClipboardText?: ClipboardTextReader;   // Read raw plain text for an otherwise-unhandled paste command. Assigning a reader makes paste command-available independently of the app-local clipboard. Clearing it restores normal command enablement. Direct EventLoop.dispatch of a decoded paste event never calls this callback.
   popupHost?: PopupHost;   // The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into. `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a dropdown is a safe no-op; a standalone `Dialog` can supply its own.
 }
 ```
@@ -190,6 +214,8 @@ interface EventLoopOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `onEvent()`/`draw()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`): a matched chord fires the command and swallows the key.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). A `keymap` you supply is merged on top and wins on any conflicting chord. `'none'` binds no clipboard chords at all — only a widget's built-in raw Ctrl+A select-all still fires — so an app on `'none'` supplies its own keymap for copy/cut/paste (and the classic chords).
+  writeClipboardText?: ClipboardTextWriter;   // Optional raw-text host writer used for copy and cut after canonical state is committed.
+  readClipboardText?: ClipboardTextReader;   // Optional raw-text host reader used by otherwise-unhandled paste commands.
   functionKeyFallback?: FunctionKeyFallback;   // Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
   commands?: Iterable<string>;   // Optional list of command names known up front. Commands are enabled by default whether listed or not.
   onIdle?: () => void;   // Called once per dispatch tick after all cascaded events drain, just before the frame is painted.
@@ -256,7 +282,7 @@ interface MenuLoopSeam {
   commandsVersion(): number;   // A tick that changes on any command-enablement change; the bar binds it so greying repaints live.
   focusView(view: View): void;   // Focus a view — used to restore the pre-menu focus when the menu closes.
   getFocused(): View | null;   // The currently-focused view, captured when a menu opens so it can be restored on close.
-  dismissAccelerators(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
+  dismissAccelerators?(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
 }
 ```
 
@@ -437,6 +463,14 @@ Find every accelerator character claimed by more than one entry, case-insensitiv
 
 ```ts
 findDuplicateAccelerators(chars: readonly string[]): DuplicateAccelerator[]
+```
+
+## frameTitleMinimumWidth
+
+Minimum full frame width that preserves a complete centered title.
+
+```ts
+frameTitleMinimumWidth(title: string, numbered = false): number
 ```
 
 ## item

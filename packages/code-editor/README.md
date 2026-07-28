@@ -1,0 +1,140 @@
+# @jsvision/code-editor
+
+A terminal-native source-code editor for JSVision applications. It provides an editor window—not
+an IDE—and has no browser or DOM dependency.
+
+## Quick start
+
+```ts
+import { CodeEditorWindow, createCodeEditorController, createDocumentModel } from '@jsvision/code-editor';
+
+const document = createDocumentModel({
+  uri: 'file:///workspace/main.ts',
+  languageId: 'typescript',
+  text: 'const answer: number = 42;\n',
+});
+const controller = createCodeEditorController({
+  document,
+  host: async (effect) => {
+    // Save, close, navigation, commands, and cross-document edits stay host-owned.
+    console.log(effect.kind);
+    return true;
+  },
+});
+const window = new CodeEditorWindow({ controller, title: 'main.ts' });
+```
+
+## Internationalization
+
+Import one explicit locale catalog, create one application-owned service, and pass the same service
+to the application and editor:
+
+```ts
+import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
+import { createI18n, defineCatalog } from '@jsvision/i18n';
+
+const appOverrides = defineCatalog({
+  schema: 1,
+  locale: 'nl',
+  messages: { 'code-editor.window.title': 'Broneditor' },
+});
+const i18n = createI18n({ locale: 'nl', catalogs: [codeEditorNl, appOverrides] });
+const localizedWindow = new CodeEditorWindow({ controller, i18n });
+```
+
+The application catalog comes last so its messages win. Without injection, each `CodeEditor`
+creates an isolated English service for compatibility. Editor-owned labels are translated; source,
+queries and replacement values, language IDs, filenames, paths, key/command tokens, and LSP or
+host-provided detail remain caller content and are sanitized only for terminal-safe presentation.
+
+The root entry point includes the document model, controller, `CodeEditor`, `CodeEditorWindow`,
+themes, protocol-neutral LSP coordination, safety limits, degradation state, and observability.
+Built-in adapters are separate public imports:
+
+- `@jsvision/code-editor/languages/javascript`
+- `@jsvision/code-editor/languages/typescript`
+- `@jsvision/code-editor/languages/postgresql`
+- `@jsvision/code-editor/node` for the optional Node JSON-RPC process transport
+
+## Language services and safety
+
+The editor uses the industry-standard Language Server Protocol through a transport-neutral
+`CodeEditorLspSession`. Applications may provide an in-process session or use the Node transport.
+Filesystem writes, commands, cross-document edits, navigation, save, and close remain explicit
+host effects; the editor never silently owns those operations.
+
+All document, protocol, completion, diagnostic, decoration, history, and telemetry collections
+have hard limits. Oversized or malformed results are rejected or truncated and reported through
+the degradation and observability APIs. Source text is projected into terminal cells, so terminal
+control bytes are displayed safely instead of being written to the terminal.
+
+## Themes and terminal capabilities
+
+The hybrid theme model supports application-derived colors, editor overrides, and independent
+dark, light, and classic palettes. Semantic roles remain stable while colors change. Monochrome,
+ASCII, narrow-terminal, diagnostic, selection, pending, read-only, and degraded states retain
+non-color indicators.
+
+## Viewport and input
+
+`CodeEditorWindow` keeps the editor, status line, and passive horizontal and vertical scrollbars
+synchronized as the terminal resizes or the document changes. Typing and caret navigation reveal
+the active caret with the smallest required scroll, while an explicit wheel or scrollbar movement
+remains in place until the next editing or navigation action.
+
+The editor supports primary-button caret placement, captured drag selection, edge auto-scroll,
+double-click selection for Unicode identifier and punctuation runs, three-cell wheel scrolling,
+and the modern keyboard actions documented by the standalone kitchen sink. `Ctrl+/` toggles the
+built-in line-comment delimiter for JavaScript, TypeScript, and PostgreSQL; unsupported languages
+leave the document unchanged.
+
+Parser-provided multi-line folds can be collapsed with `fold`, `unfold`, `foldAll`, `unfoldAll`,
+or `toggleFold`. Collapsing is presentation-only: source, revision, modified state, and undo
+history do not change. Keyboard and mouse navigation, caret following, line numbers, and scrollbar
+ranges all skip hidden rows. Enable `lineNumbers` to show clickable Unicode fold markers; ASCII
+and monochrome terminals receive equivalent non-color markers. Stale or malformed parser ranges
+never hide source.
+
+Window geometry is synchronized for drag-resize, maximize, restore, terminal resize while
+maximized, cascade, and tile. Moving a window changes its origin without changing the editor's
+interior dimensions.
+
+For standalone composition, `CodeEditor.resizeViewport(width, height)` allows a host to publish
+new terminal-cell dimensions before drawing. `viewportMetrics` exposes immutable current geometry
+and clamped scroll limits for custom passive chrome.
+
+## Standalone kitchen sink
+
+Run the comprehensive, deterministic example:
+
+```sh
+yarn workspace @jsvision/examples demo:code-editor
+```
+
+It includes direct and windowed editors, real structural folding, a capability-level inventory,
+editing and read-only lifecycle, SQL/JavaScript/TypeScript/plain text, local parsing, simulated LSP
+intelligence, host authorization, hostile Unicode, themes, accessibility, every supported window
+geometry path, mouse selection, caret-follow scrolling, passive scrollbar updates, and all
+document-size tiers without a network, database, workspace, credentials, external language server,
+or arbitrary file access. Inventory entries distinguish interactive, automated-only, and
+unsupported behavior so labels cannot overstate the live demonstration.
+
+The bounded simulated language service answers completion, hover, signature, symbols, diagnostics,
+navigation, formatting, cancellation, and recovery requests without retaining source-bearing
+payloads. Separate controls demonstrate accepted, rejected, and revision-conflicted host saves. A
+two-editor scenario shares one in-process protocol session while retaining separate
+URIs, revisions, selections, diagnostics, cancellation, presentation, and host effects; it does
+not add tabs or an editor manager. `Ctrl+Tab` switches keyboard focus between the two peers.
+
+For manual acceptance, select any scenario prefixed with `QA:`. The lower evidence panel explains
+why the capability matters, the exact interaction, and the expected visible result. Press `F5` (or
+choose **Actions → Run current QA check**) to invoke that scenario's single primary behavior. The
+panel reports `PASS` only after observing the capability-specific presentation, document revision,
+or bounded host event; selecting or resetting a scenario clears the previous result.
+Completion and other assistance popups open at the rendered caret, including gutter and scroll
+offsets, and automatically clamp or flip above it near a viewport edge.
+
+The fixture catalog also covers extension and explicit language selection, a missing-adapter
+fallback, incomplete and invalid source, LF/CRLF/CR line endings, invisible and hostile Unicode,
+live theme and degradation transitions, lifecycle decisions, terminal resize, and every document
+size tier. Redirected execution prints bounded, content-free evidence for the same journeys.

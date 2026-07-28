@@ -3,9 +3,9 @@
  * placement after a cut, and the dual-sink independence boundary (the app-local buffer fills even when
  * the OS-clipboard write is a headless/incapable no-op). Complements the ST oracles in the spec file.
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import type { KeyEvent, CapabilityProfile } from '@jsvision/core';
+import type { KeyEvent, CapabilityProfile, Logger } from '@jsvision/core';
 import { View, Group } from '../src/view/index.js';
 import type { DrawContext, DispatchEvent } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
@@ -32,7 +32,7 @@ class ClipProbe extends View {
   }
 }
 
-function mountInput(opts: ConstructorParameters<typeof Input>[0], caps = capsClip, w = 15) {
+function mountInput(opts: ConstructorParameters<typeof Input>[0], caps = capsClip, w = 15, logger?: Logger) {
   const input = new Input(opts);
   const probe = new ClipProbe();
   const root = new Group();
@@ -43,7 +43,7 @@ function mountInput(opts: ConstructorParameters<typeof Input>[0], caps = capsCli
   root.add(probe);
   const loop = createEventLoop(
     { width: w, height: 3 },
-    { caps, commands: [...Object.values(Commands), '__read__', '__seed__'] },
+    { caps, logger, commands: [...Object.values(Commands), '__read__', '__seed__'] },
   );
   const clip: string[] = [];
   loop.writeClipboard = (seq) => clip.push(seq);
@@ -87,6 +87,54 @@ test('the app-local buffer fills even when the OS clipboard write is an incapabl
   loop.dispatch(key('c', { ctrl: true }));
   expect(clip.length).toBe(0); // no OS write sequence emitted (capability-gated off)
   expect(readClip()).toBe('hi'); // but in-app paste still works — the buffer was filled unconditionally
+});
+
+test('the raw-text host sink takes precedence over the legacy terminal-sequence sink', () => {
+  const value = signal('raw 🧪');
+  const { loop, clip } = mountInput({ value });
+  const rawWrites: string[] = [];
+  loop.writeClipboardText = (text) => {
+    rawWrites.push(text);
+  };
+
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true }));
+
+  expect(rawWrites).toEqual(['raw 🧪']);
+  expect(clip).toEqual([]);
+});
+
+test('a synchronous host clipboard failure is logged without its error or clipboard payload', () => {
+  const warnings: string[] = [];
+  const logger = clipboardLogger(warnings);
+  const value = signal('private clipboard text');
+  const { loop } = mountInput({ value }, capsClip, 30, logger);
+  loop.writeClipboardText = () => {
+    throw new Error('private clipboard text');
+  };
+
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true }));
+
+  expect(warnings).toEqual(['clipboard:host clipboard write failed']);
+  expect(warnings.join(' ')).not.toContain('private clipboard text');
+});
+
+test('an asynchronous host clipboard rejection is isolated without losing the local value', async () => {
+  const warnings: string[] = [];
+  const logger = clipboardLogger(warnings);
+  const value = signal('still local');
+  const { loop } = mountInput({ value }, capsClip, 20, logger);
+  loop.writeClipboardText = vi.fn(() => Promise.reject(new Error('permission denied')));
+
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true }));
+  await Promise.resolve();
+
+  expect(warnings).toEqual(['clipboard:host clipboard write failed']);
+  loop.dispatch(key('backspace'));
+  loop.dispatch(key('v', { ctrl: true }));
+  expect(value()).toBe('still local');
 });
 
 test('paste through a picture mask drops the code points that do not fit', () => {
@@ -146,3 +194,16 @@ test('the reactive hasSelection signal fires on selection-only changes (no value
   expect(seen).toEqual([false, true, false]);
   dispose();
 });
+
+/** Creates a logger that captures only the clipboard warning's component and message. */
+function clipboardLogger(warnings: string[]): Logger {
+  return {
+    enabled: true,
+    debug: () => undefined,
+    info: () => undefined,
+    warn: (component, message) => warnings.push(`${component}:${message}`),
+    error: () => undefined,
+    entries: () => [],
+    close: () => undefined,
+  };
+}

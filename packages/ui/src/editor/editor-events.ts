@@ -15,6 +15,7 @@ import { Commands } from '../status/index.js';
 import { resolveKey, resolveModernKey } from './keymap.js';
 import type { KeyResolution } from './keymap.js';
 import { applyAction, EditorCommands } from './editor-actions.js';
+import { syncEditorClipboardProjection } from './editor-clipboard.js';
 import { handleEditorMouse } from './editor-mouse.js';
 import { isWithin } from './editor-types.js';
 import { Editor, SM_EXTEND } from './editor.js';
@@ -24,6 +25,10 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
   const inner = ev.event;
   if (ev.setClipboard !== undefined) ed.mirrorSink = ev.setClipboard; // copy/cut mirror channel
   if (ev.readClipboard !== undefined) ed.clipboardRead = ev.readClipboard; // paste fallback to the app-local buffer
+  // Editors run in the pre-process sweep, before the focused control. The event-scoped observer
+  // therefore refreshes a visible clipboard projection immediately after Input, Editor, or
+  // CodeEditor commits a canonical copy/cut, without retaining a lifecycle subscription.
+  ev.observeClipboardWrite?.((text) => syncEditorClipboardProjection(ed, text));
   if (inner.type === 'mouse' || inner.type === 'wheel') {
     handleEditorMouse(ed, ev);
     return;
@@ -57,8 +62,13 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     return;
   }
   if (inner.type === 'paste') {
+    // Every Editor runs in the pre-process sweep, so one host paste refreshes any visible clipboard
+    // projection even when another control receives the insertion.
+    syncEditorClipboardProjection(ed, inner.text);
     if (ed.state.focused) {
-      ed.insertText(inner.text); // one insertion, one undo step
+      // Empty host text is meaningful to the canonical clipboard but is not an edit: preserving the
+      // selection and undo stack also keeps empty native and bracketed paste behavior consistent.
+      if (inner.text !== '') ed.insertText(inner.text); // one insertion, one undo step
       ev.handled = true;
     }
     return;

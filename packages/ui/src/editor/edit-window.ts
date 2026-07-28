@@ -21,7 +21,7 @@ export interface EditWindowOptions {
   rect?: Rect;
   /** The editor to host (e.g. a file-backed editor, or the shared clipboard editor). Omit for a plain `Editor`. */
   editor?: Editor;
-  /** The shared clipboard editor — passed to a default-constructed editor, and used for the "Clipboard" title. */
+  /** The visible clipboard projection passed to a default editor and used for the `"Clipboard"` title. */
   clipboard?: Editor;
   /** The find/replace/save dialog handler for a default-constructed editor. */
   editorDialog?: EditorDialogHandler;
@@ -39,7 +39,7 @@ const MIN_H = 6;
  * it is resized or zoomed. The scroll bars and indicator are shown only while the window is active;
  * an inactive window shows a plain frame border. The title reads `"Clipboard"` when the hosted
  * editor is the shared clipboard editor, otherwise `"Untitled"` (or whatever a file loader sets on
- * the reactive title signal).
+ * the reactive title signal). The event loop remains the canonical clipboard owner.
  *
  * Pass your own `editor` to host a file-backed or otherwise pre-configured editor; if you omit it, a
  * plain `Editor` is created, using the `clipboard`/`editorDialog` options you provide.
@@ -51,10 +51,10 @@ const MIN_H = 6;
  * const caps = resolveCapabilities().profile;
  * const app = createApplication({ caps });
  *
- * // A shared clipboard editor, hosted in its own window.
+ * // A visible projection of the event-loop clipboard, hosted in its own window.
  * const clipboard = new Editor();
  *
- * // A document window sharing that clipboard.
+ * // A document window that keeps the projection synchronized.
  * const win = new EditWindow({
  *   clipboard,
  *   rect: { x: 2, y: 1, width: 48, height: 14 },

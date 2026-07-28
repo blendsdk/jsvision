@@ -1,6 +1,6 @@
 // Hand-written declaration for the JS plugin-API-reference generator (gen-plugin-api.mjs).
 // The script has no build step of its own, so this file exists only to let TS test files
-// import it without TS7016/TS7006. It declares just the four exports the spec test consumes,
+// import it without TS7016/TS7006. It declares the exports the API-reference tests consume,
 // not the full module surface (renderExport/renderCategory/writeApiDocs/PACKAGES stay untyped).
 
 /** One entry in the API reference's category index (`gen-plugin-api.mjs`'s `CATEGORIES`). */
@@ -15,6 +15,24 @@ export declare const CATEGORIES: readonly ApiCategory[];
 
 /** Compare API names using locale-independent UTF-16 lexical ordering. */
 export declare function compareApiNames(left: string, right: string): number;
+
+/** One documented field or method extracted from an interface declaration. */
+export interface ApiFieldDigest {
+  readonly sig: string;
+  readonly doc: string;
+}
+
+/** The extractor fields shared by every public export digest. */
+export interface ApiExportDigest {
+  readonly name: string;
+  readonly kind: string;
+  readonly lead: string;
+  readonly file: string;
+  readonly fields?: readonly ApiFieldDigest[];
+}
+
+/** Extract the public exports of one TypeScript package barrel. */
+export declare function extractPackageApi(entryFilePath: string, rootDir?: string): ApiExportDigest[];
 
 /**
  * The category slug an export belongs to, given the package it came from and its declaration

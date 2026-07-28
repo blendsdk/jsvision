@@ -8,7 +8,7 @@
  * widget.
  */
 import { View, Group } from '@jsvision/ui';
-import { createRoot } from '@jsvision/ui';
+import { createRoot, effect } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext } from '@jsvision/ui';
 import { CLEARED_LAYOUT } from './cleared-layout.js';
 
@@ -18,6 +18,21 @@ export interface CellRect {
   y: number;
   width: number;
   height: number;
+}
+
+/** A view that can report reactive intrinsic overlay geometry in terminal cells. */
+interface DesiredOverlaySize {
+  desiredSize(): { readonly width: number; readonly height: number };
+}
+
+/** Narrow a custom or built-in view that exposes reactive desired overlay geometry. */
+function hasDesiredOverlaySize(view: View): view is View & DesiredOverlaySize {
+  return typeof (view as Partial<DesiredOverlaySize>).desiredSize === 'function';
+}
+
+/** Normalize untrusted desired-size cells so malformed custom popups cannot poison layout math. */
+function overlayCellCount(value: number): number {
+  return Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
 /**
@@ -66,9 +81,10 @@ export function absoluteRect(view: View): { x: number; y: number } {
  *   cell rect), `origin` (the body's absolute origin, e.g. from {@link absoluteRect}), exactly one of
  *   `view` (a pre-built editor) or `build` (a factory run inside the root, returning the editor or
  *   `null`), and optional `clamp` — pass the host-local viewport `{ width, height }` to keep the mounted
- *   view within it (right-aligned/clamped so it never renders off-screen); omit it for a cell-pinned
- *   editor. If the built view set its own absolute `layout`, that size is honored (so a larger custom
- *   popup fits and is clamped by its true size).
+ *   built-in responsive view within it on both axes; omit it for a cell-pinned editor. If a custom
+ *   view set its own absolute `layout`, that size is honored even when larger than the clamp, while
+ *   its origin is moved as far inside as possible. A view exposing `desiredSize()` opts into reactive
+ *   remeasurement, viewport sizing, and re-anchoring whenever its desired geometry changes.
  * @returns A `dispose()` that removes the view and disposes its reactive scope (idempotent-safe to
  *   call once).
  * @example
@@ -124,31 +140,62 @@ export function mountCellOverlay(args: {
     // Honor a size the built view chose for itself (a custom filter popup that set its own absolute
     // layout can be larger than the default cell size); otherwise use the passed rect's size.
     const pre = view.layout;
-    const width = pre?.position === 'absolute' && pre.rect ? pre.rect.width : rect.width;
-    const height = pre?.position === 'absolute' && pre.rect ? pre.rect.height : rect.height;
-    let x = origin.x + rect.x - hostOrigin.x;
-    let y = origin.y + rect.y - hostOrigin.y;
-    // Keep the overlay within the viewport when asked (a filter popup anchored near an edge):
-    // right-align/clamp so it never renders off-screen. The caller passes the host-local viewport size
-    // (the host is a fill layer that may not be re-laid-out yet, so its own bounds are unreliable here).
-    // In-cell editors pass no clamp — they must stay pinned exactly to their cell.
-    if (args.clamp !== undefined && args.clamp.width > 0) {
-      // Horizontal: always keep the right edge on-screen (a too-narrow viewport pins it to x=0).
-      x = Math.max(0, Math.min(x, args.clamp.width - width));
-    }
-    // Vertical: only clamp when the view actually fits — the popup anchors under the header row (near the
-    // top), so a taller-than-viewport popup keeps its natural anchor and clips downward rather than being
-    // yanked up over the header on a short terminal.
-    if (args.clamp !== undefined && height <= args.clamp.height) {
-      y = Math.max(0, Math.min(y, args.clamp.height - height));
-    }
+    const initialSize = {
+      width: pre?.position === 'absolute' && pre.rect ? pre.rect.width : rect.width,
+      height: pre?.position === 'absolute' && pre.rect ? pre.rect.height : rect.height,
+    };
+    const anchor = {
+      x: origin.x + rect.x - hostOrigin.x,
+      y: origin.y + rect.y - hostOrigin.y,
+    };
+    /**
+     * Re-resolve size and placement together. A translated popup may grow after async distinct values
+     * load or after `between` reveals another editor, so reusing its old anchor would push it outside
+     * the viewport even though its initial placement was valid.
+     */
+    const place = (desired: { readonly width: number; readonly height: number }): void => {
+      let width = overlayCellCount(desired.width);
+      let height = overlayCellCount(desired.height);
+      let x = anchor.x;
+      let y = anchor.y;
+      if (args.clamp !== undefined) {
+        const viewportWidth = overlayCellCount(args.clamp.width);
+        const viewportHeight = overlayCellCount(args.clamp.height);
+        width = Math.min(width, viewportWidth);
+        height = Math.min(height, viewportHeight);
+        x = Math.max(0, Math.min(x, viewportWidth - width));
+        y = Math.max(0, Math.min(y, viewportHeight - height));
+      }
+      view.setLayout({ ...CLEARED_LAYOUT, position: 'absolute', rect: { x, y, width, height } });
+    };
     // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the
     // mounted view is intentionally discarded. Only a size the caller chose by setting a full absolute
     // layout survives (resolved above); the position is always the host-local cell, so an overlay can
     // never be dragged off its cell by the view it hosts. An explicit `undefined` clears a prop back
     // to its layout default.
-    view.setLayout({ ...CLEARED_LAYOUT, position: 'absolute', rect: { x, y, width, height } });
+    // A custom popup without the built-in desired-size contract retains its chosen absolute size.
+    // Clamp then affects placement only, preserving the public customization seam. Built-in popups
+    // opt into responsive two-axis sizing by exposing `desiredSize()`.
+    if (hasDesiredOverlaySize(view)) place(view.desiredSize());
+    else {
+      const clamp = args.clamp;
+      if (clamp === undefined) place(initialSize);
+      else {
+        const viewportWidth = overlayCellCount(clamp.width);
+        const viewportHeight = overlayCellCount(clamp.height);
+        const width = overlayCellCount(initialSize.width);
+        const height = overlayCellCount(initialSize.height);
+        const x = Math.max(0, Math.min(anchor.x, viewportWidth - width));
+        const y = Math.max(0, Math.min(anchor.y, viewportHeight - height));
+        view.setLayout({ ...CLEARED_LAYOUT, position: 'absolute', rect: { x, y, width, height } });
+      }
+    }
     host.add(view);
+    if (hasDesiredOverlaySize(view)) {
+      effect(() => {
+        place(view.desiredSize());
+      });
+    }
     loop.focusView(view);
     return () => {
       host.remove(view);

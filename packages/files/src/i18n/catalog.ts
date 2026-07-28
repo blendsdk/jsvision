@@ -1,0 +1,105 @@
+import { createI18n, defineCatalog } from '@jsvision/i18n';
+import type { AcceleratorManifest, I18n } from '@jsvision/i18n';
+
+/**
+ * Accelerator scopes owned by `@jsvision/files`.
+ *
+ * Applications can reuse this manifest when strictly validating framework-label overrides.
+ */
+export const FILES_ACCELERATOR_MANIFEST: AcceleratorManifest = Object.freeze({
+  scopes: Object.freeze([
+    Object.freeze({
+      name: 'files.open-dialog.actions',
+      keys: Object.freeze([
+        'files.field.name',
+        'files.field.list',
+        'files.action.open',
+        'files.action.cancel',
+        'files.action.help',
+      ]),
+    }),
+    Object.freeze({
+      name: 'files.save-dialog.actions',
+      keys: Object.freeze([
+        'files.field.name',
+        'files.field.list',
+        'files.action.ok',
+        'files.action.replace',
+        'files.action.clear',
+        'files.action.cancel',
+        'files.action.help',
+      ]),
+    }),
+    Object.freeze({
+      name: 'files.change-directory.actions',
+      keys: Object.freeze([
+        'files.field.directory-name',
+        'files.field.directory-tree',
+        'files.action.ok',
+        'files.action.chdir',
+        'files.action.revert',
+        'files.action.help',
+      ]),
+    }),
+  ]),
+});
+
+/** Canonical English messages owned by `@jsvision/files`. */
+export const FILES_ENGLISH_CATALOG = defineCatalog(
+  {
+    schema: 1,
+    locale: 'en',
+    messages: {
+      'files.action.open': '~O~pen',
+      'files.action.cancel': '~C~ancel',
+      'files.action.ok': '~O~K',
+      'files.action.replace': '~R~eplace',
+      'files.action.clear': '~C~lear',
+      'files.action.help': '~H~elp',
+      'files.action.chdir': '~C~hdir',
+      'files.action.revert': '~R~evert',
+      'files.dialog.open.title': 'Open a File',
+      'files.dialog.save-as.title': 'Save File As',
+      'files.dialog.change-directory.title': 'Change Directory',
+      'files.dialog.error.title': 'Error',
+      'files.field.name': '~N~ame',
+      'files.field.list': '~F~iles',
+      'files.field.directory-name': '~D~irectory name',
+      'files.field.directory-tree': '~D~irectory tree',
+      'files.error.invalid-file-name': "Invalid file name: '${name}'",
+      'files.error.invalid-drive-directory': 'Invalid drive or directory',
+      'files.error.invalid-directory': 'Invalid directory',
+      'files.info.month.january.short': 'Jan',
+      'files.info.month.february.short': 'Feb',
+      'files.info.month.march.short': 'Mar',
+      'files.info.month.april.short': 'Apr',
+      'files.info.month.may.short': 'May',
+      'files.info.month.june.short': 'Jun',
+      'files.info.month.july.short': 'Jul',
+      'files.info.month.august.short': 'Aug',
+      'files.info.month.september.short': 'Sep',
+      'files.info.month.october.short': 'Oct',
+      'files.info.month.november.short': 'Nov',
+      'files.info.month.december.short': 'Dec',
+      'files.info.time.am': 'am',
+      'files.info.time.pm': 'pm',
+    },
+  },
+  {
+    acceleratorManifest: FILES_ACCELERATOR_MANIFEST,
+    placeholderManifest: {
+      'files.error.invalid-file-name': ['name'],
+    },
+  },
+);
+
+/**
+ * Creates an isolated English service containing the Files catalog.
+ *
+ * A fresh service prevents runtime overlays on one standalone dialog from affecting another.
+ *
+ * @returns A locale-bound service containing only the canonical Files English catalog.
+ */
+export function createEnglishFilesI18n(): I18n {
+  return createI18n({ locale: 'en', catalogs: [FILES_ENGLISH_CATALOG] });
+}

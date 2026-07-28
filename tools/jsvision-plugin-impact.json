@@ -49,6 +49,39 @@
       ]
     },
     {
+      "name": "internationalization",
+      "paths": [
+        "packages/i18n/src",
+        "packages/ui/src/app",
+        "packages/ui/src/i18n",
+        "packages/ui/src/controls",
+        "packages/ui/src/dialog",
+        "packages/ui/src/editor",
+        "packages/ui/src/date",
+        "packages/forms/src",
+        "packages/files/src",
+        "packages/datagrid/src",
+        "packages/code-editor/src",
+        "packages/examples/package.json",
+        "packages/examples/i18n-demo"
+      ],
+      "references": [
+        "references/layout.md",
+        "references/i18n.md",
+        "references/running-and-testing.md",
+        "references/recipes/i18n-app.md",
+        "references/recipes/forms-dialogs.md",
+        "references/recipes/theme-designer.md",
+        "references/api/controls.md",
+        "references/api/forms.md",
+        "references/api/files.md",
+        "references/api/datagrid.md",
+        "references/api/code-editor.md",
+        "references/api/i18n.md",
+        "references/app-lifecycle.md"
+      ]
+    },
+    {
       "name": "forms",
       "paths": [
         "packages/forms/src"
@@ -89,6 +122,16 @@
       ]
     },
     {
+      "name": "code-editor",
+      "paths": [
+        "packages/code-editor/src"
+      ],
+      "references": [
+        "references/component-catalog.md",
+        "references/api/code-editor.md"
+      ]
+    },
+    {
       "name": "executable-recipes",
       "paths": [
         "packages/examples/recipes"
@@ -99,14 +142,16 @@
     }
   ],
   "fingerprints": {
-    "core-engine-and-themes": "b61f527b15ce653e0518e0fa60686ca9ffe7eb67911102a507e6a69527a8731e",
-    "ui-layout-and-views": "b1a4e071f18dfc140df433a6f189e9ec30a2bfd850bd7b8297f0343bb15004dd",
+    "core-engine-and-themes": "a68c446baf229a445a271af2b15e7991e763efe63eb98e8e23dbe3914d105ed1",
+    "ui-layout-and-views": "44e8b2f97a7c2c8b898e62d89b5499943961283b9e266496ef89fca194858fd6",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
-    "ui-application-shell": "9ea128d90b240fa10166a254e9180129f799e58cc9dc3fb6d8b3cdac212e0a48",
-    "forms": "adb365be24310574b9993fc2b0bcd9f927ce7bc36fc39438346fa426ec43ded5",
-    "datagrid": "4e0d5203b2958b835c62adde9ef53b4e24cccc9ecc0293406be76b97bcaa24a0",
-    "files": "6fa550756c07d5bf06dc7b63e346cccd8893ca57e54c414d03ce2731ad7b17ef",
-    "web": "82550341aebec9f42314b72956efe9e4dbbd7a7ffe6b898ed73599e96e73ef25",
-    "executable-recipes": "9e4c6120d39b7ccd6cbcbf5354147a64b8e5f4a8526b07ce81bdbbc4a370bcf6"
+    "ui-application-shell": "5ff239514bc8725dabc29a334052020f386994ecba86ec834a66191b75dbe3c6",
+    "internationalization": "3839a644204ad30e5d19032464098c23f701677d411f6ac09fb699dee0e3b3c6",
+    "forms": "028366f0307468207cae41ebe4be54eaa66a1e533883bd4d42c50c159ec7729a",
+    "datagrid": "0da1693fde29dd5c332e571c9560f0b53640041a5e5746aecc1803c5d3af7800",
+    "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
+    "web": "9c6e81ba56a4be69593dd9dac339c4653273f33ad26b8c183dec4d2e2d562407",
+    "code-editor": "708252d08848b5f438e9fd0d2f8b6d3ca95890dc1a28a964e2cd769cf3bf076f",
+    "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
   }
 }

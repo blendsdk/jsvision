@@ -30,6 +30,7 @@ import {
   Button,
   Label,
   Text,
+  createI18n,
   signal,
   col,
   row,
@@ -259,6 +260,7 @@ export const formsShowcaseStory: Story = {
       // re-expose it as the generic method formDialog calls.
       const exec = ctx.execView;
       const host = {
+        i18n: createI18n(),
         loop: { execView: <R>(view: View): Promise<R> => (exec as (m: View) => Promise<R>)(view) },
         desktop: {
           addWindow: (): void => {},

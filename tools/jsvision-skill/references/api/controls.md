@@ -4,7 +4,7 @@
 
 Leaf input widgets and the `Input` validators.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/ui`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## Button
 
@@ -12,6 +12,55 @@ A focusable command button.
 
 ```ts
 new Button(text: string, opts: ButtonOptions = {})   // extends View
+// methods & signals:
+activation: ButtonActivation
+```
+
+## ButtonActivation
+
+Read-only activation metadata for a Button.
+
+```ts
+interface ButtonActivation {
+  label: string;   // Visible label after accelerator markers have been removed.
+  command: string | null;   // Configured command, or `null` when activation is callback-only.
+  hasCallback: boolean;   // Whether activation invokes an application callback in addition to any command.
+}
+```
+
+## ButtonColumnOptions
+
+Options accepted by the one-column convenience composer.
+
+```ts
+type ButtonColumnOptions = Pick<ButtonGroupOptions, 'minimumButtonWidth' | 'gap'>
+```
+
+## ButtonGroupMetrics
+
+Intrinsic terminal-cell geometry for one logical Button group.
+
+```ts
+interface ButtonGroupMetrics {
+  buttonWidth: number;   // Equal width assigned to every Button face.
+  columnCount: number;   // Number of Button columns in the widest composed row.
+  rowCount: number;   // Number of composed rows.
+  width: number;   // Minimum width of the complete group, including horizontal gaps.
+  height: number;   // Minimum height of the complete group, including wrapped-row gaps.
+}
+```
+
+## ButtonGroupOptions
+
+Cell-based options shared by Button-group measurement and composition.
+
+```ts
+interface ButtonGroupOptions {
+  minimumButtonWidth?: number;   // Smallest width assigned to every Button. Defaults to the widest natural face.
+  gap?: number;   // Cells between adjacent Button faces in one row. Defaults to `0`.
+  maxColumns?: number;   // Maximum Buttons in one row. Omit to keep the complete group on one row.
+  rowGap?: number;   // Rows between wrapped Button rows. Defaults to gap.
+}
 ```
 
 ## ButtonOptions
@@ -166,6 +215,7 @@ Construction options for a Switch.
 
 ```ts
 interface SwitchOptions {
+  i18n?: I18n;   // Explicit translation service for default state words.
   value: Signal<boolean>;   // Two-way bound on/off state: reading renders the knob; an external write repaints.
   label?: string;   // Optional caption drawn left of the track; `~X~` marks an `Alt`+hotkey.
   onLabel?: string;   // Text shown right of the track when on (default `'On'`); `''` hides it.
@@ -208,9 +258,25 @@ A rule that constrains what an Input accepts.
 interface Validator {
   isValidInput(s: string): boolean;   // Live per-keystroke gate: may this string exist mid-edit? Must accept partial input.
   isValid(s: string): boolean;   // Blocking gate run on completion / focus-leave: is the finished value acceptable?
-  fill(s: string): string;   // Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing applies. Only picture implements it; the other validators omit it. Never throws.
+  fill?(s: string): string;   // Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing applies. Only picture implements it; the other validators omit it. Never throws.
   error?: string;   // Optional message describing the invalid state, for you to surface to the user.
 }
+```
+
+## buttonColumn
+
+Compose one equal-width vertical column of Buttons.
+
+```ts
+buttonColumn(buttons: readonly Button[], options: ButtonColumnOptions = {}): Group
+```
+
+## buttonGroup
+
+Compose equal-width Buttons in stable row-major order.
+
+```ts
+buttonGroup(buttons: readonly Button[], options: ButtonGroupOptions = {}): Group
 ```
 
 ## filter
@@ -227,6 +293,14 @@ Build an exact-membership validator over a fixed list of strings.
 
 ```ts
 lookup(list: readonly string[]): Validator
+```
+
+## measureButtonGroup
+
+Measure an equal-width logical group of Buttons in terminal cells.
+
+```ts
+measureButtonGroup(buttons: readonly Button[], options: ButtonGroupOptions = {}): ButtonGroupMetrics
 ```
 
 ## picture
