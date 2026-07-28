@@ -1,7 +1,7 @@
 /**
- * Translation approval is digest-bound release evidence. A verifier accepts exactly one matching
- * proficient approval and reports every rejected case with machine-readable package and locale
- * identity, never by parsing prose.
+ * Translation approval is digest-bound release evidence. A verifier accepts exactly one matching,
+ * method-disclosed approval and reports every rejected case with machine-readable package and
+ * locale identity, never by parsing prose.
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -22,7 +22,7 @@ interface ReviewEntry {
   readonly locale: string;
   readonly digest: string;
   readonly reviewer: string;
-  readonly proficiency: string;
+  readonly reviewMethod: string;
   readonly reviewedAt: string;
   readonly status: string;
 }
@@ -31,7 +31,7 @@ interface ReviewVerifier {
   normalizedCatalogDigest(catalog: Catalog): string;
   verifyTranslationReviews(input: {
     readonly catalogs: readonly { readonly packageName: string; readonly catalog: Catalog }[];
-    readonly manifest: { readonly schema: 1; readonly reviews: readonly ReviewEntry[] };
+    readonly manifest: { readonly schema: 2; readonly reviews: readonly ReviewEntry[] };
   }): readonly ReviewIssue[];
 }
 
@@ -55,17 +55,37 @@ function approval(digest: string, overrides: Partial<ReviewEntry> = {}): ReviewE
     locale: 'nl',
     digest,
     reviewer: 'reviewer-nl-01',
-    proficiency: 'proficient',
-    reviewedAt: '2026-07-25',
+    reviewMethod: 'ai-assisted',
+    reviewedAt: '2026-07-28',
     status: 'approved',
     ...overrides,
   };
 }
 
-test('accepts one approved proficient review matching the normalized catalog digest', async () => {
+test.each(['ai-assisted', 'proficient-human'] as const)(
+  'accepts one approved %s review matching the normalized catalog digest',
+  async (reviewMethod) => {
+    const api = await verifier();
+    const digest = api.normalizedCatalogDigest(catalog);
+    expect(
+      api.verifyTranslationReviews({
+        catalogs,
+        manifest: { schema: 2, reviews: [approval(digest, { reviewMethod })] },
+      }),
+    ).toEqual([]);
+  },
+);
+
+test('rejects review evidence without a supported disclosed method', async () => {
   const api = await verifier();
   const digest = api.normalizedCatalogDigest(catalog);
-  expect(api.verifyTranslationReviews({ catalogs, manifest: { schema: 1, reviews: [approval(digest)] } })).toEqual([]);
+  const issues = api.verifyTranslationReviews({
+    catalogs,
+    manifest: { schema: 2, reviews: [approval(digest, { reviewMethod: 'automated' })] },
+  });
+  expect(issues).toContainEqual(
+    expect.objectContaining({ code: 'UNAPPROVED_REVIEW', packageName: 'ui', locale: 'nl' }),
+  );
 });
 
 test.each([
@@ -89,7 +109,7 @@ test.each([
   const api = await verifier();
   const issues = api.verifyTranslationReviews({
     catalogs,
-    manifest: { schema: 1, reviews: reviews(api.normalizedCatalogDigest(catalog)) },
+    manifest: { schema: 2, reviews: reviews(api.normalizedCatalogDigest(catalog)) },
   });
   expect(issues.length).toBeGreaterThan(0);
   expect(issues).toEqual(

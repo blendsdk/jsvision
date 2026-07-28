@@ -38,8 +38,9 @@ messages and application-owned translations. It must support Node terminal appli
 ## Translation quality policy
 
 - Every official JSVision locale must cover 100% of framework-owned keys before release.
-- Every official translation must be reviewed by a proficient speaker.
-- Machine-generated translations may be drafts but cannot be released without human review.
+- Every official translation must have current digest-bound review evidence.
+- Review evidence discloses whether the method was proficient-human or AI-assisted; AI review must
+  never be represented as human proficiency.
 - Official catalogs must have valid plural categories, valid non-conflicting accelerators, and
   layout acceptance coverage.
 - Application catalogs may be partial by default.

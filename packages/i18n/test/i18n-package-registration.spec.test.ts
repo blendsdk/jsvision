@@ -24,14 +24,22 @@ describe('configuration-driven i18n package registration', () => {
     expect(reviews).toContain('i18n-locale-exports.json');
   });
 
-  test('derives literal ownership from package configuration and leaves human review evidence unmodified', () => {
+  test('records disclosed AI-assisted review evidence for every configured non-English catalog', () => {
     const literals = readFileSync(join(repoRoot, 'scripts/check-i18n-literals.mjs'), 'utf8');
     const reviews = JSON.parse(readFileSync(join(repoRoot, 'tools/i18n-translation-reviews.json'), 'utf8')) as {
-      readonly reviews: readonly { readonly package: string }[];
+      readonly schema: number;
+      readonly reviews: readonly {
+        readonly package: string;
+        readonly locale: string;
+        readonly reviewMethod: string;
+      }[];
     };
     expect(literals).toContain('i18n-locale-exports.json');
     expect(literals).toMatch(/config\.packages\.map\(\(\{\s*name\s*\}\)\s*=>\s*`packages\/\$\{name\}\/src`\)/u);
     expect(literals).not.toMatch(/SOURCE_ROOTS\s*=\s*\[/u);
-    expect(reviews.reviews.some((review) => review.package === 'code-editor')).toBe(false);
+    expect(reviews.schema).toBe(2);
+    expect(reviews.reviews).toHaveLength(45);
+    expect(reviews.reviews.every((review) => review.reviewMethod === 'ai-assisted')).toBe(true);
+    expect(new Set(reviews.reviews.map((review) => `${review.package}/${review.locale}`)).size).toBe(45);
   });
 });

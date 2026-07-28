@@ -181,7 +181,9 @@ export const codeEditorPl = codeEditorCatalog('pl', {
   'code-editor.search.replace': 'Zamień',
   'code-editor.search.matches': plural('count', {
     one: '${count} wynik',
-    other: '${count} wyników',
+    few: '${count} wyniki',
+    many: '${count} wyników',
+    other: '${count} wyniku',
   }),
   'code-editor.search.case-sensitive': 'Uwzględniaj wielkość liter',
   'code-editor.search.case-sensitive.on': 'tak',

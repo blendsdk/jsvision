@@ -61,5 +61,5 @@ yarn docs:api
 yarn verify
 ```
 
-`node scripts/check-i18n-reviews.mjs` is evidence-only when external proficient-speaker reviews are
+`node scripts/check-i18n-reviews.mjs` is evidence-only when digest-bound method-disclosed reviews are
 missing; it must fail truthfully rather than being bypassed or falsified.

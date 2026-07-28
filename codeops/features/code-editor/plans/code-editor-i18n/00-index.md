@@ -64,7 +64,7 @@ const editorWindow = new CodeEditorWindow({ controller, i18n });
 | Search | Existing semantic state gains bounded localized inline presentation (AR-2) |
 | Layout | Code Editor display-cell correctness now; complete cross-package sweep in #185 (AR-8) |
 | Locale exports | Shared generator and checks become configuration-driven for five packages (AR-9) |
-| Human review | Catalogs are review-ready; proficient approval is never fabricated (AR-12) |
+| Translation review | Catalogs have digest-bound AI-assisted approval; human proficiency is never claimed (AR-12) |
 
 ## Related files
 

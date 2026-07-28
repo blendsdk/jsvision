@@ -6,7 +6,7 @@ import { access, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { validateCatalog } from '../src/index.js';
+import { createI18n, validateCatalog } from '../src/index.js';
 import type { AcceleratorManifest, Catalog, Message } from '../src/index.js';
 
 const PACKAGE_NAMES = ['ui', 'forms', 'files', 'datagrid', 'code-editor'] as const;
@@ -177,4 +177,32 @@ describe.each(PACKAGE_NAMES)('@jsvision/%s locale exports', (packageName) => {
       expect(nestedCatalogs.length).toBeLessThan(2);
     }
   });
+});
+
+test('uses the locale-specific Polish plural branches for Code Editor match counts', async () => {
+  const catalog = await loadCatalog('code-editor', 'pl');
+  const i18n = createI18n({ locale: 'pl', catalogs: [catalog] });
+  const translate = (count: number) =>
+    i18n.t('code-editor.search.matches', {
+      params: { count },
+    });
+
+  expect(translate(1)).toBe('1 wynik');
+  expect(translate(2)).toBe('2 wyniki');
+  expect(translate(5)).toBe('5 wyników');
+  expect(translate(1.5)).toBe('1,5 wyniku');
+});
+
+test('uses distinct conventional two-character Portuguese weekday labels', async () => {
+  const catalog = await loadCatalog('ui', 'pt-PT');
+  expect(
+    ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].map(
+      (weekday) => catalog.messages[`ui.calendar.weekday.${weekday}.short2`],
+    ),
+  ).toEqual(['do', '2ª', '3ª', '4ª', '5ª', '6ª', 'sá']);
+});
+
+test('marks an existing letter as the Dutch whole-words accelerator', async () => {
+  const catalog = await loadCatalog('ui', 'nl');
+  expect(catalog.messages['ui.editor.whole-words']).toBe('Volledige ~w~oorden');
 });

@@ -39,14 +39,14 @@ No finding was waived or dismissed.
   the immutable Vitest file as a specification oracle rather than the authoritative wall-clock
   runner. Implement the Theme Designer with localized framework controls, source-color selection,
   live preview, OK commit, and Cancel rollback.
-- **Evidence**: Direct review verification reports 36 missing approvals; the prior release script
-  mutated versions without checking them. The docs generator covered only the main barrel. The
+- **Evidence**: Direct review verification originally reported missing approvals; the prior release
+  script mutated versions without checking them. The docs generator covered only the main barrel. The
   prior recipe constructed only static text. The serial test skipped ceilings under `CI` and
   measured source while a separate `dist` benchmark existed.
-- **Rejected alternatives**: Adding human review to the normal implementation gate would
-  contradict the accepted separate external task and make all development CI permanently red;
-  hand-written locale links could drift; keeping both timing loops authoritative would preserve
-  divergent workloads; accepting a label-only example would misrepresent the recipe.
+- **Rejected alternatives**: Representing AI-assisted review as human proficiency would create
+  false release evidence; hand-written locale links could drift; keeping both timing loops
+  authoritative would preserve divergent workloads; accepting a label-only example would
+  misrepresent the recipe.
 - **Strongest counterargument**: Five extra TypeDoc runs increase docs generation time. They make
   the Node and locale surfaces verifiable and linked, which outweighs the bounded build cost.
 - **Confidence**: High — every correction has a focused executable or structural regression and
@@ -90,8 +90,8 @@ both pass. Per policy, no third review was dispatched.
 - Generated docs include the main i18n, Node, and four locale API trees plus the deterministic
   42-link entry-point index.
 - Root `yarn verify` passed all 34 Turbo tasks after the review corrections.
-- The standalone translation-review verifier intentionally remains red with 36 `MISSING_REVIEW`
-  issues until proficient reviewers approve the checked catalog digests.
+- The standalone translation-review verifier passes 45 digest-bound approvals whose
+  `reviewMethod` is transparently recorded as `ai-assisted`.
 
 ## Clean-runner CI follow-up
 

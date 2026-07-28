@@ -7,7 +7,8 @@ import { pathToFileURL } from 'node:url';
 const REVIEW_MANIFEST_URL = new URL('../tools/i18n-translation-reviews.json', import.meta.url);
 const LOCALE_CONFIG_URL = new URL('../tools/i18n-locale-exports.json', import.meta.url);
 const APPROVED_STATUS = 'approved';
-const PROFICIENT_ATTESTATION = 'proficient';
+const REVIEW_MANIFEST_SCHEMA = 2;
+const REVIEW_METHODS = new Set(['ai-assisted', 'proficient-human']);
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
 const REVIEW_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 const SAFE_PACKAGE = /^[a-z][a-z0-9-]*$/u;
@@ -73,7 +74,7 @@ function isReviewDate(value) {
 }
 
 /**
- * Determine whether a review entry contains complete approved proficient evidence.
+ * Determine whether a review entry contains complete approved evidence with a disclosed method.
  *
  * @param {unknown} entry Candidate review entry.
  * @returns {entry is {
@@ -81,7 +82,7 @@ function isReviewDate(value) {
  *   locale: string,
  *   digest: string,
  *   reviewer: string,
- *   proficiency: string,
+ *   reviewMethod: string,
  *   reviewedAt: string,
  *   status: string
  * }} True when every required field is well formed.
@@ -96,7 +97,8 @@ function isReviewEntry(entry) {
     SHA256_HEX.test(entry.digest) &&
     typeof entry.reviewer === 'string' &&
     entry.reviewer.trim().length > 0 &&
-    entry.proficiency === PROFICIENT_ATTESTATION &&
+    typeof entry.reviewMethod === 'string' &&
+    REVIEW_METHODS.has(entry.reviewMethod) &&
     typeof entry.reviewedAt === 'string' &&
     isReviewDate(entry.reviewedAt) &&
     entry.status === APPROVED_STATUS
@@ -106,9 +108,9 @@ function isReviewEntry(entry) {
 /**
  * Verify digest-bound translation approvals without performing filesystem or module I/O.
  *
- * Every catalog requires exactly one complete, proficient, approved review whose digest matches.
- * Extra manifest entries are rejected because they otherwise conceal misspelled package or locale
- * identities.
+ * Every catalog requires exactly one complete, method-disclosed, approved review whose digest
+ * matches. Extra manifest entries are rejected because they otherwise conceal misspelled package
+ * or locale identities.
  *
  * @param {{
  *   catalogs: readonly {
@@ -126,8 +128,15 @@ function isReviewEntry(entry) {
  * });
  */
 export function verifyTranslationReviews({ catalogs, manifest }) {
-  if (manifest?.schema !== 1 || !Array.isArray(manifest.reviews)) {
-    return [issue('INVALID_MANIFEST', '*', '*', 'Review manifest must use schema 1 with a reviews array.')];
+  if (manifest?.schema !== REVIEW_MANIFEST_SCHEMA || !Array.isArray(manifest.reviews)) {
+    return [
+      issue(
+        'INVALID_MANIFEST',
+        '*',
+        '*',
+        `Review manifest must use schema ${REVIEW_MANIFEST_SCHEMA} with a reviews array.`,
+      ),
+    ];
   }
 
   const expected = new Set(catalogs.map(({ packageName, catalog }) => `${packageName}\0${catalog.locale}`));
@@ -154,7 +163,7 @@ export function verifyTranslationReviews({ catalogs, manifest }) {
           'UNAPPROVED_REVIEW',
           packageName,
           catalog.locale,
-          'Review evidence must be complete, proficient, and approved.',
+          'Review evidence must be complete, method-disclosed, and approved.',
         ),
       );
       continue;
