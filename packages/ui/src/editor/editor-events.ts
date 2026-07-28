@@ -66,7 +66,9 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     // projection even when another control receives the insertion.
     syncEditorClipboardProjection(ed, inner.text);
     if (ed.state.focused) {
-      ed.insertText(inner.text); // one insertion, one undo step
+      // Empty host text is meaningful to the canonical clipboard but is not an edit: preserving the
+      // selection and undo stack also keeps empty native and bracketed paste behavior consistent.
+      if (inner.text !== '') ed.insertText(inner.text); // one insertion, one undo step
       ev.handled = true;
     }
     return;

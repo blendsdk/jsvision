@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 17:38 UTC
-> **Progress**: 3/26 tasks (12%)
+> **Last Updated**: 2026-07-28 17:57 UTC
+> **Progress**: 5/26 tasks (19%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -27,7 +27,8 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 
 > **Phase baseline tree**: `3daf0dbf2d9f2ee4148966a6955cc941e2afe6cc`
 > **Expected modification set**: core input utility/exports/tests; UI editable widget
-> specifications/handlers/implementation tests
+> specifications/handlers/implementation tests; generated API/plugin artifacts required by the
+> repository's same-commit SDK drift policy
 
 **Reference**: 03-01 · ST-01, ST-02, ST-09, ST-15
 
@@ -40,10 +41,10 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 - [x] 1.1.3 Run the focused core/UI specifications and record expected failures before production
   changes. ✅ (completed: 2026-07-28 17:38; 8 core, 2 UI, and 1 CodeEditor expected failures;
   canonical adoption-before-routing remained green)
-- [ ] 1.2.1 Implement and export the documented bounded-paste result/helper using
-  `TextEncoder.encodeInto`; reuse `PASTE_CAP_BYTES`.
-- [ ] 1.2.2 Add explicit empty-event no-op guards at editable insertion boundaries; preserve every
-  non-empty path.
+- [x] 1.2.1 Implement and export the documented bounded-paste result/helper using
+  `TextEncoder.encodeInto`; reuse `PASTE_CAP_BYTES`. ✅ (completed: 2026-07-28 17:57)
+- [x] 1.2.2 Add explicit empty-event no-op guards at editable insertion boundaries; preserve every
+  non-empty path. ✅ (completed: 2026-07-28 17:57)
 - [ ] 1.3.1 Turn Phase 1 specs green; add invalid-cap/allocation/lifecycle implementation cases;
   run core/UI package checks and `yarn verify`; complete required reviewer/auditor quality loop.
 

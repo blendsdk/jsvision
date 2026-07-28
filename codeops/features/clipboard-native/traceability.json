@@ -1256,6 +1256,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Core exports a documented UTF-8-safe bounded paste helper",
+        "verificationEvidence:Eight bounded-paste specifications, package typecheck, docs compilation, plugin integrity, and full yarn verify pass"
+      ],
       "id": "TASK-1-2-1",
       "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
       "semanticSources": [
@@ -1268,13 +1272,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Core bounding and widget parity task 1-2-1",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Editable widgets preserve selections and history for empty paste events",
+        "verificationEvidence:Input, Editor, and CodeEditor empty-paste specifications, typechecks, and full yarn verify pass"
+      ],
       "id": "TASK-1-2-2",
       "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
       "semanticSources": [
@@ -1287,7 +1295,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Core bounding and widget parity task 1-2-2",
       "type": "task",
       "validations": []
