@@ -62,33 +62,40 @@ app-local clipboard. `readClipboardText` returns exact raw text for an otherwise
 command. Neither callback should normalize Unicode or line endings.
 
 ```ts
+import type { CapabilityProfile } from '@jsvision/core';
 import { createApplication, createEventLoop } from '@jsvision/ui';
 
-const hostClipboard = {
-  read: async (): Promise<string> => nativeClipboard.read(),
-  write: async (text: string): Promise<void> => nativeClipboard.write(text),
-};
+interface HostClipboard {
+  read(): Promise<string>;
+  write(text: string): Promise<void>;
+}
 
-const app = createApplication({
-  readClipboardText: hostClipboard.read,
-  writeClipboardText: hostClipboard.write,
-});
+function createClipboardHosts(hostClipboard: HostClipboard, caps: CapabilityProfile) {
+  const app = createApplication({
+    readClipboardText: () => hostClipboard.read(),
+    writeClipboardText: (text) => hostClipboard.write(text),
+  });
 
-const loop = createEventLoop(
-  { width: 80, height: 24 },
-  {
-    caps,
-    readClipboardText: hostClipboard.read,
-    writeClipboardText: hostClipboard.write,
-  },
-);
+  const loop = createEventLoop(
+    { width: 80, height: 24 },
+    {
+      caps,
+      readClipboardText: () => hostClipboard.read(),
+      writeClipboardText: (text) => hostClipboard.write(text),
+    },
+  );
+
+  return { app, loop };
+}
 ```
 
 Copy and cut are canonical-first: local state commits before host synchronization begins. A host
-failure never rolls it back. Native reads start one at a time in gesture order without blocking
-input or rendering. A result is delivered only while the original focus route remains continuously
-valid. Focus or modal changes, unmount/remount, stop, and dispose make the result stale and discard
-it.
+failure never rolls it back. Native reads start one at a time in gesture order. Gesture dispatch
+does not await pending async work; with a non-blocking async adapter, pending reads do not block
+input or rendering. A synchronous callback that performs blocking process or filesystem work still
+blocks the JavaScript thread, so adapters must use asynchronous host I/O. A result is delivered only
+while the original focus route remains continuously valid. Focus or modal changes, unmount/remount,
+stop, and dispose make the result stale and discard it.
 
 Successful native text is bounded to a 1 MiB UTF-8 byte prefix without splitting a code point; an
 over-cap paste reports truncation. A successful empty read clears canonical state but is a no-op

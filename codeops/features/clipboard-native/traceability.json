@@ -1767,6 +1767,12 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Phase 4 correctness, security, concurrency, performance, and release review passed after every finding was fixed and independently re-reviewed",
+        "releaseEvidence:Exact six-environment by three-operation manual matrix recorded in 10-phase-4-release-evidence.md; all unavailable cells explicit and no real clipboard touched",
+        "summary:Final focused suites, documentation build, plugin integrity, release matrix, and quality loop completed without GitHub mutation",
+        "verificationEvidence:Core 21, UI 56, CodeEditor 2, examples 18, headless E2E 1, docs 102, VitePress build, plugin integrity, and final yarn verify pass"
+      ],
       "id": "TASK-4-3-2",
       "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
       "semanticSources": [
@@ -1779,7 +1785,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Documentation, plugin, and release task 4-3-2",
       "type": "task",
       "validations": []
