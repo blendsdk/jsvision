@@ -1628,6 +1628,11 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Phase 3 correctness, security, concurrency, and performance review passed after all findings were fixed and independently re-reviewed",
+        "summary:Phase 3 adapter specs and mechanics are green with operation ordering, headless isolation, dependency closure, and honest environment evidence",
+        "verificationEvidence:11 adapter tests, headless E2E, examples typecheck, zero-vulnerability audit, plugin integrity, and full yarn verify pass; unavailable manual environments recorded"
+      ],
       "id": "TASK-3-3-1",
       "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
       "semanticSources": [
@@ -1640,7 +1645,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "tvedit native adapter task 3-3-1",
       "type": "task",
       "validations": []

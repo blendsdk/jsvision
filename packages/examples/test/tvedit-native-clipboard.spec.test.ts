@@ -9,11 +9,13 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { Logger, PasteEvent } from '@jsvision/core';
 import { createApplication, createEventLoop, Commands, Group, View } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext } from '@jsvision/ui';
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import { createTveditClipboardAdapter } from '../tvedit-demo/native-clipboard.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+
+afterEach(() => vi.restoreAllMocks());
 
 /** Advance promise continuations without introducing a timer or touching a platform clipboard. */
 async function drainMicrotasks(): Promise<void> {
@@ -142,9 +144,6 @@ test('propagates read and write rejections without logging payloads itself', asy
   await expect(adapter.writeClipboardText('clipboard-payload-SENTINEL')).rejects.toBe(writeError);
   expect(consoleWarn).not.toHaveBeenCalled();
   expect(consoleError).not.toHaveBeenCalled();
-
-  consoleWarn.mockRestore();
-  consoleError.mockRestore();
 });
 
 // The real UI scheduler serializes injected reads and returns from a gesture before either settles.
