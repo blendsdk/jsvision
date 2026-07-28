@@ -16,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { compareApiNames, extractPackageApi } from './api-extract.mjs';
 
-export { compareApiNames } from './api-extract.mjs';
+export { compareApiNames, extractPackageApi } from './api-extract.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const API_DIR = join('tools', 'jsvision-skill', 'references', 'api');
@@ -24,9 +24,11 @@ const API_DIR = join('tools', 'jsvision-skill', 'references', 'api');
 /** The stable packages an application author imports, and each public source barrel. */
 export const PACKAGES = [
   { pkg: 'core', entry: join('packages', 'core', 'src', 'engine', 'index.ts') },
+  { pkg: 'i18n', entry: join('packages', 'i18n', 'src', 'index.ts') },
   { pkg: 'ui', entry: join('packages', 'ui', 'src', 'index.ts') },
   { pkg: 'forms', entry: join('packages', 'forms', 'src', 'index.ts') },
   { pkg: 'datagrid', entry: join('packages', 'datagrid', 'src', 'index.ts') },
+  { pkg: 'code-editor', entry: join('packages', 'code-editor', 'src', 'index.ts') },
   { pkg: 'files', entry: join('packages', 'files', 'src', 'index.ts') },
   { pkg: 'web', entry: join('packages', 'web', 'src', 'index.ts') },
 ];
@@ -67,26 +69,43 @@ export const CATEGORIES = [
     slug: 'core-essentials',
     title: '@jsvision/core — engine, capabilities & themes',
     blurb: 'Rendering, terminal capabilities, input, colors, contrast, themes, and safety.',
+    importPath: '@jsvision/core',
+  },
+  {
+    slug: 'i18n',
+    title: '@jsvision/i18n — catalogs, translation & formatting',
+    blurb: 'Catalog authoring, plurals, loading, validation, diagnostics, and locale formatting.',
+    importPath: '@jsvision/i18n',
   },
   {
     slug: 'forms',
     title: '@jsvision/forms — form state & validation',
     blurb: 'Typed form state, field bindings, validation, and form dialogs.',
+    importPath: '@jsvision/forms',
   },
   {
     slug: 'datagrid',
     title: '@jsvision/datagrid — editable enterprise grids',
     blurb: 'Typed columns, editing, sorting, filtering, selection, variants, and windowing.',
+    importPath: '@jsvision/datagrid',
+  },
+  {
+    slug: 'code-editor',
+    title: '@jsvision/code-editor — terminal-native source editing',
+    blurb:
+      'The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability.',
   },
   {
     slug: 'web',
     title: '@jsvision/web — browser runtime',
     blurb: 'Mount an app in an xterm.js terminal; the in-memory browser file system.',
+    importPath: '@jsvision/web',
   },
   {
     slug: 'files',
     title: '@jsvision/files — file dialogs & editor',
     blurb: 'File/dir dialogs, the file-system seam, and the openers.',
+    importPath: '@jsvision/files',
   },
 ];
 
@@ -123,14 +142,16 @@ const UI_SEGMENT_CATEGORY = {
  * package page; `@jsvision/ui` maps by its source segment, with core re-exports (and anything
  * unmapped) collected under `core-essentials`.
  *
- * @param {string} pkg The package the export came from (`'ui'` | `'web'` | `'files'`).
+ * @param {string} pkg The package the export came from.
  * @param {string} file The export's repo-relative declaration path.
  * @returns {string} The category slug.
  */
 export function categoryFor(pkg, file) {
   if (pkg === 'core') return 'core-essentials';
+  if (pkg === 'i18n') return 'i18n';
   if (pkg === 'forms') return 'forms';
   if (pkg === 'datagrid') return 'datagrid';
+  if (pkg === 'code-editor') return 'code-editor';
   if (pkg === 'web') return 'web';
   if (pkg === 'files') return 'files';
   if (/packages\/core\//.test(file)) return 'core-essentials';
@@ -185,11 +206,12 @@ const BANNER =
 /** Render a full category page from its (name-sorted) export digests. */
 export function renderCategory(category, exportsInCat) {
   const sorted = [...exportsInCat].sort((a, b) => compareApiNames(a.name, b.name));
+  const importPath = category.importPath ?? '@jsvision/ui';
   const head = [
     BANNER,
     `# API — ${category.title}`,
     category.blurb,
-    'Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.',
+    `Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from \`${importPath}\`. For usage patterns see the recipes and \`component-catalog.md\`; this page is the exact-signature lookup.`,
   ].join('\n\n');
   // A blank line between each export section keeps the page readable and diff-friendly.
   return [head, ...sorted.map(renderExport)].join('\n\n').trimEnd() + '\n';

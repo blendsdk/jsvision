@@ -99,6 +99,7 @@ function makeAppWithInput() {
   const app = createApplication({
     warnAmbiguousWidth: false,
     caps,
+    systemClipboard: false,
     runtime,
     input: input.asInput(),
     output: output.asOutput(),

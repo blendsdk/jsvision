@@ -53,12 +53,15 @@ export function makeAgeForm(): AgeForm {
   // every child to a hand-computed rect. Absolute placement here is reserved for the dialog frame
   // itself (below).
   const fieldRow = row({ gap: 1 }, fixed(label, 6), fixed(input, 20));
-  const buttonRow = row({ gap: 2, justify: 'center' }, fixed(okButton(), 10), fixed(cancelButton(), 12));
+  const actionButtons = [okButton(), cancelButton()];
+  const actionOptions = { minimumButtonWidth: 10, gap: 2 } as const;
+  const actionMetrics = measureButtonGroup(actionButtons, actionOptions);
+  const buttonRow = buttonGroup(actionButtons, actionOptions);
 
   const dialog = new Dialog({ title: 'Enter age' });
   // A dialog places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
   dialog.setLayout({ rect: { x: 4, y: 3, width: 36, height: 9 } });
-  dialog.add(col({ gap: 1, fill: true }, fixed(fieldRow, 1), fixed(buttonRow, 2)));
+  dialog.add(col({ gap: 1, fill: true }, fixed(fieldRow, 1), fixed(buttonRow, actionMetrics.height)));
 
   return { dialog, value, input };
 }

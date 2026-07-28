@@ -28,9 +28,15 @@ All options are optional:
   concrete profile only for tests or to force a color depth.
 - **`viewport`** — initial size in cells (defaults to the terminal size, or 80×24).
 - **`theme`** — a preset or a `createTheme(...)` result (see `theming.md`).
+- **`i18n`** — one application-owned translation service. Omit it for isolated English defaults;
+  see [i18n.md](i18n.md) when loading framework and application catalogs.
 - **`menuBar`** / **`statusLine`** — chrome rows (see `component-catalog.md`).
 - **`requireTty`** (default `true`) — `run()` asserts an interactive terminal and throws otherwise.
   Pass `false` for headless/piped runs.
+- **`systemClipboard`** (default `true`) — `run()` lazily enables operating-system text copy and
+  paste. Pass `false` to keep clipboard operations app-local, bracketed-paste-driven, or OSC 52
+  outbound only. Explicit `readClipboardText` / `writeClipboardText` callbacks override the
+  automatic pair.
 
 ## Commands
 
@@ -75,6 +81,10 @@ term.open(document.getElementById('app'));
 const mounted = mountApp({ element: document.getElementById('app'), app, caps, term });
 // later: mounted.dispose();
 ```
+
+Disposal permanently detaches the mounted tree, clears focus and pointer capture, and releases
+application command handlers. Treat a disposed application as finished; construct a fresh
+application when changing locale or replacing an independently owned shell.
 
 Keep the browser-only imports (`@xterm/xterm`, its CSS) in one entry file; the app-composition
 module stays plain `@jsvision/ui` so it also runs headless and on a TTY. See

@@ -65,6 +65,10 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 ## Text editing
 
+- `CodeEditor` (`@jsvision/code-editor`) — a terminal-native source editor with line numbers,
+  syntax presentation, structural folds, folded-row navigation, diagnostics, completion, snippets,
+  and bounded hostile-text handling. Use `CodeEditorWindow` for maximize/restore-safe scrollbars
+  and line/column status. See `api/code-editor.md`.
 - **Editor** — a full multi-line text editor (selection, mouse, undo/redo, search, clipboard).
 - **Memo** — a dialog-embeddable editor bound to a two-way `Signal<string>` (`memo.getText()`).
 - **EditWindow** — a window pre-wired around an `Editor` (a ready file/edit window).
@@ -94,6 +98,12 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - **StatusItemView** — a single status-row entry, built with `statusItem(text, command?, key?)`: an
   interactive command shortcut (label + emitted command + accelerator) or a passive live label
   (accessor text, no command). Drop it into `statusLine([...])`; `StatusLine` drives its interaction.
+
+## Internationalization
+
+- **I18nError** — a stable, structured error raised by translation validation and catalog-loading
+  boundaries. Inspect its `code` and `issues` fields when an application needs to report invalid
+  locale data without depending on error-message wording.
 
 ## The escape hatch
 

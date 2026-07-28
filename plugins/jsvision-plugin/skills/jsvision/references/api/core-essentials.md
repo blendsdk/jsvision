@@ -4,7 +4,7 @@
 
 Rendering, terminal capabilities, input, colors, contrast, themes, and safety.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/core`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## AMBIGUOUS_PROBE_GLYPHS
 
@@ -20,6 +20,28 @@ The 16 ANSI names in palette-index order: 0–7 normal, 8–15 bright.
 
 ```ts
 const ANSI16_ORDER: readonly Ansi16Name[]
+```
+
+## AcceleratorManifest
+
+Accelerator topology used by strict catalog validation.
+
+```ts
+interface AcceleratorManifest {
+  scopes: readonly AcceleratorScope[];   // Every independently validated group of co-visible labels.
+}
+```
+
+## AcceleratorScope
+
+A named group of labels that can appear together and must have unique accelerators.
+
+```ts
+interface AcceleratorScope {
+  name: string;   // Stable developer-facing scope identifier.
+  keys: readonly string[];   // Message keys whose labels coexist in this scope.
+  requiredKeys?: readonly string[];   // Labels that must contain one accelerator marker. Omit this property to require every key. Supply a subset when a translated label is intentionally reachable without a keyboard accelerator.
+}
 ```
 
 ## Ansi16Name
@@ -84,6 +106,25 @@ The box-drawing + shade probe group (corners, edges, shades).
 
 ```ts
 const BOX_PROBE_GLYPHS: "┌┐└┘─│▒█"
+```
+
+## BoundedPasteText
+
+A plain-text paste after applying its UTF-8 byte boundary.
+
+```ts
+interface BoundedPasteText {
+  text: string;   // The original text when it fits, otherwise the longest complete prefix within the byte cap.
+  truncated: boolean;   // Whether one or more input code points were omitted because they exceeded the byte cap.
+}
+```
+
+## CATALOG_SCHEMA_VERSION
+
+Schema version understood by this release.
+
+```ts
+const CATALOG_SCHEMA_VERSION: 1
 ```
 
 ## CSI
@@ -166,6 +207,87 @@ interface CapabilityResolution {
 }
 ```
 
+## Catalog
+
+A validated, locale-scoped message catalog.
+
+```ts
+interface Catalog {
+  schema: typeof CATALOG_SCHEMA_VERSION;   // Exact schema version used by this catalog.
+  locale: string;   // Canonical BCP-47 catalog locale without Unicode or private-use extensions.
+  messages: Readonly<Record<string, Message>>;   // Flat namespaced message-key map.
+}
+```
+
+## CatalogInput
+
+Untrusted value supplied at a catalog validation or publication boundary.
+
+```ts
+type CatalogInput = unknown
+```
+
+## CatalogIssue
+
+One structural catalog problem.
+
+```ts
+interface CatalogIssue {
+  code: I18nCode;   // Machine-stable issue category.
+  severity: I18nSeverity;   // Whether the issue blocks publication in the selected validation mode.
+  path: readonly string[];   // Structural path within the catalog input.
+  locale?: string;   // Canonical locale when it was safely available.
+  key?: string;   // Message key when it was safely available.
+  source?: string;   // Caller-supplied source identifier when one was provided.
+}
+```
+
+## CatalogSource
+
+An asynchronous provider of one or more catalog inputs.
+
+```ts
+interface CatalogSource {
+  name: string;   // Stable value-free identifier used by diagnostics.
+  required?: boolean;   // Whether a failure aborts loading. Defaults to `true`.
+  load(context: CatalogSourceContext): Promise<CatalogInput | readonly CatalogInput[]>;   // Loads catalog inputs for one atomic service publication.
+}
+```
+
+## CatalogSourceContext
+
+Context shared by every catalog source participating in one atomic load.
+
+```ts
+interface CatalogSourceContext {
+  signal: AbortSignal;   // Caller-owned or service-created cancellation signal.
+}
+```
+
+## CatalogValidationMode
+
+Completeness policy used by catalog validation.
+
+```ts
+type CatalogValidationMode = 'partial' | 'strict'
+```
+
+## CatalogValidationOptions
+
+Options controlling structural and cross-catalog validation.
+
+```ts
+interface CatalogValidationOptions {
+  mode?: CatalogValidationMode;   // Partial application validation or complete official-catalog validation.
+  referenceCatalog?: CatalogInput;   // English or other authoritative catalog used for parity checks.
+  referenceKeys?: readonly string[];   // Optional reference-key set when a full catalog object is not available.
+  placeholderManifest?: PlaceholderManifest;   // Required placeholder names per reference key.
+  acceleratorManifest?: AcceleratorManifest;   // Co-visible labels used for accelerator validation.
+  official?: boolean;   // Treat accelerator warnings as blocking official-catalog errors.
+  source?: string;   // Value-free identifier included in returned issues.
+}
+```
+
 ## Cell
 
 A single screen cell.
@@ -223,6 +345,19 @@ Whether a color is a foreground or background (selects the SGR base code).
 
 ```ts
 type ColorRole = 'fg' | 'bg'
+```
+
+## CreateI18nOptions
+
+Options used to synchronously create an internationalization service.
+
+```ts
+interface CreateI18nOptions {
+  locale?: string | 'auto';   // Explicit locale, or `auto` to opt into environment detection. Defaults to `en`.
+  fallbackLocales?: readonly string[];   // Ordered locale fallbacks. English remains the final implicit fallback.
+  catalogs?: readonly CatalogInput[];   // Ordered catalog layers; later layers win within the same locale.
+  diagnosticSink?: DiagnosticSink;   // Optional observer for each new recoverable diagnostic.
+}
 ```
 
 ## CursorPosition
@@ -300,6 +435,14 @@ interface Degradation {
   mode: 'keyboard-only' | 'monochrome' | 'inline';   // The reduced mode the SDK runs in for this gap.
   message: string;   // A short, screen-safe human notice (no secrets).
 }
+```
+
+## DiagnosticSink
+
+Receives each new deduplicated diagnostic after it enters the bounded store.
+
+```ts
+type DiagnosticSink = (diagnostic: I18nDiagnostic) => void
 ```
 
 ## ESC_TIMEOUT_MS
@@ -432,6 +575,77 @@ The abstract, payload-free signal set the host reacts to.
 type HostSignal = 'resize' | 'interrupt' | 'terminate' | 'hangup' | 'suspend' | 'continue'
 ```
 
+## I18n
+
+Locale-bound translation and formatting service.
+
+```ts
+interface I18n {
+  locale: string;   // Canonical requested locale used for formatting.
+  fallbackLocales: readonly string[];   // Canonical configured fallbacks including final English.
+  availableLocales: readonly string[];   // Sorted catalog locales currently available to lookup.
+  diagnostics: readonly I18nDiagnostic[];   // Deduplicated recoverable diagnostics, bounded to 100 records.
+  t(key: string, options?: TranslateOptions): string;   // Resolves and evaluates one translated message.
+  number(value: number | bigint, options?: Intl.NumberFormatOptions): string;   // Formats a finite number or bigint for the service locale.
+  date(value: Date | number, options?: Intl.DateTimeFormatOptions): string;   // Formats a valid date or finite epoch milliseconds for the service locale.
+  compare(left: string, right: string, options?: Intl.CollatorOptions): number;   // Compares normalized strings with a locale-bound collator.
+  has(key: string, locale?: string): boolean;   // Reports whether a key exists in the selected locale's catalog fallback path.
+  setCatalog(catalog: CatalogInput): void;   // Atomically replaces the highest-priority runtime overlay for one locale.
+}
+```
+
+## I18nCode
+
+Stable code shared by thrown errors, validation issues, and runtime diagnostics.
+
+```ts
+type I18nCode = 'INVALID_LOCALE' | 'UNSUPPORTED_SCHEMA' | 'INVALID_CATALOG' | 'INVALID_KEY' | 'INVALID_MESSAGE' | 'INVALID_PARAMETER' | 'MISSING_TRANSLATION' | 'MISSING_PARAMETER' | 'INVALID_CONTROLLER' | 'UNSAFE_TEXT' | 'CATALOG_LIMIT_EXCEEDED' | 'ABORTED' | 'SOURCE_FAILED' | 'INVALID_FORMATTER_OPTIONS' | 'INVALID_NUMBER' | 'INVALID_DATE' | 'INVALID_PATH' | 'INVALID_JSON' | 'INVALID_UTF8'
+```
+
+## I18nDiagnostic
+
+One recoverable translation fault retained by a service.
+
+```ts
+interface I18nDiagnostic {
+  code: I18nCode;   // Machine-stable diagnostic category.
+  severity: 'warning';   // Runtime diagnostics are warnings because translation returns a safe fallback.
+  key: string;   // Message key involved in the fault.
+  locale: string;   // Locale being evaluated when the fault occurred.
+  source?: string;   // Optional source identifier inherited from the catalog layer.
+}
+```
+
+## I18nError
+
+Typed configuration, validation, formatter, and loading error.
+
+```ts
+new I18nError()   // extends Error
+// methods & signals:
+code: I18nCode
+issues: readonly CatalogIssue[]
+```
+
+## I18nErrorOptions
+
+Immutable options accepted when constructing an I18nError.
+
+```ts
+interface I18nErrorOptions {
+  issues?: readonly CatalogIssue[];   // Structured validation issues related to the failure.
+  cause?: unknown;   // Lower-level error retained without exposing it in the public message.
+}
+```
+
+## I18nSeverity
+
+Severity attached to a validation issue or recoverable diagnostic.
+
+```ts
+type I18nSeverity = 'warning' | 'error'
+```
+
 ## InitialRoute
 
 The initial route for a router: a route name plus its params.
@@ -517,6 +731,17 @@ A compiled keymap: a pure lookup from a decoded KeyEvent to a bound name.
 ```ts
 interface Keymap {
   lookup(event: KeyEvent): string | undefined;   // Return the bound name for the event's chord, or `undefined` if unbound.
+}
+```
+
+## LoadI18nOptions
+
+Options used to create a service from asynchronous catalog sources.
+
+```ts
+interface LoadI18nOptions {
+  sources: readonly CatalogSource[];   // Sources whose results are merged in declaration order; at most 256 sources may be started.
+  signal?: AbortSignal;   // Optional caller-owned cancellation signal.
 }
 ```
 
@@ -611,6 +836,40 @@ A TerminalQuery with an explicit ManagedTerminalQuery.close to detach the input 
 interface ManagedTerminalQuery {
   close(): void;   // Detach the input 'data' listener and end any active `read()` iterator. Idempotent.
 }
+```
+
+## Message
+
+A catalog message supported by the version-1 JSON schema.
+
+```ts
+type Message = string | PluralMessage | SelectMessage
+```
+
+## MessageCases
+
+A case map with a mandatory fallback.
+
+```ts
+type MessageCases = Readonly<Record<string, string>> & {
+    readonly other: string;
+}
+```
+
+## MessageParameter
+
+A primitive value that can be inserted into a message without user-defined coercion.
+
+```ts
+type MessageParameter = string | number | boolean | bigint
+```
+
+## MessageParams
+
+Named values available to interpolation and structured-message controllers.
+
+```ts
+type MessageParams = Readonly<Record<string, MessageParameter>>
 ```
 
 ## MouseCaps
@@ -727,12 +986,32 @@ interface PasteState {
 }
 ```
 
+## PlaceholderManifest
+
+Placeholder names expected for each reference message key.
+
+```ts
+type PlaceholderManifest = Readonly<Record<string, readonly string[]>>
+```
+
 ## Platform
 
 Host platform, mirroring the supported values of `process.platform`.
 
 ```ts
 type Platform = 'linux' | 'darwin' | 'win32'
+```
+
+## PluralMessage
+
+A cardinal plural selected with `Intl.PluralRules`.
+
+```ts
+interface PluralMessage {
+  kind: 'plural';   // Discriminator for cardinal plural selection.
+  parameter: string;   // Name of the finite numeric parameter controlling the selected case.
+  cases: MessageCases;   // Locale-valid plural cases with a mandatory `other` fallback.
+}
 ```
 
 ## QueryResponse
@@ -971,6 +1250,18 @@ interface ScreenBundle {
 }
 ```
 
+## SelectMessage
+
+A message selected by exact primitive string matching.
+
+```ts
+interface SelectMessage {
+  kind: 'select';   // Discriminator for exact select matching.
+  parameter: string;   // Name of the safe primitive parameter controlling the selected case.
+  cases: MessageCases;   // Exact case names with a mandatory `other` fallback.
+}
+```
+
 ## StreamOptions
 
 The stream-related subset of HostOptions — enough for detectTty to run the same binding logic the host uses, before the host is started.
@@ -1196,12 +1487,31 @@ Opaque timer handle returned by RuntimeAdapter.setTimer.
 type TimerHandle = unknown
 ```
 
+## TranslateOptions
+
+Options accepted by I18n.t.
+
+```ts
+interface TranslateOptions {
+  params?: MessageParams;   // Safe named values used by interpolation and structured-message controllers.
+  defaultMessage?: Message;   // English fallback evaluated after every catalog locale.
+}
+```
+
 ## TuiError
 
 Base class for every error the SDK throws.
 
 ```ts
 new TuiError(message: string)   // extends Error
+```
+
+## UI_ACCELERATOR_MANIFEST
+
+Co-visible accelerator groups for the built-in UI catalog.
+
+```ts
+const UI_ACCELERATOR_MANIFEST: AcceleratorManifest
 ```
 
 ## UnicodeCaps
@@ -1343,6 +1653,14 @@ Emit a literal terminal bell (`\x07`).
 bell(): string
 ```
 
+## boundPasteText
+
+Bound direct string paste using the same UTF-8 byte limit as terminal bracketed paste.
+
+```ts
+boundPasteText(text: string, capBytes = PASTE_CAP_BYTES): BoundedPasteText
+```
+
 ## charWidth
 
 Display width of a Unicode code point.
@@ -1381,6 +1699,14 @@ Create a terminal host.
 
 ```ts
 createHost(options: HostOptions): Host
+```
+
+## createI18n
+
+Create a synchronous locale-bound internationalization service.
+
+```ts
+createI18n(options?: CreateI18nOptions): I18n
 ```
 
 ## createKeymap
@@ -1479,6 +1805,14 @@ The classic DOS text-mode look — a "gray dialog / blue window" theme ready to 
 const defaultTheme: Theme
 ```
 
+## defineCatalog
+
+Validate and deep-copy one catalog for safe publication.
+
+```ts
+defineCatalog(input: CatalogInput, options?: CatalogValidationOptions): Catalog
+```
+
 ## degradeCapsForWidth
 
 Apply a probe outcome to a capability profile — downgrade only, never upgrade.
@@ -1567,6 +1901,14 @@ Resolve a held, ambiguous trailing `ESC` as a standalone Escape keypress.
 flush(state: DecoderState, options?: DecodeOptions): DecodeResult
 ```
 
+## formatCatalogIssue
+
+Format a structural issue without including translated text or parameter values.
+
+```ts
+formatCatalogIssue(issue: CatalogIssue): string
+```
+
 ## gruvboxDarkTheme
 
 The Gruvbox Dark palette — a warm retro dark theme with its `bg0` background and amber accent pinned.
@@ -1599,6 +1941,14 @@ Whether a capability profile already renders as pure ASCII, so the width probe c
 isAsciiSafe(caps: CapabilityProfile): boolean
 ```
 
+## isI18nError
+
+Narrows an unknown caught value to I18nError.
+
+```ts
+isI18nError(value: unknown): value is I18nError
+```
+
 ## janusTheme
 
 A retro PC-desktop theme — a teal field, silver 3D chrome, black text, and a navy highlight for the primary button, focus, and selection.
@@ -1613,6 +1963,22 @@ Lighten a color by raising its OKLab lightness.
 
 ```ts
 lighten(color: Color, amount: number): Color
+```
+
+## loadI18n
+
+Load caller-owned asynchronous catalog sources and publish one complete service.
+
+```ts
+loadI18n(options: LoadI18nOptions): Promise<I18n>
+```
+
+## mergeCatalogs
+
+Merge ordered locale-scoped catalogs into one validated catalog per locale.
+
+```ts
+mergeCatalogs(inputs: readonly CatalogInput[]): readonly Catalog[]
 ```
 
 ## mix
@@ -1685,6 +2051,14 @@ A classic-Mac Platinum theme — crisp grayscale surfaces with a restrained high
 
 ```ts
 const platinumTheme: Theme
+```
+
+## plural
+
+Create the exact JSON representation of a cardinal plural message.
+
+```ts
+plural(parameter: string, cases: MessageCases): PluralMessage
 ```
 
 ## probeAmbiguousWidth
@@ -1767,6 +2141,14 @@ Remove escape and other terminal-control bytes from untrusted text, returning a 
 sanitize(text: string): string
 ```
 
+## select
+
+Create the exact JSON representation of an exact select message.
+
+```ts
+select(parameter: string, cases: MessageCases): SelectMessage
+```
+
 ## serialize
 
 Build the ANSI string that turns `previous` into `current` (a damage diff).
@@ -1837,6 +2219,22 @@ Validate a `Color` and parse it to RGB components.
 
 ```ts
 toRgb(color: Color): Rgb | null
+```
+
+## validateCatalog
+
+Validate one untrusted catalog without throwing.
+
+```ts
+validateCatalog(input: CatalogInput, options?: CatalogValidationOptions): readonly CatalogIssue[]
+```
+
+## validateCatalogs
+
+Validate an ordered catalog collection with one shared policy.
+
+```ts
+validateCatalogs(inputs: readonly CatalogInput[], options?: CatalogValidationOptions): readonly CatalogIssue[]
 ```
 
 ## warnIfAmbiguousWide

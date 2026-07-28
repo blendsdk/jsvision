@@ -154,9 +154,11 @@ export default withMermaid(
             text: 'Building applications',
             items: [
               { text: 'The application shell', link: '/guide/application-shell' },
+              { text: 'Internationalization', link: '/guide/i18n' },
               { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
               { text: 'Forms', link: '/guide/forms' },
               { text: 'Data grid', link: '/guide/data-grid' },
+              { text: 'Code editor', link: '/guide/code-editor' },
               { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
             ],
           },
@@ -247,7 +249,13 @@ export default withMermaid(
             ],
           },
           { text: 'Files', items: [{ text: 'File dialog', link: '/components/files/file-dialog' }] },
-          { text: 'Theming', items: [{ text: 'Theme gallery', link: '/components/theming/preset-gallery' }] },
+          {
+            text: 'Theming',
+            items: [
+              { text: 'Theme gallery', link: '/components/theming/preset-gallery' },
+              { text: 'Localized Theme Designer', link: '/components/theming/i18n-theme-designer' },
+            ],
+          },
         ],
         '/apps/': [
           { text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] },
@@ -268,7 +276,14 @@ export default withMermaid(
         // Overview is the hand-written preface; the generated per-package trees follow.
         '/api/': [{ text: 'Overview', link: '/api/' }, ...typedocSidebar],
         '/reference/': [
-          { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },
+          {
+            text: 'Reference',
+            items: [
+              { text: 'Overview', link: '/reference/' },
+              { text: 'Internationalization', link: '/reference/i18n' },
+              { text: 'i18n entry points', link: '/reference/i18n-entry-points' },
+            ],
+          },
           {
             text: 'Architecture',
             items: [

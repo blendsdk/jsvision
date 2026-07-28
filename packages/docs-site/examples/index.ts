@@ -145,4 +145,11 @@ export const EXAMPLES: readonly ExampleEntry[] = [
     sourcePath: 'examples/theming/preset-gallery.ts',
     load: () => import('./theming/preset-gallery.js'),
   },
+  {
+    id: 'theming/i18n-theme-designer',
+    category: 'theming',
+    kind: 'app',
+    sourcePath: 'examples/i18n-theme-designer.ts',
+    load: () => import('./i18n-theme-designer.js'),
+  },
 ];

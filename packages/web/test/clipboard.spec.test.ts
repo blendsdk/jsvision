@@ -28,3 +28,24 @@ test('ST-6: setClipboard writes once and never reads', async () => {
   expect(mock.writeText).toHaveBeenCalledWith('copied');
   expect(mock.readText).not.toHaveBeenCalled();
 });
+
+test.each(['win32', 'darwin', 'linux'] as const)(
+  'setClipboard writes identical raw text on the %s browser profile',
+  async (platform) => {
+    const platformCaps = resolveCapabilities({
+      env: { LANG: 'en_US.UTF-8' },
+      platform,
+      override: { colorDepth: 'truecolor' },
+    }).profile;
+    const mock = {
+      writeText: vi.fn(() => Promise.resolve()),
+      readText: vi.fn(() => Promise.resolve('host-owned')),
+    };
+
+    await setClipboard('line 1\r\n第二行 🧪', platformCaps, mock);
+
+    expect(mock.writeText).toHaveBeenCalledOnce();
+    expect(mock.writeText).toHaveBeenCalledWith('line 1\r\n第二行 🧪');
+    expect(mock.readText).not.toHaveBeenCalled();
+  },
+);

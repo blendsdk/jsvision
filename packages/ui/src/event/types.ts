@@ -34,6 +34,36 @@ export interface ModalHostAware {
   attachModalHost(host: ModalHost): void;
 }
 
+/**
+ * Write exact plain text to a host clipboard.
+ *
+ * The callback may complete synchronously or return a promise. The event loop isolates either form
+ * of failure after committing its canonical clipboard value.
+ *
+ * @param text The raw text copied or cut by the application.
+ * @example
+ * import type { ClipboardTextWriter } from '@jsvision/ui';
+ *
+ * declare const hostClipboard: { writeText(text: string): Promise<void> };
+ * const writeClipboardText: ClipboardTextWriter = (text) => hostClipboard.writeText(text);
+ */
+export type ClipboardTextWriter = (text: string) => void | Promise<void>;
+
+/**
+ * Read exact plain text from a host clipboard.
+ *
+ * The callback may return synchronously or through a promise. Returned text is untrusted and is
+ * bounded by the event loop before it becomes a paste event.
+ *
+ * @returns The current raw host clipboard text.
+ * @example
+ * import type { ClipboardTextReader } from '@jsvision/ui';
+ *
+ * declare const hostClipboard: { readText(): Promise<string> };
+ * const readClipboardText: ClipboardTextReader = () => hostClipboard.readText();
+ */
+export type ClipboardTextReader = () => string | Promise<string>;
+
 /** Options for {@link createEventLoop}. Only `caps` is required; everything else is optional. */
 export interface EventLoopOptions {
   /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
@@ -52,6 +82,10 @@ export interface EventLoopOptions {
    * keymap for copy/cut/paste (and the classic chords).
    */
   clipboardKeys?: ClipboardKeys;
+  /** Optional raw-text host writer used for copy and cut after canonical state is committed. */
+  readonly writeClipboardText?: ClipboardTextWriter;
+  /** Optional raw-text host reader used by otherwise-unhandled paste commands. */
+  readonly readClipboardText?: ClipboardTextReader;
   /**
    * Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt
    * bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
@@ -142,10 +176,11 @@ export interface EventLoop {
   stop(): void;
   /**
    * Tear the loop down for a host that detaches a still-live app: stop the out-of-tick painter (as
-   * {@link EventLoop.stop}) **and** unmount the view tree, so every view's `onCleanup` runs and
-   * releases the timers and subscriptions it holds. Idempotent. `run()` does not need this — the
-   * process exits — but a long-lived host that mounts and unmounts many apps (the browser `mountApp`)
-   * calls it on teardown so nothing leaks between one app and the next.
+   * {@link EventLoop.stop}), unmount the view tree, clear focus and pointer capture, and release all
+   * application command handlers. Every view's `onCleanup` runs, so timers, subscriptions, and
+   * closures from the detached app cannot leak into a later one. Idempotent. `run()` does not need
+   * this — the process exits — but a long-lived host that mounts and unmounts many apps (the browser
+   * `mountApp`) calls it on teardown so nothing survives between apps.
    *
    * @example
    * import { createEventLoop } from '@jsvision/ui';
@@ -155,7 +190,7 @@ export interface EventLoop {
    * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
    *
    * // When a host detaches a still-live app (e.g. the browser mountApp teardown):
-   * loop.dispose(); // stop the painter + unmount the tree (fires every view's onCleanup)
+   * loop.dispose(); // detach the tree and release routed state plus application handlers
    */
   dispose(): void;
   /** Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick. */
@@ -201,6 +236,28 @@ export interface EventLoop {
   focusInto(view: View): void;
   /** The currently focused view, or `null` if nothing is focused. */
   getFocused(): View | null;
+  /**
+   * Return the topmost enabled, visible view at a zero-based terminal cell without dispatching an
+   * event. The query uses the same active modal scope, clipping, and z-order traversal as pointer
+   * routing, but has no focus, selection, callback, or paint side effects.
+   *
+   * @param point The zero-based terminal cell to inspect.
+   * @returns The frontmost view at the cell, or `null` outside the active routing scope.
+   * @example
+   * import { at, Button, createEventLoop, Group } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const saveButton = new Button('Save');
+   * const root = new Group();
+   * root.add(at(saveButton, 2, 1, 10, 2));
+   * const loop = createEventLoop({ width: 20, height: 6 }, { caps });
+   * loop.mount(root);
+   *
+   * const target = loop.viewAt({ x: 4, y: 2 });
+   * if (target === saveButton) console.log('Save is reachable at that cell');
+   */
+  viewAt(point: Point): View | null;
   /** Emit a command, routing it to any handler. Dropped silently if the command is disabled. */
   emitCommand(command: string, arg?: unknown): void;
   /** Enable or disable a command. While disabled, `emitCommand` for it is dropped. */
@@ -214,10 +271,11 @@ export interface EventLoop {
    */
   commandsVersion(): number;
   /**
-   * Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that
-   * resolves with the value passed to {@link endModal}. `await` it to run a dialog and read its result.
+   * Open `view` as a modal: input is captured to its subtree until it closes. The promise resolves
+   * with the value passed to {@link endModal}, or `undefined` if the event loop is permanently
+   * disposed while the modal is active. `await` it to run a dialog and read its result.
    */
-  execView<R>(view: View): Promise<R>;
+  execView<R>(view: View): Promise<R | undefined>;
   /** Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`. */
   endModal<R>(result: R): void;
   /**
@@ -300,10 +358,39 @@ export interface EventLoop {
   refreshCaret(): void;
   /**
    * Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the
-   * loop encodes and sanitizes it for you). Wire it to your output stream. `undefined` ⇒ clipboard
-   * writes are dropped, so copy/cut is a safe no-op headlessly.
+   * loop encodes and sanitizes it for you). This legacy sink remains available for direct terminal
+   * integrations. New hosts should prefer {@link writeClipboardText}, which receives raw text before
+   * host-specific encoding. When both sinks are set, only `writeClipboardText` is called.
    */
   writeClipboard?: (seq: string) => void;
+  /**
+   * Called with raw plain text after copy or cut commits it to the loop's canonical clipboard.
+   *
+   * The host owns any required conversion: browser hosts call the Clipboard API, while native
+   * terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or
+   * rejected promise is isolated and never rolls back the canonical clipboard value.
+   *
+   * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   * const writeHostClipboard = (text: string): void => {
+   *   // Forward raw text to the host API. Do not encode terminal control sequences here.
+   *   void text;
+   * };
+   * loop.writeClipboardText = writeHostClipboard;
+   */
+  writeClipboardText?: ClipboardTextWriter;
+  /**
+   * Read raw plain text for an otherwise-unhandled paste command.
+   *
+   * Assigning a reader makes paste command-available independently of the app-local clipboard.
+   * Clearing it restores normal command enablement. Direct {@link EventLoop.dispatch} of a decoded
+   * paste event never calls this callback.
+   */
+  readClipboardText?: ClipboardTextReader;
   /**
    * The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into.
    * `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a

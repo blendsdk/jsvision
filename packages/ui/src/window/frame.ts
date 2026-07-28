@@ -20,6 +20,25 @@
 import type { Style } from '@jsvision/core';
 import type { DrawContext, Point } from '../view/index.js';
 import type { Size2D } from '../layout/index.js';
+import { clipCellText, stringWidth } from '../controls/measure.js';
+
+/** Frame cells reserved around an unnumbered title for icons, padding, and border spacing. */
+const FRAME_TITLE_CHROME = 16;
+
+/**
+ * Minimum full frame width that preserves a complete centered title.
+ *
+ * @param title Visible title text.
+ * @param numbered Whether the frame also shows a window number.
+ * @returns Required full frame width in terminal cells.
+ * @example
+ * import { frameTitleMinimumWidth } from '@jsvision/ui';
+ *
+ * const width = frameTitleMinimumWidth('Settings');
+ */
+export function frameTitleMinimumWidth(title: string, numbered = false): number {
+  return stringWidth(title) + FRAME_TITLE_CHROME + (numbered ? 4 : 0);
+}
 
 /** A frame hit-zone — what a mouse-down at a window-local point means. */
 export type FrameZone = 'close' | 'zoom' | 'resize' | 'resize-left' | 'title' | 'interior' | 'border';
@@ -141,15 +160,14 @@ export function drawFrame(ctx: DrawContext, size: Size2D, state: FrameState, rol
     ctx.text(w - 7, 0, String(state.number), borderStyle);
   }
 
-  // Centered title, truncated so it can never overrun the icon/number zones: start from width−10,
-  // reserve 6 more for the close/zoom boxes, and 4 more when a number is shown. Padded with one
-  // space on each side.
+  // Centered title, clipped in renderer cells so wide and combining glyphs agree with placement.
+  // The historical chrome reserve remains unchanged; only its unit changes from code points to cells.
   if (state.title.length > 0) {
-    let max = w - 10 - 6; // −6: close + zoom boxes
+    let max = w - FRAME_TITLE_CHROME;
     if (state.number !== undefined) max -= 4; // −4: window number
-    const titleText = max > 0 ? [...state.title].slice(0, max).join('') : '';
+    const titleText = clipCellText(state.title, max);
     if (titleText.length > 0) {
-      const i = Math.max(1, Math.floor((w - titleText.length) / 2));
+      const i = Math.max(1, Math.floor((w - stringWidth(titleText)) / 2));
       ctx.text(i - 1, 0, ` ${titleText} `, titleStyle);
     }
   }

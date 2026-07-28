@@ -15,6 +15,7 @@
  * grows. Prefer the {@link openFile} opener for the common "prompt and get a path" case; construct
  * `FileDialog` directly only when you need to embed or customize it.
  */
+import type { I18n } from '@jsvision/i18n';
 import type { Signal } from '@jsvision/ui';
 import {
   Button,
@@ -23,18 +24,24 @@ import {
   History,
   Label,
   ScrollBar,
+  buttonColumn,
+  measureButtonGroup,
   col,
   cover,
   fixed,
+  frameTitleMinimumWidth,
   grow,
   row,
   signal,
   spacer,
+  stringWidth,
 } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { nodeFileSystem } from '../fs/node-fs.js';
 import { isWild } from '../fs/wildcard.js';
 import { FileInput } from '../input/file-input.js';
+import { createEnglishFilesI18n, FILES_ENGLISH_CATALOG } from '../i18n/catalog.js';
+import { filesAcceleratorLabel } from '../i18n/label.js';
 import { FileInfoPane } from '../list/file-info-pane.js';
 import { FileList } from '../list/file-list.js';
 
@@ -54,6 +61,8 @@ export interface FileDialogOptions {
   inputName?: string;
   /** The dialog title (default `'Open a File'`, or `'Save File As'` in save mode). */
   title?: string;
+  /** Translation service for package-owned labels; defaults to an isolated English service. */
+  i18n?: I18n;
   /** An extra predicate AND-ed with the wildcard when listing files. */
   filter?: (entry: DirEntry) => boolean;
   /** The id keying this dialog's recent-path history (default a file-dialog id distinct from chdir). */
@@ -66,6 +75,51 @@ export interface FileDialogOptions {
 
 /** The default recent-path history id — distinct from the chdir dialog so their lists don't mix. */
 const FILE_HISTORY_ID = 0x0f11;
+
+/** Resolve the complete mode-specific action label set before dialog geometry is chosen. */
+function fileActionLabels(i18n: I18n, save: boolean): string[] {
+  const keys: Array<keyof typeof FILES_ENGLISH_CATALOG.messages> = save
+    ? ['files.action.ok', 'files.action.replace', 'files.action.clear', 'files.action.cancel', 'files.action.help']
+    : ['files.action.open', 'files.action.cancel', 'files.action.help'];
+  return keys.map((key) => {
+    const english = FILES_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+    return filesAcceleratorLabel(i18n, key, english);
+  });
+}
+
+/** Resolve one Files label before geometry is chosen. */
+function fileLabel(i18n: I18n, key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+  const english = FILES_ENGLISH_CATALOG.messages[key];
+  if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+  return filesAcceleratorLabel(i18n, key, english);
+}
+
+/** Minimum width needed by fixed-position translated metadata in the two-row information pane. */
+function infoPaneMinimumWidth(i18n: I18n): number {
+  const monthKeys = [
+    'files.info.month.january.short',
+    'files.info.month.february.short',
+    'files.info.month.march.short',
+    'files.info.month.april.short',
+    'files.info.month.may.short',
+    'files.info.month.june.short',
+    'files.info.month.july.short',
+    'files.info.month.august.short',
+    'files.info.month.september.short',
+    'files.info.month.october.short',
+    'files.info.month.november.short',
+    'files.info.month.december.short',
+  ] as const;
+  const widestMonth = Math.max(
+    ...monthKeys.map((key) => stringWidth(i18n.t(key, { defaultMessage: FILES_ENGLISH_CATALOG.messages[key] }))),
+  );
+  const widestPeriod = Math.max(
+    stringWidth(i18n.t('files.info.time.am', { defaultMessage: FILES_ENGLISH_CATALOG.messages['files.info.time.am'] })),
+    stringWidth(i18n.t('files.info.time.pm', { defaultMessage: FILES_ENGLISH_CATALOG.messages['files.info.time.pm'] })),
+  );
+  return 49 + Math.max(0, widestMonth - 3) + Math.max(0, widestPeriod - 2);
+}
 
 /**
  * The modal open/save file dialog.
@@ -110,17 +164,50 @@ export class FileDialog extends Dialog {
   readonly buttons: Button[] = [];
   /** The button labels, parallel to {@link buttons}. */
   readonly buttonLabels: string[] = [];
+  /** Translation service used for package-owned dialog text. */
+  readonly i18n: I18n;
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
 
   constructor(opts: FileDialogOptions) {
-    super({ title: opts.title ?? (opts.save ? 'Save File As' : 'Open a File'), width: 49, height: 19 });
+    const i18n = opts.i18n ?? createEnglishFilesI18n();
+    const save = opts.save === true;
+    const title =
+      opts.title ??
+      (save
+        ? i18n.t('files.dialog.save-as.title', {
+            defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.save-as.title'],
+          })
+        : i18n.t('files.dialog.open.title', {
+            defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.open.title'],
+          }));
+    const inputLabelText = opts.inputName ?? fileLabel(i18n, 'files.field.name');
+    const filesLabelText = fileLabel(i18n, 'files.field.list');
+    const actionLabels = fileActionLabels(i18n, save);
+    const actionMetrics = measureButtonGroup(
+      actionLabels.map((label) => new Button(label)),
+      { minimumButtonWidth: 11, maxColumns: 1, rowGap: 1 },
+    );
+    const width = Math.max(
+      49,
+      actionMetrics.buttonWidth + 27,
+      frameTitleMinimumWidth(title),
+      stringWidth(inputLabelText) + 6,
+      stringWidth(filesLabelText) + 6,
+      infoPaneMinimumWidth(i18n),
+    );
+    super({
+      title,
+      width,
+      height: 19,
+    });
     // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
     // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
-    this.minWidth = 49;
+    this.minWidth = width;
     this.minHeight = 19;
+    this.i18n = i18n;
     this.fs = opts.fs ?? nodeFileSystem;
     this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.wildcard = opts.wildcard ?? signal('*.*');
@@ -149,17 +236,18 @@ export class FileDialog extends Dialog {
     });
     this.history = new History({ link: this.fileInput, historyId: opts.historyId ?? FILE_HISTORY_ID });
 
-    const inputLabel = new Label(opts.inputName ?? '~N~ame', this.fileInput);
-    const filesLabel = new Label('~F~iles', this.fileList.rows);
+    const inputLabel = new Label(inputLabelText, this.fileInput);
+    const filesLabel = new Label(filesLabelText, this.fileList.rows);
 
     this.fileInfoPane = new FileInfoPane({
       fs: this.fs,
       directory: () => this.directory(),
       wildcard: () => this.wildcard(),
       focusedEntry: () => this.fileList.focusedEntry(),
+      i18n: this.i18n,
     });
 
-    this.buildButtons(opts.save === true);
+    this.buildButtons(save, actionLabels);
 
     // Every child below that cannot measure itself carries an explicit `fixed`/`grow` size. That is
     // not decoration: only `Text` and `Button` know their own intrinsic size, so any other widget
@@ -179,7 +267,11 @@ export class FileDialog extends Dialog {
       fixed(this.listBar, 1),
     );
     // The buttons start one row below the filename field, matching the field's own top inset.
-    const buttonCol = col({ padding: { top: 1, right: 0, bottom: 0, left: 0 }, gap: 1 }, ...this.buttons);
+    const buttonCol = col(
+      { padding: { top: 1, right: 0, bottom: 0, left: 0 } },
+      buttonColumn(this.buttons, { minimumButtonWidth: 11, gap: 1 }),
+    );
+    const buttonWidth = actionMetrics.buttonWidth;
 
     // The outer column is unpadded so the info pane can span the full frame interior; the inner one
     // carries the side inset the rest of the content needs.
@@ -189,7 +281,7 @@ export class FileDialog extends Dialog {
           grow(
             col(
               { padding: { top: 1, right: 2, bottom: 0, left: 2 } },
-              grow(row({ gap: 1 }, grow(leftCol), fixed(buttonCol, 11))),
+              grow(row({ gap: 1 }, grow(leftCol), fixed(buttonCol, buttonWidth))),
             ),
           ),
           fixed(this.fileInfoPane, 2),
@@ -215,25 +307,32 @@ export class FileDialog extends Dialog {
   }
 
   /** Build the mode-appropriate button strip; the layout below places and sizes it. */
-  private buildButtons(save: boolean): void {
-    const specs: Array<{ label: string; command?: string; default?: boolean; onClick?: () => void }> = save
+  private buildButtons(save: boolean, labels: readonly string[]): void {
+    const specs: Array<{ command?: string; default?: boolean; onClick?: () => void }> = save
       ? [
-          { label: '~O~K', command: Commands.ok, default: true },
-          { label: '~R~eplace', onClick: () => this.replace() },
-          { label: '~C~lear', onClick: () => this.clear() },
-          { label: '~C~ancel', command: Commands.cancel },
-          { label: '~H~elp' },
+          { command: Commands.ok, default: true },
+          { onClick: () => this.replace() },
+          { onClick: () => this.clear() },
+          { command: Commands.cancel },
+          {},
         ]
-      : [
-          { label: '~O~pen', command: Commands.ok, default: true },
-          { label: '~C~ancel', command: Commands.cancel },
-          { label: '~H~elp' },
-        ];
-    specs.forEach((s) => {
-      const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
+      : [{ command: Commands.ok, default: true }, { command: Commands.cancel }, {}];
+    specs.forEach((spec, index) => {
+      const label = labels[index];
+      if (label === undefined) throw new RangeError('File dialog action labels must match the selected mode.');
+      const btn = new Button(label, {
+        command: spec.command,
+        default: spec.default,
+        onClick: spec.onClick,
+      });
       this.buttons.push(btn);
-      this.buttonLabels.push(s.label);
+      this.buttonLabels.push(label);
     });
+  }
+
+  /** Resolve one Files-owned message with its canonical English fallback. */
+  private text(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: FILES_ENGLISH_CATALOG.messages[key] });
   }
 
   /** Enter/double-click on a list row: a directory enters it; a file resolves + closes (like OK). */
@@ -278,6 +377,9 @@ export class FileDialog extends Dialog {
       this.wildcard.set(this.fs.basename(full));
       return false;
     }
+    // Empty input resolves to the current directory. Treat it as a filename error before the
+    // directory branch so OK cannot silently navigate to the directory already being displayed.
+    if (raw.length === 0) return this.resolveFileAt(full, raw);
     // 2. A directory ⇒ enter it (stay open).
     if (this.statKind(full) === 'dir') {
       this.directory.set(full);
@@ -293,12 +395,17 @@ export class FileDialog extends Dialog {
   /** Resolve `full` to the result path, or raise the error box and stay open. */
   private resolveFileAt(full: string, raw: string): boolean {
     if (raw.length === 0) {
-      this.showErrorSeam?.(`Invalid file name: '${raw}'`);
+      this.showErrorSeam?.(
+        this.i18n.t('files.error.invalid-file-name', {
+          defaultMessage: FILES_ENGLISH_CATALOG.messages['files.error.invalid-file-name'],
+          params: { name: raw },
+        }),
+      );
       return false;
     }
     // The parent directory must exist and be a directory for the path to be valid.
     if (this.statKind(this.fs.dirname(full)) !== 'dir') {
-      this.showErrorSeam?.('Invalid drive or directory');
+      this.showErrorSeam?.(this.text('files.error.invalid-drive-directory'));
       return false;
     }
     this.resultPath.set(full);

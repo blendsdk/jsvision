@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
+    "@jsvision/code-editor": "1.2.1",
     "@jsvision/core": "1.2.1",
     "@jsvision/datagrid": "1.2.1",
     "@jsvision/files": "1.2.1",

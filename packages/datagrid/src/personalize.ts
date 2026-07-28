@@ -10,6 +10,7 @@ import type { ModalDialogHost } from '@jsvision/ui';
 import type { EditableDataGrid } from './grid.js';
 import { PersonalizeDialog } from './personalize-dialog.js';
 import type { VariantStore } from './variant-store.js';
+import { DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 
 /** Options for {@link personalizeGrid}. */
 export interface PersonalizeOptions {
@@ -60,7 +61,15 @@ export async function personalizeGrid<T>(
   grid: EditableDataGrid<T>,
   opts: PersonalizeOptions,
 ): Promise<PersonalizeResult> {
-  const dlg = new PersonalizeDialog(grid, opts.store, opts.host, opts.title ?? 'Personalize columns');
+  const dlg = new PersonalizeDialog(
+    grid,
+    opts.store,
+    opts.host,
+    opts.title ??
+      opts.host.i18n.t('datagrid.personalize.title', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.personalize.title'],
+      }),
+  );
   opts.host.desktop.addWindow(dlg);
   try {
     const command = await opts.host.loop.execView<string>(dlg);

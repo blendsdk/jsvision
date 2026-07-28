@@ -5,22 +5,41 @@ import { pathToFileURL } from 'node:url';
 
 const PERFORMANCE_TESTS = [
   ['workspace', '@jsvision/core', 'test', 'test/perf-budget.spec.test.ts', '--maxWorkers=1'],
+  // The immutable integration oracle lives at test/performance.spec.test.ts; the authoritative
+  // wall-clock gate executes the same package's built-artifact benchmark.
+  ['workspace', '@jsvision/i18n', 'bench'],
   ['workspace', '@jsvision/ui', 'test', 'test/editor-perf.spec.test.ts', '--maxWorkers=1'],
   ['workspace', '@jsvision/datagrid', 'test', 'test/perf-grid-bench.spec.test.ts', '--maxWorkers=1'],
+  [
+    'workspace',
+    '@jsvision/code-editor',
+    'test',
+    'test/code-editor-architecture.spec.test.ts',
+    'src/quality.perf.test.ts',
+    'src/languages/languages.perf.test.ts',
+    'src/ui/folding.perf.test.ts',
+    'src/ui/viewport-long-line.perf.test.ts',
+    '--maxWorkers=1',
+  ],
 ];
 
 /**
  * Run each wall-clock budget in its own single-worker process.
  *
- * The marker makes a locally invoked serial check authoritative even if a parent
- * Turbo task leaked its hash. CI and the explicit local skip retain precedence
- * in the budget helper and therefore remain informational.
+ * The marker makes a locally invoked serial check authoritative even if a parent Turbo task leaked
+ * its hash. CI and the explicit local skip return before any wall-clock workload starts because
+ * shared or deliberately excluded environments cannot produce actionable performance evidence.
  *
  * @returns {number} Zero when every performance specification passes.
  * @example
  * process.exitCode = runPerformanceChecks();
  */
 export function runPerformanceChecks() {
+  if (process.env.CI || process.env.TUI_SKIP_PERF) {
+    process.stdout.write('perf:check skipped: wall-clock tests are not actionable in this environment.\n');
+    return 0;
+  }
+
   const useShell = process.platform === 'win32';
   const env = { ...process.env, JSVISION_PERF_CHECK: '1' };
 

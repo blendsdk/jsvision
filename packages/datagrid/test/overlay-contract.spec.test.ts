@@ -86,3 +86,21 @@ test('ST-W7: a caller layout without an absolute placement loses its size too', 
   expect(host.children.length).toBe(1);
   expect(view.bounds).toEqual({ x: 3, y: 2, width: 6, height: 1 });
 });
+
+test('ST-W7: viewport clamping repositions but does not resize an oversized custom popup', () => {
+  const { host, render } = liveHost();
+  const view = new Probe();
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 50, height: 12 } });
+
+  mountCellOverlay({
+    host,
+    loop,
+    rect: { x: 35, y: 8, width: 6, height: 1 },
+    origin: { x: 0, y: 0 },
+    view,
+    clamp: { width: 40, height: 10 },
+  });
+  render.flush();
+
+  expect(view.bounds).toEqual({ x: 0, y: 0, width: 50, height: 12 });
+});

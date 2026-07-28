@@ -241,7 +241,9 @@ export class Input extends View {
       return;
     }
     if (inner.type === 'paste') {
-      this.pasteText(inner.text); // a bracketed-paste event is the real paste path
+      // The loop still routes an empty paste so its canonical clipboard can become empty, but an
+      // empty insertion must not replace a selection or create validation/value side effects.
+      if (inner.text !== '') this.pasteText(inner.text);
       ev.handled = true;
       return;
     }

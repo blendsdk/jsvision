@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "locales": ["en", "nl", "de", "fr", "es", "it", "pt-PT", "pl", "ro", "sv"],
+  "packages": [
+    {
+      "name": "ui",
+      "symbolPrefix": "ui"
+    },
+    {
+      "name": "forms",
+      "symbolPrefix": "forms"
+    },
+    {
+      "name": "files",
+      "symbolPrefix": "files"
+    },
+    {
+      "name": "datagrid",
+      "symbolPrefix": "datagrid"
+    },
+    {
+      "name": "code-editor",
+      "symbolPrefix": "codeEditor"
+    }
+  ]
+}

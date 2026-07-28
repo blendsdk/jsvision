@@ -45,6 +45,9 @@ export type { ExecHost } from './dialog/error-dialog.js';
 export { openFile, changeDir } from './openers.js';
 export type { OpenFileOptions, ChangeDirOptions } from './openers.js';
 
+// —— localization validation ——
+export { FILES_ACCELERATOR_MANIFEST } from './i18n/catalog.js';
+
 // The editor family: the file-bound editor, the factory that opens a file in a window, and the
 // command names for wiring a File menu (save/save-as behaviour lives here, not in the base editor).
 export { FileEditor, openFileInEditor, FileCommands } from './editor/index.js';

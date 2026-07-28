@@ -1,11 +1,15 @@
 /**
  * Async modal helpers over {@link Dialog}: a message box, a yes/no confirmation, and a single-field
  * prompt. Each opens a centered modal, awaits the user's answer, and cleans itself up — so nobody
- * hand-writes centering math or teardown. They run against a minimal `{ loop, desktop }` host that an
- * `Application` from `createApplication()` satisfies directly.
+ * hand-writes centering math or teardown. They run against a minimal
+ * `{ loop, desktop, i18n }` host that an `Application` from `createApplication()` satisfies
+ * directly.
  */
-import { Text, Label, Input } from '../controls/index.js';
+import type { I18n } from '@jsvision/i18n';
+import { Text, Label, Input, buttonGroup, measureButtonGroup } from '../controls/index.js';
 import type { Validator, Button } from '../controls/index.js';
+import { stringWidth } from '../controls/measure.js';
+import { frameTitleMinimumWidth } from '../window/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import type { View } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
@@ -15,11 +19,13 @@ import { Dialog } from './dialog.js';
 import { okButton, cancelButton, yesButton, noButton, okCancelButtons } from './buttons.js';
 
 /**
- * The minimal host a modal helper needs: an event loop to run the modal and a desktop to mount it
- * into. An `Application` from `createApplication()` satisfies this directly — pass the app itself, or
- * `{ loop: app.loop, desktop: app.desktop }`.
+ * The minimal host a modal helper needs: an event loop to run the modal, a desktop to mount it into,
+ * and the service that owns framework text. An `Application` from `createApplication()` satisfies
+ * this directly; passing the app itself keeps those seams together.
  */
 export interface ModalDialogHost {
+  /** Translation service for package-owned dialog text. */
+  readonly i18n: I18n;
   /** Runs a view modally, resolving to the command that closed it. */
   loop: Pick<EventLoop, 'execView'>;
   /** The desktop the modal mounts into (and whose extent bounds it). */
@@ -50,12 +56,14 @@ export interface InputBoxOptions {
   placeholder?: string | Signal<string>;
 }
 
-/** Standard button face width, so a pair of buttons reads as a matched set. */
+/** Standard button face width, so a pair of short buttons reads as a matched set. */
 const BUTTON_WIDTH = 10;
-/** The button band is two rows tall: a raised button face plus its drop shadow. */
-const BUTTON_BAND_HEIGHT = 2;
 /** Cells between adjacent buttons in a band. */
 const BUTTON_GAP = 2;
+/** Rows between wrapped button rows. */
+const BUTTON_ROW_GAP = 1;
+/** Frame and body side insets between a dialog edge and its content. */
+const DIALOG_HORIZONTAL_CHROME = 6;
 /**
  * Body inset within a dialog's interior: a blank row under the title and a two-column side gutter, so
  * text never touches the border. No bottom inset — the button band sits on the last interior row.
@@ -75,10 +83,86 @@ export const DIALOG_BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as c
  * @returns A sized row ready to drop into a dialog body column.
  */
 export function buttonBand(...buttons: Button[]): View {
-  return fixed(
-    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((b) => fixed(b, BUTTON_WIDTH))),
-    BUTTON_BAND_HEIGHT,
+  return buttonBandFor(buttons, buttons.length);
+}
+
+/**
+ * Compose a fixed-height action band with a caller-selected wrapping column count.
+ *
+ * Kept separate from {@link buttonBand} so historical internal callers retain the variadic shape
+ * while translated surfaces can choose a viewport-aware wrapping policy.
+ */
+export function buttonBandFor(buttons: readonly Button[], maxColumns: number): View {
+  const options = {
+    minimumButtonWidth: BUTTON_WIDTH,
+    gap: BUTTON_GAP,
+    rowGap: BUTTON_ROW_GAP,
+    maxColumns: Math.max(1, maxColumns),
+  };
+  const metrics = measureButtonGroup(buttons, options);
+  const group = fixed(buttonGroup(buttons, options), metrics.width);
+  return fixed(row({ justify: 'center' }, group), metrics.height);
+}
+
+/** Intrinsic and viewport-bounded geometry for one framework-owned dialog. */
+export interface FrameworkDialogGeometry {
+  /** Final dialog width after intrinsic expansion and desktop clamping. */
+  readonly width: number;
+  /** Final dialog height after button wrapping and desktop clamping. */
+  readonly height: number;
+  /** Maximum number of action buttons placed on one row. */
+  readonly buttonColumns: number;
+}
+
+/**
+ * Resolve a compact dialog's terminal-cell geometry from all framework-owned text and actions.
+ *
+ * Preferred dimensions preserve the historical English layout. Wider translations expand the
+ * dialog while space is available. When the desktop is narrower, the action group wraps at the
+ * largest complete column count that fits; the hard desktop remains the final clipping boundary.
+ *
+ * @param host Modal host whose desktop supplies the hard viewport boundary.
+ * @param preferred Historical compact width and height.
+ * @param textWidths Display-cell widths of titles, captions, and caller text.
+ * @param buttons Complete framework-owned action group.
+ * @param maximumTextDialogWidth Optional compatibility cap applied only to text-driven expansion.
+ * @returns Resolved surface size and wrapping column count.
+ */
+export function frameworkDialogGeometry(
+  host: ModalDialogHost,
+  preferred: { width: number; height: number },
+  textWidths: readonly number[],
+  buttons: readonly Button[],
+  maximumTextDialogWidth = Number.MAX_SAFE_INTEGER,
+): FrameworkDialogGeometry {
+  const unwrapped = measureButtonGroup(buttons, {
+    minimumButtonWidth: BUTTON_WIDTH,
+    gap: BUTTON_GAP,
+    rowGap: BUTTON_ROW_GAP,
+  });
+  const desiredWidth = Math.max(
+    preferred.width,
+    ...textWidths.map((width) => Math.min(maximumTextDialogWidth, width + DIALOG_HORIZONTAL_CHROME)),
+    unwrapped.width + DIALOG_HORIZONTAL_CHROME,
   );
+  const width = Math.max(1, Math.min(desiredWidth, host.desktop.bounds.width));
+  const contentWidth = Math.max(1, width - DIALOG_HORIZONTAL_CHROME);
+  const buttonColumns =
+    buttons.length === 0
+      ? 1
+      : Math.max(
+          1,
+          Math.min(buttons.length, Math.floor((contentWidth + BUTTON_GAP) / (unwrapped.buttonWidth + BUTTON_GAP))),
+        );
+  const wrapped = measureButtonGroup(buttons, {
+    minimumButtonWidth: BUTTON_WIDTH,
+    gap: BUTTON_GAP,
+    rowGap: BUTTON_ROW_GAP,
+    maxColumns: buttonColumns,
+  });
+  const extraRows = Math.max(0, wrapped.height - 2);
+  const height = Math.max(1, Math.min(preferred.height + extraRows, host.desktop.bounds.height));
+  return { width, height, buttonColumns };
 }
 
 /**
@@ -86,14 +170,14 @@ export function buttonBand(...buttons: Button[]): View {
  * command string that closed the dialog. Shared by the helpers here and the editor's dialog builders;
  * intentionally not re-exported through the package barrel (an internal engine, not public API).
  *
- * @param host The modal host (`{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param dlg  The dialog to run.
  * @returns The command that closed the dialog.
  */
 export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<string> {
   host.desktop.addWindow(dlg);
   try {
-    return await host.loop.execView<string>(dlg as unknown as View);
+    return (await host.loop.execView<string>(dlg as unknown as View)) ?? 'cancel';
   } finally {
     host.desktop.removeWindow(dlg);
   }
@@ -106,7 +190,7 @@ export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<str
  * Esc-dismissible, and both resolve the modal to `Commands.cancel`. Callers that only inform the user
  * typically ignore the return value.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param o    Title, message text, and the button set.
  * @returns `'ok'` when OK is chosen, `'cancel'` on Cancel, Esc, or the frame close-box.
  * @example
@@ -126,19 +210,20 @@ export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<str
  */
 export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): Promise<'ok' | 'cancel'> {
   const hasCancel = o.buttons === 'okCancel';
-  // OK-only reuses the compact info-box geometry; OK/Cancel widens to fit two buttons.
-  const width = Math.min(60, Math.max(hasCancel ? 40 : 24, o.text.length + 6));
-  const height = hasCancel ? 9 : 7;
+  const buttons = hasCancel ? [okButton(host.i18n), cancelButton(host.i18n)] : [okButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(
+    host,
+    { width: hasCancel ? 40 : 24, height: hasCancel ? 9 : 7 },
+    [frameTitleMinimumWidth(o.title) - DIALOG_HORIZONTAL_CHROME, stringWidth(o.text)],
+    buttons,
+    60,
+  );
 
-  const dlg = new Dialog({ title: o.title, width, height, centered: true });
+  const dlg = new Dialog({ title: o.title, width: geometry.width, height: geometry.height, centered: true });
   // The column covers the dialog's interior, so the message takes the height the button band leaves.
   dlg.add(
     cover(
-      col(
-        { padding: DIALOG_BODY_PADDING },
-        grow(new Text(o.text)),
-        hasCancel ? buttonBand(okButton(), cancelButton()) : buttonBand(okButton()),
-      ),
+      col({ padding: DIALOG_BODY_PADDING }, grow(new Text(o.text)), buttonBandFor(buttons, geometry.buttonColumns)),
     ),
   );
 
@@ -149,7 +234,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
 /**
  * Ask a yes/no question modally.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param text The question; the box sizes itself to fit.
  * @returns `true` on Yes; `false` on No, Esc, or closing the box.
  * @example
@@ -166,9 +251,24 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
  * if (await confirm(app, 'Discard unsaved changes?')) discard();
  */
 export async function confirm(host: ModalDialogHost, text: string): Promise<boolean> {
-  const width = Math.min(60, Math.max(40, text.length + 6));
-  const dlg = new Dialog({ title: 'Confirm', width, height: 9, centered: true });
-  dlg.add(cover(col({ padding: DIALOG_BODY_PADDING }, grow(new Text(text)), buttonBand(yesButton(), noButton()))));
+  const title = host.i18n.t('ui.dialog.confirm.title', { defaultMessage: 'Confirm' });
+  const buttons = [yesButton(host.i18n), noButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(
+    host,
+    { width: 40, height: 9 },
+    [frameTitleMinimumWidth(title) - DIALOG_HORIZONTAL_CHROME, stringWidth(text)],
+    buttons,
+    60,
+  );
+  const dlg = new Dialog({
+    title,
+    width: geometry.width,
+    height: geometry.height,
+    centered: true,
+  });
+  dlg.add(
+    cover(col({ padding: DIALOG_BODY_PADDING }, grow(new Text(text)), buttonBandFor(buttons, geometry.buttonColumns))),
+  );
 
   const result = await runDialog(host, dlg);
   return result === 'yes';
@@ -178,7 +278,7 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
  * Prompt for a single line of text modally. An optional validator gates OK through the dialog's
  * `valid()` sweep, which keeps the box open and refocuses the field when the value is invalid.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param o    Title, field label (with optional `~X~` hotkey), the two-way value signal, and validator.
  * @returns The entered string on OK, or `null` if the user cancels.
  * @example
@@ -197,11 +297,17 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
  * if (entered !== null) rename(entered);
  */
 export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promise<string | null> {
-  const width = Math.min(60, Math.max(40, o.label.length + 6));
-  const dlg = new Dialog({ title: o.title, width, height: 9, centered: true });
-
   const input = new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder });
-  const [ok, cancel] = okCancelButtons();
+  const [ok, cancel] = okCancelButtons(host.i18n);
+  const buttons = [ok, cancel];
+  const geometry = frameworkDialogGeometry(
+    host,
+    { width: 40, height: 9 },
+    [frameTitleMinimumWidth(o.title) - DIALOG_HORIZONTAL_CHROME, stringWidth(o.label)],
+    buttons,
+    60,
+  );
+  const dlg = new Dialog({ title: o.title, width: geometry.width, height: geometry.height, centered: true });
   // Neither the caption nor the field reports a natural size, so both take an explicit one-row size —
   // left to size themselves they would collapse to nothing and be clipped away. The spacer below them
   // absorbs the slack that keeps the button band on the bottom row. The caption is added first for
@@ -213,7 +319,7 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
         fixed(new Label(o.label, input), 1),
         fixed(input, 1),
         spacer(),
-        buttonBand(ok, cancel),
+        buttonBandFor(buttons, geometry.buttonColumns),
       ),
     ),
   );

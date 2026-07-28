@@ -24,6 +24,8 @@ export interface CommandRegistry {
    * greying update live. Seeding does not bump it.
    */
   version(): number;
+  /** Notify reactive command affordances after enablement changes outside the override map. */
+  touch(): void;
 }
 
 /** Options for {@link createCommandRegistry}. */
@@ -68,5 +70,11 @@ export function createCommandRegistry(opts: CommandRegistryOptions): CommandRegi
     version.update((n) => n + 1); // notify bound bars so a disabled/enabled command re-greys live
   };
 
-  return { emit, enable, isEnabled, version: () => version() };
+  return {
+    emit,
+    enable,
+    isEnabled,
+    version: () => version(),
+    touch: () => version.update((n) => n + 1),
+  };
 }

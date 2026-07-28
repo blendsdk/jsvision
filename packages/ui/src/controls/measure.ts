@@ -43,6 +43,33 @@ export function stringWidth(s: string): number {
 }
 
 /**
+ * Clip text to complete terminal glyphs within a display-cell limit.
+ *
+ * Zero-width combining marks are retained only after a visible base glyph. A wide glyph that cannot
+ * fit is omitted rather than split across the clipping edge.
+ *
+ * @param text Text to clip.
+ * @param width Maximum terminal-cell width.
+ * @returns The longest complete-glyph prefix that fits.
+ */
+export function clipCellText(text: string, width: number): string {
+  if (!Number.isSafeInteger(width) || width <= 0) return '';
+  let result = '';
+  let cells = 0;
+  for (const glyph of text) {
+    const glyphCells = glyphWidth(glyph);
+    if (glyphCells === 0) {
+      if (result.length > 0) result += glyph;
+      continue;
+    }
+    if (cells + glyphCells > width) break;
+    result += glyph;
+    cells += glyphCells;
+  }
+  return result;
+}
+
+/**
  * Word-wrap `content` to `width` display columns — the same wrapping a {@link Text} view applies
  * when it draws. Reach for it when you need the line count *before* laying anything out, e.g. to
  * size a dialog tall enough that its message cannot be clipped.

@@ -11,7 +11,7 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['test/**/*.{spec,impl}.test.ts'],
+          include: ['test/**/*.{spec,impl}.test.ts', 'code-editor-demo/**/*.{spec,impl}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
           // Generous over vitest's 5s default: a few tests here pay a large one-time cost on a cold
           // Windows CI worker — a dynamic import that pulls in the whole @jsvision/ui graph, and the
@@ -22,7 +22,7 @@ export default defineConfig({
       {
         test: {
           name: 'e2e',
-          include: ['test/**/*.e2e.test.ts'],
+          include: ['test/**/*.e2e.test.ts', 'code-editor-demo/**/*.e2e.test.ts'],
           pool: 'forks',
           // `fileParallelism: false` is what serializes these now — the old `singleFork` switch no
           // longer exists, and had been silently ignored here since the runner dropped it.

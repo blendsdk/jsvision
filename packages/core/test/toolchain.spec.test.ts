@@ -95,6 +95,24 @@ test('ST-10: guard fails and names a native runtime dependency', () => {
   }
 });
 
+test('ST-10: guard also rejects a native optional runtime dependency', () => {
+  const dir = makeTempDir('rd01-st10-optional-');
+  try {
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({ name: 'fixture', version: '1.0.0', optionalDependencies: { nativelib: '1.0.0' } }),
+    );
+    const depDir = join(dir, 'node_modules', 'nativelib');
+    mkdirSync(depDir, { recursive: true });
+    writeFileSync(join(depDir, 'package.json'), JSON.stringify({ name: 'nativelib', version: '1.0.0', gypfile: true }));
+    const res = runGuard(dir);
+    expect(res.status).not.toBe(0);
+    expect(/nativelib/.test(`${res.stdout}${res.stderr}`)).toBeTruthy();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ST-11 (AC-2 structure, AR-4, AR-23): the CI workflow covers the full matrix.
 test('ST-11: ci.yml declares the 3×2 OS/Node matrix and runs verify', () => {
   const yml = readFileSync(resolve(monorepoRoot, '.github/workflows/ci.yml'), 'utf8');
