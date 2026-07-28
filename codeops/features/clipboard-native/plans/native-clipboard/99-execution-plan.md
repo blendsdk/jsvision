@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 18:18 UTC
-> **Progress**: 6/26 tasks (23%)
+> **Last Updated**: 2026-07-28 18:39 UTC
+> **Progress**: 11/26 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -55,25 +55,30 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 
 ## Phase 2: Host API and ordered focus-safe read pipeline
 
+> **Phase baseline tree**: `caba9e20033c1e40234b4a04b7c5bdac099c0be0`
 > **Expected modification set**: UI callback types/exports, application/run/event-loop routing and
 > lifecycle internals, focused specifications/implementation tests
 
 **Reference**: 03-02, 03-03 · ST-03 through ST-15
 
-- [ ] 2.1.1 `[spec-author]` Add public adapter/configuration and canonical-first write
+- [x] 2.1.1 `[spec-author]` Add public adapter/configuration and canonical-first write
   specifications for Application, direct EventLoop, sync/async callbacks, no-adapter compatibility,
-  OSC fallback, and payload-free failure.
-- [ ] 2.1.2 `[spec-author]` Add command specifications for application-handler precedence,
-  reader-aware paste availability with empty local state, modal authority, and direct
-  `PasteEvent` separation.
-- [ ] 2.1.3 `[spec-author]` Add deferred-reader specifications for serialized start/delivery,
+  OSC fallback, and payload-free failure. ✅ (completed: 2026-07-28 18:39)
+- [x] 2.1.2 `[spec-author]` Add command specifications for application-handler precedence,
+  reader-aware paste availability with empty local state, modal authority, and direct `PasteEvent`
+  separation. ✅ (completed: 2026-07-28 18:39)
+- [x] 2.1.3 `[spec-author]` Add deferred-reader specifications for serialized start/delivery,
   successful/empty/failure state transitions, later-failure fallback timing, and queue recovery.
-- [ ] 2.1.4 `[spec-author]` Add focus/modal/mount/lifecycle specifications covering continuous
+  ✅ (completed: 2026-07-28 18:39)
+- [x] 2.1.4 `[spec-author]` Add focus/modal/mount/lifecycle specifications covering continuous
   stable delivery and every stale-destination discard named in ST-12 through ST-14.
-- [ ] 2.1.5 Run focused Phase 2 specifications and record expected failures before production
-  changes.
-- [ ] 2.2.1 Export documented reader/writer callback contracts; thread optional configuration
+  ✅ (completed: 2026-07-28 18:39)
+- [x] 2.1.5 Run focused Phase 2 specifications and record expected failures before production
+  changes. ✅ (completed: 2026-07-28 18:39; UI 37 expected failures / 6 baseline passes; CodeEditor
+  1 expected failure)
+- [~] 2.2.1 Export documented reader/writer callback contracts; thread optional configuration
   through Application and EventLoop; preserve application-writer precedence and OSC fallback.
+  ⏳ (started: 2026-07-28 18:39)
 - [ ] 2.2.2 Implement app-handler-first paste interception, reader-aware command availability, and
   the rejection-safe serialized queue without awaiting input dispatch.
 - [ ] 2.2.3 Implement capture/validation generations, route mount incarnations, bounded
