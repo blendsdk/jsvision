@@ -12,6 +12,18 @@ function readRepositoryFile(path: string): string {
 }
 
 describe('release preflight', () => {
+  // Clean verification must build every workspace before cross-package contract tests import dist.
+  test('orders workspace preparation before tests in the authoritative verification command', () => {
+    const packageJson = JSON.parse(readRepositoryFile('package.json')) as {
+      scripts?: Record<string, unknown>;
+    };
+    const command = packageJson.scripts?.verify;
+
+    expect(command).toBe(
+      'yarn lint && yarn check:i18n-literals && yarn i18n:locales:check && turbo run typecheck build check:docs && turbo run test && yarn perf:check && yarn plugin:check',
+    );
+  });
+
   test('defines one release preparation command with plugin regeneration before validation', () => {
     const packageJson = JSON.parse(readRepositoryFile('package.json')) as {
       scripts?: Record<string, unknown>;

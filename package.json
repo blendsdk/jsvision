@@ -24,7 +24,7 @@
     "i18n:locales:update": "node scripts/update-i18n-locales.mjs",
     "i18n:locales:check": "node scripts/update-i18n-locales.mjs --check",
     "i18n:reviews:check": "yarn build && node scripts/check-i18n-reviews.mjs",
-    "verify": "yarn lint && yarn check:i18n-literals && yarn i18n:locales:check && turbo run typecheck build test check:docs && yarn perf:check && yarn plugin:check",
+    "verify": "yarn lint && yarn check:i18n-literals && yarn i18n:locales:check && turbo run typecheck build check:docs && turbo run test && yarn perf:check && yarn plugin:check",
     "verify:shipped": "yarn lint && yarn check:i18n-literals && turbo run typecheck build test check:docs --filter=@jsvision/core --filter=@jsvision/ui --filter=@jsvision/web --filter=@jsvision/files",
     "gate": "node scripts/gate.mjs",
     "plugin:check": "node scripts/check-plugin.mjs",
