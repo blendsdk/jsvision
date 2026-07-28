@@ -37,13 +37,15 @@ the deprecation policy.
   command, and `Input.hasSelection` (a `Signal<boolean>` an app binds to grey a Cut/Copy item when
   nothing is selected). A `controls/clipboard` kitchen-sink story ships with it.
 
-- **Optional native clipboard host adapters (`@jsvision/ui`).** `createApplication` and
+- **Automatic native clipboard with host adapter overrides (`@jsvision/ui`).** `Application.run()`
+  now enables async desktop text copy/paste by default through a lazy `clipboardy` adapter; pass
+  `systemClipboard: false` to opt out. `createApplication` and
   `createEventLoop` accept host-neutral `readClipboardText` / `writeClipboardText` callbacks for
   exact raw plain text. Copy/cut remains canonical-first; native reads are serialized and
   focus/lifecycle-safe, bounded to a 1 MiB UTF-8 prefix, and degrade to the app-local clipboard with
-  payload-free diagnostics. The private `tvedit` example demonstrates async desktop integration
-  through `clipboardy`. Browser Clipboard API and terminal OSC 52 paths remain outbound-only unless
-  a reader is explicitly configured; bracketed paste remains a separate direct input path.
+  payload-free diagnostics. Explicit callbacks override automatic integration. Browser Clipboard
+  API and terminal OSC 52 paths remain outbound-only unless a reader is configured; bracketed paste
+  remains a separate direct input path.
 
 - **`Switch` — an on/off toggle control (`@jsvision/ui`).** A focusable single-boolean control bound
   two-way to a `Signal<boolean>` (the `Slider` idiom): `new Switch({ value, label?, onLabel?,

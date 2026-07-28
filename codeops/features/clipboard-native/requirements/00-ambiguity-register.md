@@ -21,7 +21,7 @@
 | AR-08 | Lifecycle | Pending request behavior during stop/dispose | A monotonic lifecycle generation invalidates queued and in-flight requests on `stop()`; late settlements perform no dispatch, adoption, warning containing host details, or repaint. Host adapter references are cleared by run teardown. | AI — delegated by `--auto-design` | ✅ Resolved |
 | AR-09 | Encoding / bounds | How direct JavaScript strings receive the terminal paste safety boundary | Add a host-neutral core helper using bounded `TextEncoder.encodeInto`, decode only complete written bytes, and return `{ text, truncated }`; direct host reads and focused helper tests use it. | AI — delegated by `--auto-design`; challenger converged | ✅ Resolved |
 | AR-10 | External dependency | `clipboardy` release and API selection | Use the current compatible `clipboardy` 5.3 line (`^5.3.2`, Node `>=20`) and only its asynchronous `read()`/`write()` text methods. Re-evaluate the selected version during execution before lockfile mutation. | AI — delegated by `--auto-design` within the issue-mandated `clipboardy` choice | ✅ Resolved |
-| AR-11 | Dependency ownership | Which package owns native clipboard process integration | Only private `@jsvision/examples` owns the runtime dependency and injects it into `tvedit`; SDK packages expose raw-text callbacks and no `clipboardy` types. | User-selected issue #191 | ✅ Resolved |
+| AR-11 | Dependency ownership | Which package owns native clipboard process integration | Published `@jsvision/ui` owns `clipboardy` as an optional runtime dependency and `Application.run()` installs it lazily by default; `systemClipboard: false` opts out and explicit callbacks override it. This supersedes the original examples-only decision after the user required system-wide zero-configuration behavior. | User amendment, 2026-07-28 | ✅ Resolved |
 | AR-12 | Route separation | Relationship to bracketed paste and issue #188 | `Commands.paste` may invoke the native reader; decoded `PasteEvent` sources never do. Issue #188 remains independently responsible for the CodeEditor bracketed-paste defect. | User-selected issue #191 | ✅ Resolved |
 | AR-13 | Security / diagnostics | Clipboard and host-error observability | Clipboard payloads, previews, derived content, host exceptions, stderr, and helper details are never logged. Failures emit only stable payload-free warnings where the existing contract calls for one. | User-selected issue #191 | ✅ Resolved |
 | AR-14 | Scope exclusions | Comparable clipboard features that could expand the issue | Exclude rich text, images, files, history, monitoring, polling, retries, prompts, automatic system-package installation, OSC 52 reads, and remote-local SSH clipboard transport. | User-selected issue #191 | ✅ Resolved |
@@ -63,10 +63,11 @@ Features outside the issue's explicit plain-text, request-driven model are rejec
 - **Evidence:** `packages/ui/src/event/types.ts:328-351` already exposes raw-text writes;
   `packages/ui/src/app/run.ts:123-126` installs the native OSC 52 writer; and
   `packages/ui/src/app/application.ts:421-432` is the application-to-loop construction boundary.
-- **Rejected alternatives:** Importing `clipboardy` into UI violates host neutrality. A
-  `clipboard` service object is viable but adds a new abstraction and compatibility surface without
-  improving the two-function contract. Widget-level readers duplicate host access and cannot enforce
-  ordering or teardown.
+- **Amendment:** The callback contracts remain host-neutral, but the user subsequently required
+  native `Application.run()` to configure the system clipboard automatically. UI therefore owns a
+  lazy optional dependency without exposing its types. A `clipboard` service object adds a new
+  abstraction without improving the two-function contract. Widget-level readers duplicate host
+  access and cannot enforce ordering or teardown.
 - **Strongest counterargument:** Adding callbacks at both application and loop levels creates two
   public configuration surfaces.
 - **Confidence:** High — reopen if current public API review finds an existing host-adapter object
@@ -199,17 +200,19 @@ Features outside the issue's explicit plain-text, request-driven model are rejec
   family; no install is performed during planning.
 - **Objective:** Use the maintained asynchronous cross-platform text API on the repository's Node
   22+ baseline.
-- **Decision:** Plan for `clipboardy: ^5.3.2` in `@jsvision/examples` runtime dependencies and call
-  only `read()` and `write()`.
-- **Evidence:** The npm registry reports `clipboardy` 5.3.2 as latest, with Node `>=20`; the examples
+- **Decision:** Use `clipboardy: ^5.3.2` as an optional `@jsvision/ui` runtime dependency and call
+  only `read()` and `write()` after the first clipboard operation. This supersedes the original
+  examples-only location.
+- **Evidence:** The npm registry reports `clipboardy` 5.3.2 as latest, with Node `>=20`; the UI
   package declares Node `>=22`.
 - **Rejected alternatives:** Pinning an older major loses current platform fixes. An exact patch pin
-  unnecessarily prevents compatible fixes in a private demonstration package. Sync methods violate
+  unnecessarily prevents compatible fixes in the supported runtime package. Sync methods violate
   the issue's latency constraint.
 - **Strongest counterargument:** A caret range can admit a future behavior change before the next
   lockfile refresh.
 - **Confidence:** High — execution must re-check the selected release and lockfile diff.
-- **Hardening:** The version is reversible and isolated to a private package.
+- **Hardening:** Optional dependency ownership preserves install/runtime degradation, while the
+  browser production build verifies the lazy import boundary.
 - **Policy version:** 1
 - **Root invocation ID:** `AD-191-20260728T133457Z`
 - **Reopen triggers:** Latest `clipboardy` changes its Node baseline, subprocess behavior, license,

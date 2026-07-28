@@ -12,7 +12,7 @@
 | # | Category | Ambiguity / Gap | Resolution | Authority | Status |
 |---|---|---|---|---|---|
 | AR-01 | Target | Which approved requirements this plan implements | One planning group and plan implement `clipboard-native/RD-01`, `RD-02`, and `RD-03`. | Requirements AR-18 | ✅ Resolved |
-| AR-02 | Modification set | Which production surfaces may change | Core paste utility; UI application/run/event-loop and editable widgets; private examples adapter; tests, consumer docs, canonical skill, generated plugin, lockfile, and CodeOps evidence. | AI — delegated by `--auto-design` | ✅ Resolved |
+| AR-02 | Modification set | Which production surfaces may change | Core paste utility; UI application/run/event-loop, automatic adapter, package manifest, and editable widgets; tests, consumer docs, canonical skill, generated plugin, lockfile, and CodeOps evidence. | AI — delegated by `--auto-design`; amended by user | ✅ Resolved |
 | AR-03 | Public API | Concrete adapter types and configuration path | Export raw-text callback types; add optional reader/writer to `ApplicationOptions` and direct `EventLoopOptions`; preserve the existing event-loop writer methods for runtime hosts. | Requirements AR-03 | ✅ Resolved |
 | AR-04 | Command routing | Where native reads intercept paste commands | Let the existing application command sink handle first; otherwise the event loop captures an eligible `Commands.paste` and schedules the reader. Modal scope remains authoritative. | AI — delegated by `--auto-design` | ✅ Resolved |
 | AR-05 | Command enablement | How paste remains reachable with an empty local clipboard | The event loop's command-emission boundary treats paste as enabled while a reader exists; with no reader, existing registry enablement remains unchanged. | AI — delegated by `--auto-design` | ✅ Resolved |
@@ -20,7 +20,7 @@
 | AR-07 | Destination continuity | Concrete stale-target proof | Capture scope, route, focus/modal generation, lifecycle generation, and per-view mount incarnations; revalidate atomically immediately before dispatch. | Requirements AR-06, AR-08 | ✅ Resolved |
 | AR-08 | Bounds | Utility signature and algorithm | Export `boundPasteText(text, capBytes = PASTE_CAP_BYTES): { text; truncated }` from core; use a fixed buffer and `TextEncoder.encodeInto`. | Requirements AR-09 | ✅ Resolved |
 | AR-09 | Empty text | Widget implementation boundary | Add explicit empty-paste no-op guards to every editable widget reached by `PasteEvent`; canonical adoption remains loop-owned and occurs first. | Requirements AR-19 | ✅ Resolved |
-| AR-10 | Native adapter | How `clipboardy` remains testable and isolated | Add a small examples-owned adapter factory accepting async read/write functions; `tvedit` injects `clipboardy.read`/`write`, while tests inject fakes. | AI — delegated by `--auto-design` | ✅ Resolved |
+| AR-10 | Native adapter | How `clipboardy` remains testable and isolated | `Application.run()` installs a lazy UI-owned adapter by default; `systemClipboard: false` opts out, explicit callbacks override it, and tests inject or mock async read/write methods. This supersedes the initial `tvedit`-only factory. | User amendment, 2026-07-28 | ✅ Resolved |
 | AR-11 | Timeout / cancellation | Whether reads time out or receive abort signals | Add neither: the public callback stays parameterless, serialization bounds concurrency, and lifecycle tokens make late completion inert. | Requirements AR-07, AR-08 | ✅ Resolved |
 | AR-12 | Diagnostics | Where failures are reported | Use the existing event-loop warning sink with stable payload-free read/write messages; do not forward thrown values. | Requirements AR-13, AR-20 | ✅ Resolved |
 | AR-13 | Tests | File and oracle split | Requirements-derived behavior goes in clipboard `.spec.test.ts` files; scheduler/token/adapter mechanics go in `.impl.test.ts`; machine clipboard access is forbidden. | RD-03 | ✅ Resolved |
@@ -80,18 +80,20 @@
 - **Reopen trigger:** Measured helper latency makes key-repeat queues unusable or a cancellable
   adapter contract is approved.
 
-### AR-10 — examples adapter factory
+### AR-10 — automatic application adapter
 
 - **Objective:** Exercise the exact native wiring without touching the developer or CI clipboard.
-- **Evidence:** `@jsvision/examples` is private and already owns runtime demonstrations; SDK
-  packages must not depend on `clipboardy`.
-- **Decision:** Keep dependency-specific imports in the executable entry and place injectable
-  raw-text composition in an examples module tested with fakes.
-- **Counterargument:** A factory adds indirection to a small example.
-- **Confidence:** High. It is the smallest seam that proves mapping and failure behavior
-  deterministically.
-- **Reopen trigger:** Existing examples infrastructure already provides an equivalent dependency
-  injection seam.
+- **Evidence:** Every native example already converges on `Application.run()`. Example-only wiring
+  made `tvedit` work while leaving the kitchen sink and consumer applications unconfigured.
+- **Decision:** Publish `clipboardy` as an optional UI runtime dependency, load it on the first
+  clipboard operation, and install the ordered pair automatically only when no explicit callback
+  owns the boundary.
+- **Counterargument:** This expands the published UI dependency closure and changes default
+  `Application.run()` behavior.
+- **Confidence:** High. UI, package-policy, headless, plugin, and browser production builds verify
+  the boundary; explicit opt-out preserves isolated/OSC-only hosts.
+- **Reopen trigger:** A supported bundler cannot preserve the lazy import or optional dependency
+  installation proves unreliable on a supported package manager.
 
 ## Zero-Ambiguity Gate
 

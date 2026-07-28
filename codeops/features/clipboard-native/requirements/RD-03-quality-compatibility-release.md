@@ -31,10 +31,10 @@ Codex guidance. *(AR-12–AR-17)*
 - **R3.4 — Security evidence.** Tests shall prove that clipboard text, content previews, thrown
   host values, helper stderr, and derived text never appear in logs for sync/async read and write
   failures, invalid targets, truncation, or teardown. *(AR-13, AR-20)*
-- **R3.5 — Documentation.** Consumer docs shall explain ordinary native shortcuts, optional
-  application callbacks, explicit-read timing, raw-text and 1 MiB bounds, ordered focus safety,
-  successful empty reads, fallback, terminal bracketed paste, headless/SSH limitations, and the
-  `tvedit` adapter. Public exports shall carry complete JSDoc and examples. *(AR-16)*
+- **R3.5 — Documentation.** Consumer docs shall explain automatic native application behavior,
+  `systemClipboard: false`, custom callbacks, explicit-read timing, raw-text and 1 MiB bounds,
+  ordered focus safety, successful empty reads, fallback, terminal bracketed paste, and
+  headless/SSH limitations. Public exports shall carry complete JSDoc and examples. *(AR-16)*
 - **R3.6 — Plugin governance.** After mapped SDK changes, execution shall inspect every reference
   reported by source-impact checking, update canonical `tools/jsvision-skill/` content where
   semantically required, run `yarn plugin:update`, include generated
@@ -78,10 +78,11 @@ Codex guidance. *(AR-12–AR-17)*
 
 ### Compatibility
 
-- Public additions are optional and source-compatible.
-- No-adapter behavior is unchanged.
+- Public additions are source-compatible; automatic native behavior is default-on only when
+  `Application.run()` owns the native terminal host.
+- Direct event loops and `systemClipboard: false` retain the previous no-reader behavior.
 - Browser hosting remains outbound-only unless separately specified in a future feature.
-- The selected Node dependency remains private to examples.
+- The selected Node dependency is optional in published UI and loaded only on demand.
 - Clipboard strings preserve raw content in canonical state; individual widgets retain their
   established insertion normalization. *(AR-03, AR-04, AR-11, AR-12)*
 

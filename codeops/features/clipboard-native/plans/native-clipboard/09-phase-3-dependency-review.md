@@ -1,8 +1,10 @@
 # Phase 3 Dependency Review: `clipboardy`
 
 > **Reviewed**: 2026-07-28
-> **Decision**: Proceed with the planned `clipboardy: ^5.3.2` private examples dependency
-> **Plan impact**: None
+> **Decision**: Proceed with `clipboardy: ^5.3.2`; ownership amended to an optional
+> `@jsvision/ui` runtime dependency
+> **Plan impact**: Phase 5 supersedes the original private-examples ownership after the user
+> required automatic system clipboard behavior for every native application
 
 ## Current release
 
@@ -45,8 +47,11 @@ reviewed packages report MIT licenses.
 
 ## Implementation constraints retained
 
-- Add the dependency only to private `@jsvision/examples`.
+- Declare the dependency as optional in published `@jsvision/ui`, so normal installs receive the
+  zero-configuration adapter while an unavailable optional dependency can degrade safely.
 - Import and inject only the asynchronous text methods; never invoke synchronous or image APIs.
+- Load the dependency only after the first clipboard operation; browser mounting and headless
+  composition must not execute it.
 - Preserve raw strings exactly, including empty values, Unicode, and line endings.
 - Do not install platform helpers, retry, poll, log clipboard payloads, or make remote clipboard
   claims.

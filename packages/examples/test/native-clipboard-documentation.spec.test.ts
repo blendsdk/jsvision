@@ -44,6 +44,8 @@ const generatedGotchas = repositoryFile('plugins/jsvision-plugin/skills/jsvision
 const generatedApi = repositoryFile('plugins/jsvision-plugin/skills/jsvision/references/api/app-shell.md');
 
 const configurationConcepts: readonly DocumentationConcept[] = [
+  { label: 'automatic system clipboard default', pattern: /Application\.run\(\)[\s\S]{0,180}(?:default|automatic)/i },
+  { label: 'system clipboard opt-out', pattern: /\bsystemClipboard\s*:\s*false\b/ },
   { label: 'readClipboardText callback', pattern: /\breadClipboardText\b/ },
   { label: 'writeClipboardText callback', pattern: /\bwriteClipboardText\b/ },
   { label: 'application configuration example', pattern: /createApplication\s*\(\s*\{[\s\S]*readClipboardText/ },
@@ -105,8 +107,11 @@ const safetyConcepts: readonly DocumentationConcept[] = [
 ];
 
 const platformConcepts: readonly DocumentationConcept[] = [
-  { label: 'tvedit demonstrates native clipboard integration', pattern: /\btvedit\b/i },
-  { label: 'clipboardy is private to the examples package', pattern: /clipboardy[\s\S]{0,180}(?:examples|private)/i },
+  {
+    label: 'clipboardy is loaded lazily by the UI runtime',
+    pattern:
+      /(?:UI runtime|Application\.run)[\s\S]{0,180}clipboardy|clipboardy[\s\S]{0,180}(?:UI runtime|Application\.run)/i,
+  },
   {
     label: 'macOS support is host-helper dependent',
     pattern: /macOS[\s\S]{0,180}(?:helper|pbcopy|pbpaste)|(?:helper|pbcopy|pbpaste)[\s\S]{0,180}macOS/i,
@@ -143,7 +148,7 @@ test('consumer guide documents ordering, destination safety, bounds, empty reads
   expectConcepts('keyboard and clipboard guide', consumerGuide, safetyConcepts);
 });
 
-test('consumer guide documents tvedit platform, headless, helper, and no-install limitations', () => {
+test('consumer guide documents automatic platform, headless, helper, and no-install limitations', () => {
   expectConcepts('keyboard and clipboard guide', consumerGuide, platformConcepts);
 });
 
@@ -175,7 +180,7 @@ test('generated plugin teaches the same complete native clipboard operating mode
   ]);
 });
 
-test('source-impact routing keeps the native tvedit adapter connected to clipboard guidance', () => {
+test('source-impact routing keeps automatic application clipboard changes connected to clipboard guidance', () => {
   const impact: unknown = JSON.parse(repositoryFile('tools/jsvision-plugin-impact.json'));
   if (!isRecord(impact) || !Array.isArray(impact.areas)) {
     throw new Error('tools/jsvision-plugin-impact.json must contain an areas array');
@@ -183,13 +188,13 @@ test('source-impact routing keeps the native tvedit adapter connected to clipboa
   const routed = impact.areas.some((area) => {
     if (!isRecord(area) || !Array.isArray(area.paths) || !Array.isArray(area.references)) return false;
     return (
-      area.paths.includes('packages/examples/tvedit-demo') &&
+      area.paths.includes('packages/ui/src/app') &&
       area.references.includes('references/architecture.md') &&
       area.references.includes('references/gotchas.md')
     );
   });
 
-  expect(routed, 'tvedit native adapter changes must report both canonical clipboard references').toBe(true);
+  expect(routed, 'application clipboard changes must report both canonical clipboard references').toBe(true);
 });
 
 /** Narrow parsed JSON before reading its named fields. */

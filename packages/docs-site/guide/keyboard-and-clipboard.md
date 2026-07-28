@@ -47,19 +47,36 @@ on the hosting environment:
   clipboard permission. A rejection leaves the JSVision clipboard intact.
 - OSC 52 is a capability-gated outbound copy path for native terminals. Terminal emulators,
   multiplexers, and security policies may disable it; OSC 52 does not provide native reads here.
-- A native host can inject raw reader and writer callbacks. The UI SDK does not choose platform
-  helpers or run clipboard executables itself.
+- `Application.run()` enables the operating-system text clipboard by default through a lazy
+  `clipboardy` adapter. The dependency is not loaded until the first native copy or paste gesture.
+- Direct event-loop hosts can inject raw reader and writer callbacks because they own their runtime
+  boundary and do not use `Application.run()`.
 
 This means `Ctrl+C`/`Ctrl+V` is the consistent application command set. Host gestures are aliases
 into the same pipeline, not a second clipboard implementation. Terminals commonly own
 `Ctrl+Shift+C` and `Ctrl+Shift+V`, so applications must not rely on receiving those shifted
 shortcuts.
 
-## Configure a host adapter
+## Automatic native clipboard and custom adapters
+
+Native terminal applications created with `createApplication()` need no clipboard configuration:
+
+```ts
+const app = createApplication();
+await app.run(); // Native Ctrl+C/Ctrl+V is enabled by default.
+```
+
+Pass `systemClipboard: false` to opt out. App-local copy/paste, terminal bracketed paste, and
+capability-gated OSC 52 output remain available:
+
+```ts
+const isolatedApp = createApplication({ systemClipboard: false });
+```
 
 `writeClipboardText` receives exact raw text after copy or cut commits it to the canonical
 app-local clipboard. `readClipboardText` returns exact raw text for an otherwise-unhandled paste
-command. Neither callback should normalize Unicode or line endings.
+command. Supplying custom callbacks overrides the automatic adapter. Neither callback should
+normalize Unicode or line endings.
 
 ```ts
 import type { CapabilityProfile } from '@jsvision/core';
@@ -103,14 +120,15 @@ without editing the focused widget. A read failure emits one payload-free warnin
 current app-local canonical value as the ordered fallback. Clipboard payloads and host error
 details are never logged.
 
-The private `tvedit` example demonstrates this boundary with `clipboardy`, which is owned only by
-the examples package:
+The published UI runtime uses `clipboardy` for automatic native terminal integration:
 
 - macOS uses the helpers selected by `clipboardy`, such as `pbcopy` and `pbpaste`.
 - Windows uses its PowerShell/native helper path.
 - Linux supports X11 and Wayland when the required desktop/session helpers are available.
 - Headless and SSH sessions may have no system clipboard. A missing helper leaves the app usable
   through canonical fallback.
+- Installations that omit optional dependencies do not include `clipboardy`; the lazy load then
+  fails safely and the app continues through canonical fallback.
 
 JSVision does not install platform helpers, alter permissions, retry, or poll. The native adapter
 has no timeout; a hung host operation holds later native operations in order while input, rendering,

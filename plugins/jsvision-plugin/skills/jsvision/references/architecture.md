@@ -21,16 +21,21 @@ commit there before attempting host synchronization. Incoming host paste adopts 
 the focused control inserts it. This keeps `Input`, `Editor`, and `CodeEditor` consistent even when
 browser clipboard permission is denied or a terminal lacks OSC 52 support.
 
-Keep host mechanisms at the mount boundary: browser hosts use the Clipboard API, and native hosts
-may inject `readClipboardText` and `writeClipboardText`. OSC 52 remains a capability-gated outbound
-copy path; browser clipboard integration is also outbound-only unless the host explicitly supplies
-a reader. Bracketed paste remains a separate direct input path and never calls the reader.
+Keep host mechanisms at the mount boundary: browser hosts use the Clipboard API, while
+`Application.run()` installs a lazy system text clipboard by default. Pass
+`systemClipboard: false` to opt out. Native hosts with a custom boundary may inject
+`readClipboardText` and `writeClipboardText`; explicit callbacks take precedence over the
+automatic pair. OSC 52 remains a capability-gated outbound fallback. Browser clipboard integration
+is outbound-only unless the host explicitly supplies a reader. Bracketed paste remains a separate
+direct input path and never calls the reader.
 
 ```ts
 const app = createApplication({
   readClipboardText: () => hostClipboard.read(),
   writeClipboardText: (text) => hostClipboard.write(text),
 });
+
+const isolatedApp = createApplication({ systemClipboard: false });
 
 const loop = createEventLoop(viewport, {
   caps,
@@ -48,12 +53,11 @@ and retain truncation metadata. An empty success clears canonical state without 
 failure uses the current app-local canonical fallback. Never log clipboard payloads or host error
 details.
 
-The `tvedit` example uses `clipboardy`, which is private to the examples package; published SDK
-packages do not depend on it. Its macOS `pbcopy`/`pbpaste`, Windows PowerShell/native, and Linux
-X11/Wayland paths remain host-helper-dependent. In headless or SSH sessions, missing helpers fall
-back while the app remains usable. JSVision does not install helpers, retry, or poll. Do not send
-OSC 52 to a browser terminal, log clipboard contents, or interpret clipboard text as terminal
-output.
+The published UI runtime uses `clipboardy` lazily for its automatic macOS `pbcopy`/`pbpaste`,
+Windows PowerShell/native, and Linux X11/Wayland paths. Those paths remain host-helper-dependent.
+In headless or SSH sessions, missing helpers fall back while the app remains usable. JSVision does
+not install helpers, retry, or poll. Do not send OSC 52 to a browser terminal, log clipboard
+contents, or interpret clipboard text as terminal output.
 
 ## Security and reliability
 

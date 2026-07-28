@@ -133,15 +133,16 @@ Do not confuse `shadow` with the separate `buttonShadow` role.
 **Symptom:** `Ctrl+C` and `Ctrl+V` work between JSVision controls, but copied text does not reach the
 browser or operating-system clipboard.
 **Cause:** host synchronization is capability- and permission-dependent. Browser mounts use an
-outbound-only Clipboard API bridge; native terminals may use capability-gated outbound OSC 52.
-Neither path installs a native reader. The JSVision clipboard remains valid when either mechanism
-is unavailable.
-**Fix:** keep the event loop's raw text as the canonical clipboard and configure the appropriate
-host mount. In browsers, preserve the default clipboard bridge or inject a compatible
-`ClipboardBridge`. In native terminals, enable OSC 52 in the terminal and any multiplexer, or inject
-`readClipboardText` and `writeClipboardText` at `createApplication`/`createEventLoop`. Ordinary
-`Ctrl+C` and `Ctrl+V` remain application commands; terminal-owned `Ctrl+Shift+C` and
-`Ctrl+Shift+V` are host aliases when delivered. Bracketed paste stays a separate direct path.
+outbound-only Clipboard API bridge. Native `Application.run()` installs a lazy system reader and
+writer by default, but desktop permissions, display access, or platform helpers may be unavailable.
+The JSVision clipboard remains valid when host synchronization is unavailable.
+**Fix:** keep the event loop's raw text as the canonical clipboard. Native applications normally
+need no configuration; check desktop/display access if automatic integration fails. Use
+`systemClipboard: false` to opt out, or inject `readClipboardText` and `writeClipboardText` for a
+custom host boundary. Direct `createEventLoop` hosts must supply their own callbacks. In browsers,
+preserve the default clipboard bridge or inject a compatible `ClipboardBridge`. Ordinary `Ctrl+C`
+and `Ctrl+V` remain application commands; terminal-owned `Ctrl+Shift+C` and `Ctrl+Shift+V` are host
+aliases when delivered. Bracketed paste stays a separate direct path.
 
 For native reads, operations are serialized in gesture order and intentionally have no timeout.
 Dispatch does not await pending async work; use an async host adapter so pending reads do not block
@@ -150,6 +151,6 @@ headless/SSH session, missing X11/Wayland helper, or restricted macOS/Windows he
 payload-free diagnostics and the current canonical fallback so the app remains usable. Focus/modal
 changes, unmount, stop, and disposal discard stale results. A successful empty read clears
 canonical state without editing, and successful text is truncated to a 1 MiB UTF-8 prefix when
-needed. The private `tvedit` example owns `clipboardy` and its macOS `pbcopy`/`pbpaste`, Windows
-PowerShell, and Linux X11/Wayland selection; published SDK packages do not. Never install helpers,
-retry, poll, or log clipboard/error details.
+needed. The UI runtime loads `clipboardy` only after the first system clipboard gesture and uses its
+macOS `pbcopy`/`pbpaste`, Windows PowerShell, and Linux X11/Wayland selection. Never install
+helpers, retry, poll, or log clipboard/error details.

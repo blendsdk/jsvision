@@ -38,8 +38,6 @@ import type { Application, DispatchEvent } from '@jsvision/ui';
 import type { Platform } from '@jsvision/core';
 import { nodeFileSystem, openFile, openFileInEditor, FileCommands, FileEditor } from '@jsvision/files';
 
-import { createTveditClipboardAdapter } from './native-clipboard.js';
-
 /** Demo-local commands (no framework surface — the PF-012 quit-sweep + window arrangement). */
 const CMD_EXIT_REQUEST = 'exitRequest';
 
@@ -181,14 +179,11 @@ async function main(): Promise<number> {
       override: { mouse: { sgr: true }, unicode: { utf8: true } },
     })
   ).profile;
-  const { default: clipboardy } = await import('clipboardy');
-
   const app = createApplication({
     caps,
     menuBar: buildMenuBar(),
     statusLine: buildStatusLine(),
     keymap: buildKeymap(),
-    ...createTveditClipboardAdapter(clipboardy),
   });
   const host = { i18n: app.i18n, loop: app.loop, desktop: app.desktop };
   const editorDialog = wireEditorDialogs(host, {

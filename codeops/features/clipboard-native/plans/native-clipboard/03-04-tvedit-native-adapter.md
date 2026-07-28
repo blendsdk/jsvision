@@ -1,22 +1,26 @@
-# Component: `tvedit` Native Clipboard Adapter
+# Component: Automatic Native Application Clipboard
 
 > **Implements**: RD-02
-> **Status**: Ready for execution
+> **Status**: Superseded and amended by execution-plan Phase 5
 > **CodeOps Artifact Schema**: 1
 
 ## Responsibility
 
-Demonstrate symmetric desktop clipboard integration in `tvedit` while keeping all OS process
-integration and dependency ownership inside private `@jsvision/examples`.
+Enable symmetric desktop clipboard integration automatically for every native
+`Application.run()`. The original `tvedit`-only implementation proved the adapter but was
+superseded after kitchen-sink validation exposed its application-specific scope.
 
 ## Dependency and composition
 
 - Recheck the current compatible release before editing the manifest; planned range is
   `clipboardy: ^5.3.2` on the repository's Node 22+ baseline.
-- Add it only to `packages/examples/package.json` runtime dependencies and review the lockfile diff.
+- Add it to `packages/ui/package.json` optional runtime dependencies and review the lockfile diff.
 - Import only asynchronous `read` and `write`; do not call synchronous APIs.
-- Map them to raw-text UI callbacks without adding normalization, previews, or exception logging.
-- Keep a small adapter factory dependency-injectable so automated tests use fakes.
+- Load it on the first system clipboard operation and map it to raw-text UI callbacks without
+  normalization, previews, or exception logging.
+- Install it only when no explicit callback owns the boundary; support
+  `systemClipboard: false`.
+- Keep the adapter factory dependency-injectable so automated tests use fakes.
 
 ## Runtime behavior
 
