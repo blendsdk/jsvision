@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+Changed: Updated localization files for several languages to improve translation accuracy and consistency.  
+Changed: Refactored the form-dialog.ts to enhance performance and maintainability.  
+Changed: Modified the i18n catalog to include additional context for translations.  
+Changed: Improved test coverage in form-dialog and i18n test files for better reliability.
+
 ## [1.0.0] - 2026-07-22
 
 Added:

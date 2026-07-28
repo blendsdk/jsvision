@@ -12,6 +12,16 @@ first published release has an accurate history.
 > `[Unreleased]` is the authoritative surface; from 1.0.0 the package follows
 > [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+Changed:
+- Skipped timing-dependent core, UI, datagrid, and i18n specs in CI for improved performance testing.
+- Retained deterministic formatter-cache coverage without a large timing workload.
+- Updated performance test configurations to skip the serial benchmark runner in CI.
+
+Fixed:
+- Adjusted performance tests to ensure they do not interfere with CI processes by marking certain tests as skipped.
+
 ## [1.2.1] - 2026-07-23
 
 Added:

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-28
+
+## Added
+- Enable native clipboard by default with a lazy ordered system clipboard adapter for `Application.run`.
+
+## Changed
+- Preserve explicit opt-out, custom host callbacks, and teardown finality for clipboard handling.
+
+## Fixed
+- Hardened bounded paste handling to preserve exact source prefixes for malformed UTF-16 input and reject oversized custom caps before allocation.
+- Skipped wall-clock performance tests to retain deterministic formatter-cache coverage without large timing workloads.
+
+## Test
+- Defined bounded empty paste contract to specify UTF-8 byte-safe public paste bounding and ensure editable selections and history are preserved during empty paste events.
+
 ## [1.2.1] - 2026-07-23
 
 Added:
