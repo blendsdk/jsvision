@@ -8,7 +8,7 @@
  *
  * Usage: `node scripts/check-no-native-deps.mjs [projectRoot]`
  *   - projectRoot defaults to the current working directory.
- *   - Reads `<projectRoot>/package.json` and, for each runtime dependency,
+ *   - Reads `<projectRoot>/package.json` and, for each required or optional runtime dependency,
  *     inspects its installed manifest under `<projectRoot>/node_modules/<dep>`.
  *
  * Exit codes: 0 = policy satisfied (no native runtime deps); 1 = a violation was
@@ -17,7 +17,7 @@
  * Pure-Node ESM, no shell-isms, so it behaves identically on every OS (AR-4).
  */
 import { readFileSync, existsSync } from 'node:fs';
-import { join, resolve, isAbsolute } from 'node:path';
+import { dirname, isAbsolute, join, parse, resolve } from 'node:path';
 
 /** Install-script commands that signal native compilation. */
 const NATIVE_SCRIPT_PATTERN = /node-gyp|node-pre-gyp|prebuild|prebuildify|cmake-js|cmake|\bgyp\b/i;
@@ -55,6 +55,24 @@ function nativeReason(depDir, manifest) {
 }
 
 /**
+ * Resolve a dependency from the project or an ancestor workspace node_modules directory.
+ * @param {string} projectRoot Directory containing the consumer package.json.
+ * @param {string} dep Runtime dependency package name.
+ * @returns {string|null} Installed package directory, or null when unavailable.
+ */
+function findInstalledDependency(projectRoot, dep) {
+  let directory = projectRoot;
+  const root = parse(directory).root;
+
+  while (true) {
+    const candidate = join(directory, 'node_modules', dep);
+    if (existsSync(join(candidate, 'package.json'))) return candidate;
+    if (directory === root) return null;
+    directory = dirname(directory);
+  }
+}
+
+/**
  * Run the policy check against a project root.
  * @param {string} projectRoot Directory containing package.json.
  * @returns {{ offenders: string[], unresolved: string[] }}
@@ -62,18 +80,18 @@ function nativeReason(depDir, manifest) {
 function checkProject(projectRoot) {
   const pkgPath = join(projectRoot, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-  const deps = pkg.dependencies ?? {};
+  const deps = { ...(pkg.dependencies ?? {}), ...(pkg.optionalDependencies ?? {}) };
   const offenders = [];
   const unresolved = [];
 
   for (const dep of Object.keys(deps)) {
-    const depDir = join(projectRoot, 'node_modules', dep);
-    const depManifestPath = join(depDir, 'package.json');
-    if (!existsSync(depManifestPath)) {
-      // Not installed at this root — cannot inspect; report so it is not a silent pass.
+    const depDir = findInstalledDependency(projectRoot, dep);
+    if (depDir === null) {
+      // Not installed in this package or a hoisted workspace root.
       unresolved.push(dep);
       continue;
     }
+    const depManifestPath = join(depDir, 'package.json');
     const manifest = JSON.parse(readFileSync(depManifestPath, 'utf8'));
     const reason = nativeReason(depDir, manifest);
     if (reason) {

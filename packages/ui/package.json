@@ -95,6 +95,9 @@
     "@jsvision/core": "1.1.0",
     "@jsvision/i18n": "1.1.0"
   },
+  "optionalDependencies": {
+    "clipboardy": "^5.3.2"
+  },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "vitest": "^4.1.10"

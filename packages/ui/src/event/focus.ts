@@ -16,6 +16,8 @@ import { devWarn } from '../shared/warnings.js';
 
 /** Tracks and moves focus over the mounted view tree. */
 export interface FocusManager {
+  /** Monotonic counter incremented whenever focus moves to a different leaf. */
+  version(): number;
   /** The currently focused leaf, or `null` if nothing is focused. */
   getFocused(): View | null;
   /** The focused leaf within `scope`, or `null` — used to confine dispatch to an open modal's subtree. */
@@ -49,6 +51,7 @@ export interface FocusManager {
  * @returns A {@link FocusManager}.
  */
 export function createFocusManager(getRoot: () => View | null): FocusManager {
+  let generation = 0;
   // A view cannot receive focus if any ancestor is hidden or disabled, even if the view itself is fine.
   const noBlockingAncestor = (view: View): boolean => {
     let ancestor = view.parent;
@@ -119,6 +122,7 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   const focusLeafFrom = (old: View | null, view: View): void => {
     setCurrentChain(view);
     if (old === view) return; // already focused — nothing to flip
+    generation += 1;
     if (old !== null) {
       old.state.focused = false;
       old.invalidate();
@@ -347,6 +351,7 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   };
 
   return {
+    version: () => generation,
     getFocused,
     focusedLeafIn,
     focusView,

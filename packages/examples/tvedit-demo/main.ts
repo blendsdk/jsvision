@@ -179,7 +179,6 @@ async function main(): Promise<number> {
       override: { mouse: { sgr: true }, unicode: { utf8: true } },
     })
   ).profile;
-
   const app = createApplication({
     caps,
     menuBar: buildMenuBar(),

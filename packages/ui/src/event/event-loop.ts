@@ -8,12 +8,12 @@
  * `emitCommand` from within `onEvent`) joins the tick already in progress instead of starting a new
  * one, so nested actions still collapse into one frame.
  */
-import { createLogger, setClipboard } from '@jsvision/core';
+import { boundPasteText, createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile, Theme } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot, View } from '../view/index.js';
 import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
-import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
+import type { ClipboardTextReader, ClipboardTextWriter, EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { buildKeymap } from './default-keymap.js';
 import { normalizeFunctionKey } from './function-key-fallback.js';
 import type { FunctionKeyFallback } from './function-key-fallback.js';
@@ -32,6 +32,37 @@ import type { ModalManager } from './modal.js';
  * reported as a double-click via `DispatchEvent.clickCount`.
  */
 const MULTI_CLICK_MS = 500;
+
+/** Stable command name whose unhandled route may request native clipboard text. */
+const PASTE_COMMAND = 'paste';
+
+/** One view and the reactive owner scope created for its captured mount incarnation. */
+interface CapturedPasteRouteMember {
+  readonly view: View;
+  readonly mountScope: View['scope'];
+}
+
+/** Destination identity retained while a serialized native clipboard read is pending. */
+interface CapturedPasteRequest {
+  readonly lifecycleGeneration: number;
+  readonly focusGeneration: number;
+  readonly modalGeneration: number;
+  readonly scopeRoot: View;
+  readonly focusedLeaf: View;
+  readonly route: readonly CapturedPasteRouteMember[];
+}
+
+/** Mutable queued work so teardown can release adapters and view routes behind a hung active read. */
+interface QueuedNativePaste {
+  request: CapturedPasteRequest | null;
+  reader: ClipboardTextReader | null;
+}
+
+/** Normalized host-read outcome that never carries an exception object. */
+interface NativeClipboardRead {
+  readonly failed: boolean;
+  readonly text: string;
+}
 
 /** A modal view that can veto its own close via a `valid(command)` gate (e.g. `Dialog`). */
 interface QuitValidatable {
@@ -148,6 +179,21 @@ class EventLoopImpl implements EventLoop {
    * without reading the external OS clipboard. In-memory only — never serialized to disk or network.
    */
   private clipboardText = '';
+  /** Optional raw host reader backing the public runtime getter/setter. */
+  private clipboardTextReader?: ClipboardTextReader;
+  /** FIFO of native gestures waiting behind the single active reader. */
+  private readonly clipboardReadQueue: QueuedNativePaste[] = [];
+  /**
+   * Mutable cell for the active read. Teardown clears its request so a host promise that never
+   * settles cannot keep the destination view graph reachable through its async continuation.
+   */
+  private activeClipboardRead: QueuedNativePaste | null = null;
+  /** Whether the asynchronous FIFO worker is scheduled or awaiting its one active reader. */
+  private clipboardReadWorkerRunning = false;
+  /** Incremented whenever an eligible native paste is appended to the serialized queue. */
+  private clipboardReadScheduleVersion = 0;
+  /** Incremented before the loop becomes stopped so late continuations can prove lifecycle staleness. */
+  private lifecycleGeneration = 0;
   /** The command that terminates the app; a quit while modals are open cascades top-down. */
   private readonly quitCommand: string;
   /** Whether accelerator mode is armed (hotkeys revealed, bare letters fire accelerators). */
@@ -182,7 +228,16 @@ class EventLoopImpl implements EventLoop {
   /** Called with a clipboard sequence on copy/cut; wired to the host by `run()`. See {@link EventLoop.writeClipboard}. */
   writeClipboard?: (seq: string) => void;
   /** Called with raw clipboard text on copy/cut. See {@link EventLoop.writeClipboardText}. */
-  writeClipboardText?: (text: string) => void | Promise<void>;
+  writeClipboardText?: ClipboardTextWriter;
+  /** Reads raw clipboard text for native paste commands. See {@link EventLoop.readClipboardText}. */
+  get readClipboardText(): ClipboardTextReader | undefined {
+    return this.clipboardTextReader;
+  }
+  set readClipboardText(reader: ClipboardTextReader | undefined) {
+    if (this.clipboardTextReader === reader) return;
+    this.clipboardTextReader = reader;
+    this.registry.touch();
+  }
   /** Called on resize after reflow; wired by the app. See {@link EventLoop.onResize}. */
   onResize?: (size: Size2D) => void;
   /** Host for anchored dropdown popups; wired by the app. See {@link EventLoop.popupHost}. */
@@ -209,6 +264,8 @@ class EventLoopImpl implements EventLoop {
     this.focus = createFocusManager(() => this.root);
     this.modal = createModalManager(this.focus);
     this.commandSink = new CommandSink(this.logger);
+    this.writeClipboardText = opts.writeClipboardText;
+    this.clipboardTextReader = opts.readClipboardText;
     // The quit command terminates the loop through the one command sink: register it internally so it
     // can read the numeric exit-code argument (the public `onCommand` handler is arg-less). A bare loop
     // with no `onQuit` leaves quit as an ordinary command with no special termination.
@@ -260,7 +317,10 @@ class EventLoopImpl implements EventLoop {
   stop(): void {
     // Gate the out-of-tick painter: the seam and any queued microtask early-return on `stopped`, so a
     // late timer/promise callback during or after teardown cannot write a frame to a stopped host.
+    if (this.stopped) return;
+    this.lifecycleGeneration += 1;
     this.stopped = true;
+    this.clearQueuedNativePaste();
   }
 
   dispose(): void {
@@ -276,6 +336,8 @@ class EventLoopImpl implements EventLoop {
     this.root = null;
     this.captureTarget = null;
     this.commandSink.clear();
+    this.writeClipboardText = undefined;
+    this.readClipboardText = undefined;
   }
 
   onCommand(command: string, handler: () => void): () => void {
@@ -283,8 +345,12 @@ class EventLoopImpl implements EventLoop {
   }
 
   dispatch(event: AppEvent): void {
+    const routedEvent = event.type === 'key' ? normalizeFunctionKey(event, this.functionKeyFallback) : event;
+    const nativePasteGesture =
+      this.clipboardTextReader !== undefined &&
+      ((routedEvent.type === 'command' && routedEvent.command === PASTE_COMMAND) ||
+        (routedEvent.type === 'key' && this.keymap?.lookup(routedEvent) === PASTE_COMMAND));
     this.runTick(() => {
-      const routedEvent = event.type === 'key' ? normalizeFunctionKey(event, this.functionKeyFallback) : event;
       // Host paste is another entry into the same clipboard pipeline. Adopt it before routing so
       // every editable control inserts the event and a later Ctrl+V repeats the same host text.
       if (routedEvent.type === 'paste') this.clipboardText = routedEvent.text;
@@ -301,7 +367,7 @@ class EventLoopImpl implements EventLoop {
         clickCount = this.clickCount;
       }
       this.queue.push({ event: routedEvent, handled: false, clickCount });
-    });
+    }, nativePasteGesture);
   }
 
   resize(size: Size2D): void {
@@ -347,15 +413,18 @@ class EventLoopImpl implements EventLoop {
   }
 
   emitCommand(command: string, arg?: unknown): void {
-    this.runTick(() => {
-      // A quit while modals are open cascades top-down through the stack rather than being dispatched
-      // into the top modal (where the app's quit handler would be unreachable).
-      if (command === this.quitCommand && this.modal.isActive()) {
-        this.cascadeQuit(command, arg);
-      } else {
-        this.registry.emit(command, arg);
-      }
-    });
+    this.runTick(
+      () => {
+        // A quit while modals are open cascades top-down through the stack rather than being dispatched
+        // into the top modal (where the app's quit handler would be unreachable).
+        if (command === this.quitCommand && this.modal.isActive()) {
+          this.cascadeQuit(command, arg);
+        } else {
+          this.emitRegisteredCommand(command, arg);
+        }
+      },
+      command === PASTE_COMMAND && this.clipboardTextReader !== undefined,
+    );
   }
 
   /**
@@ -378,6 +447,7 @@ class EventLoopImpl implements EventLoop {
   }
 
   isCommandEnabled(command: string): boolean {
+    if (command === PASTE_COMMAND && this.clipboardTextReader !== undefined) return true;
     return this.registry.isEnabled(command);
   }
 
@@ -394,7 +464,7 @@ class EventLoopImpl implements EventLoop {
     if (isModalHostAware(view)) {
       view.attachModalHost({
         endModal: (result: unknown) => this.endModal(result),
-        isCommandEnabled: (command: string) => this.registry.isEnabled(command),
+        isCommandEnabled: (command: string) => this.isCommandEnabled(command),
       });
     }
     return new Promise<R | undefined>((resolve) => {
@@ -440,11 +510,12 @@ class EventLoopImpl implements EventLoop {
    *
    * @param work Queues an event or performs a focus/command/modal change.
    */
-  private runTick(work: () => void): void {
+  private runTick(work: () => void, skipPaintWhenNativeScheduled = false): void {
     if (this.draining) {
       work(); // join the active tick; the outer call drains and repaints
       return;
     }
+    const nativeScheduleBefore = this.clipboardReadScheduleVersion;
     this.draining = true;
     try {
       work();
@@ -456,7 +527,13 @@ class EventLoopImpl implements EventLoop {
       this.draining = false;
     }
     this.onIdle?.(); // everything queued this tick has drained
-    this.paint(); // one coalesced frame for the whole tick
+    // Starting an asynchronous read does not alter the retained view tree. Avoid emitting an empty
+    // frame for a top-level native-paste gesture; the eventual ordinary PasteEvent owns the one
+    // delivery frame. A command handled by the application never increments the schedule version
+    // and therefore keeps the normal command paint.
+    if (!skipPaintWhenNativeScheduled || this.clipboardReadScheduleVersion === nativeScheduleBefore) {
+      this.paint();
+    }
   }
 
   /**
@@ -517,6 +594,11 @@ class EventLoopImpl implements EventLoop {
       this.deliver(this.commandSink, ev);
       if (ev.handled) return;
     }
+    if (ev.event.type === 'command' && ev.event.command === PASTE_COMMAND && this.clipboardTextReader !== undefined) {
+      this.scheduleNativePaste();
+      ev.handled = true;
+      return;
+    }
     route(ev, this.routeContext());
   }
 
@@ -539,9 +621,9 @@ class EventLoopImpl implements EventLoop {
       scopeRoot: scope,
       keymap: this.keymap,
       focusedLeaf: this.focus.focusedLeafIn(scope),
-      emitCommand: (name, arg) => this.registry.emit(name, arg),
+      emitCommand: (name, arg) => this.emitRegisteredCommand(name, arg),
       // Exposed on each event as `ev.emit` / `ev.focusView` for a view to call from its onEvent.
-      emit: (name, arg) => this.registry.emit(name, arg),
+      emit: (name, arg) => this.emitRegisteredCommand(name, arg),
       focusView: (view) => this.focus.focusView(view),
       // Pointer capture a view requests from within its own onEvent (e.g. a scrollbar thumb-drag).
       setCapture: (view) => this.setCapture(view),
@@ -601,11 +683,197 @@ class EventLoopImpl implements EventLoop {
     try {
       const pending = sink(text);
       if (pending !== undefined) {
-        void pending.catch(() => this.logger.warn('clipboard', 'host clipboard write failed'));
+        void pending.catch(() => {
+          if (!this.stopped) this.logger.warn('clipboard', 'host clipboard write failed');
+        });
       }
     } catch {
       this.logger.warn('clipboard', 'host clipboard write failed');
     }
+  }
+
+  /**
+   * Enqueue a command while allowing a configured native reader to make paste available even when
+   * the ordinary registry override disables local paste.
+   */
+  private emitRegisteredCommand(command: string, arg?: unknown): void {
+    if (command !== PASTE_COMMAND || this.clipboardTextReader === undefined) {
+      this.registry.emit(command, arg);
+      return;
+    }
+    const event =
+      arg === undefined ? { type: 'command' as const, command } : { type: 'command' as const, command, arg };
+    this.queue.push({ event, handled: false });
+  }
+
+  /** Capture the exact currently focused route, or return `null` when paste has no eligible target. */
+  private captureNativePasteRequest(): CapturedPasteRequest | null {
+    if (this.stopped) return null;
+    const scopeRoot = this.scopeRoot();
+    const focusedLeaf = this.focus.focusedLeafIn(scopeRoot);
+    if (scopeRoot === null || focusedLeaf === null || !this.focus.isFocusable(focusedLeaf)) return null;
+
+    const route: CapturedPasteRouteMember[] = [];
+    let node: View | null = focusedLeaf;
+    while (node !== null) {
+      if (!node.mounted || node.scope === null) return null;
+      route.push({ view: node, mountScope: node.scope });
+      if (node === scopeRoot) break;
+      node = node.parent;
+    }
+    if (route[route.length - 1]?.view !== scopeRoot) return null;
+
+    return {
+      lifecycleGeneration: this.lifecycleGeneration,
+      focusGeneration: this.focus.version(),
+      modalGeneration: this.modal.version(),
+      scopeRoot,
+      focusedLeaf,
+      route,
+    };
+  }
+
+  /** Add one eligible gesture to the serial native-read FIFO without awaiting it. */
+  private scheduleNativePaste(): void {
+    const reader = this.clipboardTextReader;
+    const request = this.captureNativePasteRequest();
+    if (reader === undefined || request === null) return;
+
+    this.clipboardReadQueue.push({ request, reader });
+    this.clipboardReadScheduleVersion += 1;
+    if (this.clipboardReadWorkerRunning) return;
+    this.clipboardReadWorkerRunning = true;
+    void Promise.resolve()
+      .then(() => this.drainNativePasteQueue())
+      .catch(() => this.reportNativePasteDeliveryFailure());
+  }
+
+  /**
+   * Invoke a reader and normalize every sync/async outcome without retaining the callback or error.
+   *
+   * @param reader The callback captured for one eligible gesture.
+   * @returns A payload-free failure marker or a successful string.
+   */
+  private startNativeClipboardRead(reader: ClipboardTextReader): Promise<NativeClipboardRead> {
+    try {
+      return Promise.resolve(reader()).then(
+        (result: unknown) =>
+          typeof result === 'string' ? { failed: false, text: result } : { failed: true, text: '' },
+        () => ({ failed: true, text: '' }),
+      );
+    } catch {
+      return Promise.resolve({ failed: true, text: '' });
+    }
+  }
+
+  /** Drain queued gestures one at a time, recovering from every read or delivery-side exception. */
+  private async drainNativePasteQueue(): Promise<void> {
+    try {
+      while (this.clipboardReadQueue.length > 0) {
+        const job = this.clipboardReadQueue.shift();
+        if (job === undefined) continue;
+        let reader = job.reader;
+        job.reader = null;
+        if (job.request === null || reader === null || !this.isNativePasteRequestValid(job.request)) {
+          job.request = null;
+          continue;
+        }
+
+        this.activeClipboardRead = job;
+        const read = this.startNativeClipboardRead(reader);
+        reader = null;
+        const outcome = await read;
+        const request = job.request;
+        job.request = null;
+        if (this.activeClipboardRead === job) this.activeClipboardRead = null;
+        if (request === null) continue;
+        try {
+          this.deliverNativePaste(request, outcome);
+        } catch {
+          this.reportNativePasteDeliveryFailure();
+        }
+      }
+    } finally {
+      if (this.activeClipboardRead !== null) {
+        this.activeClipboardRead.request = null;
+        this.activeClipboardRead.reader = null;
+        this.activeClipboardRead = null;
+      }
+      this.clipboardReadWorkerRunning = false;
+      if (!this.stopped && this.clipboardReadQueue.length > 0) {
+        this.clipboardReadWorkerRunning = true;
+        void Promise.resolve()
+          .then(() => this.drainNativePasteQueue())
+          .catch(() => this.reportNativePasteDeliveryFailure());
+      }
+    }
+  }
+
+  /** Deliver one normalized result atomically after the captured destination passes its final guard. */
+  private deliverNativePaste(request: CapturedPasteRequest, outcome: NativeClipboardRead): void {
+    if (!this.isNativePasteRequestValid(request)) return;
+    if (outcome.failed) {
+      try {
+        this.logger.warn('clipboard', 'host clipboard read failed');
+      } catch {
+        // Logging is injected host code. Recovery must continue without exposing or rethrowing it.
+      }
+      // The warning callback may re-enter focus, modality, or lifecycle APIs. Revalidate before
+      // reading the ordered fallback and dispatching it to the still-authoritative destination.
+      if (!this.isNativePasteRequestValid(request)) return;
+      this.dispatch({ type: 'paste', text: this.clipboardText, truncated: false });
+      return;
+    }
+
+    const bounded = boundPasteText(outcome.text);
+    this.dispatch({ type: 'paste', text: bounded.text, truncated: bounded.truncated });
+  }
+
+  /** Release every adapter and destination route, including the cell held across the active await. */
+  private clearQueuedNativePaste(): void {
+    if (this.activeClipboardRead !== null) {
+      this.activeClipboardRead.request = null;
+      this.activeClipboardRead.reader = null;
+      this.activeClipboardRead = null;
+    }
+    for (const job of this.clipboardReadQueue) {
+      job.request = null;
+      job.reader = null;
+    }
+    this.clipboardReadQueue.length = 0;
+  }
+
+  /** Report an unexpected delivery-side failure without allowing an injected logger to reject work. */
+  private reportNativePasteDeliveryFailure(): void {
+    if (this.stopped) return;
+    try {
+      this.logger.error('clipboard', 'native paste delivery failed');
+    } catch {
+      // The scheduler is already normalized; a throwing diagnostic sink is deliberately ignored.
+    }
+  }
+
+  /** Prove the captured lifecycle, modal scope, focus route, and every mount incarnation still match. */
+  private isNativePasteRequestValid(request: CapturedPasteRequest): boolean {
+    if (
+      this.stopped ||
+      this.lifecycleGeneration !== request.lifecycleGeneration ||
+      this.focus.version() !== request.focusGeneration ||
+      this.modal.version() !== request.modalGeneration ||
+      this.scopeRoot() !== request.scopeRoot ||
+      this.focus.focusedLeafIn(request.scopeRoot) !== request.focusedLeaf ||
+      !this.focus.isFocusable(request.focusedLeaf)
+    ) {
+      return false;
+    }
+
+    for (let index = 0; index < request.route.length; index += 1) {
+      const member = request.route[index];
+      if (member === undefined || !member.view.mounted || member.view.scope !== member.mountScope) return false;
+      const expectedParent = request.route[index + 1]?.view ?? null;
+      if (member.view !== request.scopeRoot && member.view.parent !== expectedParent) return false;
+    }
+    return true;
   }
 
   /**

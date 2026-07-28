@@ -108,6 +108,17 @@ The box-drawing + shade probe group (corners, edges, shades).
 const BOX_PROBE_GLYPHS: "┌┐└┘─│▒█"
 ```
 
+## BoundedPasteText
+
+A plain-text paste after applying its UTF-8 byte boundary.
+
+```ts
+interface BoundedPasteText {
+  text: string;   // The original text when it fits, otherwise the longest complete prefix within the byte cap.
+  truncated: boolean;   // Whether one or more input code points were omitted because they exceeded the byte cap.
+}
+```
+
 ## CATALOG_SCHEMA_VERSION
 
 Schema version understood by this release.
@@ -1640,6 +1651,14 @@ Emit a literal terminal bell (`\x07`).
 
 ```ts
 bell(): string
+```
+
+## boundPasteText
+
+Bound direct string paste using the same UTF-8 byte limit as terminal bracketed paste.
+
+```ts
+boundPasteText(text: string, capBytes = PASTE_CAP_BYTES): BoundedPasteText
 ```
 
 ## charWidth

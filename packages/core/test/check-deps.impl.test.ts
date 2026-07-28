@@ -98,3 +98,32 @@ test('guard rejects a dependency that ships a node-gyp install script', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('guard inspects a hoisted optional dependency instead of silently warning', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rd01-guard-hoisted-'));
+  const project = join(root, 'packages', 'consumer');
+  const depDir = join(root, 'node_modules', 'native-optional');
+  mkdirSync(project, { recursive: true });
+  mkdirSync(depDir, { recursive: true });
+  writeFileSync(
+    join(project, 'package.json'),
+    JSON.stringify({
+      name: 'consumer',
+      version: '1.0.0',
+      optionalDependencies: { 'native-optional': '1.0.0' },
+    }),
+  );
+  writeFileSync(
+    join(depDir, 'package.json'),
+    JSON.stringify({ name: 'native-optional', version: '1.0.0', gypfile: true }),
+  );
+
+  try {
+    const result = runGuard(project);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain('native-optional');
+    expect(result.output).not.toContain('cannot verify');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
