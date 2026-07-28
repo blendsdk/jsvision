@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 17:57 UTC
-> **Progress**: 5/26 tasks (19%)
+> **Last Updated**: 2026-07-28 18:18 UTC
+> **Progress**: 6/26 tasks (23%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -45,8 +45,9 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
   `TextEncoder.encodeInto`; reuse `PASTE_CAP_BYTES`. ✅ (completed: 2026-07-28 17:57)
 - [x] 1.2.2 Add explicit empty-event no-op guards at editable insertion boundaries; preserve every
   non-empty path. ✅ (completed: 2026-07-28 17:57)
-- [ ] 1.3.1 Turn Phase 1 specs green; add invalid-cap/allocation/lifecycle implementation cases;
+- [x] 1.3.1 Turn Phase 1 specs green; add invalid-cap/allocation/lifecycle implementation cases;
   run core/UI package checks and `yarn verify`; complete required reviewer/auditor quality loop.
+  ✅ (completed: 2026-07-28 18:18; all major findings fixed and independently re-reviewed)
 
 **Deliverable**: One reusable UTF-8-safe cap and non-destructive empty paste across widgets.
 

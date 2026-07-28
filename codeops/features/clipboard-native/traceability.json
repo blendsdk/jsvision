@@ -1302,6 +1302,11 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Phase 1 correctness, security, and performance review passed after every major finding was fixed and re-reviewed",
+        "summary:Phase 1 hardening covers invalid caps, bounded large input, remount, and unfocused delivery",
+        "verificationEvidence:Core 21/21, UI 5/5, CodeEditor 1/1, plugin checks, typecheck, and full yarn verify pass"
+      ],
       "id": "TASK-1-3-1",
       "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
       "semanticSources": [
@@ -1314,7 +1319,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Core bounding and widget parity task 1-3-1",
       "type": "task",
       "validations": []
