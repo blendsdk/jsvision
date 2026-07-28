@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:28 UTC
-> **Progress**: 18/26 tasks (69%)
+> **Last Updated**: 2026-07-28 19:30 UTC
+> **Progress**: 19/26 tasks (73%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -115,11 +115,13 @@ native paste.
   dependency changes.
   ✅ (completed: 2026-07-28 19:28; 1 file failed before collection because the required adapter
   module does not exist)
-- [~] 3.2.1 Implement the examples-owned adapter factory; inject async `clipboardy.read`/`write`
+- [x] 3.2.1 Implement the examples-owned adapter factory; inject async `clipboardy.read`/`write`
   into `tvedit`; add only the private examples dependency and reconcile/review `yarn.lock`.
-  ⏳ (started: 2026-07-28 19:28)
-- [ ] 3.3.1 Turn Phase 3 specs green; add missing-helper/headless mechanics cases; run examples/UI
+  ✅ (completed: 2026-07-28 19:30; six specs and headless E2E pass; dependency is examples-only and
+  the pre-existing lock selector is preserved)
+- [~] 3.3.1 Turn Phase 3 specs green; add missing-helper/headless mechanics cases; run examples/UI
   checks and `yarn verify`; perform available manual smoke cells; complete reviewer/auditor loop.
+  ⏳ (started: 2026-07-28 19:30)
 
 **Deliverable**: Cross-platform native desktop clipboard behavior demonstrated by `tvedit`.
 
