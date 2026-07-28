@@ -25,7 +25,9 @@ export interface TveditClipboardAdapter {
  * Adapt asynchronous native clipboard methods to the JSVision host boundary.
  *
  * The wrappers deliberately perform no normalization, logging, retry, or platform selection.
- * Those responsibilities belong to the injected clipboard implementation and the UI event loop.
+ * Native operations execute in request order so a paste cannot overtake an earlier copy. The queue
+ * has no timeout: a host operation that never settles deliberately holds later native operations,
+ * while the UI event loop remains non-blocking and can still stop or discard stale work.
  *
  * @param methods Asynchronous raw-text clipboard operations supplied by the native host.
  * @returns JSVision reader and writer callbacks.
@@ -39,8 +41,24 @@ export interface TveditClipboardAdapter {
  * ```
  */
 export function createTveditClipboardAdapter(methods: TveditClipboardMethods): TveditClipboardAdapter {
+  let operationTail = Promise.resolve();
+
   return {
-    readClipboardText: () => methods.read(),
-    writeClipboardText: (text) => methods.write(text),
+    readClipboardText: () => {
+      const result = operationTail.then(() => methods.read());
+      operationTail = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      return result;
+    },
+    writeClipboardText: (text) => {
+      const result = operationTail.then(() => methods.write(text));
+      operationTail = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      return result;
+    },
   };
 }

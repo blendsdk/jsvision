@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:30 UTC
-> **Progress**: 19/26 tasks (73%)
+> **Last Updated**: 2026-07-28 19:45 UTC
+> **Progress**: 20/26 tasks (77%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -119,9 +119,10 @@ native paste.
   into `tvedit`; add only the private examples dependency and reconcile/review `yarn.lock`.
   ✅ (completed: 2026-07-28 19:30; six specs and headless E2E pass; dependency is examples-only and
   the pre-existing lock selector is preserved)
-- [~] 3.3.1 Turn Phase 3 specs green; add missing-helper/headless mechanics cases; run examples/UI
+- [x] 3.3.1 Turn Phase 3 specs green; add missing-helper/headless mechanics cases; run examples/UI
   checks and `yarn verify`; perform available manual smoke cells; complete reviewer/auditor loop.
-  ⏳ (started: 2026-07-28 19:30)
+  ✅ (completed: 2026-07-28 19:45; 11 unit and 1 headless E2E pass; all findings fixed and
+  independently re-reviewed; unavailable manual cells recorded honestly)
 
 **Deliverable**: Cross-platform native desktop clipboard behavior demonstrated by `tvedit`.
 

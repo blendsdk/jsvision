@@ -37,7 +37,6 @@ import {
 import type { Application, DispatchEvent } from '@jsvision/ui';
 import type { Platform } from '@jsvision/core';
 import { nodeFileSystem, openFile, openFileInEditor, FileCommands, FileEditor } from '@jsvision/files';
-import clipboardy from 'clipboardy';
 
 import { createTveditClipboardAdapter } from './native-clipboard.js';
 
@@ -182,6 +181,7 @@ async function main(): Promise<number> {
       override: { mouse: { sgr: true }, unicode: { utf8: true } },
     })
   ).profile;
+  const { default: clipboardy } = await import('clipboardy');
 
   const app = createApplication({
     caps,
