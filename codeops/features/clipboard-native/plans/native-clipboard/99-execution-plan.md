@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:45 UTC
-> **Progress**: 20/26 tasks (77%)
+> **Last Updated**: 2026-07-28 19:51 UTC
+> **Progress**: 22/26 tasks (85%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -130,18 +130,22 @@ native paste.
 
 ## Phase 4: Documentation, plugin, and release closure
 
+> **Phase baseline tree**: `309b967e73f9ef3a2f36c766dcd4221618482920`
 > **Expected modification set**: public JSDoc/API pages, docs site, canonical skill/impact mapping,
 > generated plugin, manual evidence, plan/traceability status
 
 **Reference**: 03-05 · ST-18
 
-- [ ] 4.1.1 `[spec-author]` Add documentation/canonical-skill specifications for configuration,
+- [x] 4.1.1 `[spec-author]` Add documentation/canonical-skill specifications for configuration,
   raw-text semantics, shortcuts, ordering/focus safety, bounds, empty/failure behavior,
   platform/headless limitations, and no-install policy.
-- [ ] 4.1.2 Run focused Phase 4 specifications and record expected failures before documentation
+  ✅ (completed: 2026-07-28 19:51)
+- [x] 4.1.2 Run focused Phase 4 specifications and record expected failures before documentation
   changes.
-- [ ] 4.2.1 Complete public JSDoc and consumer docs/examples; regenerate API documentation and run
+  ✅ (completed: 2026-07-28 19:51; seven semantic documentation/plugin checks failed as expected)
+- [~] 4.2.1 Complete public JSDoc and consumer docs/examples; regenerate API documentation and run
   docs checks.
+  ⏳ (started: 2026-07-28 19:51)
 - [ ] 4.2.2 Run source-impact analysis, update every reported canonical skill reference/recipe and
   mapping when necessary, run `yarn plugin:update`, and inspect all generated output.
 - [ ] 4.3.1 Turn docs/plugin specifications green; run `yarn plugin:check`; finish and truthfully
