@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 15:55 UTC
-> **Progress**: 0/26 tasks (0%)
+> **Last Updated**: 2026-07-28 17:38 UTC
+> **Progress**: 3/26 tasks (12%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -25,19 +25,21 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 
 ## Phase 1: Core bounding and widget parity
 
+> **Phase baseline tree**: `3daf0dbf2d9f2ee4148966a6955cc941e2afe6cc`
 > **Expected modification set**: core input utility/exports/tests; UI editable widget
 > specifications/handlers/implementation tests
 
 **Reference**: 03-01 · ST-01, ST-02, ST-09, ST-15
 
-- [ ] 1.1.1 `[spec-author]` Add immutable core specifications for exact-fit/overflow ASCII,
+- [x] 1.1.1 `[spec-author]` Add immutable core specifications for exact-fit/overflow ASCII,
   multibyte boundaries, combining/wide Unicode, empty input, default cap, valid-prefix and
-  truncation semantics.
-- [ ] 1.1.2 `[spec-author]` Add UI specifications proving an empty `PasteEvent` updates canonical
+  truncation semantics. ✅ (completed: 2026-07-28 17:38)
+- [x] 1.1.2 `[spec-author]` Add UI specifications proving an empty `PasteEvent` updates canonical
   state but does not mutate selection, value, undo history, validation, or paint state in Input,
-  Editor, and CodeEditor.
-- [ ] 1.1.3 Run the focused core/UI specifications and record expected failures before production
-  changes.
+  Editor, and CodeEditor. ✅ (completed: 2026-07-28 17:38)
+- [x] 1.1.3 Run the focused core/UI specifications and record expected failures before production
+  changes. ✅ (completed: 2026-07-28 17:38; 8 core, 2 UI, and 1 CodeEditor expected failures;
+  canonical adoption-before-routing remained green)
 - [ ] 1.2.1 Implement and export the documented bounded-paste result/helper using
   `TextEncoder.encodeInto`; reuse `PASTE_CAP_BYTES`.
 - [ ] 1.2.2 Add explicit empty-event no-op guards at editable insertion boundaries; preserve every
