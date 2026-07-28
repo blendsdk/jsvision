@@ -37,6 +37,8 @@ interface ApplicationOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `draw()`/`onEvent()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`) applied across the whole app.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). Any `keymap` you supply merges on top and wins on a conflicting chord. Use `'none'` to bind no clipboard chords (e.g. an app hosting a WordStar-mode `Editor`) and supply your own keymap instead.
+  writeClipboardText?: ClipboardTextWriter;   // Write exact raw text to the host clipboard after a copy or cut commits it locally. Host failures are reported without payload details and never roll back canonical state.
+  readClipboardText?: ClipboardTextReader;   // Read exact raw text from the host clipboard for otherwise-unhandled paste commands. The loop serializes calls, bounds successful text, and discards results whose original focus destination is no longer continuously valid.
   functionKeyFallback?: FunctionKeyFallback;   // Portable F-key fallback for terminals or browsers that reserve physical function keys. Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve those Alt chords literally.
   menuBar?: MenuBar;   // Optional menu bar shown as the top row. Build one with `menuBar(...)`.
   statusLine?: StatusLine;   // Optional status line shown as the bottom row. Build one with `statusLine(...)`.
@@ -56,6 +58,22 @@ Which clipboard key set the framework binds by default. - `'modern'` — Ctrl+A 
 
 ```ts
 type ClipboardKeys = 'modern' | 'classic' | 'both' | 'none'
+```
+
+## ClipboardTextReader
+
+Read exact plain text from a host clipboard.
+
+```ts
+type ClipboardTextReader = () => string | Promise<string>
+```
+
+## ClipboardTextWriter
+
+Write exact plain text to a host clipboard.
+
+```ts
+type ClipboardTextWriter = (text: string) => void | Promise<void>
 ```
 
 ## CommandName
@@ -178,7 +196,8 @@ interface EventLoop {
   onResize?: (size: Size2D) => void;   // Called inside resize after the reflow settles the new geometry, so a handler can re-anchor viewport-sized chrome against fresh bounds (the app uses it to re-fit maximized windows and re-anchor the open menu). The loop repaints once more afterward so the adjustment is visible. `undefined` ⇒ resize only reflows.
   refreshCaret(): void;   // Re-send the current caret cell to onCaret out of band. `run()` calls it once after the first frame (which is painted directly, not through a tick) to position the initial cursor. A no-op when `onCaret` is unset.
   writeClipboard?: (seq: string) => void;   // Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the loop encodes and sanitizes it for you). This legacy sink remains available for direct terminal integrations. New hosts should prefer writeClipboardText, which receives raw text before host-specific encoding. When both sinks are set, only `writeClipboardText` is called.
-  writeClipboardText?: (text: string) => void | Promise<void>;   // Called with raw plain text after copy or cut commits it to the loop's canonical clipboard. The host owns any required conversion: browser hosts call the Clipboard API, while native terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or rejected promise is isolated and never rolls back the canonical clipboard value.
+  writeClipboardText?: ClipboardTextWriter;   // Called with raw plain text after copy or cut commits it to the loop's canonical clipboard. The host owns any required conversion: browser hosts call the Clipboard API, while native terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or rejected promise is isolated and never rolls back the canonical clipboard value.
+  readClipboardText?: ClipboardTextReader;   // Read raw plain text for an otherwise-unhandled paste command. Assigning a reader makes paste command-available independently of the app-local clipboard. Clearing it restores normal command enablement. Direct EventLoop.dispatch of a decoded paste event never calls this callback.
   popupHost?: PopupHost;   // The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into. `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a dropdown is a safe no-op; a standalone `Dialog` can supply its own.
 }
 ```
@@ -194,6 +213,8 @@ interface EventLoopOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `onEvent()`/`draw()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`): a matched chord fires the command and swallows the key.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). A `keymap` you supply is merged on top and wins on any conflicting chord. `'none'` binds no clipboard chords at all — only a widget's built-in raw Ctrl+A select-all still fires — so an app on `'none'` supplies its own keymap for copy/cut/paste (and the classic chords).
+  writeClipboardText?: ClipboardTextWriter;   // Optional raw-text host writer used for copy and cut after canonical state is committed.
+  readClipboardText?: ClipboardTextReader;   // Optional raw-text host reader used by otherwise-unhandled paste commands.
   functionKeyFallback?: FunctionKeyFallback;   // Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
   commands?: Iterable<string>;   // Optional list of command names known up front. Commands are enabled by default whether listed or not.
   onIdle?: () => void;   // Called once per dispatch tick after all cascaded events drain, just before the frame is painted.

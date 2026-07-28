@@ -1441,6 +1441,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Documented reader and writer contracts exported and threaded through Application, EventLoop, and run lifecycle",
+        "verificationEvidence:Public adapter and application/run specifications pass; UI typecheck passes"
+      ],
       "id": "TASK-2-2-1",
       "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
       "semanticSources": [
@@ -1453,13 +1457,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Host API and ordered focus-safe paste task 2-2-1",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Application-first paste interception and rejection-safe serialized reader queue implemented",
+        "verificationEvidence:Command, ordered delivery, fallback, availability, and recovery specifications pass"
+      ],
       "id": "TASK-2-2-2",
       "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
       "semanticSources": [
@@ -1472,13 +1480,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Host API and ordered focus-safe paste task 2-2-2",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Focus and modal generations, route mount-scope identities, bounded delivery, and lifecycle invalidation implemented",
+        "verificationEvidence:All focus, modal, mount, stop, teardown, bounded delivery, and CodeEditor specifications pass"
+      ],
       "id": "TASK-2-2-3",
       "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
       "semanticSources": [
@@ -1491,13 +1503,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Host API and ordered focus-safe paste task 2-2-3",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Phase 2 correctness, security, concurrency, and performance review passed after every major finding was fixed and independently re-reviewed",
+        "summary:Phase 2 specifications are green with scheduler, command-version, and stale-queue implementation hardening",
+        "verificationEvidence:UI 51/51, CodeEditor 1/1, UI typecheck/build, plugin integrity, and full yarn verify pass"
+      ],
       "id": "TASK-2-3-1",
       "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
       "semanticSources": [
@@ -1510,7 +1527,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Host API and ordered focus-safe paste task 2-3-1",
       "type": "task",
       "validations": []

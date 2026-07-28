@@ -120,10 +120,12 @@ export async function runApplication(ctx: RunContext): Promise<number> {
       output.write(caretSequence(cell));
     }
   };
-  ctx.loop.writeClipboardText = (text) => {
-    const sequence = setClipboard(text, ctx.caps);
-    if (sequence !== '') output.write(sequence);
-  };
+  if (ctx.loop.writeClipboardText === undefined) {
+    ctx.loop.writeClipboardText = (text) => {
+      const sequence = setClipboard(text, ctx.caps);
+      if (sequence !== '') output.write(sequence);
+    };
+  }
 
   // Resolved by the app's quit sink (through the shared quitState cell) when the 'quit' command fires.
   const quitPromise = new Promise<number>((resolve) => {
@@ -150,16 +152,19 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     ctx.loop.refreshCaret(); // position the initial cursor (the first paint is not a loop tick)
     return await quitPromise;
   } finally {
+    // Invalidate asynchronous clipboard work before terminal restoration yields. A slow host stop
+    // must never leave a window where late host callbacks can still adopt, route, warn, or repaint.
+    ctx.loop.stop();
     await host.stop(); // always restore the terminal — on normal exit, a throw, or a signal
     // The terminal is restored, so the withheld warnings can now safely reach stderr. Done before
     // the loop teardown below so a diagnostic survives even if teardown itself throws.
     endScreenSession();
-    // Gate the loop's out-of-tick painter before detaching the sinks, so a deferred paint still in
-    // flight during teardown (a timer/promise that fired mid-shutdown) cannot write to the stopped host.
-    ctx.loop.stop();
+    // The loop was stopped before restoration began, so detaching these references cannot race a
+    // native clipboard continuation or deferred painter.
     ctx.loop.onFrame = undefined;
     ctx.loop.onCaret = undefined;
     ctx.loop.writeClipboardText = undefined;
+    ctx.loop.readClipboardText = undefined;
     ctx.quitState.resolve = null;
   }
 }

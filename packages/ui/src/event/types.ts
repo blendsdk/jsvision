@@ -34,6 +34,36 @@ export interface ModalHostAware {
   attachModalHost(host: ModalHost): void;
 }
 
+/**
+ * Write exact plain text to a host clipboard.
+ *
+ * The callback may complete synchronously or return a promise. The event loop isolates either form
+ * of failure after committing its canonical clipboard value.
+ *
+ * @param text The raw text copied or cut by the application.
+ * @example
+ * import type { ClipboardTextWriter } from '@jsvision/ui';
+ *
+ * declare const hostClipboard: { writeText(text: string): Promise<void> };
+ * const writeClipboardText: ClipboardTextWriter = (text) => hostClipboard.writeText(text);
+ */
+export type ClipboardTextWriter = (text: string) => void | Promise<void>;
+
+/**
+ * Read exact plain text from a host clipboard.
+ *
+ * The callback may return synchronously or through a promise. Returned text is untrusted and is
+ * bounded by the event loop before it becomes a paste event.
+ *
+ * @returns The current raw host clipboard text.
+ * @example
+ * import type { ClipboardTextReader } from '@jsvision/ui';
+ *
+ * declare const hostClipboard: { readText(): Promise<string> };
+ * const readClipboardText: ClipboardTextReader = () => hostClipboard.readText();
+ */
+export type ClipboardTextReader = () => string | Promise<string>;
+
 /** Options for {@link createEventLoop}. Only `caps` is required; everything else is optional. */
 export interface EventLoopOptions {
   /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
@@ -52,6 +82,10 @@ export interface EventLoopOptions {
    * keymap for copy/cut/paste (and the classic chords).
    */
   clipboardKeys?: ClipboardKeys;
+  /** Optional raw-text host writer used for copy and cut after canonical state is committed. */
+  readonly writeClipboardText?: ClipboardTextWriter;
+  /** Optional raw-text host reader used by otherwise-unhandled paste commands. */
+  readonly readClipboardText?: ClipboardTextReader;
   /**
    * Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt
    * bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
@@ -348,7 +382,15 @@ export interface EventLoop {
    * };
    * loop.writeClipboardText = writeHostClipboard;
    */
-  writeClipboardText?: (text: string) => void | Promise<void>;
+  writeClipboardText?: ClipboardTextWriter;
+  /**
+   * Read raw plain text for an otherwise-unhandled paste command.
+   *
+   * Assigning a reader makes paste command-available independently of the app-local clipboard.
+   * Clearing it restores normal command enablement. Direct {@link EventLoop.dispatch} of a decoded
+   * paste event never calls this callback.
+   */
+  readClipboardText?: ClipboardTextReader;
   /**
    * The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into.
    * `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a
