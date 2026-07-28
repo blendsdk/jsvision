@@ -32,8 +32,9 @@ export type {
 } from './capability/index.js';
 
 // Input decoder — turn raw terminal bytes into typed key/mouse/paste/focus events, plus a chord keymap.
-export { createDecoderState, decode, flush, createKeymap } from './input/index.js';
+export { createDecoderState, decode, flush, createKeymap, boundPasteText } from './input/index.js';
 export type {
+  BoundedPasteText,
   KeyEvent,
   MouseEvent,
   WheelEvent,
