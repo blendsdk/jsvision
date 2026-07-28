@@ -118,7 +118,7 @@ export type {
   FocusHost,
   FocusHostAware,
 } from './router/index.js';
-export { Window } from './window/index.js';
+export { Window, frameTitleMinimumWidth } from './window/index.js';
 export { MenuBar, MenuPopup, menuBar, subMenu, item, separator, menuSpacer } from './menu/index.js';
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
 export { findDuplicateAccelerators, reportDuplicateAccelerators } from './menu/index.js';
@@ -133,6 +133,9 @@ export {
   Text,
   Label,
   Button,
+  buttonColumn,
+  buttonGroup,
+  measureButtonGroup,
   Input,
   Slider,
   Switch,
@@ -147,7 +150,11 @@ export {
 export type {
   TextOptions,
   TextSeverity,
+  ButtonActivation,
   ButtonOptions,
+  ButtonColumnOptions,
+  ButtonGroupMetrics,
+  ButtonGroupOptions,
   InputOptions,
   SliderOptions,
   SwitchOptions,

@@ -32,50 +32,17 @@ import type { CalendarDate } from './calendar-date.js';
 import { addDays, addMonths, compare, dayOfWeek, fromDate, toISO } from './calendar-date.js';
 import { buildMonthGrid } from './calendar-grid.js';
 import type { MonthGrid } from './calendar-grid.js';
-import { metricsFor, dayFieldX, weekdayLabelX, weekRowY, weekdayLabels, headerLine } from './calendar-metrics.js';
+import {
+  dayFieldX,
+  fitCalendarMetrics,
+  weekdayLabelX,
+  weekRowY,
+  weekdayLabels,
+  headerLine,
+} from './calendar-metrics.js';
 import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
+import { localizedCalendarMetrics, localizedMonthNames, localizedWeekdayNames } from './calendar-localization.js';
 import { createEnglishUiI18n } from '../i18n/catalog.js';
-
-/** Stable month key suffixes indexed 1-12 (index 0 unused). */
-const MONTH_KEYS = [
-  '',
-  'january',
-  'february',
-  'march',
-  'april',
-  'may',
-  'june',
-  'july',
-  'august',
-  'september',
-  'october',
-  'november',
-  'december',
-] as const;
-
-/** Historical English month names indexed 1-12 (index 0 unused). */
-const UI_MONTH_NAMES = [
-  '',
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-] as const;
-
-/** Stable weekday key suffixes in Sunday-first order. */
-const WEEKDAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
-
-/** Historical English weekday abbreviations in Sunday-first order. */
-const UI_WEEKDAY_SHORT2 = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
-const UI_WEEKDAY_SHORT3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 /** Runtime shape standardized for `Intl.Locale` but absent from some TypeScript library versions. */
 interface LocaleWithWeekInfo {
@@ -188,27 +155,15 @@ export class Calendar extends View {
     this.firstDayOfWeek = opts.firstDayOfWeek ?? (opts.i18n === undefined ? 0 : localeFirstDay(this.i18n.locale));
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
     this.onChange = opts.onChange;
-    const todayLabel = this.i18n.t('ui.calendar.today', { defaultMessage: 'Today' });
-    this.metrics = metricsFor(opts.density ?? 'comfortable', this.showWeekNumbers, todayLabel);
-    this.monthNames = MONTH_KEYS.map((month, index) =>
-      index === 0
-        ? ''
-        : this.i18n.t(`ui.calendar.month.${month}`, {
-            defaultMessage: UI_MONTH_NAMES[index],
-          }),
+    this.monthNames = localizedMonthNames(this.i18n);
+    this.weekdayNames = localizedWeekdayNames(this.i18n);
+    this.metrics = localizedCalendarMetrics(
+      this.i18n,
+      opts.density ?? 'comfortable',
+      this.showWeekNumbers,
+      this.monthNames,
+      this.weekdayNames,
     );
-    this.weekdayNames = {
-      short2: WEEKDAY_KEYS.map((day, index) =>
-        this.i18n.t(`ui.calendar.weekday.${day}.short2`, {
-          defaultMessage: UI_WEEKDAY_SHORT2[index],
-        }),
-      ),
-      short3: WEEKDAY_KEYS.map((day, index) =>
-        this.i18n.t(`ui.calendar.weekday.${day}.short3`, {
-          defaultMessage: UI_WEEKDAY_SHORT3[index],
-        }),
-      ),
-    };
 
     const initial = this.clampBounds(this.value() ?? this.todayDate);
     this.visibleYear = signal(initial.year);
@@ -231,6 +186,11 @@ export class Calendar extends View {
   /** Advertise the density's intrinsic size (width × height) for `auto` sizing. */
   override measure(): Size2D {
     return { width: this.metrics.width, height: this.metrics.height };
+  }
+
+  /** Resolve geometry against the live assigned width while retaining the intrinsic day-cell stride. */
+  protected visibleMetrics(): CalendarMetrics {
+    return fitCalendarMetrics(this.metrics, this.bounds.width > 0 ? this.bounds.width : this.metrics.width);
   }
 
   /** Clamp a date into `[min,max]` (only where the respective bound is set); the cursor never leaves it. */
@@ -348,7 +308,7 @@ export class Calendar extends View {
 
   /** Paint the header, weekday row, 6 grid rows, and (comfortable/spacious) the footer, per the metrics. */
   draw(ctx: DrawContext): void {
-    const m = this.metrics;
+    const m = this.visibleMetrics();
     const normal = ctx.color('calendarNormal');
     ctx.fill(' ', normal); // the whole grid background is the normal (cyan) fill
 
@@ -447,7 +407,7 @@ export class Calendar extends View {
   protected handleMouse(ev: DispatchEvent): void {
     const local = ev.local;
     if (local === undefined) return;
-    const m = this.metrics;
+    const m = this.visibleMetrics();
     if (local.y === 0) {
       // Header row: month ↑↓ at the far left, year ↑↓ at the far right (up = +1, down = −1).
       if (local.x === m.monthUpX) this.shiftMonth(1);

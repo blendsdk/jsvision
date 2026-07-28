@@ -6,4 +6,6 @@ export type { CodeEditorWindowOptions } from './code-editor-window.js';
 export { projectCodeEditor } from './projection.js';
 export type { CodeEditorFrame, CodeEditorProjectedCell, ProjectCodeEditorOptions } from './projection.js';
 export type { CodeEditorSearchField, CodeEditorSearchState } from './search-session.js';
+export { projectCodeEditorSearchPresentation } from './search-presentation.js';
+export type { CodeEditorSearchPresentation } from './search-presentation.js';
 export type { CodeEditorViewportMetrics } from './viewport.js';

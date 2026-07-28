@@ -16,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { compareApiNames, extractPackageApi } from './api-extract.mjs';
 
-export { compareApiNames } from './api-extract.mjs';
+export { compareApiNames, extractPackageApi } from './api-extract.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const API_DIR = join('tools', 'jsvision-skill', 'references', 'api');

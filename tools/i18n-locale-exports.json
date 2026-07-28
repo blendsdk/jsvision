@@ -17,6 +17,10 @@
     {
       "name": "datagrid",
       "symbolPrefix": "datagrid"
+    },
+    {
+      "name": "code-editor",
+      "symbolPrefix": "codeEditor"
     }
   ]
 }

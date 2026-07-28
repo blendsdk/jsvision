@@ -1,9 +1,12 @@
 import type { CapabilityProfile } from '@jsvision/core';
+import type { I18n } from '@jsvision/i18n';
 import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController, CodeEditorControllerEvent } from '../controller.js';
 import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
+import { createEnglishCodeEditorI18n } from '../i18n/catalog.js';
+import { formatCodeEditorDiagnosticOverlay } from '../i18n/presentation.js';
 import type {
   CodeEditorTheme,
   CodeEditorThemeResolutionReport,
@@ -27,12 +30,15 @@ import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from '
 import { codeEditorVisibleRows } from './folding.js';
 import { lineSeparator } from './editing-operations.js';
 import { CodeEditorSearchSession, type CodeEditorSearchState } from './search-session.js';
+import { projectCodeEditorSearchPresentation } from './search-presentation.js';
 import { CodeEditorThemeState } from './theme-state.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
 /** Construction options for a terminal-native code editor view. */
 export interface CodeEditorOptions {
   readonly controller: CodeEditorController;
+  /** Locale-bound service used for editor-owned presentation. Defaults to isolated English. */
+  readonly i18n?: I18n;
   readonly keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
   /** Exact existing commands that explicitly authorize canonical custom-binding collisions. */
   readonly keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;
@@ -61,6 +67,8 @@ export interface CodeEditorKeyRoute {
 export class CodeEditor extends Group {
   public override focusable = true;
   public readonly controller: CodeEditorController;
+  /** Exact locale-bound service used by this editor instance. */
+  public readonly i18n: I18n;
   /** Whether this editor projects the optional line-number gutter. */
   public readonly lineNumbers: boolean;
   public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: false });
@@ -101,6 +109,7 @@ export class CodeEditor extends Group {
   public constructor(options: CodeEditorOptions) {
     super();
     this.controller = options.controller;
+    this.i18n = options.i18n ?? createEnglishCodeEditorI18n();
     this.#lastSelectionHead = Number(this.controller.document.selection.head);
     this.lineNumbers = options.lineNumbers === true;
     this.assistanceView = new CodeEditorAssistanceView({
@@ -122,6 +131,8 @@ export class CodeEditor extends Group {
       finishSelectionChange: () => this.#finishSelectionChange(false, true),
       changed: () => {
         this.#touchInteraction();
+        const rect = this.layout.rect;
+        if (rect !== undefined) this.resizeViewport(rect.width, rect.height);
         this.invalidate();
       },
     });
@@ -266,8 +277,12 @@ export class CodeEditor extends Group {
     ) {
       throw new RangeError('Invalid editor viewport dimension.');
     }
+    const documentHeight = Math.max(
+      0,
+      height - projectCodeEditorSearchPresentation(this.#search.state, this.i18n, width).rowCount,
+    );
     const gutterWidth = codeEditorGutterWidth(width, this.controller.document.snapshot.lineCount, this.lineNumbers);
-    if (this.#viewport.resize(width, height, gutterWidth)) this.#touchInteraction();
+    if (this.#viewport.resize(width, documentHeight, gutterWidth)) this.#touchInteraction();
   }
 
   /** Opens a validated completion list without changing the document selection. */
@@ -410,6 +425,7 @@ export class CodeEditor extends Group {
     this.#lastFrame = projectCodeEditor({
       controller: this.controller,
       ...options,
+      height: this.#viewport.metrics.height,
       theme: this.#themeState.theme,
       themeName: this.#themeState.fingerprint,
       scrollX: this.scroll.x(),
@@ -497,6 +513,14 @@ export class CodeEditor extends Group {
           );
       }
     }
+    const search = projectCodeEditorSearchPresentation(this.#search.state, this.i18n, context.size.width);
+    const searchStyle = context.color('statusBar');
+    for (let index = 0; index < search.rows.length; index += 1) {
+      const y = context.size.height - search.rowCount + index;
+      if (y < 0 || y >= context.size.height) continue;
+      context.fillRect(0, y, context.size.width, 1, ' ', searchStyle);
+      context.text(0, y, search.rows[index] ?? '', searchStyle);
+    }
   }
 
   /** Exposes the projected caret to the terminal event loop. */
@@ -551,6 +575,18 @@ export class CodeEditor extends Group {
   }
 
   #routeMouseEvent(event: DispatchEvent): void {
+    const layoutHeight = this.layout.rect?.height ?? this.#viewport.metrics.height;
+    if (
+      this.#search.state.open &&
+      event.event.type === 'mouse' &&
+      event.event.kind === 'down' &&
+      event.local !== undefined &&
+      event.local.y >= this.#viewport.metrics.height &&
+      event.local.y < layoutHeight
+    ) {
+      event.handled = true;
+      return;
+    }
     if (
       event.event.type === 'mouse' &&
       event.event.kind === 'down' &&
@@ -636,7 +672,11 @@ export class CodeEditor extends Group {
     }
     if (this.#assistanceSource !== overlay.items) {
       this.#assistanceSource = overlay.items;
-      this.assistanceView.show(overlay.items);
+      this.assistanceView.show(
+        overlay.diagnostic === undefined
+          ? overlay.items
+          : formatCodeEditorDiagnosticOverlay(overlay, this.i18n, this.controller.limits.popupWidth),
+      );
     }
     this.assistanceView.selected = overlay.selected;
     this.#positionAssistance();

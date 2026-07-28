@@ -15,6 +15,14 @@ interface BracketPair {
 }
 ```
 
+## CODE_EDITOR_ACCELERATOR_MANIFEST
+
+Accelerator scopes owned by `@jsvision/code-editor`.
+
+```ts
+const CODE_EDITOR_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
 ## CodeEditor
 
 Focusable terminal-native source editor backed by a document controller.
@@ -23,6 +31,7 @@ Focusable terminal-native source editor backed by a document controller.
 new CodeEditor(options: CodeEditorOptions)   // extends Group
 // methods & signals:
 controller: CodeEditorController
+i18n: I18n
 lineNumbers: boolean
 behavior
 nonColorIndicators
@@ -897,6 +906,7 @@ Construction options for a terminal-native code editor view.
 ```ts
 interface CodeEditorOptions {
   controller: CodeEditorController;
+  i18n?: I18n;   // Locale-bound service used for editor-owned presentation. Defaults to isolated English.
   keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
   keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;   // Exact existing commands that explicitly authorize canonical custom-binding collisions.
   lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
@@ -914,6 +924,12 @@ interface CodeEditorOverlayPresentation {
   kind: 'hover' | 'signature' | 'diagnostic' | 'navigation' | 'symbols';   // Interaction family represented by the rows.
   items: readonly string[];   // Sanitized bounded rows rendered by the terminal popup.
   selected: number;   // Zero-based row selected by chooser-style overlays.
+  diagnostic?: {
+    /** Stable severity used to select the localized editor-owned label. */
+    readonly severity: 'error' | 'warning' | 'information' | 'hint';
+    /** Sanitized external detail that must never be translated as a template. */
+    readonly detail: string;
+  };   // Locale-neutral diagnostic wrapper retained until the final view projection.
 }
 ```
 
@@ -956,6 +972,17 @@ Field that currently receives keyboard input in the find/replace surface.
 
 ```ts
 type CodeEditorSearchField = 'query' | 'replacement'
+```
+
+## CodeEditorSearchPresentation
+
+Immutable terminal rows reserved for the editor's find/replace surface.
+
+```ts
+interface CodeEditorSearchPresentation {
+  rowCount: 0 | 1 | 2;   // Zero while closed, one for find, and two for replace.
+  rows: readonly string[];   // Display-cell-bounded localized rows in top-to-bottom order.
+}
 ```
 
 ## CodeEditorSearchState
@@ -1067,6 +1094,7 @@ Movable editor window that adds standard scrollbar/status composition.
 ```ts
 new CodeEditorWindow(options: CodeEditorWindowOptions)   // extends Window
 // methods & signals:
+i18n: I18n
 editor: CodeEditor
 horizontalScrollBar: ScrollBar
 verticalScrollBar: ScrollBar
@@ -1084,6 +1112,7 @@ Construction options for standard window composition around a code editor.
 ```ts
 interface CodeEditorWindowOptions {
   controller: CodeEditorController;
+  i18n?: I18n;   // Locale-bound service shared by the window chrome and its editor. Defaults to isolated English.
   title?: string;
   lineNumbers?: boolean;   // Shows the editor's optional fixed line-number gutter. Defaults to `false`.
   onDocumentChange?: () => void;   // Runs after an accepted editor mutation so the host can refresh language services.
@@ -1650,6 +1679,14 @@ classifyDocumentSize(size: {
 }): CodeEditorDocumentSizeClassification
 ```
 
+## clipCodeEditorDisplayText
+
+Clips text to terminal display cells without splitting a wide code point.
+
+```ts
+clipCodeEditorDisplayText(text: string, maximumWidth: number, ellipsis = true): string
+```
+
 ## createCodeEditorController
 
 Creates a controller shared by direct and window-hosted code editor views.
@@ -1752,6 +1789,38 @@ Normalizes a public selection input into trusted document offsets.
 
 ```ts
 documentSelection(value: DocumentSelectionInput, length: number): DocumentSelection
+```
+
+## formatCodeEditorDegradationNotice
+
+Formats one editor-owned degradation notice with an explicit or isolated English service.
+
+```ts
+formatCodeEditorDegradationNotice(notice: CodeEditorDegradationNotice, i18n?: I18n): string | undefined
+```
+
+## formatCodeEditorDiagnosticOverlay
+
+Formats a structured diagnostic overlay at the final locale-bound view boundary.
+
+```ts
+formatCodeEditorDiagnosticOverlay(overlay: CodeEditorOverlayPresentation, i18n: I18n = createEnglishCodeEditorI18n(), maximumWidth = 240): readonly string[]
+```
+
+## formatCodeEditorStatus
+
+Formats status values with line and column before lower-priority language text.
+
+```ts
+formatCodeEditorStatus(status: { readonly language: string; readonly line: number; readonly column: number }, i18n: I18n = createEnglishCodeEditorI18n(), maximumWidth = 2_000): string
+```
+
+## formatInvisibleCharacterWarning
+
+Formats an invisible-character warning without changing detected source text.
+
+```ts
+formatInvisibleCharacterWarning(warning: InvisibleCharacterWarning, i18n?: I18n): string
 ```
 
 ## indentLines

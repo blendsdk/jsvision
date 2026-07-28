@@ -29,6 +29,7 @@ import {
   Dialog,
   filter,
   fixed,
+  frameTitleMinimumWidth,
   Group,
   grow,
   Input,
@@ -40,8 +41,9 @@ import {
   spacer,
   Text,
   View,
+  stringWidth,
 } from '@jsvision/ui';
-import { buttonRow, buttonRowMinWidth } from './button-row.js';
+import { buttonCellWidth, buttonRow, buttonRowMinWidth } from './button-row.js';
 import type { ColumnFilter } from './filter.js';
 import type { EditableDataGrid } from './grid.js';
 import type { SortKey } from './sort.js';
@@ -99,6 +101,36 @@ const BODY_INSET = 2;
  * content width), so the two stay column-aligned.
  */
 const GUTTER = 1;
+
+/** Per-dialog fixed cells resolved from translated headers and control values. */
+interface PersonalizationCells {
+  readonly marker: number;
+  readonly toggle: number;
+  readonly freeze: number;
+  readonly width: number;
+}
+
+/** Resolve fixed column cells from every framework string that can occupy them. */
+function personalizationCells(i18n: I18n): PersonalizationCells {
+  const text = (key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string =>
+    i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
+  return {
+    marker: CELL.marker,
+    toggle: Math.max(CELL.toggle, stringWidth(text('datagrid.personalize.header.show'))),
+    freeze: Math.max(
+      CELL.freeze,
+      stringWidth(text('datagrid.personalize.header.freeze')),
+      stringWidth(text('datagrid.personalize.freeze.none')),
+      stringWidth(text('datagrid.personalize.freeze.left')),
+      stringWidth(text('datagrid.personalize.freeze.right')),
+    ),
+    width: Math.max(
+      CELL.width,
+      stringWidth(text('datagrid.personalize.header.width')),
+      stringWidth(text('datagrid.personalize.width.auto')),
+    ),
+  };
+}
 
 /** Catalog keys for human freeze-side labels; the model keeps the lowercase enum. */
 const FREEZE_MESSAGE_KEY: Record<FreezeSide, keyof typeof DATAGRID_ENGLISH_CATALOG.messages> = {
@@ -308,14 +340,26 @@ export class PersonalizeDialog<T> extends Dialog {
   private readonly variantSelected = signal(0);
   /** The dialog's own width, known at construction — used only to size the scroller's content extent. */
   private readonly dlgW: number;
+  /** Fixed cells shared by the translated header and every editable column row. */
+  private readonly cells: PersonalizationCells;
 
   constructor(grid: EditableDataGrid<T>, store: VariantStore, host: ModalDialogHost, title: string) {
     const bounds = host.desktop.bounds;
-    const w = Math.min(Math.max(48, bounds.width - 8), 64);
+    const cells = personalizationCells(host.i18n);
+    const columnHeader = host.i18n.t('datagrid.personalize.header.column', {
+      defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.personalize.header.column'],
+    });
+    const headerContentWidth =
+      cells.marker + cells.toggle + cells.freeze + cells.width + 4 * ROW_GAP + stringWidth(columnHeader);
+    const w = Math.min(
+      Math.max(48, Math.min(bounds.width - 8, 64), headerContentWidth + 6, frameTitleMinimumWidth(title)),
+      bounds.width,
+    );
     const h = Math.min(Math.max(13, bounds.height - 2), 22); // room for translated actions to wrap
     super({ title, width: w, height: h });
     // The default Dialog padding (1) is the frame inset; the single fill `col` body lays out inside it.
     this.dlgW = w;
+    this.cells = cells;
     this.grid = grid;
     this.store = store;
     this.dlgHost = host;
@@ -400,10 +444,14 @@ export class PersonalizeDialog<T> extends Dialog {
     const reset = new Button(this.action('datagrid.personalize.action.reset'), { onClick: () => this.reset() });
     const [ok, cancel] = okCancelButtons(this.i18n);
     const variantActions = [save, apply, del, setDefault, reset];
+    const variantButtonWidth = buttonCellWidth(variantActions);
     const variantRows =
       buttonRowMinWidth(variantActions) <= contentW
-        ? [buttonRow(variantActions)]
-        : [buttonRow(variantActions.slice(0, 3)), buttonRow(variantActions.slice(3))];
+        ? [buttonRow(variantActions, variantButtonWidth)]
+        : [
+            buttonRow(variantActions.slice(0, 3), variantButtonWidth),
+            buttonRow(variantActions.slice(3), variantButtonWidth),
+          ];
 
     this.add(
       col(
@@ -432,11 +480,11 @@ export class PersonalizeDialog<T> extends Dialog {
         gap: ROW_GAP,
         padding: { top: 0, right: SCROLLBAR + GUTTER, bottom: 0, left: 0 },
       },
-      fixed(new Text(' '), CELL.marker),
-      fixed(new Text(this.text('datagrid.personalize.header.show')), CELL.toggle),
+      fixed(new Text(' '), this.cells.marker),
+      fixed(new Text(this.text('datagrid.personalize.header.show')), this.cells.toggle),
       grow(new Text(this.text('datagrid.personalize.header.column')), 1),
-      fixed(new Text(this.text('datagrid.personalize.header.freeze')), CELL.freeze),
-      fixed(new Text(this.text('datagrid.personalize.header.width')), CELL.width),
+      fixed(new Text(this.text('datagrid.personalize.header.freeze')), this.cells.freeze),
+      fixed(new Text(this.text('datagrid.personalize.header.width')), this.cells.width),
     );
   }
 
@@ -528,11 +576,11 @@ export class PersonalizeDialog<T> extends Dialog {
 
     return row(
       { gap: ROW_GAP },
-      fixed(marker, CELL.marker),
-      fixed(toggle, CELL.toggle),
+      fixed(marker, this.cells.marker),
+      fixed(toggle, this.cells.toggle),
       grow(title, 1),
-      fixed(freeze, CELL.freeze),
-      fixed(widthInput, CELL.width),
+      fixed(freeze, this.cells.freeze),
+      fixed(widthInput, this.cells.width),
     );
   }
 

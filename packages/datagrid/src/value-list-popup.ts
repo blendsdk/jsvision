@@ -13,16 +13,30 @@
  * by default (equivalent to no filter); unchecking narrows the kept rows.
  */
 import type { I18n } from '@jsvision/i18n';
-import { Group, View, Input, Button, Text, ScrollBar, col, row, spacer, signal, grow, fixed } from '@jsvision/ui';
+import {
+  Group,
+  View,
+  Input,
+  Button,
+  buttonColumn,
+  Text,
+  ScrollBar,
+  col,
+  row,
+  spacer,
+  signal,
+  grow,
+  fixed,
+  stringWidth,
+} from '@jsvision/ui';
 import type { Signal, DispatchEvent, DrawContext } from '@jsvision/ui';
 import type { DistinctResult } from './filter.js';
 import { buttonRow, buttonCellWidth } from './button-row.js';
 import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 import { datagridAcceleratorLabel } from './i18n/label.js';
 
-/** Fixed rows around the checkbox list: search caption + search input + gap + buttons (2). The status
- * row is counted separately in {@link ValueList.desiredHeight} because it collapses when it is empty. */
-const VALUE_LIST_CHROME_ROWS = 5;
+/** Fixed rows outside the action group: search caption + search input + one separator row. */
+const VALUE_LIST_NON_ACTION_ROWS = 3;
 /** The checkbox list's fixed height in rows — more values than this scroll; fewer leave blank rows. */
 const LIST_ROWS = 8;
 
@@ -69,6 +83,8 @@ export interface ValueListConfig {
   buttonWidth?: number;
   /** Translation service for package-owned labels; defaults to isolated English text. */
   i18n?: I18n;
+  /** Available content width used to choose a horizontal or stacked action arrangement. */
+  availableWidth?: number;
 }
 
 /**
@@ -116,7 +132,6 @@ class CheckboxList extends View {
     const focused = this.focusedRow();
     const normal = ctx.color('listNormal');
     const h = ctx.size.height;
-    const w = ctx.size.width;
     ctx.fill(' ', normal);
     const maxTop = this.maxTop(labels.length, h);
     const top = Math.min(this.top(), maxTop);
@@ -125,7 +140,7 @@ class CheckboxList extends View {
       const label = labels[idx];
       const box = checked.has(label) ? '[x] ' : '[ ] ';
       const role = idx === focused ? ctx.color('listFocused') : normal;
-      ctx.text(0, i, (box + label).slice(0, w), role);
+      ctx.text(0, i, box + label, role);
     }
     // Re-limit the sibling scroll bar from the live viewport + row count (the draw-time sync ListView
     // uses): offsets 0..maxTop, a page = one viewport, an arrow (and thus one wheel notch) = one row.
@@ -223,6 +238,12 @@ export class ValueList extends Group {
   private readonly truncatedFlag: Signal<boolean> = signal(false);
   private readonly loadingFlag: Signal<boolean> = signal(true);
   private readonly errorFlag: Signal<boolean> = signal(false);
+  /** Shared natural action width supplied by the embedding popup. */
+  private readonly actionButtonWidth: number;
+  /** Rows occupied by the chosen Select All/Apply arrangement. */
+  private readonly actionHeight: number;
+  /** Width occupied by the chosen Select All/Apply arrangement. */
+  private readonly actionWidth: number;
   /** The search-narrowed, sorted labels (case-insensitive contains); a stable derived accessor. */
   private readonly visible: () => string[];
 
@@ -237,6 +258,7 @@ export class ValueList extends Group {
     this.i18n = cfg.i18n ?? createEnglishDatagridI18n();
     this.comparisonI18n = cfg.i18n;
     this.onApplySink = cfg.onApply;
+    this.actionButtonWidth = cfg.buttonWidth ?? valueListButtonWidth(this.i18n);
     this.checked = signal<ReadonlySet<string>>(cfg.current ?? new Set());
     this.visible = this.derived(() => {
       const fold = (value: string): string =>
@@ -268,7 +290,13 @@ export class ValueList extends Group {
       onClick: () => this.selectAll(),
     });
     const apply = new Button(this.action('datagrid.filter.action.apply'), { onClick: () => this.apply() });
-    const controls = buttonRow([selectAll, apply], cfg.buttonWidth);
+    const horizontalActionWidth = this.actionButtonWidth * 2 + 1;
+    const stackActions = cfg.availableWidth !== undefined && horizontalActionWidth > cfg.availableWidth;
+    const controls = stackActions
+      ? buttonColumn([selectAll, apply], { minimumButtonWidth: this.actionButtonWidth, gap: 1 })
+      : buttonRow([selectAll, apply], this.actionButtonWidth);
+    this.actionHeight = stackActions ? 5 : 2;
+    this.actionWidth = stackActions ? this.actionButtonWidth : horizontalActionWidth;
 
     // One status line: loading → error → truncation disclosure → blank. Never silent about truncation.
     const status = new Text(() =>
@@ -341,7 +369,26 @@ export class ValueList extends Group {
    * @returns The desired total height of the value-list section, in cells.
    */
   desiredHeight(): number {
-    return VALUE_LIST_CHROME_ROWS + (this.hasStatus() ? 1 : 0) + LIST_ROWS;
+    return VALUE_LIST_NON_ACTION_ROWS + this.actionHeight + (this.hasStatus() ? 1 : 0) + LIST_ROWS;
+  }
+
+  /**
+   * The value-list's reactive desired width in terminal cells.
+   *
+   * It covers the complete action pair, every currently visible distinct label plus its checkbox,
+   * and every possible status/caption. Async distinct loading and search filtering therefore feed
+   * the embedding popup's placement calculation without a second geometry path.
+   */
+  desiredWidth(): number {
+    const labelWidth = this.visible().reduce((width, label) => Math.max(width, stringWidth(label) + 5), 0);
+    const chromeKeys = [
+      'datagrid.filter.field.search',
+      'datagrid.filter.status.loading',
+      'datagrid.filter.status.error',
+      'datagrid.filter.status.truncated',
+    ] as const;
+    const chromeWidth = chromeKeys.reduce((width, key) => Math.max(width, stringWidth(this.text(key))), 0);
+    return Math.max(32, this.actionWidth, labelWidth, chromeWidth);
   }
 
   /** Whether the status line has a message to show (loading, error, or a truncation disclosure). */

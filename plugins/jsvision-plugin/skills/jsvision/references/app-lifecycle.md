@@ -78,6 +78,10 @@ const mounted = mountApp({ element: document.getElementById('app'), app, caps, t
 // later: mounted.dispose();
 ```
 
+Disposal permanently detaches the mounted tree, clears focus and pointer capture, and releases
+application command handlers. Treat a disposed application as finished; construct a fresh
+application when changing locale or replacing an independently owned shell.
+
 Keep the browser-only imports (`@xterm/xterm`, its CSS) in one entry file; the app-composition
 module stays plain `@jsvision/ui` so it also runs headless and on a TTY. See
 `running-and-testing.md`.
