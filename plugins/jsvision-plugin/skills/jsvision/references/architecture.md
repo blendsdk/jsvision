@@ -40,11 +40,13 @@ const loop = createEventLoop(viewport, {
 ```
 
 Callbacks exchange exact raw Unicode and line endings. Copy/cut commits canonical state first.
-Native reads run one at a time in gesture order without blocking input or rendering. Discard a
-result after focus or modal changes, unmount/remount, stop, or disposal. Bound successful native
-text to a 1 MiB UTF-8 prefix and retain truncation metadata. An empty success clears canonical state
-without editing. A reader failure uses the current app-local canonical fallback. Never log
-clipboard payloads or host error details.
+Native reads run one at a time in gesture order. Dispatch does not await pending async work; with an
+async host adapter, pending reads do not block input or rendering. Never perform blocking
+synchronous process or filesystem work inside a callback. Discard a result after focus or modal
+changes, unmount/remount, stop, or disposal. Bound successful native text to a 1 MiB UTF-8 prefix
+and retain truncation metadata. An empty success clears canonical state without editing. A reader
+failure uses the current app-local canonical fallback. Never log clipboard payloads or host error
+details.
 
 The `tvedit` example uses `clipboardy`, which is private to the examples package; published SDK
 packages do not depend on it. Its macOS `pbcopy`/`pbpaste`, Windows PowerShell/native, and Linux

@@ -144,10 +144,12 @@ host mount. In browsers, preserve the default clipboard bridge or inject a compa
 `Ctrl+Shift+V` are host aliases when delivered. Bracketed paste stays a separate direct path.
 
 For native reads, operations are serialized in gesture order and intentionally have no timeout.
-Keep input and rendering non-blocking. A headless/SSH session, missing X11/Wayland helper, or
-restricted macOS/Windows helper can fail; use payload-free diagnostics and the current canonical
-fallback so the app remains usable. Focus/modal changes, unmount, stop, and disposal discard stale
-results. A successful empty read clears canonical state without editing, and successful text is
-truncated to a 1 MiB UTF-8 prefix when needed. The private `tvedit` example owns `clipboardy` and its
-macOS `pbcopy`/`pbpaste`, Windows PowerShell, and Linux X11/Wayland selection; published SDK
-packages do not. Never install helpers, retry, poll, or log clipboard/error details.
+Dispatch does not await pending async work; use an async host adapter so pending reads do not block
+input or rendering, and never run blocking synchronous process/filesystem work in the callback. A
+headless/SSH session, missing X11/Wayland helper, or restricted macOS/Windows helper can fail; use
+payload-free diagnostics and the current canonical fallback so the app remains usable. Focus/modal
+changes, unmount, stop, and disposal discard stale results. A successful empty read clears
+canonical state without editing, and successful text is truncated to a 1 MiB UTF-8 prefix when
+needed. The private `tvedit` example owns `clipboardy` and its macOS `pbcopy`/`pbpaste`, Windows
+PowerShell, and Linux X11/Wayland selection; published SDK packages do not. Never install helpers,
+retry, poll, or log clipboard/error details.
