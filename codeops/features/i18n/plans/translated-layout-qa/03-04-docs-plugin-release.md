@@ -45,6 +45,6 @@ directly.
 1. Focused UI, Forms, Files, Datagrid, Code Editor, examples, docs, and canonical-skill tests pass.
 2. `yarn plugin:check` passes.
 3. Locale generation/check remains clean for all five packages and ten locales.
-4. Review tooling may continue to report missing external proficient-speaker attestations; no
+4. Review tooling requires current digest-bound evidence with a disclosed supported method; no
    identity or approval is fabricated.
 5. `yarn verify` passes.

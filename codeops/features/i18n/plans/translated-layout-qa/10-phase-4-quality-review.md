@@ -56,7 +56,7 @@ major issue.
 | Examples package | Typecheck passed; 47 files and 376 tests passed |
 | Locale generation | 50 explicit entry points updated and check-clean |
 | Documentation/plugin | `yarn docs:api`, `yarn plugin:update`, and `yarn plugin:check` passed |
-| External proficient review | Truthfully unmet for 45 package/locale pairs; no attestation fabricated |
+| Translation review | Complete for 45 package/locale pairs using disclosed AI-assisted evidence; no human proficiency claimed |
 | Full gate | `yarn verify` passed after the review fixes in 101.78 seconds |
 
 ## Post-review visual correction

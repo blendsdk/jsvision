@@ -87,7 +87,7 @@ are immutable: implementation failures are fixed in implementation, not by chang
 | ST-46 | Compare all official catalogs with English | Exact key/kind/placeholder parity; strict validation has no issue | RD-04 FR-2/3 |
 | ST-47 | Verify official accelerator scope manifests | Every required label has one ASCII letter and no scope collision | RD-04 FR-3 |
 | ST-48 | Invalid app accelerator override for one key | Only that override is ignored and valid English default renders | RD-04 FR-3 |
-| ST-49 | Review manifest with matching approved proficient review | Review verifier passes for that catalog digest | RD-04 FR-4 |
+| ST-49 | Review manifest with matching approved proficient-human or AI-assisted review | Review verifier passes for that catalog digest and rejects undisclosed methods | RD-04 FR-4 |
 | ST-50 | Missing, unapproved, duplicate, or stale review digest | Release review verifier fails and identifies locale/package structurally | RD-04 FR-4 |
 | ST-51 | Run docs snippets and Theme Designer localization recipe | Every snippet typechecks/runs against public APIs | RD-04 FR-5/6 |
 | ST-52 | Generate API docs | I18n public surface and locale entry points are linked and JSDoc-complete | RD-04 FR-5 |
@@ -133,4 +133,4 @@ Implementation tests are split by module (`locale`, `messages`, `validation`, `c
 - [ ] Security and parser adversarial suites pass on supported platforms.
 - [ ] Generated files are deterministic and plugin drift is clean.
 - [ ] `yarn verify` passes.
-- [ ] Human translation review evidence passes the digest verifier.
+- [x] Method-disclosed translation review evidence passes the digest verifier.

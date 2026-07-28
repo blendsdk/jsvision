@@ -12,7 +12,7 @@ test('should reject an approved review with an impossible calendar date', async 
     normalizedCatalogDigest(catalog: Catalog): string;
     verifyTranslationReviews(input: {
       readonly catalogs: readonly { readonly packageName: string; readonly catalog: Catalog }[];
-      readonly manifest: { readonly schema: 1; readonly reviews: readonly unknown[] };
+      readonly manifest: { readonly schema: 2; readonly reviews: readonly unknown[] };
     }): readonly { readonly code: string }[];
   };
   const catalog: Catalog = {
@@ -23,14 +23,14 @@ test('should reject an approved review with an impossible calendar date', async 
   const issues = api.verifyTranslationReviews({
     catalogs: [{ packageName: 'ui', catalog }],
     manifest: {
-      schema: 1,
+      schema: 2,
       reviews: [
         {
           package: 'ui',
           locale: 'nl',
           digest: api.normalizedCatalogDigest(catalog),
           reviewer: 'reviewer-nl-01',
-          proficiency: 'proficient',
+          reviewMethod: 'ai-assisted',
           reviewedAt: '2026-99-99',
           status: 'approved',
         },

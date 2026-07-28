@@ -141,7 +141,8 @@ focus/keyboard/mouse reachability even where documented cosmetic clipping remain
 
 - RD-01 supplies the shared service and formatting/comparison behavior.
 - RD-02 supplies package/app catalog validation.
-- RD-04 owns complete translations, human review evidence, docs/plugin recipes, and the full matrix.
+- RD-04 owns complete translations, method-disclosed review evidence, docs/plugin recipes, and the
+  full matrix.
 
 ## Scope Decisions
 

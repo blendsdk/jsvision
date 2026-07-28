@@ -115,7 +115,7 @@ export const uiNl = uiCatalog('nl', {
     'ui.editor.find.label': '~Z~oektekst',
     'ui.editor.replace.label': '~N~ieuwe tekst',
     'ui.editor.case-sensitive': '~H~oofdlettergevoelig',
-    'ui.editor.whole-words': '~W~Volledige woorden',
+    'ui.editor.whole-words': 'Volledige ~w~oorden',
     'ui.editor.prompt-on-replace': '~V~ragen bij vervangen',
     'ui.editor.replace-all': '~A~lles vervangen',
     'ui.editor.replace-occurrence': 'Deze vondst vervangen?',
@@ -371,7 +371,7 @@ export const uiPtPT = uiCatalog('pt-PT', {
     'novembro',
     'dezembro',
   ],
-  weekdays2: ['do', 'se', 'te', 'qu', 'qu', 'se', 'sá'],
+  weekdays2: ['do', '2ª', '3ª', '4ª', '5ª', '6ª', 'sá'],
   weekdays3: ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'],
 });
 

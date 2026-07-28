@@ -4545,7 +4545,7 @@
     {
       "edges": [],
       "evidence": [
-        "blocker:36 non-English package/locale catalogs require external digest-bound proficient-speaker approval; verifier currently reports 36 MISSING_REVIEW issues"
+        "completion:45 non-English package/locale catalogs have current digest-bound AI-assisted approval with the review method disclosed"
       ],
       "id": "TASK-5-3-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
@@ -4560,7 +4560,7 @@
         }
       ],
       "status": "pending",
-      "title": "Obtain proficient-speaker approvals for every non-English catalog digest and pass the review verifier",
+      "title": "Record method-disclosed approval for every non-English catalog digest and pass the review verifier",
       "type": "task",
       "validations": []
     },

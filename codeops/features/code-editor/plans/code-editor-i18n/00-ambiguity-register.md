@@ -24,7 +24,7 @@
 | AR-9 | Technical unknowns | Locale entry generation currently assumes four packages and forty entry points | Handwrite Code Editor exports / extend the shared config and make counts configuration-derived | Extend the shared generator/config and remove brittle four-package/count assumptions from affected checks | ✅ Resolved |
 | AR-10 | Naming & terminology | Code Editor key namespace and accelerator topology | Reuse `ui.editor.*` / use `code-editor.*`; invent action accelerators / publish no scopes until real co-visible accelerator labels exist | Use stable `code-editor.*` keys and an empty public accelerator manifest unless the implemented search chrome creates a real accelerator scope | ✅ Resolved |
 | AR-11 | Security & compliance | Translation and external content can contain terminal controls or hostile Unicode | Trust official catalogs and host strings / preserve validation, sanitization, clipping, and bounded diagnostics at every presentation boundary | Preserve strict catalog validation and existing external-content normalization; never translate or interpolate unsanitized external detail as a message template | ✅ Resolved |
-| AR-12 | Non-functional gaps | Definition of completion when proficient-speaker approvals require external human authority | Fabricate/AI-attest reviews / prepare complete catalogs and leave digest approval as an explicit release gate | Never impersonate proficient reviewers; implementation produces review-ready catalogs and reports the external approval gate separately | ✅ Resolved |
+| AR-12 | Non-functional gaps | Definition of completion when proficient speakers are unavailable | Remove review / misrepresent AI as human / disclose AI-assisted review | Keep digest-bound review, record `ai-assisted` explicitly, and never claim human proficiency | ✅ Resolved |
 | AR-13 | Dependencies | #185 owns the `demo:i18n` registry that does not yet exist | Create a competing harness in #184 / keep the story and combined viewport matrix in #185 | Do not create a second harness; #185 will integrate the Code Editor story after #184 makes every state constructible | ✅ Resolved |
 | AR-14 | Verification | Which command is authoritative | Package-local checks only / repository gate | Use project-declared `yarn verify`; package-local checks are focused iteration only | ✅ Resolved |
 | AR-15 | Packaging | Whether locale or Node imports may leak into the browser-safe main entry | Eager locale registry / explicit locale subpaths and isolated `./node` | Keep the main entry browser-safe, publish one explicit subpath per locale, and retain Node-only imports behind `./node` | ✅ Resolved |
@@ -120,11 +120,12 @@
   public Code Editor contract requires locale-sensitive semantics, or browser-isolation tests show
   a locale/Node import leak.
 
-### AR-12 — Human translation review
+### AR-12 — Translation review
 
-- **Authority**: Existing review policy and the non-delegable boundary on external attestations.
-- **Decision**: Create structurally complete translations and digest-ready outputs, but never add a
-  reviewer identity or proficient approval without that person's explicit attestation.
+- **Authority**: The user replaced the former human-only policy on 2026-07-28 because proficient
+  speakers are no longer available.
+- **Decision**: Permit digest-bound AI-assisted review when its method and reviewer are disclosed.
+  Never describe AI-assisted evidence as proficient-human approval.
 
 ### AR-13 — QA harness ownership
 

@@ -118,4 +118,4 @@ harnesses; real in-memory application/controller/document objects are preferred.
 - [x] Package typecheck, test, and docs checks pass during focused iteration.
 - [x] `yarn plugin:update` and `yarn plugin:check` pass.
 - [x] `yarn verify` passes.
-- [x] External proficient-review and #185 harness status are reported honestly.
+- [x] Method-disclosed review and #185 harness status are reported honestly.

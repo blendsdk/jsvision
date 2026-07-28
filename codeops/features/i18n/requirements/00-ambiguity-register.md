@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision Internationalization
 
 > **Status**: ✅ GATE PASSED — all 29 items resolved
-> **Last Updated**: 2026-07-25 01:48 CEST
+> **Last Updated**: 2026-07-28
 > **Feature-Set**: i18n (`codeops/features/i18n/`)
 > **Mode**: auto-design
 > **Root Invocation ID**: `i18n-20260725-01`
@@ -11,7 +11,7 @@
 |---|---|---|---|---|---|
 | 1 | Feature / scope | Who owns translations and where must they run? | Framework only / applications only / both across Node and web | **Both** framework and application messages; Node terminal and `@jsvision/web` browser runtimes | ✅ Resolved |
 | 2 | Scope / locales | Which locales ship as complete official catalogs? | Core six / recommended ten / broader European set | **Recommended ten**: `en`, `nl`, `de`, `fr`, `es`, `it`, `pt-PT`, `pl`, `ro`, `sv`; English is default and final fallback | ✅ Resolved |
-| 3 | Quality | What makes an official translation releasable? | Machine draft / automated completeness only / complete plus proficient-speaker review | **100% coverage, valid plurals/accelerators/layout, and proficient-speaker review; machine-only drafts are not releasable** | ✅ Resolved |
+| 3 | Quality | What makes an official translation releasable? | Machine draft / automated completeness only / complete plus disclosed review | **100% coverage, valid plurals/accelerators/layout, and digest-bound review whose method is disclosed as proficient-human or AI-assisted** | ✅ Resolved |
 | 4 | Lifecycle | How does i18n enter an application? | Global mutable singleton / asynchronous application factory / preloaded explicit service | **Load first, then pass the synchronous service to synchronous `createApplication({ i18n })`; expose the exact instance as `app.i18n`; no global mutable translator** | ✅ Resolved |
 | 5 | Behavior | How do missing locale data, messages, and parameters behave? | Throw / expose keys / deterministic safe fallback | **Region → language → configured fallback → call-site default; missing params remain visible and diagnostic; missing key without a default returns the key** | ✅ Resolved |
 | 6 | Data / messages | Which v1 message capabilities and authoring shape are supported? | Strings only / ICU parser / typed string plus one-level structured plural/select | **`${name}` interpolation, `plural()` and `select()` with mandatory `other`, cardinal `Intl.PluralRules`, and equivalent schema-versioned TS/JSON forms** | ✅ Resolved |
@@ -33,7 +33,7 @@
 | 22 | Integration / bundles | How do applications load package-owned official catalogs without global registration or circular dependencies? | Automatic global registry / explicit package catalog bundles / central all-package bundle | **Explicit locale subpath catalog imports from each owning package, ordered before application catalogs; no registry or all-locale main-bundle side effect** | ✅ Resolved |
 | 23 | Edge cases | How do invalid select parameters and plural/select composition behave? | Throw / diagnostic plus `other`; one structured level / implicit nested evaluation | **Missing/invalid controllers diagnose and select `other`; cases contain strings only; no plural/select nesting in v1** | ✅ Resolved |
 | 24 | Compatibility | How are existing English literals and public message keys migrated? | Immediate replacement without oracle / byte-golden migration and stable namespaced keys / dual APIs indefinitely | **Inventory built-in literals, preserve English golden output and existing explicit label overrides, and govern namespaced message keys as stable public API** | ✅ Resolved |
-| 25 | Quality / governance | How is human translation review represented at release time? | Informal assertion / durable per-locale review evidence tied to catalog revision | **Durable proficient-speaker review is mandatory; implementation cannot claim release readiness without it** | ✅ Resolved |
+| 25 | Quality / governance | How is translation review represented at release time? | Informal assertion / human-only attestation / durable method-disclosed evidence tied to catalog revision | **Durable digest-bound review is mandatory; evidence identifies the reviewer and whether the review was proficient-human or AI-assisted, without representing AI review as human proficiency** | ✅ Resolved |
 | 26 | Non-functional | What verification and performance constraints govern the synchronous draw path? | Functional tests only / specification, integration, locale matrix, security, bundle and cache verification | **Specification-first unit/integration/security/package tests, English goldens, ten-locale layout/accelerator matrix, bounded caches, zero runtime dependencies, and hot-path benchmarks** | ✅ Resolved |
 | 27 | Security / boundary | Do authentication, authorization, retention, encryption, rate limiting, or network security apply? | Treat catalogs as network service / explicitly local library boundary | **The package is a local library with no auth, endpoint, storage, or network ownership; custom-source callers own transport security, authorization, rate limits, secrets, and retention** | ✅ Resolved |
 | 28 | API / typing | Are message keys generated or statically constrained in v1? | Generated union / generic key parameter / stable string keys with validation | **No extraction or generated key types in v1; keys remain stable public namespaced strings** | ✅ Resolved |

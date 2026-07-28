@@ -213,8 +213,8 @@ repository/plugin gates. See [08-phase-4-quality-review](08-phase-4-quality-revi
 **Reference**: [03-04](03-04-locales-docs-plugin.md) · AR-42, AR-44
 
 - [x] 5.3.1 Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — clean-runner follow-up moved the unchanged cross-package layout oracle to `@jsvision/examples`; focused dependency-order verification and root `yarn verify` passed ✅ (completed: 2026-07-26 02:36)
-- [ ] 5.3.2 Obtain proficient-speaker approvals for every non-English catalog digest and pass the review verifier — `tools/i18n-translation-reviews.json`
-  - External blocker: 36 package/locale catalogs still need digest-bound proficient approval; the verifier reports one `MISSING_REVIEW` issue for each.
+- [x] 5.3.2 Record approved method-disclosed evidence for every non-English catalog digest and pass the review verifier — `tools/i18n-translation-reviews.json`
+  - Completed 2026-07-28 after the user replaced the unavailable human-only policy with disclosed AI-assisted review; the verifier passes all 45 package/locale catalogs.
 
 ## Dependencies
 
@@ -231,11 +231,11 @@ Phase 5 docs/plugin/review/release
 ```
 
 Within every phase the order is specification tests → red verification → implementation → green
-verification → implementation hardening → full verification. The external review task depends on
-stable final catalog digests and may remain the sole release blocker.
+verification → implementation hardening → full verification. Review evidence depends on stable
+final catalog digests and must be refreshed whenever catalog bytes change.
 
 ## Success criteria
 
 The feature is complete only when all 66 tasks are verified, `yarn verify` and plugin drift checks
 pass, main-entry browser isolation and security suites pass, no dead code or undocumented public
-surface remains, and every non-English catalog has current proficient-speaker approval.
+surface remains, and every non-English catalog has current method-disclosed approval.

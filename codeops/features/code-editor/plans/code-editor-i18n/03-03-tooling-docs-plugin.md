@@ -30,8 +30,8 @@ handwritten per-locale entry pattern is added. Generated output messages report 
 - Literal auditing includes `packages/code-editor/src`, recognizes Code Editor projector calls, and
   classifies every candidate in `tools/i18n-literals.json`.
 - Review tooling loads every configured non-English package catalog and derives the expected total.
-  `tools/i18n-translation-reviews.json` is changed only when real proficient reviewers provide
-  current digest attestations. *(AR-12)*
+  `tools/i18n-translation-reviews.json` changes only after an authorized review of exact built
+  digests. Each entry discloses whether the method was proficient-human or AI-assisted. *(AR-12)*
 - Cross-package examples/layout checks recognize the fifth catalog where their purpose is catalog
   completeness. The comprehensive viewport expansion stays in #185. *(AR-8, AR-13)*
 
@@ -63,17 +63,17 @@ continues covering component/API references. Run `yarn plugin:update`, inspect e
 reference, and commit the generated `plugins/jsvision-plugin/skills/jsvision/` changes with the
 source changes. Run `yarn plugin:check`. *(AR-9)*
 
-## External review handoff
+## Review handoff
 
 Once catalog bytes stabilize:
 
 1. build locale outputs;
 2. derive the nine Code Editor catalog digests through the existing review tooling;
-3. provide catalogs/digests to proficient speakers;
-4. add attestations only from the named reviewers;
+3. perform the authorized AI-assisted audit or provide catalogs/digests to proficient speakers;
+4. add attestations with the actual reviewer and review method;
 5. rerun `yarn i18n:reviews:check`.
 
-This execution may prepare steps 1–3 but cannot claim steps 4–5 without external authority.
+The manifest records the real method and never presents AI-assisted review as human proficiency.
 *(AR-12)*
 
 ## Error handling
@@ -83,7 +83,7 @@ This execution may prepare steps 1–3 but cannot claim steps 4–5 without exte
 | Invalid/duplicate package config | Generator/check fails before resolving paths | AR-9, AR-11 |
 | Generated entry drift | `i18n:locales:check` fails with exact paths | AR-9 |
 | Literal unclassified or stale | `check:i18n-literals` fails until ownership manifest matches source | AR-9 |
-| Missing/stale human review | Review check reports package/locale; no synthetic approval | AR-12 |
+| Missing/stale or undisclosed review | Review check reports package/locale; AI review is never labeled as human | AR-12 |
 | Canonical/plugin drift | `plugin:check` fails; rerun generator from canonical sources | AR-9 |
 | #185 registry absent | No duplicate harness; report later integration dependency | AR-13 |
 
@@ -94,4 +94,4 @@ This execution may prepare steps 1–3 but cannot claim steps 4–5 without exte
 - Literal ownership completeness and stale-entry rejection.
 - Docs entry-point and example compilation tests.
 - Canonical skill recipe import coverage and plugin drift check.
-- Full `yarn verify`, with external review status reported separately.
+- Full `yarn verify`, including the digest-bound review gate.

@@ -42,4 +42,4 @@ attribution.
 
 The engine, integrations, documentation, and draft catalogs may be implemented and verified before
 translation review. RD-04 and the release phase remain incomplete until each non-English catalog
-digest has a proficient-speaker approval recorded in the checked review manifest.
+digest has a method-disclosed approval recorded in the checked review manifest.

@@ -58,9 +58,10 @@ used by UI, Forms, Files, and Datagrid.
 
 ### Should have
 
-- **FR-11 — Review readiness.** Every non-English Code Editor catalog is structurally ready for
-  digest-bound proficient-speaker review, and review tooling expects the package once built.
-  Review identities and approvals are supplied only by real reviewers. *(AR-12)*
+- **FR-11 — Review readiness.** Every non-English Code Editor catalog has digest-bound review
+  evidence, and review tooling expects the package once built. Evidence discloses whether its
+  method is proficient-human or AI-assisted and never presents AI review as human proficiency.
+  *(AR-12)*
 - **FR-12 — Host accessibility formatters.** Pure degradation and invisible-warning projectors are
   exported so hosts can render the same localized accessible copy outside the built-in view without
   learning catalog keys. *(AR-3)*
@@ -105,7 +106,7 @@ used by UI, Forms, Files, and Datagrid.
 
 - The #185 shared sizing APIs, complete dialog/dropdown/calendar/surface sweep, `demo:i18n`
   registry, Code Editor story registration, and combined ten-locale viewport matrix.
-- Claiming or fabricating proficient-speaker approval.
+- Presenting AI-assisted review as proficient-human approval.
 - Translating caller, source, path, filename, language/protocol, stable ID, persisted setting,
   telemetry, or keybinding identity data.
 - Locale-sensitive source search or collation.
@@ -131,5 +132,5 @@ used by UI, Forms, Files, and Datagrid.
    generation.
 10. Package documentation, docs site, canonical skill, generated plugin, package-local checks,
     `yarn plugin:check`, and `yarn verify` pass.
-11. External proficient-speaker approvals and #185-owned QA integration remain explicitly visible
-    follow-up gates rather than being falsely claimed complete.
+11. Digest-bound method-disclosed translation reviews pass; #185-owned QA integration remains an
+    explicitly visible follow-up gate.

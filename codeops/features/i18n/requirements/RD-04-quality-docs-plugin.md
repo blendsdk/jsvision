@@ -12,7 +12,7 @@
 ## Feature Overview
 
 Make internationalization a maintained SDK guarantee rather than an isolated translator. This RD
-owns the ten official catalogs, proficient-speaker review evidence, English compatibility,
+owns the ten official catalogs, method-disclosed review evidence, English compatibility,
 cross-runtime/security/performance verification, consumer documentation, and the canonical JSVision
 Codex plugin guidance. *(AR #2, AR #3, AR #11, AR #13, AR #24–AR #26)*
 
@@ -25,10 +25,11 @@ Codex plugin guidance. *(AR #2, AR #3, AR #11, AR #13, AR #24–AR #26)*
       reference, and final catalog fallback. Region variants outside this list are application-owned.
       *(AR #2, AR #3)*
 - [ ] **FR-2 — Review evidence.** A versioned review manifest records, for every package/locale
-      catalog, its normalized content digest, review status, proficient reviewer identity, and review
-      date. Any catalog change invalidates its prior review entry. Non-English machine drafts may
-      exist during development but cannot satisfy release readiness or be described as official
-      reviewed translations. *(AR #3, AR #25)*
+      catalog, its normalized content digest, review status, reviewer identity, disclosed review
+      method, and review date. Accepted methods are `proficient-human` and `ai-assisted`; AI review
+      must never be represented as human proficiency. Any catalog change invalidates its prior
+      review entry. Unreviewed machine drafts may exist during development but cannot satisfy
+      release readiness or be described as reviewed translations. *(AR #3, AR #25)*
 - [ ] **FR-3 — Completeness gate.** Official catalogs must match their package English reference
       key-for-key, message-kind-for-kind, placeholder-for-placeholder, valid plural categories,
       accelerator scope rules, and layout inventory. Missing/extra/mismatched values fail the owning
@@ -88,7 +89,7 @@ Codex plugin guidance. *(AR #2, AR #3, AR #11, AR #13, AR #24–AR #26)*
 
 ### Won't Have (Out of Scope)
 
-- Claiming proficient review based on machine translation or automated validation.
+- Representing AI-assisted review as proficient-human review.
 - Publishing unrevised catalogs as official.
 - Code-editor plugin guidance or implementation; GitHub issue #184 owns that future work.
 - Full Theme Designer localization, translation-management SaaS integration, or automatic extraction.
@@ -101,18 +102,19 @@ The manifest uses stable package and canonical locale identifiers. Each entry co
 
 ```json
 {
-  "package": "@jsvision/ui",
+  "package": "ui",
   "locale": "nl",
-  "catalogDigest": "sha256:<normalized-catalog-digest>",
-  "reviewer": "<proficient reviewer identity>",
+  "digest": "<normalized-sha256-catalog-digest>",
+  "reviewer": "<reviewer identity>",
+  "reviewMethod": "ai-assisted",
   "reviewedAt": "YYYY-MM-DD",
-  "status": "reviewed"
+  "status": "approved"
 }
 ```
 
-The gate computes the digest; it never trusts a stale declared digest. English may be reviewed by
-the existing framework maintainer, but every non-English entry requires a proficient speaker.
-*(AR #3, AR #25)*
+The gate computes the digest; it never trusts a stale declared digest. Every non-English entry
+requires an approved review using one of the two disclosed methods. Future proficient-human review
+may supersede AI-assisted evidence by replacing the single digest-bound entry. *(AR #3, AR #25)*
 
 ### T-2 Required test groups
 
@@ -169,7 +171,7 @@ The final verification includes a clean generated-plugin diff and review-manifes
 | Decision | Options Considered | Chosen | Rationale | AR Ref |
 |---|---|---|---|---|
 | Languages | Core six / recommended ten / broader set | Recommended ten | User-selected mainstream European coverage | AR #2 |
-| Review | Machine / automated / proficient speaker | Proficient speaker plus automated gates | Semantic correctness cannot be inferred mechanically | AR #3, AR #25 |
+| Review | Unreviewed machine draft / proficient human / disclosed AI-assisted review | Digest-bound proficient-human or AI-assisted evidence plus automated gates | Review remains auditable when proficient speakers are unavailable, without misstating who performed it | AR #3, AR #25 |
 | Agent support | Generic docs / canonical skill integration | Canonical skill integration | Plugin is a supported SDK surface | AR #11 |
 | Proof app | Theme Designer / focused recipe | Focused recipe | Tests app ownership without scope expansion | AR #13 |
 
@@ -184,8 +186,8 @@ The final verification includes a clean generated-plugin diff and review-manifes
 
 ## Acceptance Criteria
 
-1. [ ] All four framework packages have 100% key/kind/placeholder coverage for all ten locales and
-       every non-English catalog digest has current proficient-speaker review evidence.
+1. [ ] All framework packages have 100% key/kind/placeholder coverage for all ten locales and every
+       non-English catalog digest has current review evidence with its method disclosed.
 2. [ ] Any one-character catalog edit invalidates its review digest and causes release readiness to fail.
 3. [ ] English no-configuration goldens are byte-identical before and after migration.
 4. [ ] The complete security, runtime, packaging, locale, layout, accelerator, and performance matrix passes.

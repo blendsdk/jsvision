@@ -94,7 +94,7 @@ and additive compatibility.
 - [x] 3.2.2 Make literal ownership, locale validation, review loading, and cross-package catalog checks configuration-aware; classify Code Editor literals without fabricating reviews — `scripts/check-i18n-literals.mjs`, `scripts/check-i18n-reviews.mjs`, `tools/i18n-literals.json`, `packages/i18n/test/` *(completed 2026-07-26 10:54 UTC)*
 - [x] 3.2.3 Document Code Editor injection, locale subpaths, application overrides, and external-content ownership in package and docs-site guidance — `packages/code-editor/README.md`, `packages/docs-site/guide/code-editor.md`, `packages/docs-site/guide/i18n.md`, `packages/docs-site/reference/i18n-entry-points.md` *(completed 2026-07-26 10:54 UTC)*
 - [x] 3.2.4 Update canonical skill references and overlapping impact mapping, run `yarn plugin:update`, and inspect/include generated plugin output — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`, `plugins/jsvision-plugin/skills/jsvision/` *(completed 2026-07-26 10:54 UTC)*
-- [x] 3.3.1 Confirm Phase 3 specifications green, run locale/plugin/package documentation checks, and report external proficient-review plus #185 harness gates *(verified 2026-07-26 11:21 UTC after independent review corrections; focused registration 5/5 and docs 5/5 green; generated Code Editor main/locale API targets confirmed; review checker truthfully reports 45 missing proficient approvals; #185 demo/viewport gate remains pending)*
+- [x] 3.3.1 Confirm Phase 3 specifications green, run locale/plugin/package documentation checks, and report translation-review plus #185 harness gates *(verified 2026-07-26 11:21 UTC after independent review corrections; focused registration 5/5 and docs 5/5 green; generated Code Editor main/locale API targets confirmed; review follow-up completed 2026-07-28 with disclosed AI-assisted approval for all 45 catalogs; #185 demo/viewport gate remains pending)*
 - [x] 3.3.2 Run final `yarn verify`, synchronize traceability/roadmaps, and record implementation/verification evidence without closing #185-owned acceptance work *(verified 2026-07-26 11:21 UTC; reviewer and auditor report no remaining critical/major findings; `yarn verify` passed 38/38 Turbo tasks, all performance budgets, and plugin integrity)*
 
 **Deliverables**:
@@ -124,4 +124,4 @@ Phase 3: shared tooling/docs/plugin register the stable public surface
 3. Existing Code Editor search, controller, LSP, lifecycle, and packaging regressions pass.
 4. `yarn plugin:check` and `yarn verify` pass.
 5. No dead code, unsafe casts, plan references in shipped comments, or hidden locale state.
-6. External proficient-review and #185-owned integration gates are reported, never fabricated.
+6. Translation-review methods and #185-owned integration gates are reported, never fabricated.
