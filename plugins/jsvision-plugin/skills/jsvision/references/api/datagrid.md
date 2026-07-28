@@ -433,6 +433,7 @@ operandA: Signal<string>
 operandB: Signal<string>
 dateOperandA: Signal<CalendarDate | null>
 dateOperandB: Signal<CalendarDate | null>
+desiredSize(): { readonly width: number; readonly height: number }
 operators(): readonly string[]
 currentOperator(): string
 selectOperator(op: string): void
@@ -454,6 +455,7 @@ interface FilterPopupConfig<T> {
   filterType: FilterType;   // The resolved filter type — selects the operator set and operand editors.
   i18n?: I18n;   // Translation service for package-owned labels; defaults to isolated English text.
   distinct?: () => Promise<DistinctResult>;   // When present, embeds the value-list section (added in a later phase).
+  availableWidth?: number;   // Host width used to select a complete horizontal or stacked action arrangement.
   onApply: (columnId: string, filter: ColumnFilter) => void;   // Reports an applied condition filter for the column.
   onClear: (columnId: string) => void;   // Reports that the column's filter should be cleared.
   onClose: () => void;   // Closes the popup — called after Apply/Clear and on Escape / click-away.
@@ -937,6 +939,7 @@ new ValueList(cfg: ValueListConfig)   // extends Group
 search: Signal<string>
 visibleLabels(): readonly string[]
 desiredHeight(): number
+desiredWidth(): number
 checkedLabels(): ReadonlySet<string>
 truncated(): boolean
 loading(): boolean
@@ -956,6 +959,7 @@ interface ValueListConfig {
   onApply: (selected: ReadonlySet<string>) => void;   // Reports the checked label set (the container turns it into a `{ kind: 'set' }` filter).
   buttonWidth?: number;   // Forced Select All / Apply width, so a popup can size all its buttons alike; omit to self-size.
   i18n?: I18n;   // Translation service for package-owned labels; defaults to isolated English text.
+  availableWidth?: number;   // Available content width used to choose a horizontal or stacked action arrangement.
 }
 ```
 

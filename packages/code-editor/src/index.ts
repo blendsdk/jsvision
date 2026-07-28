@@ -13,6 +13,8 @@ export type CodeEditorLanguageId = 'plain' | 'javascript' | 'typescript' | 'post
  */
 export const plainLanguageId: CodeEditorLanguageId = 'plain';
 
+export { CODE_EDITOR_ACCELERATOR_MANIFEST } from './i18n/catalog.js';
+
 export { HARD_CODE_EDITOR_LIMITS, classifyDocumentSize, resolveCodeEditorLimits } from './limits.js';
 export type {
   CodeEditorDocumentFeatureState,
@@ -22,7 +24,7 @@ export type {
   CodeEditorSizeTierFeature,
   EssentialCodeEditorFeature,
 } from './limits.js';
-export { createDegradationState } from './degradation.js';
+export { createDegradationState, formatCodeEditorDegradationNotice } from './degradation.js';
 export type {
   CodeEditorDegradationNotice,
   CodeEditorDegradationOptions,
@@ -80,7 +82,12 @@ export {
 export { LanguageRegistry } from './languages/registry.js';
 export { createLanguageScheduler, LanguageScheduler } from './languages/scheduler.js';
 export { indentLines, toggleLineComments } from './languages/editing.js';
-export { inspectInvisibleCharacters } from './languages/invisibles.js';
+export { formatInvisibleCharacterWarning, inspectInvisibleCharacters } from './languages/invisibles.js';
+export {
+  clipCodeEditorDisplayText,
+  formatCodeEditorDiagnosticOverlay,
+  formatCodeEditorStatus,
+} from './i18n/presentation.js';
 export { querySyntaxViewport } from './languages/syntax.js';
 export type {
   BracketPair,
@@ -145,6 +152,7 @@ export type {
   CodeEditorOptions,
   CodeEditorProjectedCell,
   CodeEditorSearchField,
+  CodeEditorSearchPresentation,
   CodeEditorSearchState,
   CodeEditorViewportMetrics,
   CodeEditorWindowOptions,

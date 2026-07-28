@@ -11,10 +11,18 @@ import { signal } from '../reactive/index.js';
 import type { Point, Group } from '../view/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
-import { runDialog, messageBox, buttonBand, DIALOG_BODY_PADDING } from '../dialog/message-box.js';
+import {
+  runDialog,
+  messageBox,
+  buttonBandFor,
+  frameworkDialogGeometry,
+  DIALOG_BODY_PADDING,
+} from '../dialog/message-box.js';
 import { uiAcceleratorLabel } from '../i18n/label.js';
 import type { ModalDialogHost } from '../dialog/message-box.js';
 import { Input, CheckGroup, Label, Text } from '../controls/index.js';
+import { stringWidth } from '../controls/measure.js';
+import { frameTitleMinimumWidth } from '../window/index.js';
 import { History } from '../dropdown/index.js';
 import type {
   EditorDialogHandler,
@@ -62,12 +70,7 @@ function fieldRow(field: Input): Group {
  * if (rec !== null) console.log('search for', rec.find);
  */
 export async function findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null> {
-  const dlg = new Dialog({
-    title: host.i18n.t('ui.editor.find.title', { defaultMessage: 'Find' }),
-    width: 38,
-    height: 12,
-    centered: true,
-  });
+  const title = host.i18n.t('ui.editor.find.title', { defaultMessage: 'Find' });
   const find = signal(initial?.find ?? '');
   const flags = signal([initial?.options.caseSensitive ?? false, initial?.options.wholeWords ?? false]);
 
@@ -76,18 +79,32 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
     uiAcceleratorLabel(host.i18n, 'ui.editor.case-sensitive', 'Case ~s~ensitive'),
     uiAcceleratorLabel(host.i18n, 'ui.editor.whole-words', '~W~hole words only'),
   ];
+  const fieldLabel = uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find');
+  const buttons = [okButton(host.i18n), cancelButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(
+    host,
+    { width: 38, height: 12 },
+    [frameTitleMinimumWidth(title) - 6, stringWidth(fieldLabel), ...labels.map(stringWidth)],
+    buttons,
+  );
+  const dlg = new Dialog({
+    title,
+    width: geometry.width,
+    height: geometry.height,
+    centered: true,
+  });
   // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
   // the button band to the bottom row.
   dlg.add(
     cover(
       col(
         { padding: DIALOG_BODY_PADDING },
-        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find'), input), 1),
+        fixed(new Label(fieldLabel, input), 1),
         fixed(fieldRow(input), 1),
         spacer({ fixed: 1 }),
         fixed(new CheckGroup({ labels, value: flags }), labels.length),
         spacer(),
-        buttonBand(okButton(host.i18n), cancelButton(host.i18n)),
+        buttonBandFor(buttons, geometry.buttonColumns),
       ),
     ),
   );
@@ -121,12 +138,7 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
  * });
  */
 export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null> {
-  const dlg = new Dialog({
-    title: host.i18n.t('ui.editor.replace.title', { defaultMessage: 'Replace' }),
-    width: 40,
-    height: 16,
-    centered: true,
-  });
+  const title = host.i18n.t('ui.editor.replace.title', { defaultMessage: 'Replace' });
   const find = signal(initial?.find ?? '');
   const replace = signal(initial?.replace ?? '');
   const flags = signal([
@@ -144,21 +156,36 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
     uiAcceleratorLabel(host.i18n, 'ui.editor.prompt-on-replace', '~P~rompt on replace'),
     uiAcceleratorLabel(host.i18n, 'ui.editor.replace-all', '~R~eplace all'),
   ];
+  const findLabel = uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find');
+  const replaceLabel = uiAcceleratorLabel(host.i18n, 'ui.editor.replace.label', '~N~ew text');
+  const buttons = [okButton(host.i18n), cancelButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(
+    host,
+    { width: 40, height: 16 },
+    [frameTitleMinimumWidth(title) - 6, stringWidth(findLabel), stringWidth(replaceLabel), ...labels.map(stringWidth)],
+    buttons,
+  );
+  const dlg = new Dialog({
+    title,
+    width: geometry.width,
+    height: geometry.height,
+    centered: true,
+  });
   // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
   // the button band to the bottom row.
   dlg.add(
     cover(
       col(
         { padding: DIALOG_BODY_PADDING },
-        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find'), findInput), 1),
+        fixed(new Label(findLabel, findInput), 1),
         fixed(fieldRow(findInput), 1),
         spacer({ fixed: 1 }),
-        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.replace.label', '~N~ew text'), newInput), 1),
+        fixed(new Label(replaceLabel, newInput), 1),
         fixed(fieldRow(newInput), 1),
         spacer({ fixed: 1 }),
         fixed(new CheckGroup({ labels, value: flags }), labels.length),
         spacer(),
-        buttonBand(okButton(host.i18n), cancelButton(host.i18n)),
+        buttonBandFor(buttons, geometry.buttonColumns),
       ),
     ),
   );
@@ -190,15 +217,12 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
  * if (answer === 'yes') await save();
  */
 export async function confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'> {
-  const width = Math.min(60, Math.max(40, message.length + 6));
-  const dlg = new Dialog({ width, height: 9, centered: true });
+  const buttons = [yesButton(host.i18n), noButton(host.i18n), cancelButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(host, { width: 40, height: 9 }, [stringWidth(message)], buttons);
+  const dlg = new Dialog({ width: geometry.width, height: geometry.height, centered: true });
   dlg.add(
     cover(
-      col(
-        { padding: DIALOG_BODY_PADDING },
-        grow(new Text(message)),
-        buttonBand(yesButton(host.i18n), noButton(host.i18n), cancelButton(host.i18n)),
-      ),
+      col({ padding: DIALOG_BODY_PADDING }, grow(new Text(message)), buttonBandFor(buttons, geometry.buttonColumns)),
     ),
   );
   const result = await runDialog(host, dlg);
@@ -250,23 +274,18 @@ export async function infoBox(host: EditorDialogHost, message: string): Promise<
  */
 export async function replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'> {
   const desk = host.desktop.bounds;
-  const x = Math.trunc((desk.width - 40) / 2);
+  const message = host.i18n.t('ui.editor.replace-occurrence', {
+    defaultMessage: 'Replace this occurence?',
+  });
+  const buttons = [yesButton(host.i18n), noButton(host.i18n), cancelButton(host.i18n)];
+  const geometry = frameworkDialogGeometry(host, { width: 40, height: 7 }, [stringWidth(message)], buttons);
+  const x = Math.max(0, Math.trunc((desk.width - geometry.width) / 2));
   let y = 1;
-  if (cursor.y <= desk.y + 8 + 1) y = desk.height - 7 - 2; // drop to the bottom to avoid the caret
-  const dlg = new Dialog({ rect: { x, y, width: 40, height: 7 } }); // explicit rect — never centered
+  if (cursor.y <= desk.y + geometry.height + 2) y = Math.max(0, desk.height - geometry.height - 2);
+  const dlg = new Dialog({ rect: { x, y, width: geometry.width, height: geometry.height } });
   dlg.add(
     cover(
-      col(
-        { padding: DIALOG_BODY_PADDING },
-        grow(
-          new Text(
-            host.i18n.t('ui.editor.replace-occurrence', {
-              defaultMessage: 'Replace this occurence?',
-            }),
-          ),
-        ),
-        buttonBand(yesButton(host.i18n), noButton(host.i18n), cancelButton(host.i18n)),
-      ),
+      col({ padding: DIALOG_BODY_PADDING }, grow(new Text(message)), buttonBandFor(buttons, geometry.buttonColumns)),
     ),
   );
   const result = await runDialog(host, dlg);

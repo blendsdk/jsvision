@@ -7,18 +7,22 @@ import { createTheme } from '@jsvision/core';
 import type { Theme } from '@jsvision/core';
 import { createI18n, defineCatalog } from '@jsvision/i18n';
 import { datagridNl } from '@jsvision/datagrid/locales/nl';
+import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
 import { filesNl } from '@jsvision/files/locales/nl';
 import { formsNl } from '@jsvision/forms/locales/nl';
 import {
+  Button,
   Commands,
   Dialog,
   ListBox,
   Text,
   at,
+  buttonGroup,
   cancelButton,
   createApplication,
   createRoot,
   effect,
+  measureButtonGroup,
   okButton,
   signal,
 } from '@jsvision/ui';
@@ -57,7 +61,7 @@ export default defineExample({
   build: (context) => {
     const i18n = createI18n({
       locale: 'nl',
-      catalogs: [uiNl, formsNl, filesNl, datagridNl, appNl],
+      catalogs: [uiNl, formsNl, filesNl, datagridNl, codeEditorNl, appNl],
     });
     const app = createApplication({
       caps: context.caps,
@@ -74,15 +78,30 @@ export default defineExample({
       command: Commands.ok,
       typeAhead: true,
     });
+    const actionButtons: Button[] = [okButton(i18n), cancelButton(i18n)];
+    const dialogWidth = Math.min(DIALOG_WIDTH, Math.max(1, context.width - 2));
+    const contentWidth = Math.max(0, dialogWidth - 2);
+    const unwrappedOptions = { minimumButtonWidth: 10, gap: 2 } as const;
+    const unwrappedMetrics = measureButtonGroup(actionButtons, unwrappedOptions);
+    const actionOptions =
+      unwrappedMetrics.width <= contentWidth
+        ? unwrappedOptions
+        : ({ minimumButtonWidth: 10, gap: 2, maxColumns: 1 } as const);
+    const actionMetrics = measureButtonGroup(actionButtons, actionOptions);
+    const actions = buttonGroup(actionButtons, actionOptions);
+    const desiredDialogHeight = DIALOG_HEIGHT + actionMetrics.height - 2;
+    const dialogHeight = Math.min(desiredDialogHeight, Math.max(1, context.height));
+    const contentHeight = Math.max(0, dialogHeight - 2);
+    const actionX = Math.max(0, Math.floor((contentWidth - actionMetrics.width) / 2));
+    const actionY = Math.max(0, contentHeight - actionMetrics.height);
     const dialog = new Dialog({
       title: ` ${i18n.t('app.theme-designer.title')} `,
-      width: Math.min(DIALOG_WIDTH, Math.max(1, context.width - 2)),
-      height: Math.min(DIALOG_HEIGHT, Math.max(1, context.height)),
+      width: dialogWidth,
+      height: dialogHeight,
     });
     dialog.add(at(new Text(i18n.t('app.theme-designer.help')), 2, 1, DIALOG_WIDTH - 4, 2));
     dialog.add(at(list, 2, 4, DIALOG_WIDTH - 4, 4));
-    dialog.add(at(okButton(i18n), 9, 9, 10, 2));
-    dialog.add(at(cancelButton(i18n), 22, 9, 12, 2));
+    dialog.add(at(actions, actionX, actionY, actionMetrics.width, actionMetrics.height));
 
     let committed = previewTheme(selected());
     let preview = committed;

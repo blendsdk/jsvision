@@ -23,7 +23,7 @@ import { route } from './dispatch.js';
 import type { RouteContext } from './dispatch.js';
 import { createFocusManager } from './focus.js';
 import type { FocusManager } from './focus.js';
-import { hitTestRoute } from './hit-test.js';
+import { hitTestRoute, hitTestViewAt } from './hit-test.js';
 import { createModalManager } from './modal.js';
 import type { ModalManager } from './modal.js';
 
@@ -95,6 +95,11 @@ class CommandSink extends View {
   /** Internal: register a handler that also receives the command event's argument (built-in quit only). */
   registerInternal(command: string, handler: (arg?: unknown) => void): () => void {
     return this.addHandler(command, handler);
+  }
+
+  /** Drop every application handler when the owning loop is permanently disposed. */
+  clear(): void {
+    this.handlers.clear();
   }
 
   override onEvent(ev: DispatchEvent): void {
@@ -262,7 +267,15 @@ class EventLoopImpl implements EventLoop {
     // Order matters: stop the painter first so unmounting (which disposes reactive scopes and may
     // dirty the tree as effects tear down) can never schedule a frame to a host that is going away.
     this.stop();
+    // Settle and release modal frames before unmounting their views. Disposal is not a user choice,
+    // so pending modal promises receive `undefined` and no saved focus is restored.
+    this.modal.dispose();
     this.renderRoot.unmount();
+    // A disposed host must not retain focus paths, pointer capture, or application command closures.
+    // Clearing the root also makes every later dispatch inert because there is no routing scope.
+    this.root = null;
+    this.captureTarget = null;
+    this.commandSink.clear();
   }
 
   onCommand(command: string, handler: () => void): () => void {
@@ -309,6 +322,10 @@ class EventLoopImpl implements EventLoop {
 
   getFocused(): View | null {
     return this.focus.getFocused();
+  }
+
+  viewAt(point: Point): View | null {
+    return hitTestViewAt(this.scopeRoot(), point);
   }
 
   focusNext(): void {
@@ -368,7 +385,7 @@ class EventLoopImpl implements EventLoop {
     return this.registry.version();
   }
 
-  execView<R>(view: View): Promise<R> {
+  execView<R>(view: View): Promise<R | undefined> {
     // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
     // frame on open; the returned promise resolves later, when endModal is called.
     this.captureTarget = null; // drop any in-flight drag so it cannot capture across the modal boundary
@@ -380,7 +397,7 @@ class EventLoopImpl implements EventLoop {
         isCommandEnabled: (command: string) => this.registry.isEnabled(command),
       });
     }
-    return new Promise<R>((resolve) => {
+    return new Promise<R | undefined>((resolve) => {
       this.runTick(() => this.modal.begin(view, resolve));
     });
   }

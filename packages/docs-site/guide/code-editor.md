@@ -127,3 +127,26 @@ self-contained and import only public package entry points.
 The concise repository kitchen-sink story intentionally advertises fewer capabilities. Every item
 in its blurb is enabled on the mounted editor, including line numbers, parser-backed folding,
 completion, and diagnostics.
+
+## Internationalization
+
+Import one explicit Code Editor locale and pass the application-owned `i18n` service to either
+`CodeEditor` or `CodeEditorWindow`:
+
+```ts
+import { CodeEditorWindow } from '@jsvision/code-editor';
+import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
+import { createI18n, defineCatalog } from '@jsvision/i18n';
+
+const overrides = defineCatalog({
+  schema: 1,
+  locale: 'nl',
+  messages: { 'code-editor.window.title': 'Broneditor' },
+});
+const i18n = createI18n({ locale: 'nl', catalogs: [codeEditorNl, overrides] });
+const editorWindow = new CodeEditorWindow({ controller, i18n });
+```
+
+Application catalogs come last and may override editor-owned messages. Query/replacement text,
+source, language IDs, filenames, paths, command tokens, and LSP or host detail are never translated.
+Without injection, every editor instance uses an isolated English fallback service.

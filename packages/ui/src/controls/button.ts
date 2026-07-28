@@ -30,6 +30,28 @@ export interface ButtonOptions {
 }
 
 /**
+ * Read-only activation metadata for a {@link Button}.
+ *
+ * The descriptor intentionally reports whether a callback is bound without exposing the callback
+ * itself. Headless inspectors can therefore identify an action without invoking application code.
+ *
+ * @example
+ * import { Button } from '@jsvision/ui';
+ *
+ * const save = new Button('~S~ave', { command: 'file.save', onClick: () => console.log('saved') });
+ * console.log(save.activation);
+ * // { label: 'Save', command: 'file.save', hasCallback: true }
+ */
+export interface ButtonActivation {
+  /** Visible label after accelerator markers have been removed. */
+  readonly label: string;
+  /** Configured command, or `null` when activation is callback-only. */
+  readonly command: string | null;
+  /** Whether activation invokes an application callback in addition to any command. */
+  readonly hasCallback: boolean;
+}
+
+/**
  * A focusable command button.
  *
  * @example
@@ -49,6 +71,12 @@ export class Button extends View {
   override focusable = true;
   /** Caught after the focused chain so `Alt`+hotkey and a default button's `Enter` are seen dialog-wide. */
   override postProcess = true;
+  /**
+   * Immutable metadata describing what activation will emit or invoke.
+   *
+   * This is safe to inspect in a mounted dialog because it never calls the bound callback.
+   */
+  readonly activation: ButtonActivation;
 
   /** The original tilde-marked label. */
   protected readonly raw: string;
@@ -75,6 +103,11 @@ export class Button extends View {
     this.parsed = parseTilde(text);
     this.command = opts.command;
     this.clickHandler = opts.onClick;
+    this.activation = Object.freeze({
+      label: this.parsed.text,
+      command: opts.command ?? null,
+      hasCallback: opts.onClick !== undefined,
+    });
     this.isDefault = opts.default ?? false;
     this.disabledOpt = opts.disabled ?? false;
     this.state.disabled = this.resolveDisabled(); // initial value also controls focusability

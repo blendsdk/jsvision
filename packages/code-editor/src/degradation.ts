@@ -70,6 +70,26 @@ export interface CodeEditorDegradationOptions {
   readonly onChange?: (snapshot: CodeEditorDegradationSnapshot) => void;
 }
 
+/**
+ * Formats one editor-owned degradation notice with an explicit or isolated English service.
+ *
+ * @param notice - Stable editor degradation metadata.
+ * @param i18n - Optional locale service.
+ * @returns Localized wrapper text, or `undefined` when the notice has no compatible prose.
+ * @example
+ * ```ts
+ * const state = createDegradationState();
+ * state.fail('parser');
+ * const message = formatCodeEditorDegradationNotice(state.snapshot().notices[0]!);
+ * ```
+ */
+export function formatCodeEditorDegradationNotice(
+  notice: CodeEditorDegradationNotice,
+  i18n?: I18n,
+): string | undefined {
+  return formatNotice(notice, i18n);
+}
+
 const AVAILABLE_ACTIONS = Object.freeze(['edit', 'search', 'save', 'close', 'retryLanguageService']);
 const FEATURE_LIST: readonly CodeEditorDegradedFeature[] = Object.freeze([
   'documentModel',
@@ -272,3 +292,6 @@ function ownFunction(
   const value = safeOwnData(options, name);
   return typeof value === 'function' ? (snapshot) => Reflect.apply(value, undefined, [snapshot]) : undefined;
 }
+import type { I18n } from '@jsvision/i18n';
+
+import { formatCodeEditorDegradationNotice as formatNotice } from './i18n/presentation.js';

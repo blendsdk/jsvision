@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { createI18n, defineCatalog, validateCatalog } from '@jsvision/i18n';
 import { Button } from '../src/controls/index.js';
-import { buttonBand } from '../src/dialog/message-box.js';
+import { buttonBand, frameworkDialogGeometry } from '../src/dialog/message-box.js';
 import { yesNoButtons } from '../src/dialog/buttons.js';
 import { UI_ACCELERATOR_MANIFEST } from '../src/i18n/scopes.js';
 import { UI_ENGLISH_CATALOG } from '../src/i18n/catalog.js';
@@ -25,6 +25,26 @@ describe('localized button geometry', () => {
     expect(wide.measure().width).toBe(13);
     expect(wide.bounds.width).toBe(wide.measure().width);
     expect(narrow.bounds.width).toBe(wide.measure().width);
+  });
+
+  test('should wrap actions and clamp dimensions at a hard desktop boundary', () => {
+    const buttons = [new Button('A translated primary action'), new Button('A translated cancel action')];
+    const geometry = frameworkDialogGeometry(
+      {
+        i18n: createI18n(),
+        loop: { execView: () => Promise.reject(new Error('Geometry test must not execute a modal.')) },
+        desktop: {
+          bounds: { x: 0, y: 0, width: 24, height: 7 },
+          addWindow: () => undefined,
+          removeWindow: () => undefined,
+        },
+      },
+      { width: 20, height: 6 },
+      [80],
+      buttons,
+    );
+
+    expect(geometry).toEqual({ width: 24, height: 7, buttonColumns: 1 });
   });
 });
 
