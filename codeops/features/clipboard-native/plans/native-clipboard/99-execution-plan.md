@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:24 UTC
-> **Progress**: 16/26 tasks (62%)
+> **Last Updated**: 2026-07-28 19:28 UTC
+> **Progress**: 18/26 tasks (69%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -107,14 +107,17 @@ native paste.
   and transitive dependency diff; record any plan-changing result before installation.
   ✅ (completed: 2026-07-28 19:24; 5.3.2 remains latest, MIT, Node >=20, async API compatible; no
   plan change)
-- [~] 3.1.2 `[spec-author]` Add examples specifications with injected functions for exact raw
+- [x] 3.1.2 `[spec-author]` Add examples specifications with injected functions for exact raw
   read/write, Unicode, empty, rejection, order, non-blocking behavior, and sentinel-safe
   diagnostics.
-  ⏳ (started: 2026-07-28 19:24)
-- [ ] 3.1.3 Run focused Phase 3 specifications and record expected failures before adapter or
+  ✅ (completed: 2026-07-28 19:28)
+- [x] 3.1.3 Run focused Phase 3 specifications and record expected failures before adapter or
   dependency changes.
-- [ ] 3.2.1 Implement the examples-owned adapter factory; inject async `clipboardy.read`/`write`
+  ✅ (completed: 2026-07-28 19:28; 1 file failed before collection because the required adapter
+  module does not exist)
+- [~] 3.2.1 Implement the examples-owned adapter factory; inject async `clipboardy.read`/`write`
   into `tvedit`; add only the private examples dependency and reconcile/review `yarn.lock`.
+  ⏳ (started: 2026-07-28 19:28)
 - [ ] 3.3.1 Turn Phase 3 specs green; add missing-helper/headless mechanics cases; run examples/UI
   checks and `yarn verify`; perform available manual smoke cells; complete reviewer/auditor loop.
 

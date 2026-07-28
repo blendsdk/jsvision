@@ -1558,6 +1558,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Immutable examples adapter specifications added with injected async fakes and no machine clipboard access",
+        "verificationEvidence:Six requirements-derived cases cover raw strings, empty text, headless isolation, failure propagation, ordering, lifecycle, and payload-free fallback"
+      ],
       "id": "TASK-3-1-2",
       "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
       "semanticSources": [
@@ -1570,13 +1574,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "tvedit native adapter task 3-1-2",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Focused Phase 3 RED captured before adapter, manifest, or dependency changes",
+        "verificationEvidence:Focused run failed exactly because tvedit-demo/native-clipboard.js and its factory do not exist; 1 failed file, 0 tests collected"
+      ],
       "id": "TASK-3-1-3",
       "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
       "semanticSources": [
@@ -1589,7 +1597,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "tvedit native adapter task 3-1-3",
       "type": "task",
       "validations": []
