@@ -1534,6 +1534,11 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "dependencyReview:Pre-install direct and transitive dependency surface recorded in 09-phase-3-dependency-review.md",
+        "summary:Current clipboardy release, engine, license, API, platform behavior, and dependency surface reviewed with no plan change",
+        "verificationEvidence:npm registry metadata and official clipboardy documentation confirm 5.3.2, Node >=20, MIT, async text APIs, platform helpers, and headless limits"
+      ],
       "id": "TASK-3-1-1",
       "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
       "semanticSources": [
@@ -1546,7 +1551,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "tvedit native adapter task 3-1-1",
       "type": "task",
       "validations": []

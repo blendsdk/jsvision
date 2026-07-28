@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 19:18 UTC
-> **Progress**: 15/26 tasks (58%)
+> **Last Updated**: 2026-07-28 19:24 UTC
+> **Progress**: 16/26 tasks (62%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -97,16 +97,20 @@ native paste.
 
 ## Phase 3: `tvedit` native adapter
 
+> **Phase baseline tree**: `5ca9636b797246cf3a98d0143efa04cc9e82433f`
 > **Expected modification set**: private examples source/tests/package manifest and carefully
 > reconciled lockfile
 
 **Reference**: 03-04 · ST-16, ST-17
 
-- [ ] 3.1.1 Recheck current `clipboardy` release, Node engine, license, async API, platform helpers,
+- [x] 3.1.1 Recheck current `clipboardy` release, Node engine, license, async API, platform helpers,
   and transitive dependency diff; record any plan-changing result before installation.
-- [ ] 3.1.2 `[spec-author]` Add examples specifications with injected functions for exact raw
+  ✅ (completed: 2026-07-28 19:24; 5.3.2 remains latest, MIT, Node >=20, async API compatible; no
+  plan change)
+- [~] 3.1.2 `[spec-author]` Add examples specifications with injected functions for exact raw
   read/write, Unicode, empty, rejection, order, non-blocking behavior, and sentinel-safe
   diagnostics.
+  ⏳ (started: 2026-07-28 19:24)
 - [ ] 3.1.3 Run focused Phase 3 specifications and record expected failures before adapter or
   dependency changes.
 - [ ] 3.2.1 Implement the examples-owned adapter factory; inject async `clipboardy.read`/`write`
