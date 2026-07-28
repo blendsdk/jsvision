@@ -12,6 +12,7 @@ import type { CapabilityProfile, Logger, RuntimeAdapter, ScreenBuffer } from '@j
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
 import { beginScreenSession, endScreenSession } from '../shared/warnings.js';
+import { createSystemClipboardAdapter } from './system-clipboard.js';
 
 /**
  * Encode a caret cell as a terminal sequence: show and move the cursor to the cell (converting the
@@ -49,6 +50,11 @@ export interface RunContext {
   /** Assert an interactive TTY before starting (default `true`). See {@link ApplicationOptions.requireTty}. */
   readonly requireTty?: boolean;
   /**
+   * Enable the operating-system text clipboard when no custom clipboard callbacks are configured.
+   * Defaults to `true`; pass `false` to retain app-local and OSC 52 behavior only.
+   */
+  readonly systemClipboard?: boolean;
+  /**
    * The app's screen-safe logger, if it has one. Development warnings raised while the app owns the
    * terminal are mirrored into it as they happen, so a run with `JSVISION_LOG` set shows diagnostics
    * live rather than only at exit.
@@ -71,6 +77,12 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   // The last caret cell the loop reported. After a suspend/resume the host repaints the last frame but
   // does not re-report the caret, so run() re-applies this to re-position the cursor.
   let lastCaret: Point | null = null;
+
+  // Fail fast on an unusable terminal before installing runtime callbacks or reserving the quit
+  // resolver. A failed launch must leave the assembled event loop exactly as it was.
+  if (ctx.requireTty ?? true) {
+    assertEssentials(ctx.caps, { isTTY: detectTty({ input: ctx.input, output: ctx.output }) });
+  }
 
   const host = createHost({
     caps: ctx.caps,
@@ -120,24 +132,27 @@ export async function runApplication(ctx: RunContext): Promise<number> {
       output.write(caretSequence(cell));
     }
   };
-  ctx.loop.writeClipboardText = (text) => {
-    const sequence = setClipboard(text, ctx.caps);
-    if (sequence !== '') output.write(sequence);
-  };
+  let systemClipboardAdapter: ReturnType<typeof createSystemClipboardAdapter> | undefined;
+  if (
+    ctx.systemClipboard !== false &&
+    ctx.loop.writeClipboardText === undefined &&
+    ctx.loop.readClipboardText === undefined
+  ) {
+    systemClipboardAdapter = createSystemClipboardAdapter();
+    ctx.loop.writeClipboardText = systemClipboardAdapter.writeClipboardText;
+    ctx.loop.readClipboardText = systemClipboardAdapter.readClipboardText;
+  }
+  if (ctx.loop.writeClipboardText === undefined) {
+    ctx.loop.writeClipboardText = (text) => {
+      const sequence = setClipboard(text, ctx.caps);
+      if (sequence !== '') output.write(sequence);
+    };
+  }
 
   // Resolved by the app's quit sink (through the shared quitState cell) when the 'quit' command fires.
   const quitPromise = new Promise<number>((resolve) => {
     ctx.quitState.resolve = resolve;
   });
-
-  // Fail fast on an unusable terminal: a launch with no interactive terminal at all would otherwise
-  // take over the screen with no way to receive keyboard input. This runs BEFORE host.start(), so
-  // nothing is ever entered on the failing path — there is no terminal state to restore. `detectTty`
-  // reads the injected streams (honest under test doubles) and honours the POSIX `/dev/tty` fallback,
-  // so piped output backed by a controlling terminal still passes. Opt out with `requireTty: false`.
-  if (ctx.requireTty ?? true) {
-    assertEssentials(ctx.caps, { isTTY: detectTty({ input: ctx.input, output: ctx.output }) });
-  }
 
   // From here on the renderer owns the terminal, so a development warning raised during layout,
   // focus, or dispatch must not be written anywhere — it is withheld until the restore below. The
@@ -150,16 +165,20 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     ctx.loop.refreshCaret(); // position the initial cursor (the first paint is not a loop tick)
     return await quitPromise;
   } finally {
+    // Invalidate asynchronous clipboard work before terminal restoration yields. A slow host stop
+    // must never leave a window where late host callbacks can still adopt, route, warn, or repaint.
+    systemClipboardAdapter?.stop();
+    ctx.loop.stop();
     await host.stop(); // always restore the terminal — on normal exit, a throw, or a signal
     // The terminal is restored, so the withheld warnings can now safely reach stderr. Done before
     // the loop teardown below so a diagnostic survives even if teardown itself throws.
     endScreenSession();
-    // Gate the loop's out-of-tick painter before detaching the sinks, so a deferred paint still in
-    // flight during teardown (a timer/promise that fired mid-shutdown) cannot write to the stopped host.
-    ctx.loop.stop();
+    // The loop was stopped before restoration began, so detaching these references cannot race a
+    // native clipboard continuation or deferred painter.
     ctx.loop.onFrame = undefined;
     ctx.loop.onCaret = undefined;
     ctx.loop.writeClipboardText = undefined;
+    ctx.loop.readClipboardText = undefined;
     ctx.quitState.resolve = null;
   }
 }

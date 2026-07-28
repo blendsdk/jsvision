@@ -548,7 +548,9 @@ export class CodeEditor extends Group {
       return;
     }
     if (event.event.type === 'paste') {
-      this.insertText(event.event.text);
+      // An empty clipboard still arrives as a routed paste so the loop can adopt it canonically.
+      // It is not a document transaction and therefore must preserve selection and undo history.
+      if (event.event.text !== '') this.insertText(event.event.text);
       event.handled = true;
       return;
     }

@@ -1,0 +1,2499 @@
+{
+  "feature": "clipboard-native",
+  "nodes": [
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Issue #191 requirements passed the Zero-Ambiguity Gate"
+      ],
+      "id": "SET-CLIPBOARD",
+      "members": [
+        "clipboard-native/RD-01",
+        "clipboard-native/RD-02",
+        "clipboard-native/RD-03"
+      ],
+      "revision": "sha256:9684fc3ca2718aca86dc1d064d7e248ba7735e25e12d523063e51447ae3864ff",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/README.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "JSVision native clipboard requirements",
+      "type": "requirement-set",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "clipboard-native/CRIT-01"
+        },
+        {
+          "relation": "specified-by",
+          "target": "clipboard-native/SPEC-01"
+        },
+        {
+          "relation": "specified-by",
+          "target": "clipboard-native/SPEC-02"
+        },
+        {
+          "relation": "specified-by",
+          "target": "clipboard-native/SPEC-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-08"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-19"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-20"
+        }
+      ],
+      "evidence": [
+        "summary:Approved issue #191 requirement with resolved acceptance and dependency semantics"
+      ],
+      "id": "RD-01",
+      "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-01-host-neutral-clipboard-adapters.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Host-neutral clipboard adapters",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/CRIT-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/CRIT-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/SPEC-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+          "upstream": "clipboard-native/SPEC-02",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/SPEC-03",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/CRIT-01",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/SPEC-01",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+          "upstream": "clipboard-native/SPEC-02",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/SPEC-03",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "clipboard-native/CRIT-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-01"
+        },
+        {
+          "relation": "specified-by",
+          "target": "clipboard-native/SPEC-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-18"
+        }
+      ],
+      "evidence": [
+        "summary:Approved issue #191 requirement with resolved acceptance and dependency semantics"
+      ],
+      "id": "RD-02",
+      "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-02-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "tvedit native adapter",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/CRIT-02",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/CRIT-02",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/SPEC-04",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/CRIT-02",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/SPEC-04",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "clipboard-native/CRIT-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-02"
+        },
+        {
+          "relation": "specified-by",
+          "target": "clipboard-native/SPEC-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-16"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/AR-18"
+        }
+      ],
+      "evidence": [
+        "summary:Approved issue #191 requirement with resolved acceptance and dependency semantics"
+      ],
+      "id": "RD-03",
+      "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-03-quality-compatibility-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality, compatibility, and release governance",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "upstream": "clipboard-native/CRIT-03",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "upstream": "clipboard-native/CRIT-03",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/RD-02",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/RD-02",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/SPEC-05",
+          "validatedAt": "2026-07-28T13:55:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "upstream": "clipboard-native/CRIT-03",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/RD-02",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/SPEC-05",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "clipboard-native/TEST-01"
+        },
+        {
+          "relation": "tested-by",
+          "target": "clipboard-native/TEST-02"
+        },
+        {
+          "relation": "tested-by",
+          "target": "clipboard-native/TEST-03"
+        }
+      ],
+      "id": "CRIT-01",
+      "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-01-host-neutral-clipboard-adapters.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Host-neutral adapter acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "clipboard-native/TEST-04"
+        }
+      ],
+      "id": "CRIT-02",
+      "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-02-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "tvedit adapter acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "clipboard-native/TEST-05"
+        }
+      ],
+      "id": "CRIT-03",
+      "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/RD-03-quality-compatibility-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality and release acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-01",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 01",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-02",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 02",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-03",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 03",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-04",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 04",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-05",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 05",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-06",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 06",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-07",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 07",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-08",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 08",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-09",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 09",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-10",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 10",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-11",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 11",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-12",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 12",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-13",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 13",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-14",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 14",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-15",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 15",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-16",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 16",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-17",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 17",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-18",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 18",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-19",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 19",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-20",
+      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard requirements decision 20",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Three-RD planning group passed the plan Zero-Ambiguity Gate"
+      ],
+      "id": "GROUP-NATIVE",
+      "members": [
+        "clipboard-native/RD-01",
+        "clipboard-native/RD-02",
+        "clipboard-native/RD-03"
+      ],
+      "revision": "sha256:b4f9142aeb55aeca018670c565af7bb6b0a46245489eaa08f08c30e721575c70",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Native clipboard implementation planning group",
+      "type": "planning-group",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-01",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Bounded paste text and empty-event parity",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-02",
+      "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-02-host-adapter-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Host-neutral clipboard adapter API",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-03",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Ordered focus-safe native paste",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-04",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "tvedit native clipboard adapter",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-05",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Documentation, plugin, and release closure",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-01",
+      "revision": "sha256:a4e76bf7041cb499db175107ef2ab30cc4148ebc15d5a5fc6b9a3398eb2a3b33",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Core and widget clipboard specifications",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-02",
+      "revision": "sha256:a4e76bf7041cb499db175107ef2ab30cc4148ebc15d5a5fc6b9a3398eb2a3b33",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Host adapter and write compatibility specifications",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-03",
+      "revision": "sha256:a4e76bf7041cb499db175107ef2ab30cc4148ebc15d5a5fc6b9a3398eb2a3b33",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Ordered focus-safe paste specifications",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-04",
+      "revision": "sha256:a4e76bf7041cb499db175107ef2ab30cc4148ebc15d5a5fc6b9a3398eb2a3b33",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "tvedit adapter specifications",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-05",
+      "revision": "sha256:a4e76bf7041cb499db175107ef2ab30cc4148ebc15d5a5fc6b9a3398eb2a3b33",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Documentation, plugin, and release validations",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Core bounded-paste specification tests authored from the approved contract",
+        "verificationEvidence:Eight focused core specification cases fail only because the planned public boundary is absent"
+      ],
+      "id": "TASK-1-1-1",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-1-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Empty-paste widget specification tests authored from the approved contract",
+        "verificationEvidence:Focused UI and CodeEditor specifications expose destructive empty-paste selection behavior"
+      ],
+      "id": "TASK-1-1-2",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-1-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Focused red phase confirmed all new behavior is absent while canonical adoption remains compatible",
+        "verificationEvidence:Red phase confirmed eight core, two UI, and one CodeEditor expected failures with one compatible baseline pass"
+      ],
+      "id": "TASK-1-1-3",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-1-3",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Core exports a documented UTF-8-safe bounded paste helper",
+        "verificationEvidence:Eight bounded-paste specifications, package typecheck, docs compilation, plugin integrity, and full yarn verify pass"
+      ],
+      "id": "TASK-1-2-1",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-2-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Editable widgets preserve selections and history for empty paste events",
+        "verificationEvidence:Input, Editor, and CodeEditor empty-paste specifications, typechecks, and full yarn verify pass"
+      ],
+      "id": "TASK-1-2-2",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-2-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "qualityReview:Phase 1 correctness, security, and performance review passed after every major finding was fixed and re-reviewed",
+        "summary:Phase 1 hardening covers invalid caps, bounded large input, remount, and unfocused delivery",
+        "verificationEvidence:Core 21/21, UI 5/5, CodeEditor 1/1, plugin checks, typecheck, and full yarn verify pass"
+      ],
+      "id": "TASK-1-3-1",
+      "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-01-bounded-paste-text.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Core bounding and widget parity task 1-3-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable application and direct-loop adapter plus write compatibility specifications added",
+        "verificationEvidence:Focused adapter specifications produced expected RED while no-adapter and OSC compatibility baselines remained green"
+      ],
+      "id": "TASK-2-1-1",
+      "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-02-host-adapter-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-1-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable command precedence, availability, modal authority, and direct-event separation specifications added",
+        "verificationEvidence:Focused command specifications produced expected RED with handler precedence, unrelated command, and direct-event baselines green"
+      ],
+      "id": "TASK-2-1-2",
+      "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-02-host-adapter-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-1-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable serialized delivery, success, empty, failure, ordered fallback, and recovery specifications added",
+        "verificationEvidence:Focused ordered-delivery specifications produced expected RED for native scheduling and state transitions"
+      ],
+      "id": "TASK-2-1-3",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-1-3",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable focus, modal, route, remount, stop, teardown, and late-settlement specifications added",
+        "verificationEvidence:Focused continuity and lifecycle specifications produced expected RED across every stale-destination case"
+      ],
+      "id": "TASK-2-1-4",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-1-4",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Phase 2 focused RED matrix captured before production changes",
+        "verificationEvidence:UI 37 expected failures and 6 baseline passes across 43 tests; CodeEditor 1 expected failure"
+      ],
+      "id": "TASK-2-1-5",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-1-5",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Documented reader and writer contracts exported and threaded through Application, EventLoop, and run lifecycle",
+        "verificationEvidence:Public adapter and application/run specifications pass; UI typecheck passes"
+      ],
+      "id": "TASK-2-2-1",
+      "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-02-host-adapter-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-2-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Application-first paste interception and rejection-safe serialized reader queue implemented",
+        "verificationEvidence:Command, ordered delivery, fallback, availability, and recovery specifications pass"
+      ],
+      "id": "TASK-2-2-2",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-2-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Focus and modal generations, route mount-scope identities, bounded delivery, and lifecycle invalidation implemented",
+        "verificationEvidence:All focus, modal, mount, stop, teardown, bounded delivery, and CodeEditor specifications pass"
+      ],
+      "id": "TASK-2-2-3",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-2-3",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "qualityReview:Phase 2 correctness, security, concurrency, and performance review passed after every major finding was fixed and independently re-reviewed",
+        "summary:Phase 2 specifications are green with scheduler, command-version, and stale-queue implementation hardening",
+        "verificationEvidence:UI 51/51, CodeEditor 1/1, UI typecheck/build, plugin integrity, and full yarn verify pass"
+      ],
+      "id": "TASK-2-3-1",
+      "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-03-ordered-focus-safe-paste.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Host API and ordered focus-safe paste task 2-3-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "dependencyReview:Pre-install direct and transitive dependency surface recorded in 09-phase-3-dependency-review.md",
+        "summary:Current clipboardy release, engine, license, API, platform behavior, and dependency surface reviewed with no plan change",
+        "verificationEvidence:npm registry metadata and official clipboardy documentation confirm 5.3.2, Node >=20, MIT, async text APIs, platform helpers, and headless limits"
+      ],
+      "id": "TASK-3-1-1",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "tvedit native adapter task 3-1-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable examples adapter specifications added with injected async fakes and no machine clipboard access",
+        "verificationEvidence:Six requirements-derived cases cover raw strings, empty text, headless isolation, failure propagation, ordering, lifecycle, and payload-free fallback"
+      ],
+      "id": "TASK-3-1-2",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "tvedit native adapter task 3-1-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Focused Phase 3 RED captured before adapter, manifest, or dependency changes",
+        "verificationEvidence:Focused run failed exactly because tvedit-demo/native-clipboard.js and its factory do not exist; 1 failed file, 0 tests collected"
+      ],
+      "id": "TASK-3-1-3",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "tvedit native adapter task 3-1-3",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "lockfileReview:Expected clipboardy closure added and pre-existing @lezer/common ^1.5.2 selector preserved",
+        "summary:Examples-owned async adapter factory implemented and wired to interactive tvedit with private clipboardy 5.3.2 dependency",
+        "verificationEvidence:Examples typecheck, six immutable adapter specifications, and headless tvedit E2E pass; yarn why and manifest scan prove examples-only ownership"
+      ],
+      "id": "TASK-3-2-1",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "tvedit native adapter task 3-2-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "qualityReview:Phase 3 correctness, security, concurrency, and performance review passed after all findings were fixed and independently re-reviewed",
+        "summary:Phase 3 adapter specs and mechanics are green with operation ordering, headless isolation, dependency closure, and honest environment evidence",
+        "verificationEvidence:11 adapter tests, headless E2E, examples typecheck, zero-vulnerability audit, plugin integrity, and full yarn verify pass; unavailable manual environments recorded"
+      ],
+      "id": "TASK-3-3-1",
+      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-04-tvedit-native-adapter.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "tvedit native adapter task 3-3-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable semantic documentation and canonical-skill specifications added",
+        "verificationEvidence:Seven semantic oracles cover consumer configuration, host paths, safety, platform limits, canonical/generated skill parity, and impact routing"
+      ],
+      "id": "TASK-4-1-1",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-1-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Focused Phase 4 RED captured before documentation, skill, impact-map, or generated-plugin edits",
+        "verificationEvidence:Focused run produced 1 failed file and 7/7 expected failures against current consumer and skill documentation"
+      ],
+      "id": "TASK-4-1-2",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-1-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Consumer clipboard guide completed and public API documentation regenerated",
+        "verificationEvidence:Docs API generation, docs-site typecheck, 102 unit tests, and VitePress production build pass"
+      ],
+      "id": "TASK-4-2-1",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-2-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Canonical clipboard guidance and dedicated tvedit impact routing updated; generated plugin synchronized",
+        "verificationEvidence:Seven semantic documentation/plugin specifications and yarn plugin:check pass after generator-owned synchronization"
+      ],
+      "id": "TASK-4-2-2",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-2-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Documentation and plugin oracles are green with an explicit observed/unavailable environment matrix",
+        "verificationEvidence:Seven semantic documentation/plugin checks and plugin integrity pass; headless automated evidence passes and all unavailable interactive cells are explicit"
+      ],
+      "id": "TASK-4-3-1",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-3-1",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "qualityReview:Phase 4 correctness, security, concurrency, performance, and release review passed after every finding was fixed and independently re-reviewed",
+        "releaseEvidence:Exact six-environment by three-operation manual matrix recorded in 10-phase-4-release-evidence.md; all unavailable cells explicit and no real clipboard touched",
+        "summary:Final focused suites, documentation build, plugin integrity, release matrix, and quality loop completed without GitHub mutation",
+        "verificationEvidence:Core 21, UI 56, CodeEditor 2, examples 18, headless E2E 1, docs 102, VitePress build, plugin integrity, and final yarn verify pass"
+      ],
+      "id": "TASK-4-3-2",
+      "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/03-05-documentation-plugin-release.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Documentation, plugin, and release task 4-3-2",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-01",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 01",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-02",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 02",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-03",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 03",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-04",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 04",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-05",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 05",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-06",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 06",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-07",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 07",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-08",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 08",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-09",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 09",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-10",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 10",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-11",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 11",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-12",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 12",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-13",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 13",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-14",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "medium",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 14",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "PAR-15",
+      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "risk": "high",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Native clipboard plan decision 15",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "clipboard-native/RD-03"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-1-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-1-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-1-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-2-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-3-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-3-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-3-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-3-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-3-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "clipboard-native/TASK-4-3-2"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-08"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "clipboard-native/PAR-15"
+        }
+      ],
+      "evidence": [
+        "entryEvidence:develop baseline 440485496; issue #191 and merged PR #190 reviewed; modification set recorded in 00-index.md"
+      ],
+      "id": "PLAN-NATIVE",
+      "revision": "sha256:b4f9142aeb55aeca018670c565af7bb6b0a46245489eaa08f08c30e721575c70",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/clipboard-native/plans/native-clipboard/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Native clipboard implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:8d03d5a5638b8941328a91c75f3e3ef97087dd6a9bcf75d9faa3e8d01b708304",
+          "upstream": "clipboard-native/RD-01",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "upstream": "clipboard-native/RD-02",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "upstream": "clipboard-native/RD-03",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-1-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-1-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-1-3",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-2-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-2-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c3fb42ed51ec0ef6e2727d589cc4e4fbf71bf4a45784d7f50035aab63504ec9",
+          "upstream": "clipboard-native/TASK-1-3-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+          "upstream": "clipboard-native/TASK-2-1-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+          "upstream": "clipboard-native/TASK-2-1-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-1-3",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-1-4",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-1-5",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c8391ef31f36ac415bfc43ad109f926fee2c9c05ee2b671feda7d3e09efb667",
+          "upstream": "clipboard-native/TASK-2-2-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-2-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-2-3",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:569d34bb5c267f067e9b43075ecc56764da8b2b246aef9e24e757b6424397234",
+          "upstream": "clipboard-native/TASK-2-3-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/TASK-3-1-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/TASK-3-1-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/TASK-3-1-3",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/TASK-3-2-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "upstream": "clipboard-native/TASK-3-3-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-1-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-1-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-2-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-2-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-3-1",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:306456c798b71c58c55c80fb9adf03d9a97edc556df2471609abc960997a1966",
+          "upstream": "clipboard-native/TASK-4-3-2",
+          "validatedAt": "2026-07-28T15:30:52.324Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-28T15:32:35.294Z"
+}

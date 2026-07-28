@@ -11,6 +11,64 @@
  * Paste content is bounded by the size cap and is never logged or retained beyond
  * the emitted event.
  */
+import { PASTE_CAP_BYTES } from './events.js';
+
+/** Reused encoder for bounding direct string paste without first allocating its full UTF-8 form. */
+const pasteTextEncoder = new TextEncoder();
+
+/**
+ * A plain-text paste after applying its UTF-8 byte boundary.
+ *
+ * `truncated` distinguishes an empty clipboard from a non-empty value that could not fit. The
+ * returned text is always an exact JavaScript-string prefix of the input.
+ */
+export interface BoundedPasteText {
+  /** The original text when it fits, otherwise the longest complete prefix within the byte cap. */
+  readonly text: string;
+  /** Whether one or more input code points were omitted because they exceeded the byte cap. */
+  readonly truncated: boolean;
+}
+
+/**
+ * Bound direct string paste using the same UTF-8 byte limit as terminal bracketed paste.
+ *
+ * `TextEncoder.encodeInto` stops before a code point that cannot fit. Its `read` count is therefore
+ * a safe UTF-16 slice boundary for well-formed surrogate pairs, while slicing the original string
+ * also preserves any isolated surrogate supplied by the host. The helper first proves small inputs
+ * fit from their maximum possible UTF-8 size, then allocates at most the configured bounded buffer
+ * instead of encoding an arbitrarily large input into a second full-size byte array.
+ *
+ * @param text Untrusted plain text supplied by a host clipboard.
+ * @param capBytes Maximum encoded UTF-8 bytes; defaults to {@link PASTE_CAP_BYTES}.
+ * @returns The unchanged input when it fits, otherwise its longest complete bounded prefix.
+ * @throws {RangeError} When `capBytes` is negative, non-integral, not a safe integer, or exceeds
+ *   {@link PASTE_CAP_BYTES}.
+ *
+ * @example
+ * import { boundPasteText } from '@jsvision/core';
+ *
+ * const bounded = boundPasteText('A😀B', 5);
+ * // bounded === { text: 'A😀', truncated: true }
+ */
+export function boundPasteText(text: string, capBytes = PASTE_CAP_BYTES): BoundedPasteText {
+  if (!Number.isSafeInteger(capBytes) || capBytes < 0 || capBytes > PASTE_CAP_BYTES) {
+    throw new RangeError(`paste byte cap must be an integer from 0 to ${PASTE_CAP_BYTES}`);
+  }
+  if (text.length === 0) return { text, truncated: false };
+
+  // Each UTF-16 code unit needs at most three UTF-8 bytes. This conservative proof avoids a
+  // one-megabyte allocation for ordinary short clipboard values.
+  if (text.length * 3 <= capBytes) return { text, truncated: false };
+
+  const bytes = new Uint8Array(capBytes);
+  const { read } = pasteTextEncoder.encodeInto(text, bytes);
+  if (read === text.length) return { text, truncated: false };
+
+  return {
+    text: text.slice(0, read),
+    truncated: true,
+  };
+}
 
 /** The bracketed-paste start marker `ESC [ 200 ~`. */
 export const PASTE_START = Uint8Array.from([0x1b, 0x5b, 0x32, 0x30, 0x30, 0x7e]);

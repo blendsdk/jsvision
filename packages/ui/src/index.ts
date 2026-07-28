@@ -80,6 +80,8 @@ export { createEventLoop, buildKeymap } from './event/index.js';
 export type {
   EventLoop,
   EventLoopOptions,
+  ClipboardTextReader,
+  ClipboardTextWriter,
   ClipboardKeys,
   CommandEvent,
   AppEvent,
