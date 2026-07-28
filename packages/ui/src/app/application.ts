@@ -15,7 +15,13 @@ import { Group } from '../view/index.js';
 import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
-import type { EventLoop, ClipboardKeys, FunctionKeyFallback } from '../event/index.js';
+import type {
+  ClipboardKeys,
+  ClipboardTextReader,
+  ClipboardTextWriter,
+  EventLoop,
+  FunctionKeyFallback,
+} from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
 import type { MenuBar, MenuItem } from '../menu/index.js';
 import { Commands, StatusItemView, statusItem } from '../status/index.js';
@@ -60,6 +66,19 @@ export interface ApplicationOptions {
    * a WordStar-mode `Editor`) and supply your own keymap instead.
    */
   clipboardKeys?: ClipboardKeys;
+  /**
+   * Write exact raw text to the host clipboard after a copy or cut commits it locally.
+   *
+   * Host failures are reported without payload details and never roll back canonical state.
+   */
+  readonly writeClipboardText?: ClipboardTextWriter;
+  /**
+   * Read exact raw text from the host clipboard for otherwise-unhandled paste commands.
+   *
+   * The loop serializes calls, bounds successful text, and discards results whose original focus
+   * destination is no longer continuously valid.
+   */
+  readonly readClipboardText?: ClipboardTextReader;
   /**
    * Portable F-key fallback for terminals or browsers that reserve physical function keys.
    * Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve
@@ -424,6 +443,8 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     logger: opts.logger,
     keymap: opts.keymap,
     clipboardKeys: opts.clipboardKeys, // undefined ⇒ the loop's `'both'` default
+    writeClipboardText: opts.writeClipboardText,
+    readClipboardText: opts.readClipboardText,
     functionKeyFallback: opts.functionKeyFallback ?? 'number-row',
     commands: commandSeed,
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-28 18:39 UTC
-> **Progress**: 11/26 tasks (42%)
+> **Last Updated**: 2026-07-28 19:18 UTC
+> **Progress**: 15/26 tasks (58%)
 > **CodeOps Artifact Schema**: 1
 
 ## Execution rule
@@ -76,15 +76,19 @@ the first `[~]`, otherwise the first `[ ]`. Every phase follows specification re
 - [x] 2.1.5 Run focused Phase 2 specifications and record expected failures before production
   changes. ✅ (completed: 2026-07-28 18:39; UI 37 expected failures / 6 baseline passes; CodeEditor
   1 expected failure)
-- [~] 2.2.1 Export documented reader/writer callback contracts; thread optional configuration
+- [x] 2.2.1 Export documented reader/writer callback contracts; thread optional configuration
   through Application and EventLoop; preserve application-writer precedence and OSC fallback.
-  ⏳ (started: 2026-07-28 18:39)
-- [ ] 2.2.2 Implement app-handler-first paste interception, reader-aware command availability, and
+  ✅ (completed: 2026-07-28 18:47)
+- [x] 2.2.2 Implement app-handler-first paste interception, reader-aware command availability, and
   the rejection-safe serialized queue without awaiting input dispatch.
-- [ ] 2.2.3 Implement capture/validation generations, route mount incarnations, bounded
+  ✅ (completed: 2026-07-28 18:47)
+- [x] 2.2.3 Implement capture/validation generations, route mount incarnations, bounded
   success/fallback dispatch, stable warnings, and stop/teardown invalidation.
-- [ ] 2.3.1 Turn all Phase 2 specs green; add scheduler/token/error mechanics tests; run UI API,
+  ✅ (completed: 2026-07-28 18:47)
+- [x] 2.3.1 Turn all Phase 2 specs green; add scheduler/token/error mechanics tests; run UI API,
   typecheck, tests, `yarn plugin:check`, and `yarn verify`; complete reviewer/auditor quality loop.
+  ✅ (completed: 2026-07-28 19:18; 51 UI and 1 CodeEditor tests pass; all major findings fixed and
+  independently re-reviewed)
 
 **Deliverable**: Optional symmetric host-neutral clipboard behavior with deterministic focus-safe
 native paste.

@@ -26,6 +26,8 @@ export interface ModalFocus {
 
 /** The open-modal stack. While `isActive()`, input is confined to `topView()`. */
 export interface ModalManager {
+  /** Monotonic counter incremented whenever the active modal stack changes. */
+  version(): number;
   /** Whether any modal is open. */
   isActive(): boolean;
   /** The top modal's subtree root (where input is confined), or `null` when none is open. */
@@ -51,6 +53,7 @@ export interface ModalManager {
  */
 export function createModalManager(focus: ModalFocus): ModalManager {
   const stack: ModalFrame[] = [];
+  let generation = 0;
 
   const isActive = (): boolean => stack.length > 0;
 
@@ -64,20 +67,23 @@ export function createModalManager(focus: ModalFocus): ModalManager {
     // Each modal on the stack resolves with its own result type; erase the resolver to `unknown`
     // here and pass the caller's result back through it in `end`.
     stack.push({ view, savedFocus, resolve: resolve as (result: unknown) => void });
+    generation += 1;
     focus.focusInto(view); // focus the modal's first focusable child (or the one it last had)
   };
 
   const end = <R>(result: R): void => {
     const frame = stack.pop();
     if (frame === undefined) return; // nothing open — ignore
+    generation += 1;
     // Restore the focus that was saved when this modal opened; a no-op if that view is gone.
     if (frame.savedFocus !== null) focus.focusView(frame.savedFocus);
     frame.resolve(result);
   };
 
   const dispose = (): void => {
+    if (stack.length > 0) generation += 1;
     for (const frame of stack.splice(0).reverse()) frame.resolve(undefined);
   };
 
-  return { isActive, topView, begin, end, dispose };
+  return { version: () => generation, isActive, topView, begin, end, dispose };
 }
