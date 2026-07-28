@@ -1,0 +1,1 @@
+function e(t,n){return n<=0?0:Math.min(n-1,Math.max(0,t))}function h(t,n,i,m){if(i<=0)return 0;let a=n;t<a?a=t:t>=a+i&&(a=t-i+1);const x=Math.max(0,m-i);return Math.min(x,Math.max(0,a))}export{e as c,h as k};
