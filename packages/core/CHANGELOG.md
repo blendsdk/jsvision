@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-23
+
+Added:
+  - Implemented a cross-platform serial performance gate for core, UI, and datagrid.
+
+Changed:
+  - Made CI and Turbo timing runs informational while preserving explicit skips.
+
+Fixed:
+  - Isolated performance budgets from parallel verification for improved accuracy.
+
+## [1.2.0] - 2026-07-23
+
+Added:
+- Decode portable function-key sequences, recognizing CSI final, Linux-console, and Kitty F1-F12 encodings.
+- Validate raw parameter grammar and family-specific modifier boundaries.
+- Extend keyboard corpus with CSI, Linux-console, and Kitty fixtures for improved coverage.
+
+Changed:
+- Added immutable F1-F12 terminal encoding oracles and enhanced split-boundary coverage in tests.
+- Updated test fixtures for input corpus to align with new function-key decoding.
+
+Fixed:
+- Hardened handling of malformed inputs and exhaustive split-point identification.
+
 ## [1.0.0] - 2026-07-22
 
 ### Changed

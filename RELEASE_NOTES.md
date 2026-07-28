@@ -1,21 +1,19 @@
-# Release Notes — v1.1.0
+# Release Notes — v1.2.1
 
 **Released**: 2026-07-23
 
-We are excited to announce the release of version 1.1.0, bringing improved features and enhanced usability to our software. This update focuses on making our documentation and examples more helpful, as well as simplifying the integration process for new users. 
+Release Notes for Version 1.2.1
 
-Highlights of the changes include:
+We are excited to announce version 1.2.1, packed with important updates that enhance the overall performance and functionality of our software. This release brings optimizations that improve efficiency across several core modules, ensuring a smoother experience for all users.
 
-1. **New Marketplace Integration**: We've added a portable integration with the Codex marketplace, allowing users to easily access additional resources and tools that complement their experience with our software.
+Highlights:
 
-2. **Updated Documentation**: We’ve revamped our documentation by writing a new "Install & Packages" guide, which simplifies the installation process for newcomers. Two outdated reference guides have been retired to ensure our users have the most relevant information at their fingertips.
+- Performance Improvements: In this version, we focused on isolating performance budgets from parallel processes. This ensures that each part of the application operates more effectively without being bogged down by others. As a result, users will notice quicker response times and a more reliable experience when using our system.
 
-3. **Typechecking Enhancements**: Starters now come with enhanced typechecking capabilities, ensuring that the templates generated are accurate and functional right from the start. This minimizes errors and helps users get up and running smoothly.
+- Package Updates: Key components of our platform—such as the core functionality, data handling, user interface, and documentation site—have all been updated. These updates contribute to a more cohesive and efficient user experience while interacting with our software.
 
-4. **Distinguished Guides**: The data-grid guide now has a unique title separate from the component page, making it easier for users to find the information they need without confusion.
+- Documentation Updates: As we continue to enhance our platform, we have also updated our documentation site. Users will find improved clarity and guidance, making it easier to navigate and utilize the features of our software.
 
-5. **Refined Example Projects**: Our example projects have been updated to eliminate duplicate elements and ensure consistent imports across the board. This offers a clearer path for developers looking to implement features based on our examples.
+- Example Updates: We've adjusted our example projects to align with these improvements, ensuring that users can see firsthand how the latest updates work in real-time scenarios. This not only aids in understanding but also demonstrates best practices for utilizing the software effectively.
 
-6. **Simplified Dependencies**: We have streamlined our web application by removing unnecessary dependencies, making the overall experience more efficient.
-
-These enhancements not only improve usability but also help users to maximize their productivity with our tools. We look forward to your feedback on these updates!
+Overall, version 1.2.1 is a step towards providing our users with a faster, more streamlined experience. We encourage everyone to explore these enhancements and leverage them to boost productivity in their projects. Thank you for your continued support!
