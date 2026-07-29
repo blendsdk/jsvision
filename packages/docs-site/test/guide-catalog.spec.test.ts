@@ -93,6 +93,7 @@ describe('Guide curriculum catalog', () => {
     expect(CATALOG.entries.map((entry) => entry.id)).toEqual(EXPECTED_IDS);
     expect(CATALOG.entries).toHaveLength(31);
     expect(CATALOG.entries.filter((entry) => entry.stage === 'complete').map((entry) => entry.id)).toEqual([
+      'introduction',
       'layout',
       'reactive-state',
       'data-grid-specialist',
