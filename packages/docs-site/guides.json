@@ -24,7 +24,7 @@
       "group": "Getting started",
       "page": "/guide/install-and-packages",
       "profile": "orientation",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 2,
       "prerequisites": ["introduction"],
       "learningOutcomes": [

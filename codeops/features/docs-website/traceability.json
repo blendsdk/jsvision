@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:bc35c024483d9700c49cae9283d0fa213d98c840bb23292f654495d278cfa086",
+          "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -926,7 +926,8 @@
         "Phase 1 final state: 19/19 focused tests, docs-site typecheck, and authoritative yarn verify passed.",
         "Phase 2 Install & packages: expected-red baseline was 7 failed and 1 passed; implementation then passed 8/8 focused specifications.",
         "Phase 2 Install & packages: docs-site typecheck and authoritative yarn verify passed at the first green checkpoint.",
-        "Phase 2 Install & packages hardening: package-matrix, stale-version, and invalid-import checks passed with the full 11/11 focused suite and authoritative yarn verify."
+        "Phase 2 Install & packages hardening: package-matrix, stale-version, and invalid-import checks passed with the full 11/11 focused suite and authoritative yarn verify.",
+        "Phase 2 Install & packages promotion: 18/18 focused course/catalog tests, docs-site typecheck, and authoritative yarn verify passed before the catalog stage became complete."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -955,10 +956,11 @@
         "summary:The permitted fix-scoped re-review retained one Major for a viewport-only resize; the final correction now drives the real dialog resize seam. A third review is prohibited.",
         "summary:Phase 1 is complete after final focused, docs-site typecheck, and authoritative yarn verify gates passed.",
         "summary:Phase 2 tasks 2.1.1 through 2.2.4 reached the specification-to-green checkpoint with 8 focused tests, docs-site typecheck, and yarn verify passing.",
-        "summary:Phase 2 task 2.3.1 added package-matrix, stale-version, and invalid-import hardening; 11 focused tests and yarn verify pass."
+        "summary:Phase 2 task 2.3.1 added package-matrix, stale-version, and invalid-import hardening; 11 focused tests and yarn verify pass.",
+        "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:bc35c024483d9700c49cae9283d0fa213d98c840bb23292f654495d278cfa086",
+      "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1050,7 +1052,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:bc35c024483d9700c49cae9283d0fa213d98c840bb23292f654495d278cfa086",
+          "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1058,5 +1060,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:09:07Z"
+  "updated": "2026-07-29T20:14:19Z"
 }
