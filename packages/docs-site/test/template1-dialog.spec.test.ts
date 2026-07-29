@@ -85,3 +85,32 @@ test('stretches a standard padded content group across maximize and restore', ()
     }
   });
 });
+
+test('can preserve authored child heights while positions and widths remain responsive', () => {
+  createRoot((dispose) => {
+    const dialog = new Template1Dialog({
+      title: 'Fixed-height controls',
+      width: 40,
+      height: 12,
+      preserveChildHeights: true,
+    });
+    const content = new Group();
+    const specimen = new Group();
+    content.add(at(specimen, 2, 2, 10, 2));
+    dialog.add(at(content, 1, 1, 36, 8));
+    const app = mountTemplateDialog(dialog);
+    try {
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      expect(specimen.bounds.width).toBeGreaterThan(10);
+      expect(specimen.bounds.height).toBe(2);
+
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      expect(specimen.bounds).toEqual({ x: 2, y: 2, width: 10, height: 2 });
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});

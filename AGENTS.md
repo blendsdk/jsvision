@@ -45,7 +45,9 @@ following live-example structure:
 4. Inset the dialog's content by one cell on every side, in addition to the frame's own inset, so
    controls and text never touch the inside edge of the border. Supply responsive layout behavior
    that preserves this inset and uses the additional room without clipping after resize, maximize,
-   and restore.
+   and restore. Set `preserveChildHeights: true` for primitive galleries whose direct content
+   children have deliberately authored row heights; keep it disabled for grids, editors, lists, and
+   other workspace panes that should consume additional vertical space.
 5. Use the theme-controlled `dialog` surface without a custom background. Under the Classic theme,
    the dialog background must match the application's menu-bar background.
 6. Keep the showcase alive after opening. `Template1Dialog` is non-closable by default; use a

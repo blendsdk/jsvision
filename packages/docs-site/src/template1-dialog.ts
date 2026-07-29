@@ -25,6 +25,13 @@ export interface Template1DialogOptions {
    * example has been reviewed at both its compact and maximized sizes.
    */
   readonly startMaximized?: boolean;
+  /**
+   * Keep every direct content child's authored height while scaling its position and width.
+   *
+   * Use this for primitive galleries made from fixed-height control rows. Leave it disabled for
+   * workspace examples whose editors, grids, lists, or other panes should consume vertical space.
+   */
+  readonly preserveChildHeights?: boolean;
   /** Repositions content whenever the dialog size changes. */
   readonly onResize?: Template1DialogResize;
 }
@@ -71,6 +78,7 @@ function scaleInterval(start: number, length: number, authoredExtent: number, ne
 export class Template1Dialog extends Dialog {
   protected readonly resizeContent: Template1DialogResize | undefined;
   protected readonly startMaximized: boolean;
+  protected readonly preserveChildHeights: boolean;
   protected authoredContent: Template1AuthoredContent | undefined;
 
   /**
@@ -85,6 +93,7 @@ export class Template1Dialog extends Dialog {
     this.minHeight = options.height;
     this.resizeContent = options.onResize;
     this.startMaximized = options.startMaximized ?? false;
+    this.preserveChildHeights = options.preserveChildHeights ?? false;
     this.onMount(() => {
       if (this.startMaximized && !this.isZoomed()) this.zoom();
     });
@@ -120,7 +129,8 @@ export class Template1Dialog extends Dialog {
     });
     for (const child of authored.children) {
       const [x, childWidth] = scaleInterval(child.rect.x, child.rect.width, authored.width, nextWidth);
-      const [y, childHeight] = scaleInterval(child.rect.y, child.rect.height, authored.height, nextHeight);
+      const [y, scaledHeight] = scaleInterval(child.rect.y, child.rect.height, authored.height, nextHeight);
+      const childHeight = this.preserveChildHeights ? child.rect.height : scaledHeight;
       child.view.setLayout({ rect: { x, y, width: childWidth, height: childHeight } });
     }
   }

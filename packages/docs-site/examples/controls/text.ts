@@ -26,7 +26,12 @@ export default defineExample({
     const detailed = signal(false);
     const status = signal('ready');
 
-    const dialog = new Template1Dialog({ title: ' Text Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Text Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Text presents information without entering the Tab order.'), 0, 0, CONTENT_WIDTH, 1));
