@@ -10,6 +10,9 @@
     "directory": "packages/docs-site"
   },
   "type": "module",
+  "imports": {
+    "#data-grid-lab": "./src/example-fixtures/data-grid/lab.ts"
+  },
   "scripts": {
     "dev": "vitepress dev",
     "docs:api": "node scripts/gen-api.mjs",

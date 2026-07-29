@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 107 / 180 tasks complete
+> **Progress**: 134 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -523,55 +523,89 @@
 
 ## Phase 9 — Data Grid Specialist Hub
 
+> **Phase baseline tree**: `1ab0abe500117be6b8300acddbd6f56a21bf1a02`
+> **Expected modification set**: Phase 9 Data Grid topology/objective/trust contracts, deterministic
+> bounded fixtures, sharded specification and implementation tests, 12 specialist pages and 24
+> template1 examples, Data Grid registry/catalog/API/sidebar migration, deletion of obsolete
+> Data Grid docs sources, bounded integration corrections, this execution plan, feature roadmap,
+> traceability, and verification/review evidence.
+
 ### 9.1 Specification tests
 
-- [ ] **9.1.1** Add sharded `test/data-grid-docs.{topology,interaction,trust}.spec.test.ts` files and
+- [x] **9.1.1** Add sharded `test/data-grid-docs.{topology,interaction,trust}.spec.test.ts` files and
   `test/contracts/data-grid/` for ST-23, ST-24, ST-25, page profiles, exact behavior contracts, and
   the Data Grid half of ST-31.
-- [ ] **9.1.2** Run RED for hub routes/sidebar/examples and record the obsolete page/module evidence.
+  ✅ (completed: 2026-07-29 08:05 CEST; 12-topic topology, 24 typed behavior contracts, lazy
+  registry, bounded windowed-source, hostile export, and obsolete-route oracles typecheck)
+- [x] **9.1.2** Run RED for hub routes/sidebar/examples and record the obsolete page/module evidence.
+  ✅ (completed: 2026-07-29 08:06 CEST; expected RED: 43 failed and 2 passed across 45 focused
+  cases, covering all 12 absent hub pages, all 24 absent examples, missing fixtures/registry/sidebar,
+  and retained obsolete page/module; log `/tmp/phase9-red-final.log`)
 
 ### 9.2 Hub pages
 
-- [ ] **9.2.1** Add Overview and Data & Columns pages.
-- [ ] **9.2.2** Add Layout & Rendering and Sorting & Filtering pages.
-- [ ] **9.2.3** Add Rows/Selection/Navigation and Editing/Editors pages.
-- [ ] **9.2.4** Add Validation/Lifecycle and Footer/Aggregation/Detail pages.
-- [ ] **9.2.5** Add Data at Scale and Export/Personalization pages.
-- [ ] **9.2.6** Add Theming/Accessibility/Performance and API pages.
+- [x] **9.2.1** Add Overview and Data & Columns pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; landing/capability page contracts pass)
+- [x] **9.2.2** Add Layout & Rendering and Sorting & Filtering pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; both capability page contracts pass)
+- [x] **9.2.3** Add Rows/Selection/Navigation and Editing/Editors pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; both capability page contracts pass)
+- [x] **9.2.4** Add Validation/Lifecycle and Footer/Aggregation/Detail pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; both capability page contracts pass)
+- [x] **9.2.5** Add Data at Scale and Export/Personalization pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; both capability page contracts pass)
+- [x] **9.2.6** Add Theming/Accessibility/Performance and API pages.
+  ✅ (completed: 2026-07-29 08:09 CEST; capability/API page contracts pass; all 13 topology
+  catalog/page cases green)
 
 ### 9.3 Focused examples
 
-- [ ] **9.3.1** Add `quick-start`, `data-sources`, and `typed-columns` examples.
-- [ ] **9.3.2** Add `layout-freezing` and `rendering` examples.
-- [ ] **9.3.3** Add `sorting`, `quick-filter`, and `advanced-filter` examples.
-- [ ] **9.3.4** Add `selection-navigation` and `row-mutations` examples.
-- [ ] **9.3.5** Add `editing-lifecycle` and `editor-types` examples.
-- [ ] **9.3.6** Add `custom-editor` and `dirty-commit` examples.
-- [ ] **9.3.7** Add `validation` and `lifecycle-states` examples.
-- [ ] **9.3.8** Add `aggregates` and `master-detail` examples.
-- [ ] **9.3.9** Add `windowed` and `large-memory` examples.
-- [ ] **9.3.10** Add `export` and `variants-personalization` examples.
-- [ ] **9.3.11** Add `theming-accessibility` and `performance-boundaries` examples.
-- [ ] **9.3.12** Register all 24 examples in the Data Grid family registry module with lazy app
+- [x] **9.3.1** Add `quick-start`, `data-sources`, and `typed-columns` examples.
+- [x] **9.3.2** Add `layout-freezing` and `rendering` examples.
+- [x] **9.3.3** Add `sorting`, `quick-filter`, and `advanced-filter` examples.
+- [x] **9.3.4** Add `selection-navigation` and `row-mutations` examples.
+- [x] **9.3.5** Add `editing-lifecycle` and `editor-types` examples.
+- [x] **9.3.6** Add `custom-editor` and `dirty-commit` examples.
+- [x] **9.3.7** Add `validation` and `lifecycle-states` examples.
+- [x] **9.3.8** Add `aggregates` and `master-detail` examples.
+- [x] **9.3.9** Add `windowed` and `large-memory` examples.
+- [x] **9.3.10** Add `export` and `variants-personalization` examples.
+- [x] **9.3.11** Add `theming-accessibility` and `performance-boundaries` examples.
+- [x] **9.3.12** Register all 24 examples in the Data Grid family registry module with lazy app
   imports.
+  ✅ (completed: 2026-07-29 08:17 CEST; all twelve example groups use real public DataGrid or
+  EditableDataGrid surfaces through a shared scenario fixture; docs-site typecheck and all 24
+  template1 live paint cases pass)
 
 ### 9.4 Route/sidebar migration
 
-- [ ] **9.4.1** Add the `/components/data-grid/` prefix sidebar and replace the global Data Grid link
+- [x] **9.4.1** Add the `/components/data-grid/` prefix sidebar and replace the global Data Grid link
   in `.vitepress/config.ts`.
-- [ ] **9.4.2** Add exact catalog-parity Data Grid rows to the checked-in `src/api/api-map.mjs` and
+  ✅ (completed: 2026-07-29 08:19 CEST; exact 12-link specialist sidebar is active)
+- [x] **9.4.2** Add exact catalog-parity Data Grid rows to the checked-in `src/api/api-map.mjs` and
   update current docs links.
-- [ ] **9.4.3** Delete `components/table/data-grid.md` and `examples/table/data-grid.ts`; remove the
+  ✅ (completed: 2026-07-29 08:19 CEST; all 11 catalog-owned visual symbols map to topic anchors)
+- [x] **9.4.3** Delete `components/table/data-grid.md` and `examples/table/data-grid.ts`; remove the
   obsolete registry entry.
-- [ ] **9.4.4** Run ST-23/ST-24/ST-25/Data Grid ST-31 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 08:19 CEST; obsolete page, example, and registry shard removed)
+- [x] **9.4.4** Run ST-23/ST-24/ST-25/Data Grid ST-31 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 08:19 CEST; docs-site typecheck and all 45 focused topology,
+  interaction, trust, route, registry, fixture, and live paint specification cases pass)
 
 ### 9.5 Implementation tests and hardening
 
-- [ ] **9.5.1** Add sharded `test/data-grid-docs.{lifecycle,data-scale,export}.impl.test.ts` files for
+- [x] **9.5.1** Add sharded `test/data-grid-docs.{lifecycle,data-scale,export}.impl.test.ts` files for
   async reset/disposal, windowed-source guard failures, export edge cases, editor/popup cleanup, and
   deterministic variant state.
-- [ ] **9.5.2** Complete all 12 topic content reviews and source/API spot checks.
-- [ ] **9.5.3** Run docs-site and Data Grid focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 08:24 CEST; 13 lifecycle, overlay/popup cleanup, guarded scale,
+  export safety, and variant determinism cases pass)
+- [x] **9.5.2** Complete all 12 topic content reviews and source/API spot checks.
+  ✅ (completed: 2026-07-29 08:24 CEST; verified public entry imports, generated API targets,
+  source/identity/interaction/edit/validation/scale/export/theme boundaries, exact example
+  populations, and absence of stale or placeholder content)
+- [x] **9.5.3** Run docs-site and Data Grid focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 09:03 CEST; 100 focused Data Grid checks, docs-site typecheck,
+  629 docs-site unit tests, and authoritative `yarn verify` pass; final verify 143.39 seconds)
 
 ## Phase 10 — Code Editor Specialist Hub
 

@@ -209,7 +209,7 @@ export default withMermaid(
               { text: 'Dialog', link: '/components/containers/dialog' },
             ],
           },
-          { text: 'Table', items: [{ text: 'Data grid', link: '/components/table/data-grid' }] },
+          { text: 'Data Grid', items: [{ text: 'Overview', link: '/components/data-grid/' }] },
           {
             text: 'Feedback',
             items: [
@@ -254,6 +254,34 @@ export default withMermaid(
             items: [
               { text: 'Theme gallery', link: '/components/theming/preset-gallery' },
               { text: 'Localized Theme Designer', link: '/components/theming/i18n-theme-designer' },
+            ],
+          },
+        ],
+        '/components/data-grid/': [
+          {
+            text: 'Data Grid',
+            items: [
+              { text: 'Overview', link: '/components/data-grid/' },
+              { text: 'Data & columns', link: '/components/data-grid/data-and-columns' },
+              { text: 'Layout & rendering', link: '/components/data-grid/layout-and-rendering' },
+              { text: 'Sorting & filtering', link: '/components/data-grid/sorting-and-filtering' },
+              {
+                text: 'Rows, selection & navigation',
+                link: '/components/data-grid/rows-selection-navigation',
+              },
+              { text: 'Editing & cell editors', link: '/components/data-grid/editing-and-editors' },
+              { text: 'Validation & lifecycle', link: '/components/data-grid/validation-and-lifecycle' },
+              { text: 'Footer, aggregation & detail', link: '/components/data-grid/footer-and-detail' },
+              { text: 'Data at scale', link: '/components/data-grid/data-at-scale' },
+              {
+                text: 'Export & personalization',
+                link: '/components/data-grid/export-and-personalization',
+              },
+              {
+                text: 'Theming, accessibility & performance',
+                link: '/components/data-grid/theming-accessibility-performance',
+              },
+              { text: 'API map', link: '/components/data-grid/api' },
             ],
           },
         ],
