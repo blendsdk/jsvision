@@ -5,6 +5,8 @@
  * eligibility changes, both modal restore targets, responsive geometry, and host-owned teardown.
  */
 import { describe, expect, test, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { Button, Dialog, Group, createRoot } from '@jsvision/ui';
 import type { Application, View } from '@jsvision/ui';
 import modalityExample from '../examples/guides/views-focus-modality.js';
@@ -27,6 +29,7 @@ const LESSONS = [
   { id: 'guides/views-focus-traversal', definition: traversalExample },
   { id: 'guides/views-focus-modality', definition: modalityExample },
 ] as const;
+const GUIDE_SOURCE = readFileSync(fileURLToPath(new URL('../guide/views-and-focus.md', import.meta.url)), 'utf8');
 
 /** Grow a laboratory through the shared dialog's real south-east resize grip. */
 function resizeDialog(app: Application, dialog: Dialog, widthDelta = 10, heightDelta = 4): void {
@@ -95,16 +98,21 @@ test('tree traversal skips hidden and disabled candidates in exact retained orde
     app.loop.dispatch(key('tab', { shift: true }));
     expect(app.loop.getFocused()).toBe(gamma);
 
-    app.loop.focusView(alpha);
+    app.loop.focusView(beta);
     app.loop.dispatch(key('h', { alt: true }));
-    app.loop.dispatch(key('tab'));
     expect(app.loop.getFocused()).toBe(gamma);
-    expect(frameText(app)).toContain('Hidden target: yes');
-
-    app.loop.focusView(alpha);
-    app.loop.dispatch(key('d', { alt: true }));
+    expect(beta.state.visible).toBe(false);
+    expect(app.loop.getFocused()?.mounted).toBe(true);
     app.loop.dispatch(key('tab'));
     expect(app.loop.getFocused()).toBe(last);
+    expect(frameText(app)).toContain('Hidden target: yes');
+
+    app.loop.dispatch(key('h', { alt: true }));
+    app.loop.focusView(gamma);
+    app.loop.dispatch(key('d', { alt: true }));
+    expect(app.loop.getFocused()).toBe(last);
+    expect(gamma.state.disabled).toBe(true);
+    expect(app.loop.getFocused()?.mounted).toBe(true);
     expect(frameText(app)).toContain('Disabled target: yes');
     dispose();
   });
@@ -171,12 +179,12 @@ test('modal close restores either launch target and removes the nested window af
 describe.each(LESSONS)('$id geometry hardening', ({ id, definition }) => {
   test('keeps every descendant contained through resize, maximize, and exact restore', () => {
     createRoot((dispose) => {
-      const { app, dialog } = buildLabExample(id, definition, {
-        viewport: { width: 120, height: 40 },
-      });
+      const { app, dialog } = buildLabExample(id, definition);
       const content = dialog.children.find((child): child is Group => child instanceof Group);
       if (content === undefined) throw new Error(`${id} has no inset content group`);
 
+      collectTemplate1Evidence(app, dialog);
+      app.loop.resize({ width: 120, height: 40 });
       resizeDialog(app, dialog);
       const resizedDialog = { ...dialog.bounds };
       const resizedContent = { ...content.bounds };
@@ -198,6 +206,42 @@ describe.each(LESSONS)('$id geometry hardening', ({ id, definition }) => {
       dispose();
     });
   });
+});
+
+test('modal teaching snippet captures the optional result before using it', () => {
+  expect(GUIDE_SOURCE).toMatch(/const result = await loop\.execView\(dialog\);/);
+  expect(GUIDE_SOURCE).toMatch(/result \?\?/);
+  expect(GUIDE_SOURCE).not.toMatch(/await loop\.execView\(dialog\);[\s\S]{0,120}console\.log\(result\)/);
+});
+
+test('pending modal settlement performs no stale UI work after host teardown', async () => {
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const { app, cleanups } = buildThroughHostLifecycle(modalityExample);
+  const dialog = app.desktop?.children.find((view): view is Dialog => view instanceof Dialog);
+  if (dialog === undefined) throw new Error('the modality lesson is missing its template dialog');
+
+  app.loop.dispatch(key('m', { alt: true }));
+  const nested = app.desktop?.children.find((view): view is Dialog => view instanceof Dialog && view !== dialog);
+  if (nested === undefined) throw new Error('the modality lesson did not mount its nested dialog');
+
+  const removeWindow = vi.spyOn(app.desktop!, 'removeWindow');
+  const focusView = vi.spyOn(app.loop, 'focusView');
+  removeWindow.mockClear();
+  focusView.mockClear();
+  try {
+    cleanups[0]?.();
+    app.loop.dispose();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(nested.mounted).toBe(false);
+    expect(removeWindow).not.toHaveBeenCalled();
+    expect(focusView).not.toHaveBeenCalled();
+    expect(warning.mock.calls.flat().join('\n')).not.toContain('created outside any createRoot() scope');
+  } finally {
+    app.loop.dispose();
+    warning.mockRestore();
+  }
 });
 
 describe.each(LESSONS)('$id host lifecycle', ({ definition }) => {

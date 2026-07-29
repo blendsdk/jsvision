@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 24 items resolved
-> **Last Updated**: 2026-07-29 23:32
+> **Status**: ✅ GATE PASSED — all 27 items resolved
+> **Last Updated**: 2026-07-30 01:16
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -29,6 +29,9 @@
 | 22 | Execution (runtime) | How should Phase 4 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 4.1.1–4.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 4 task IDs and resume per-task commits after 4.2.4. | ✅ Resolved |
 | 23 | Quality review (runtime) | How should the two Major and one Minor Phase 4 findings be resolved without weakening the completed Reactive state contract? | Own both lab graphs through the host lifecycle, teach required layout invalidation, and make no-op batch feedback truthful / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every technical correction, prove teardown through the authentic host lifecycle, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 5. | ✅ Resolved |
 | 24 | Execution (runtime) | How should Phase 5 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 5.1.1–5.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 5 task IDs and resume per-task commits after 5.2.4. | ✅ Resolved |
+| 25 | Quality review (runtime) | How should the Phase 5 command-portability finding be resolved without weakening the completed Codex plugin contract? | Teach and verify package-manager-specific executable forwarding / retain a generic command that fails or misroutes flags / waive the finding | **Authority: AI — delegated by `--auto-design`.** Correct the Guide and canonical skill for npm, Yarn, pnpm, and Bun, rerun every applicable gate, and use the one permitted fix-scoped re-review before Phase 6. | ✅ Resolved |
+| 26 | Execution (runtime) | How should Phase 6 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 6.1.1–6.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 6 task IDs and resume per-task commits after 6.2.4. | ✅ Resolved |
+| 27 | Quality review (runtime) | How should the four Major and three Minor Phase 6 findings be resolved without weakening the Views & focus course contract? | Re-home newly ineligible focus synchronously, correct and assert the modal snippet, make pending modal teardown inert, restore 80×24 and ASCII evidence, clarify focus memory, and temporarily demote the course / defer or waive findings while retaining Complete status | **Authority: AI — delegated by `--auto-design`.** Apply every correction, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -512,3 +515,45 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
   green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-27 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness, teardown safety, documentation accuracy, accessibility fallback,
+  and verification mechanics inside the confirmed Views & focus learning outcomes; no product
+  scope, acceptance criteria, security policy, or public compatibility decision changes.
+- **Objective:** Resolve every Phase 6 quality finding and make the course's Complete stage mean
+  that focused eligibility, modal disposal, snippets, compact geometry, and resilient text are
+  independently verified.
+- **Decision:** When hiding Beta or disabling Gamma while it owns focus, synchronously focus the
+  next eligible retained-tree target in the same command. Correct the modal snippet to capture
+  `execView<string>()` and distinguish its `undefined` host-teardown result. Give the modal lab an
+  idempotent active lifetime and return from pending modal continuations after host disposal.
+  Clarify that `Group.current` is active-chain state plus inactive restoration memory, replace
+  decorative laboratory separators with ASCII-safe text, and assert the default 80×24 state before
+  larger resize/maximize/restore evidence. Revert the catalog/map/task to Upgrade/pending
+  verification until the one permitted re-review and all authoritative gates pass.
+- **Evidence:** Independent review of `98f0a18ab..dde771c37` found focus left on newly hidden or
+  disabled controls, an undefined `result` identifier in the teaching snippet, post-disposal modal
+  continuation work, ambiguous `Group.current` prose, missing explicit default-viewport evidence,
+  and decorative non-ASCII lab copy.
+- **Rejected alternatives:** Deferral while retaining Complete would make the stage contradict the
+  completion gate. Waiving findings is forbidden. Relying on later Tab traversal leaves focus
+  observably invalid between actions. Removing modal teardown coverage would hide rather than fix
+  stale continuation work.
+- **Strongest counterargument:** Re-homing to a named next sibling couples the lesson to its small
+  fixture order, and an active-lifetime flag adds state solely for teardown. The fixture is
+  intentionally deterministic and teaches exact retained order; the flag is the smallest mechanism
+  that prevents disposed owners from mutating UI while leaving normal modal restoration unchanged.
+- **Confidence:** High — each correction follows the existing public focus, modal, lifecycle, and
+  template1 contracts and has a direct observable assertion.
+- **Hardening:** The mandatory independent reviewer supplied the findings. After 35/35 focused
+  tests, docs-site typecheck, production docs build, plugin integrity, and authoritative
+  `yarn verify` passed, the single allowed fix-scoped re-review resolved all four Major and three
+  Minor findings with no remaining Critical, Major, or Minor issue.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A newly ineligible focused target remains focused, pending modal settlement
+  mutates a disposed application, the snippet no longer compiles against the public API, default
+  80×24 evidence clips, ASCII fallback regresses, or the re-review retains a Critical or Major
+  finding.

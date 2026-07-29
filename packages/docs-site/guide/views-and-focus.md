@@ -44,9 +44,10 @@ Application root
             └─ Cancel
 ```
 
-Focus also lives in the tree. Every `Group.current` points to the focused child in that subtree.
-Following those pointers from the root reaches one focused leaf. The pointers remember a group's
-last focused child, which enables restorative entry without rebuilding the interface.
+Focus also lives in the tree. Along the active ancestor chain, each `Group.current` points toward
+the one focused leaf. In an inactive group, the same property remembers its last focused child
+instead; that restoration memory does not mean the child is currently focused. This distinction
+enables restorative entry without rebuilding the interface.
 
 ## Your first focusable view tree
 
@@ -185,9 +186,9 @@ import { Dialog, EventLoop } from '@jsvision/ui';
 declare const loop: EventLoop;
 declare const dialog: Dialog;
 
-await loop.execView(dialog);
+const result = await loop.execView(dialog);
 // Dialog OK, Cancel, Esc, or its close box calls endModal() through the attached host.
-console.log(result);
+console.log(result ?? 'host disposed');
 ```
 
 At completion, `endModal()` restores the previous saved focus if it is still eligible. Nested

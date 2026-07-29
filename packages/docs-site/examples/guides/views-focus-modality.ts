@@ -33,7 +33,13 @@ export default defineExample({
   blurb: 'Open a nested modal, traverse its contained scope, then close it and observe exact focus restoration.',
   build: (ctx) =>
     createRoot((disposeReactive) => {
-      ctx.onCleanup?.(disposeReactive);
+      let active = true;
+      const disposeLesson = (): void => {
+        if (!active) return;
+        active = false;
+        disposeReactive();
+      };
+      ctx.onCleanup?.(disposeLesson);
       const app = demoApp(ctx, {
         themeMenu: true,
         keymap: createKeymap({ 'alt+m': CMD_OPEN }),
@@ -57,7 +63,7 @@ export default defineExample({
             const focused = app.loop.getFocused();
             if (focused === open) return 'Restored focus: Open modal';
             if (focused === workspace) return 'Restored focus: Workspace target';
-            return 'Modal open — focus contained in the nested dialog';
+            return 'Modal open - focus contained in the nested dialog';
           }),
           0,
           0,
@@ -69,7 +75,7 @@ export default defineExample({
       content.add(at(open, 0, 3, 20, 2));
       content.add(at(workspace, 23, 3, 22, 2));
       content.add(at(new Text(() => result()), 0, 6, 62, 1));
-      content.add(at(new Text('Alt+M opens · Tab / Shift+Tab stay contained · Esc closes'), 0, 9, 62, 1));
+      content.add(at(new Text('Alt+M opens | Tab / Shift+Tab stay contained | Esc closes'), 0, 9, 62, 1));
       content.add(at(new Text('After close, the exact previously focused control is restored.'), 0, 11, 62, 1));
 
       app.onCommand(CMD_OPEN, () => {
@@ -77,7 +83,7 @@ export default defineExample({
         const value = signal('');
         const nested = new Dialog({ title: ' Modal focus scope ', width: 42, height: 10 });
         const input = new Input({ value });
-        nested.add(at(new Text('Modal open — focus contained.'), 1, 1, 36, 1));
+        nested.add(at(new Text('Modal open - focus contained.'), 1, 1, 36, 1));
         nested.add(at(new Label('~N~ote', input), 1, 3, 9, 1));
         nested.add(at(input, 11, 3, 24, 1));
         nested.add(at(okButton(app.i18n), 7, 6, 11, 2));
@@ -86,14 +92,15 @@ export default defineExample({
         // Adding a desktop window activates and focuses it immediately. Restore the launch target
         // before execView captures focus so the modal session saves the learner's actual origin.
         app.loop.focusView(restoreFocus);
-        result.set('Status: Modal open — focus contained until OK, Cancel, or Esc');
+        result.set('Status: Modal open - focus contained until OK, Cancel, or Esc');
         void app.loop.execView<string>(nested).then((command) => {
+          if (command === undefined || !active) return;
           app.desktop.removeWindow(nested);
           // Removing the active desktop window chooses a new active window and may move focus into
           // it. Reapply the modal's saved target afterward so the laboratory demonstrates exact
           // restoration rather than only restoration to the surrounding application frame.
           app.loop.focusView(restoreFocus);
-          result.set(`Restored focus: ${labels.get(restoreFocus) ?? 'previous control'} · ${command}`);
+          result.set(`Restored focus: ${labels.get(restoreFocus) ?? 'previous control'} | ${command}`);
         });
       });
 
@@ -103,7 +110,7 @@ export default defineExample({
         height: CONTENT_HEIGHT + 4,
         preserveChildHeights: (view) => view instanceof Text || view instanceof Button,
       });
-      dialog.onMount(() => dialog.onCleanup(disposeReactive));
+      dialog.onMount(() => dialog.onCleanup(disposeLesson));
       dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
       app.desktop.addWindow(dialog);
       app.loop.focusView(open);
