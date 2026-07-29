@@ -3,6 +3,13 @@ import type { ExampleEntry } from './types.js';
 /** Concept-guide laboratories in course order, each owning the complete template1 application shell. */
 export const GUIDE_EXAMPLES = [
   {
+    id: 'guides/introduction-runtime',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/introduction-runtime.ts',
+    load: () => import('../../examples/guides/introduction-runtime.js'),
+  },
+  {
     id: 'guides/layout-flow',
     category: 'guides',
     kind: 'app',

@@ -5,103 +5,149 @@ description: JSVision is a TypeScript SDK for building full-screen, keyboard-and
 
 # Introduction
 
-**JSVision is an SDK for building full-screen applications that live in a terminal.** Not a
-command-line tool that prints lines and exits — a real application: a menu bar across the top, a
-status line at the bottom, windows and dialogs you can move, resize, and tab through, with the mouse
-working everywhere it should.
+JSVision is a TypeScript SDK for full-screen, event-driven applications rendered in terminal
+cells. Instead of printing a result and exiting, a JSVision program keeps a view tree alive,
+receives keyboard and mouse input, updates state, and paints new frames until the application
+quits.
 
-You write it once in TypeScript. It runs in a terminal — any terminal — and, with no changes and no
-backend, inside a web page. The terminal is the fastest, lightest, most universally available display
-surface there is; JSVision makes it a place you can build serious software for.
+This course gives you the map before the details. You will learn what the application owns, what
+the host runtime owns, run a small real application, and choose the next Guide course for your
+goal.
 
-## See it for yourself
+## Who this course is for
 
-This is a real JSVision application, running in this page right now — the standard shell and a
-welcome dialog. Press **Play**, then **Enter** to dismiss the dialog. Once it is gone, **F10** opens
-the menu and **Alt+X** exits.
+Start here if you are comfortable reading a short TypeScript program but have not built a
+terminal UI before. There are no JSVision prerequisites. To run the Node example locally you need
+Node 22 or newer, an ESM project, and an interactive terminal; the next course walks through that
+setup.
 
-<PlayExample id="apps/hello" title="Hello, JSVision" blurb="The standard application shell — menu bar, status line, desktop — and a modal welcome dialog." />
+By the end, you should be able to:
 
-Everything on this site works that way: every component page runs the real thing, not a recording.
+- explain the difference between application code, the JSVision event loop, and a host runtime;
+- recognize the rendered terminal frame as output rather than application state;
+- run a first application and quit it cleanly; and
+- choose the next course without learning packages, layout, or reactivity out of order.
 
-## Why you might want this
+## Mental model
 
-- **It runs where a GUI cannot.** Anywhere there is a terminal, there is a place for your app.
-- **It starts instantly and stays small.** No browser engine, no bundle to ship, no window manager.
-- **Keyboard-first, mouse-friendly.** Every control is reachable by keyboard; every control also
-  responds to a click, a drag, and a scroll wheel.
-- **It is genuinely portable.** The engine measures what your terminal can actually do and adapts —
-  the same application looks right on a modern truecolor terminal and on a monochrome one.
+Keep three responsibilities separate:
 
-## What you get
+| Layer              | Owns                                                                      | Does not own                                       |
+| ------------------ | ------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Application**    | Views, state, commands, focus, and the decision to quit                   | Reading terminal bytes or restoring terminal modes |
+| **Host runtime**   | Input, resize events, capability-aware terminal setup, and frame delivery | Your feature state or screen structure             |
+| **Terminal frame** | The cells currently visible to the user                                   | The durable source of truth for the application    |
 
-**A complete widget set.** Buttons, text inputs with validators and input masks, checkboxes, radio
-groups, switches, sliders, list boxes, trees, tables, tabs, progress bars, spinners, calendars and
-date pickers, colour pickers, dropdowns with history, and a real multi-line text editor.
+The data moves in both directions:
 
-**A windowing desktop.** Movable, resizable, zoomable, cascading and tiling windows with a window
-manager, plus modal dialogs that resolve as a promise — `await` a dialog and read what the user
-chose.
-
-**Reactive state.** Signals bind widget values to your data. Change the value, the widget repaints;
-type in the widget, your value updates. No manual refresh calls.
-
-**A layout engine.** Compose screens with flex-style rows, columns, and padding instead of computing
-cell coordinates by hand — and drop to absolute placement whenever you want exact control.
-
-**Theming that degrades gracefully.** Thirteen built-in presets, semantic colour roles, and automatic
-downsampling from truecolor to 256 colours to 16 to monochrome, so you author once and it renders
-sensibly everywhere.
-
-**A rendering engine that is correct about text.** Width-aware handling of Unicode, CJK, and emoji,
-and a damage-diff renderer that repaints only the cells that actually changed — so a full-screen app
-stays fluid even over a slow connection.
-
-**Batteries for real applications.** Form handling with schema validation, an editable enterprise
-data grid, file-open and directory dialogs, and clipboard support across every editable widget.
-
-**The same app in the browser.** A JSVision application mounts unchanged into an xterm.js terminal
-on a web page — every live example on this site is exactly that, the real SDK running in front of
-you. The browser host is internal to this repository and not yet published, so this is something
-you can see here rather than set up yourself today; see
-[Running in a browser](/guide/install-and-packages#running-in-a-browser).
-
-**Testable without a terminal.** Applications mount headlessly, so you can assert on what is on
-screen in an ordinary test run.
-
-## Install
-
-JSVision is ESM-only and needs Node 22 or newer.
-
-```sh
-npm install @jsvision/ui
+```text
+keyboard · mouse · resize
+          ↓
+host runtime → event loop → application views and state
+          ↑                         ↓
+          └──────── rendered terminal frame
 ```
 
-That is everything you need to build with — `@jsvision/ui` is the widget framework, and it brings
-the `@jsvision/core` rendering engine with it. See
-[Install & packages](/guide/install-and-packages) for the rest of the family and which ones you
-actually need.
+`createApplication()` assembles the application shell and event loop. On Node,
+`app.run()` connects that loop to the terminal host, enters the interactive screen, forwards input
+and resizes, and writes rendered frames. When the quit command resolves—or startup or runtime work
+throws—the run path restores the terminal in its cleanup path.
 
-## Your first application
+The live examples on this site use a browser host instead of `app.run()`. They still mount a real
+application and drive its real event loop; the surrounding docs helper is not part of the public
+API you copy into a project.
 
-A complete, runnable application: a menu bar with an Exit item, a status line, and an app that runs
-until you quit and leaves your terminal exactly as it found it.
+## Your first JSVision application
+
+This is a complete application with one body view and one discoverable quit command:
 
 ```ts
-import { createApplication, menuBar, subMenu, item, statusLine, statusItem, Commands } from '@jsvision/ui';
+import { Commands, Text, createApplication, statusItem, statusLine } from '@jsvision/ui';
 
 const app = createApplication({
-  menuBar: menuBar([subMenu('~F~ile', [item('E~x~it', Commands.quit, 'Alt+X')])]),
-  statusLine: statusLine([statusItem('~E~xit', Commands.quit, 'Alt+X')]),
+  content: new Text('Hello from JSVision'),
+  statusLine: statusLine([statusItem('~Q~uit', Commands.quit, 'Alt+X')]),
 });
 
-// Runs until the quit command; restores the terminal on every exit path.
-const code = await app.run();
-process.exit(code);
+const exitCode = await app.run();
+process.exitCode = exitCode;
 ```
 
-That is the whole program. Terminal capabilities are detected for you, the screen is set up and torn
-down for you, and `~x~` marks the keyboard shortcut letter in a label.
+Important details:
+
+- `content` is the application body. Passing a body creates a full-screen content application;
+  omitting it gives you the classic `Desktop` window manager.
+- `statusItem()` makes the quit action visible instead of hiding it in code.
+- `~Q~` marks the accelerator in the label, while `Alt+X` is the displayed key chord.
+- `app.run()` resolves with the exit code carried by the quit command. Setting `process.exitCode`
+  lets normal JavaScript cleanup finish.
+
+Menus, windows, layouts, and reactive state are deliberately absent. They are later lessons, not
+requirements for a first result.
+
+## Run the application
+
+After completing [Install & packages](/guide/install-and-packages), save the snippet as
+`src/main.ts` and run it with the TypeScript runner configured by that course:
+
+```sh
+npx tsx src/main.ts
+```
+
+The screen should show the text body and a status line. Press **Alt+X** to emit the standard quit
+command. A successful result is not merely “text appeared”: input reached the event loop, the
+application produced a frame, and the host restored the terminal after the loop ended.
+
+The laboratory below makes those boundaries visible. Press **Alt+N** or activate **Next stage** to
+follow one frame from application construction, through the host runtime, to the terminal. Press
+**Alt+R** to reset the explanation.
+
+<PlayExample id="guides/introduction-runtime" title="Trace the first frame" blurb="Advance through application, host runtime, and terminal-frame stages to see what each layer owns." />
+
+## Common first-run failures
+
+| Symptom                                                                 | Likely cause                                                       | Correction                                                                     | Evidence                                                                   |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Node reports an unsupported module or `require()` error                 | The project is not using the required ESM setup                    | Follow the package and TypeScript configuration exactly                        | The public import resolves before the app starts                           |
+| Startup reports that terminal essentials are not met                    | The process has no interactive TTY, such as a redirected or CI run | Run it in an interactive terminal; use a deliberate headless harness for tests | The app enters its interactive screen instead of failing before host setup |
+| The process keeps running after the first frame                         | A full-screen app is event-driven and waits for a quit command     | Keep the visible quit status item and press **Alt+X**                          | `app.run()` resolves and the normal shell returns                          |
+| A browser example works but the copied program cannot import its helper | The docs shell is repository infrastructure, not consumer API      | Import `createApplication` from `@jsvision/ui`                                 | TypeScript resolves only public package exports                            |
+
+Do not “fix” a missing TTY by disabling the runtime check in a production entry point. The
+`requireTty: false` option exists for a controlled headless harness with injected input and output,
+not for making an unusable interactive process appear healthy.
+
+## Best practices
+
+- **Keep the application model host-neutral.** Put feature state and commands in the application;
+  later Node and browser hosts can drive the same model without owning it.
+- **Give every important action a visible path.** A status or menu hint makes quit and recovery
+  discoverable to keyboard users.
+- **Treat the rendered frame as evidence, not state.** Tests may inspect frames, but business state
+  belongs in signals and models so it remains explainable and reusable.
+- **Let `run()` own the terminal lifecycle.** Bypassing its cleanup path risks leaving raw mode or
+  the alternate screen active after an error.
+
+## Choose your next course
+
+| Your goal                                  | Continue with                                     | Why                                                                    |
+| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------- |
+| Run the snippet locally or choose packages | [Install & packages](/guide/install-and-packages) | Establish Node 22+, ESM, TypeScript, and supported imports first       |
+| Arrange views into a responsive screen     | [Layout](/guide/layout)                           | Learn terminal-cell geometry and size negotiation                      |
+| Connect changing data to the interface     | [Reactive state](/guide/reactive-state)           | Learn signals, derived state, effects, and ownership                   |
+| Use JSVision through Codex                 | [Codex plugin](/guide/codex-plugin)               | Install the supported integration and understand its canonical sources |
+
+After those foundations, [The application shell](/guide/application-shell) teaches menus,
+desktops, windows, status composition, and the complete lifecycle.
+
+## Practice
+
+1. Before running the lab, predict which layer owns keyboard decoding and which owns the quit
+   command. Advance the stages and check your answer.
+2. Change the greeting text in the snippet. Explain why this changes application state and the
+   resulting frame but not the host runtime.
+3. Remove the visible status item without removing the quit command. The program can still be
+   terminated by emitted commands, but note why the interface is now harder to discover.
 
 ## Learning path
 

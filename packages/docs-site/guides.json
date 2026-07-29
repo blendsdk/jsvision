@@ -16,7 +16,7 @@
       ],
       "requiredLiveExamples": 1,
       "liveExampleException": null,
-      "examples": ["apps/hello"]
+      "examples": ["guides/introduction-runtime"]
     },
     {
       "id": "install-and-packages",
