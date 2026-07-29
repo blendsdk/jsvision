@@ -1,67 +1,55 @@
 /**
- * A scrolling list with keyboard navigation and type-ahead. Arrow keys / PgUp /
- * PgDn move the highlight, Enter or a click selects a row, and typing a prefix
- * jumps to the next match. The owned scroll bar tracks the focused row; a live
- * echo shows the focused and selected items.
+ * A ListBox laboratory demonstrating navigation, activation, reactive replacement, and focus
+ * clamping when a string collection shrinks.
  */
-import { ListBox, Text, signal, at, col, grow, fixed, spacer } from '@jsvision/ui';
+import { Group, Label, ListBox, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
+import { demoApp } from '../../src/demo-shell.js';
 
-const FRUITS = [
-  'Apple',
-  'Apricot',
-  'Avocado',
-  'Banana',
-  'Blackberry',
-  'Blueberry',
-  'Cantaloupe',
-  'Cherry',
-  'Coconut',
-  'Cranberry',
-  'Date',
-  'Elderberry',
-  'Fig',
-  'Grape',
-  'Guava',
-  'Kiwi',
-  'Lemon',
-  'Lime',
-  'Mango',
-  'Nectarine',
-  'Orange',
-  'Papaya',
-  'Peach',
-  'Pear',
-  'Pineapple',
-  'Plum',
-  'Raspberry',
-  'Strawberry',
-];
-
-// A 40x12 box: ten list rows, a gap row, and the echo row.
-const WIDTH = 40;
-const HEIGHT = 12;
+const CMD_REPLACE = 'list-box-lab.replace';
+const CONTENT_WIDTH = 44;
+const CONTENT_HEIGHT = 11;
 
 export default defineExample({
-  title: 'List box',
-  blurb: 'A virtual-scroll list with type-ahead: arrows / PgDn move, Enter selects, type a prefix to jump.',
-  build: () => {
-    const items = signal([...FRUITS]);
+  title: 'List Box Lab',
+  blurb: 'Navigate and select a string list, then replace its source and watch focus clamp safely.',
+  build: (ctx) => {
+    const app = demoApp(ctx, {
+      themeMenu: true,
+      keymap: createKeymap({ 'alt+r': CMD_REPLACE }),
+    });
+    const items = signal(['One', 'Two', 'Three', 'Four', 'Five']);
     const focused = signal(0);
     const selected = signal(-1);
-    const list = new ListBox({ items, focused, selected, typeAhead: true });
-
-    const echo = new Text(() => {
-      const focus = items()[focused()] ?? '-';
-      const pick = selected() >= 0 ? (items()[selected()] ?? '-') : '(none)';
-      return `focused: ${focus}   selected: ${pick}`;
+    const choice = signal('none');
+    const list = new ListBox({
+      items,
+      focused,
+      selected,
+      typeAhead: true,
+      onSelect: (_index, value) => choice.set(value),
     });
+    const dialog = new Template1Dialog({
+      title: ' List Box Lab ',
+      width: 48,
+      height: 15,
+      preserveChildHeights: (view) => view !== list,
+    });
+    const content = new Group();
 
-    // A column: the list takes whatever height is left over, a one-cell gap separates it from the
-    // echo, and the echo keeps exactly one row however long its text is. `spacer({ fixed: 1 })` is
-    // the hard one-cell gap -- a bare `spacer(1)` would ask for a 1fr *share* and swallow half the
-    // column. The size is stated here rather than left to the shell's default, so changing it is a
-    // deliberate edit to this file.
-    return at(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)), 0, 0, WIDTH, HEIGHT);
+    content.add(at(new Text('Reactive strings with ListView navigation.'), 0, 0, 44, 1));
+    content.add(at(new Label('~C~hoices', list.rows), 0, 2, 10, 1));
+    content.add(at(list, 11, 2, 16, 6));
+    content.add(at(new Text(() => `Selected: ${choice()}`), 29, 2, 15, 2));
+    content.add(at(new Text(() => `Items: ${items().length} · focus ${focused()}`), 0, 8, 44, 1));
+    content.add(at(new Text('End then Alt+R shrinks five values to two.'), 0, 9, 44, 1));
+    content.add(at(new Text('Enter selects · prefix search · Alt+C focus'), 0, 10, 44, 1));
+
+    app.onCommand(CMD_REPLACE, () => items.set(['One', 'Two']));
+    dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
+    app.desktop.addWindow(dialog);
+    app.loop.focusView(list.rows);
+    return app;
   },
 });

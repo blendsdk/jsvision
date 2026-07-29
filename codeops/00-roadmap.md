@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-21
+> **Last Updated**: 2026-07-29
 > **Features**: 0 / 2 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime` and `docs-website` active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
 > **CodeOps Skills Version**: 3.0.0
 
@@ -14,7 +14,7 @@
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (172/193 tasks; Code Editor flagship migration complete, overview integration next) · RD-04/07…10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-29 |
 
 ## Archived
 

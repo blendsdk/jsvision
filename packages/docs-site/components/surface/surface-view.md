@@ -35,11 +35,17 @@ view.panBy(8, 0); // scroll right, clamped to keep the surface in view
 
 ## Live example
 
-<PlayComingSoon title="Surface view" />
+<PlayExample id="surface/surface-view"
+  title="Surface View Lab"
+  blurb="Pan a compact viewport over a larger reactive surface while observing clamped two-axis offsets."
+/>
 
 ## Props
 
 `new SurfaceView(options)`.
+
+The public surface is `SurfaceView`, `SurfaceViewOptions`, `SurfaceSource`, and the two-way
+`Signal<Point>` delta.
 
 | Prop       | Type                     | Default         | Description                                                                    |
 | ---------- | ------------------------ | --------------- | ------------------------------------------------------------------------------ |
@@ -65,7 +71,7 @@ view.panBy(8, 0); // scroll right, clamped to keep the surface in view
 
 Every write bumps an internal version counter, so a bound `SurfaceView` repaints on its own.
 
-## Keyboard & mouse
+## Viewport and clipping
 
 `SurfaceView` is passive — `focusable` is `false` and it handles no keyboard or mouse input. Drive it
 from the outside:
@@ -75,6 +81,12 @@ from the outside:
 | `scrollTo(target)`     | Scroll so `target` becomes the top-left, **clamped** to keep the surface in view. |
 | `panBy(dx, dy)`        | Pan by a delta from the current offset (clamped).                                 |
 | Write `delta` directly | Scroll without the clamp — lets you scroll past the surface edge.                 |
+
+## Panning and reactive sources
+
+`scrollTo` and `panBy` clamp against the current surface and viewport. An accessor-based
+`SurfaceSource` can swap the canvas live; delta changes, surface replacement, and buffer version
+changes each schedule repaint.
 
 ## Sizing & layout
 

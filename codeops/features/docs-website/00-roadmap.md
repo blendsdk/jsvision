@@ -3,7 +3,7 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-13
+> **Last Updated**: 2026-07-29
 > **Progress**: 4 / 10 (40%)
 > **CodeOps Skills Version**: 3.3.2
 
@@ -13,7 +13,7 @@ example runs live, client-side, in xterm.js** (no backend), because the engine i
 byte-in/byte-out. Proven by the `web-xterm` spike, extracted here into a first-class `@jsvision/web`
 runtime. File/dir dialogs run against a browser virtual FileSystem. Docs cannot drift from the code:
 every example is a real, compiled, smoke-tested module embedded by snippet, guarded by a hard-fail
-`check:docs-site` CI gate. Requirements: 10 RDs behind a passed Zero-Ambiguity Gate (33/33).
+`check:docs-site` CI gate. Requirements: 10 RDs behind a passed Zero-Ambiguity Gate (42/42).
 
 ## Legend
 
@@ -27,7 +27,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 | RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | [web-runtime](plans/web-runtime/00-index.md) · [preflight](plans/web-runtime/00-preflight-report.md) | Done | ✅ | 2026-07-09 | Shipped — @jsvision/web browser runtime: createBrowserHost/mountApp · buildBrowserCaps · virtual FileSystem · key-reclaim · outbound clipboard · browser-stubs · dogfooded into web-xterm. |
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | [live-example-system](plans/live-example-system/00-index.md) · [register](plans/live-example-system/00-ambiguity-register.md) · [preflight](plans/live-example-system/00-preflight-report.md) | Done | ✅ | 2026-07-10 | Shipped — docs samples run live in xterm.js via mountApp (shown == running) · 8 seed examples · DemoShell · Play · ↳ remediation ✅ (resize · draggable shell · reopen dialogs · Source fix). |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — landing/pitch: hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter · depends RD-01, RD-03. |
-| RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — per-component page template + full ~40 coverage · hierarchy · status badges · components.json · depends RD-03. |
+| RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | [component-documentation-system](plans/component-documentation-system/00-index.md) · [preflight](plans/component-documentation-system/00-preflight-report.md) | Executing | 🔄 | 2026-07-29 | 187/193 tasks · Phase 11 full integration, lifecycle hardening, independent quality review, and authoritative verification are green. |
 | RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | [api-reference](plans/api-reference/00-index.md) | Done | ✅ | 2026-07-11 | Done — generated TypeDoc→md→VitePress reference for 4 public barrels · gitignored/regen per-package · bidirectional symbol↔page cross-links · drift-gated 20/20 · TypeDoc devDeps only. |
 | RD-07 | Sample applications | [RD-07](requirements/RD-07-sample-apps.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — sample apps: Todo · tvedit (virtual FS + local files) · polished kitchen-sink · file/data browser, each in DemoShell · depends RD-02, RD-03. |
 | RD-08 | Reference & trust content | [RD-08](requirements/RD-08-reference-trust.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — reference/trust: architecture · guides/cookbook · FAQ · a11y · security · perf · compat · theming gallery · versioning · contributing · absorbs docs/ techdocs · depends RD-03, RD-05. |

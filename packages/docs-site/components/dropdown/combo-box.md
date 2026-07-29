@@ -1,96 +1,112 @@
 ---
-title: Combo box
-description: ComboBox — a text field plus a dropdown list of items of any type T, in editable (free text + filter) or select-only mode.
+title: Combo Box
+description: Combine editable filtering or select-only choice with a typed ComboBox field, anchored popup, and synchronized value and text signals.
 ---
 
-# Combo box
+# Combo Box
 
-`ComboBox<T>` is a dropdown selector: a text [`Input`](/components/controls/input) plus a trailing
-`▐↓▌` button that opens a scrollable [`ListView`](/components/containers/list-box) of items of any
-type `T`. It binds two signals — `value` (the selected item, or `null`) and `text` (the field text) —
-and works in two modes: **editable** (the default: free text that filters the list) and
-**select-only** (a read-only picker with type-ahead). It opens on a click of the button, or on Down /
-Alt+Down while the field is focused; opening needs an overlay host (the app shell provides one), so it
-is a no-op headless.
+`ComboBox<T>` composes an [`Input`](/components/controls/input), a three-cell dropdown button, and
+an anchored [`ListView`](/components/containers/list-view). It keeps typed `value` and displayed
+`text` signals explicit, supporting both free-text filtering and strict selection.
+
+The application shell supplies the popup overlay host. Without one, open gestures are safe no-ops.
 
 ## Usage
 
 ```ts
-import { ComboBox, Group, createEventLoop, signal } from '@jsvision/ui';
-import { resolveCapabilities } from '@jsvision/core';
+import { ComboBox, signal } from '@jsvision/ui';
 
-const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
-const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
+const colors = signal(['Red', 'Green', 'Blue']);
 const value = signal<string | null>(null);
-
-const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
-combo.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } });
-
-const controls = new Group();
-controls.add(combo);
-const loop = createEventLoop({ width: 40, height: 12 }, { caps });
-loop.mount(controls);
-loop.focusView(combo.input); // the field is the focus target
-// Typing filters the candidates; Alt+↓ opens the list; Enter picks (sets value + text).
+const text = signal('');
+const combo = new ComboBox({
+  items: colors,
+  getText: (color) => color,
+  value,
+  text,
+});
 ```
 
 ## Live example
 
-<PlayComingSoon title="Combo box" />
+<PlayExample id="dropdown/combo-box" title="Editable picker laboratory" blurb="Type “gr” to narrow five typed candidates, open the anchored popup, and commit Green while value and field text synchronize." />
 
-## Props
+The filtered count comes from `combo.filtered()`, not a duplicate filter in the laboratory.
 
-`new ComboBox(options)`.
+## Props and public state
 
-| Prop       | Type                               | Default            | Description                                                                |
-| ---------- | ---------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| `items`    | `Signal<T[]>`                      | —                  | The source items (reactive — the open select-only popup re-renders).       |
-| `getText`  | `(item: T) => string`              | —                  | Render an item to its display string (list rows + the value ⟷ text match). |
-| `value`    | `Signal<T \| null>`                | —                  | Two-way selected value (`null` = none / no exact match).                   |
-| `text`     | `Signal<string>`                   | internal `''`      | Two-way field text.                                                        |
-| `editable` | `boolean`                          | `true`             | `true` = free text + filter; `false` = read-only picker + type-ahead.      |
-| `filter`   | `(item: T, text: string) => bool`  | substring (i-case) | Candidate predicate for editable mode.                                     |
-| `onSelect` | `(index: number, item: T) => void` | —                  | Fired on pick, with the list index + item.                                 |
-| `command`  | `string`                           | —                  | Typed command emitted on pick.                                             |
-| `maxRows`  | `number`                           | `6`                | Max visible popup rows.                                                    |
+`ComboBox<T>` accepts `ComboBoxOptions<T>`:
 
-The composed field is exposed as `combo.input` (the focus target); `combo.filtered()` reads the
-current candidate list.
+| Prop                   | Type                      | Default                    | Purpose                               |
+| ---------------------- | ------------------------- | -------------------------- | ------------------------------------- |
+| `items`                | `Signal<T[]>`             | —                          | Reactive candidates.                  |
+| `getText`              | `(item: T) => string`     | —                          | Field/list representation.            |
+| `value`                | `Signal<T \| null>`       | —                          | Typed selected value.                 |
+| `text`                 | `Signal<string>`          | internal `''`              | Field text.                           |
+| `editable`             | `boolean`                 | `true`                     | Free text/filter or select-only mode. |
+| `filter`               | `(item, text) => boolean` | case-insensitive substring | Editable candidate filter.            |
+| `placeholder`          | `string`                  | —                          | Empty editable-field hint.            |
+| `onSelect` / `command` | callback / string         | —                          | Pick outputs.                         |
+| `maxRows`              | `number`                  | `6`                        | Visible popup rows.                   |
 
-## Keyboard & mouse
+Public `items`, `value`, `text`, `input`, and `filtered()` expose the composed state and focus target.
+The public `input` member is the actual composed `Input`, not a mirrored field facade.
 
-| Input                      | Result                                                                       |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| Type in the field          | **Editable:** filters the candidates. **Select-only:** read-only.            |
-| **Down / Alt+Down**        | Open the dropdown list (while the field is focused).                         |
-| **Click** the `▐↓▌` button | Open the dropdown list.                                                      |
-| Type in the open list      | **Select-only:** type-ahead jumps the focused row.                           |
-| **Enter / Space / click**  | Pick the focused row (sets `text` in editable mode, `value` in select-only). |
+## Size and Layout
 
-With no overlay host available (headless), opening is a no-op.
+ComboBox is one row: the input flexes and the dropdown button reserves three cells. Give it enough
+width for representative values and place it where the anchored popup has useful space. Popup
+placement stays inside the overlay host and uses up to `maxRows`.
 
-## Sizing & layout
+Focus `combo.input`, not the outer group. Down opens while that field is focused; Alt+Down opens
+from the wider control scope.
 
-One row: the text field (flex-grows) plus a trailing 3-cell dropdown button. Give it enough width for
-the longest value you expect to show inline.
+## Editable and select-only modes
 
-## Best practices
+Editable mode accepts free text and filters candidates. `value` tracks the item whose `getText`
+exactly equals `text`; unmatched free text intentionally yields `null`.
 
-- **Pick the mode to match the intent.** Editable when free text is meaningful (a path, a search);
-  select-only (`editable: false`) when the value must be one of the items.
-- **`value` vs. `text`.** In editable mode `value` tracks the item whose `getText` exactly equals the
-  field text, else `null` — so free text matching nothing leaves `value` null by design.
-- **Focus the field, not the group.** Focus `combo.input`; the ComboBox sees Down/Alt+Down because
-  the focused field is its descendant.
+Select-only mode rejects field edits and mirrors `getText(value)` into text. Its open list enables
+type-ahead so users can jump without changing the read-only field.
+
+```ts
+import { ComboBox } from '@jsvision/ui';
+
+const language = new ComboBox({
+  items: languages,
+  getText: (item) => item.label,
+  value: selectedLanguage,
+  editable: false,
+});
+```
+
+## Popup and selection
+
+Down, Alt+Down, or the `▐↓▌` button opens a popup anchored to the control. Editable mode snapshots
+the current filtered candidates; select-only mode observes the live items signal. Enter, Space, or
+a row click commits the typed item and closes the popup.
+
+Editable picks write text and let the binding derive value. Select-only picks write value and let
+the binding derive text. This one-way-per-mode design avoids feedback loops.
+
+## Best Practices
+
+- Use select-only mode when arbitrary text would be invalid domain data.
+- Preserve a separate text signal when drafts or unmatched searches matter.
+- Make `getText` stable and unique when exact text-to-value matching is required.
+- Keep popup candidates bounded and searchable; use another component for huge remote datasets.
+- Focus the public input and provide a visible field label.
 
 ## Theming
 
-The field uses the input roles, the button draws the shared `▐↓▌` dropdown icon, and the popup list
-uses the standard list roles.
+The field uses `inputNormal`, `inputSelected`, `inputSelection`, and `inputPlaceholder`.
+`historyButtonArrow` and `historyButtonSides` paint the dropdown glyph. Popup rows use
+`listNormal`, `listFocused`, and `listSelected`. Check field, button, and popup contrast together
+because they cross several roles.
 
 ## Related
 
-- [History](/components/dropdown/history) — a most-recently-used dropdown for an `Input`'s past values.
-- [List box](/components/containers/list-box) — the list the dropdown opens.
-- [Input](/components/controls/input) — the text field the combo box is built on.
-- [API reference](/api/ui/classes/ComboBox) — the generated `ComboBox` signature.
+- [History](/components/dropdown/history) — recall prior free-text values.
+- [List View](/components/containers/list-view) — popup’s typed row model.
+- [Input](/components/controls/input) — editable field behavior.
+- [ComboBox API](/api/ui/classes/ComboBox) — generated options and public signals.

@@ -34,11 +34,16 @@ write('server listening on :8080\n');
 
 ## Live example
 
-<PlayComingSoon title="Terminal" />
+<PlayExample id="terminal/terminal"
+  title="Terminal Lab"
+  blurb="Stream safe text through terminalWriter, retain bounded history, wheel backward, and snap to newest output."
+/>
 
 ## Props
 
 `new Terminal(options)`.
+
+The public surface is `Terminal`, `TerminalOptions`, and the `terminalWriter` callback adapter.
 
 | Prop       | Type     | Default | Description                                                          |
 | ---------- | -------- | ------- | -------------------------------------------------------------------- |
@@ -53,7 +58,12 @@ write('server listening on :8080\n');
 | `clear()`              | Drop all content.                                                          |
 | `terminalWriter(term)` | Standalone helper: wraps a `Terminal` as a `(text) => void` callback sink. |
 
-## Keyboard & mouse
+## Streaming and retention
+
+`write` and `writeLine` append into a bounded ring measured in UTF-16 code units. `terminalWriter`
+adapts that API to a plain string sink. Every new write resets scrollback to the newest output.
+
+## Scrollback and safety
 
 | Input          | Result                                                |
 | -------------- | ----------------------------------------------------- |
