@@ -416,32 +416,56 @@
 
 ## Phase 7 — Surface, General Editing, and Terminal
 
+> **Phase baseline tree**: `ad72993e536537bf559760b195a4f8c635039c71`
+> **Expected modification set**: Phase 7 surface/editor/terminal behavior contracts, family
+> specification and implementation tests, seven pages and template1 examples, family registry
+> modules, bounded integration corrections, this execution plan, roadmap, traceability, and
+> verification/review evidence.
+
 ### 7.1 Specification tests
 
-- [ ] **7.1.1** Add `test/contracts/editing.ts` and
+- [x] **7.1.1** Add `test/contracts/editing.ts` and
   `test/editing-components.spec.test.ts` for the surface/editor/output subset of ST-21, its
   cumulative IDs, exact behavior contracts, and the explicit boundary from the Code Editor hub.
-- [ ] **7.1.2** Run RED for Surface/Indicator pages and the five missing examples.
+  ✅ (completed: 2026-07-29 06:47 CEST; docs-site typecheck passes)
+- [x] **7.1.2** Run RED for Surface/Indicator pages and the five missing examples.
+  ✅ (completed: 2026-07-29 06:47 CEST; expected RED: 28 failures covering seven page contracts,
+  seven absent template1 examples, and seven behavior contracts; `/tmp/tmp.Xjdf6v14vT`)
 
 ### 7.2 Implementation
 
-- [ ] **7.2.1** Add `components/surface/surface.md`; upgrade `surface-view.md`.
-- [ ] **7.2.2** Add `examples/surface/surface.ts` and `surface-view.ts`.
-- [ ] **7.2.3** Upgrade `components/editor/editor.md` and `memo.md`.
-- [ ] **7.2.4** Add `examples/editor/editor.ts` and `memo.ts`.
-- [ ] **7.2.5** Upgrade `components/editor/edit-window.md`; add
+- [x] **7.2.1** Add `components/surface/surface.md`; upgrade `surface-view.md`.
+  ✅ (completed: 2026-07-29 06:50 CEST; focused page contracts pass)
+- [x] **7.2.2** Add `examples/surface/surface.ts` and `surface-view.ts`.
+  ✅ (completed: 2026-07-29 06:49 CEST; docs-site typecheck passes)
+- [x] **7.2.3** Upgrade `components/editor/editor.md` and `memo.md`.
+  ✅ (completed: 2026-07-29 06:50 CEST; focused page contracts pass)
+- [x] **7.2.4** Add `examples/editor/editor.ts` and `memo.ts`.
+  ✅ (completed: 2026-07-29 06:49 CEST; docs-site typecheck passes)
+- [x] **7.2.5** Upgrade `components/editor/edit-window.md`; add
   `components/editor/indicator.md`.
-- [ ] **7.2.6** Add `examples/editor/edit-window.ts` and `indicator.ts`.
-- [ ] **7.2.7** Upgrade `components/terminal/terminal.md`; add
+  ✅ (completed: 2026-07-29 06:51 CEST; focused page contracts pass)
+- [x] **7.2.6** Add `examples/editor/edit-window.ts` and `indicator.ts`.
+  ✅ (completed: 2026-07-29 06:49 CEST; docs-site typecheck passes)
+- [x] **7.2.7** Upgrade `components/terminal/terminal.md`; add
   `examples/terminal/terminal.ts`.
-- [ ] **7.2.8** Register all seven examples in the surface/editing/terminal family registry modules.
-- [ ] **7.2.9** Run the family ST-21 subset and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 06:51 CEST; focused page/behavior contracts pass)
+- [x] **7.2.8** Register all seven examples in the surface/editing/terminal family registry modules.
+  ✅ (completed: 2026-07-29 06:49 CEST; docs-site typecheck passes)
+- [x] **7.2.9** Run the family ST-21 subset and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 06:51 CEST; all 29 family page, template, visibility, and behavior
+  cases pass; `/tmp/tmp.4wxFIfjPPa`)
 
 ### 7.3 Implementation tests and hardening
 
-- [ ] **7.3.1** Add `test/editing-components.impl.test.ts` for surface bounds, editor reset/undo,
+- [x] **7.3.1** Add `test/editing-components.impl.test.ts` for surface bounds, editor reset/undo,
   clipboard seams, timer/writer disposal, and safe terminal text.
-- [ ] **7.3.2** Complete content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 06:52 CEST; typecheck and all 36 family specification/implementation
+  cases pass; `/tmp/tmp.mhCC68LNNh`)
+- [x] **7.3.2** Complete content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 07:10 CEST; independent review closed RV-701 through RV-707 after
+  one correction pass; 39/39 focused cases, 454/454 docs-site cases, 20/20 documentation checks,
+  and post-review `yarn verify` passed in 134.60 seconds)
 
 ## Phase 8 — Forms and Files
 

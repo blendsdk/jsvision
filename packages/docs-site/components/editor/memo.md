@@ -31,12 +31,18 @@ console.log('memo text is', notes());
 
 ## Live example
 
-<PlayComingSoon title="Memo" />
+<PlayExample id="editor/memo"
+  title="Memo Lab"
+  blurb="Edit a signal-bound multiline field, replace it externally, and let Tab continue through the dialog."
+/>
 
 ## Props
 
 `new Memo(options)` — extends [`EditorOptions`](/components/editor/editor#props) with one required
 field.
+
+The public surface is `Memo`, `MemoOptions`, inherited `EditorOptions`, and its required
+`Signal<string>`.
 
 | Prop    | Type             | Default | Description                                                                         |
 | ------- | ---------------- | ------- | ----------------------------------------------------------------------------------- |
@@ -45,7 +51,12 @@ field.
 All other `Editor` options (`clipboard`, `keyBindings`, `undoDepth`, `autoIndent`, `overwrite`,
 `editorDialog`, `commands`) apply unchanged.
 
-## Keyboard & mouse
+## Signal synchronization
+
+Typing mirrors the complete buffer into `value` in the same update. External signal writes replace
+the buffer without feedback loops, making the signal the durable source of truth.
+
+## Dialog focus behavior
 
 Identical to [`Editor`](/components/editor/editor#keyboard-mouse), with one difference: **Tab is not
 captured** — it moves focus to the next control so a memo sits naturally in a dialog's focus order.

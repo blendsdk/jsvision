@@ -8,7 +8,7 @@ description: EditWindow — a blue movable/resizable window framing an Editor wi
 `EditWindow` is a blue editor window: an [`Editor`](/components/editor/editor) framed by a
 movable/resizable [`Window`](/components/containers/dialog), with a vertical and horizontal
 [`ScrollBar`](/components/containers/scroll-bar) and a `line:col`
-[`Indicator`](/components/editor/edit-window) wired in. It enforces a minimum size of 24×6 and
+[`Indicator`](/components/editor/indicator) wired in. It enforces a minimum size of 24×6 and
 repositions its scroll bars and indicator whenever it is resized or zoomed. The scroll bars and
 indicator show only while the window is active; an inactive window shows a plain frame. Add it to a
 desktop and it behaves like any other window.
@@ -32,11 +32,17 @@ win.editor.setText('Hello, world!');
 
 ## Live example
 
-<PlayComingSoon title="Edit window" />
+<PlayExample id="editor/edit-window"
+  title="Edit Window Lab"
+  blurb="Use a complete document window with hosted Editor, scroll bars, indicator, activation, and zoom."
+/>
 
 ## Props
 
 `new EditWindow(options)`.
+
+The public surface is `EditWindow`, `EditWindowOptions`, its hosted `Editor`, and its wired
+`Indicator`.
 
 | Prop           | Type                  | Default        | Description                                                                        |
 | -------------- | --------------------- | -------------- | ---------------------------------------------------------------------------------- |
@@ -49,13 +55,19 @@ The hosted editor is exposed as `win.editor`. The title reads `"Clipboard"` when
 shared clipboard editor, otherwise `"Untitled"` (a file loader can retitle it via the reactive title
 signal).
 
-### The `Indicator` strip
+## Window composition
+
+The frame owns the Editor, two ScrollBars, and an Indicator. Activation shows the gadgets; inactive
+windows return to a plain frame. A supplied Editor keeps its own buffer and policies while the
+window takes over placement.
+
+## Gadgets and resize
 
 `Indicator` is the passive `line:col` strip in the window's bottom border. It shows the caret's
 1-based line/column and a `*` when the document has unsaved changes; it fills with a double line at
 rest and a single line while the window is dragged. `EditWindow` creates and positions one for you.
 
-## Keyboard & mouse
+### Keyboard and mouse
 
 Inside the frame, all [`Editor`](/components/editor/editor#keyboard-mouse) input applies. The window
 chrome adds the usual move (drag the title), resize (drag the corner), and zoom controls; the scroll
@@ -78,8 +90,9 @@ can leave one stale frame painted before it re-pins. The minimum size is 24×6.
 
 ## Theming
 
-The blue window frame uses the window roles; the hosted editor uses the `editorNormal` /
-`editorSelected` roles, and the indicator uses `indicatorNormal` / `indicatorDragging`.
+The frame uses `windowActive` while focused and `windowInactive` otherwise. The hosted editor uses
+`editorNormal` / `editorSelected`; the bars use `scrollBarControls` / `scrollBarPage`; and the
+indicator uses `indicatorNormal` / `indicatorDragging`.
 
 ## Related
 

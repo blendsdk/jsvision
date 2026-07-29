@@ -444,9 +444,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:47bffecf9adf18634f4f0e49a92f10af644021c667858766410262de96955e8f",
+          "revision": "sha256:3bd102f0ee1de0d81fec2071d271129aab85950d393fd3d408f67705458b62c6",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-28T23:32:36Z"
+          "validatedAt": "2026-07-29T05:10:00Z"
         }
       ]
     },
@@ -456,7 +456,8 @@
         "Phase 3 controls: 53 focused page, template, behavior, and lifecycle cases passed after independent review.",
         "Phase 4 foundations and application shell: 32 focused cases passed after accepted fixes; the one-time re-review closed every finding.",
         "Phase 5 containers and navigation: 49 focused cases passed after accepted review fixes, including complete rendered teaching lines and guarded tab closure.",
-        "Phase 6 feedback, date, and color: 44 focused cases and 408 docs-site cases passed after widget-bound rendering, real popup/input, date-boundary, pointer, and cleanup corrections."
+        "Phase 6 feedback, date, and color: 44 focused cases and 408 docs-site cases passed after widget-bound rendering, real popup/input, date-boundary, pointer, and cleanup corrections.",
+        "Phase 7 surface, general editing, and terminal: 39 focused cases and 454 docs-site cases passed after widget-bound surface, signal, scrollback, gadget, drag, and cleanup corrections."
       ],
       "id": "TEST-RD05",
       "revision": "sha256:0394095d0e4cfe056dd06a373e2f5f35e0cc745218993fd8fa11c54a42689032",
@@ -482,10 +483,11 @@
         "Phase 3 verified: all nine Controls pages/examples complete; reviewed-state yarn verify passed across 19 packages.",
         "Phase 4 verified: all eight Foundations and Application Shell pages/examples complete; every independent-review finding is closed.",
         "Phase 5 verified: all ten Containers and Navigation pages/examples complete; accepted review fixes pass the strengthened family suite.",
-        "Phase 6 verified: all six Feedback, Date, and Color pages/examples complete; post-review yarn verify and the 20-check documentation build pass."
+        "Phase 6 verified: all six Feedback, Date, and Color pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
+        "Phase 7 verified: all seven Surface, General Editing, and Terminal pages/examples complete; post-review yarn verify and the 20-check documentation build pass."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:47bffecf9adf18634f4f0e49a92f10af644021c667858766410262de96955e8f",
+      "revision": "sha256:3bd102f0ee1de0d81fec2071d271129aab85950d393fd3d408f67705458b62c6",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -574,13 +576,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:47bffecf9adf18634f4f0e49a92f10af644021c667858766410262de96955e8f",
+          "revision": "sha256:3bd102f0ee1de0d81fec2071d271129aab85950d393fd3d408f67705458b62c6",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-28T23:32:36Z"
+          "validatedAt": "2026-07-29T05:10:00Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T04:41:52Z"
+  "updated": "2026-07-29T05:10:00Z"
 }
