@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f8c5a9aee7cc9ca1a2c7914100427a72279d748d9ab98390467c9042c14519dc",
+          "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -940,7 +940,8 @@
         "Phase 4 host-lifecycle evidence: both labs build without an ambient owner, emit no unowned-root warning, and stop reactive work after host teardown.",
         "Phase 4 fix-scoped re-review: both Major findings and the Minor finding are resolved with no remaining Critical, Major, or Minor issue.",
         "Phase 5 Codex plugin expected red: 2 passed and 6 failed across eight independently authored final-contract specifications.",
-        "Phase 5 Codex plugin green checkpoint: 8/8 specifications and 15/15 focused course/catalog tests pass with docs-site typecheck, plugin integrity, and authoritative yarn verify."
+        "Phase 5 Codex plugin green checkpoint: 8/8 specifications and 15/15 focused course/catalog tests pass with docs-site typecheck, plugin integrity, and authoritative yarn verify.",
+        "Phase 5 Codex plugin hardening: 18/18 focused tests and yarn verify pass across real tree equality, synthetic distribution drift, and independent stale-version diagnostics."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -983,10 +984,11 @@
         "summary:Phase 4 task 4.3.2 passed 27/27 focused Reactive state/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry.",
         "summary:Phase 4 independent review found two Major and one Minor issue; AR-23 applied every correction and the permitted re-review cleared all findings.",
         "summary:Phase 5 tasks 5.1.1 and 5.1.2 established eight Codex plugin cases; expected red is 2 passed and 6 failed for course and authentic-substitute gaps.",
-        "summary:Phase 5 tasks 5.2.1 through 5.2.4 reached green with 8/8 specifications, 15/15 focused tests, docs-site typecheck, plugin integrity, and yarn verify passing."
+        "summary:Phase 5 tasks 5.2.1 through 5.2.4 reached green with 8/8 specifications, 15/15 focused tests, docs-site typecheck, plugin integrity, and yarn verify passing.",
+        "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:f8c5a9aee7cc9ca1a2c7914100427a72279d748d9ab98390467c9042c14519dc",
+      "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1084,7 +1086,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f8c5a9aee7cc9ca1a2c7914100427a72279d748d9ab98390467c9042c14519dc",
+          "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1092,5 +1094,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T21:37:00Z"
+  "updated": "2026-07-29T21:46:00Z"
 }
