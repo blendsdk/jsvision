@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-29 23:11
-> **Progress**: 32/246 tasks (13%)
+> **Progress**: 38/246 tasks (15%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -289,15 +289,15 @@ independent specification-first phase (AR-10).
 
 ### Step 5.1: Specification tests
 
-- [ ] 5.1.1 [spec-author] Write the Codex plugin workflow oracle — `packages/docs-site/test/codex-plugin-guide.spec.test.ts`
-- [ ] 5.1.2 Run the specification and record the expected red result
+- [x] 5.1.1 [spec-author] Write the Codex plugin workflow oracle — `packages/docs-site/test/codex-plugin-guide.spec.test.ts` ✅ (completed: 2026-07-29 23:31)
+- [x] 5.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-29 23:31) — expected red: 2 passed, 6 failed for prerequisite, source-boundary, authentic-evidence, command-boundary, diagnosis, practice, and next-step gaps; commit deferred to the green 5.2.4 checkpoint per runtime AR-24
 
 ### Step 5.2: Implementation
 
-- [ ] 5.2.1 Upgrade supported installation, invocation, source ownership, failures, and next steps — `packages/docs-site/guide/codex-plugin.md`
-- [ ] 5.2.2 Bind the substitute to canonical skill/plugin update and validation behavior — `packages/docs-site/guide/codex-plugin.md`
-- [ ] 5.2.3 Revalidate the zero-lab catalog exception without promoting the stage — `packages/docs-site/guides.json`
-- [ ] 5.2.4 Run ST-14 green plus docs-site typecheck; fix implementation only
+- [x] 5.2.1 Upgrade supported installation, invocation, source ownership, failures, and next steps — `packages/docs-site/guide/codex-plugin.md` ✅ (completed: 2026-07-29 23:34)
+- [x] 5.2.2 Bind the substitute to canonical skill/plugin update and validation behavior — `packages/docs-site/guide/codex-plugin.md` ✅ (completed: 2026-07-29 23:34)
+- [x] 5.2.3 Revalidate the zero-lab catalog exception without promoting the stage — `packages/docs-site/guides.json` ✅ (completed: 2026-07-29 23:34) — unchanged integration profile, host-runtime exception, empty example list, and Upgrade stage pass the catalog oracle
+- [x] 5.2.4 Run ST-14 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-29 23:37) — 8/8 Codex plugin specifications, 15/15 focused course/catalog tests, docs-site typecheck, plugin integrity, and authoritative `yarn verify` passed
 
 ### Step 5.3: Hardening
 
