@@ -9,13 +9,7 @@ import {
   createGuardedWindowedRows,
   createWindowedDataGridLabSource,
 } from '../src/example-fixtures/data-grid/windowed-source.js';
-import {
-  buildLabExample,
-  collectTemplate1Evidence,
-  dispatchExampleAction,
-  frameText,
-  viewsIn,
-} from './example-lab-harness.js';
+import { buildLabExample, dispatchExampleAction, frameText, viewsIn } from './example-lab-harness.js';
 
 describe('guarded procedural source', () => {
   test('rejects invalid or unbounded slices', () => {
@@ -50,11 +44,11 @@ describe('guarded procedural source', () => {
 });
 
 describe('scale laboratories', () => {
-  test('windowed lab reports bounded work in a centered padded dialog', () => {
+  test('windowed lab reports bounded work in its maximized experimental dialog', () => {
     createRoot((dispose) => {
       const { app, dialog } = buildLabExample('data-grid/windowed', windowed);
       try {
-        collectTemplate1Evidence(app, dialog);
+        expect(dialog.isZoomed()).toBe(true);
         dispatchExampleAction(app, { kind: 'key', key: 'w', modifiers: ['Alt'] });
         expect(frameText(app)).toMatch(/bounded reads/);
         const grid = viewsIn(dialog).find((view) => view instanceof EditableDataGrid);

@@ -2,7 +2,8 @@
  * A SplitView laboratory showing proportional panes, minimum constraints, focusable keyboard
  * resizing, commit callbacks, and a live grab-mark signal.
  */
-import { Dialog, Group, SplitView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, SplitView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -33,8 +34,7 @@ export default defineExample({
       minSize: [10, 14],
       onResizeEnd: () => commits.set(commits() + 1),
     });
-    const dialog = new Dialog({ title: ' Split View Lab ', width: 56, height: 15 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Split View Lab ', width: 56, height: 15 });
     const content = new Group();
 
     content.add(at(new Text('One divider trades cells between two panes.'), 0, 0, 52, 1));

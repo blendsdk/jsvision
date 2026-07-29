@@ -2,7 +2,8 @@
  * A ListBox laboratory demonstrating navigation, activation, reactive replacement, and focus
  * clamping when a string collection shrinks.
  */
-import { Dialog, Group, Label, ListBox, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Label, ListBox, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -29,8 +30,7 @@ export default defineExample({
       typeAhead: true,
       onSelect: (_index, value) => choice.set(value),
     });
-    const dialog = new Dialog({ title: ' List Box Lab ', width: 48, height: 15 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' List Box Lab ', width: 48, height: 15 });
     const content = new Group();
 
     content.add(at(new Text('Reactive strings with ListView navigation.'), 0, 0, 44, 1));

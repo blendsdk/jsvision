@@ -1,7 +1,8 @@
 /**
  * A Calendar laboratory showing bounded navigation, selection, disabled dates, and stable today.
  */
-import { Calendar, Dialog, Group, Text, at, createKeymap, dayOfWeek, signal, toISO } from '@jsvision/ui';
+import { Calendar, Group, Text, at, createKeymap, dayOfWeek, signal, toISO } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { CalendarDate } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -32,8 +33,7 @@ export default defineExample({
       density: 'compact',
       isDisabled: (date) => dayOfWeek(date) === 0,
     });
-    const dialog = new Dialog({ title: ' Calendar Lab ', width: 60, height: 17 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Calendar Lab ', width: 60, height: 17 });
     const content = new Group();
 
     content.add(at(new Text('Monday-first · ISO weeks · Sundays disabled'), 0, 0, 56, 1));

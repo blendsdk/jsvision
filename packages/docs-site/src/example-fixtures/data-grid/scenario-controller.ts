@@ -2,6 +2,7 @@ import type { AppEvent, Signal } from '@jsvision/ui';
 import type { EditableDataGrid, ExportFormat, GridStatus } from '@jsvision/datagrid';
 import type { DataGridLabRow } from './data.js';
 import type { DataGridLabScenario } from './lab.js';
+import { moveDataGridMasterCursor } from './master-detail.js';
 import { DataGridLabProbe } from './probe.js';
 import type { WindowedDataGridLabSource } from './windowed-source.js';
 
@@ -275,9 +276,10 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
       return true;
     }
     if (scenario === 'master-detail' && chord === 'down') {
-      grid.selectRow('customer-2');
-      probe.set('detail-key', 'customer-2');
-      status.set('customer-2 · Bram · West');
+      moveDataGridMasterCursor(grid, 'next');
+      status.set(
+        `${String(grid.focusedKey())} · ${grid.focusedRow()?.name ?? 'none'} · ${grid.focusedRow()?.region ?? ''}`,
+      );
       return true;
     }
     if (scenario === 'large-memory' && chord === 'alt+l') return false;
@@ -336,6 +338,9 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
     probe.bindProbe('performance-note', () => status());
   }
   if (scenario === 'large-memory') probe.bindProbe('performance-note', () => status());
+  if (scenario === 'master-detail') {
+    probe.bindProbe('detail-key', () => String(grid.focusedKey() ?? ''));
+  }
   if (['editing-lifecycle', 'editor-types', 'custom-editor', 'dirty-commit', 'validation'].includes(scenario)) {
     probe.bindProbe('editing-state', () => (grid.rows.isEditing() ? 'editing' : 'idle'));
     probe.bindProbe('cell-text', () =>

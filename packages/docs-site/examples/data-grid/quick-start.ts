@@ -4,7 +4,7 @@ import { buildDataGridLab } from '#data-grid-lab';
 
 export default defineExample({
   title: 'Choose a Grid',
-  blurb: 'Compare DataGrid and EditableDataGrid in one focused Classic-theme laboratory.',
+  blurb: 'Compare DataGrid and EditableDataGrid in a maximized, resizable Classic-theme laboratory.',
   build: (ctx) =>
     buildDataGridLab(ctx, {
       scenario: 'quick-start',

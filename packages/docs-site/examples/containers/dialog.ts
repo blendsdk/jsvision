@@ -2,7 +2,8 @@
  * A Dialog laboratory showing automatic centering, built-in padding, validation gating, and the
  * guaranteed cancel escape path.
  */
-import { Commands, Dialog, Group, Input, Label, Text, at, createKeymap, range, signal } from '@jsvision/ui';
+import { Commands, Group, Input, Label, Text, at, createKeymap, range, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     const validation = signal('waiting');
     const cancel = signal('not checked');
     const age = new Input({ value: ageValue, validator: range(18, 120) });
-    const dialog = new Dialog({ title: ' Dialog Lab ', width: 48, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Dialog Lab ', width: 48, height: 14 });
     const content = new Group();
 
     content.add(at(new Text('Dialog aggregates child validity before a modal command resolves.'), 0, 0, 44, 2));

@@ -1,7 +1,8 @@
 /**
  * A typed Router laboratory demonstrating push, back, replace, and reset on a real screen stack.
  */
-import { Button, Dialog, Group, Text, at, createKeymap, createRouter } from '@jsvision/ui';
+import { Button, Group, Text, at, createKeymap, createRouter } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -53,8 +54,7 @@ export default defineExample({
         settings: { build: () => ({ view: routeView('SETTINGS', 'Replaced without growing the stack') }) },
       },
     });
-    const dialog = new Dialog({ title: ' Router Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Router Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('Router owns a typed stack of full-screen View roots.'), 0, 0, CONTENT_WIDTH, 1));

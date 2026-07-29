@@ -1,5 +1,6 @@
 /** Indicator laboratory for caret position, modified state, and passive status presentation. */
-import { Dialog, Group, Indicator, Text, at, createKeymap } from '@jsvision/ui';
+import { Group, Indicator, Text, at, createKeymap } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -18,8 +19,7 @@ export default defineExample({
     });
     const indicator = new Indicator();
     indicator.setValue({ line: 1, col: 1 }, false);
-    const dialog = new Dialog({ title: ' Indicator Lab ', width: 54, height: 12 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Indicator Lab ', width: 54, height: 12 });
     const content = new Group();
     content.add(at(new Text('Indicator is a passive Editor status projection.'), 0, 0, 50, 1));
     content.add(at(indicator, 0, 3, 18, 1));

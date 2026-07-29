@@ -2,7 +2,8 @@
  * An interactive RadioGroup laboratory showing exclusive selection, select-on-arrow movement,
  * wrapping navigation, item accelerators, a disabled row, and deterministic reset.
  */
-import { Button, Dialog, Group, RadioGroup, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, RadioGroup, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     });
     group.setItemEnabled(3, false);
 
-    const dialog = new Dialog({ title: ' Radio Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Radio Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(

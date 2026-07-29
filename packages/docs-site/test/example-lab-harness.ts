@@ -174,25 +174,41 @@ export function buildLabExample(
  * @returns Immutable geometry and rendered cell evidence.
  * @throws When chrome, centering, margins, padding, surface color, or frame bounds are invalid.
  */
-export function collectTemplate1Evidence(app: Application, dialog: Dialog): Template1Evidence {
+export function collectTemplate1Evidence(
+  app: Application,
+  dialog: Dialog,
+  options: { readonly startup?: 'compact' | 'maximized' } = {},
+): Template1Evidence {
   const desktop = app.desktop;
   if (desktop === undefined) throw new Error('template1 requires a desktop');
-
-  const expectedX = Math.floor((desktop.bounds.width - dialog.bounds.width) / 2);
-  const expectedY = Math.floor((desktop.bounds.height - dialog.bounds.height) / 2);
-  if (dialog.bounds.x !== expectedX || dialog.bounds.y !== expectedY) {
-    throw new Error(`template1 dialog is not centered: ${dialog.bounds.x},${dialog.bounds.y}`);
-  }
-  if (!dialog.centered) throw new Error('template1 dialog must use automatic centering');
   if (dialog.closable) throw new Error('template1 dialog must remain non-closable');
   if (dialog.background !== undefined) throw new Error('template1 dialog must not override its theme surface');
-  if (
-    dialog.bounds.x <= 0 ||
-    dialog.bounds.y <= 0 ||
-    dialog.bounds.x + dialog.bounds.width >= desktop.bounds.width ||
-    dialog.bounds.y + dialog.bounds.height >= desktop.bounds.height
-  ) {
-    throw new Error('template1 dialog must leave visible desktop margin on every side');
+
+  if (options.startup === 'maximized') {
+    if (
+      !dialog.isZoomed() ||
+      dialog.bounds.x !== 0 ||
+      dialog.bounds.y !== 0 ||
+      dialog.bounds.width !== desktop.bounds.width ||
+      dialog.bounds.height !== desktop.bounds.height
+    ) {
+      throw new Error('template1 dialog must start maximized to the complete desktop');
+    }
+  } else {
+    const expectedX = Math.floor((desktop.bounds.width - dialog.bounds.width) / 2);
+    const expectedY = Math.floor((desktop.bounds.height - dialog.bounds.height) / 2);
+    if (dialog.bounds.x !== expectedX || dialog.bounds.y !== expectedY) {
+      throw new Error(`template1 dialog is not centered: ${dialog.bounds.x},${dialog.bounds.y}`);
+    }
+    if (!dialog.centered) throw new Error('template1 dialog must use automatic centering');
+    if (
+      dialog.bounds.x <= 0 ||
+      dialog.bounds.y <= 0 ||
+      dialog.bounds.x + dialog.bounds.width >= desktop.bounds.width ||
+      dialog.bounds.y + dialog.bounds.height >= desktop.bounds.height
+    ) {
+      throw new Error('template1 dialog must leave visible desktop margin on every side');
+    }
   }
 
   const content = dialog.children.find((child): child is Group => child instanceof Group);
@@ -226,12 +242,22 @@ export function collectTemplate1Evidence(app: Application, dialog: Dialog): Temp
     throw new Error('template1 dialog surface must match the Classic menu-bar background');
   }
 
-  const frameLines = lines
-    .slice(origin.y, origin.y + dialog.bounds.height)
-    .map((line) => line.slice(origin.x, origin.x + dialog.bounds.width));
-  if (frameLines.length !== dialog.bounds.height || frameLines.some((line) => line.length !== dialog.bounds.width)) {
+  const frameFitsBuffer =
+    origin.x >= 0 &&
+    origin.y >= 0 &&
+    origin.x + dialog.bounds.width <= buffer.width &&
+    origin.y + dialog.bounds.height <= buffer.height;
+  if (!frameFitsBuffer) {
     throw new Error('template1 dialog frame is clipped');
   }
+  // Extract by terminal cell rather than JavaScript string index. A one-cell Unicode glyph can use
+  // two UTF-16 code units, which would shift a later string slice even though the frame is intact.
+  const frameLines = Array.from({ length: dialog.bounds.height }, (_, row) =>
+    Array.from(
+      { length: dialog.bounds.width },
+      (_, column) => buffer.get(origin.x + column, origin.y + row)?.char ?? ' ',
+    ).join(''),
+  );
   const top = frameLines[0];
   const bottom = frameLines.at(-1);
   const hasCorners = top?.at(0)?.trim() !== '' && top?.at(-1)?.trim() !== '';

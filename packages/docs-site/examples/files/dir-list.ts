@@ -1,6 +1,7 @@
 /** DirList laboratory for derived trees, reactive rerooting, activation, and empty error state. */
 import { DirList } from '@jsvision/files';
-import { Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -23,8 +24,7 @@ export default defineExample({
     const directory = signal(FILE_LAB_HOME);
     const status = signal('ready · activate any tree node');
     const tree = new DirList({ fs: fixture.fs, directory, onChangeDir: (path) => directory.set(path) });
-    const dialog = new Dialog({ title: ' Directory List Lab ', width: 60, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Directory List Lab ', width: 60, height: 14 });
     const content = new Group();
     content.add(at(new Text('Ancestor chain plus immediate child directories.'), 0, 0, 56, 1));
     content.add(at(tree, 0, 2, 34, 6));

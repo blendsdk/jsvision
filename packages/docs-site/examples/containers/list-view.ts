@@ -2,7 +2,8 @@
  * A typed ListView laboratory showing stable sorting, independent focus/selection, activation, and
  * prefix type-ahead over domain objects.
  */
-import { Dialog, Group, Label, ListView, Text, at, signal } from '@jsvision/ui';
+import { Group, Label, ListView, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -37,8 +38,7 @@ export default defineExample({
       typeAhead: true,
       onSelect: (_index, person) => selectedName.set(person.name),
     });
-    const dialog = new Dialog({ title: ' List View Lab ', width: 52, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' List View Lab ', width: 52, height: 16 });
     const content = new Group();
 
     content.add(at(new Text('Typed items use sorted getText labels.'), 0, 0, 48, 1));

@@ -2,7 +2,8 @@
  * An editable ComboBox laboratory demonstrating typed candidates, live filtering, an anchored
  * popup, and exact value/text synchronization.
  */
-import { ComboBox, Dialog, Group, Label, Text, at, signal } from '@jsvision/ui';
+import { ComboBox, Group, Label, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
       placeholder: 'type a color',
       onSelect: (_index, item) => picked.set(item),
     });
-    const dialog = new Dialog({ title: ' Combo Box Lab ', width: 50, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Combo Box Lab ', width: 50, height: 14 });
     const content = new Group();
 
     content.add(at(new Text('Editable text filters typed color candidates.'), 0, 0, 46, 1));

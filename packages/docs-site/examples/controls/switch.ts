@@ -2,7 +2,8 @@
  * An interactive Switch laboratory showing on, off, focused, custom-label, disabled, hotkey,
  * mouse, keyboard, externally reset, and signal-feedback states.
  */
-import { Button, Dialog, Group, Switch, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, Switch, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -35,8 +36,7 @@ export default defineExample({
       disabled: true,
     });
 
-    const dialog = new Dialog({ title: ' Switch Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Switch Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('One boolean signal per control; external writes repaint immediately.'), 0, 0, 60, 1));

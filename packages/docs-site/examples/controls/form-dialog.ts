@@ -1,6 +1,7 @@
 /** FormDialog laboratory with a schema preview and the real modal submission lifecycle. */
 import { formDialog } from '@jsvision/forms';
-import { Button, Dialog, Group, Input, Label, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Button, Group, Input, Label, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { z } from 'zod';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -25,8 +26,7 @@ export default defineExample({
     const status = signal('ready · enter a name and age');
     const nameInput = new Input({ value: name });
     const ageInput = new Input({ value: age });
-    const dialog = new Dialog({ title: ' Form Dialog Lab ', width: 60, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Form Dialog Lab ', width: 60, height: 14 });
     const content = new Group();
     content.add(at(new Text('Schema fields, coercion, errors, and modal lifecycle.'), 0, 0, 56, 1));
     content.add(at(new Label('~N~ame', nameInput), 0, 2, 10, 1));

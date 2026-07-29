@@ -1,7 +1,8 @@
 /**
  * A ColorSwatch laboratory showing live input, discrete commit, wrap navigation, and mouse gestures.
  */
-import { ColorSwatch, Dialog, Group, Text, at, signal } from '@jsvision/ui';
+import { ColorSwatch, Group, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { Color } from '@jsvision/core';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -25,8 +26,7 @@ export default defineExample({
       onInput: () => inputCount.set(inputCount() + 1),
       onChange: () => commitCount.set(commitCount() + 1),
     });
-    const dialog = new Dialog({ title: ' Color Swatch Lab ', width: 60, height: 13 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Color Swatch Lab ', width: 60, height: 13 });
     const content = new Group();
 
     content.add(at(new Text('Four-cell palette with separate preview and commit.'), 0, 0, 56, 1));

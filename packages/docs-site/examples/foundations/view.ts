@@ -1,7 +1,8 @@
 /**
  * A custom View laboratory demonstrating clipped drawing, focus, input, and reactive repainting.
  */
-import { Dialog, Group, Text, View, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, View, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -58,8 +59,7 @@ export default defineExample({
     });
     const active = signal(false);
     const canvas = new DemoView(active);
-    const dialog = new Dialog({ title: ' View Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' View Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('A View owns pixels, input, focus, layout, and mount scope.'), 0, 0, CONTENT_WIDTH, 1));

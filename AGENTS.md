@@ -33,28 +33,38 @@ following live-example structure:
 
 1. Build a complete docs application with `demoApp(ctx, { themeMenu: true })`; do not return a bare
    component for the generic stage-window wrapper. Keep `demoApp`'s default **Classic theme**.
-2. Put the example inside a real `Dialog` added to `app.desktop`, and register the example with
-   `kind: 'app'` in `packages/docs-site/examples/index.ts`.
-3. Construct the `Dialog` with `width` and `height` but no positioned `rect`, so JSVision
-   auto-centers it. Size it tightly around the content: it must not fill the desktop, and the
-   patterned desktop must remain visibly exposed on every side at the standard 80×24 viewport.
+2. Put the example inside the shared docs-site `Template1Dialog` from
+   `packages/docs-site/src/template1-dialog.ts`, add it to `app.desktop`, and register the example
+   with `kind: 'app'` in `packages/docs-site/examples/index.ts`.
+3. Construct the `Template1Dialog` with `width` and `height` but no positioned `rect`, so JSVision
+   auto-centers it. Size it tightly around the content: by default it must not fill the desktop, and
+   the patterned desktop must remain visibly exposed on every side at the standard 80×24 viewport.
+   Every template1 dialog is resizable and maximizable, but `startMaximized` must remain `false`
+   unless the user explicitly approves maximized startup for that individual example after manual
+   review. The complete Data Grid example family is explicitly approved to start maximized.
 4. Inset the dialog's content by one cell on every side, in addition to the frame's own inset, so
-   controls and text never touch the inside edge of the border.
+   controls and text never touch the inside edge of the border. Supply responsive layout behavior
+   that preserves this inset and uses the additional room without clipping after resize, maximize,
+   and restore.
 5. Use the theme-controlled `dialog` surface without a custom background. Under the Classic theme,
    the dialog background must match the application's menu-bar background.
-6. Keep the showcase alive after opening: make the dialog non-closable unless closing and reopening
-   it is an intentional part of the component demonstration.
+6. Keep the showcase alive after opening. `Template1Dialog` is non-closable by default; use a
+   separate intentionally closable nested dialog when closing and reopening is part of the
+   component demonstration.
 7. Make the example a polished interactive showcase, not a minimal smoke sample. Present the
    component's meaningful visual and behavioral states together, exercise reactive behavior where
    applicable, include visible action feedback, mark usable Alt-hotkeys, and provide concise keyboard
    and mouse instructions without clipping.
 8. Update the component page's `<PlayExample>` title and blurb to describe the actual interaction.
-   Add focused specification coverage that renders the real example and verifies the centered,
-   non-fullscreen Classic dialog plus the component-specific states and interactions.
+   Add focused specification coverage that renders the real example and verifies its centered
+   compact state, resize/maximize/restore behavior, responsive unclipped content, Classic surface,
+   and component-specific states and interactions. When maximized startup is explicitly approved,
+   also verify that exact startup state.
 
-The Button Lab in `packages/docs-site/examples/controls/button.ts` is the canonical `template1`
-reference implementation. Preserve this structure unless the request explicitly overrides part of
-the template.
+The Button Lab in `packages/docs-site/examples/controls/button.ts` remains the canonical content and
+interaction reference while existing examples migrate to the shared shell. `Template1Dialog` is the
+canonical window-behavior implementation; do not duplicate its resize, maximize, restore, minimum
+size, or startup-mode logic in an individual example.
 
 ## Prime directive: docs-site `component-page-template1` (NON-NEGOTIABLE)
 

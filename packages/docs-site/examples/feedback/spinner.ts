@@ -1,7 +1,8 @@
 /**
  * A Spinner laboratory showing all presets under a deterministic caller-owned frame signal.
  */
-import { Dialog, Group, Spinner, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Spinner, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -19,8 +20,7 @@ export default defineExample({
       keymap: createKeymap({ 'alt+n': CMD_NEXT, 'alt+r': CMD_RESET }),
     });
     const frame = signal(0);
-    const dialog = new Dialog({ title: ' Spinner Lab ', width: 60, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Spinner Lab ', width: 60, height: 14 });
     const content = new Group();
 
     content.add(at(new Text('One frame signal drives dots, line, and blocks.'), 0, 0, 56, 1));

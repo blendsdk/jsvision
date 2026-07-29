@@ -4,7 +4,7 @@ import { buildDataGridLab } from '#data-grid-lab';
 
 export default defineExample({
   title: 'Windowed 100k Source',
-  blurb: 'Read bounded slices from 100,000 procedural rows without a full array.',
+  blurb: 'Start maximized and read bounded slices from 100,000 procedural rows without a full array.',
   build: (ctx) =>
     buildDataGridLab(ctx, {
       scenario: 'windowed',

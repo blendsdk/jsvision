@@ -3,7 +3,8 @@
  * breaks, display-cell-aware Unicode wrapping, semantic severity roles, natural measurement, and
  * the control's non-focusable presentation role.
  */
-import { Button, Dialog, Group, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -25,8 +26,7 @@ export default defineExample({
     const detailed = signal(false);
     const status = signal('ready');
 
-    const dialog = new Dialog({ title: ' Text Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Text Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('Text presents information without entering the Tab order.'), 0, 0, CONTENT_WIDTH, 1));

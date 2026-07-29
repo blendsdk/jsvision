@@ -1,5 +1,6 @@
 /** Surface laboratory for offscreen drawing, sanitized cells, preserving resize, and clearing. */
-import { Dialog, Group, Surface, SurfaceView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Surface, SurfaceView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -28,8 +29,7 @@ export default defineExample({
     };
     draw();
     const view = new SurfaceView({ surface });
-    const dialog = new Dialog({ title: ' Surface Lab ', width: 60, height: 15 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Surface Lab ', width: 60, height: 15 });
     const content = new Group();
     content.add(at(new Text('Surface owns cells; SurfaceView only projects them.'), 0, 0, 56, 1));
     content.add(at(view, 0, 2, 38, 6));

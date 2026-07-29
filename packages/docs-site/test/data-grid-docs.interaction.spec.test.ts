@@ -66,27 +66,30 @@ describe('Data Grid objective contracts', () => {
 });
 
 describe('Data Grid live examples', () => {
-  test.each(DATA_GRID_EXAMPLE_IDS)('%s paints a template1 dialog containing a real grid', async (exampleId) => {
-    const definition = await loadDefinition(exampleId);
-    createRoot((dispose) => {
-      const { app, dialog } = buildLabExample(exampleId, definition);
-      try {
-        const descendants = viewsIn(dialog);
-        expect(dialog).toBeInstanceOf(Dialog);
-        expect(
-          descendants.some((view) => view instanceof DataGrid || view instanceof EditableDataGrid),
-          `${exampleId} must contain a public grid`,
-        ).toBe(true);
-        collectTemplate1Evidence(app, dialog);
-      } finally {
+  test.each(DATA_GRID_EXAMPLE_IDS)(
+    '%s starts in a maximized template1 dialog containing a real grid',
+    async (exampleId) => {
+      const definition = await loadDefinition(exampleId);
+      createRoot((dispose) => {
+        const { app, dialog } = buildLabExample(exampleId, definition);
         try {
-          app.loop.dispose();
+          const descendants = viewsIn(dialog);
+          expect(dialog).toBeInstanceOf(Dialog);
+          expect(
+            descendants.some((view) => view instanceof DataGrid || view instanceof EditableDataGrid),
+            `${exampleId} must contain a public grid`,
+          ).toBe(true);
+          collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
         } finally {
-          dispose();
+          try {
+            app.loop.dispose();
+          } finally {
+            dispose();
+          }
         }
-      }
-    });
-  });
+      });
+    },
+  );
 });
 
 describe('Data Grid executable behavior contracts', () => {

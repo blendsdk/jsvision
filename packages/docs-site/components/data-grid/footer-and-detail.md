@@ -40,7 +40,7 @@ master, clear or deliberately move the detail view rather than showing stale inf
 
 <PlayExample id="data-grid/master-detail"
   title="Master-detail binding"
-  blurb="Move the grid cursor and observe a detail pane track the focused row's stable key."
+  blurb="Move through the top master grid and watch the lower detail grid replace its rows by stable customer key."
 />
 
 ## Limits and practices

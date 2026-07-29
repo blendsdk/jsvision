@@ -1,7 +1,8 @@
 /**
  * A Group laboratory demonstrating retained child order, background fill, and dynamic ownership.
  */
-import { Dialog, Group, Show, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Show, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -20,8 +21,7 @@ export default defineExample({
       keymap: createKeymap({ 'alt+a': CMD_OVERLAY }),
     });
     const overlayVisible = signal(false);
-    const dialog = new Dialog({ title: ' Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const stage = new Group();
     stage.background = 'dialog';

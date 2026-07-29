@@ -1,7 +1,8 @@
 /**
  * A Window laboratory demonstrating real frame state, zoom/restore, and a protected close policy.
  */
-import { Desktop, Dialog, Group, Text, Window, at, createKeymap, signal } from '@jsvision/ui';
+import { Desktop, Group, Text, Window, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -25,8 +26,7 @@ export default defineExample({
     });
     const state = signal('restored');
     const closeFeedback = signal('Close policy: protected');
-    const dialog = new Dialog({ title: ' Window Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Window Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const desktop = new Desktop();
     const specimen = new Window('Specimen');

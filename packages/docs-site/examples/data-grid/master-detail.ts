@@ -4,11 +4,11 @@ import { buildDataGridLab } from '#data-grid-lab';
 
 export default defineExample({
   title: 'Master and Detail',
-  blurb: 'Bind detail state to the focused master record key.',
+  blurb: 'Move through the top customer grid and watch the lower work-item grid follow.',
   build: (ctx) =>
     buildDataGridLab(ctx, {
       scenario: 'master-detail',
       title: 'Master and Detail',
-      objective: 'Detail follows stable master identity, never a visual row index.',
+      objective: 'The lower grid follows the focused master key, never a visual row index.',
     }),
 });

@@ -1,5 +1,6 @@
 /** EditWindow laboratory for hosted editor state, frame gadgets, resize, and zoom. */
-import { Dialog, EditWindow, Group, Text, at, createKeymap } from '@jsvision/ui';
+import { EditWindow, Group, Text, at, createKeymap } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -14,8 +15,7 @@ export default defineExample({
     const app = demoApp(ctx, { themeMenu: true, keymap: createKeymap({ 'alt+z': CMD_ZOOM }) });
     const win = new EditWindow({ rect: { x: 0, y: 1, width: 52, height: 10 } });
     win.editor.setText('EditWindow hosts Editor\nwith scroll bars and an Indicator.');
-    const dialog = new Dialog({ title: ' Edit Window Lab ', width: 68, height: 18 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Edit Window Lab ', width: 68, height: 18 });
     const content = new Group();
     content.add(at(new Text('A document window composed inside the teaching dialog.'), 0, 0, 64, 1));
     content.add(win);

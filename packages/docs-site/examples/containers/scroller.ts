@@ -2,7 +2,8 @@
  * A Scroller laboratory showing clipped oversized content, both owned bars, keyboard paging, and
  * independently clamped horizontal and vertical offsets.
  */
-import { Dialog, Group, Scroller, Text, at, createKeymap } from '@jsvision/ui';
+import { Group, Scroller, Text, at, createKeymap } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -30,8 +31,7 @@ export default defineExample({
       extent: { width: 58, height: 18 },
       scrollbars: 'both',
     });
-    const dialog = new Dialog({ title: ' Scroller Lab ', width: 56, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Scroller Lab ', width: 56, height: 16 });
     const content = new Group();
 
     content.add(at(new Text('A 58×18 sheet inside a 43×7 viewport.'), 0, 0, 52, 1));

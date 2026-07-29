@@ -2,7 +2,8 @@
  * An interactive Slider laboratory showing horizontal and vertical orientations, range boundaries,
  * keyboard and pointer input, live-versus-commit callbacks, linked labels, and reset.
  */
-import { Button, Dialog, Group, Label, Slider, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, Label, Slider, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -46,8 +47,7 @@ export default defineExample({
       onChange: () => status.set('vertical value committed'),
     });
 
-    const dialog = new Dialog({ title: ' Slider Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Slider Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('A bounded numeric signal with separate preview and commit events.'), 0, 0, 60, 1));

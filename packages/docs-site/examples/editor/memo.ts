@@ -1,5 +1,6 @@
 /** Memo laboratory for two-way signal binding and dialog-friendly Tab traversal. */
-import { Button, Dialog, Group, Memo, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Button, Group, Memo, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -15,8 +16,7 @@ export default defineExample({
     const value = signal('Initial notes');
     const memo = new Memo({ value });
     const next = new Button('~N~ext control');
-    const dialog = new Dialog({ title: ' Memo Lab ', width: 60, height: 15 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Memo Lab ', width: 60, height: 15 });
     const content = new Group();
     content.add(at(new Text('Memo mirrors every edit into one Signal<string>.'), 0, 0, 56, 1));
     content.add(at(memo, 0, 2, 38, 6));

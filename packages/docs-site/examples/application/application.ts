@@ -1,7 +1,8 @@
 /**
  * An Application laboratory demonstrating app-wide keymaps, command dispatch, and enablement.
  */
-import { Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     const enabled = signal(true);
     const runs = signal(0);
     const commandState = signal('ready');
-    const dialog = new Dialog({ title: ' Application Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Application Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('One Application owns the loop, commands, focus, chrome, and theme.'), 0, 0, 60, 1));
