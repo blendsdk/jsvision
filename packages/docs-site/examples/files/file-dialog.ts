@@ -38,7 +38,12 @@ export default defineExample({
       sep: fixture.fs.sep,
     });
     const info = new FileInfoPane({ fs: fixture.fs, directory, wildcard, focusedEntry: list.focusedEntry });
-    const dialog = new Template1Dialog({ title: ' File Dialog Lab ', width: 68, height: 18 });
+    const dialog = new Template1Dialog({
+      title: ' File Dialog Lab ',
+      width: 68,
+      height: 18,
+      preserveChildHeights: (view) => view !== list,
+    });
     const content = new Group();
     content.add(at(new Text('FileDialog composes these same public picker widgets.'), 0, 0, 64, 1));
     content.add(at(input, 0, 2, 42, 1));

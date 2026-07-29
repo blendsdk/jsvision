@@ -26,10 +26,15 @@ export default defineExample({
     });
     const activeName = signal('Inspector');
     const layoutName = signal('overlapping');
-    const dialog = new Template1Dialog({ title: ' Desktop Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const miniature = new Desktop();
     miniature.shadow = true;
+    const dialog = new Template1Dialog({
+      title: ' Desktop Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: (view) => view !== miniature,
+    });
 
     const editor = new Window('Editor');
     editor.closable = false;

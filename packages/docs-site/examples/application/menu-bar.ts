@@ -34,7 +34,12 @@ export default defineExample({
     });
     const command = signal('none');
     const dynamic = signal(false);
-    const dialog = new Template1Dialog({ title: ' Menu Bar Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Menu Bar Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     const originalMenus = app.menuBase();
 

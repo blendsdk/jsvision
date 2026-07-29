@@ -106,7 +106,9 @@ describe('multilingual harness documentation', () => {
   test('keeps the English form laboratory on template1 without locale coupling', () => {
     const source = read(FIXED_ENGLISH_FORM);
     expect(source).not.toMatch(/@jsvision\/i18n|\/locales\//u);
-    expect(source).toContain("new Template1Dialog({ title: ' Form Dialog Lab ', width: 60, height: 14 })");
+    expect(source).toContain('new Template1Dialog({');
+    expect(source).toContain("title: ' Form Dialog Lab '");
+    expect(source).toContain('preserveChildHeights: true');
     expect(source).not.toContain('startMaximized');
     expect(source).toContain('dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT))');
     expect(source).toContain('formDialog(app, {');

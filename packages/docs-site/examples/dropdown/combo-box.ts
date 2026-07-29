@@ -27,7 +27,12 @@ export default defineExample({
       placeholder: 'type a color',
       onSelect: (_index, item) => picked.set(item),
     });
-    const dialog = new Template1Dialog({ title: ' Combo Box Lab ', width: 50, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' Combo Box Lab ',
+      width: 50,
+      height: 14,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Editable text filters typed color candidates.'), 0, 0, 46, 1));

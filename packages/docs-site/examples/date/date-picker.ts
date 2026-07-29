@@ -34,7 +34,12 @@ export default defineExample({
       density: 'compact',
       placeholder: 'DD/MM/YYYY',
     });
-    const dialog = new Template1Dialog({ title: ' Date Picker Lab ', width: 60, height: 13 });
+    const dialog = new Template1Dialog({
+      title: ' Date Picker Lab ',
+      width: 60,
+      height: 13,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Masked DD/MM/YYYY field and shared date value.'), 0, 0, 56, 1));

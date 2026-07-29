@@ -39,7 +39,12 @@ export default defineExample({
       wildcard: () => '*.ts',
       focusedEntry: entry,
     });
-    const dialog = new Template1Dialog({ title: ' File Info Pane Lab ', width: 64, height: 12 });
+    const dialog = new Template1Dialog({
+      title: ' File Info Pane Lab ',
+      width: 64,
+      height: 12,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     content.add(at(new Text('Two passive rows: expanded path, then focused metadata.'), 0, 0, 60, 1));
     content.add(at(pane, 0, 3, 60, 2));

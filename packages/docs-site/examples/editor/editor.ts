@@ -15,7 +15,12 @@ export default defineExample({
     const app = demoApp(ctx, { themeMenu: true, keymap: createKeymap({ 'alt+r': CMD_RESET }) });
     const editor = new Editor({ keyBindings: 'modern', autoIndent: true });
     editor.setText('Edit this document\nSecond line for navigation.');
-    const dialog = new Template1Dialog({ title: ' Editor Lab ', width: 64, height: 17 });
+    const dialog = new Template1Dialog({
+      title: ' Editor Lab ',
+      width: 64,
+      height: 17,
+      preserveChildHeights: (view) => view !== editor,
+    });
     const content = new Group();
     content.add(at(new Text('General Editor — the lightweight multiline text engine.'), 0, 0, 60, 1));
     content.add(at(editor, 0, 2, 45, 8));

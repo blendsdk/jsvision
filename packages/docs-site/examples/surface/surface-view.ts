@@ -21,7 +21,12 @@ export default defineExample({
     const surface = Surface.from(rows);
     const delta = signal({ x: 0, y: 0 });
     const view = new SurfaceView({ surface, delta });
-    const dialog = new Template1Dialog({ title: ' Surface View Lab ', width: 60, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' Surface View Lab ',
+      width: 60,
+      height: 14,
+      preserveChildHeights: (child) => child !== view,
+    });
     const content = new Group();
     content.add(at(new Text('A 54×12 canvas inside a 38×6 passive viewport.'), 0, 0, 56, 1));
     content.add(at(view, 0, 2, 38, 6));

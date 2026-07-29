@@ -19,7 +19,12 @@ export default defineExample({
     const entries = signal(['/tmp', '/var/log', '/srv/archive']);
     const input = new Input({ value, maxLength: 30 });
     const history = new History({ link: input, history: entries, maxRows: 5 });
-    const dialog = new Template1Dialog({ title: ' History Lab ', width: 54, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' History Lab ',
+      width: 54,
+      height: 14,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('App-owned MRU records the current field on open.'), 0, 0, 50, 1));

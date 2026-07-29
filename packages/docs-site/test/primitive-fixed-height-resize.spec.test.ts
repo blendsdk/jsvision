@@ -7,20 +7,14 @@
  */
 import { Group, createRoot } from '@jsvision/ui';
 import { expect, test } from 'vitest';
-import inputExample from '../examples/controls/input.js';
-import labelExample from '../examples/controls/label.js';
-import textExample from '../examples/controls/text.js';
-import type { ExampleDefinition } from '../examples/_contract.js';
+import { EXAMPLES } from '../examples/index.js';
 import { buildLabExample } from './example-lab-harness.js';
+import { FIXED_HEIGHT_EXAMPLE_IDS } from './contracts/primitive-resize.js';
 
-/** Primitive examples whose direct content regions have deliberate, fixed row heights. */
-const FIXED_HEIGHT_EXAMPLES: readonly [exampleId: string, definition: ExampleDefinition][] = [
-  ['controls/input', inputExample],
-  ['controls/text', textExample],
-  ['controls/label', labelExample],
-];
-
-test.each(FIXED_HEIGHT_EXAMPLES)('%s preserves authored child heights when maximized', (exampleId, definition) => {
+test.each(FIXED_HEIGHT_EXAMPLE_IDS)('%s preserves authored child heights when maximized', async (exampleId) => {
+  const entry = EXAMPLES.find((candidate) => candidate.id === exampleId);
+  if (entry === undefined) throw new Error(`${exampleId} is not registered`);
+  const definition = (await entry.load()).default;
   createRoot((dispose) => {
     const { app, dialog } = buildLabExample(exampleId, definition, { viewport: { width: 120, height: 40 } });
     try {

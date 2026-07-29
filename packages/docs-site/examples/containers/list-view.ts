@@ -38,7 +38,12 @@ export default defineExample({
       typeAhead: true,
       onSelect: (_index, person) => selectedName.set(person.name),
     });
-    const dialog = new Template1Dialog({ title: ' List View Lab ', width: 52, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' List View Lab ',
+      width: 52,
+      height: 16,
+      preserveChildHeights: (view) => view !== list,
+    });
     const content = new Group();
 
     content.add(at(new Text('Typed items use sorted getText labels.'), 0, 0, 48, 1));

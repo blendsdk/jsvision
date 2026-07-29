@@ -26,7 +26,12 @@ export default defineExample({
     const status = signal('ready · enter a name and age');
     const nameInput = new Input({ value: name });
     const ageInput = new Input({ value: age });
-    const dialog = new Template1Dialog({ title: ' Form Dialog Lab ', width: 60, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' Form Dialog Lab ',
+      width: 60,
+      height: 14,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     content.add(at(new Text('Schema fields, coercion, errors, and modal lifecycle.'), 0, 0, 56, 1));
     content.add(at(new Label('~N~ame', nameInput), 0, 2, 10, 1));

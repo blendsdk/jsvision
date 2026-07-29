@@ -27,7 +27,12 @@ export default defineExample({
     const enabled = signal(true);
     const runs = signal(0);
     const commandState = signal('ready');
-    const dialog = new Template1Dialog({ title: ' Application Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Application Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('One Application owns the loop, commands, focus, chrome, and theme.'), 0, 0, 60, 1));

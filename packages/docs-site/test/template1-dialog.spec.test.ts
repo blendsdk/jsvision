@@ -114,3 +114,30 @@ test('can preserve authored child heights while positions and widths remain resp
     }
   });
 });
+
+test('can preserve selected child heights while a workspace pane grows', () => {
+  createRoot((dispose) => {
+    const fixedChrome = new Group();
+    const growingPane = new Group();
+    const dialog = new Template1Dialog({
+      title: 'Mixed workspace',
+      width: 40,
+      height: 12,
+      preserveChildHeights: (view) => view !== growingPane,
+    });
+    const content = new Group();
+    content.add(at(fixedChrome, 2, 1, 10, 1));
+    content.add(at(growingPane, 2, 3, 30, 4));
+    dialog.add(at(content, 1, 1, 36, 8));
+    const app = mountTemplateDialog(dialog);
+    try {
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      expect(fixedChrome.bounds.height).toBe(1);
+      expect(growingPane.bounds.height).toBeGreaterThan(4);
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});

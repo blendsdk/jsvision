@@ -27,7 +27,12 @@ export default defineExample({
     });
     group.setItemEnabled(3, false);
 
-    const dialog = new Template1Dialog({ title: ' Check Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Check Group Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Independent choices — toggling one row never clears another.'), 0, 0, CONTENT_WIDTH, 1));

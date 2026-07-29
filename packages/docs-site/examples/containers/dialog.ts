@@ -27,7 +27,12 @@ export default defineExample({
     const validation = signal('waiting');
     const cancel = signal('not checked');
     const age = new Input({ value: ageValue, validator: range(18, 120) });
-    const dialog = new Template1Dialog({ title: ' Dialog Lab ', width: 48, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' Dialog Lab ',
+      width: 48,
+      height: 14,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Dialog aggregates child validity before a modal command resolves.'), 0, 0, 44, 2));

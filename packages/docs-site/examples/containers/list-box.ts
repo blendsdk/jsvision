@@ -30,7 +30,12 @@ export default defineExample({
       typeAhead: true,
       onSelect: (_index, value) => choice.set(value),
     });
-    const dialog = new Template1Dialog({ title: ' List Box Lab ', width: 48, height: 15 });
+    const dialog = new Template1Dialog({
+      title: ' List Box Lab ',
+      width: 48,
+      height: 15,
+      preserveChildHeights: (view) => view !== list,
+    });
     const content = new Group();
 
     content.add(at(new Text('Reactive strings with ListView navigation.'), 0, 0, 44, 1));

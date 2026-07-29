@@ -26,12 +26,13 @@ export interface Template1DialogOptions {
    */
   readonly startMaximized?: boolean;
   /**
-   * Keep every direct content child's authored height while scaling its position and width.
+   * Keep direct content children at their authored heights while scaling positions and widths.
    *
-   * Use this for primitive galleries made from fixed-height control rows. Leave it disabled for
-   * workspace examples whose editors, grids, lists, or other panes should consume vertical space.
+   * Pass `true` for primitive galleries made entirely from fixed-height control rows. A predicate
+   * can preserve labels, buttons, and teaching text while allowing selected editors, grids, lists,
+   * or other workspace panes to consume vertical space.
    */
-  readonly preserveChildHeights?: boolean;
+  readonly preserveChildHeights?: boolean | ((view: View) => boolean);
   /** Repositions content whenever the dialog size changes. */
   readonly onResize?: Template1DialogResize;
 }
@@ -78,7 +79,7 @@ function scaleInterval(start: number, length: number, authoredExtent: number, ne
 export class Template1Dialog extends Dialog {
   protected readonly resizeContent: Template1DialogResize | undefined;
   protected readonly startMaximized: boolean;
-  protected readonly preserveChildHeights: boolean;
+  protected readonly preserveChildHeights: boolean | ((view: View) => boolean);
   protected authoredContent: Template1AuthoredContent | undefined;
 
   /**
@@ -130,7 +131,11 @@ export class Template1Dialog extends Dialog {
     for (const child of authored.children) {
       const [x, childWidth] = scaleInterval(child.rect.x, child.rect.width, authored.width, nextWidth);
       const [y, scaledHeight] = scaleInterval(child.rect.y, child.rect.height, authored.height, nextHeight);
-      const childHeight = this.preserveChildHeights ? child.rect.height : scaledHeight;
+      const preserveHeight =
+        typeof this.preserveChildHeights === 'function'
+          ? this.preserveChildHeights(child.view)
+          : this.preserveChildHeights;
+      const childHeight = preserveHeight ? child.rect.height : scaledHeight;
       child.view.setLayout({ rect: { x, y, width: childWidth, height: childHeight } });
     }
   }

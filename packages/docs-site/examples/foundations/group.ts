@@ -21,7 +21,12 @@ export default defineExample({
       keymap: createKeymap({ 'alt+a': CMD_OVERLAY }),
     });
     const overlayVisible = signal(false);
-    const dialog = new Template1Dialog({ title: ' Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Group Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     const stage = new Group();
     stage.background = 'dialog';
