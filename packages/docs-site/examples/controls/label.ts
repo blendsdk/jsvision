@@ -2,7 +2,8 @@
  * An interactive Label laboratory showing direct control links, Alt-hotkeys, click-to-focus,
  * selected-caption feedback, a non-interactive caption, and deterministic reset.
  */
-import { Button, Dialog, Group, Input, Label, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, Input, Label, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -22,8 +23,7 @@ export default defineExample({
     const status = signal('ready — the Name field starts focused');
     const nameInput = new Input({ value: name, maxLength: 22, placeholder: 'Type a name' });
     const emailInput = new Input({ value: email, maxLength: 30, placeholder: 'Type an email' });
-    const dialog = new Dialog({ title: ' Label Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Label Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('Linked captions move focus without adding extra Tab stops.'), 0, 0, CONTENT_WIDTH, 1));

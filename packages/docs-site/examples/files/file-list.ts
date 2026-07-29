@@ -1,6 +1,7 @@
 /** FileList laboratory for reactive scans, wildcard filters, hidden files, and read errors. */
 import { FileList } from '@jsvision/files';
-import { Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -25,8 +26,7 @@ export default defineExample({
     const showHidden = signal(false);
     const status = signal('ready · hidden files omitted');
     const list = new FileList({ fs: fixture.fs, directory, wildcard, showHidden });
-    const dialog = new Dialog({ title: ' File List Lab ', width: 60, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' File List Lab ', width: 60, height: 14 });
     const content = new Group();
     content.add(at(new Text('Files first, directories after them, parent entry last.'), 0, 0, 56, 1));
     content.add(at(list, 0, 2, 38, 6));

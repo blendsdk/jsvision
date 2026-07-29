@@ -1,7 +1,8 @@
 /**
  * A Desktop laboratory embedding a real window manager inside the centered teaching dialog.
  */
-import { Desktop, Dialog, Group, Text, Window, at, createKeymap, signal } from '@jsvision/ui';
+import { Desktop, Group, Text, Window, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -25,8 +26,7 @@ export default defineExample({
     });
     const activeName = signal('Inspector');
     const layoutName = signal('overlapping');
-    const dialog = new Dialog({ title: ' Desktop Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Desktop Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const miniature = new Desktop();
     miniature.shadow = true;

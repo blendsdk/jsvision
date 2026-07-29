@@ -1,6 +1,7 @@
 /** FileEditor laboratory for loading, exact saves, backups, write failures, and modified state. */
 import { FileEditor } from '@jsvision/files';
-import { Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -28,8 +29,7 @@ export default defineExample({
       editorDialog: async () => ({ kind: 'ok' }),
     });
     editor.loadFile();
-    const dialog = new Dialog({ title: ' File Editor Lab ', width: 64, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' File Editor Lab ', width: 64, height: 16 });
     const content = new Group();
     content.add(at(new Text('FileEditor adds load/save/backup policy to Editor.'), 0, 0, 60, 1));
     content.add(at(editor, 0, 2, 44, 7));

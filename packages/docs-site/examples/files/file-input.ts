@@ -1,7 +1,8 @@
 /** FileInput laboratory for file/directory mirroring and focused edit preservation. */
 import { FileInput } from '@jsvision/files';
 import type { DirEntry } from '@jsvision/files';
-import { Button, Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Button, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     const focusedEntry = signal<DirEntry | undefined>(README);
     const input = new FileInput({ value, focusedEntry, wildcard: () => '*.ts', sep: '/' });
     const reset = new Button('~F~ile entry', { command: CMD_FILE });
-    const dialog = new Dialog({ title: ' File Input Lab ', width: 60, height: 12 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' File Input Lab ', width: 60, height: 12 });
     const content = new Group();
     content.add(at(new Text('Focused entries mirror until this field owns focus.'), 0, 0, 56, 1));
     content.add(at(input, 0, 2, 38, 1));

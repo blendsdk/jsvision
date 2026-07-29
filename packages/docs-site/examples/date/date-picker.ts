@@ -1,7 +1,8 @@
 /**
  * A DatePicker laboratory showing masking, nullable binding, bounds, and the anchored calendar.
  */
-import { DatePicker, Dialog, Group, Label, Text, at, createKeymap, signal, toISO } from '@jsvision/ui';
+import { DatePicker, Group, Label, Text, at, createKeymap, signal, toISO } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { CalendarDate } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -33,8 +34,7 @@ export default defineExample({
       density: 'compact',
       placeholder: 'DD/MM/YYYY',
     });
-    const dialog = new Dialog({ title: ' Date Picker Lab ', width: 60, height: 13 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Date Picker Lab ', width: 60, height: 13 });
     const content = new Group();
 
     content.add(at(new Text('Masked DD/MM/YYYY field and shared date value.'), 0, 0, 56, 1));

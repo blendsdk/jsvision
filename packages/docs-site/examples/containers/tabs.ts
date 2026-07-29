@@ -2,7 +2,8 @@
  * A TabView laboratory showing enabled cycling, scoped accelerators, persistent mounted pages, and
  * closeable-tab lifecycle.
  */
-import { Dialog, Group, TabView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, TabView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { Tab } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -39,8 +40,7 @@ export default defineExample({
       active,
       onClose: (tab) => closed.set(tab.title.replaceAll('~', '')),
     });
-    const dialog = new Dialog({ title: ' Tabs Lab ', width: 60, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Tabs Lab ', width: 60, height: 16 });
     const content = new Group();
 
     content.add(at(new Text('All tab pages stay mounted; one lays out.'), 0, 0, 56, 1));

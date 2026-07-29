@@ -2,7 +2,8 @@
  * A ScrollBar laboratory comparing two orientations over one bound signal and showing live range
  * collapse into the disabled track state.
  */
-import { Dialog, Group, ScrollBar, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, ScrollBar, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     const disabled = signal(false);
     const vertical = new ScrollBar({ value, min: 0, max: 100, pageStep: 20, orientation: 'vertical' });
     const horizontal = new ScrollBar({ value, min: 0, max: 100, pageStep: 20, orientation: 'horizontal' });
-    const dialog = new Dialog({ title: ' Scroll Bar Lab ', width: 48, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Scroll Bar Lab ', width: 48, height: 14 });
     const content = new Group();
 
     content.add(at(new Text('Two bar orientations share one value signal.'), 0, 0, 44, 1));

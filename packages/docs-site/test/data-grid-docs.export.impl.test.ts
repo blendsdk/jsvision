@@ -63,7 +63,7 @@ describe('variant determinism and live labs', () => {
     createRoot((dispose) => {
       const exported = buildLabExample('data-grid/export', exportExample);
       try {
-        collectTemplate1Evidence(exported.app, exported.dialog);
+        collectTemplate1Evidence(exported.app, exported.dialog, { startup: 'maximized' });
         dispatchExampleAction(exported.app, { kind: 'key', key: 'c', modifiers: ['Alt'] });
         expect(frameText(exported.app)).toContain("'=SUM(A1:A2)");
       } finally {

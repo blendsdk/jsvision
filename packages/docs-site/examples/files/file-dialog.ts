@@ -1,6 +1,7 @@
 /** FileDialog laboratory for virtual browsing, filtering, modal launch, and denied reads. */
 import { FileDialog, FileInfoPane, FileInput, FileList } from '@jsvision/files';
-import { Button, Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Button, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -37,8 +38,7 @@ export default defineExample({
       sep: fixture.fs.sep,
     });
     const info = new FileInfoPane({ fs: fixture.fs, directory, wildcard, focusedEntry: list.focusedEntry });
-    const dialog = new Dialog({ title: ' File Dialog Lab ', width: 68, height: 18 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' File Dialog Lab ', width: 68, height: 18 });
     const content = new Group();
     content.add(at(new Text('FileDialog composes these same public picker widgets.'), 0, 0, 64, 1));
     content.add(at(input, 0, 2, 42, 1));

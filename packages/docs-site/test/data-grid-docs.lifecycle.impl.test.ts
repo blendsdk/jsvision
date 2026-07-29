@@ -51,14 +51,14 @@ function editableGrid(state: ReturnType<typeof buildLabExample>): EditableDataGr
 describe('lifecycle example state swaps', () => {
   test('loading and error remain inside one padded template1 host', () => {
     withLab('data-grid/lifecycle-states', lifecycleStates, ({ app, dialog }) => {
-      collectTemplate1Evidence(app, dialog);
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
       dispatchExampleAction(app, { kind: 'key', key: 'l', modifiers: ['Alt'] });
       expect(frameText(app)).toContain('Loading');
       dispatchExampleAction(app, { kind: 'key', key: 'l', modifiers: ['Alt'] });
       dispatchExampleAction(app, { kind: 'key', key: 'f', modifiers: ['Alt'] });
       dispatchExampleAction(app, { kind: 'key', key: 'x', modifiers: ['Alt'] });
       expect(frameText(app)).toContain('Source unavailable');
-      collectTemplate1Evidence(app, dialog);
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
     });
   });
 

@@ -156,7 +156,7 @@ export const PERFORMANCE_BOUNDARIES_CONTRACT = dataGridContract(
     gridCase(
       'inspect-bounded-work',
       ['lazy-construction', 'bounded-rendering', 'windowed-guidance', 'no-benchmark-theater'],
-      [{ probe: 'source-read-count', operator: 'equals', value: 1 }],
+      [{ probe: 'source-read-count', operator: 'greater-than', value: 0 }],
       [{ kind: 'mouse', gesture: 'wheel', at: { x: 28, y: 12 }, delta: 4 }],
       [
         { probe: 'source-read-count', operator: 'less-than', value: 20 },

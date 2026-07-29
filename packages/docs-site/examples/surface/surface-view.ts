@@ -1,5 +1,6 @@
 /** SurfaceView laboratory for reactive, clamped panning over an oversized canvas. */
-import { Dialog, Group, Surface, SurfaceView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Surface, SurfaceView, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -20,8 +21,7 @@ export default defineExample({
     const surface = Surface.from(rows);
     const delta = signal({ x: 0, y: 0 });
     const view = new SurfaceView({ surface, delta });
-    const dialog = new Dialog({ title: ' Surface View Lab ', width: 60, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Surface View Lab ', width: 60, height: 14 });
     const content = new Group();
     content.add(at(new Text('A 54×12 canvas inside a 38×6 passive viewport.'), 0, 0, 56, 1));
     content.add(at(view, 0, 2, 38, 6));

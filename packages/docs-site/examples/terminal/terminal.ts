@@ -1,5 +1,6 @@
 /** Terminal laboratory for safe streaming, bounded history, wheel scrollback, and clearing. */
-import { Dialog, Group, Terminal, Text, at, createKeymap, signal, terminalWriter } from '@jsvision/ui';
+import { Group, Terminal, Text, at, createKeymap, signal, terminalWriter } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -22,8 +23,7 @@ export default defineExample({
     for (let index = 1; index <= 7; index += 1) terminal.writeLine(`history line ${index}`);
     terminal.writeLine('newest output');
     const status = signal('pinned to newest');
-    const dialog = new Dialog({ title: ' Terminal Lab ', width: 60, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Terminal Lab ', width: 60, height: 16 });
     const content = new Group();
     content.add(at(new Text('Passive, bounded output — never a command shell.'), 0, 0, 56, 1));
     content.add(at(terminal, 0, 2, 42, 7));

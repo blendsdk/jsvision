@@ -1,4 +1,4 @@
-import { Button, DataGrid, Dialog, Group, Input, Text, at, signal } from '@jsvision/ui';
+import { Button, DataGrid, Group, Input, Text, at, signal } from '@jsvision/ui';
 import type { Application, Column, DispatchEvent, Signal, SortState } from '@jsvision/ui';
 import {
   EditableDataGrid,
@@ -14,8 +14,12 @@ import { demoApp } from '../../demo-shell.js';
 import { DATA_GRID_LAB_ROWS, createDataGridLabRows } from './data.js';
 import type { DataGridLabRow } from './data.js';
 import { HOSTILE_EXPORT_VALUES } from './export-fixtures.js';
+import { createDataGridMasterDetailLayout, moveDataGridMasterCursor } from './master-detail.js';
+import type { DataGridMasterDetailLayout } from './master-detail.js';
 import { createDataGridScenarioController } from './scenario-controller.js';
 import { WINDOWED_TOTAL_ROWS, createWindowedDataGridLabSource } from './windowed-source.js';
+import { Template1Dialog } from '../../template1-dialog.js';
+import type { Template1DialogSize } from '../../template1-dialog.js';
 
 /** Stable identifiers accepted by the shared Data Grid laboratory builder. */
 export type DataGridLabScenario =
@@ -560,15 +564,15 @@ function createActions(
         {
           label: '~N~ext master',
           run: () => {
-            grid.selectRow('customer-2');
-            status.set('detail key customer-2 · Bram · West');
+            moveDataGridMasterCursor(grid, 'next');
+            status.set(`detail key ${String(grid.focusedKey())} · ${grid.focusedRow()?.name ?? 'none'}`);
           },
         },
         {
           label: '~R~eset detail',
           run: () => {
-            grid.selectRow('customer-1');
-            status.set('detail key customer-1 · Alice · North');
+            moveDataGridMasterCursor(grid, 'first');
+            status.set(`detail key ${String(grid.focusedKey())} · ${grid.focusedRow()?.name ?? 'none'}`);
           },
         },
       ];
@@ -663,10 +667,76 @@ function createActions(
 }
 
 /** Add uniformly measured action buttons to the right side of a lab. */
-function addActions(content: Group, actions: readonly LabAction[]): void {
-  actions.slice(0, 4).forEach((action, index) => {
-    content.add(at(new Button(action.label, { onClick: action.run }), 52, 2 + index * 3, 18, 2));
+function addActions(content: Group, actions: readonly LabAction[]): Button[] {
+  return actions.slice(0, 4).map((action, index) => {
+    const button = new Button(action.label, { onClick: action.run });
+    content.add(at(button, 52, 2 + index * 3, 18, 2));
+    return button;
   });
+}
+
+/** Responsive references unique to the overview's side-by-side grid comparison. */
+interface QuickStartLayout {
+  readonly readOnlyLabel: Text;
+  readonly readOnlyGrid: DataGrid<DataGridLabRow>;
+  readonly editableLabel: Text;
+}
+
+/**
+ * Expand a Data Grid lab while keeping its action rail and teaching text anchored.
+ *
+ * The overview divides the growing main area between two grids. Master/detail stacks two grids
+ * vertically so their relationship remains clear. Other scenarios give the main area to one grid.
+ */
+function reflowResizableLab(
+  size: Template1DialogSize,
+  content: Group,
+  grid: EditableDataGrid<DataGridLabRow>,
+  actions: readonly Button[],
+  objective: Text,
+  state: Text,
+  instructions: Text,
+  quickStart: QuickStartLayout | undefined,
+  masterDetailLayout: DataGridMasterDetailLayout | undefined,
+): void {
+  const contentWidth = size.width - 4;
+  const contentHeight = size.height - 4;
+  const mainWidth = contentWidth - 20;
+
+  content.setLayout({ rect: { x: 1, y: 1, width: contentWidth, height: contentHeight } });
+  objective.setLayout({ rect: { x: 0, y: 0, width: contentWidth, height: 2 } });
+  actions.forEach((button, index) => {
+    button.setLayout({ rect: { x: mainWidth + 2, y: 2 + index * 3, width: 18, height: 2 } });
+  });
+  state.setLayout({ rect: { x: 0, y: contentHeight - 3, width: contentWidth, height: 2 } });
+  instructions.setLayout({ rect: { x: 0, y: contentHeight - 1, width: contentWidth, height: 1 } });
+
+  if (masterDetailLayout !== undefined) {
+    const combinedGridHeight = contentHeight - 8;
+    const masterHeight = Math.floor(combinedGridHeight / 2);
+    const detailHeight = combinedGridHeight - masterHeight;
+    const detailLabelY = 3 + masterHeight;
+    masterDetailLayout.masterLabel.setLayout({ rect: { x: 0, y: 2, width: mainWidth, height: 1 } });
+    grid.setLayout({ rect: { x: 0, y: 3, width: mainWidth, height: masterHeight } });
+    masterDetailLayout.detailLabel.setLayout({ rect: { x: 0, y: detailLabelY, width: mainWidth, height: 1 } });
+    masterDetailLayout.detailGrid.setLayout({
+      rect: { x: 0, y: detailLabelY + 1, width: mainWidth, height: detailHeight },
+    });
+    return;
+  }
+
+  if (quickStart === undefined) {
+    grid.setLayout({ rect: { x: 0, y: 2, width: mainWidth, height: contentHeight - 6 } });
+    return;
+  }
+
+  const leftWidth = Math.floor((mainWidth - 2) / 2);
+  const rightWidth = mainWidth - leftWidth - 2;
+  const comparisonHeight = contentHeight - 7;
+  quickStart.readOnlyLabel.setLayout({ rect: { x: 0, y: 2, width: leftWidth, height: 1 } });
+  quickStart.readOnlyGrid.setLayout({ rect: { x: 0, y: 3, width: leftWidth, height: comparisonHeight } });
+  quickStart.editableLabel.setLayout({ rect: { x: leftWidth + 2, y: 2, width: rightWidth, height: 1 } });
+  grid.setLayout({ rect: { x: leftWidth + 2, y: 3, width: rightWidth, height: comparisonHeight } });
 }
 
 /**
@@ -747,11 +817,12 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
     personalizationState,
   });
 
-  const dialog = new Dialog({ title: ` ${definition.title} `, width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-  dialog.closable = false;
   const content = new Group();
-  content.add(at(new Text(definition.objective), 0, 0, CONTENT_WIDTH, 2));
+  const objective = new Text(definition.objective);
+  content.add(at(objective, 0, 0, CONTENT_WIDTH, 2));
   content.add(at(probe, 0, 0, 0, 0));
+  let quickStartLayout: QuickStartLayout | undefined;
+  let masterDetailLayout: DataGridMasterDetailLayout | undefined;
 
   if (definition.scenario === 'quick-start') {
     const readOnlyRows = signal([...DATA_GRID_LAB_ROWS]);
@@ -762,7 +833,7 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
       { title: 'Name', accessor: (row) => row.name, width: 12 },
       { title: 'Amount', accessor: (row) => String(row.amount), width: 8, align: 'right' },
     ];
-    const readOnly = new DataGrid({
+    const readOnly = new DataGrid<DataGridLabRow>({
       rows: readOnlyRows,
       columns: readOnlyColumns,
       focused,
@@ -770,10 +841,19 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
       sort,
       zebra: true,
     });
-    content.add(at(new Text('DataGrid'), 0, 2, 24, 1));
+    const readOnlyLabel = new Text('DataGrid');
+    const editableLabel = new Text('EditableDataGrid');
+    content.add(at(readOnlyLabel, 0, 2, 24, 1));
     content.add(at(readOnly, 0, 3, 24, 9));
-    content.add(at(new Text('EditableDataGrid'), 26, 2, 24, 1));
+    content.add(at(editableLabel, 26, 2, 24, 1));
     content.add(at(grid, 26, 3, 24, 9));
+    quickStartLayout = { readOnlyLabel, readOnlyGrid: readOnly, editableLabel };
+  } else if (definition.scenario === 'master-detail') {
+    masterDetailLayout = createDataGridMasterDetailLayout(grid);
+    content.add(at(masterDetailLayout.masterLabel, 0, 2, GRID_WIDTH, 1));
+    content.add(at(grid, 0, 3, GRID_WIDTH, 4));
+    content.add(at(masterDetailLayout.detailLabel, 0, 7, GRID_WIDTH, 1));
+    content.add(at(masterDetailLayout.detailGrid, 0, 8, GRID_WIDTH, 4));
   } else {
     content.add(at(grid, 0, 2, GRID_WIDTH, GRID_HEIGHT));
   }
@@ -787,12 +867,29 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
       run: openPersonalization,
     });
   }
-  addActions(content, actions);
-  if (definition.scenario === 'master-detail') {
-    content.add(at(new Text(() => `Detail\n${status()}`), 52, 8, 18, 4));
-  }
-  content.add(at(new Text(() => `State: ${status()}`), 0, 13, CONTENT_WIDTH, 2));
-  content.add(at(new Text('Arrows move · Enter edits · Space selects · Alt+hotkeys act'), 0, 15, CONTENT_WIDTH, 1));
+  const actionButtons = addActions(content, actions);
+  const state = new Text(() => `State: ${status()}`);
+  const instructions = new Text('Click ↕ to restore · drag corners after restore · Alt+hotkeys act');
+  content.add(at(state, 0, 13, CONTENT_WIDTH, 2));
+  content.add(at(instructions, 0, 15, CONTENT_WIDTH, 1));
+  const dialog = new Template1Dialog({
+    title: ` ${definition.title} `,
+    width: DIALOG_WIDTH,
+    height: DIALOG_HEIGHT,
+    startMaximized: true,
+    onResize: (size) =>
+      reflowResizableLab(
+        size,
+        content,
+        grid,
+        actionButtons,
+        objective,
+        state,
+        instructions,
+        quickStartLayout,
+        masterDetailLayout,
+      ),
+  });
   dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
   app.desktop.addWindow(dialog);
   app.loop.focusView(grid.rows);

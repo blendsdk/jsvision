@@ -2,7 +2,8 @@
  * An interactive MultiCheckGroup laboratory showing three ordered states, independent item cycles,
  * wraparound, readable signal feedback, a disabled row, and deterministic reset.
  */
-import { Button, Dialog, Group, MultiCheckGroup, Text, at, signal } from '@jsvision/ui';
+import { Button, Group, MultiCheckGroup, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,11 @@ export default defineExample({
     });
     group.setItemEnabled(3, false);
 
-    const dialog = new Dialog({ title: ' Multi-check Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({
+      title: ' Multi-check Group Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+    });
     const content = new Group();
 
     content.add(at(new Text('Each row cycles independently: blank = Off, x = Partial, X = Full.'), 0, 0, 60, 1));

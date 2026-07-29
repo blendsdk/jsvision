@@ -2,7 +2,8 @@
  * A Tree laboratory demonstrating view-owned expansion, directional navigation, bracket markers,
  * and independent focus and activation state.
  */
-import { Dialog, Group, Label, Text, Tree, at, signal } from '@jsvision/ui';
+import { Group, Label, Text, Tree, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import type { TreeNode } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
@@ -33,8 +34,7 @@ export default defineExample({
       markerStyle: 'brackets',
       onSelect: (_index, selectedNode) => opened.set(selectedNode.value),
     });
-    const dialog = new Dialog({ title: ' Tree Lab ', width: 52, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Tree Lab ', width: 52, height: 16 });
     const content = new Group();
 
     content.add(at(new Text('Tree owns expansion; node data stays plain.'), 0, 0, 48, 1));

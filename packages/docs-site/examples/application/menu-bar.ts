@@ -1,7 +1,8 @@
 /**
  * A MenuBar laboratory demonstrating real menu navigation, item accelerators, and live replacement.
  */
-import { Dialog, Group, MenuBar, Text, at, createKeymap, item, menuSpacer, signal, subMenu } from '@jsvision/ui';
+import { Group, MenuBar, Text, at, createKeymap, item, menuSpacer, signal, subMenu } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -33,8 +34,7 @@ export default defineExample({
     });
     const command = signal('none');
     const dynamic = signal(false);
-    const dialog = new Dialog({ title: ' Menu Bar Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Menu Bar Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const originalMenus = app.menuBase();
 

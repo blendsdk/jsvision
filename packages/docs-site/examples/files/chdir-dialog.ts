@@ -1,6 +1,7 @@
 /** ChDirDialog laboratory for tree navigation, revert, modal launch, and denied paths. */
 import { ChDirDialog, DirList } from '@jsvision/files';
-import { Button, Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Button, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -29,8 +30,7 @@ export default defineExample({
     const directory = signal(FILE_LAB_HOME);
     const status = signal('ready · current directory is valid');
     const tree = new DirList({ fs: fixture.fs, directory, onChangeDir: (path) => directory.set(path) });
-    const dialog = new Dialog({ title: ' Change Directory Lab ', width: 60, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Change Directory Lab ', width: 60, height: 16 });
     const content = new Group();
     content.add(at(new Text('ChDirDialog binds a path field to this reactive tree.'), 0, 0, 56, 1));
     content.add(at(tree, 0, 2, 34, 7));

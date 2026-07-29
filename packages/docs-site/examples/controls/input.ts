@@ -3,7 +3,8 @@
  * validation, picture-mask formatting, two-way binding, selection, clipboard editing, word
  * navigation, mouse selection, and horizontal scrolling.
  */
-import { Button, Dialog, Group, Input, Label, Text, signal, filter, range, picture, at } from '@jsvision/ui';
+import { Button, Group, Input, Label, Text, signal, filter, range, picture, at } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -50,8 +51,7 @@ export default defineExample({
     });
     const inputs = [nameInput, ageInput, phoneInput, longInput];
 
-    const dialog = new Dialog({ title: ' Input Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Input Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('Four fields — type, validate, select, paste, and scroll'), 0, 0, CONTENT_WIDTH, 1));

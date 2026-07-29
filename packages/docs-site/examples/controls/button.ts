@@ -3,7 +3,8 @@
  * reactively enabled states. The first action receives focus, while clicking and holding any
  * enabled face reveals the transient pressed treatment.
  */
-import { Button, Dialog, Group, Input, Label, Text, signal, at } from '@jsvision/ui';
+import { Button, Group, Input, Label, Text, signal, at } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -21,8 +22,7 @@ export default defineExample({
     const projectName = signal('');
     const lastAction = signal('Nothing yet');
     const nameInput = new Input({ value: projectName, maxLength: 20, placeholder: 'Type to enable Save' });
-    const dialog = new Dialog({ title: ' Button Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Button Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('State gallery — hold the mouse button to see the pressed face'), 0, 0, CONTENT_WIDTH, 1));

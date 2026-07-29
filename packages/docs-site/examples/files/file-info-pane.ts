@@ -1,7 +1,8 @@
 /** FileInfoPane laboratory for reactive paths, metadata, and broken-link presentation. */
 import { FileInfoPane } from '@jsvision/files';
 import type { DirEntry } from '@jsvision/files';
-import { Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
@@ -38,8 +39,7 @@ export default defineExample({
       wildcard: () => '*.ts',
       focusedEntry: entry,
     });
-    const dialog = new Dialog({ title: ' File Info Pane Lab ', width: 64, height: 12 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' File Info Pane Lab ', width: 64, height: 12 });
     const content = new Group();
     content.add(at(new Text('Two passive rows: expanded path, then focused metadata.'), 0, 0, 60, 1));
     content.add(at(pane, 0, 3, 60, 2));

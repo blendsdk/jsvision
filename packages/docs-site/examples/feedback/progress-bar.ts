@@ -1,7 +1,8 @@
 /**
  * A ProgressBar laboratory showing reactive updates, labels, captions, positions, and clamping.
  */
-import { Dialog, Group, ProgressBar, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Group, ProgressBar, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -21,8 +22,7 @@ export default defineExample({
     });
     const value = signal(0.25);
     const note = signal('ready');
-    const dialog = new Dialog({ title: ' Progress Bar Lab ', width: 60, height: 16 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Progress Bar Lab ', width: 60, height: 16 });
     const content = new Group();
 
     content.add(at(new Text('One signal drives several determinate presentations.'), 0, 0, 56, 1));

@@ -2,7 +2,8 @@
  * An interactive CheckGroup laboratory showing independent values, selection focus, item
  * accelerators, disabled-row behavior, signal-driven feedback, and deterministic reset.
  */
-import { Button, CheckGroup, Dialog, Group, Text, at, signal } from '@jsvision/ui';
+import { Button, CheckGroup, Group, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -26,8 +27,7 @@ export default defineExample({
     });
     group.setItemEnabled(3, false);
 
-    const dialog = new Dialog({ title: ' Check Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' Check Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
 
     content.add(at(new Text('Independent choices — toggling one row never clears another.'), 0, 0, CONTENT_WIDTH, 1));

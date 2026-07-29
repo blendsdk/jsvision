@@ -2,7 +2,8 @@
  * A History laboratory demonstrating deterministic app-owned MRU data, record-on-open behavior,
  * keyboard popup access, and replacement of a linked Input.
  */
-import { Dialog, Group, History, Input, Label, Text, at, signal } from '@jsvision/ui';
+import { Group, History, Input, Label, Text, at, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
@@ -18,8 +19,7 @@ export default defineExample({
     const entries = signal(['/tmp', '/var/log', '/srv/archive']);
     const input = new Input({ value, maxLength: 30 });
     const history = new History({ link: input, history: entries, maxRows: 5 });
-    const dialog = new Dialog({ title: ' History Lab ', width: 54, height: 14 });
-    dialog.closable = false;
+    const dialog = new Template1Dialog({ title: ' History Lab ', width: 54, height: 14 });
     const content = new Group();
 
     content.add(at(new Text('App-owned MRU records the current field on open.'), 0, 0, 50, 1));

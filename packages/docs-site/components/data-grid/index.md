@@ -28,7 +28,7 @@ const ledger = new EditableDataGrid<AccountRow>({
 
 <PlayExample id="data-grid/quick-start"
   title="Choose a grid"
-  blurb="Switch between the concise read-only DataGrid and the typed EditableDataGrid inside the same Classic desktop lab."
+  blurb="Compare the concise read-only DataGrid and typed EditableDataGrid in a maximized lab, then restore or resize it to inspect their responsive layout."
 />
 
 ## Capability map
@@ -49,8 +49,7 @@ const ledger = new EditableDataGrid<AccountRow>({
 - Keep export escaping and formula neutralization at the trust boundary.
 - Measure performance with the intended source model; a 100,000-row window is not a
   100,000-element in-memory array.
-- Preserve visible desktop margins around large dialogs, even when a grid needs more room than a
-  control-sized example.
+- Make grid workspaces resizable and preserve their padded layout across maximize and restore.
 
 ## DataGrid
 
