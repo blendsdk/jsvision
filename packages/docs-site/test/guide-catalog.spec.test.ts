@@ -95,6 +95,7 @@ describe('Guide curriculum catalog', () => {
     expect(CATALOG.entries.filter((entry) => entry.stage === 'complete').map((entry) => entry.id)).toEqual([
       'introduction',
       'install-and-packages',
+      'codex-plugin',
       'layout',
       'reactive-state',
       'data-grid-specialist',
