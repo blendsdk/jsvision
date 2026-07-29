@@ -98,6 +98,7 @@ describe('Guide curriculum catalog', () => {
       'codex-plugin',
       'layout',
       'reactive-state',
+      'views-and-focus',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);
