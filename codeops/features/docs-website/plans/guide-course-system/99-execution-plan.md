@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 21:16
-> **Progress**: 6/246 tasks (2%)
+> **Last Updated**: 2026-07-29 21:22
+> **Progress**: 7/246 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -93,7 +93,7 @@ independent specification-first phase (AR-10).
 
 ### Step 1.3: Hardening
 
-- [ ] 1.3.1 Add route/lab edge coverage — `packages/docs-site/test/introduction-guide.impl.test.ts`
+- [x] 1.3.1 Add route/lab edge coverage — `packages/docs-site/test/introduction-guide.impl.test.ts` ✅ (completed: 2026-07-29 21:22) — 4/4 focused implementation tests and authoritative `yarn verify` passed
 - [ ] 1.3.2 Run focused checks, promote Introduction to Complete, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Introduction spec/impl tests and `yarn workspace @jsvision/docs-site typecheck`
