@@ -12,6 +12,27 @@ services, or lifecycle policy.
 
 ## Quick start
 
+Start with these guided workspaces. Each opens maximized with substantial TypeScript source, real
+syntax highlighting, one named action, and a side rail that explains what changed inside the
+editor.
+
+<PlayExample id="code-editor/lsp-completion"
+  title="Explore intelligent TypeScript completion"
+  blurb="Place the lesson at a real member-expression caret, request bounded completion, hover, and signature help, then inspect the native suggestion popup."
+/>
+
+<PlayExample id="code-editor/lsp-diagnostics"
+  title="Find and explain a TypeScript error"
+  blurb="Reveal a parser-aligned diagnostic, inspect its severity marker and terminal-safe explanation, then reset the lesson."
+/>
+
+<PlayExample id="code-editor/language-folding"
+  title="Navigate a structured TypeScript module"
+  blurb="Collapse parser-provided regions, inspect the gutter markers and shortened document, then restore the complete source."
+/>
+
+### Composition basics
+
 Create the document and controller first, then give the controller to either surface. Stable
 `memory:` or application-owned URIs make document identity explicit without implying filesystem
 access.

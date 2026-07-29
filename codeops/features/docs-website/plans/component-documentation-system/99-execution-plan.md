@@ -749,7 +749,8 @@
   docs-site checks, the independent quality review, and `yarn verify`. ✅ (completed:
   2026-07-29 15:15 CEST; 67 focused flagship/interaction/language checks pass; independent review
   corrections align real LSP request positions, prove native projected states, and guard stale,
-  aborted, reset, and disposal continuations; authoritative `yarn verify` passes)
+  aborted, reset, and disposal continuations; the landing page exposes all three flagship pilots
+  before the composition lab; authoritative `yarn verify` passes)
 
 ## Phase 11 — Overview and Full Integration
 
