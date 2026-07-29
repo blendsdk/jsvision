@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 00:39
-> **Progress**: 46/246 tasks (19%)
+> **Last Updated**: 2026-07-30 00:45
+> **Progress**: 47/246 tasks (19%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -341,7 +341,7 @@ independent specification-first phase (AR-10).
 
 ### Step 6.3: Hardening
 
-- [ ] 6.3.1 Add tab-order, hidden/disabled, modal restoration, and resize edges — `packages/docs-site/test/views-and-focus-guide.impl.test.ts`
+- [x] 6.3.1 Add tab-order, hidden/disabled, modal restoration, and resize edges — `packages/docs-site/test/views-and-focus-guide.impl.test.ts` ✅ (completed: 2026-07-30 00:45) — added seven implementation cases covering exact retained order, eligibility fallback, remembered focus, both modal restore targets, nested teardown, responsive geometry, and idempotent host cleanup; 26/26 focused tests, docs-site typecheck, and `yarn verify` pass
 - [ ] 6.3.2 Run focused checks, promote Views & focus, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Views/focus spec/impl tests and docs-site typecheck

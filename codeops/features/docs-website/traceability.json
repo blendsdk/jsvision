@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
+          "revision": "sha256:6ba1bc7ab71a4509117e6fc13f83b04d59a07d3c2f60f575ead891b592e84561",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -943,7 +943,8 @@
         "Phase 5 Codex plugin green checkpoint: 8/8 specifications and 15/15 focused course/catalog tests pass with docs-site typecheck, plugin integrity, and authoritative yarn verify.",
         "Phase 5 Codex plugin hardening: 18/18 focused tests and yarn verify pass across real tree equality, synthetic distribution drift, and independent stale-version diagnostics.",
         "Phase 6 Views & focus expected red: 3 passed and 16 failed across 19 independently authored final-contract specifications.",
-        "Phase 6 Views & focus green checkpoint: 19/19 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass."
+        "Phase 6 Views & focus green checkpoint: 19/19 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
+        "Phase 6 Views & focus hardening: 26/26 focused tests and yarn verify pass across retained order, eligibility fallback, modal restoration, responsive geometry, and host cleanup."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -988,10 +989,11 @@
         "summary:Phase 5 tasks 5.1.1 and 5.1.2 established eight Codex plugin cases; expected red is 2 passed and 6 failed for course and authentic-substitute gaps.",
         "summary:Phase 5 tasks 5.2.1 through 5.2.4 reached green with 8/8 specifications, 15/15 focused tests, docs-site typecheck, plugin integrity, and yarn verify passing.",
         "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass.",
-        "summary:Phase 6 tasks 6.1.1 through 6.2.4 delivered the complete Views & focus course and two template1 laboratories; 19/19 specifications, docs-site typecheck, registry integration, and yarn verify pass."
+        "summary:Phase 6 tasks 6.1.1 through 6.2.4 delivered the complete Views & focus course and two template1 laboratories; 19/19 specifications, docs-site typecheck, registry integration, and yarn verify pass.",
+        "summary:Phase 6 task 6.3.1 added retained-order, eligibility, focus-memory, modal-restoration, geometry, and cleanup hardening; 26/26 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
+      "revision": "sha256:6ba1bc7ab71a4509117e6fc13f83b04d59a07d3c2f60f575ead891b592e84561",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1092,7 +1094,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
+          "revision": "sha256:6ba1bc7ab71a4509117e6fc13f83b04d59a07d3c2f60f575ead891b592e84561",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1100,5 +1102,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T22:39:09Z"
+  "updated": "2026-07-29T22:45:57Z"
 }
