@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
+          "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -941,7 +941,9 @@
         "Phase 4 fix-scoped re-review: both Major findings and the Minor finding are resolved with no remaining Critical, Major, or Minor issue.",
         "Phase 5 Codex plugin expected red: 2 passed and 6 failed across eight independently authored final-contract specifications.",
         "Phase 5 Codex plugin green checkpoint: 8/8 specifications and 15/15 focused course/catalog tests pass with docs-site typecheck, plugin integrity, and authoritative yarn verify.",
-        "Phase 5 Codex plugin hardening: 18/18 focused tests and yarn verify pass across real tree equality, synthetic distribution drift, and independent stale-version diagnostics."
+        "Phase 5 Codex plugin hardening: 18/18 focused tests and yarn verify pass across real tree equality, synthetic distribution drift, and independent stale-version diagnostics.",
+        "Phase 6 Views & focus expected red: 3 passed and 16 failed across 19 independently authored final-contract specifications.",
+        "Phase 6 Views & focus green checkpoint: 19/19 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -985,10 +987,11 @@
         "summary:Phase 4 independent review found two Major and one Minor issue; AR-23 applied every correction and the permitted re-review cleared all findings.",
         "summary:Phase 5 tasks 5.1.1 and 5.1.2 established eight Codex plugin cases; expected red is 2 passed and 6 failed for course and authentic-substitute gaps.",
         "summary:Phase 5 tasks 5.2.1 through 5.2.4 reached green with 8/8 specifications, 15/15 focused tests, docs-site typecheck, plugin integrity, and yarn verify passing.",
-        "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass."
+        "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass.",
+        "summary:Phase 6 tasks 6.1.1 through 6.2.4 delivered the complete Views & focus course and two template1 laboratories; 19/19 specifications, docs-site typecheck, registry integration, and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
+      "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1015,10 +1018,11 @@
         "Auto-design AR-22 preserves Phase 4 expected-red evidence until its green checkpoint.",
         "Auto-design AR-23 corrected every Phase 4 quality finding and the permitted re-review found no remaining Critical, Major, or Minor issue.",
         "Auto-design AR-24 preserves Phase 5 expected-red evidence until its first green checkpoint.",
-        "Auto-design AR-25 corrected the package-manager renderer commands; the permitted Phase 5 re-review found no remaining issue."
+        "Auto-design AR-25 corrected the package-manager renderer commands; the permitted Phase 5 re-review found no remaining issue.",
+        "Auto-design AR-26 preserves the Phase 6 expected-red specification evidence through its first green checkpoint."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:ce985a2f6c2691aafd985ab84cf7354dc9f4b943ae41885d243822d88d549020",
+      "revision": "sha256:079e1c449f459fe7695324366588d8e25aed9ed785dbbfc7496cdf92e8e94a09",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1088,7 +1092,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
+          "revision": "sha256:6ccf9eabe3504d4f170bd466eef340d1a6480b3a862f9495848155806ba3b83d",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1096,5 +1100,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T22:13:18Z"
+  "updated": "2026-07-29T22:39:09Z"
 }

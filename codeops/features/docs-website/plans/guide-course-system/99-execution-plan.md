@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 00:13
-> **Progress**: 40/246 tasks (16%)
+> **Last Updated**: 2026-07-30 00:39
+> **Progress**: 46/246 tasks (19%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -329,15 +329,15 @@ independent specification-first phase (AR-10).
 
 ### Step 6.1: Specification tests
 
-- [ ] 6.1.1 [spec-author] Write the Views & focus course oracle — `packages/docs-site/test/views-and-focus-guide.spec.test.ts`
-- [ ] 6.1.2 Run the specification and record the expected red result
+- [x] 6.1.1 [spec-author] Write the Views & focus course oracle — `packages/docs-site/test/views-and-focus-guide.spec.test.ts` ✅ (completed: 2026-07-30 00:20) — independent specification author produced 19 final-contract cases covering course content, retained-tree/focus/modal public controls, two template1 labs, interactions, and responsive evidence
+- [x] 6.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 00:24) — expected red: 3 public retained-tree/focus/modal controls passed and 16 course/catalog/laboratory contract cases failed; commit deferred to the green 6.2.4 checkpoint per runtime AR-26
 
 ### Step 6.2: Implementation
 
-- [ ] 6.2.1 Replace the placeholder with the complete retained-tree and focus course — `packages/docs-site/guide/views-and-focus.md`
-- [ ] 6.2.2 Implement two objective-matched template1 labs and bounded fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/views-and-focus/`
-- [ ] 6.2.3 Register both labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 6.2.4 Run ST-15 green plus docs-site typecheck; fix implementation only
+- [x] 6.2.1 Replace the placeholder with the complete retained-tree and focus course — `packages/docs-site/guide/views-and-focus.md` ✅ (completed: 2026-07-30 00:39) — delivered the beginner-to-production course backbone, verified public-API snippets, integration boundaries, failure diagnosis, best practices, and practice work
+- [x] 6.2.2 Implement two objective-matched template1 labs and bounded fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/views-and-focus/` ✅ (completed: 2026-07-30 00:39) — added deterministic traversal/eligibility and modal containment/restoration laboratories with responsive Classic dialogs, keyboard paths, persistent non-color feedback, and owned cleanup
+- [x] 6.2.3 Register both labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 00:39) — registered both `kind: 'app'` Guide IDs and synchronized catalog evidence while retaining the `upgrade` stage
+- [x] 6.2.4 Run ST-15 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 00:39) — 19/19 focused course assertions, docs-site typecheck, registry integration, and authoritative `yarn verify` passed
 
 ### Step 6.3: Hardening
 

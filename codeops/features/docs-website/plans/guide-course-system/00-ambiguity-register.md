@@ -486,3 +486,29 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** A supported manager changes its executable command contract, renderer flags
   stop forwarding unchanged, or the Guide and shipped skill diverge.
+
+**AR-26 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red course upgrade under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 6 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 6.1.1 and 6.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 6.2.4. Commit tasks 6.1.1–6.2.4 as one spec-to-green slice only after
+  focused specifications, docs-site typecheck, and `yarn verify` pass.
+- **Evidence:** The independent spec author created nineteen final-contract cases; three public
+  retained-tree/focus/modal controls pass and sixteen course, catalog, and laboratory cases expose
+  the placeholder implementation.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening or quarantining
+  the oracle destroys the planned course evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the previously approved and independently challenged policy
+  applied to the Views & focus course task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a repeated challenge of the unchanged policy
+  was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
+  green checkpoint, or the repository gains an authoritative red-commit mechanism.
