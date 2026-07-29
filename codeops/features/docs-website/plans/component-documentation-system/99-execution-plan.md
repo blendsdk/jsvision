@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 38 / 180 tasks complete
+> **Progress**: 52 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -233,31 +233,69 @@
 
 ## Phase 4 — Foundations and Application Shell
 
+> **Phase baseline tree**: `b722c383e0419b28982020b86b519a696e24bcb7`
+> **Expected modification set**: Phase 4 foundation/application behavior contracts, family
+> specification and implementation tests, eight pages and examples, foundation/application registry
+> modules, bounded integration corrections, this execution plan, roadmap, traceability, and
+> verification/review evidence.
+
 ### 4.1 Specification tests
 
-- [ ] **4.1.1** Add `test/contracts/application.ts` and
+- [x] **4.1.1** Add `test/contracts/application.ts` and
   `test/application-components.spec.test.ts` for ST-20, freezing the eight page IDs, cumulative
-  delivery set, and exact behavior contract per example.
-- [ ] **4.1.2** Run RED for all missing foundation/application targets.
+  delivery set, and exact behavior contract per example. ✅ (completed: 2026-07-29 04:49)
+  - Verification: `yarn workspace @jsvision/docs-site typecheck`
+- [x] **4.1.2** Run RED for all missing foundation/application targets.
+  ✅ (completed: 2026-07-29 04:49)
+  - Verification: expected RED, 24 failures covering all eight missing pages and all eight missing
+    registered examples (`/tmp/tmp.LCaSBpPauH`).
 
 ### 4.2 Implementation
 
-- [ ] **4.2.1** Add `components/foundations/view.md` and `group.md`.
-- [ ] **4.2.2** Add `examples/foundations/view.ts` and `group.ts`.
-- [ ] **4.2.3** Add `components/application/application.md` and `desktop.md`.
-- [ ] **4.2.4** Add `examples/application/application.ts` and `desktop.ts`.
-- [ ] **4.2.5** Add `components/application/router.md` and `window.md`.
-- [ ] **4.2.6** Add `examples/application/router.ts` and `window.ts`.
-- [ ] **4.2.7** Add `components/application/menu-bar.md` and `status-line.md`.
-- [ ] **4.2.8** Add `examples/application/menu-bar.ts` and `status-line.ts`.
-- [ ] **4.2.9** Register all eight application/foundation examples in their family registry modules.
-- [ ] **4.2.10** Run ST-20 and shared page/template specs until GREEN.
+- [x] **4.2.1** Add `components/foundations/view.md` and `group.md`.
+  ✅ (completed: 2026-07-29 04:51)
+  - Verification: focused page-contract cases pass for both pages.
+- [x] **4.2.2** Add `examples/foundations/view.ts` and `group.ts`.
+  ✅ (completed: 2026-07-29 04:52)
+  - Verification: `yarn workspace @jsvision/docs-site typecheck`
+- [x] **4.2.3** Add `components/application/application.md` and `desktop.md`.
+  ✅ (completed: 2026-07-29 04:54)
+  - Verification: focused page-contract cases pass for both pages.
+- [x] **4.2.4** Add `examples/application/application.ts` and `desktop.ts`.
+  ✅ (completed: 2026-07-29 04:55)
+  - Verification: `yarn workspace @jsvision/docs-site typecheck`
+- [x] **4.2.5** Add `components/application/router.md` and `window.md`.
+  ✅ (completed: 2026-07-29 04:57)
+  - Verification: focused page-contract cases pass for both pages.
+- [x] **4.2.6** Add `examples/application/router.ts` and `window.ts`.
+  ✅ (completed: 2026-07-29 04:58)
+  - Verification: `yarn workspace @jsvision/docs-site typecheck`
+- [x] **4.2.7** Add `components/application/menu-bar.md` and `status-line.md`.
+  ✅ (completed: 2026-07-29 05:00)
+  - Verification: focused page-contract cases pass for both pages.
+- [x] **4.2.8** Add `examples/application/menu-bar.ts` and `status-line.ts`.
+  ✅ (completed: 2026-07-29 05:02)
+  - Verification: `yarn workspace @jsvision/docs-site typecheck`
+- [x] **4.2.9** Register all eight application/foundation examples in their family registry modules.
+  ✅ (completed: 2026-07-29 05:03)
+  - Verification: 19 registry/catalog cases pass.
+- [x] **4.2.10** Run ST-20 and shared page/template specs until GREEN.
+  ✅ (completed: 2026-07-29 05:04)
+  - Verification: 67 application-family, shared page, and template1 cases pass.
 
 ### 4.3 Implementation tests and hardening
 
-- [ ] **4.3.1** Add `test/application-components.impl.test.ts` for focus ownership, router reset,
+- [x] **4.3.1** Add `test/application-components.impl.test.ts` for focus ownership, router reset,
   modal/window composition, menu/status command behavior, and cleanup.
-- [ ] **4.3.2** Complete source-accuracy/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 05:05)
+  - Verification: 7 focused ownership, navigation, chrome, and teardown cases pass.
+- [x] **4.3.2** Complete source-accuracy/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 05:11)
+  - Verification: 78 focused docs-site cases pass; full `yarn verify` passes across 19 workspaces
+    (`/tmp/tmp.2XPsCLVLHc`). The independent review found three Major and one Minor issue; all
+    accepted fixes passed 32 focused cases, and the one-time re-review closed every finding
+    without a Critical or Major regression. The exact reviewed state passed `yarn verify` in 126
+    seconds (`/tmp/tmp.uOFttzzbYL`).
 
 ## Phase 5 — Containers and Navigation
 

@@ -45,6 +45,7 @@ user-delegated auto-design policy.
 | AR-19 | Example ownership | Must every cataloged symbol have a unique live-example module? | Every primary standard component page owns at least one registered primary example. A focused example may cover multiple tightly coupled symbols, and specialist topic pages may contain several examples; every cataloged symbol must map to at least one example, but duplicate demos are not required. | ✅ | session |
 | AR-20 | Documentation source | Are page snippets extracted from full runnable modules? | No. Registry `sourcePath` identifies the compiled runnable module. Markdown snippets remain separately authored, essence-only teaching artifacts and must not paste or extract a whole example module. | ✅ | preflight |
 | AR-21 | Runtime interaction | Which accelerator can focus the vertical Slider without conflicting with the Classic application shell? | Use **Alt+T** on “verTical.” Alt+V is already owned by the always-present View menu and opened that menu instead of focusing the slider. | ✅ | runtime-auto-design |
+| AR-22 | Runtime interaction | How should the Menu Bar example execute an item accelerator through the real menu state machine? | Use **Alt+L** to open the example's top-level File menu, then plain **O** to activate Open. Alt+O cannot directly target a submenu item while the menu is closed. | ✅ | runtime-auto-design |
 
 ### AR-21 delegated decision provenance
 
@@ -69,6 +70,32 @@ user-delegated auto-design policy.
 - **Root invocation ID:** `component-documentation-system-2026-07-29`.
 - **Reopen triggers:** The Classic View accelerator changes, or another control in the Slider
   example claims Alt+T.
+
+### AR-22 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** The input sequence is a reversible test/example mechanism within the approved
+  Menu Bar behavior; it changes neither the public API nor documentation scope.
+- **Objective:** Exercise real top-level and item accelerator behavior with visible command feedback.
+- **Decision:** Mark the `l` in the top-level `Fi~l~e` menu; drive it with Alt+L followed by plain O
+  for `~O~pen`.
+- **Evidence:** `MenuBar.onEvent` routes Alt+letter to `topHotkey`, while a plain letter reaches
+  `itemHotkey` only when a controller is already open.
+- **Rejected alternatives:** Map Alt+O through the application keymap was rejected because it would
+  bypass MenuBar; label the top-level title Open was rejected because it would demonstrate opening
+  a menu, not activating an item; use mouse-only activation was rejected because the contract
+  explicitly teaches keyboard navigation.
+- **Strongest counterargument:** Two keystrokes are slower than a global accelerator. They accurately
+  expose the menu hierarchy, and the application can separately add a global chord when its product
+  design calls for one.
+- **Confidence:** High — the source defines separate closed/open routing paths and existing menu
+  specifications exercise the same sequence.
+- **Hardening:** The behavior contract dispatches both events through the real application loop and
+  requires the emitted command's visible result.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29`.
+- **Reopen triggers:** MenuBar gains direct closed-state item accelerators or the File top-level
+  accelerator conflicts with future shared chrome.
 
 ## Inventory evidence
 
