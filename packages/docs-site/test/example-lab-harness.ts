@@ -62,6 +62,10 @@ export function dispatchExampleAction(app: Application, action: ExampleAction): 
     );
     return;
   }
+  if (action.kind === 'paste') {
+    app.loop.dispatch({ type: 'paste', text: action.text, truncated: false });
+    return;
+  }
   const button = action.button === 'middle' ? 1 : action.button === 'right' ? 2 : 0;
   const mouse = (kind: MouseEvent['kind'], point: { readonly x: number; readonly y: number }): MouseEvent => ({
     type: 'mouse',

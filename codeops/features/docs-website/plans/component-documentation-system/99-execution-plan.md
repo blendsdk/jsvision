@@ -363,29 +363,56 @@
 
 ## Phase 6 — Feedback, Date, and Color
 
+> **Phase baseline tree**: `bb1b1c61d2e34209b7afd9f417bdce71ca37293f`
+> **Expected modification set**: Phase 6 feedback/date/color behavior contracts, family
+> specification and implementation tests, six upgraded pages and template1 examples, family
+> registry modules, bounded integration corrections, this execution plan, roadmap, traceability,
+> and verification/review evidence.
+
 ### 6.1 Specification tests
 
-- [ ] **6.1.1** Add `test/contracts/value-components.ts` and
+- [x] **6.1.1** Add `test/contracts/value-components.ts` and
   `test/value-components.spec.test.ts` for the feedback/date/color subset of ST-21, freezing all six
-  IDs and exact behavior contracts.
-- [ ] **6.1.2** Run RED for all six Coming Soon examples.
+  IDs and exact behavior contracts. ✅ (completed: 2026-07-29 06:16 CEST; docs-site typecheck passes)
+- [x] **6.1.2** Run RED for all six Coming Soon examples.
+  ✅ (completed: 2026-07-29 06:16 CEST; expected RED: 24 failures covering six richer page
+  contracts, six missing template1 examples, and all six behavior contracts; `/tmp/tmp.ZJKlmTfEEr`)
 
 ### 6.2 Implementation
 
-- [ ] **6.2.1** Upgrade Progress Bar and Spinner pages.
-- [ ] **6.2.2** Add Progress Bar and Spinner `template1` examples.
-- [ ] **6.2.3** Upgrade Calendar and Date Picker pages.
-- [ ] **6.2.4** Add Calendar and Date Picker examples.
-- [ ] **6.2.5** Upgrade Color Swatch and Color Picker pages.
-- [ ] **6.2.6** Add Color Swatch and Color Picker examples.
-- [ ] **6.2.7** Register all six examples in the feedback/date/color family registry modules.
-- [ ] **6.2.8** Run the family ST-21 subset and shared contracts until GREEN.
+- [x] **6.2.1** Upgrade Progress Bar and Spinner pages.
+  ✅ (completed: 2026-07-29 06:19 CEST; focused page contracts pass)
+- [x] **6.2.2** Add Progress Bar and Spinner `template1` examples.
+  ✅ (completed: 2026-07-29 06:18 CEST; docs-site typecheck passes)
+- [x] **6.2.3** Upgrade Calendar and Date Picker pages.
+  ✅ (completed: 2026-07-29 06:19 CEST; focused page contracts pass)
+- [x] **6.2.4** Add Calendar and Date Picker examples.
+  ✅ (completed: 2026-07-29 06:18 CEST; docs-site typecheck passes)
+- [x] **6.2.5** Upgrade Color Swatch and Color Picker pages.
+  ✅ (completed: 2026-07-29 06:19 CEST; focused page contracts pass)
+- [x] **6.2.6** Add Color Swatch and Color Picker examples.
+  ✅ (completed: 2026-07-29 06:18 CEST; docs-site typecheck passes)
+- [x] **6.2.7** Register all six examples in the feedback/date/color family registry modules.
+  ✅ (completed: 2026-07-29 06:18 CEST; docs-site typecheck passes)
+- [x] **6.2.8** Run the family ST-21 subset and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 06:20 CEST; all 25 family page, template, visibility, and behavior
+  cases pass; `/tmp/tmp.o4FlDWrepE`)
 
 ### 6.3 Implementation tests and hardening
 
-- [ ] **6.3.1** Add `test/value-components.impl.test.ts` for timer cleanup, date boundaries,
+- [x] **6.3.1** Add `test/value-components.impl.test.ts` for timer cleanup, date boundaries,
   popup reset, invalid color entry, and deterministic animation.
-- [ ] **6.3.2** Complete content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 06:21 CEST; typecheck and all 31 family specification/implementation
+  cases pass; `/tmp/tmp.Q0HklcfQZv`)
+- [x] **6.3.2** Complete content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 06:41 CEST; public exports, option defaults, localization, theme roles,
+  widget-owned rendering, bounds, disabled dates, popup ownership, valid/invalid input, pointer
+  gestures, timers, clipping, and cleanup reviewed; 408 docs-site cases and `yarn docs:check` 20/20
+  pass; authoritative post-review `yarn verify` passes in 121 seconds; logs
+  `/tmp/tmp.XRXG9J3QGx`, `/tmp/tmp.i0cDjW6b51`, and `/tmp/tmp.Oe0iEYzfsy`). The independent review
+  found five Major issues and one Minor issue; all were corrected under auto-design. The one-time
+  re-review closed four findings and prescribed two bounded final corrections, which now pass all
+  44 focused family/contract cases (`/tmp/tmp.LRxh2GFYd9`).
 
 ## Phase 7 — Surface, General Editing, and Terminal
 

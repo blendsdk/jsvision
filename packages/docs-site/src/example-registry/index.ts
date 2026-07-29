@@ -1,8 +1,11 @@
 import { APPLICATION_EXAMPLES } from './applications.js';
+import { COLOR_EXAMPLES } from './colors.js';
 import { CONTAINER_FILE_TABLE_EXAMPLES } from './containers-files-table.js';
 import { CONTAINER_EXAMPLES } from './containers.js';
 import { CONTROL_EXAMPLES } from './controls.js';
+import { DATE_EXAMPLES } from './dates.js';
 import { DROPDOWN_EXAMPLES } from './dropdowns.js';
+import { FEEDBACK_EXAMPLES } from './feedback.js';
 import { FOUNDATION_EXAMPLES } from './foundations.js';
 import { THEMING_EXAMPLES } from './theming.js';
 import type { ExampleEntry } from './types.js';
@@ -31,6 +34,9 @@ export const EXAMPLES = composeExampleRegistry(
   DROPDOWN_EXAMPLES,
   CONTAINER_FILE_TABLE_EXAMPLES,
   APPLICATION_EXAMPLES,
+  FEEDBACK_EXAMPLES,
+  DATE_EXAMPLES,
+  COLOR_EXAMPLES,
   THEMING_EXAMPLES,
 );
 

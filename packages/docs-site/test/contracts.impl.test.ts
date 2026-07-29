@@ -44,6 +44,7 @@ describe('behavior expectation validation', () => {
 describe('behavior action validation', () => {
   test.each([
     [{ kind: 'key', key: 'enter', modifiers: ['Meta'] }, /unknown modifier/],
+    [{ kind: 'paste', text: '' }, /paste text must contain 1 to 1024 characters/],
     [{ kind: 'mouse', gesture: 'drag', at: { x: 1, y: 1 }, button: 'left', to: { x: -1, y: 2 } }, /destination/],
     [{ kind: 'mouse', gesture: 'click', at: { x: 1, y: 1 }, delta: 1 }, /inapplicable field/],
     [{ kind: 'mouse', gesture: 'wheel', at: { x: 1, y: 1 }, delta: 0 }, /non-zero integer/],

@@ -25,11 +25,17 @@ bar.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 }
 
 ## Live example
 
-<PlayComingSoon title="Progress bar" />
+<PlayExample id="feedback/progress-bar"
+  title="Progress Bar Lab"
+  blurb="Drive determinate bars through a shared signal and inspect captions, labels, layout, and safe clamping."
+/>
 
 ## Props
 
 `new ProgressBar(options)`.
+
+The public surface is `ProgressBar`, `ProgressBarOptions`, `Signal<number>`, and the
+`LabelPosition` union.
 
 | Prop            | Type                                       | Default  | Description                                                       |
 | --------------- | ------------------------------------------ | -------- | ----------------------------------------------------------------- |
@@ -38,12 +44,19 @@ bar.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 }
 | `label`         | `string \| (() => string)`                 | —        | Text beside or above the bar (literal or reactive accessor).      |
 | `labelPosition` | `'left' \| 'right' \| 'top' \| 'top-left'` | `'left'` | Where the label sits (see Sizing).                                |
 
-## Behaviour
+## Value and rendering
 
 The bar is passive — it has no keyboard or mouse interaction. It advances purely when you write its
 `value` signal (from a timer, a download callback, a loop). The optional `NN%` caption reads _on_ the
 bar: each digit's background matches whatever it sits on (fill colour where the fill has reached it,
 track colour where it hasn't), with an inverted foreground — no separate box.
+
+## Labels and captions
+
+`caption` overlays the rounded, clamped percentage without consuming another row. A `label` is
+independent: place it to the left or right for an inline description, or use `top`/`top-left` when
+the description deserves its own row. A reactive label getter can report changing work while the
+same value signal drives the fill.
 
 ## Sizing & layout
 
@@ -68,6 +81,7 @@ variable-width label (`9%`→`100%`) reflows the bar as it grows — pad it to a
 | --------------- | --------------------------------------------------- |
 | `progressFill`  | The filled `█`/eighth-block run: brightCyan on blue |
 | `progressTrack` | The unfilled `░` track: cyan on blue                |
+| `staticText`    | Optional label text around the bar                  |
 
 ## Related
 

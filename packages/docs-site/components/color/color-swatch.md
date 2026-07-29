@@ -31,11 +31,17 @@ swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 
 
 ## Live example
 
-<PlayComingSoon title="Color swatch" />
+<PlayExample id="color/color-swatch"
+  title="Color Swatch Lab"
+  blurb="Compare live palette movement with an explicit committed color using keyboard and mouse."
+/>
 
 ## Props
 
 `new ColorSwatch(options)`.
+
+The public surface is `ColorSwatch`, `ColorSwatchOptions`, the core `Color` type, and the default
+`ANSI16_ORDER` palette.
 
 | Prop       | Type                   | Default        | Description                                                           |
 | ---------- | ---------------------- | -------------- | --------------------------------------------------------------------- |
@@ -46,7 +52,7 @@ swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 
 | `onChange` | `(c: Color) => void`   | —              | Fired on the discrete commit (Enter / Space / mouse-up).              |
 | `nameFor`  | `(c: Color) => string` | —              | Color-name accessor a hosting `ColorPicker` uses to caption its chip. |
 
-## Keyboard & mouse
+## Live selection and commit
 
 | Input                    | Result                                                   |
 | ------------------------ | -------------------------------------------------------- |
@@ -58,6 +64,13 @@ swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 
 If `value` is an off-palette color (e.g. a custom hex from a hosting picker), no marker shows, but
 arrow navigation still works from an internal cursor. On a near-black cell the marker is drawn in a
 contrasting colour so it stays visible.
+
+## Palette geometry
+
+Every palette entry occupies a three-cell block. `columns` controls wrapping and `measure()` reports
+the resulting width and row count, including a safe one-row minimum for an empty palette. An
+off-palette custom value keeps the grid usable: no marker is drawn, but the internal cursor provides
+a stable starting point for the next arrow movement.
 
 ## Sizing & layout
 

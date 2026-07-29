@@ -28,11 +28,16 @@ const stop = runSpinner(frame, { timer: app.runtime, intervalMs: 80 });
 
 ## Live example
 
-<PlayComingSoon title="Spinner" />
+<PlayExample id="feedback/spinner"
+  title="Spinner Lab"
+  blurb="Compare rotating and ping-pong presets while retaining explicit ownership of animation time."
+/>
 
 ## Props
 
 `new Spinner(options)`.
+
+The public surface is `Spinner`, `SpinnerOptions`, `runSpinner`, and its injectable `TimerSeam`.
 
 | Prop     | Type                           | Default  | Description                                                        |
 | -------- | ------------------------------ | -------- | ------------------------------------------------------------------ |
@@ -47,10 +52,20 @@ timer over an injectable timer seam, and returns an idempotent, leak-free `stop(
 (e.g. an app's `runtime`); `intervalMs` defaults to a sensible cadence. You can also drive `frame`
 yourself from any tick source.
 
-## Behaviour
+## Frames and timer ownership
 
 The spinner is passive — no keyboard or mouse. It repaints when `frame` (or a reactive `label`)
 changes. The glyph draws at column 0 and the label at column 2 (a one-cell gap).
+
+`runSpinner` is optional convenience, not hidden ownership. Keep the returned stop function beside
+the operation that started it, and call it during completion or teardown. Manual frame writes are
+often better for deterministic tests and for applications that already own an animation tick.
+
+## Presets and fallbacks
+
+`dots` and `line` rotate by wrapping their frame index; `blocks` grows and shrinks as a ping-pong
+sequence. Unsupported Unicode presets fall back to the ASCII `line` frames at draw time, so the
+control remains animated instead of displaying an unusable glyph.
 
 ## Sizing & layout
 

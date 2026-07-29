@@ -25,24 +25,33 @@ picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 
 
 ## Live example
 
-<PlayComingSoon title="Date picker" />
+<PlayExample id="date/date-picker"
+  title="Date Picker Lab"
+  blurb="Edit a masked civil date or choose it from a bounded, deterministic popup calendar."
+/>
 
 ## Props
 
 `new DatePicker(options)`.
 
-| Prop              | Type                                           | Default        | Description                                   |
-| ----------------- | ---------------------------------------------- | -------------- | --------------------------------------------- |
-| `value`           | `Signal<CalendarDate \| null>`                 | —              | Two-way selected day (`null` = none).         |
-| `format`          | `'YYYY-MM-DD' \| 'DD/MM/YYYY' \| 'MM/DD/YYYY'` | `'YYYY-MM-DD'` | Field mask + parse/serialize.                 |
-| `today`           | `CalendarDate`                                 | system clock   | Forwarded to the dropdown `Calendar`.         |
-| `min`             | `CalendarDate`                                 | —              | Inclusive lower bound (forwarded).            |
-| `max`             | `CalendarDate`                                 | —              | Inclusive upper bound (forwarded).            |
-| `isDisabled`      | `(d: CalendarDate) => boolean`                 | —              | Disabled-day predicate (forwarded).           |
-| `firstDayOfWeek`  | `0 \| 1`                                       | `0`            | First day of the week (forwarded).            |
-| `showWeekNumbers` | `boolean`                                      | `false`        | ISO week numbers in the dropdown (forwarded). |
+The public surface is `DatePicker`, `DatePickerOptions`, the `DateFormat` union, and the hosted
+`Calendar`.
 
-## Keyboard & mouse
+| Prop              | Type                                           | Default         | Description                                            |
+| ----------------- | ---------------------------------------------- | --------------- | ------------------------------------------------------ |
+| `value`           | `Signal<CalendarDate \| null>`                 | —               | Two-way selected day (`null` = none).                  |
+| `i18n`            | `I18n`                                         | English UI      | Localizes the hosted calendar and week start.          |
+| `format`          | `'YYYY-MM-DD' \| 'DD/MM/YYYY' \| 'MM/DD/YYYY'` | `'YYYY-MM-DD'`  | Field mask + parse/serialize.                          |
+| `today`           | `CalendarDate`                                 | system clock    | Forwarded to the dropdown `Calendar`.                  |
+| `min`             | `CalendarDate`                                 | —               | Inclusive lower bound (forwarded).                     |
+| `max`             | `CalendarDate`                                 | —               | Inclusive upper bound (forwarded).                     |
+| `isDisabled`      | `(d: CalendarDate) => boolean`                 | —               | Disabled-day predicate (forwarded).                    |
+| `firstDayOfWeek`  | `0 \| 1`                                       | locale-derived  | Explicit override; English without `i18n` uses Sunday. |
+| `showWeekNumbers` | `boolean`                                      | `false`         | ISO week numbers in the dropdown (forwarded).          |
+| `density`         | `'compact' \| 'comfortable' \| 'spacious'`     | `'comfortable'` | Hosted calendar geometry and popup size.               |
+| `placeholder`     | `string \| Signal<string>`                     | —               | Muted hint while the masked field is empty.            |
+
+## Masked field and value
 
 | Input                      | Result                                                            |
 | -------------------------- | ----------------------------------------------------------------- |
@@ -52,6 +61,13 @@ picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 
 | Pick a day in the calendar | Fill the field and close the popup.                               |
 
 With no overlay host available (headless), opening is a no-op.
+
+## Popup calendar
+
+The popup receives the same value signal, bounds, disabled-date predicate, week start, week-number
+flag, density, and deterministic `today` as the field. Selecting a day therefore serializes it into
+the active `DateFormat` and closes the popup without a second synchronization layer. Escaping or
+dismissing the popup leaves the current value intact.
 
 ## Sizing & layout
 
@@ -69,8 +85,9 @@ One row: the masked input plus a trailing 3-cell dropdown button. Give it enough
 
 ## Theming
 
-`DatePicker` uses the input roles for the field and the `calendar*` roles for the dropdown; the `▐↓▌`
-button draws the shared dropdown icon.
+The field uses `inputNormal` and `inputSelected`; the popup uses `calendarNormal`,
+`calendarSelected`, and the other `calendar*` roles. The `▐↓▌` button draws the shared dropdown
+icon with `historyButtonSides` and `historyButtonArrow`.
 
 ## Related
 
