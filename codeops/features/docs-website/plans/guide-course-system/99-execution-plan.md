@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:01
-> **Progress**: 14/246 tasks (6%)
+> **Last Updated**: 2026-07-29 22:09
+> **Progress**: 15/246 tasks (6%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -150,7 +150,7 @@ independent specification-first phase (AR-10).
 
 ### Step 2.3: Hardening
 
-- [ ] 2.3.1 Add package-matrix, stale-version, and invalid-import coverage — `packages/docs-site/test/install-and-packages-guide.impl.test.ts`
+- [x] 2.3.1 Add package-matrix, stale-version, and invalid-import coverage — `packages/docs-site/test/install-and-packages-guide.impl.test.ts` ✅ (completed: 2026-07-29 22:09) — 11/11 focused specification and implementation tests plus authoritative `yarn verify` passed
 - [ ] 2.3.2 Run focused checks, promote Install & packages, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Install spec/impl tests and docs-site typecheck
