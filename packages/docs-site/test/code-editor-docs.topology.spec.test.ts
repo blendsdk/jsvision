@@ -15,7 +15,19 @@ const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Immutable Code Editor topic oracle in specialist-sidebar order. */
 const CODE_EDITOR_TOPICS = [
-  ['code-editor/overview', 'index.md', '/components/code-editor/', 'Overview', 'landing', ['code-editor/quick-start']],
+  [
+    'code-editor/overview',
+    'index.md',
+    '/components/code-editor/',
+    'Overview',
+    'landing',
+    [
+      'code-editor/lsp-completion',
+      'code-editor/lsp-diagnostics',
+      'code-editor/language-folding',
+      'code-editor/quick-start',
+    ],
+  ],
   [
     'code-editor/documents-and-lifecycle',
     'documents-and-lifecycle.md',

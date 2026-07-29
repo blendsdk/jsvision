@@ -950,7 +950,12 @@
       "sidebarOrder": 1,
       "hub": "code-editor",
       "profile": "landing",
-      "examples": ["code-editor/quick-start"]
+      "examples": [
+        "code-editor/lsp-completion",
+        "code-editor/lsp-diagnostics",
+        "code-editor/language-folding",
+        "code-editor/quick-start"
+      ]
     },
     {
       "kind": "topic",

@@ -32,3 +32,11 @@ action-then-reset race.
 - Flagship specification, implementation, interaction, and language/LSP checks: 67/67 pass.
 - The language/LSP suite retains explicit real-adapter failure and degraded-fallback coverage.
 - Final authoritative `yarn verify` passed after all review corrections and artifact updates.
+
+## Landing-page visibility correction
+
+The first delivery retained the generic Quick Start as the only Code Editor landing-page example,
+which made the flagship work effectively invisible to readers entering through the sidebar. The
+landing page now presents completion, diagnostics, and folding first, followed by the composition
+example. Catalog and topology contracts require that exact population so the flagship tour cannot
+silently disappear from the primary route.
