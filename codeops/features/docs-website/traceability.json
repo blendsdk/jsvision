@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
+          "revision": "sha256:6846776da6075a7402e4c4ad1aaa7f849cd2757b3a520f237ef5d5f0d7b23700",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -973,10 +973,11 @@
         "summary:Phase 3 independent review found two Major issues; AR-21 applied both corrections and the permitted re-review cleared every Critical and Major finding.",
         "summary:Phase 4 tasks 4.1.1 and 4.1.2 reconciled fifteen Reactive state cases; expected red is 13 passed and 2 failed for course-content gaps.",
         "summary:Phase 4 tasks 4.2.1 through 4.2.3 corrected only course-content gaps; both labs and catalog evidence remain valid and 15/15 specifications pass.",
-        "summary:Phase 4 task 4.2.4 reached green with 15/15 specifications, docs-site typecheck, and authoritative yarn verify passing."
+        "summary:Phase 4 task 4.2.4 reached green with 15/15 specifications, docs-site typecheck, and authoritative yarn verify passing.",
+        "summary:Phase 4 task 4.3.1 added real resize, repeated batching, alternating dependency, exact cleanup, and post-disposal hardening; 20/20 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
+      "revision": "sha256:6846776da6075a7402e4c4ad1aaa7f849cd2757b3a520f237ef5d5f0d7b23700",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1072,7 +1073,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
+          "revision": "sha256:6846776da6075a7402e4c4ad1aaa7f849cd2757b3a520f237ef5d5f0d7b23700",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1080,5 +1081,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T21:02:19Z"
+  "updated": "2026-07-29T21:08:35Z"
 }
