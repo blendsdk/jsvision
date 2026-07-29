@@ -94,7 +94,7 @@
       "group": "Core concepts",
       "page": "/guide/views-and-focus",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 3,
       "prerequisites": ["layout", "reactive-state"],
       "learningOutcomes": [
