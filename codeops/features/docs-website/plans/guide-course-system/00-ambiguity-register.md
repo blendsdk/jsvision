@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 21 items resolved
-> **Last Updated**: 2026-07-29 22:48
+> **Status**: ✅ GATE PASSED — all 22 items resolved
+> **Last Updated**: 2026-07-29 22:56
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -26,6 +26,7 @@
 | 19 | Execution (runtime) | How should Phase 3 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 3.1.1–3.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 3 task IDs and resume per-task commits after 3.2.4. | ✅ Resolved |
 | 20 | API accuracy (runtime) | Does a `topRight` stack layer have to re-anchor in the same render flush after resize or in its documented settled frame? | Verify the documented one-extra-frame settled state / change the correct lab to satisfy an unsupported same-flush assertion | **Authority: AI — delegated by `--auto-design`.** Preserve the public stack contract and flush the second settling frame before asserting the final anchor. | ✅ Resolved |
 | 21 | Quality review (runtime) | How should the two Major Phase 3 findings be resolved without weakening the completed Layout contract? | Invalidate overlay layout immediately and correct the infeasible-minimum lesson with rendered and solver evidence / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 4. | ✅ Resolved |
+| 22 | Execution (runtime) | How should Phase 4 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 4.1.1–4.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 4 task IDs and resume per-task commits after 4.2.4. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -373,3 +374,28 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** A hidden layer remains painted after either activation path, visibility
   invalidation semantics change, infeasible fractional minimums stop filling the exact track, or
   the documented 7/13 result changes.
+
+**AR-22 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red re-audit under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 4 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 4.1.1 and 4.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 4.2.4. Commit tasks 4.1.1–4.2.4 as one spec-to-green slice only after
+  focused specifications, docs-site typecheck, and `yarn verify` pass.
+- **Evidence:** The independent spec author reconciled fifteen final-contract cases; the focused
+  run passed thirteen and exposed two content-contract gaps.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening or quarantining
+  the oracle destroys the planned re-audit evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the previously approved and independently challenged policy applied
+  to the Reactive state re-audit task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a repeated challenge of the unchanged policy
+  was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
+  green checkpoint, or the repository gains an authoritative red-commit mechanism.

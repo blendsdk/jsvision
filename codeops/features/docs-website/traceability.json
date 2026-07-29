@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
+          "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -970,10 +970,13 @@
         "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass.",
         "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass.",
         "summary:Phase 3 task 3.3.2 passed 22 focused Layout/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry.",
-        "summary:Phase 3 independent review found two Major issues; AR-21 applied both corrections and the permitted re-review cleared every Critical and Major finding."
+        "summary:Phase 3 independent review found two Major issues; AR-21 applied both corrections and the permitted re-review cleared every Critical and Major finding.",
+        "summary:Phase 4 tasks 4.1.1 and 4.1.2 reconciled fifteen Reactive state cases; expected red is 13 passed and 2 failed for course-content gaps.",
+        "summary:Phase 4 tasks 4.2.1 through 4.2.3 corrected only course-content gaps; both labs and catalog evidence remain valid and 15/15 specifications pass.",
+        "summary:Phase 4 task 4.2.4 reached green with 15/15 specifications, docs-site typecheck, and authoritative yarn verify passing."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
+      "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -996,10 +999,11 @@
         "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings.",
         "Auto-design AR-18 selected the mandatory compiler, runtime-probe, and engine-wording corrections for the Phase 2 quality findings.",
         "Auto-design AR-19 preserved Phase 3 expected-red evidence through its green checkpoint; AR-20 aligned corner-layer evidence with the documented settled frame.",
-        "Auto-design AR-21 corrected both Phase 3 quality findings and the permitted re-review found no remaining Critical or Major issue."
+        "Auto-design AR-21 corrected both Phase 3 quality findings and the permitted re-review found no remaining Critical or Major issue.",
+        "Auto-design AR-22 preserves Phase 4 expected-red evidence until its green checkpoint."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:ce5fefabf00bcbf3a87eabab1078189d1d0fdcbc1a399f7b706cdf08a15ec5a4",
+      "revision": "sha256:254d4b7d02e46d9837e437a7da39ca0d029df80539b9320ae903c867bdc38362",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1068,7 +1072,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
+          "revision": "sha256:2007d48b19488631ff061c75dd951fda9050cf3d8ec6c27c9ba1bebabb3fa486",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1076,5 +1080,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:48:00Z"
+  "updated": "2026-07-29T21:02:19Z"
 }

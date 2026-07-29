@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:48
-> **Progress**: 24/246 tasks (10%)
+> **Last Updated**: 2026-07-29 23:02
+> **Progress**: 30/246 tasks (12%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -232,17 +232,26 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-13 · `03-02` · `03-03`
 
+> **Phase baseline tree**: `1aa11a740712999569c009d9ce8aa4d1d8d7b6cc`
+>
+> **Expected modification set**: `packages/docs-site/guide/reactive-state.md`,
+> `packages/docs-site/examples/guides/reactive-*.ts`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/test/reactive-state-guide.spec.test.ts`,
+> `packages/docs-site/test/reactive-state-guide.impl.test.ts`, this execution plan, the ambiguity
+> register, and docs-website roadmap/traceability evidence required by the execution protocol.
+
 ### Step 4.1: Specification tests
 
-- [ ] 4.1.1 [spec-author] Reconcile the existing Reactive state oracle with the final contract — `packages/docs-site/test/reactive-state-guide.spec.test.ts`
-- [ ] 4.1.2 Run the specification and record red gaps or justify a complete pre-existing pass
+- [x] 4.1.1 [spec-author] Reconcile the existing Reactive state oracle with the final contract — `packages/docs-site/test/reactive-state-guide.spec.test.ts` ✅ (completed: 2026-07-29 22:56)
+- [x] 4.1.2 Run the specification and record red gaps or justify a complete pre-existing pass ✅ (completed: 2026-07-29 22:56) — expected red: 13 passed, 2 failed for prerequisite/backbone/outcomes/diagnostic/practice gaps; commit deferred to the green 4.2.4 checkpoint per runtime AR-22
 
 ### Step 4.2: Implementation
 
-- [ ] 4.2.1 Correct mental-model, lifecycle, failure, practice, or link gaps — `packages/docs-site/guide/reactive-state.md`
-- [ ] 4.2.2 Correct graph/lifetime labs or fixtures only where the audit requires it — `packages/docs-site/examples/guides/reactive-*.ts`
-- [ ] 4.2.3 Reconcile registry and catalog evidence without weakening the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 4.2.4 Run ST-13 green plus docs-site typecheck; fix implementation only
+- [x] 4.2.1 Correct mental-model, lifecycle, failure, practice, or link gaps — `packages/docs-site/guide/reactive-state.md` ✅ (completed: 2026-07-29 22:58) — added prerequisite/audience/outcomes, first reactive result, composition, evidence-oriented diagnosis, and progressive practice
+- [x] 4.2.2 Correct graph/lifetime labs or fixtures only where the audit requires it — `packages/docs-site/examples/guides/reactive-*.ts` ✅ (completed: 2026-07-29 22:58) — source audit and reconciled oracle proved both labs correct through keyboard, mouse, reactive, lifecycle, and geometry paths
+- [x] 4.2.3 Reconcile registry and catalog evidence without weakening the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-29 22:58) — unchanged complete-stage metadata, prerequisite, outcomes, IDs, app kinds, and source paths pass the reconciled oracle
+- [x] 4.2.4 Run ST-13 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-29 23:02) — 15/15 reconciled specifications, docs-site typecheck, and authoritative `yarn verify` passed
 
 ### Step 4.3: Hardening
 
