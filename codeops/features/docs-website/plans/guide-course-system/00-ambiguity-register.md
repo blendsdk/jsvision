@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 22 items resolved
-> **Last Updated**: 2026-07-29 22:56
+> **Status**: ✅ GATE PASSED — all 23 items resolved
+> **Last Updated**: 2026-07-29 23:23
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -27,6 +27,7 @@
 | 20 | API accuracy (runtime) | Does a `topRight` stack layer have to re-anchor in the same render flush after resize or in its documented settled frame? | Verify the documented one-extra-frame settled state / change the correct lab to satisfy an unsupported same-flush assertion | **Authority: AI — delegated by `--auto-design`.** Preserve the public stack contract and flush the second settling frame before asserting the final anchor. | ✅ Resolved |
 | 21 | Quality review (runtime) | How should the two Major Phase 3 findings be resolved without weakening the completed Layout contract? | Invalidate overlay layout immediately and correct the infeasible-minimum lesson with rendered and solver evidence / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 4. | ✅ Resolved |
 | 22 | Execution (runtime) | How should Phase 4 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 4.1.1–4.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 4 task IDs and resume per-task commits after 4.2.4. | ✅ Resolved |
+| 23 | Quality review (runtime) | How should the two Major and one Minor Phase 4 findings be resolved without weakening the completed Reactive state contract? | Own both lab graphs through the host lifecycle, teach required layout invalidation, and make no-op batch feedback truthful / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every technical correction, prove teardown through the authentic host lifecycle, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 5. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -399,3 +400,35 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
   green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-23 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness and evidence hardening inside the confirmed Reactive state course
+  contract; no product, scope, policy, or risk-acceptance choice is required.
+- **Objective:** Resolve every Phase 4 review finding before the Codex plugin course.
+- **Decision:** Own each lab's complete build-time reactive graph in a root whose disposer is
+  registered with the example host and, as an idempotent fallback, with dialog cleanup. Teach that
+  direct mounted visibility mutations require layout invalidation, with one shared-container
+  invalidation after grouped sibling changes. Report repeated equal batch and reset transactions as
+  no-op writes instead of claiming an effect rerun.
+- **Evidence:** Host-authentic tests build both examples without an ambient owner, observe no
+  unowned-root warning, invoke the registered host cleanup, and prove subsequent actions cannot
+  advance effect or cleanup counts. Rendered guide and interaction assertions cover the corrected
+  invalidation and no-op feedback.
+- **Rejected alternatives:** Demotion and deferral would leave lifecycle leaks and misleading
+  beginner guidance in a completed prerequisite course. Waiving any finding is prohibited by the
+  quality protocol.
+- **Strongest counterargument:** Dialog cleanup alone could appear sufficient because the shared
+  shell normally mounts the window. The example host owns the build contract, however, so its
+  teardown must dispose the graph even when mounting never completes; the dialog hook is only the
+  fallback for independent unmount.
+- **Confidence:** High — the correction follows the public ownership API and is exercised through
+  the real docs example host lifecycle.
+- **Hardening:** The permitted fix-scoped re-review resolved both Major findings and the Minor
+  finding with no remaining Critical, Major, or Minor issue. The final correction passes 29/29
+  focused Reactive state/catalog tests, docs-site typecheck, and authoritative `yarn verify`.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either lab emits an unowned-root warning, a host teardown leaves reactive
+  work live, direct visibility guidance omits invalidation, or equal transactions claim a rerun.
