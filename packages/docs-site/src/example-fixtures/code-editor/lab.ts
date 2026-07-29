@@ -659,6 +659,7 @@ export function buildCodeEditorLab(ctx: ExampleContext, definition: CodeEditorLa
     title: ` ${definition.title} `,
     width: DIALOG_WIDTH,
     height: DIALOG_HEIGHT,
+    startMaximized: true,
     onResize: (size) =>
       reflowLab(size, content, editor, quickStart?.windowed, buttons, objective, inspector, instructions),
   });

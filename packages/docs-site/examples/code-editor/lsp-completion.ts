@@ -1,14 +1,14 @@
 /** Bounded in-process completion laboratory. */
 import { defineExample } from '../_contract.js';
-import { buildCodeEditorLab } from '#code-editor-lab';
+import { buildFlagshipCodeEditorLab } from '#code-editor-flagship';
 
 export default defineExample({
   title: 'LSP Completion',
-  blurb: 'Issue a deterministic in-process request and inspect bounded completion items.',
+  blurb: 'Request smart suggestions in a substantial highlighted TypeScript profile formatter.',
   build: (ctx) =>
-    buildCodeEditorLab(ctx, {
+    buildFlagshipCodeEditorLab(ctx, {
       scenario: 'lsp-completion',
-      title: 'LSP Completion',
-      objective: 'Bound completion content, request lifecycle, and presentation.',
+      title: 'Smart TypeScript Completion',
+      instruction: 'Inspect profile. in formatProfile(), then request suggestions with Alt+R.',
     }),
 });

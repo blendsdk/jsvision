@@ -48,6 +48,7 @@ user-delegated auto-design policy.
 | AR-22 | Runtime interaction | How should the Menu Bar example execute an item accelerator through the real menu state machine? | Use **Alt+L** to open the example's top-level File menu, then plain **O** to activate Open. Alt+O cannot directly target a submenu item while the menu is closed. | ✅ | runtime-auto-design |
 | AR-23 | Runtime verification | How should the Code Editor template specification observe maximize and restore? | Flush the existing deferred render/layout root after each `Template1Dialog.zoom()` before inspecting bounds. This preserves the established asynchronous layout contract and matches the shared template1 specifications; it does not require a new synchronous dialog behavior. | ✅ | runtime-auto-design |
 | AR-24 | Live-example fidelity | What evidence must a Code Editor lab expose for its learning objective? | Drive the public editor/controller/service/host input path itself and assert its public state. Status text and docs-only probes may summarize that evidence, but may not substitute for clipboard output, document lifecycle, adapter state, search presentation, protocol results, theme reports, viewport input, or recovery state. | ✅ | runtime-auto-design |
+| AR-25 | Flagship presentation | How should Code Editor examples communicate a capability at first glance? | Treat Code Editor as a flagship surface. Start its examples maximized, use substantial scenario-relevant source instead of one- or two-line fixtures, run the real built-in language adapter so syntax highlighting is visible on first render, replace generic actions with capability-specific teaching controls, and show human-readable evidence beside the editor. Establish the pattern with completion, diagnostics, and language-folding pilots; obtain visual approval before applying it to the remaining examples. | ✅ | session |
 
 ### AR-21 delegated decision provenance
 
@@ -148,6 +149,33 @@ user-delegated auto-design policy.
 - **Root invocation ID:** `component-documentation-system-2026-07-29-phase-10`.
 - **Reopen triggers:** A public Code Editor input/state contract changes or a live-example claim no
   longer maps to executable public evidence.
+
+### AR-25 decision provenance
+
+- **Authority:** User approval on 2026-07-29; implementation mechanisms delegated by
+  `--auto-design`.
+- **Objective:** Make the flagship Code Editor immediately recognizable as a capable,
+  syntax-aware development surface whose focused examples explain what to try and what changed.
+- **Decision:** Use maximized `template1` dialogs, meaningful multi-line fixtures, real initial
+  syntax analysis, feature-named actions, and visible human-readable results. Pilot completion,
+  diagnostics, and language folding before migrating the remaining examples.
+- **Evidence:** The existing shared lab gives most scenarios the same three-line TypeScript
+  document, generic “Run check” and “Focus editor” controls, and a fixed
+  language/revision/selection inspector. Assigning `languageId` alone does not populate the
+  controller's syntax result.
+- **Rejected alternatives:** Retaining the generic lab with richer prose was rejected because the
+  visible examples would still look alike; synthetic coloring was rejected because it would not
+  demonstrate the shipped language adapters; converting all 21 examples before a visual checkpoint
+  was rejected because an unreviewed presentation pattern would be expensive to unwind.
+- **Strongest counterargument:** Maximized startup and larger fixtures consume more terminal space.
+  The Code Editor is a workspace component whose legibility and syntax presentation directly
+  benefit from that space.
+- **Confidence:** High — the user explicitly approved both the flagship direction and maximized
+  startup.
+- **Hardening:** The pilot spans three distinct presentation families: assistance, diagnostics,
+  and structural transformation.
+- **Reopen triggers:** The pilots fail visual review, a built-in adapter cannot provide stable
+  first-render syntax, or the maximized layout obscures the teaching controls.
 
 ## Inventory evidence
 

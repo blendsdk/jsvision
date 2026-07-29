@@ -12,7 +12,8 @@
   "type": "module",
   "imports": {
     "#data-grid-lab": "./src/example-fixtures/data-grid/lab.ts",
-    "#code-editor-lab": "./src/example-fixtures/code-editor/lab.ts"
+    "#code-editor-lab": "./src/example-fixtures/code-editor/lab.ts",
+    "#code-editor-flagship": "./src/example-fixtures/code-editor/flagship.ts"
   },
   "scripts": {
     "dev": "vitepress dev",

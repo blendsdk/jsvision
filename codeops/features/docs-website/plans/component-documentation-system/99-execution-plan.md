@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 159 / 180 tasks complete
-> **Last Updated**: 2026-07-29 12:02 CEST
+> **Progress**: 166 / 187 tasks complete
+> **Last Updated**: 2026-07-29 15:15 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -31,7 +31,7 @@
 - Apply the current `AGENTS.md` `template1` directive to every new live example. Use the shared
   `Template1Dialog` rather than duplicating dialog behavior: examples start compact and centered,
   remain responsive through resize/maximize/restore, and use `startMaximized` only where the user
-  has explicitly approved it. No Code Editor example currently has that startup approval.
+  has explicitly approved it. Code Editor examples have explicit approval for maximized startup.
 
 ## Phase Dependencies
 
@@ -47,6 +47,7 @@
 | 8 | 2 | Forms/files complete |
 | 9 | 1, 2 | Data Grid hub replaces old page |
 | 10 | 1, 2 | Code Editor hub replaces old guide |
+| 10.6 | 10 | Three flagship Code Editor presentation pilots establish the visual pattern |
 | 11 | 3–10 | Full catalog/sidebar/API/overview integration |
 | 12 | 11 | Final source/content/production verification |
 
@@ -705,6 +706,50 @@
   ✅ (completed: 2026-07-29 12:45 CEST; 82 focused Code Editor checks and docs-site typecheck pass;
   independent review corrections close real-input, host-recovery, sanitizer, shared-controller, and
   objective-fidelity gaps; authoritative `yarn verify` passes in 142.49 seconds)
+
+## Phase 10.6 — Code Editor Flagship Presentation Pilots
+
+> **Phase baseline tree**: `40efd1dab7b28999a3dc6c515903284af4ecbe90`
+> **Expected modification set**: Code Editor flagship specification and implementation tests,
+> completion/diagnostics/language-folding example modules, shared flagship fixture/layout modules,
+> the Code Editor example registry only if module wiring changes, the owning Code Editor
+> specification/testing/decision artifacts, this execution plan, roadmaps, traceability, and
+> verification/review evidence.
+
+### 10.6.1 Specification tests
+
+- [x] **10.6.1** Add immutable flagship pilot specifications for maximized responsive startup,
+  meaningful multi-line source, non-empty real built-in syntax, capability-specific actions,
+  reset behavior, and visible human-readable result evidence. ✅ (completed: 2026-07-29 14:46
+  CEST; docs-site typecheck passes)
+- [x] **10.6.2** Run the focused pilot specification and record RED against the generic laboratory.
+  ✅ (completed: 2026-07-29 14:50 CEST; expected RED: 30 failed and 23 passed across the flagship
+  and maximized-startup specifications; log `/tmp/tmp.v4CG4UfqTt/red-10.6.2.log`)
+
+### 10.6.2 Implementation
+
+- [x] **10.6.3** Add bounded flagship source fixtures and a shared syntax-aware responsive teaching
+  layout that uses the public language registry/scheduler/controller path. ✅ (completed:
+  2026-07-29 14:51 CEST; docs-site typecheck and all 44 existing Code Editor interaction cases
+  pass with maximized startup)
+- [x] **10.6.4** Rebuild `lsp-completion` as an inviting TypeScript assistance lesson with a staged
+  caret, named completion action, visible suggestions/details, and reset. ✅ (completed:
+  2026-07-29 14:53 CEST; seven focused flagship, behavior, and LSP implementation cases pass)
+- [x] **10.6.5** Rebuild `lsp-diagnostics` as an understandable TypeScript error lesson with visible
+  severity/message evidence and reset. ✅ (completed: 2026-07-29 14:53 CEST; seven focused
+  flagship, behavior, and LSP implementation cases pass)
+- [x] **10.6.6** Rebuild `language-folding` around a substantial foldable TypeScript module with a
+  named fold action, visible before/after evidence, and reset. ✅ (completed: 2026-07-29 14:55
+  CEST; five focused flagship and behavior-contract cases pass)
+
+### 10.6.3 Implementation tests and hardening
+
+- [x] **10.6.7** Add implementation coverage for adapter failure/stale-result safety, repeated
+  action/reset, maximize/restore/reflow, disposal, and deterministic fixture bounds; run focused
+  docs-site checks, the independent quality review, and `yarn verify`. ✅ (completed:
+  2026-07-29 15:15 CEST; 67 focused flagship/interaction/language checks pass; independent review
+  corrections align real LSP request positions, prove native projected states, and guard stale,
+  aborted, reset, and disposal continuations; authoritative `yarn verify` passes)
 
 ## Phase 11 — Overview and Full Integration
 
