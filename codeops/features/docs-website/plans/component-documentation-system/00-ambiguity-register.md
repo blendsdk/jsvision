@@ -177,6 +177,40 @@ user-delegated auto-design policy.
 - **Reopen triggers:** The pilots fail visual review, a built-in adapter cannot provide stable
   first-render syntax, or the maximized layout obscures the teaching controls.
 
+### AR-26 decision provenance
+
+- **Authority:** User approval on 2026-07-29; implementation mechanisms delegated by
+  `--auto-design`.
+- **Eligibility:** This selects an internal presentation architecture for the already-approved 21
+  Code Editor examples without changing their routes, learning objectives, or public SDK behavior.
+- **Objective:** Apply the visually approved flagship quality to every remaining Code Editor
+  example while keeping each capability understandable at first glance.
+- **Decision:** Replace the remaining generic presentation through one shared responsive lesson
+  shell and three bounded scenario cohorts: foundation/lifecycle, languages/search, and
+  platform/safety. Each scenario supplies substantial language-appropriate source, a named action,
+  concise Try/Result/Look-for teaching copy, and native editor evidence. Large capabilities remain
+  separate examples.
+- **Evidence:** The user approved the completion, diagnostics, and folding pilots but found the
+  other examples visually indistinguishable. The existing generic builder already owns the real
+  capability actions, so retaining those public paths while replacing tiny shared source and
+  generic chrome minimizes behavioral risk.
+- **Rejected alternatives:** One kitchen-sink example was rejected because it hides individual
+  capabilities; duplicating 18 complete builders was rejected because shared lifecycle and
+  Template1 behavior would drift; prose-only changes were rejected because the editor surface
+  would still look unchanged.
+- **Strongest counterargument:** A shared shell can make lessons feel formulaic. Scenario-specific
+  source, action labels, native state, and teaching cues provide the variation while shared
+  geometry/reset/disposal remain consistent.
+- **Confidence:** High — the user explicitly approved the pilot pattern and the existing actions
+  already pass public-state behavior contracts.
+- **Hardening:** Immutable specs cover every non-pilot ID, require substantial source and named
+  actions, and inspect capability-specific native output; independent review checks the full
+  migration diff.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29-phase-10.7`.
+- **Reopen triggers:** A migrated example cannot expose meaningful native state, the shared shell
+  obscures a capability, or fixture size makes the maximized workspace hard to scan.
+
 ## Inventory evidence
 
 | Surface | Current evidence | Planning consequence |

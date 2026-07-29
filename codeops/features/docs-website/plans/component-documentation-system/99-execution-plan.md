@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 166 / 187 tasks complete
-> **Last Updated**: 2026-07-29 15:15 CEST
+> **Progress**: 172 / 193 tasks complete
+> **Last Updated**: 2026-07-29 16:09 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -48,7 +48,8 @@
 | 9 | 1, 2 | Data Grid hub replaces old page |
 | 10 | 1, 2 | Code Editor hub replaces old guide |
 | 10.6 | 10 | Three flagship Code Editor presentation pilots establish the visual pattern |
-| 11 | 3–10 | Full catalog/sidebar/API/overview integration |
+| 10.7 | 10.6 | All remaining Code Editor examples adopt the approved flagship pattern |
+| 11 | 3–10.7 | Full catalog/sidebar/API/overview integration |
 | 12 | 11 | Final source/content/production verification |
 
 ## Phase 1 — Catalog Model and Approved Inventory
@@ -751,6 +752,53 @@
   corrections align real LSP request positions, prove native projected states, and guard stale,
   aborted, reset, and disposal continuations; the landing page exposes all three flagship pilots
   before the composition lab; authoritative `yarn verify` passes)
+
+## Phase 10.7 — Complete Code Editor Flagship Migration
+
+> **Phase baseline tree**: `e4933eb2cbc89f029f11f1092fbf20cc4f1e0617`
+> **Expected modification set**: remaining Code Editor example presentation specifications and
+> implementation tests, the shared Code Editor lesson shell and scenario content modules, all
+> non-pilot Code Editor example wrappers only if their definitions require richer metadata, owning
+> Code Editor specification/testing/decision artifacts, this execution plan, roadmaps,
+> traceability, and verification/review evidence.
+
+### 10.7.1 Specification tests
+
+- [x] **10.7.1** Extend immutable flagship presentation specifications to all 18 non-pilot Code
+  Editor examples: substantial bounded source, language-appropriate syntax, capability-named
+  actions, Try/Result/Look-for guidance, independent reset, maximized responsive geometry, and
+  capability-specific native editor evidence. ✅ (completed: 2026-07-29 16:09 CEST; docs-site
+  typecheck passes)
+- [x] **10.7.2** Run the focused presentation specifications and record RED against the remaining
+  generic laboratory. ✅ (completed: 2026-07-29 16:09 CEST; expected RED: all 37 presentation
+  cases fail against tiny shared source, generic controls/copy, absent syntax, and absent reset;
+  log `/tmp/red-10.7.2.log`)
+
+### 10.7.2 Implementation
+
+- [x] **10.7.3** Extract one shared responsive lesson shell and migrate all eighteen remaining
+  examples in the foundation, language/search, and platform/safety cohorts. Each scenario must
+  retain its own substantial source, named action, teaching rail, reset path, and native editor
+  evidence. ✅ (completed: 2026-07-29 16:38 CEST; one shared responsive shell now presents 18
+  distinct substantial fixtures, real built-in syntax analysis, capability-named actions, complete
+  restored/maximized teaching rails, and independent reset)
+- [x] **10.7.4** Run the immutable presentation specification and correct implementation defects
+  until all eighteen migrated examples pass. ✅ (completed: 2026-07-29 16:38 CEST; 37/37
+  presentation specifications pass, including post-action native-state change and compact
+  Look-for-tail visibility for every lesson)
+- [x] **10.7.5** Run the existing Code Editor interaction, lifecycle, language, and recovery
+  contract suites and correct any regression without weakening their assertions. ✅ (completed:
+  2026-07-29 16:38 CEST; focused Code Editor verification passes 108/108 after preserving public
+  interaction, lifecycle, language/LSP, safety, and recovery contracts)
+
+### 10.7.3 Implementation tests and hardening
+
+- [x] **10.7.6** Add cohort hardening coverage for repeated action/reset, async cancellation,
+  language switching, bounded fixtures, responsive reflow, and disposal; run focused checks,
+  independent quality review, and `yarn verify`. ✅ (completed: 2026-07-29 16:38 CEST; cohort
+  hardening proves adapter-specific repaint, parser-independent structural folds, reset/action race
+  serialization, host evidence reset, disposal, and responsive restore; reviewer and auditor report
+  zero residual findings; docs-site 73 files/900 tests pass; authoritative `yarn verify` passes)
 
 ## Phase 11 — Overview and Full Integration
 
