@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 20:26
-> **Progress**: 0/246 tasks (0%)
+> **Last Updated**: 2026-07-29 21:16
+> **Progress**: 6/246 tasks (2%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -70,17 +70,26 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-10 · `03-02` · `03-03` · AR-5
 
+> **Phase baseline tree**: `ce341905ce1834bda4f43cbfaab9f903e2162924`
+>
+> **Expected modification set**: `packages/docs-site/guide/index.md`,
+> `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/introduction/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/test/introduction-guide.spec.test.ts`,
+> `packages/docs-site/test/introduction-guide.impl.test.ts`, this execution plan, and the
+> docs-website roadmap/traceability evidence required by the execution protocol.
+
 ### Step 1.1: Specification tests
 
-- [ ] 1.1.1 [spec-author] Write the Introduction course oracle — `packages/docs-site/test/introduction-guide.spec.test.ts`
-- [ ] 1.1.2 Run the Introduction specification and record the expected red result (or justify a pre-existing pass)
+- [x] 1.1.1 [spec-author] Write the Introduction course oracle — `packages/docs-site/test/introduction-guide.spec.test.ts` ✅ (completed: 2026-07-29 21:04)
+- [x] 1.1.2 Run the Introduction specification and record the expected red result (or justify a pre-existing pass) ✅ (completed: 2026-07-29 21:04) — authoritative focused run: 5 failed, 1 pre-existing next-course link assertion passed; commit deferred to the green 1.2.4 checkpoint per runtime AR-13
 
 ### Step 1.2: Implementation
 
-- [ ] 1.2.1 Upgrade audience, runtime mental model, first result, failures, and next steps — `packages/docs-site/guide/index.md`
-- [ ] 1.2.2 Implement or adapt the one objective-matched template1 lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/introduction/`
-- [ ] 1.2.3 Register the lab and synchronize catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 1.2.4 Run ST-10 green plus docs-site typecheck; fix implementation only
+- [x] 1.2.1 Upgrade audience, runtime mental model, first result, failures, and next steps — `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-29 21:08)
+- [x] 1.2.2 Implement or adapt the one objective-matched template1 lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/introduction/` ✅ (completed: 2026-07-29 21:11)
+- [x] 1.2.3 Register the lab and synchronize catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-29 21:11)
+- [x] 1.2.4 Run ST-10 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-29 21:16) — 6/6 focused specification tests, docs-site typecheck, and authoritative `yarn verify` passed
 
 ### Step 1.3: Hardening
 

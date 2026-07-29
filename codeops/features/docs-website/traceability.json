@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+          "revision": "sha256:69f64e2d8179347100760b7b8489daedfefe232430ca8c7195ee874c44d1a3a8",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -943,7 +943,7 @@
         "summary:Execution started after the selected Guide plan passed its execution-entry readiness gate."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+      "revision": "sha256:69f64e2d8179347100760b7b8489daedfefe232430ca8c7195ee874c44d1a3a8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -965,7 +965,7 @@
         "The user confirmed all ten Guide-course planning decisions on 2026-07-29."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:aaecfb5284d152a304a82fdcc2d5fb6079f0268f8f6443a5270e33930de6dd12",
+      "revision": "sha256:6aa5e8a821ecffae4bb2905ddfaf3728adb2090eefdd4644863a9023ebeb0f2c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1034,7 +1034,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+          "revision": "sha256:69f64e2d8179347100760b7b8489daedfefe232430ca8c7195ee874c44d1a3a8",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1042,5 +1042,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T18:36:58Z"
+  "updated": "2026-07-29T19:16:45Z"
 }
