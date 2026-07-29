@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
+          "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -988,7 +988,7 @@
         "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
+      "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1014,10 +1014,11 @@
         "Auto-design AR-21 corrected both Phase 3 quality findings and the permitted re-review found no remaining Critical or Major issue.",
         "Auto-design AR-22 preserves Phase 4 expected-red evidence until its green checkpoint.",
         "Auto-design AR-23 corrected every Phase 4 quality finding and the permitted re-review found no remaining Critical, Major, or Minor issue.",
-        "Auto-design AR-24 preserves Phase 5 expected-red evidence until its first green checkpoint."
+        "Auto-design AR-24 preserves Phase 5 expected-red evidence until its first green checkpoint.",
+        "Auto-design AR-25 corrected the package-manager renderer commands; the permitted Phase 5 re-review found no remaining issue."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:1d7d34c18cd64bfe1ac172b571a2b5b571f1db34cedaefaf4b771b15a696435e",
+      "revision": "sha256:ce985a2f6c2691aafd985ab84cf7354dc9f4b943ae41885d243822d88d549020",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1087,7 +1088,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
+          "revision": "sha256:0685a9b8ce5618f11c1b633279402fb8a7982b8c83d701abe77bc373806d0ca8",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1095,5 +1096,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T22:01:54Z"
+  "updated": "2026-07-29T22:13:18Z"
 }
