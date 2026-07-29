@@ -120,7 +120,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/event-routing", "guides/command-precedence"]
     },
     {
       "id": "keyboard-and-clipboard",

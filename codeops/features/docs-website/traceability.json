@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7fb11968255f67e5c25d476b388eaf9fef18835ca82b70dbea1ee6d8455e78b7",
+          "revision": "sha256:cb66000827594e5b84b7f3214b97264b5bfa7e2379874a9499d8512b3433f786",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-29T23:16:00Z"
+          "validatedAt": "2026-07-29T23:45:38Z"
         }
       ]
     },
@@ -945,7 +945,9 @@
         "Phase 6 Views & focus expected red: 3 passed and 16 failed across 19 independently authored final-contract specifications.",
         "Phase 6 Views & focus green checkpoint: 19/19 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
         "Phase 6 Views & focus hardening: 26/26 focused tests and yarn verify pass across retained order, eligibility fallback, modal restoration, responsive geometry, and host cleanup.",
-        "Phase 6 Views & focus promotion: 35/35 focused course/implementation/catalog tests, docs-site typecheck, production docs build, plugin integrity, and yarn verify pass after the permitted re-review cleared every finding."
+        "Phase 6 Views & focus promotion: 35/35 focused course/implementation/catalog tests, docs-site typecheck, production docs build, plugin integrity, and yarn verify pass after the permitted re-review cleared every finding.",
+        "Phase 7 Events, commands & keymaps expected red: 5 public controls pass and 18 course, catalog, registry, and laboratory cases fail across 23 independently authored final-contract tests.",
+        "Phase 7 Events, commands & keymaps green checkpoint: 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -992,10 +994,12 @@
         "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass.",
         "summary:Phase 6 tasks 6.1.1 through 6.2.4 delivered the complete Views & focus course and two template1 laboratories; 19/19 specifications, docs-site typecheck, registry integration, and yarn verify pass.",
         "summary:Phase 6 task 6.3.1 added retained-order, eligibility, focus-memory, modal-restoration, geometry, and cleanup hardening; 26/26 focused tests and yarn verify pass.",
-        "summary:Phase 6 task 6.3.2 promoted Views & focus after AR-27 corrections passed 35/35 focused tests and every authoritative gate, and the permitted re-review cleared all findings."
+        "summary:Phase 6 task 6.3.2 promoted Views & focus after AR-27 corrections passed 35/35 focused tests and every authoritative gate, and the permitted re-review cleared all findings.",
+        "summary:Phase 7 tasks 7.1.1 and 7.1.2 established 23 independently authored cases; expected red is 5 public controls passing and 18 course/lab contract failures.",
+        "summary:Phase 7 tasks 7.2.1 through 7.2.4 reached green with 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify passing."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:7fb11968255f67e5c25d476b388eaf9fef18835ca82b70dbea1ee6d8455e78b7",
+      "revision": "sha256:cb66000827594e5b84b7f3214b97264b5bfa7e2379874a9499d8512b3433f786",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1024,10 +1028,12 @@
         "Auto-design AR-24 preserves Phase 5 expected-red evidence until its first green checkpoint.",
         "Auto-design AR-25 corrected the package-manager renderer commands; the permitted Phase 5 re-review found no remaining issue.",
         "Auto-design AR-26 preserves the Phase 6 expected-red specification evidence through its first green checkpoint.",
-        "Auto-design AR-27 applied every mandatory Phase 6 review correction; the permitted re-review cleared all findings before the course returned to Complete."
+        "Auto-design AR-27 applied every mandatory Phase 6 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
+        "Auto-design AR-28 selected outcome-shaped IDs for the two Events, commands & keymaps laboratories.",
+        "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:b1a73beeeacacc769ccc98c516a406a841953731bf9d049d900ff551d6659225",
+      "revision": "sha256:9077cc1e2d65a780473db03d692005188c4d2fda594df29d234820e37635e649",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1097,13 +1103,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7fb11968255f67e5c25d476b388eaf9fef18835ca82b70dbea1ee6d8455e78b7",
+          "revision": "sha256:cb66000827594e5b84b7f3214b97264b5bfa7e2379874a9499d8512b3433f786",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-29T23:16:00Z"
+          "validatedAt": "2026-07-29T23:45:38Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T23:16:00Z"
+  "updated": "2026-07-29T23:45:38Z"
 }
