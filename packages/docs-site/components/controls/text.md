@@ -71,6 +71,8 @@ This natural size lets Text participate in auto-sized flow layouts. An absolute 
 hard override: Text wraps inside that width and clips after that height.
 
 ```ts
+import { Text, at } from '@jsvision/ui';
+
 const title = new Text('Deployment summary');
 
 title.measure(); // { width: 18, height: 1 }
@@ -123,6 +125,8 @@ Widths are terminal display cells. Wide CJK characters and emoji normally occupy
 combining marks occupy zero, so wrapping agrees with the screen buffer:
 
 ```ts
+import { wrapText } from '@jsvision/ui';
+
 wrapText('日本語', 4); // ['日本', '語']
 wrapText('😀😀😀', 4); // ['😀😀', '😀']
 ```
@@ -156,6 +160,8 @@ derive presentation from state—not to mutate state, perform I/O, or launch wor
 Use severity for the meaning of the message, not as an arbitrary color picker:
 
 ```ts
+import { Text } from '@jsvision/ui';
+
 const hint = new Text('All required fields are complete.');
 const warning = new Text('This action cannot be undone.', { severity: 'warning' });
 const error = new Text('Project name is required.', { severity: 'error' });
