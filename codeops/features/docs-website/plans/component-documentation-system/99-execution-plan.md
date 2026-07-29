@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 15 / 180 tasks complete
+> **Progress**: 25 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -123,35 +123,58 @@
 
 ## Phase 2 — Executable Page and `template1` Contracts
 
+> **Phase baseline tree**: `8c8ad54ced4d62b2e8e1575c5fc030071b5c78f3`
+> **Expected modification set**: Phase 2 page parser/declaration, reference behavior contracts,
+> template evidence helpers, focused specification and implementation tests, any bounded reference
+> integration corrections, this execution plan, traceability, and verification evidence.
+
 ### 2.1 Specification tests
 
-- [ ] **2.1.1** Add `test/component-pages.spec.test.ts` for ST-9 through ST-13 against the
+- [x] **2.1.1** Add `test/component-pages.spec.test.ts` for ST-9 through ST-13 against the
   Button/Input/Text references plus controlled standard, `landing`, `capability`, and `api`
-  fixtures.
-- [ ] **2.1.2** Add `test/contracts/_contract.ts`, Button/Input/Text behavior contracts, cumulative
+  fixtures. ✅ (completed: 2026-07-29 03:24 CEST; RED confirmed for the absent page parser)
+- [x] **2.1.2** Add `test/contracts/_contract.ts`, Button/Input/Text behavior contracts, cumulative
   delivery-set helpers, and `test/template1-examples.spec.test.ts` for ST-14 through ST-17 against
-  the real reference apps.
-- [ ] **2.1.3** Run both specs and record RED for missing shared parsers/evidence helpers; record any
-  already-satisfied reference behavior rather than forcing artificial failure.
+  the real reference apps. ✅ (completed: 2026-07-29 03:24 CEST; RED confirmed for the absent
+  template evidence collector; four executable behavior cases already passed)
+- [x] **2.1.3** Run both specs and record RED for missing shared parsers/evidence helpers; record any
+  already-satisfied reference behavior rather than forcing artificial failure. ✅ (completed:
+  2026-07-29 03:24 CEST; expected RED: 12 failed and 4 passed across 16 focused cases; log
+  `/tmp/tmp.CjLCuPfK3E`)
 
 ### 2.2 Implementation
 
-- [ ] **2.2.1** Add `src/components/component-pages.mjs` to parse frontmatter, headings, PlayExample
+- [x] **2.2.1** Add `src/components/component-pages.mjs` to parse frontmatter, headings, PlayExample
   bindings, specialist page profiles, snippets, related links, and anchors with useful diagnostics.
-- [ ] **2.2.2** Extend `test/example-lab-harness.ts` with the runtime `Template1Evidence` helper from
-  03-02.
-- [ ] **2.2.3** Make only genuine catalog/structural integration corrections to Button/Input/Text
-  pages or specs, at most three files per correction task.
-- [ ] **2.2.4** Run ST-9…ST-17 against canonical references/profile fixtures until GREEN; global
-  catalog applicability remains a Phase-11 parity gate.
+  ✅ (completed: 2026-07-29 04:00 CEST; strict YAML, active-Markdown scanning, VitePress slugs,
+  staged content/link expectations, placement rules, and all eighteen page/parser cases pass)
+- [x] **2.2.2** Extend `test/example-lab-harness.ts` with the runtime `Template1Evidence` helper from
+  03-02. ✅ (completed: 2026-07-29 04:00 CEST; all seven template/reference-contract cases plus
+  sixteen geometry, surface, interaction, lifecycle, and isolation cases pass)
+- [x] **2.2.3** Make only genuine catalog/structural integration corrections to Button/Input/Text
+  pages or specs, at most three files per correction task. ✅ (completed: 2026-07-29 04:00 CEST;
+  Input and Text focused snippets gained missing public-entry imports required by the strengthened
+  contract; Button required no correction)
+- [x] **2.2.4** Run ST-9…ST-17 against canonical references/profile fixtures until GREEN; global
+  catalog applicability remains a Phase-11 parity gate. ✅ (completed: 2026-07-29 04:00 CEST; all
+  52 page, template, and behavior-contract specification/implementation cases pass)
 
 ### 2.3 Implementation tests and hardening
 
-- [ ] **2.3.1** Add `test/component-pages.impl.test.ts` for malformed frontmatter, duplicate/missing
+- [x] **2.3.1** Add `test/component-pages.impl.test.ts` for malformed frontmatter, duplicate/missing
   headings, code-fence handling, heading slug/anchor edge cases, and precise file diagnostics.
-- [ ] **2.3.2** Add `test/template1-examples.impl.test.ts` for odd/even centering, padding/frame
-  detection, small viewport failure diagnostics, focus reset, and disposal.
-- [ ] **2.3.3** Run focused docs-site checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 04:00 CEST; seven grouped parser implementation cases cover malformed
+  YAML, hidden/fenced content, headings, fences, diagnostics, and VitePress-compatible anchors)
+- [x] **2.3.2** Add `test/template1-examples.impl.test.ts` for odd/even centering, padding/frame
+  detection, small viewport failure diagnostics, focus reset, and disposal. ✅ (completed:
+  2026-07-29 04:00 CEST; sixteen real-app geometry, surface, mouse, focus, and disposal cases pass;
+  strict behavior-schema hardening adds ten adversarial cases)
+- [x] **2.3.3** Run focused docs-site checks, then `yarn verify`. ✅ (completed: 2026-07-29 03:39
+  CEST; initial authoritative `yarn verify` passed in 123.98s; the required reviewer/auditor loop
+  found page-oracle, lifecycle, schema, input-dispatch, anchor, and surface gaps; auto-design
+  remediated them, a 147.81s authoritative run passed, and the one-time re-review's five residual
+  majors were corrected; final exact-state `yarn verify` passed in 111.59s with all 52 Phase 2
+  focused cases and 218 docs-site tests green; log `/tmp/tmp.SBsttNxX7D`)
 
 ## Phase 3 — Controls
 

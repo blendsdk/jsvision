@@ -444,7 +444,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+          "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-28T23:32:36Z"
         }
@@ -475,7 +475,7 @@
         "Execution entry: codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md"
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+      "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -564,7 +564,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+          "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-28T23:32:36Z"
         }

@@ -177,6 +177,8 @@ Use `hasSelection()` for reactive command availability; use `selection` only whe
 matter:
 
 ```ts
+import { Button } from '@jsvision/ui';
+
 const copyButton = new Button('~C~opy', {
   command: 'copy',
   disabled: () => !nameInput.hasSelection(),
