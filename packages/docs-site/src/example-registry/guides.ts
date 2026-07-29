@@ -51,4 +51,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/views-focus-modality.ts',
     load: () => import('../../examples/guides/views-focus-modality.js'),
   },
+  {
+    id: 'guides/event-routing',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/event-routing.ts',
+    load: () => import('../../examples/guides/event-routing.js'),
+  },
+  {
+    id: 'guides/command-precedence',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/command-precedence.ts',
+    load: () => import('../../examples/guides/command-precedence.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

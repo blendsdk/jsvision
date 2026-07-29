@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 01:16
-> **Progress**: 48/246 tasks (20%)
+> **Last Updated**: 2026-07-30 01:45
+> **Progress**: 54/246 tasks (22%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -375,18 +375,23 @@ independent specification-first phase (AR-10).
 ## Phase 7: Events, commands & keymaps
 
 **Reference**: ST-16 · `03-02` · `03-03`
+> **Phase baseline tree**: `da449549cb63556d32cf0604f8b64b17d694511e`
+> **Expected modification set**: `packages/docs-site/guide/events-commands-and-keymaps.md`,
+> `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/events-commands-and-keymaps/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, and synchronized CodeOps lifecycle artifacts.
 
 ### Step 7.1: Specification tests
 
-- [ ] 7.1.1 [spec-author] Write the events/commands/keymaps oracle — `packages/docs-site/test/events-commands-and-keymaps-guide.spec.test.ts`
-- [ ] 7.1.2 Run the specification and record the expected red result
+- [x] 7.1.1 [spec-author] Write the events/commands/keymaps oracle — `packages/docs-site/test/events-commands-and-keymaps-guide.spec.test.ts` ✅ (completed: 2026-07-30 01:31) — independent specification author produced 23 executed cases covering the full course, public routing controls, two template1 labs, interaction outcomes, responsive evidence, and cleanup
+- [x] 7.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 01:31) — expected red: 5 public dispatch/keymap/command controls passed and 18 course, catalog, registry, and laboratory contract cases failed; commit deferred to the green 7.2.4 checkpoint per runtime AR-29
 
 ### Step 7.2: Implementation
 
-- [ ] 7.2.1 Replace the placeholder with event flow, command discovery, precedence, and diagnosis — `packages/docs-site/guide/events-commands-and-keymaps.md`
-- [ ] 7.2.2 Implement two objective-matched template1 labs and event fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/events-commands-and-keymaps/`
-- [ ] 7.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 7.2.4 Run ST-16 green plus docs-site typecheck; fix implementation only
+- [x] 7.2.1 Replace the placeholder with event flow, command discovery, precedence, and diagnosis — `packages/docs-site/guide/events-commands-and-keymaps.md` ✅ (completed: 2026-07-30 01:45) — delivered the full beginner-to-production course with verified routing, pointer, command, keymap, precedence, lifecycle, diagnosis, and practice teaching
+- [x] 7.2.2 Implement two objective-matched template1 labs and event fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/events-commands-and-keymaps/` ✅ (completed: 2026-07-30 01:45) — added deterministic routing and precedence laboratories with real keyboard/paste/command/mouse paths, Classic compact dialogs, responsive behavior, ASCII feedback, and owned cleanup
+- [x] 7.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 01:45) — registered both `kind: 'app'` IDs and synchronized catalog evidence while retaining the Upgrade stage
+- [x] 7.2.4 Run ST-16 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 01:45) — 23/23 specifications, docs-site typecheck, registry integration, and authoritative `yarn verify` passed
 
 ### Step 7.3: Hardening
 

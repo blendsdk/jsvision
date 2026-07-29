@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 27 items resolved
-> **Last Updated**: 2026-07-30 01:16
+> **Status**: ✅ GATE PASSED — all 29 items resolved
+> **Last Updated**: 2026-07-30 01:31
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -32,6 +32,8 @@
 | 25 | Quality review (runtime) | How should the Phase 5 command-portability finding be resolved without weakening the completed Codex plugin contract? | Teach and verify package-manager-specific executable forwarding / retain a generic command that fails or misroutes flags / waive the finding | **Authority: AI — delegated by `--auto-design`.** Correct the Guide and canonical skill for npm, Yarn, pnpm, and Bun, rerun every applicable gate, and use the one permitted fix-scoped re-review before Phase 6. | ✅ Resolved |
 | 26 | Execution (runtime) | How should Phase 6 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 6.1.1–6.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 6 task IDs and resume per-task commits after 6.2.4. | ✅ Resolved |
 | 27 | Quality review (runtime) | How should the four Major and three Minor Phase 6 findings be resolved without weakening the Views & focus course contract? | Re-home newly ineligible focus synchronously, correct and assert the modal snippet, make pending modal teardown inert, restore 80×24 and ASCII evidence, clarify focus memory, and temporarily demote the course / defer or waive findings while retaining Complete status | **Authority: AI — delegated by `--auto-design`.** Apply every correction, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
+| 28 | Naming (runtime) | Which stable IDs should distinguish the two Events, commands & keymaps laboratories? | `guides/event-routing` plus `guides/command-precedence` / implementation-shaped control names / reuse unrelated component examples | **Authority: AI — delegated by `--auto-design`.** Use the two outcome-shaped Guide IDs so one lab proves event routing and the other proves command/keymap precedence. | ✅ Resolved |
+| 29 | Execution (runtime) | How should Phase 7 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 7.1.1–7.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 7 task IDs and resume per-task commits after 7.2.4. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -557,3 +559,57 @@ cross-course contracts after every authored route is complete.
   mutates a disposed application, the snippet no longer compiles against the public API, default
   80×24 evidence clips, ASCII fallback regresses, or the re-review retains a Critical or Major
   finding.
+
+**AR-28 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable documentation-example naming within the confirmed two-laboratory Events,
+  commands & keymaps scope; no product behavior, acceptance criterion, or external publication
+  boundary changes.
+- **Objective:** Give each laboratory one durable ID that states the distinct catalog outcome it
+  proves and remains meaningful if its concrete controls evolve.
+- **Decision:** Register the event-flow laboratory as `guides/event-routing` and the
+  command/keymap laboratory as `guides/command-precedence`.
+- **Evidence:** The catalog requires two examples and separately names event-tree tracing and
+  command/keymap precedence. Existing Guide IDs use the `guides/<objective>` namespace and do not
+  couple public registry identity to a widget implementation.
+- **Rejected alternatives:** Control-shaped names would become stale as the teaching UI evolves.
+  Reusing component examples would not prove the complete routing and precedence outcomes or
+  establish Guide ownership.
+- **Strongest counterargument:** The IDs omit the full course slug and could be read broadly.
+  Their concise objective names remain unique, match the two learner outcomes exactly, and fit the
+  existing registry namespace.
+- **Confidence:** High — the choice is reversible before publication and grounded in the catalog's
+  explicit two-part learning contract.
+- **Hardening:** Low-risk naming choice checked against the catalog, registry namespace, and planned
+  lab objectives; independent challenge was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either laboratory objective changes, an ID collision appears, or an existing
+  published example proves the exact same outcome and framing before stage promotion.
+
+**AR-29 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red course upgrade under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 7 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 7.1.1 and 7.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 7.2.4. Commit tasks 7.1.1–7.2.4 as one spec-to-green slice only after
+  focused specifications, docs-site typecheck, registry integration, and `yarn verify` pass.
+- **Evidence:** The independent spec author created twenty-three executed final-contract cases; five
+  public dispatch/keymap/command controls pass and eighteen course, catalog, registry, and laboratory
+  cases expose the placeholder implementation.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening or quarantining
+  the oracle destroys the planned course evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the previously approved and independently challenged policy
+  applied to the Events, commands & keymaps course task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a repeated challenge of the unchanged policy
+  was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before implementation, an unrelated failure blocks the
+  green checkpoint, or the repository gains an authoritative red-commit mechanism.
