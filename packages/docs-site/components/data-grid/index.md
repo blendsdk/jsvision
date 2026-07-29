@@ -55,13 +55,23 @@ const ledger = new EditableDataGrid<AccountRow>({
 
 Use `DataGrid` when the application owns transformations and needs a straightforward tabular view.
 Its `GridHeader` and `GridRows` surfaces can also be composed when a custom host owns surrounding
-chrome.
+chrome. See the generated API for
+[DataGrid](/api/ui/classes/DataGrid), [GridHeader](/api/ui/classes/GridHeader), and
+[GridRows](/api/ui/classes/GridRows).
 
-## EditableDataGrid
+## Editable Data Grid
 
 Use `EditableDataGrid` when the grid should own typed editing and richer interaction. The package
 adds dedicated header, filter, editor, footer, and personalization surfaces without making the
 read-only grid pay for those policies.
+
+The generated API documents [EditableDataGrid](/api/datagrid/classes/EditableDataGrid),
+[EditableGridRows](/api/datagrid/classes/EditableGridRows),
+[SortHeader](/api/datagrid/classes/SortHeader),
+[QuickFilterRow](/api/datagrid/classes/QuickFilterRow),
+[FilterPopup](/api/datagrid/classes/FilterPopup), [ValueList](/api/datagrid/classes/ValueList),
+[FooterBand](/api/datagrid/classes/FooterBand), and
+[personalizeGrid](/api/datagrid/functions/personalizeGrid).
 
 ## Related
 

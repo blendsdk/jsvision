@@ -155,15 +155,10 @@ describe('Data Grid catalog and page topology', () => {
 });
 
 describe('Data Grid specialist sidebar', () => {
-  test('uses the exact prefix, ordered links, and no obsolete component route', async () => {
+  test('uses the exact prefix and the catalog projection without an obsolete component route', async () => {
     const source = await readFile(join(PACKAGE_ROOT, '.vitepress/config.ts'), 'utf8');
     expect(source).toContain("'/components/data-grid/':");
-    let cursor = source.indexOf("'/components/data-grid/':");
-    for (const topic of DATA_GRID_TOPICS) {
-      const next = source.indexOf(`link: '${topic.route}'`, cursor);
-      expect(next, `missing or out-of-order Data Grid sidebar link ${topic.route}`).toBeGreaterThan(cursor);
-      cursor = next;
-    }
+    expect(source).toContain('items: componentNavigation.dataGrid.map(sidebarItem)');
     expect(source).not.toContain('/components/table/data-grid');
   });
 

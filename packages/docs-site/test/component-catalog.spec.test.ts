@@ -9,11 +9,21 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
+import { EXAMPLES } from '../examples/index.js';
+import { APPLICATION_CATALOG_ENTRY_IDS, APPLICATION_EXAMPLE_IDS } from './contracts/application.js';
+import { CODE_EDITOR_CATALOG_ENTRY_IDS, CODE_EDITOR_EXAMPLE_IDS } from './contracts/code-editor/index.js';
+import { CONTAINER_CATALOG_ENTRY_IDS, CONTAINER_EXAMPLE_IDS } from './contracts/containers.js';
+import { CONTROL_CATALOG_ENTRY_IDS, CONTROL_EXAMPLE_IDS } from './contracts/controls.js';
+import { DATA_GRID_CATALOG_ENTRY_IDS, DATA_GRID_EXAMPLE_IDS } from './contracts/data-grid/index.js';
+import { EDITING_CATALOG_ENTRY_IDS, EDITING_EXAMPLE_IDS } from './contracts/editing.js';
+import { FILE_CATALOG_ENTRY_IDS, FILE_EXAMPLE_IDS } from './contracts/files.js';
+import { VALUE_COMPONENT_CATALOG_ENTRY_IDS, VALUE_COMPONENT_EXAMPLE_IDS } from './contracts/value-components.js';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CATALOG_PATH = join(PACKAGE_ROOT, 'components.json');
 const CATALOG_MODULE_PATH = '../src/components/component-catalog.mjs';
 const TARGET_MODULE_PATH = '../src/api/component-target.mjs';
+const API_MAP_MODULE_PATH = '../src/api/api-map.mjs';
 
 type PackageName = 'ui' | 'forms' | 'files' | 'datagrid' | 'code-editor';
 
@@ -57,7 +67,24 @@ interface CatalogDocument {
 
 interface CatalogModule {
   readonly validateComponentCatalog: (value: unknown) => CatalogDocument;
-  readonly projectComponentNavigation: (entries: readonly CatalogEntry[]) => unknown;
+  readonly projectComponentNavigation: (entries: readonly CatalogEntry[]) => ComponentNavigation;
+}
+
+interface NavigationItem {
+  readonly id: string;
+  readonly text: string;
+  readonly link: string;
+}
+
+interface NavigationGroup {
+  readonly text: string;
+  readonly items: readonly NavigationItem[];
+}
+
+interface ComponentNavigation {
+  readonly components: readonly NavigationGroup[];
+  readonly dataGrid: readonly NavigationItem[];
+  readonly codeEditor: readonly NavigationItem[];
 }
 
 interface ComponentTarget {
@@ -69,6 +96,12 @@ interface ComponentTarget {
 
 interface ComponentTargetModule {
   readonly parseComponentTarget: (target: string) => ComponentTarget;
+}
+
+interface ApiMapRow {
+  readonly pkg: PackageName;
+  readonly symbol: string;
+  readonly componentPage: string;
 }
 
 /**
@@ -290,6 +323,67 @@ function assertComponentTarget(value: unknown): asserts value is ComponentTarget
   }
 }
 
+function isNavigationItem(value: unknown): value is NavigationItem {
+  return (
+    isRecord(value) && typeof value.id === 'string' && typeof value.text === 'string' && typeof value.link === 'string'
+  );
+}
+
+function isNavigationGroup(value: unknown): value is NavigationGroup {
+  return (
+    isRecord(value) &&
+    typeof value.text === 'string' &&
+    Array.isArray(value.items) &&
+    value.items.every(isNavigationItem)
+  );
+}
+
+function assertComponentNavigation(value: unknown): asserts value is ComponentNavigation {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.components) ||
+    !value.components.every(isNavigationGroup) ||
+    !Array.isArray(value.dataGrid) ||
+    !value.dataGrid.every(isNavigationItem) ||
+    !Array.isArray(value.codeEditor) ||
+    !value.codeEditor.every(isNavigationItem)
+  ) {
+    throw new TypeError('component navigation projection returned an invalid shape');
+  }
+}
+
+function isApiMapRow(value: unknown): value is ApiMapRow {
+  return (
+    isRecord(value) &&
+    (value.pkg === 'ui' ||
+      value.pkg === 'forms' ||
+      value.pkg === 'files' ||
+      value.pkg === 'datagrid' ||
+      value.pkg === 'code-editor') &&
+    typeof value.symbol === 'string' &&
+    typeof value.componentPage === 'string'
+  );
+}
+
+/** Convert a catalog route into its checked-in Markdown source path. */
+function markdownPathForRoute(route: string): string {
+  const relative = route.replace(/^\/components\//, '');
+  return relative.endsWith('/')
+    ? join(PACKAGE_ROOT, 'components', relative, 'index.md')
+    : join(PACKAGE_ROOT, 'components', `${relative}.md`);
+}
+
+/** Produce the stable lowercase heading form used by the catalog's explicit anchors. */
+function headingSlug(heading: string): string {
+  return heading
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_~]/gu, '')
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, '')
+    .replace(/\s+/gu, '-')
+    .replace(/-+/gu, '-');
+}
+
 async function loadCatalogModule(): Promise<CatalogModule> {
   const candidate: unknown = await import(CATALOG_MODULE_PATH);
   if (
@@ -308,7 +402,9 @@ async function loadCatalogModule(): Promise<CatalogModule> {
       return result;
     },
     projectComponentNavigation(entries: readonly CatalogEntry[]) {
-      return project(entries);
+      const result = project(entries);
+      assertComponentNavigation(result);
+      return result;
     },
   };
 }
@@ -326,6 +422,14 @@ async function loadTargetModule(): Promise<ComponentTargetModule> {
       return result;
     },
   };
+}
+
+async function loadApiMap(): Promise<readonly ApiMapRow[]> {
+  const candidate: unknown = await import(API_MAP_MODULE_PATH);
+  if (!isRecord(candidate) || !Array.isArray(candidate.API_MAP) || !candidate.API_MAP.every(isApiMapRow)) {
+    throw new TypeError('api-map.mjs must export a valid API_MAP array');
+  }
+  return candidate.API_MAP;
 }
 
 describe('component catalog specification', () => {
@@ -392,6 +496,118 @@ describe('component catalog specification', () => {
       entry.symbols.map((symbol) => `${entry.package}:${symbol}`),
     );
     expect(new Set(ownership).size).toBe(ownership.length);
+  });
+
+  test('ST-4: every catalog page and optional heading anchor resolves', async () => {
+    const raw: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+    const { validateComponentCatalog } = await loadCatalogModule();
+    const catalog = validateComponentCatalog(raw);
+
+    for (const entry of catalog.entries) {
+      const [route, fragment] = entry.page.split('#');
+      const source = await readFile(markdownPathForRoute(route!), 'utf8');
+      if (fragment === undefined) continue;
+      const headingSlugs = [...source.matchAll(/^#{1,6}\s+(.+)$/gmu)].map((match) => headingSlug(match[1]!));
+      expect(headingSlugs, `${entry.id}: missing #${fragment}`).toContain(fragment);
+    }
+  });
+
+  test('ST-5: every catalog example resolves exactly once through a unique runnable source', async () => {
+    const raw: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+    const { validateComponentCatalog } = await loadCatalogModule();
+    const catalog = validateComponentCatalog(raw);
+    const catalogExamples = new Set(catalog.entries.flatMap((entry) => entry.examples));
+
+    for (const exampleId of catalogExamples) {
+      expect(
+        EXAMPLES.filter((entry) => entry.id === exampleId),
+        exampleId,
+      ).toHaveLength(1);
+    }
+    expect(new Set(EXAMPLES.map((entry) => entry.sourcePath)).size).toBe(EXAMPLES.length);
+  });
+
+  test('ST-6: projected standard and specialist navigation has exact catalog parity', async () => {
+    const raw: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+    const { projectComponentNavigation, validateComponentCatalog } = await loadCatalogModule();
+    const catalog = validateComponentCatalog(raw);
+    const navigation = projectComponentNavigation(catalog.entries);
+    const componentIds = navigation.components.flatMap((group) => group.items.map((item) => item.id));
+    const expectedComponentIds = catalog.entries
+      .filter(
+        (entry) =>
+          (entry.kind === 'topic' && entry.profile === 'landing') ||
+          (entry.kind === 'component' && entry.complexity === 'standard' && entry.primary),
+      )
+      .map((entry) => entry.id);
+    const expectedDataGridIds = catalog.entries
+      .filter((entry) => entry.kind === 'topic' && entry.hub === 'data-grid')
+      .map((entry) => entry.id);
+    const expectedCodeEditorIds = catalog.entries
+      .filter((entry) => entry.kind === 'topic' && entry.hub === 'code-editor')
+      .map((entry) => entry.id);
+
+    expect([...componentIds].sort()).toEqual([...expectedComponentIds].sort());
+    expect(navigation.dataGrid.map((item) => item.id)).toEqual(expectedDataGridIds);
+    expect(navigation.codeEditor.map((item) => item.id)).toEqual(expectedCodeEditorIds);
+    expect(new Set(componentIds).size).toBe(componentIds.length);
+    expect(new Set(navigation.dataGrid.map((item) => item.id)).size).toBe(navigation.dataGrid.length);
+    expect(new Set(navigation.codeEditor.map((item) => item.id)).size).toBe(navigation.codeEditor.length);
+  });
+
+  test('ST-7: related IDs and catalog API ownership match the checked-in backlink map', async () => {
+    const raw: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+    const { validateComponentCatalog } = await loadCatalogModule();
+    const catalog = validateComponentCatalog(raw);
+    const ids = new Set(catalog.entries.map((entry) => entry.id));
+
+    for (const entry of catalog.entries) {
+      expect(entry.related, `${entry.id}: self-related`).not.toContain(entry.id);
+      expect(
+        entry.related.every((related) => ids.has(related)),
+        `${entry.id}: unresolved related ID`,
+      ).toBe(true);
+    }
+
+    const expectedApiRows = catalog.entries
+      .filter((entry): entry is CatalogEntry & CatalogComponent => entry.kind === 'component')
+      .flatMap((entry) => entry.apiSymbols.map(({ package: pkg, symbol }) => `${pkg}:${symbol}:${entry.page}`))
+      .sort();
+    const apiMap = await loadApiMap();
+    const actualApiRows = apiMap.map(({ pkg, symbol, componentPage }) => `${pkg}:${symbol}:${componentPage}`).sort();
+    expect(actualApiRows).toEqual(expectedApiRows);
+  });
+
+  test('family and specialist delivery sets cover every catalog row and distinct catalog example', async () => {
+    const raw: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+    const { validateComponentCatalog } = await loadCatalogModule();
+    const catalog = validateComponentCatalog(raw);
+    const deliveredCatalogIds = [
+      ...APPLICATION_CATALOG_ENTRY_IDS,
+      ...CONTROL_CATALOG_ENTRY_IDS,
+      ...CONTAINER_CATALOG_ENTRY_IDS,
+      ...VALUE_COMPONENT_CATALOG_ENTRY_IDS,
+      ...EDITING_CATALOG_ENTRY_IDS,
+      ...FILE_CATALOG_ENTRY_IDS,
+      ...DATA_GRID_CATALOG_ENTRY_IDS,
+      ...CODE_EDITOR_CATALOG_ENTRY_IDS,
+    ];
+    const deliveredExampleIds = [
+      ...APPLICATION_EXAMPLE_IDS,
+      ...CONTROL_EXAMPLE_IDS,
+      ...CONTAINER_EXAMPLE_IDS,
+      ...VALUE_COMPONENT_EXAMPLE_IDS,
+      ...EDITING_EXAMPLE_IDS,
+      ...FILE_EXAMPLE_IDS,
+      ...DATA_GRID_EXAMPLE_IDS,
+      ...CODE_EDITOR_EXAMPLE_IDS,
+    ];
+    const catalogExampleIds = [...new Set(catalog.entries.flatMap((entry) => entry.examples))];
+
+    expect([...deliveredCatalogIds].sort()).toEqual(catalog.entries.map((entry) => entry.id).sort());
+    expect(new Set(deliveredCatalogIds).size).toBe(deliveredCatalogIds.length);
+    expect([...deliveredExampleIds].sort()).toEqual(catalogExampleIds.sort());
+    expect(new Set(deliveredExampleIds).size).toBe(deliveredExampleIds.length);
   });
 
   test('ST-8: navigation projection is stable for fixed adversarial permutations', async () => {

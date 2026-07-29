@@ -202,6 +202,7 @@ export function validateComponentCatalog(value) {
   const symbolOwners = [];
   const orderKeys = [];
   const projectedRoutes = [];
+  const navigationLabelKeys = [];
   for (const entry of entries) {
     if (entry.related.includes(entry.id)) fail(`${entry.id}.related`, 'cannot reference itself');
     for (const related of entry.related) {
@@ -210,15 +211,20 @@ export function validateComponentCatalog(value) {
     if (entry.kind === 'component') {
       symbolOwners.push(...entry.symbols.map((symbol) => `${entry.package}:${symbol}`));
       orderKeys.push(`${entry.complexity === 'standard' ? entry.family : entry.complexity}:${entry.sidebarOrder}`);
-      if (entry.complexity === 'standard' && entry.primary) projectedRoutes.push(entry.page);
+      if (entry.complexity === 'standard' && entry.primary) {
+        projectedRoutes.push(entry.page);
+        navigationLabelKeys.push(`standard:${entry.family}:${entry.title}`);
+      }
     } else {
       orderKeys.push(`${entry.hub}:${entry.sidebarOrder}`);
       projectedRoutes.push(entry.page);
+      navigationLabelKeys.push(`${entry.hub}:${entry.title}`);
     }
   }
   requireUnique(symbolOwners, 'catalog component symbol ownership');
   requireUnique(orderKeys, 'catalog sidebar ordering');
   requireUnique(projectedRoutes, 'catalog projected routes');
+  requireUnique(navigationLabelKeys, 'catalog navigation labels');
 
   return Object.freeze({ schemaVersion: 1, entries: freezeArray(entries) });
 }
@@ -284,7 +290,7 @@ export function projectComponentNavigation(entries) {
     .filter((entry) => entry.kind === 'topic' && entry.profile === 'landing')
     .slice()
     .sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id))
-    .map(navigationItem);
+    .map((entry) => Object.freeze({ id: entry.id, text: entry.family, link: entry.page }));
   if (hubLandings.length > 0) {
     components.push(Object.freeze({ text: 'Specialists', items: freezeArray(hubLandings) }));
   }

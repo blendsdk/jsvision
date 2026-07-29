@@ -49,6 +49,9 @@ user-delegated auto-design policy.
 | AR-23 | Runtime verification | How should the Code Editor template specification observe maximize and restore? | Flush the existing deferred render/layout root after each `Template1Dialog.zoom()` before inspecting bounds. This preserves the established asynchronous layout contract and matches the shared template1 specifications; it does not require a new synchronous dialog behavior. | ✅ | runtime-auto-design |
 | AR-24 | Live-example fidelity | What evidence must a Code Editor lab expose for its learning objective? | Drive the public editor/controller/service/host input path itself and assert its public state. Status text and docs-only probes may summarize that evidence, but may not substitute for clipboard output, document lifecycle, adapter state, search presentation, protocol results, theme reports, viewport input, or recovery state. | ✅ | runtime-auto-design |
 | AR-25 | Flagship presentation | How should Code Editor examples communicate a capability at first glance? | Treat Code Editor as a flagship surface. Start its examples maximized, use substantial scenario-relevant source instead of one- or two-line fixtures, run the real built-in language adapter so syntax highlighting is visible on first render, replace generic actions with capability-specific teaching controls, and show human-readable evidence beside the editor. Establish the pattern with completion, diagnostics, and language-folding pilots; obtain visual approval before applying it to the remaining examples. | ✅ | session |
+| AR-26 | Flagship migration | How should the approved Code Editor presentation scale across the remaining examples? | Use one responsive lesson shell with scenario-specific source, named actions, teaching cues, and native evidence; keep lifecycle/reset/disposal shared. | ✅ | session + runtime-auto-design |
+| AR-27 | DOM verification seam | How should PlayExample expose deterministic terminal and resize dependencies to DOM tests? | Resolve a typed runtime through a Vue injection key with a browser-production default. Tests provide a mount-scoped runtime; no test-only prop or mutable module-global override enters the component API. | ✅ | runtime-auto-design |
+| AR-28 | Lazy launcher cancellation | How should PlayExample close safely while browser chunks or an example module are still loading? | Give both the launcher and plain-TS controller lifecycle generations. Publish the opening session before awaiting it, keep the opening terminal disposable, reject stale continuations before mount, surface startup failures in the existing alert, and validate persisted cell dimensions before terminal allocation. | ✅ | runtime-auto-design |
 
 ### AR-21 delegated decision provenance
 
@@ -210,6 +213,69 @@ user-delegated auto-design policy.
 - **Root invocation ID:** `component-documentation-system-2026-07-29-phase-10.7`.
 - **Reopen triggers:** A migrated example cannot expose meaningful native state, the shared shell
   obscures a capability, or fixture size makes the maximized workspace hard to scan.
+
+### AR-27 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** The dependency-injection mechanism is a reversible internal testing and
+  architecture choice inside the approved DOM verification scope; it does not change live-example
+  behavior, routes, or acceptance criteria.
+- **Objective:** Exercise PlayExample through a deterministic DOM oracle without eagerly loading
+  xterm or sharing mutable test state.
+- **Decision:** Export a typed Vue injection key and browser runtime. PlayExample resolves the
+  injected value with the browser runtime as its production default; each DOM test provides a
+  mount-scoped replacement.
+- **Evidence:** PlayExample currently constructs xterm, addons, the controller, and ResizeObserver
+  inside the SFC. The DOM oracle needs to count lazy construction, mount/disposal, reset, and
+  resize behavior without WebGL or browser-layout nondeterminism.
+- **Rejected alternatives:** A runtime prop was rejected because it exposes test plumbing as
+  component API; a module-global setter was rejected because concurrent mounts/tests can leak state;
+  mocking every dynamic import was rejected because it couples the oracle to bundler internals and
+  cannot cleanly own ResizeObserver construction.
+- **Strongest counterargument:** Vue injection adds one indirection to a previously local
+  implementation. The runtime stays small and typed, and the default preserves the existing
+  production call path.
+- **Confidence:** High — Vue already owns the component lifecycle and mount-scoped providers are
+  directly supported by Vue Test Utils.
+- **Hardening:** The DOM specification asserts no construction before activation, one open,
+  reset/remount, observer ownership, and unmount disposal; existing controller tests continue to
+  exercise real headless terminals.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29-phase-11`.
+- **Reopen triggers:** PlayExample moves out of Vue, multiple launchers must intentionally share
+  one runtime instance, or production SSR cannot resolve the default without browser effects.
+
+### AR-28 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Cancellation and persisted-size validation are reversible internal lifecycle
+  hardening inside the approved Play DOM verification scope.
+- **Objective:** Ensure close/unmount is final even when runtime chunks or the selected example
+  module settle later, without making xterm eager.
+- **Decision:** Track lifecycle generations in both PlayExample and PlayController. The launcher
+  exposes its opening session to close immediately; the controller retains the opening terminal so
+  close can dispose it across the asynchronous module-load boundary. Late continuations check their
+  generation before mounting. Persisted dimensions must be positive safe integers and are clamped
+  to 40×12 through 240×80 cells before allocation.
+- **Evidence:** Independent review reproduced a close-during-create/open race, unhandled runtime
+  import rejection, and unbounded same-origin storage input. Focused DOM and controller tests now
+  cover pending creation, pending open, immediate disposal, late resolution, rejected startup,
+  real deferred import factories, keyboard activation, and malformed/oversized dimensions.
+- **Rejected alternatives:** Waiting for pending work before closing leaves a hidden live terminal;
+  an `AbortSignal` alone cannot cancel JavaScript module imports and would not dispose an already
+  created terminal; trusting same-origin storage would leave allocation controlled by mutable
+  browser state.
+- **Strongest counterargument:** Two generation counters duplicate lifecycle state. They protect
+  different ownership boundaries: Vue owns the modal/session, while PlayController owns the
+  terminal and module-load await.
+- **Confidence:** High — cleanup is asserted before the delayed load resolves, and stale resolution
+  cannot remount.
+- **Hardening:** DOM and plain-TypeScript regression tests exercise both async boundaries, error
+  presentation, dimension validation, and idempotent teardown.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29-phase-11`.
+- **Reopen triggers:** The controller gains a cancellable module loader, Play sessions become
+  shareable across launchers, or supported terminal dimensions change.
 
 ## Inventory evidence
 

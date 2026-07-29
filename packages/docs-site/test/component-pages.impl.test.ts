@@ -83,3 +83,19 @@ describe('component page Markdown scanning', () => {
     expect(evidence.anchors).toContain('keyboard-mouse');
   });
 });
+
+describe('specialist profile diagnostics', () => {
+  test('names the missing landing-profile section', () => {
+    const source = buttonSource
+      .replace('## Usage', '## Quick start')
+      .replace('## Live example', '## Capability map')
+      .replace('## Props', '## Cross-cutting practices');
+    expect(() =>
+      validateComponentPage(source, {
+        filePath: 'fixtures/landing.md',
+        profile: 'landing',
+        expectedExamples: ['controls/button'],
+      }),
+    ).toThrow(/Capability map section is not substantive/);
+  });
+});

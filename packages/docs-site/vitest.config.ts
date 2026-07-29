@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -34,6 +35,16 @@ export default defineConfig({
           // cold start can take ~20s on a loaded Windows runner. 15s was too tight and
           // flaked there; 60s keeps the check without the platform-timeout flake.
           testTimeout: 60_000,
+        },
+      },
+      {
+        plugins: [vue()],
+        define: { __JSVISION_VERSION__: JSON.stringify(rootVersion) },
+        test: {
+          name: 'dom',
+          include: ['test-dom/**/*.{spec,impl}.test.ts'],
+          environment: 'happy-dom',
+          testTimeout: 15_000,
         },
       },
     ],

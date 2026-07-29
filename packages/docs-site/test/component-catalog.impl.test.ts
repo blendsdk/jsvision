@@ -78,6 +78,14 @@ describe('component catalog diagnostics', () => {
     ).toThrow('projected routes');
   });
 
+  test('rejects duplicate labels inside one projected navigation group', () => {
+    expect(() =>
+      validateComponentCatalog(
+        catalog(component('button', 'Button', 1), { ...component('input', 'Input', 2), title: 'button' }),
+      ),
+    ).toThrow('navigation labels');
+  });
+
   test('returns immutable entries, projections, and stable lookup indexes', () => {
     const parsed = validateComponentCatalog(catalog(component('input', 'Input', 2), component('button', 'Button', 1)));
     const navigation = projectComponentNavigation(parsed.entries);
@@ -91,5 +99,19 @@ describe('component catalog diagnostics', () => {
     expect(indexes.symbolOwner.get('ui:Input')).toBe(parsed.entries[0]);
     expect('set' in indexes.byId).toBe(false);
     expect('delete' in indexes.symbolOwner).toBe(false);
+  });
+
+  test('keeps projection output stable across fixed adversarial entry orders', () => {
+    const entries = [
+      component('button', 'Button', 1),
+      component('input', 'Input', 2),
+      { ...component('text', 'Text', 3), family: 'Output' },
+    ];
+    const permutations = [entries, [...entries].reverse(), [entries[2]!, entries[0]!, entries[1]!]];
+    const projections = permutations.map((items) =>
+      projectComponentNavigation(validateComponentCatalog(catalog(...items)).entries),
+    );
+    expect(projections[1]).toEqual(projections[0]);
+    expect(projections[2]).toEqual(projections[0]);
   });
 });
