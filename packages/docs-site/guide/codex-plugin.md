@@ -116,9 +116,14 @@ problem is visual or behavioral.
 runs the renderer through the consumer project's `tsx` so TypeScript modules load in the
 consumer-project environment:
 
+Use the command form for the consumer project's package manager. The `--` after `npm exec` keeps
+renderer flags out of npm's own argument parser:
+
 ```sh
-<package-manager> exec tsx <skill-directory>/render-app.mjs <module> \
-  [--export name] [--pick property] [--size 80x24] [--keys "tab enter"]
+npm exec -- tsx <skill-directory>/render-app.mjs <module> [--export name] [--pick property] [--size 80x24] [--keys "tab enter"]
+yarn exec tsx <skill-directory>/render-app.mjs <module> [--export name] [--pick property] [--size 80x24] [--keys "tab enter"]
+pnpm exec tsx <skill-directory>/render-app.mjs <module> [--export name] [--pick property] [--size 80x24] [--keys "tab enter"]
+bunx tsx <skill-directory>/render-app.mjs <module> [--export name] [--pick property] [--size 80x24] [--keys "tab enter"]
 ```
 
 Render at normal and constrained terminal sizes. Use `--keys` to capture important focus,

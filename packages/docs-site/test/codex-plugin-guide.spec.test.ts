@@ -25,6 +25,12 @@ const MARKETPLACE = readJsonRecord(join(REPOSITORY_ROOT, '.agents', 'plugins', '
 const CANONICAL_SKILL = join(REPOSITORY_ROOT, 'tools', 'jsvision-skill');
 const DISTRIBUTED_SKILL = join(REPOSITORY_ROOT, 'plugins', 'jsvision-plugin', 'skills', 'jsvision');
 const PLUGIN_SKILLS = join(REPOSITORY_ROOT, 'plugins', 'jsvision-plugin', 'skills');
+const RENDER_COMMANDS = [
+  'npm exec -- tsx <skill-directory>/render-app.mjs <module>',
+  'yarn exec tsx <skill-directory>/render-app.mjs <module>',
+  'pnpm exec tsx <skill-directory>/render-app.mjs <module>',
+  'bunx tsx <skill-directory>/render-app.mjs <module>',
+] as const;
 
 /** Return true when an unknown JSON value is a plain string-keyed object. */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -136,7 +142,8 @@ describe('Codex plugin course contract', () => {
   test('should document the real generator, doctor, and renderer command boundaries', () => {
     expect(GUIDE).toContain('node <skill-directory>/new-jsvision-app.mjs <name> --package-manager <manager>');
     expect(GUIDE).toContain('node <skill-directory>/jsvision-doctor.mjs [path]');
-    expect(GUIDE).toContain('<package-manager> exec tsx <skill-directory>/render-app.mjs <module>');
+    for (const command of RENDER_COMMANDS) expect(GUIDE).toContain(command);
+    expect(GUIDE).not.toContain('<package-manager> exec tsx');
     expect(GUIDE).toMatch(/--template\s+form\|grid\|dashboard/u);
     expect(GUIDE).toContain('--current-dir');
     expect(GUIDE).toMatch(/explicit confirmation[\s\S]*current directory/iu);

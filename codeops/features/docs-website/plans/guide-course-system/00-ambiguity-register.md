@@ -458,3 +458,31 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
   green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-25 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Factual command portability and verification inside the confirmed Codex plugin
+  course and shipped renderer skill; no product, scope, policy, or risk-acceptance choice is
+  required.
+- **Objective:** Resolve the Phase 5 review finding without teaching a package-manager command that
+  fails or misroutes renderer flags.
+- **Decision:** Replace the generic renderer invocation with explicit `npm exec --`, `yarn exec`,
+  `pnpm exec`, and `bunx` forms. Require the Guide oracle to cover all four consumer command shapes
+  and add implementation coverage that keeps the shipped renderer skill synchronized.
+- **Evidence:** The generic `<package-manager> exec` form is invalid for Bun, while npm needs its
+  option separator before renderer arguments to keep flags such as `--export` and `--keys` out of
+  npm's parser.
+- **Rejected alternatives:** Removing Bun contradicts the supported generator/package-manager
+  surface. Keeping one abstract placeholder leaves users to discover incompatible syntax.
+- **Strongest counterargument:** Four nearly identical commands add repetition. The repetition is
+  bounded and makes the only meaningful package-manager differences explicit at the point of use.
+- **Confidence:** High — the correction follows the package managers' documented executable
+  invocation forms and is locked in both the course contract and shipped-skill hardening.
+- **Hardening:** The correction passes 19/19 focused course/catalog tests, docs-site typecheck,
+  plugin integrity, and authoritative `yarn verify`. The one permitted fix-scoped re-review found
+  no remaining Critical, Major, or Minor issue.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A supported manager changes its executable command contract, renderer flags
+  stop forwarding unchanged, or the Guide and shipped skill diverge.

@@ -17,6 +17,13 @@ const CORE_MANIFEST_PATH = join(REPOSITORY_ROOT, 'packages', 'core', 'package.js
 const PLUGIN_MANIFEST_PATH = join(REPOSITORY_ROOT, 'plugins', 'jsvision-plugin', '.codex-plugin', 'plugin.json');
 const CANONICAL_SKILL = join(REPOSITORY_ROOT, 'tools', 'jsvision-skill');
 const DISTRIBUTED_SKILL = join(REPOSITORY_ROOT, 'plugins', 'jsvision-plugin', 'skills', 'jsvision');
+const RENDER_SKILL_PATH = join(REPOSITORY_ROOT, 'plugins', 'jsvision-plugin', 'skills', 'jsvision-render', 'SKILL.md');
+const RENDER_COMMANDS = [
+  'npm exec -- tsx <skill-directory>/render-app.mjs <module>',
+  'yarn exec tsx <skill-directory>/render-app.mjs <module>',
+  'pnpm exec tsx <skill-directory>/render-app.mjs <module>',
+  'bunx tsx <skill-directory>/render-app.mjs <module>',
+] as const;
 const temporaryDirectories: string[] = [];
 
 /** Remove every bounded fixture created by the current test. */
@@ -74,6 +81,13 @@ function driftFixture(): { readonly canonical: string; readonly distributed: str
 }
 
 describe('Codex plugin course implementation hardening', () => {
+  test('should keep every supported package-manager renderer command in the shipped skill', () => {
+    const skill = readFileSync(RENDER_SKILL_PATH, 'utf8');
+
+    for (const command of RENDER_COMMANDS) expect(skill).toContain(command);
+    expect(skill).not.toContain('<package-manager> exec tsx');
+  });
+
   test('should keep the real canonical and assembled skill trees identical', () => {
     expect(checkTreesEqual(CANONICAL_SKILL, DISTRIBUTED_SKILL)).toEqual([]);
   });

@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 00:01
+> **Last Updated**: 2026-07-30 00:13
 > **Progress**: 40/246 tasks (16%)
 > **CodeOps Artifact Schema**: 1
 
@@ -305,6 +305,23 @@ independent specification-first phase (AR-10).
 - [x] 5.3.2 Run focused checks, promote Codex plugin, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 00:01) — 18/18 focused course/catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass; the catalog, learner-facing map, and Complete-stage projection agree
 
 **Verify**: Codex guide spec/impl tests, docs-site typecheck, and `yarn plugin:check`
+
+### Phase 5 quality review
+
+- The independent reviewer found one Major issue and no Critical or Minor issues: the generic
+  `<package-manager> exec` renderer command was invalid for Bun and did not protect renderer flags
+  from npm's argument parser.
+- Auto-design AR-25 replaced the placeholder with explicit `npm exec --`, `yarn exec`, `pnpm exec`,
+  and `bunx` forms in both the Guide and shipped renderer skill.
+- The course specification and shipped-skill implementation tests cover all four forms and reject
+  the obsolete placeholder. The corrective state passes 19/19 focused course/catalog tests,
+  docs-site typecheck, plugin integrity, and authoritative `yarn verify`.
+- The one permitted fix-scoped re-review found no remaining Critical, Major, or Minor issue.
+- Security and performance auditors were not invoked because the correction changes bounded
+  command documentation and assertions without adding a privileged runtime boundary or
+  performance-critical path.
+- Techdocs was not invoked because the phase changes consumer integration teaching without changing
+  architecture, public APIs, integrations, data entities, or infrastructure.
 
 ## Phase 6: Views & focus
 
