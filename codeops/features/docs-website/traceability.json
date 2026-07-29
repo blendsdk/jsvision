@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
+          "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -932,7 +932,8 @@
         "Phase 2 fix-scoped re-review: both Major findings and the Minor engine wording issue are resolved with no remaining finding in scope.",
         "Phase 3 Layout re-audit: expected red was 9 passed and 3 failed; content and timing corrections then passed 12/12 reconciled specifications.",
         "Phase 3 Layout green checkpoint: docs-site typecheck and authoritative yarn verify passed with real resize, maximize, restore, Classic surface, padding, and clipping evidence.",
-        "Phase 3 Layout hardening: 15/15 focused tests and authoritative yarn verify passed across repeated geometry, nested containment, interaction state, and hidden overlay state."
+        "Phase 3 Layout hardening: 15/15 focused tests and authoritative yarn verify passed across repeated geometry, nested containment, interaction state, and hidden overlay state.",
+        "Phase 3 Layout synchronization: 22/22 focused Layout/catalog tests and docs-site typecheck passed; the curriculum map remains Complete."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -965,10 +966,11 @@
         "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed.",
         "summary:Phase 2 independent review found two Major and one Minor issue; AR-18 applied every correction and the permitted re-review cleared all findings.",
         "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass.",
-        "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass."
+        "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass.",
+        "summary:Phase 3 task 3.3.2 passed 22 focused Layout/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
+      "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1062,7 +1064,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
+          "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1070,5 +1072,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:37:56Z"
+  "updated": "2026-07-29T20:39:20Z"
 }
