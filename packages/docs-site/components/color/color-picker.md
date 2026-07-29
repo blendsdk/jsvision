@@ -31,11 +31,17 @@ picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 
 
 ## Live example
 
-<PlayComingSoon title="Color picker" />
+<PlayExample id="color/color-picker"
+  title="Color Picker Lab"
+  blurb="Open a palette, preview live movement, commit deliberately, and load a custom truecolor value."
+/>
 
 ## Props
 
 `new ColorPicker(options)`.
+
+The public surface is `ColorPicker`, `ColorPickerOptions`, its hosted `ColorSwatch`, and the custom
+hex `Input`.
 
 | Prop          | Type                   | Default        | Description                                                                |
 | ------------- | ---------------------- | -------------- | -------------------------------------------------------------------------- |
@@ -43,12 +49,12 @@ picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 
 | `colors`      | `readonly Color[]`     | `ANSI16_ORDER` | Palette forwarded to the `ColorSwatch`.                                    |
 | `columns`     | `number`               | `4`            | Columns forwarded to the `ColorSwatch`.                                    |
 | `allowCustom` | `boolean`              | `true`         | Include a hex `Input` for arbitrary `#rrggbb` truecolor.                   |
-| `label`       | `string`               | —              | Chip caption prefix (used when `nameFor` is absent).                       |
+| `label`       | `string`               | —              | Fixed fallback caption used when `nameFor` is absent.                      |
 | `nameFor`     | `(c: Color) => string` | —              | Name accessor for the chip caption.                                        |
 | `onInput`     | `(c: Color) => void`   | —              | Fired on every live change in the popup (arrow / click / drag).            |
 | `onChange`    | `(c: Color) => void`   | —              | Fired on the commit gesture (Enter / Space / mouse-up), which also closes. |
 
-## Keyboard & mouse
+## Popup selection and custom colors
 
 | Input                      | Result                                                          |
 | -------------------------- | --------------------------------------------------------------- |
@@ -59,6 +65,13 @@ picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 
 | Type `#rrggbb`             | Set a custom truecolor; an incomplete/invalid value is ignored. |
 
 With no overlay host available (headless), opening is a no-op.
+
+## Live preview and commit
+
+Palette movement updates `value` and calls `onInput` immediately, which is ideal for reversible
+preview. Enter, Space, or mouse release calls `onChange` and closes the popup, creating a clear
+commit boundary. The custom field follows the same shared value but ignores incomplete or invalid
+hex text; named colors remain named when their RGB already matches.
 
 ## Sizing & layout
 
@@ -76,8 +89,9 @@ and the button.
 
 ## Theming
 
-The chip and popup use the input/dialog roles; the swatch marker uses `colorMarker`, and the `▐↓▌`
-button draws the shared dropdown icon.
+The chip uses `inputNormal` and `inputSelected`; the popup follows the dialog surface, the swatch
+marker uses `colorMarker`, and the `▐↓▌` button uses `historyButtonSides` and
+`historyButtonArrow`.
 
 ## Related
 

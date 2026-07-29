@@ -12,6 +12,10 @@ export type ExampleAction =
       readonly modifiers: readonly ExampleModifier[];
     }
   | {
+      readonly kind: 'paste';
+      readonly text: string;
+    }
+  | {
       readonly kind: 'mouse';
       readonly gesture: 'click' | 'double-click' | 'drag' | 'wheel';
       readonly at: { readonly x: number; readonly y: number };
@@ -168,6 +172,13 @@ function validateAction(action: unknown, caseId: string): void {
     }
     if (new Set(action.modifiers).size !== action.modifiers.length) {
       throw new Error(`${caseId}: duplicate modifier`);
+    }
+    return;
+  }
+  if (action.kind === 'paste') {
+    expectExactFields(action, ['kind', 'text'], caseId);
+    if (typeof action.text !== 'string' || action.text.length === 0 || action.text.length > 1024) {
+      throw new Error(`${caseId}: paste text must contain 1 to 1024 characters`);
     }
     return;
   }
