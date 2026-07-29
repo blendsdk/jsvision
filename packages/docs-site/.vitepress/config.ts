@@ -158,7 +158,6 @@ export default withMermaid(
               { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
               { text: 'Forms', link: '/guide/forms' },
               { text: 'Data grid', link: '/guide/data-grid' },
-              { text: 'Code editor', link: '/guide/code-editor' },
               { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
             ],
           },
@@ -210,6 +209,7 @@ export default withMermaid(
             ],
           },
           { text: 'Data Grid', items: [{ text: 'Overview', link: '/components/data-grid/' }] },
+          { text: 'Code Editor', items: [{ text: 'Overview', link: '/components/code-editor/' }] },
           {
             text: 'Feedback',
             items: [
@@ -282,6 +282,39 @@ export default withMermaid(
                 link: '/components/data-grid/theming-accessibility-performance',
               },
               { text: 'API map', link: '/components/data-grid/api' },
+            ],
+          },
+        ],
+        '/components/code-editor/': [
+          {
+            text: 'Code Editor',
+            items: [
+              { text: 'Overview', link: '/components/code-editor/' },
+              {
+                text: 'Documents & lifecycle',
+                link: '/components/code-editor/documents-and-lifecycle',
+              },
+              {
+                text: 'Editing, navigation & clipboard',
+                link: '/components/code-editor/editing-navigation-clipboard',
+              },
+              { text: 'Languages & syntax', link: '/components/code-editor/languages-and-syntax' },
+              { text: 'Folding', link: '/components/code-editor/folding' },
+              { text: 'Search & replace', link: '/components/code-editor/search-and-replace' },
+              {
+                text: 'Language intelligence & LSP',
+                link: '/components/code-editor/language-intelligence',
+              },
+              {
+                text: 'Viewport & large documents',
+                link: '/components/code-editor/viewport-and-large-documents',
+              },
+              { text: 'Themes & fallbacks', link: '/components/code-editor/themes-and-fallbacks' },
+              {
+                text: 'Host safety & recovery',
+                link: '/components/code-editor/host-safety-and-recovery',
+              },
+              { text: 'API map', link: '/components/code-editor/api' },
             ],
           },
         ],

@@ -121,6 +121,18 @@ export const API_MAP = [
     componentPage: '/components/surface/surface-view',
   },
   {
+    symbol: 'CodeEditor',
+    pkg: 'code-editor',
+    apiPath: '/api/code-editor/classes/CodeEditor',
+    componentPage: '/components/code-editor/#codeeditor',
+  },
+  {
+    symbol: 'CodeEditorWindow',
+    pkg: 'code-editor',
+    apiPath: '/api/code-editor/classes/CodeEditorWindow',
+    componentPage: '/components/code-editor/#codeeditorwindow',
+  },
+  {
     symbol: 'DataGrid',
     pkg: 'ui',
     apiPath: '/api/ui/classes/DataGrid',
@@ -142,7 +154,7 @@ export const API_MAP = [
     symbol: 'EditableDataGrid',
     pkg: 'datagrid',
     apiPath: '/api/datagrid/classes/EditableDataGrid',
-    componentPage: '/components/data-grid/#editable-data-grid',
+    componentPage: '/components/data-grid/#editabledatagrid',
   },
   {
     symbol: 'EditableGridRows',

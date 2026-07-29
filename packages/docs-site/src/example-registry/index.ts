@@ -1,5 +1,6 @@
 import { APPLICATION_EXAMPLES } from './applications.js';
 import { COLOR_EXAMPLES } from './colors.js';
+import { CODE_EDITOR_EXAMPLES } from './code-editor.js';
 import { CONTAINER_EXAMPLES } from './containers.js';
 import { CONTROL_EXAMPLES } from './controls.js';
 import { DATE_EXAMPLES } from './dates.js';
@@ -41,6 +42,7 @@ export const EXAMPLES = composeExampleRegistry(
   FEEDBACK_EXAMPLES,
   DATE_EXAMPLES,
   DATA_GRID_EXAMPLES,
+  CODE_EDITOR_EXAMPLES,
   COLOR_EXAMPLES,
   SURFACE_EXAMPLES,
   EDITING_EXAMPLES,
