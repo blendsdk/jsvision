@@ -4,7 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 134 / 180 tasks complete
+> **Progress**: 159 / 180 tasks complete
+> **Last Updated**: 2026-07-29 12:02 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -27,6 +28,10 @@
   complete catalog population.
 - Keep registry family modules under `src/example-registry/` and shared fixtures outside the
   recursively scanned `examples/` tree.
+- Apply the current `AGENTS.md` `template1` directive to every new live example. Use the shared
+  `Template1Dialog` rather than duplicating dialog behavior: examples start compact and centered,
+  remain responsive through resize/maximize/restore, and use `startMaximized` only where the user
+  has explicitly approved it. No Code Editor example currently has that startup approval.
 
 ## Phase Dependencies
 
@@ -609,54 +614,97 @@
 
 ## Phase 10 — Code Editor Specialist Hub
 
+> **Phase baseline tree**: `21a756f3dbbdd32f87c99497ca3313a3bbd036f6`
+> **Expected modification set**: Phase 10 Code Editor topology/objective/safety contracts,
+> deterministic bounded editor/LSP/host fixtures, sharded specification and implementation tests,
+> 11 specialist pages and 21 responsive `template1` examples using the shared `Template1Dialog`,
+> Code Editor registry/catalog/API/sidebar migration, deletion of the obsolete guide, bounded
+> integration corrections, this execution plan, feature roadmap, traceability, and
+> verification/review evidence.
+
 ### 10.1 Specification tests
 
-- [ ] **10.1.1** Add sharded `test/code-editor-docs.{topology,interaction,safety}.spec.test.ts` files
+- [x] **10.1.1** Add sharded `test/code-editor-docs.{topology,interaction,safety}.spec.test.ts` files
   and `test/contracts/code-editor/` for ST-26, ST-27, ST-28, page profiles, exact behavior
   contracts, and the Code Editor half of ST-31.
-- [ ] **10.1.2** Run RED for hub routes/sidebar/examples and record the obsolete guide evidence.
+  ✅ (completed: 2026-07-29 11:48 CEST; docs-site typecheck passes; 21 typed contracts and exact
+  11-topic topology compile)
+- [x] **10.1.2** Run RED for hub routes/sidebar/examples and record the obsolete guide evidence.
+  ✅ (completed: 2026-07-29 11:48 CEST; expected RED: 60 failed and 2 passed across 62 focused
+  cases, covering absent hub pages, registry/examples, safety fixtures/sidebar, and retained
+  obsolete guide; log `/tmp/phase10-red.log`)
 
 ### 10.2 Hub pages
 
-- [ ] **10.2.1** Add Overview and Documents/Lifecycle pages.
-- [ ] **10.2.2** Add Editing/Navigation/Clipboard and Languages/Syntax pages.
-- [ ] **10.2.3** Add Folding and Search/Replace pages.
-- [ ] **10.2.4** Add Language Intelligence and Viewport/Large Documents pages.
-- [ ] **10.2.5** Add Themes/Fallbacks and Host Safety/Recovery pages.
-- [ ] **10.2.6** Add the Code Editor API page.
+- [x] **10.2.1** Add Overview and Documents/Lifecycle pages.
+  ✅ (completed: 2026-07-29 11:51 CEST; landing and capability page contracts pass)
+- [x] **10.2.2** Add Editing/Navigation/Clipboard and Languages/Syntax pages.
+  ✅ (completed: 2026-07-29 11:51 CEST; both capability page contracts pass)
+- [x] **10.2.3** Add Folding and Search/Replace pages.
+  ✅ (completed: 2026-07-29 11:51 CEST; both capability page contracts pass)
+- [x] **10.2.4** Add Language Intelligence and Viewport/Large Documents pages.
+  ✅ (completed: 2026-07-29 11:51 CEST; both capability page contracts pass)
+- [x] **10.2.5** Add Themes/Fallbacks and Host Safety/Recovery pages.
+  ✅ (completed: 2026-07-29 11:51 CEST; both capability page contracts pass)
+- [x] **10.2.6** Add the Code Editor API page.
+  ✅ (completed: 2026-07-29 11:51 CEST; API profile contract passes; all 11 page checks green)
 
 ### 10.3 Focused examples
 
-- [ ] **10.3.1** Add `quick-start`, `document-controller`, and `external-changes`.
-- [ ] **10.3.2** Add `editing-navigation` and `readonly-clipboard`.
-- [ ] **10.3.3** Add `language-gallery`, `syntax-fallback`, and `invisibles-line-endings`.
-- [ ] **10.3.4** Add `language-folding` and `structural-folding`.
-- [ ] **10.3.5** Add `search` and `replace`.
-- [ ] **10.3.6** Add `lsp-completion`, `lsp-diagnostics`, and `lsp-navigation`.
-- [ ] **10.3.7** Add `viewport-mouse` and `large-document-tiers`.
-- [ ] **10.3.8** Add `themes` and `theme-fallback`.
-- [ ] **10.3.9** Add `safe-terminal-text` and `host-recovery`.
-- [ ] **10.3.10** Register all 21 examples in the Code Editor family registry module with lazy app
+- [x] **10.3.1** Add `quick-start`, `document-controller`, and `external-changes`.
+  ✅ (completed: 2026-07-29 12:00 CEST; template and behavior contracts pass)
+- [x] **10.3.2** Add `editing-navigation` and `readonly-clipboard`.
+  ✅ (completed: 2026-07-29 12:00 CEST; template and behavior contracts pass)
+- [x] **10.3.3** Add `language-gallery`, `syntax-fallback`, and `invisibles-line-endings`.
+  ✅ (completed: 2026-07-29 12:00 CEST; template and behavior contracts pass)
+- [x] **10.3.4** Add `language-folding` and `structural-folding`.
+  ✅ (completed: 2026-07-29 12:00 CEST; validated fold-state contracts pass)
+- [x] **10.3.5** Add `search` and `replace`.
+  ✅ (completed: 2026-07-29 12:00 CEST; query, selection, and revision contracts pass)
+- [x] **10.3.6** Add `lsp-completion`, `lsp-diagnostics`, and `lsp-navigation`.
+  ✅ (completed: 2026-07-29 12:00 CEST; bounded in-process service contracts pass)
+- [x] **10.3.7** Add `viewport-mouse` and `large-document-tiers`.
+  ✅ (completed: 2026-07-29 12:00 CEST; responsive and bounded-tier contracts pass)
+- [x] **10.3.8** Add `themes` and `theme-fallback`.
+  ✅ (completed: 2026-07-29 12:00 CEST; theme and fallback contracts pass)
+- [x] **10.3.9** Add `safe-terminal-text` and `host-recovery`.
+  ✅ (completed: 2026-07-29 12:00 CEST; sanitization and recovery contracts pass)
+- [x] **10.3.10** Register all 21 examples in the Code Editor family registry module with lazy app
   imports.
+  ✅ (completed: 2026-07-29 12:00 CEST; exact ordered population, lazy imports, and 48 focused
+  interaction/safety cases pass)
 
 ### 10.4 Route/sidebar migration
 
-- [ ] **10.4.1** Add the `/components/code-editor/` prefix sidebar and global hub link.
-- [ ] **10.4.2** Extend the checked-in `src/api/api-map.mjs` with exact catalog-parity
+- [x] **10.4.1** Add the `/components/code-editor/` prefix sidebar and global hub link.
+  ✅ (completed: 2026-07-29 12:02 CEST; exact 11-link specialist sidebar passes)
+- [x] **10.4.2** Extend the checked-in `src/api/api-map.mjs` with exact catalog-parity
   `code-editor` rows and update current docs links using the shared target parser.
-- [ ] **10.4.3** Move the guide's i18n lesson to Languages & syntax; make
+  ✅ (completed: 2026-07-29 12:02 CEST; CodeEditor and CodeEditorWindow rows target overview anchors)
+- [x] **10.4.3** Move the guide's i18n lesson to Languages & syntax; make
   `test/i18n-docs.spec.test.ts` resolve and guard that catalog target; delete
   `guide/code-editor.md` and remove its guide-sidebar entry in the same verified task.
-- [ ] **10.4.4** Run ST-26/ST-27/ST-28/Code Editor ST-31 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 12:02 CEST; catalog-resolved i18n contract passes and obsolete guide is absent)
+- [x] **10.4.4** Run ST-26/ST-27/ST-28/Code Editor ST-31 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 12:02 CEST; docs-site typecheck and all 65 focused topology,
+  interaction, safety, removal, and i18n cases pass)
 
 ### 10.5 Implementation tests and hardening
 
-- [ ] **10.5.1** Add sharded
+- [x] **10.5.1** Add sharded
   `test/code-editor-docs.{document-lifecycle,language-lsp,host-recovery}.impl.test.ts` files for
   session/controller disposal, bounded protocol arrays/text, host-effect denial, failure/recovery,
   and large-fixture guards.
-- [ ] **10.5.2** Complete all 11 topic content/security reviews and source/API spot checks.
-- [ ] **10.5.3** Run docs-site and Code Editor focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 12:10 CEST; 13 lifecycle isolation, bounded LSP, recovery authority,
+  sanitization, terminal-safety, and fixture-ceiling cases pass)
+- [x] **10.5.2** Complete all 11 topic content/security reviews and source/API spot checks.
+  ✅ (completed: 2026-07-29 12:17 CEST; reviewed all 11 pages and 21 examples for public-entry
+  imports, bounded fixtures, real controller/LSP/host seams, Template1 responsiveness, generated
+  API targets, stale-guide references, placeholders, and terminal-safe presentation)
+- [x] **10.5.3** Run docs-site and Code Editor focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 12:45 CEST; 82 focused Code Editor checks and docs-site typecheck pass;
+  independent review corrections close real-input, host-recovery, sanitizer, shared-controller, and
+  objective-fidelity gaps; authoritative `yarn verify` passes in 142.49 seconds)
 
 ## Phase 11 — Overview and Full Integration
 

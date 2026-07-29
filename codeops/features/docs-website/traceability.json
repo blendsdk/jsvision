@@ -444,7 +444,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
+          "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-29T07:04:47Z"
         }
@@ -491,7 +491,7 @@
         "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
+      "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -513,7 +513,7 @@
         "The user confirmed the complete plan ambiguity register on 2026-07-29."
       ],
       "id": "DEC-RD05",
-      "revision": "sha256:33d7cf6bf575e69b6d9f1f5fb370ae8d68e9f98ee62ebe6f8bf36d0c387f9cba",
+      "revision": "sha256:21ac2ff2f075b85661dcbd7e773e3b383199def35b622879046f8ab209f9c03c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -580,7 +580,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
+          "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-29T07:04:47Z"
         }

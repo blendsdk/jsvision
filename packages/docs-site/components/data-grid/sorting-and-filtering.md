@@ -81,3 +81,5 @@ unfiltered count.
 - [Data & columns](/components/data-grid/data-and-columns) — define typed comparators and values.
 - [SortHeader API](/api/datagrid/classes/SortHeader) and
   [QuickFilterRow API](/api/datagrid/classes/QuickFilterRow) — generated signatures.
+- [FilterPopup API](/api/datagrid/classes/FilterPopup) and
+  [ValueList API](/api/datagrid/classes/ValueList) — advanced filter surfaces.

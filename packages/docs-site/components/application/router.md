@@ -108,4 +108,4 @@ Screen-specific chrome must preserve the same contrast and accelerator treatment
 - [Application](/components/application/application) — wires router content and its host seams.
 - [View](/components/foundations/view) and [Group](/components/foundations/group) — screen roots.
 - [Menu Bar](/components/application/menu-bar) and [Status Line](/components/application/status-line).
-- [createRouter API](/api/ui/functions/createRouter) and [Router API](/api/ui/classes/Router).
+- [createRouter API](/api/ui/functions/createRouter) and [Router API](/api/ui/interfaces/Router).

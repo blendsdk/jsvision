@@ -46,6 +46,8 @@ user-delegated auto-design policy.
 | AR-20 | Documentation source | Are page snippets extracted from full runnable modules? | No. Registry `sourcePath` identifies the compiled runnable module. Markdown snippets remain separately authored, essence-only teaching artifacts and must not paste or extract a whole example module. | ✅ | preflight |
 | AR-21 | Runtime interaction | Which accelerator can focus the vertical Slider without conflicting with the Classic application shell? | Use **Alt+T** on “verTical.” Alt+V is already owned by the always-present View menu and opened that menu instead of focusing the slider. | ✅ | runtime-auto-design |
 | AR-22 | Runtime interaction | How should the Menu Bar example execute an item accelerator through the real menu state machine? | Use **Alt+L** to open the example's top-level File menu, then plain **O** to activate Open. Alt+O cannot directly target a submenu item while the menu is closed. | ✅ | runtime-auto-design |
+| AR-23 | Runtime verification | How should the Code Editor template specification observe maximize and restore? | Flush the existing deferred render/layout root after each `Template1Dialog.zoom()` before inspecting bounds. This preserves the established asynchronous layout contract and matches the shared template1 specifications; it does not require a new synchronous dialog behavior. | ✅ | runtime-auto-design |
+| AR-24 | Live-example fidelity | What evidence must a Code Editor lab expose for its learning objective? | Drive the public editor/controller/service/host input path itself and assert its public state. Status text and docs-only probes may summarize that evidence, but may not substitute for clipboard output, document lifecycle, adapter state, search presentation, protocol results, theme reports, viewport input, or recovery state. | ✅ | runtime-auto-design |
 
 ### AR-21 delegated decision provenance
 
@@ -96,6 +98,56 @@ user-delegated auto-design policy.
 - **Root invocation ID:** `component-documentation-system-2026-07-29`.
 - **Reopen triggers:** MenuBar gains direct closed-state item accelerators or the File top-level
   accelerator conflicts with future shared chrome.
+
+### AR-23 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** The verification synchronization mechanism is a reversible testing decision
+  inside the approved responsive-dialog behavior and changes no product behavior or acceptance
+  criterion.
+- **Objective:** Verify maximized and restored geometry only after the UI has applied the requested
+  layout.
+- **Decision:** Flush the real render root after each direct `zoom()` call before collecting bounds
+  and responsive-layout evidence.
+- **Evidence:** `Window.zoom()` requests layout through `setLayout`; the established shared,
+  primitive, and Data Grid template specifications all flush before inspecting new geometry.
+- **Rejected alternatives:** Make `Template1Dialog.zoom()` synchronously mutate settled bounds was
+  rejected because it would change the shared UI scheduling contract; weaken maximize assertions was
+  rejected because exact desktop bounds are required.
+- **Strongest counterargument:** The extra flush makes the test aware of the rendering scheduler.
+  That scheduler is already the public headless verification boundary used by the rest of the suite.
+- **Confidence:** High — the same pattern is green across all existing responsive examples.
+- **Hardening:** The test still inspects exact maximized bounds and exact compact restore geometry.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29-phase-10`.
+- **Reopen triggers:** `Window.zoom()` becomes synchronous or the headless render API changes.
+
+### AR-24 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** This strengthens reversible documentation fixtures and tests without changing
+  public SDK behavior, page topology, or the approved example population.
+- **Objective:** Make every Code Editor live-example claim demonstrably true through the public
+  surface it teaches.
+- **Decision:** Replace synthetic state transitions with real keyboard, mouse, clipboard, document,
+  language-scheduler, search, LSP, theme-resolution, host-authorization, and recovery operations;
+  retain probes only as content-free projections of those results.
+- **Evidence:** The independent Phase 10 review found status-only paths that passed their own probe
+  assertions without exercising the promised behavior. The corrected tests inspect public
+  controller, editor, coordinator, clipboard, theme, viewport, and degradation state.
+- **Rejected alternatives:** Weaken the page claims was rejected because the approved hub is meant
+  to demonstrate these capabilities; retain probe-only checks was rejected because they cannot
+  detect divergence from SDK behavior.
+- **Strongest counterargument:** The shared lab becomes more involved. Common Template1 geometry
+  remains centralized, while each scenario still performs one bounded teaching action.
+- **Confidence:** High — each corrected path uses an existing public API already covered by package
+  specifications.
+- **Hardening:** Focused tests rebuild every case and assert both behavior contracts and the relevant
+  public state; the authoritative repository gate remains mandatory.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29-phase-10`.
+- **Reopen triggers:** A public Code Editor input/state contract changes or a live-example claim no
+  longer maps to executable public evidence.
 
 ## Inventory evidence
 
