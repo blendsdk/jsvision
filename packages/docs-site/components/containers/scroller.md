@@ -1,89 +1,107 @@
 ---
 title: Scroller
-description: Scroller — a focusable viewport that clips and pans an oversized content view, with auto-owned scroll bar(s) in the reserved edges.
+description: Clip oversized content into a keyboard- and wheel-driven Scroller viewport with owned vertical, horizontal, or dual scroll bars.
 ---
 
 # Scroller
 
-`Scroller` is a scrolling viewport over an oversized content view: a `Group` that clips a larger child
-to its own bounds and pans it, with one auto-owned [`ScrollBar`](/components/containers/scroll-bar) per
-requested axis drawn in the reserved edge cells (vertical → rightmost column, horizontal → bottom row).
-It is **focusable** and scrolls from the keyboard and wheel; the owned bars can also be dragged or
-clicked directly, sharing the same scroll-offset signals.
+`Scroller` turns one oversized view into a bounded viewport. It owns the content offset, clips
+painting and hit-testing to the visible rectangle, and can compose vertical, horizontal, both, or
+no scroll bars. Use it when content has a known two-dimensional extent but does not already own its
+own virtual navigation model.
 
 ## Usage
 
 ```ts
-import { Scroller, Group, Text, signal } from '@jsvision/ui';
+import { Group, Scroller, Text, at } from '@jsvision/ui';
 
 const content = new Group();
-for (let i = 0; i < 40; i += 1) {
-  const line = new Text(`Line ${i + 1}`);
-  line.setLayout({ position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } });
-  content.add(line);
+for (let row = 0; row < 40; row += 1) {
+  content.add(at(new Text(`Row ${row + 1}`), 0, row, 50, 1));
 }
-// The content is laid out to its FULL extent (40 rows), not the 8-row viewport — otherwise there
-// is nothing to scroll.
-const scroller = new Scroller({ content, extent: { width: 30, height: 40 }, scrollbars: 'vertical' });
-scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } });
-// loop.focusView(scroller) — then PgDn / ↓ reveal the lower lines.
+const scroller = new Scroller({
+  content,
+  extent: { width: 50, height: 40 },
+  scrollbars: 'both',
+});
 ```
 
 ## Live example
 
-<PlayComingSoon title="Scroller" />
+<PlayExample id="containers/scroller" title="Two-axis viewport laboratory" blurb="Page through an oversized document, jump to the vertical end, and reveal its far-right columns while the live delta shows both clamped axes." />
 
-## Props
+The content includes coordinate labels so clipping and movement are observable in the viewport, not
+only in the status readout.
 
-`new Scroller(options)`.
+## Props and public state
 
-| Prop         | Type                                             | Default      | Description                                                                |
-| ------------ | ------------------------------------------------ | ------------ | -------------------------------------------------------------------------- |
-| `content`    | `View`                                           | —            | The oversized content view (clipped to the viewport, offset `-delta`).     |
-| `extent`     | `Size2D \| (() => Size2D)`                       | —            | The content's natural size = the scroll limit; a thunk re-reads each draw. |
-| `scrollbars` | `'vertical' \| 'horizontal' \| 'both' \| 'none'` | `'vertical'` | Which owned bars to create (reserving an edge each).                       |
+`Scroller` accepts `ScrollerOptions`:
 
-## Keyboard & mouse
+| Prop         | Type                       | Default      | Purpose                                              |
+| ------------ | -------------------------- | ------------ | ---------------------------------------------------- |
+| `content`    | `View`                     | —            | Oversized child to clip and offset.                  |
+| `extent`     | `Size2D \| (() => Size2D)` | —            | Natural content size and scroll limit.               |
+| `scrollbars` | `ScrollbarsMode`           | `'vertical'` | `'vertical'`, `'horizontal'`, `'both'`, or `'none'`. |
 
-| Input                  | Result                                                     |
-| ---------------------- | ---------------------------------------------------------- |
-| **↑ / ↓**              | Scroll the y axis by ±1.                                   |
-| **← / →**              | Scroll the x axis by ±1.                                   |
-| **PgUp / PgDn**        | Scroll the y axis by ±(viewport height − 1).               |
-| **Home / End**         | Jump to the top / bottom of the y axis.                    |
-| **Wheel**              | Scroll by ±3 (up/down, or left/right).                     |
-| **Drag / click** a bar | Move that axis directly (the owned bars share the offset). |
+The read-only `delta` getter exposes the current `{ x, y }` offset. The scroller itself is focusable
+and owns navigation; its bars are passive mouse chrome.
 
-## Sizing & layout
+## Size and Layout
 
-The content view **must be laid out to its full `extent`** (it is drawn shifted by `-delta` and
-clipped to the viewport), not to the viewport. Give the `Scroller` its own bounds via an absolute
-`rect` or a flex slot; each requested bar reserves an edge (the vertical bar the rightmost column, the
-horizontal bar the bottom row), so the usable viewport is the bounds minus those edges. The offset is
-clamped to `[0, extent − viewport]` per axis, so it never over-scrolls.
+The scroller’s assigned bounds are the viewport. A vertical bar reserves the rightmost column; a
+horizontal bar reserves the bottom row; dual bars also reserve and paint the bottom-right corner.
+The remaining cells determine the maximum offsets:
 
-## Best practices
+`maxX = extent.width - viewport.width` and `maxY = extent.height - viewport.height`, clamped at zero.
 
-- **Size the content to the extent, not the viewport.** This is the one footgun: lay the content out
-  to its full `extent` (a 40-row list is 40 rows tall) or there is nothing to pan.
-- **Use a thunk for dynamic content.** Pass `extent: () => currentSize()` when the content grows or
-  shrinks — it is re-read on every draw, so the bars re-range and the clamp stays correct.
-- **Reach for a purpose-built viewer when one fits.** A list of rows is better served by
-  [`List box`](/components/containers/list-box), an outline by [`Tree`](/components/containers/tree);
-  `Scroller` is for arbitrary oversized content.
+An extent thunk is re-read during drawing, so content can grow or shrink without rebuilding the
+container. Keep the returned dimensions finite and consistent with the child’s natural layout.
+
+## Viewport and extent
+
+The content is positioned at `-delta` and clipped by the scroller. Each draw recalculates live
+viewport dimensions, clamps offsets, and updates owned bar ranges. Shrinking content below the
+viewport disables the corresponding bar instead of allowing stale over-scroll.
+
+```ts
+import { Scroller, signal } from '@jsvision/ui';
+
+const extent = signal({ width: 80, height: 200 });
+const scroller = new Scroller({
+  content,
+  extent: () => extent(),
+  scrollbars: 'both',
+});
+```
+
+## Keyboard and wheel scrolling
+
+Arrow keys move one cell on the matching axis. Page Up/Down moves by the visible height minus one,
+Home goes to the vertical start, and End goes to the vertical end. Wheel input moves three cells on
+the wheel’s axis. Every path clamps to the current extent.
+
+The bars accept pointer input directly and write the same internal offset signals. This keeps
+keyboard, wheel, track clicks, and thumb drags synchronized.
+
+## Best Practices
+
+- Use `Scroller` for one bounded oversized canvas; use `ListView`, `Tree`, or Data Grid for
+  collection virtualization.
+- Provide an extent that describes actual content, not the viewport.
+- Focus the scroller when keyboard navigation should take precedence.
+- Show positional context inside large content so users know what moved.
+- Test both content growth and shrinkage when `extent` is dynamic.
 
 ## Theming
 
-`Scroller` adds no roles of its own — it paints through its owned bars:
-
-| Role                | Applies to                                           |
-| ------------------- | ---------------------------------------------------- |
-| `scrollBarControls` | The arrows and thumbs of the owned bars              |
-| `scrollBarPage`     | The bar page tracks and the bottom-right corner cell |
+The content keeps its own roles. Owned bars use `scrollBarControls` for arrows/thumb and
+`scrollBarPage` for tracks and the dual-bar corner. The surrounding `dialog` role in the example
+shows why the content background should be explicit rather than relying on whatever lies behind the
+viewport.
 
 ## Related
 
-- [Scroll bar](/components/containers/scroll-bar) — the passive bar a Scroller owns.
-- [List box](/components/containers/list-box) — a virtual-scroll list of rows.
-- [Tree](/components/containers/tree) — a scrolling, expandable outline.
-- [API reference](/api/ui/classes/Scroller) — the generated `Scroller` signature.
+- [Scroll Bar](/components/containers/scroll-bar) — standalone passive range control.
+- [List View](/components/containers/list-view) — virtual rows with semantic selection.
+- [Surface View](/components/surface/surface-view) — surface-backed rendering.
+- [Scroller API](/api/ui/classes/Scroller) — generated `ScrollerOptions` and `delta`.
