@@ -46,8 +46,9 @@ following live-example structure:
    controls and text never touch the inside edge of the border. Supply responsive layout behavior
    that preserves this inset and uses the additional room without clipping after resize, maximize,
    and restore. Set `preserveChildHeights: true` for primitive galleries whose direct content
-   children have deliberately authored row heights; keep it disabled for grids, editors, lists, and
-   other workspace panes that should consume additional vertical space.
+   children all have deliberately authored row heights. For mixed workspaces, pass a predicate that
+   preserves labels, buttons, inputs, status text, and instructions while allowing the principal
+   grid, editor, list, tree, terminal, canvas, or other workspace pane to grow vertically.
 5. Use the theme-controlled `dialog` surface without a custom background. Under the Classic theme,
    the dialog background must match the application's menu-bar background.
 6. Keep the showcase alive after opening. `Template1Dialog` is non-closable by default; use a

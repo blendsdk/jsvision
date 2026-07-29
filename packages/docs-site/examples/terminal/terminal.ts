@@ -23,7 +23,12 @@ export default defineExample({
     for (let index = 1; index <= 7; index += 1) terminal.writeLine(`history line ${index}`);
     terminal.writeLine('newest output');
     const status = signal('pinned to newest');
-    const dialog = new Template1Dialog({ title: ' Terminal Lab ', width: 60, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Terminal Lab ',
+      width: 60,
+      height: 16,
+      preserveChildHeights: (view) => view !== terminal,
+    });
     const content = new Group();
     content.add(at(new Text('Passive, bounded output — never a command shell.'), 0, 0, 56, 1));
     content.add(at(terminal, 0, 2, 42, 7));

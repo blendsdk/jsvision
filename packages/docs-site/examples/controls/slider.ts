@@ -47,7 +47,12 @@ export default defineExample({
       onChange: () => status.set('vertical value committed'),
     });
 
-    const dialog = new Template1Dialog({ title: ' Slider Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Slider Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: (view) => view !== vertical,
+    });
     const content = new Group();
 
     content.add(at(new Text('A bounded numeric signal with separate preview and commit events.'), 0, 0, 60, 1));

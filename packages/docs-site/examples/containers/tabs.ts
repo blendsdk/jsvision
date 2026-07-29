@@ -40,7 +40,12 @@ export default defineExample({
       active,
       onClose: (tab) => closed.set(tab.title.replaceAll('~', '')),
     });
-    const dialog = new Template1Dialog({ title: ' Tabs Lab ', width: 60, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Tabs Lab ',
+      width: 60,
+      height: 16,
+      preserveChildHeights: (child) => child !== view,
+    });
     const content = new Group();
 
     content.add(at(new Text('All tab pages stay mounted; one lays out.'), 0, 0, 56, 1));

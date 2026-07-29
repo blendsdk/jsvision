@@ -30,7 +30,12 @@ export default defineExample({
     const directory = signal(FILE_LAB_HOME);
     const status = signal('ready · current directory is valid');
     const tree = new DirList({ fs: fixture.fs, directory, onChangeDir: (path) => directory.set(path) });
-    const dialog = new Template1Dialog({ title: ' Change Directory Lab ', width: 60, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Change Directory Lab ',
+      width: 60,
+      height: 16,
+      preserveChildHeights: (view) => view !== tree,
+    });
     const content = new Group();
     content.add(at(new Text('ChDirDialog binds a path field to this reactive tree.'), 0, 0, 56, 1));
     content.add(at(tree, 0, 2, 34, 7));

@@ -27,7 +27,12 @@ export default defineExample({
     });
     group.setItemEnabled(3, false);
 
-    const dialog = new Template1Dialog({ title: ' Radio Group Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Radio Group Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(

@@ -27,7 +27,12 @@ export default defineExample({
     const focusedEntry = signal<DirEntry | undefined>(README);
     const input = new FileInput({ value, focusedEntry, wildcard: () => '*.ts', sep: '/' });
     const reset = new Button('~F~ile entry', { command: CMD_FILE });
-    const dialog = new Template1Dialog({ title: ' File Input Lab ', width: 60, height: 12 });
+    const dialog = new Template1Dialog({
+      title: ' File Input Lab ',
+      width: 60,
+      height: 12,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     content.add(at(new Text('Focused entries mirror until this field owns focus.'), 0, 0, 56, 1));
     content.add(at(input, 0, 2, 38, 1));

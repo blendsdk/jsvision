@@ -22,7 +22,12 @@ export default defineExample({
     });
     const value = signal(0.25);
     const note = signal('ready');
-    const dialog = new Template1Dialog({ title: ' Progress Bar Lab ', width: 60, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Progress Bar Lab ',
+      width: 60,
+      height: 16,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('One signal drives several determinate presentations.'), 0, 0, 56, 1));

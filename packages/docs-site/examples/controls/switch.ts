@@ -36,7 +36,12 @@ export default defineExample({
       disabled: true,
     });
 
-    const dialog = new Template1Dialog({ title: ' Switch Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Switch Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('One boolean signal per control; external writes repaint immediately.'), 0, 0, 60, 1));

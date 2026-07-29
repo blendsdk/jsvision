@@ -34,7 +34,12 @@ export default defineExample({
       markerStyle: 'brackets',
       onSelect: (_index, selectedNode) => opened.set(selectedNode.value),
     });
-    const dialog = new Template1Dialog({ title: ' Tree Lab ', width: 52, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Tree Lab ',
+      width: 52,
+      height: 16,
+      preserveChildHeights: (view) => view !== tree,
+    });
     const content = new Group();
 
     content.add(at(new Text('Tree owns expansion; node data stays plain.'), 0, 0, 48, 1));

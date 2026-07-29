@@ -54,7 +54,12 @@ export default defineExample({
         settings: { build: () => ({ view: routeView('SETTINGS', 'Replaced without growing the stack') }) },
       },
     });
-    const dialog = new Template1Dialog({ title: ' Router Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Router Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: (view) => view !== router,
+    });
     const content = new Group();
 
     content.add(at(new Text('Router owns a typed stack of full-screen View roots.'), 0, 0, CONTENT_WIDTH, 1));

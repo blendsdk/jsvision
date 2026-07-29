@@ -34,7 +34,12 @@ export default defineExample({
       minSize: [10, 14],
       onResizeEnd: () => commits.set(commits() + 1),
     });
-    const dialog = new Template1Dialog({ title: ' Split View Lab ', width: 56, height: 15 });
+    const dialog = new Template1Dialog({
+      title: ' Split View Lab ',
+      width: 56,
+      height: 15,
+      preserveChildHeights: (view) => view !== split,
+    });
     const content = new Group();
 
     content.add(at(new Text('One divider trades cells between two panes.'), 0, 0, 52, 1));

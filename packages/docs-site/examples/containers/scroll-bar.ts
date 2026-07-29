@@ -27,7 +27,12 @@ export default defineExample({
     const disabled = signal(false);
     const vertical = new ScrollBar({ value, min: 0, max: 100, pageStep: 20, orientation: 'vertical' });
     const horizontal = new ScrollBar({ value, min: 0, max: 100, pageStep: 20, orientation: 'horizontal' });
-    const dialog = new Template1Dialog({ title: ' Scroll Bar Lab ', width: 48, height: 14 });
+    const dialog = new Template1Dialog({
+      title: ' Scroll Bar Lab ',
+      width: 48,
+      height: 14,
+      preserveChildHeights: (view) => view !== vertical,
+    });
     const content = new Group();
 
     content.add(at(new Text('Two bar orientations share one value signal.'), 0, 0, 44, 1));

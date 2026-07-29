@@ -31,7 +31,12 @@ export default defineExample({
       extent: { width: 58, height: 18 },
       scrollbars: 'both',
     });
-    const dialog = new Template1Dialog({ title: ' Scroller Lab ', width: 56, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' Scroller Lab ',
+      width: 56,
+      height: 16,
+      preserveChildHeights: (view) => view !== scroller,
+    });
     const content = new Group();
 
     content.add(at(new Text('A 58×18 sheet inside a 43×7 viewport.'), 0, 0, 52, 1));

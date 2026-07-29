@@ -29,7 +29,12 @@ export default defineExample({
     };
     draw();
     const view = new SurfaceView({ surface });
-    const dialog = new Template1Dialog({ title: ' Surface Lab ', width: 60, height: 15 });
+    const dialog = new Template1Dialog({
+      title: ' Surface Lab ',
+      width: 60,
+      height: 15,
+      preserveChildHeights: (child) => child !== view,
+    });
     const content = new Group();
     content.add(at(new Text('Surface owns cells; SurfaceView only projects them.'), 0, 0, 56, 1));
     content.add(at(view, 0, 2, 38, 6));

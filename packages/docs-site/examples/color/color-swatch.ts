@@ -26,7 +26,12 @@ export default defineExample({
       onInput: () => inputCount.set(inputCount() + 1),
       onChange: () => commitCount.set(commitCount() + 1),
     });
-    const dialog = new Template1Dialog({ title: ' Color Swatch Lab ', width: 60, height: 13 });
+    const dialog = new Template1Dialog({
+      title: ' Color Swatch Lab ',
+      width: 60,
+      height: 13,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Four-cell palette with separate preview and commit.'), 0, 0, 56, 1));

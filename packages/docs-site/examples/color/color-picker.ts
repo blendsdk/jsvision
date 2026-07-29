@@ -32,7 +32,12 @@ export default defineExample({
       onInput: () => inputCount.set(inputCount() + 1),
       onChange: () => commitCount.set(commitCount() + 1),
     });
-    const dialog = new Template1Dialog({ title: ' Color Picker Lab ', width: 60, height: 13 });
+    const dialog = new Template1Dialog({
+      title: ' Color Picker Lab ',
+      width: 60,
+      height: 13,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Popup palette plus a validated custom-color field.'), 0, 0, 56, 1));

@@ -29,7 +29,12 @@ export default defineExample({
       editorDialog: async () => ({ kind: 'ok' }),
     });
     editor.loadFile();
-    const dialog = new Template1Dialog({ title: ' File Editor Lab ', width: 64, height: 16 });
+    const dialog = new Template1Dialog({
+      title: ' File Editor Lab ',
+      width: 64,
+      height: 16,
+      preserveChildHeights: (view) => view !== editor,
+    });
     const content = new Group();
     content.add(at(new Text('FileEditor adds load/save/backup policy to Editor.'), 0, 0, 60, 1));
     content.add(at(editor, 0, 2, 44, 7));

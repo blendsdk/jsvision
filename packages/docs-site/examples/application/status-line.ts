@@ -25,7 +25,12 @@ export default defineExample({
     const action = signal('none');
     const enabled = signal(true);
     const saves = signal(0);
-    const dialog = new Template1Dialog({ title: ' Status Line Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Status Line Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('The real footer combines command items, spacers, and passive hints.'), 0, 0, 60, 1));

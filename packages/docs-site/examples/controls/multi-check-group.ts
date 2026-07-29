@@ -31,6 +31,7 @@ export default defineExample({
       title: ' Multi-check Group Lab ',
       width: DIALOG_WIDTH,
       height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
     });
     const content = new Group();
 

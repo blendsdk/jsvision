@@ -19,7 +19,12 @@ export default defineExample({
     });
     const indicator = new Indicator();
     indicator.setValue({ line: 1, col: 1 }, false);
-    const dialog = new Template1Dialog({ title: ' Indicator Lab ', width: 54, height: 12 });
+    const dialog = new Template1Dialog({
+      title: ' Indicator Lab ',
+      width: 54,
+      height: 12,
+      preserveChildHeights: true,
+    });
     const content = new Group();
     content.add(at(new Text('Indicator is a passive Editor status projection.'), 0, 0, 50, 1));
     content.add(at(indicator, 0, 3, 18, 1));

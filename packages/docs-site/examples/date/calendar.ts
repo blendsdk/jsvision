@@ -33,7 +33,12 @@ export default defineExample({
       density: 'compact',
       isDisabled: (date) => dayOfWeek(date) === 0,
     });
-    const dialog = new Template1Dialog({ title: ' Calendar Lab ', width: 60, height: 17 });
+    const dialog = new Template1Dialog({
+      title: ' Calendar Lab ',
+      width: 60,
+      height: 17,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Monday-first · ISO weeks · Sundays disabled'), 0, 0, 56, 1));

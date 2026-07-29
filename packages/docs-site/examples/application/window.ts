@@ -26,9 +26,14 @@ export default defineExample({
     });
     const state = signal('restored');
     const closeFeedback = signal('Close policy: protected');
-    const dialog = new Template1Dialog({ title: ' Window Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
     const content = new Group();
     const desktop = new Desktop();
+    const dialog = new Template1Dialog({
+      title: ' Window Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: (view) => view !== desktop,
+    });
     const specimen = new Window('Specimen');
     specimen.closable = false;
     specimen.number = 1;
