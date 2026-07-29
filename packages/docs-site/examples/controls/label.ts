@@ -23,7 +23,12 @@ export default defineExample({
     const status = signal('ready — the Name field starts focused');
     const nameInput = new Input({ value: name, maxLength: 22, placeholder: 'Type a name' });
     const emailInput = new Input({ value: email, maxLength: 30, placeholder: 'Type an email' });
-    const dialog = new Template1Dialog({ title: ' Label Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Label Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Linked captions move focus without adding extra Tab stops.'), 0, 0, CONTENT_WIDTH, 1));

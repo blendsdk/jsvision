@@ -51,7 +51,12 @@ export default defineExample({
     });
     const inputs = [nameInput, ageInput, phoneInput, longInput];
 
-    const dialog = new Template1Dialog({ title: ' Input Lab ', width: DIALOG_WIDTH, height: DIALOG_HEIGHT });
+    const dialog = new Template1Dialog({
+      title: ' Input Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
     const content = new Group();
 
     content.add(at(new Text('Four fields — type, validate, select, paste, and scroll'), 0, 0, CONTENT_WIDTH, 1));
