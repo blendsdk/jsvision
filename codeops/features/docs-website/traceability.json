@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
+          "revision": "sha256:31216ad3d218af27bbee4995b6fb5c596465816e906e5997af3d8033b80aa7b7",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -927,7 +927,9 @@
         "Phase 2 Install & packages: expected-red baseline was 7 failed and 1 passed; implementation then passed 8/8 focused specifications.",
         "Phase 2 Install & packages: docs-site typecheck and authoritative yarn verify passed at the first green checkpoint.",
         "Phase 2 Install & packages hardening: package-matrix, stale-version, and invalid-import checks passed with the full 11/11 focused suite and authoritative yarn verify.",
-        "Phase 2 Install & packages promotion: 18/18 focused course/catalog tests, docs-site typecheck, and authoritative yarn verify passed before the catalog stage became complete."
+        "Phase 2 Install & packages promotion: 18/18 focused course/catalog tests, docs-site typecheck, and authoritative yarn verify passed before the catalog stage became complete.",
+        "Phase 2 review remediation: real TypeScript consumer and Node CommonJS probes pass; invalid subpath and missing-extension fixtures fail as expected; 18/18 focused tests and yarn verify pass.",
+        "Phase 2 fix-scoped re-review: both Major findings and the Minor engine wording issue are resolved with no remaining finding in scope."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -957,10 +959,11 @@
         "summary:Phase 1 is complete after final focused, docs-site typecheck, and authoritative yarn verify gates passed.",
         "summary:Phase 2 tasks 2.1.1 through 2.2.4 reached the specification-to-green checkpoint with 8 focused tests, docs-site typecheck, and yarn verify passing.",
         "summary:Phase 2 task 2.3.1 added package-matrix, stale-version, and invalid-import hardening; 11 focused tests and yarn verify pass.",
-        "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed."
+        "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed.",
+        "summary:Phase 2 independent review found two Major and one Minor issue; AR-18 applied every correction and the permitted re-review cleared all findings."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
+      "revision": "sha256:31216ad3d218af27bbee4995b6fb5c596465816e906e5997af3d8033b80aa7b7",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -980,10 +983,11 @@
       "edges": [],
       "evidence": [
         "The user confirmed all ten Guide-course planning decisions on 2026-07-29.",
-        "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings."
+        "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings.",
+        "Auto-design AR-18 selected the mandatory compiler, runtime-probe, and engine-wording corrections for the Phase 2 quality findings."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:5ce80700a9af5fba5f679adeca06a0879b3f01bf7de6295bb83a68f56d730bc2",
+      "revision": "sha256:a91c885d1af9a75badc9a484a4169b8ca39a1d41cbb0b6b1c195b09b37f6e59d",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1052,7 +1056,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:e0857d3fd7197ae62a90c7e1b095d6dcc43fe8f0022eec81515acc090ff1ec16",
+          "revision": "sha256:31216ad3d218af27bbee4995b6fb5c596465816e906e5997af3d8033b80aa7b7",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1060,5 +1064,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:14:19Z"
+  "updated": "2026-07-29T20:22:39Z"
 }
