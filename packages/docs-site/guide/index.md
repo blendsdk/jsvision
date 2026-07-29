@@ -158,11 +158,11 @@ courses are part of the confirmed curriculum and appear here before they enter t
 
 ### Getting started
 
-| Course                                            | Stage   | Purpose                                                                 |
-| ------------------------------------------------- | ------- | ----------------------------------------------------------------------- |
-| [Introduction](/guide/)                           | Upgrade | Understand the product, run the live shell, and choose a learning path. |
-| [Install & packages](/guide/install-and-packages) | Upgrade | Choose packages and configure a Node 22+ ESM project.                   |
-| [Codex plugin](/guide/codex-plugin)               | Upgrade | Use the supported agent integration and canonical JSVision guidance.    |
+| Course                                            | Stage    | Purpose                                                                 |
+| ------------------------------------------------- | -------- | ----------------------------------------------------------------------- |
+| [Introduction](/guide/)                           | Complete | Understand the product, run the live shell, and choose a learning path. |
+| [Install & packages](/guide/install-and-packages) | Upgrade  | Choose packages and configure a Node 22+ ESM project.                   |
+| [Codex plugin](/guide/codex-plugin)               | Upgrade  | Use the supported agent integration and canonical JSVision guidance.    |
 
 ### Core concepts
 

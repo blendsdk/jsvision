@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 21:22
-> **Progress**: 7/246 tasks (3%)
+> **Last Updated**: 2026-07-29 21:28
+> **Progress**: 8/246 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -76,8 +76,10 @@ independent specification-first phase (AR-10).
 > `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/introduction/`,
 > `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
 > `packages/docs-site/test/introduction-guide.spec.test.ts`,
-> `packages/docs-site/test/introduction-guide.impl.test.ts`, this execution plan, and the
-> docs-website roadmap/traceability evidence required by the execution protocol.
+> `packages/docs-site/test/introduction-guide.impl.test.ts`,
+> `packages/docs-site/test/guide-catalog.spec.test.ts` (mechanical complete-stage allowlist), this
+> execution plan, and the docs-website roadmap/traceability evidence required by the execution
+> protocol.
 
 ### Step 1.1: Specification tests
 
@@ -94,7 +96,7 @@ independent specification-first phase (AR-10).
 ### Step 1.3: Hardening
 
 - [x] 1.3.1 Add route/lab edge coverage — `packages/docs-site/test/introduction-guide.impl.test.ts` ✅ (completed: 2026-07-29 21:22) — 4/4 focused implementation tests and authoritative `yarn verify` passed
-- [ ] 1.3.2 Run focused checks, promote Introduction to Complete, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 1.3.2 Run focused checks, promote Introduction to Complete, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-29 21:28) — 17/17 focused course/catalog tests, docs-site typecheck, and authoritative `yarn verify` passed
 
 **Verify**: Introduction spec/impl tests and `yarn workspace @jsvision/docs-site typecheck`
 
