@@ -47,7 +47,7 @@
 | ST-24 | Data Grid objectives | All 24 named Data Grid example IDs exist, paint, and prove the learning objectives in 03-04 through real grid state/input. | AC-6/9/10 · PR-5 |
 | ST-25 | Data Grid trust boundaries | Scale examples avoid full-array access for windowed data; export proves escaping; examples are lazy and use bounded deterministic sources. | AC-6/10/11 · PR-5/8 |
 | ST-26 | Code Editor topology | `/components/code-editor/` has exactly the 11 required pages in specialist-sidebar order; every page satisfies its catalog-selected profile and only the API page may omit examples. | AC-7 · PR-6 |
-| ST-27 | Code Editor objectives | All 21 named Code Editor example IDs exist, paint, and prove the learning objectives in 03-05 through real editor/controller state/input. | AC-7/9/10 · PR-6 |
+| ST-27 | Code Editor objectives | All 21 named Code Editor example IDs exist, paint, and prove the learning objectives in 03-05 through real editor/controller state/input. The completion, diagnostics, and language-folding pilots start maximized, use substantial scenario-specific fixtures, apply non-empty real syntax results, expose capability-named actions, and render human-readable result evidence. | AC-7/9/10 · PR-6 |
 | ST-28 | Code Editor safety | LSP uses bounded in-process seams; protocol text is sanitized; host effects require explicit authorization; large-doc fixtures remain bounded; disposal/reset leaves no work running. | AC-7/10/11 · PR-6/8 |
 | ST-29 | No Coming Soon | No cataloged page contains `PlayComingSoon`; every `PlayExample` resolves and its title/blurb states an objective. | AC-2/4 · PR-3/4 |
 | ST-30 | Accessibility and lazy loading | A Vue-capable DOM project mounts Play with deterministic terminal/ResizeObserver seams and proves labelled controls, keyboard activation, lazy imports, mount/disposal counts, and unopened-example isolation; the production build remains green. | AC-10/11 · PR-8 |
@@ -87,7 +87,7 @@ than leaving the input to implementation-time interpretation.
 | ST-24 | The 24 Data Grid IDs, deterministic row fixtures, and capability-complete reset/action/probe cases in `test/contracts/data-grid/`. |
 | ST-25 | Windowed source trap, export injection strings, import spies, and bounded row counts exercised through scale/export pages. |
 | ST-26 | Code Editor topic-route/sidebar fixture from 03-05 compared with catalog, filesystem, and VitePress config. |
-| ST-27 | The 21 Code Editor IDs, bounded document fixtures, and capability-complete reset/action/probe cases in `test/contracts/code-editor/`. |
+| ST-27 | The 21 Code Editor IDs, bounded document fixtures, and capability-complete reset/action/probe cases in `test/contracts/code-editor/`; flagship pilot checks additionally inspect maximized responsive geometry, meaningful source size, non-empty adapter syntax, capability-specific controls, reset, and visible teaching evidence. |
 | ST-28 | Malformed/oversized protocol payloads, denied host effect, failed/recovered session, large-tier fixture, and disposal signal. |
 | ST-29 | All cataloged Markdown and every `PlayExample` ID/title/blurb; a Coming Soon and missing-ID fixture. |
 | ST-30 | A dedicated `dom` Vitest project using `@vitejs/plugin-vue`, `happy-dom`, and Vue Test Utils, with injected/mocked xterm and `ResizeObserver`, keyboard activation, dynamic-import spies, unopened/opened mount counts, disposal evidence, and production-build assertions. The docs manifest exposes a focused DOM command and its normal `test` script runs both `unit` and `dom` projects under `yarn verify`. |

@@ -30,8 +30,8 @@ boundary. Limit their size before presentation and discard responses for cancell
 requests.
 
 <PlayExample id="code-editor/lsp-completion"
-  title="Bounded completion service"
-  blurb="Run an in-process completion request and inspect bounded items plus the ready service state."
+  title="Smart TypeScript completion"
+  blurb="Explore a highlighted profile formatter, request suggestions at profile., and inspect the real popup plus its bounded hover and signature evidence."
 />
 
 ## Diagnostics
@@ -40,8 +40,8 @@ Diagnostics need severity, range, and a terminal-safe message. Overlay placement
 the current viewport and use non-color severity cues.
 
 <PlayExample id="code-editor/lsp-diagnostics"
-  title="Safe diagnostic projection"
-  blurb="Project a hostile bounded diagnostic through sanitization and inspect its safe overlay count."
+  title="Understand TypeScript diagnostics"
+  blurb="Find a realistic property mistake, reveal its editor marker, and read the safe explanation and suggested correction beside the source."
 />
 
 ## Navigation and formatting

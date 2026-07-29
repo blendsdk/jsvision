@@ -1,7 +1,7 @@
 # Specification: Code Editor Documentation Hub
 
 > **Requirements**: PR-6, PR-8
-> **Decisions**: AR-6, AR-8, AR-9, AR-13, AR-14, AR-15, AR-17, AR-18, AR-19
+> **Decisions**: AR-6, AR-8, AR-9, AR-13, AR-14, AR-15, AR-17, AR-18, AR-19, AR-25
 
 ## Objective
 
@@ -52,6 +52,22 @@ developers need them and linked to TypeDoc rather than split into artificial com
 | `host-recovery` | Show host-effect authorization, service failure, suspension, and recovery. |
 
 Every example uses `template1`, bounded deterministic documents, and no external network service.
+Because Code Editor is a flagship workspace component, its examples start maximized and remain
+responsive through restore, resize, and re-maximize.
+
+The visible demonstration must teach the capability without requiring the reader to infer meaning
+from raw controller state:
+
+- use a meaningful, scenario-specific source fixture long enough to show indentation, line numbers,
+  scrolling, and several syntax categories;
+- resolve and run the real built-in language adapter so syntax highlighting is visible after the
+  initial bounded analysis completes;
+- name controls after the action they perform rather than using a generic “Run check” label;
+- present a short “Try this” instruction and human-readable evidence of the result; and
+- retain technical probes as executable test seams, not as the primary explanation shown to users.
+
+Completion, diagnostics, and language folding establish the initial presentation patterns. Their
+visual review is a checkpoint before those patterns are applied to the remaining examples.
 
 The objective table is a capability summary. Before implementation,
 `test/contracts/code-editor/` supplies one typed behavior contract per example with its exact
@@ -91,7 +107,8 @@ map page and in focused topic snippets.
   runnable example directory.
 - Use only public `@jsvision/code-editor` entry-point imports in teaching snippets/examples unless an
   explicitly exported Node-only entry point is the lesson.
-- Keep docs fixture text small enough for source embeds and review.
+- Keep docs fixture text bounded and reviewable while using enough realistic code to make syntax,
+  structure, and the focused capability visually obvious.
 
 ## Removal and Link Migration
 
@@ -109,7 +126,8 @@ map page and in focused topic snippets.
 
 - Specification: ST-26 through ST-28, ST-31, ST-32.
 - Hub specs verify scenario objectives, safety seams, service-state transitions, large-document
-  boundaries, theme fallback, and lazy loading.
+  boundaries, theme fallback, lazy loading, flagship fixture quality, first-render syntax, named
+  teaching actions, visible result evidence, and maximized responsive layout.
 - Implementation tests cover deterministic sessions, reset/disposal, failure paths, and fixture
   boundaries after the specs are green.
 - Final: `yarn verify`.

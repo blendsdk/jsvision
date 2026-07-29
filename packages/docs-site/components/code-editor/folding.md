@@ -23,8 +23,8 @@ A language adapter can return ranges that understand constructs such as function
 nested blocks. Apply only results produced for the current document revision.
 
 <PlayExample id="code-editor/language-folding"
-  title="Language fold regions"
-  blurb="Collapse a parser-informed TypeScript region, inspect the visible header, and navigate without changing source text."
+  title="Explore TypeScript code folding"
+  blurb="Scan a substantial highlighted release formatter, collapse its real parser-provided regions, and observe how the document becomes easier to navigate without changing source."
 />
 
 ## Structural folds

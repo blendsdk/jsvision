@@ -65,35 +65,41 @@ describe('Code Editor objective contracts', () => {
 });
 
 describe('Code Editor live examples', () => {
-  test.each(CODE_EDITOR_EXAMPLE_IDS)('%s uses compact responsive template1 around a real editor', async (exampleId) => {
-    const definition = await loadDefinition(exampleId);
-    createRoot((dispose) => {
-      const { app, dialog } = buildLabExample(exampleId, definition);
-      try {
-        const descendants = viewsIn(dialog);
-        expect(dialog).toBeInstanceOf(Dialog);
-        expect(
-          descendants.some((view) => view instanceof CodeEditor || view instanceof CodeEditorWindow),
-          `${exampleId} must contain a public Code Editor surface`,
-        ).toBe(true);
-        collectTemplate1Evidence(app, dialog);
-        expect(dialog.isZoomed(), `${exampleId} needs explicit approval before maximized startup`).toBe(false);
-        const compact = { ...dialog.bounds };
-        dialog.zoom();
-        app.loop.renderRoot.flush();
-        collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
-        dialog.zoom();
-        app.loop.renderRoot.flush();
-        expect(dialog.bounds).toEqual(compact);
-      } finally {
+  test.each(CODE_EDITOR_EXAMPLE_IDS)(
+    '%s uses maximized responsive template1 around a real editor',
+    async (exampleId) => {
+      const definition = await loadDefinition(exampleId);
+      createRoot((dispose) => {
+        const { app, dialog } = buildLabExample(exampleId, definition);
         try {
-          app.loop.dispose();
+          const descendants = viewsIn(dialog);
+          expect(dialog).toBeInstanceOf(Dialog);
+          expect(
+            descendants.some((view) => view instanceof CodeEditor || view instanceof CodeEditorWindow),
+            `${exampleId} must contain a public Code Editor surface`,
+          ).toBe(true);
+          expect(dialog.isZoomed(), `${exampleId} should start maximized as a flagship workspace`).toBe(true);
+          collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+          dialog.zoom();
+          app.loop.renderRoot.flush();
+          collectTemplate1Evidence(app, dialog);
+          const compact = { ...dialog.bounds };
+          dialog.zoom();
+          app.loop.renderRoot.flush();
+          collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+          dialog.zoom();
+          app.loop.renderRoot.flush();
+          expect(dialog.bounds).toEqual(compact);
         } finally {
-          dispose();
+          try {
+            app.loop.dispose();
+          } finally {
+            dispose();
+          }
         }
-      }
-    });
-  });
+      });
+    },
+  );
 });
 
 describe('Code Editor executable behavior contracts', () => {
@@ -117,7 +123,7 @@ describe('Code Editor executable behavior contracts', () => {
             for (const expectation of behavior.initial) expectProbe(probe, expectation, dialog.bounds.width);
             for (const action of behavior.actions) {
               dispatchExampleAction(app, action);
-              for (let turn = 0; turn < 4; turn += 1) await Promise.resolve();
+              await new Promise<void>((resolve) => setTimeout(resolve, 0));
             }
             for (const expectation of behavior.expected) expectProbe(probe, expectation, dialog.bounds.width);
             const descendants = viewsIn(dialog);
