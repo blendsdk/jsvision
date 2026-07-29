@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
 > **Status**: ✅ GATE PASSED — all 16 items resolved
-> **Last Updated**: 2026-07-29 21:35
+> **Last Updated**: 2026-07-29 21:45
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -203,9 +203,10 @@ cross-course contracts after every authored route is complete.
 - **Objective:** Resolve every blocking Phase 1 review finding before the next course begins.
 - **Decision:** Display and bind **Alt+X** separately and accurately with
   `statusItem('~Alt-X~ Quit', Commands.quit, 'Alt+X')`. Extend the immutable oracle to prove Node
-  terminal and browser-host destinations, render the visible quit chord, exercise intermediate
-  resize plus maximize/restore with complete content and shared template evidence, and prove the
-  stage-panel binding stops after application disposal. Correct the related practice exercise.
+  terminal and browser-host destinations, render the visible quit chord, perform a real SE-grip
+  resize of the dialog to an intermediate size, exercise maximize/restore from that geometry with
+  complete content and shared template evidence, and prove the stage-panel binding stops after
+  application disposal. Correct the related practice exercise.
 - **Evidence:** The independent phase reviewer traced status rendering to the first `statusItem`
   argument and chord matching to its `key` field. The reviewer also showed that the previous
   maximize assertion could pass while meaningful content was clipped and that the catalog's runtime
@@ -218,8 +219,12 @@ cross-course contracts after every authored route is complete.
   shared evidence collector only at the three geometry states whose behavior must remain distinct.
 - **Confidence:** High — both fixes follow verified public source and reuse the real render/event
   loop rather than introducing mocks.
-- **Hardening:** Independent phase review raised both findings. The correction must pass focused
-  course tests, docs-site typecheck, `yarn verify`, and one independent fix-scoped re-review.
+- **Hardening:** Independent phase review raised both findings. The one permitted fix-scoped
+  re-review cleared the status, destination, content, restore, cleanup, and practice corrections but
+  found that resizing only the terminal viewport did not exercise a compact dialog's resize seam.
+  The final correction dispatches a real window-manager drag through the SE grip and must pass
+  focused course tests, docs-site typecheck, and `yarn verify`; the protocol prohibits a third
+  review.
 - **Policy version:** 1.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The visible status API changes its label/key semantics, any geometry state

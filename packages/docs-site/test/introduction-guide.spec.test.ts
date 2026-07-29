@@ -13,7 +13,15 @@ import { Button, Commands, Text, createApplication, createRoot, signal, statusIt
 import type { ExampleDefinition } from '../examples/_contract.js';
 import { EXAMPLES } from '../examples/index.js';
 import { RuntimeStagePanel } from '../src/example-fixtures/introduction/runtime-stage-panel.js';
-import { buildLabExample, collectTemplate1Evidence, frameText, key, viewsIn } from './example-lab-harness.js';
+import {
+  absoluteOrigin,
+  buildLabExample,
+  collectTemplate1Evidence,
+  dispatchExampleAction,
+  frameText,
+  key,
+  viewsIn,
+} from './example-lab-harness.js';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const GUIDE = readFileSync(join(PACKAGE_ROOT, 'guide', 'index.md'), 'utf8');
@@ -140,9 +148,23 @@ describe('Introduction Runtime Lab', () => {
       expect(labels).toEqual(['Next stage', 'Reset']);
 
       app.loop.resize({ width: 100, height: 32 });
-      const resized = collectTemplate1Evidence(app, dialog);
+      const authored = { ...dialog.bounds };
+      const origin = absoluteOrigin(dialog);
+      const resizeFrom = {
+        x: origin.x + dialog.bounds.width - 1,
+        y: origin.y + dialog.bounds.height - 1,
+      };
+      dispatchExampleAction(app, {
+        kind: 'mouse',
+        gesture: 'drag',
+        at: resizeFrom,
+        to: { x: resizeFrom.x + 12, y: resizeFrom.y + 4 },
+      });
+      const resized = collectTemplate1Evidence(app, dialog, { startup: 'resized' });
       const compact = { ...dialog.bounds };
       for (const text of requiredContent) expect(frameText(app)).toContain(text);
+      expect(resized.dialogRect.width).toBeGreaterThan(authored.width);
+      expect(resized.dialogRect.height).toBeGreaterThan(authored.height);
       expect(resized.dialogRect.width).toBeLessThan(resized.viewport.width);
       expect(resized.dialogRect.height).toBeLessThan(resized.viewport.height - 2);
 
@@ -154,7 +176,7 @@ describe('Introduction Runtime Lab', () => {
       dialog.zoom();
       app.loop.renderRoot.flush();
       expect(dialog.bounds).toEqual(compact);
-      collectTemplate1Evidence(app, dialog);
+      collectTemplate1Evidence(app, dialog, { startup: 'resized' });
       for (const text of requiredContent) expect(frameText(app)).toContain(text);
       dispose();
     });
