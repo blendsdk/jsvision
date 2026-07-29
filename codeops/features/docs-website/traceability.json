@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
+          "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -988,7 +988,7 @@
         "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
+      "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1051,7 +1051,8 @@
       "evidence": [
         "Entry point: codeops/features/docs-website/plans/guide-course-system/00-index.md",
         "summary:Execution-entry snapshots validated for the complete approved Guide plan closure.",
-        "summary:The user confirmed all ten Guide-course decisions; the 31-phase plan maps 47 specification cases to 246 prerequisite-ordered tasks."
+        "summary:The user confirmed all ten Guide-course decisions; the 31-phase plan maps 47 specification cases to 246 prerequisite-ordered tasks.",
+        "summary:Task 5.3.2 promoted the verified Codex plugin course to Complete and synchronized the catalog and learner-facing curriculum at 40/246 tasks."
       ],
       "id": "PLAN-RD08-GUIDES",
       "revision": "sha256:579ceaea0021d6732fba447c0c56fecfdd0155946c4267e12f3283fef05d06bb",
@@ -1086,7 +1087,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0d50a48d3acc90708fb3d8123a875eaf9f375f58d4541caac17873f21b901fd2",
+          "revision": "sha256:2fc8198797f1bb452ef8c1fb096b068cee29524f47e86beba301da2605a67bdd",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1094,5 +1095,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T21:46:00Z"
+  "updated": "2026-07-29T22:01:54Z"
 }

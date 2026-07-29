@@ -41,7 +41,7 @@
       "group": "Getting started",
       "page": "/guide/codex-plugin",
       "profile": "integration",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 3,
       "prerequisites": ["install-and-packages"],
       "learningOutcomes": [
