@@ -62,6 +62,12 @@ export default defineExample({
         hidden.set(next);
         beta.state.visible = !next;
         beta.invalidateLayout();
+        if (next && app.loop.getFocused() === beta) {
+          const fallback = gamma.state.disabled ? delta : gamma;
+          app.loop.focusView(fallback);
+          action.set(`Status: Beta left focus candidates; focus moved to ${fallback === gamma ? 'Gamma' : 'Last'}`);
+          return;
+        }
         action.set(`Status: Beta ${next ? 'left' : 'rejoined'} the tree-order focus candidates`);
       });
       app.onCommand(CMD_DISABLE, () => {
@@ -69,6 +75,11 @@ export default defineExample({
         disabled.set(next);
         gamma.state.disabled = next;
         gamma.invalidate();
+        if (next && app.loop.getFocused() === gamma) {
+          app.loop.focusView(delta);
+          action.set('Status: Gamma became ineligible; focus moved to Last');
+          return;
+        }
         action.set(`Status: Gamma is ${next ? 'skipped' : 'eligible'} during traversal`);
       });
       app.onCommand(CMD_ENTER, () => {
@@ -85,7 +96,7 @@ export default defineExample({
       content.add(at(new Text(focusReadout(app.loop, labels)), 0, 6, 66, 1));
       content.add(
         at(
-          new Text(() => `Hidden target: ${hidden() ? 'yes' : 'no'} · Disabled target: ${disabled() ? 'yes' : 'no'}`),
+          new Text(() => `Hidden target: ${hidden() ? 'yes' : 'no'} | Disabled target: ${disabled() ? 'yes' : 'no'}`),
           0,
           7,
           66,
@@ -96,7 +107,7 @@ export default defineExample({
       content.add(at(disableTarget, 21, 9, 20, 2));
       content.add(at(enterGroup, 43, 9, 21, 2));
       content.add(at(new Text(() => action()), 0, 12, 66, 1));
-      content.add(at(new Text('Tab / Shift+Tab traverse · Alt+H hide · Alt+D disable · Alt+I enter'), 0, 13, 66, 1));
+      content.add(at(new Text('Tab / Shift+Tab traverse | Alt+H hide | Alt+D disable | Alt+I enter'), 0, 13, 66, 1));
 
       const dialog = new Template1Dialog({
         title: ' Focus Traversal Laboratory ',

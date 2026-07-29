@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 00:55
+> **Last Updated**: 2026-07-30 01:16
 > **Progress**: 48/246 tasks (20%)
 > **CodeOps Artifact Schema**: 1
 
@@ -342,9 +342,35 @@ independent specification-first phase (AR-10).
 ### Step 6.3: Hardening
 
 - [x] 6.3.1 Add tab-order, hidden/disabled, modal restoration, and resize edges — `packages/docs-site/test/views-and-focus-guide.impl.test.ts` ✅ (completed: 2026-07-30 00:45) — added seven implementation cases covering exact retained order, eligibility fallback, remembered focus, both modal restore targets, nested teardown, responsive geometry, and idempotent host cleanup; 26/26 focused tests, docs-site typecheck, and `yarn verify` pass
-- [x] 6.3.2 Run focused checks, promote Views & focus, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 00:55) — promoted the verified course to Complete, synchronized catalog/map/sidebar expectations, and passed 33/33 focused tests, docs-site typecheck, `yarn docs:build`, plugin integrity, and authoritative `yarn verify`
+- [x] 6.3.2 Run focused checks, promote Views & focus, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 01:16) — promoted only after AR-27 corrections passed 35/35 focused tests, docs-site typecheck, production docs build, plugin integrity, authoritative `yarn verify`, and the permitted fix-scoped re-review with no remaining finding
 
 **Verify**: Views/focus spec/impl tests and docs-site typecheck
+
+### Phase 6 quality review
+
+- The independent reviewer found four Major issues and three Minor issues: eligibility toggles
+  could strand focus on hidden or disabled controls, the modal snippet referenced an undefined
+  result, pending modal settlement performed stale post-disposal work, completion was promoted
+  prematurely, focus-memory prose was ambiguous, default 80×24 evidence was implicit, and lab
+  separators were not ASCII-safe.
+- Auto-design AR-27 applied every correction without waiver and returned the course to Upgrade
+  while remediation was pending.
+- The corrected labs synchronously re-home newly ineligible focus, distinguish pending host
+  teardown from modal commands, suppress stale continuation work after disposal, and use ASCII-safe
+  visible instructions. The Guide captures and handles the optional modal result and distinguishes
+  active focus chains from inactive restoration memory.
+- Hardening now opens a real pending modal during host teardown and verifies inert settlement,
+  exercises eligibility changes from the affected targets, and collects template1 evidence at the
+  standard 80×24 viewport before resize, maximize, and restore.
+- The one permitted fix-scoped re-review resolved all four Major and three Minor findings with no
+  remaining Critical, Major, or Minor issue.
+- The final corrective state passes 35/35 focused course/implementation/catalog tests, docs-site
+  typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
+- Security and performance auditors were not invoked because the phase changes bounded
+  documentation interactions and lifecycle cleanup without a privileged-input boundary or
+  performance-critical runtime path.
+- Techdocs was not invoked because the phase changes consumer teaching and example correctness
+  without changing architecture, public APIs, integrations, data entities, or infrastructure.
 
 ## Phase 7: Events, commands & keymaps
 
