@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 21:49
-> **Progress**: 8/246 tasks (3%)
+> **Last Updated**: 2026-07-29 22:01
+> **Progress**: 14/246 tasks (6%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -117,22 +117,36 @@ independent specification-first phase (AR-10).
   maximize, and restore evidence. A third review is prohibited; focused and authoritative gates are
   the closing evidence. The final state passes 19/19 focused tests, docs-site typecheck, and
   authoritative `yarn verify`; Phase 1 is complete.
+- Techdocs was not invoked because the phase changed consumer teaching, docs examples, and test
+  evidence without changing architecture, public APIs, integrations, data entities, or
+  infrastructure.
 
 ## Phase 2: Install & packages
 
 **Reference**: ST-11 · `03-02 §Authentic Substitutes` · AR-5
 
+> **Phase baseline tree**: `b9ac50d2e48d19b539aaa753df9da6ff2226aaf7`
+>
+> **Expected modification set**: `packages/docs-site/guide/install-and-packages.md`,
+> `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`,
+> `packages/docs-site/test/install-and-packages-guide.spec.test.ts`,
+> `packages/docs-site/test/install-and-packages-guide.impl.test.ts`,
+> `packages/docs-site/test/guide-catalog.spec.test.ts` (mechanical complete-stage allowlist), this
+> execution plan, `scripts/jsvision-doctor.d.mts` (type declaration for authentic doctor evidence),
+> the ambiguity register, and docs-website roadmap/traceability evidence required by the execution
+> protocol.
+
 ### Step 2.1: Specification tests
 
-- [ ] 2.1.1 [spec-author] Write the installation/package-selection oracle — `packages/docs-site/test/install-and-packages-guide.spec.test.ts`
-- [ ] 2.1.2 Run the specification and record the expected red result
+- [x] 2.1.1 [spec-author] Write the installation/package-selection oracle — `packages/docs-site/test/install-and-packages-guide.spec.test.ts` ✅ (completed: 2026-07-29 21:54)
+- [x] 2.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-29 21:54) — authoritative focused run: 7 failed, 1 public-export validation case passed; commit deferred to the green 2.2.4 checkpoint per runtime AR-17
 
 ### Step 2.2: Implementation
 
-- [ ] 2.2.1 Upgrade package choice, Node 22+ ESM setup, public imports, and diagnosis — `packages/docs-site/guide/install-and-packages.md`
-- [ ] 2.2.2 Bind the zero-lab substitute to real manifests, exports, and doctor/module-resolution evidence — `packages/docs-site/guide/install-and-packages.md`
-- [ ] 2.2.3 Revalidate the catalog exception and evidence metadata without promoting the stage — `packages/docs-site/guides.json`
-- [ ] 2.2.4 Run ST-11 green plus docs-site typecheck; fix implementation only
+- [x] 2.2.1 Upgrade package choice, Node 22+ ESM setup, public imports, and diagnosis — `packages/docs-site/guide/install-and-packages.md` ✅ (completed: 2026-07-29 21:57)
+- [x] 2.2.2 Bind the zero-lab substitute to real manifests, exports, and doctor/module-resolution evidence — `packages/docs-site/guide/install-and-packages.md` ✅ (completed: 2026-07-29 21:57)
+- [x] 2.2.3 Revalidate the catalog exception and evidence metadata without promoting the stage — `packages/docs-site/guides.json` ✅ (completed: 2026-07-29 21:57) — existing zero-lab exception remains accurate and the 8/8 green oracle verifies its evidence contract
+- [x] 2.2.4 Run ST-11 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-29 22:01) — 8/8 focused specification tests, docs-site typecheck, and authoritative `yarn verify` passed
 
 ### Step 2.3: Hardening
 
