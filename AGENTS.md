@@ -25,3 +25,139 @@
 - CodeOps lifecycle artifacts and configuration live under `codeops/`.
 
 <!-- CODEOPS-PROJECT:END -->
+
+## Prime directive: docs-site `template1` (NON-NEGOTIABLE)
+
+When a request says to create or update a docs-site example **“based on `template1`”**, use the
+following live-example structure:
+
+1. Build a complete docs application with `demoApp(ctx, { themeMenu: true })`; do not return a bare
+   component for the generic stage-window wrapper. Keep `demoApp`'s default **Classic theme**.
+2. Put the example inside a real `Dialog` added to `app.desktop`, and register the example with
+   `kind: 'app'` in `packages/docs-site/examples/index.ts`.
+3. Construct the `Dialog` with `width` and `height` but no positioned `rect`, so JSVision
+   auto-centers it. Size it tightly around the content: it must not fill the desktop, and the
+   patterned desktop must remain visibly exposed on every side at the standard 80×24 viewport.
+4. Inset the dialog's content by one cell on every side, in addition to the frame's own inset, so
+   controls and text never touch the inside edge of the border.
+5. Use the theme-controlled `dialog` surface without a custom background. Under the Classic theme,
+   the dialog background must match the application's menu-bar background.
+6. Keep the showcase alive after opening: make the dialog non-closable unless closing and reopening
+   it is an intentional part of the component demonstration.
+7. Make the example a polished interactive showcase, not a minimal smoke sample. Present the
+   component's meaningful visual and behavioral states together, exercise reactive behavior where
+   applicable, include visible action feedback, mark usable Alt-hotkeys, and provide concise keyboard
+   and mouse instructions without clipping.
+8. Update the component page's `<PlayExample>` title and blurb to describe the actual interaction.
+   Add focused specification coverage that renders the real example and verifies the centered,
+   non-fullscreen Classic dialog plus the component-specific states and interactions.
+
+The Button Lab in `packages/docs-site/examples/controls/button.ts` is the canonical `template1`
+reference implementation. Preserve this structure unless the request explicitly overrides part of
+the template.
+
+## Prime directive: docs-site `component-page-template1` (NON-NEGOTIABLE)
+
+When a request says to create or update a docs-site component page **“based on
+`component-page-template1`”**, produce a complete teaching page modeled on
+`packages/docs-site/components/controls/button.md`. The page must teach developers how and when to
+use the component; it must not be only a brief description wrapped around a demo or a duplicate of
+the generated API reference.
+
+### Required page backbone
+
+Use the following order unless the component has a concrete usability reason to move a section:
+
+1. **Frontmatter and title** — provide an accurate title and a search-friendly description that
+   identifies the component, its primary purpose, and its most important behavior.
+2. **Overview** — explain what the component is, when to use it, its main capabilities, its state or
+   data model, and the most important user-visible behavior. A reader should understand the
+   component before seeing code.
+3. **Quick usage** — show the normal construction path in one small TypeScript snippet. Include only
+   the imports and setup needed to communicate that path.
+4. **Primary live example** — provide one polished flagship showcase near the top of the page. Build
+   every newly created live example with the docs-site `template1` directive unless the request
+   explicitly overrides its shell.
+5. **Props or public configuration** — document the constructor shape, option types, defaults,
+   reactive getters or signals, and important interactions between options. Use a table when the
+   API is naturally tabular. Cover the practical public surface without reproducing the generated
+   API reference.
+6. **Sizing & layout** — explain natural or measured size, minimum usable dimensions, terminal-cell
+   behavior, parent/container requirements, padding, clipping, wrapping, scrolling, and resize
+   behavior wherever they apply.
+7. **Component-specific sections** — add the sections required to teach the component's actual
+   capabilities. Do not force irrelevant generic headings.
+8. **Best practices** — give concrete recommendations, common mistakes, preferred helpers, and
+   composition guidance. Explain the consequence of ignoring each important recommendation.
+9. **Theming** — name the exact theme roles used by the component and map them to visual states or
+   regions. Use a compact table when several roles are involved, and call out contrast or fallback
+   requirements when relevant.
+10. **Related** — link only to genuinely related components or guides, followed by the generated API
+    reference.
+
+### Component-specific sections and live examples
+
+Choose component-specific sections from the component's real behavior. Relevant subjects may
+include keyboard and mouse interaction, commands and events, reactive state, selection and
+navigation, validation, data modeling, columns and sorting, editing, clipboard behavior, scrolling,
+virtualization, async work, lifecycle, accessibility, internationalization, performance, host
+authorization, security boundaries, or composition with other controls.
+
+A component-specific section may contain **multiple live examples**, and complex components are
+expected to use several when that improves teaching:
+
+- Place each live example beside the prose for the behavior it demonstrates; do not collect every
+  demo at the top when later sections need focused interaction.
+- Give every example a single, explicit learning objective and a unique registry ID. Several
+  examples in one section are appropriate when they cover distinct states, workflows, scales, or
+  interaction modes.
+- Do not create multiple examples that merely repeat the same capability with different sample
+  data. Combine closely related states into one lab when comparison is the lesson.
+- Make every new example a polished `template1` application: Classic theme, app shell, centered
+  padded dialog, visible desktop margin, usable hotkeys, concise instructions, and focused
+  specification coverage.
+- Update each `<PlayExample>` title and blurb so the reader knows exactly what to try and what the
+  example proves.
+
+For a large component, keep the main page complete at the everyday-use level and link to focused
+guides for genuinely deep subjects. Do not make readers leave the component page to discover its
+basic construction, configuration, sizing, interaction model, or theming.
+
+### Code-snippet standard
+
+Code snippets are explanatory, not miniature applications:
+
+- Demonstrate one concept at a time and show only its essence. Do not add an app shell, unrelated
+  controls, sample infrastructure, or defensive plumbing that does not help explain the section.
+- Keep imports minimal and use the public package entry point. Names, types, option defaults, helper
+  behavior, and control flow must remain accurate even when surrounding application setup is
+  intentionally omitted.
+- Prefer a short, concrete example over prose-shaped pseudocode. Comments should explain the
+  non-obvious reason for a line, not narrate the syntax.
+- Split unrelated concepts into separate snippets near the prose that explains them. Do not build
+  one accumulating kitchen-sink snippet that readers must mentally dismantle.
+- Do not paste the live-example module into the page. The interactive example and the teaching
+  snippet serve different purposes.
+
+### Accuracy and completion gate
+
+Before writing, inspect the component's public source, exports, tests, theme roles, existing docs,
+and related helpers. Never infer or invent props, defaults, events, commands, keyboard behavior,
+layout limits, performance claims, or theme roles.
+
+A page based on `component-page-template1` is complete only when:
+
+- every required backbone section is present or its omission is explicitly justified by the
+  component's actual behavior;
+- every meaningful public behavior is either taught on the page or linked to a focused guide;
+- examples and snippets use current public APIs and do not contradict source or tests;
+- all live examples are registered, render without clipping at the standard 80×24 viewport, and
+  have focused specification coverage for their stated learning objectives;
+- the page links to the generated API reference instead of duplicating its exhaustive signatures;
+  and
+- focused docs checks and the repository's full `yarn verify` gate pass.
+
+The Button page in `packages/docs-site/components/controls/button.md` is the canonical structural
+reference. Preserve its concise, concept-focused teaching style while allowing richer components
+such as data grids and code editors to add multiple specialized sections and multiple live examples
+within each section.

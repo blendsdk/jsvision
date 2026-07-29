@@ -24,24 +24,20 @@ function paintedCells(app: Application): number {
     .reduce((total, row) => total + row.filter((cell) => cell.char.trim() !== '').length, 0);
 }
 
-test('ST-2: every seed example paints a non-empty frame', async () => {
-  // Guard against a vacuous pass — the seed set must actually be registered.
-  expect(EXAMPLES.length).toBeGreaterThan(0);
-  for (const entry of EXAMPLES) {
-    const def = (await entry.load()).default;
-    createRoot((dispose) => {
-      const app = demoShell({
-        build: (ctx) => def.build(ctx),
-        title: def.title,
-        kind: entry.kind,
-        caps,
-        viewport: VP,
-      });
-      // An `app`-kind example is returned by the shell as-is (never resized) — force one compose
-      // so its first frame settles before we read it.
-      app.loop.resize(VP);
-      expect(paintedCells(app), `${entry.id} paints something`).toBeGreaterThan(0);
-      dispose();
+test.each(EXAMPLES)('$id paints a non-empty frame', async (entry) => {
+  const def = (await entry.load()).default;
+  createRoot((dispose) => {
+    const app = demoShell({
+      build: (ctx) => def.build(ctx),
+      title: def.title,
+      kind: entry.kind,
+      caps,
+      viewport: VP,
     });
-  }
+    // Complete applications own their shell and are not resized by demoShell.
+    // Compose once at the shared viewport before inspecting the rendered frame.
+    app.loop.resize(VP);
+    expect(paintedCells(app), `${entry.id} paints something`).toBeGreaterThan(0);
+    dispose();
+  });
 });

@@ -1,0 +1,576 @@
+{
+  "feature": "docs-website",
+  "nodes": [
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CATALOG"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CONTRACT"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-STANDARD"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-DATAGRID"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CODEEDITOR"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-QUALITY"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "RD-05",
+      "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/requirements/RD-05-component-docs.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component documentation system",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+          "upstream": "docs-website/SPEC-CATALOG",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+          "upstream": "docs-website/SPEC-CONTRACT",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+          "upstream": "docs-website/SPEC-STANDARD",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+          "upstream": "docs-website/SPEC-DATAGRID",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+          "upstream": "docs-website/SPEC-CODEEDITOR",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+          "upstream": "docs-website/SPEC-QUALITY",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+          "upstream": "docs-website/SPEC-CATALOG",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+          "upstream": "docs-website/SPEC-CONTRACT",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+          "upstream": "docs-website/SPEC-STANDARD",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+          "upstream": "docs-website/SPEC-DATAGRID",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+          "upstream": "docs-website/SPEC-CODEEDITOR",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+          "upstream": "docs-website/SPEC-QUALITY",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CATALOG",
+      "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-01-catalog-and-navigation.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component catalog and navigation",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CONTRACT",
+      "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-02-page-and-example-contract.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Standard page and example contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-STANDARD",
+      "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-03-standard-component-migration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Standard component migration",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-DATAGRID",
+      "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-04-data-grid-hub.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Data Grid documentation hub",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CODEEDITOR",
+      "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-05-code-editor-hub.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor documentation hub",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-QUALITY",
+      "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-06-overview-links-and-quality.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Overview, links, and content quality",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "docs-website/TEST-RD05"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "CRIT-RD05",
+      "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "RD-05 acceptance mapping",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+          "upstream": "docs-website/TASK-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD05",
+      "revision": "sha256:0394095d0e4cfe056dd06a373e2f5f35e0cc745218993fd8fa11c54a42689032",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "ST-1 through ST-32 component-documentation evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution entry: codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md"
+      ],
+      "id": "TASK-RD05",
+      "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Execute the component documentation system plan",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "The user confirmed the complete plan ambiguity register on 2026-07-29."
+      ],
+      "id": "DEC-RD05",
+      "revision": "sha256:ba3cdcbefa38054163fafa8935b0b2aa9e71ccf10b22c26f0ff213904e7e2f4d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved RD-05 documentation architecture decisions",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "docs-website/RD-05"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "evidence": [
+        "Entry point: codeops/features/docs-website/plans/component-documentation-system/00-index.md"
+      ],
+      "id": "PLAN-RD05",
+      "revision": "sha256:9a8dd52a1bcc2625502d009ab5207736346d9e51d6cb3d998a50932bd4e93370",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component documentation system implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+          "upstream": "docs-website/RD-05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+          "upstream": "docs-website/RD-05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8c15a333812275ba4680ce803664dba2d1d78f6ba57c184bbb7f4a2dbabd8afe",
+          "upstream": "docs-website/TASK-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-28T23:32:36Z"
+}

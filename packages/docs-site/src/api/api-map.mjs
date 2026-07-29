@@ -8,12 +8,14 @@
 // validated against the real generated tree by the build gate, so a plugin
 // path-scheme change fails loudly rather than shipping a dead link.
 
+import { parseComponentTarget } from './component-target.mjs';
+
 /**
  * One component↔reference link.
  *
  * @typedef {object} ApiLink
  * @property {string} symbol            The exported symbol name, e.g. 'Button'.
- * @property {'core' | 'ui' | 'files' | 'forms' | 'datagrid'} pkg  Unscoped package.
+ * @property {'core' | 'i18n' | 'ui' | 'files' | 'forms' | 'datagrid' | 'code-editor'} pkg  Unscoped package.
  * @property {string} apiPath           Site-absolute route of the generated symbol page, e.g. '/api/ui/classes/Button'.
  * @property {string} componentPage     Site-absolute route of the hand-written component page.
  */
@@ -128,19 +130,15 @@ export const API_MAP = [
 ];
 
 /**
- * Human-readable label for a component page route — its last path segment,
- * de-kebabed and sentence-cased, matching the site's sidebar labels
- * (`/components/table/data-grid` → `Data grid`). Used as the back-link text.
+ * Human-readable label for a validated component target.
  *
  * @param {string} componentPage  A site-absolute component route.
  * @returns {string}
  *
  * @example
  * pageLabel('/components/controls/button');   // → 'Button'
- * pageLabel('/components/table/data-grid');   // → 'Data grid'
+ * pageLabel('/components/data-grid/');        // → 'Data Grid'
  */
 export function pageLabel(componentPage) {
-  const segment = componentPage.replace(/\/$/, '').split('/').pop() ?? '';
-  const words = segment.split('-');
-  return words.map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(' ');
+  return parseComponentTarget(componentPage).label;
 }
