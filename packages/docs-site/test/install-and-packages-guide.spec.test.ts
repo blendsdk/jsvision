@@ -7,9 +7,10 @@
  * workflow with authentic manifest, compiler, export-map, and doctor evidence instead of a live
  * example.
  */
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { describe, expect, test } from 'vitest';
 import { formatFindings, lintText } from '../../../scripts/jsvision-doctor.mjs';
 
@@ -17,6 +18,7 @@ const REPOSITORY_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..'
 const DOCS_ROOT = join(REPOSITORY_ROOT, 'packages', 'docs-site');
 const GUIDE = readFileSync(join(DOCS_ROOT, 'guide', 'install-and-packages.md'), 'utf8');
 const CATALOG = JSON.parse(readFileSync(join(DOCS_ROOT, 'guides.json'), 'utf8')) as GuideCatalog;
+const TYPESCRIPT_CLI = join(REPOSITORY_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
 
 const PUBLIC_PACKAGES = [
   '@jsvision/core',
@@ -73,6 +75,49 @@ function packageImports(): readonly string[] {
   return [
     ...GUIDE.matchAll(/\b(?:import|export)\s+(?:type\s+)?(?:[^;'"]+\s+from\s+)?['"](@jsvision\/[^'"]+)['"]/gu),
   ].map((match) => match[1]!);
+}
+
+/** Compile a bounded local consumer using the same NodeNext settings taught by the course. */
+function compileConsumer(mainSource: string): { readonly status: number | null; readonly output: string } {
+  const fixture = mkdtempSync(join(REPOSITORY_ROOT, '.install-guide-consumer-'));
+  try {
+    writeFileSync(
+      join(fixture, 'package.json'),
+      JSON.stringify({ name: 'install-guide-consumer', private: true, type: 'module' }),
+    );
+    writeFileSync(
+      join(fixture, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true,
+        },
+        include: ['*.ts'],
+      }),
+    );
+    writeFileSync(join(fixture, 'helper.ts'), 'export const helper = 1;\n');
+    writeFileSync(join(fixture, 'main.ts'), mainSource);
+    const result = spawnSync(process.execPath, [TYPESCRIPT_CLI, '--project', fixture], {
+      cwd: fixture,
+      encoding: 'utf8',
+    });
+    return { status: result.status, output: `${result.stdout}${result.stderr}` };
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+}
+
+/** Probe the real Node 22 CommonJS failure at the published package-root boundary. */
+function requireUiPackage(): { readonly status: number | null; readonly output: string } {
+  const result = spawnSync(process.execPath, ['--input-type=commonjs', '--eval', "require('@jsvision/ui')"], {
+    cwd: REPOSITORY_ROOT,
+    encoding: 'utf8',
+  });
+  return { status: result.status, output: `${result.stdout}${result.stderr}` };
 }
 
 describe('Install & packages course contract', () => {
@@ -168,9 +213,29 @@ describe('Install & packages course contract', () => {
     const brokenDoctorOutput = formatFindings(
       lintText("import { helper } from './helper';\nvoid helper;", 'src/main.ts'),
     );
+    const validConsumer = compileConsumer(`
+import { createApplication } from '@jsvision/ui';
+import { createI18n } from '@jsvision/i18n';
+import { createForm } from '@jsvision/forms';
+import { FileDialog } from '@jsvision/files';
+import { EditableDataGrid } from '@jsvision/datagrid';
+import { CodeEditor } from '@jsvision/code-editor';
+import { typescriptLanguageId } from '@jsvision/code-editor/languages/typescript';
+import { helper } from './helper.js';
+void [createApplication, createI18n, createForm, FileDialog, EditableDataGrid, CodeEditor];
+void typescriptLanguageId;
+void helper;
+`);
+    const invalidSubpath = compileConsumer("import { missing } from '@jsvision/ui/src/missing.js';\nvoid missing;\n");
+    const missingExtension = compileConsumer("import { helper } from './helper';\nvoid helper;\n");
 
     expect(cleanDoctorOutput).toBe('jsvision-doctor: no issues found ✓');
     expect(brokenDoctorOutput).toContain('[missing-js-extension]');
+    expect(validConsumer).toEqual({ status: 0, output: '' });
+    expect(invalidSubpath.status).not.toBe(0);
+    expect(invalidSubpath.output).toMatch(/Cannot find module '@jsvision\/ui\/src\/missing\.js'/u);
+    expect(missingExtension.status).not.toBe(0);
+    expect(missingExtension.output).toMatch(/explicit file extensions[\s\S]*\.\/helper\.js/iu);
     expect(GUIDE).toMatch(/(?:verify|evidence).*(?:without|instead of).*(?:live|embedded).*(?:lab|example)/iu);
     expect(GUIDE).toContain('npx tsc --noEmit');
     expect(GUIDE).toMatch(/(?:npx tsc --noEmit)[\s\S]*(?:exit(?:s| code)?\s*0|no (?:errors|output))/iu);
@@ -182,13 +247,17 @@ describe('Install & packages course contract', () => {
   });
 
   test('should diagnose setup, module-resolution, export, peer, and version failures', () => {
+    const commonJsProbe = requireUiPackage();
+
     expect(GUIDE).toMatch(/## (?:Setup failures|Failure modes|Diagnos(?:e|ing))/iu);
     expect(GUIDE).toMatch(/symptom[\s\S]*cause[\s\S]*(?:correction|fix)[\s\S]*(?:evidence|verify)/iu);
+    expect(commonJsProbe.status).not.toBe(0);
+    expect(commonJsProbe.output).toMatch(/ERR_PACKAGE_PATH_NOT_EXPORTED[\s\S]*No "exports" main defined/u);
 
     const requiredEvidence = [
       /Node[\s\S]*(?:22|engine)/iu,
       /Cannot find module[\s\S]*NodeNext/iu,
-      /ERR_REQUIRE_ESM[\s\S]*(?:import|ESM)/iu,
+      /No "exports" main defined[\s\S]*(?:import condition|static import|ESM)/iu,
       /ERR_PACKAGE_PATH_NOT_EXPORTED[\s\S]*(?:exports map|public entry point|subpath)/iu,
       /(?:missing peer|peer dependency)[\s\S]*(?:zod|Zod)[\s\S]*\^?4/iu,
       /(?:mixed|mismatched|stale)[\s\S]*(?:@jsvision\/|versions?|lockfile)/iu,

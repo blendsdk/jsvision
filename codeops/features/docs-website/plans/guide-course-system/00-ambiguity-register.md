@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 17 items resolved
-> **Last Updated**: 2026-07-29 21:54
+> **Status**: ✅ GATE PASSED — all 18 items resolved
+> **Last Updated**: 2026-07-29 22:22
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -22,6 +22,7 @@
 | 15 | API accuracy (runtime) | Which constructor belongs in the Introduction teaching snippet after the red oracle exposed a docs-only helper assumption? | Teach public `createApplication` / teach docs-only `demoApp` as if it were exported | **Authority: AI — delegated by `--auto-design`.** Correct the oracle before implementation and require `createApplication` from `@jsvision/ui`; retain `demoApp` only inside the live-example module. | ✅ Resolved |
 | 16 | Quality review (runtime) | How should the two Major Phase 1 review findings be resolved without weakening the approved course contract? | Correct the visible status-chord teaching and strengthen the immutable oracle across destinations, resize/maximize/restore, complete content, Classic surface, and reactive disposal / demote the course and defer correction / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted re-review before Phase 2. | ✅ Resolved |
 | 17 | Execution (runtime) | How should Phase 2 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 2.1.1–2.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 2 task IDs and resume per-task commits after 2.2.4. | ✅ Resolved |
+| 18 | Quality review (runtime) | How should the two Major and one Minor Phase 2 findings be resolved without weakening the completed orientation contract? | Compile a real bounded NodeNext consumer and probe real failure boundaries while correcting the course / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every technical correction, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 3. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -258,3 +259,32 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** The oracle unexpectedly turns green before implementation, an unrelated
   failure blocks the green checkpoint, or the repository gains an authoritative red-commit
   mechanism.
+
+**AR-18 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness and evidence hardening inside the confirmed Install & packages
+  orientation contract; no scope, product, risk-acceptance, or policy choice is required.
+- **Objective:** Resolve every blocking Phase 2 review finding before the Layout re-audit begins.
+- **Decision:** Compile a bounded local consumer with the real TypeScript CLI, the documented
+  NodeNext settings, all taught public symbols, and a valid relative `.js` import. Add negative
+  compiler fixtures for an unsupported package subpath and an omitted relative extension. Probe
+  `require('@jsvision/ui')` on the actual Node runtime and teach the observed import-condition
+  failure separately from a guessed subpath. Describe `EBADENGINE` as a warning unless strict
+  engine policy rejects it.
+- **Evidence:** The independent reviewer showed that the previous test asserted compiler prose
+  without invoking TypeScript, and verified that the import-only root export produces
+  `ERR_PACKAGE_PATH_NOT_EXPORTED` with `No "exports" main defined`, not `ERR_REQUIRE_ESM`.
+- **Rejected alternatives:** Demotion and deferral would leave known inaccuracies in a completed
+  prerequisite course. Waiving either Major finding is prohibited by the quality protocol.
+- **Strongest counterargument:** Real compiler subprocesses add several seconds to the focused
+  suite. The zero-live-lab exception specifically promises authentic build-time evidence, so the
+  bounded cost is necessary and proportionate.
+- **Confidence:** High — the correction executes the shipped compiler and current Node runtime
+  against the workspace packages without network access.
+- **Hardening:** The single permitted fix-scoped re-review confirmed both Major findings and the
+  Minor wording issue are resolved, with no remaining finding in scope.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The real consumer no longer compiles, a negative fixture stops failing, the
+  root export gains a CommonJS condition, or package-manager engine behavior changes.

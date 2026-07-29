@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:14
+> **Last Updated**: 2026-07-29 22:22
 > **Progress**: 16/246 tasks (7%)
 > **CodeOps Artifact Schema**: 1
 
@@ -154,6 +154,25 @@ independent specification-first phase (AR-10).
 - [x] 2.3.2 Run focused checks, promote Install & packages, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-29 22:14) — promoted after 18/18 focused course/catalog tests, docs-site typecheck, and authoritative `yarn verify` passed
 
 **Verify**: Install spec/impl tests and docs-site typecheck
+
+**Phase quality review**:
+
+- Independent correctness review found two Major issues and one Minor issue: the zero-lab
+  substitute did not execute the compiler, the CommonJS failure name contradicted the import-only
+  export map on Node 22, and the engine row overstated default package-manager rejection.
+- Auto-design AR-18 selected every technical correction; no finding was waived. The course now
+  compiles a bounded NodeNext consumer through the real TypeScript CLI, proves invalid-subpath and
+  missing-extension failures, probes the actual CommonJS root failure, and distinguishes engine
+  warnings from strict-policy rejection.
+- The correction passes 18/18 focused course/catalog tests, docs-site typecheck, and authoritative
+  `yarn verify`. The one permitted fix-scoped re-review cleared all three findings with no remaining
+  Critical, Major, or Minor finding in scope.
+- Security and performance auditors were explicitly skipped because the phase changes consumer
+  documentation, read-only manifest/compiler validation, and declaration alignment without a
+  privileged-input boundary or performance-critical runtime path.
+- Techdocs was not invoked because the phase changes consumer setup teaching and validation
+  evidence without changing architecture, public APIs, integrations, data entities, or
+  infrastructure.
 
 ## Phase 3: Layout pilot re-audit
 
