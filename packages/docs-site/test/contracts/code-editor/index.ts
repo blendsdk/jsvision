@@ -2,6 +2,22 @@ import { FOUNDATION_CODE_EDITOR_CONTRACTS } from './foundation.js';
 import { INTELLIGENCE_CODE_EDITOR_CONTRACTS } from './intelligence.js';
 import { SAFETY_CODE_EDITOR_CONTRACTS } from './safety.js';
 
+/** Code Editor component owner and topic pages in catalog order. */
+export const CODE_EDITOR_CATALOG_ENTRY_IDS = [
+  'code-editor',
+  'code-editor/overview',
+  'code-editor/documents-and-lifecycle',
+  'code-editor/editing-navigation-clipboard',
+  'code-editor/languages-and-syntax',
+  'code-editor/folding',
+  'code-editor/search-and-replace',
+  'code-editor/language-intelligence',
+  'code-editor/viewport-and-large-documents',
+  'code-editor/themes-and-fallbacks',
+  'code-editor/host-safety-and-recovery',
+  'code-editor/api',
+] as const;
+
 /** Exact Code Editor hub example population in teaching order. */
 export const CODE_EDITOR_EXAMPLE_IDS = [
   'code-editor/quick-start',

@@ -490,10 +490,11 @@
         "Phase 7 verified: all seven Surface, General Editing, and Terminal pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
         "Phase 8 verified: Form Dialog and all seven composable file-family pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
         "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass.",
-        "Phase 10.7 verified: all 21 Code Editor examples use the flagship teaching presentation; reviewer and auditor report zero residual findings and authoritative yarn verify passes."
+        "Phase 10.7 verified: all 21 Code Editor examples use the flagship teaching presentation; reviewer and auditor report zero residual findings and authoritative yarn verify passes.",
+        "Phase 11 verified: catalog-backed overview, sidebars, API parity, rendered-route validation, and lazy Play DOM coverage are complete; every accepted independent-review finding is closed and authoritative yarn verify passes."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
+      "revision": "sha256:77328bd928fe3931db66bbdc9738aa15398ab23fe653575aa6f033523c3ed816",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -512,10 +513,11 @@
     {
       "edges": [],
       "evidence": [
-        "The user confirmed the complete plan ambiguity register on 2026-07-29."
+        "The user confirmed the complete plan ambiguity register on 2026-07-29.",
+        "Phase 11 auto-design selected mount-scoped Vue runtime injection and generation-aware lazy-session cancellation with bounded persisted terminal dimensions."
       ],
       "id": "DEC-RD05",
-      "revision": "sha256:1eb25c349df4ed67f70fc55fa5823224df92593ec8eaba41b39c7313b9010d1e",
+      "revision": "sha256:8044cb066f31b3fa0fefc4c4c538f30880457eeb0e56cb5e104ed7e44900efc7",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -582,13 +584,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
+          "revision": "sha256:77328bd928fe3931db66bbdc9738aa15398ab23fe653575aa6f033523c3ed816",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-29T07:04:47Z"
+          "validatedAt": "2026-07-29T16:07:51Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T07:04:47Z"
+  "updated": "2026-07-29T16:07:51Z"
 }

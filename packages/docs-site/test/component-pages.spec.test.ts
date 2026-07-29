@@ -5,13 +5,27 @@
  * structure. Controlled fixtures isolate the three specialist profiles without requiring future
  * hub pages to exist before their delivery phases.
  */
-import { readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
+import { EXAMPLES } from '../examples/index.js';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE_MODULE_PATH = '../src/components/component-pages.mjs';
+const CATALOG_PATH = join(PACKAGE_ROOT, 'components.json');
+const REMOVED_SOURCE_PATHS = [
+  join(PACKAGE_ROOT, 'components/table/data-grid.md'),
+  join(PACKAGE_ROOT, 'guide/code-editor.md'),
+] as const;
+const CURRENT_DOCS_ROOTS = [
+  join(PACKAGE_ROOT, '.vitepress'),
+  join(PACKAGE_ROOT, 'components'),
+  join(PACKAGE_ROOT, 'guide'),
+  join(PACKAGE_ROOT, 'scripts'),
+  join(PACKAGE_ROOT, 'src'),
+] as const;
+const STALE_ROUTE_ORACLE_PATH = join(PACKAGE_ROOT, 'scripts/check-docs-build.mjs');
 
 type PageProfile = 'standard' | 'landing' | 'capability' | 'api';
 
@@ -39,6 +53,12 @@ interface PageModule {
   readonly validateComponentPage: (source: string, options: PageContractOptions) => PageEvidence;
 }
 
+interface CatalogPageTarget {
+  readonly id: string;
+  readonly page: string;
+  readonly examples: readonly string[];
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -60,6 +80,49 @@ function assertPageEvidence(value: unknown): asserts value is PageEvidence {
   ) {
     throw new TypeError('component page validator returned invalid evidence');
   }
+}
+
+function isCatalogPageTarget(value: unknown): value is CatalogPageTarget {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.page === 'string' &&
+    Array.isArray(value.examples) &&
+    value.examples.every((example) => typeof example === 'string')
+  );
+}
+
+/** Read the catalog targets without deriving expectations from page contents. */
+async function readCatalogTargets(): Promise<readonly CatalogPageTarget[]> {
+  const candidate: unknown = JSON.parse(await readFile(CATALOG_PATH, 'utf8'));
+  if (!isRecord(candidate) || !Array.isArray(candidate.entries) || !candidate.entries.every(isCatalogPageTarget)) {
+    throw new TypeError('components.json must contain page targets with example arrays');
+  }
+  return candidate.entries;
+}
+
+/** Resolve a site-absolute component target to its checked-in Markdown file. */
+function markdownPathForTarget(target: string): string {
+  const [route] = target.split('#');
+  const relative = route!.replace(/^\/components\//, '');
+  return relative.endsWith('/')
+    ? join(PACKAGE_ROOT, 'components', relative, 'index.md')
+    : join(PACKAGE_ROOT, 'components', `${relative}.md`);
+}
+
+/** Collect current text-bearing docs sources while excluding tests and generated output. */
+async function collectTextSources(root: string): Promise<readonly string[]> {
+  const entries = await readdir(root, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await collectTextSources(path)));
+    } else if (/\.(?:md|mjs|ts|vue)$/u.test(entry.name)) {
+      files.push(path);
+    }
+  }
+  return files;
 }
 
 async function loadPageModule(): Promise<PageModule> {
@@ -311,5 +374,36 @@ describe('focused snippet and teaching obligations', () => {
         validLinks: ['/api/ui/classes/DataGrid'],
       }),
     ).toThrow(/invalid related\/API link/);
+  });
+});
+
+describe('complete catalog page population', () => {
+  test('ST-29: every catalog page uses registered live examples and contains no Coming Soon placeholder', async () => {
+    const targets = await readCatalogTargets();
+    const registeredIds = new Set(EXAMPLES.map((entry) => entry.id));
+
+    for (const target of targets) {
+      const source = await readFile(markdownPathForTarget(target.page), 'utf8');
+      expect(source, `${target.id}: stale placeholder`).not.toContain('<PlayComingSoon');
+      for (const exampleId of target.examples) {
+        expect(registeredIds.has(exampleId), `${target.id}: missing ${exampleId}`).toBe(true);
+        expect(source, `${target.id}: missing PlayExample ${exampleId}`).toContain(`<PlayExample id="${exampleId}"`);
+      }
+    }
+  });
+
+  test('ST-31: removed specialist pages and routes are absent from current executable docs sources', async () => {
+    for (const removedPath of REMOVED_SOURCE_PATHS) {
+      await expect(access(removedPath)).rejects.toThrow();
+    }
+
+    const currentSources = (await Promise.all(CURRENT_DOCS_ROOTS.map((root) => collectTextSources(root))))
+      .flat()
+      .filter((filePath) => filePath !== STALE_ROUTE_ORACLE_PATH);
+    for (const filePath of currentSources) {
+      const source = await readFile(filePath, 'utf8');
+      expect(source, filePath).not.toContain('/components/table/data-grid');
+      expect(source, filePath).not.toContain('/guide/code-editor');
+    }
   });
 });

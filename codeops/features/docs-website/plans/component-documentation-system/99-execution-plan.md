@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 172 / 193 tasks complete
-> **Last Updated**: 2026-07-29 16:09 CEST
+> **Progress**: 187 / 193 tasks complete
+> **Last Updated**: 2026-07-29 17:43 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -802,43 +802,78 @@
 
 ## Phase 11 — Overview and Full Integration
 
+> **Phase baseline tree**: `6142311148f9484cd715892ea1c63f9d31639a7a`
+> **Expected modification set**: Phase 11 catalog/page specification and implementation tests,
+> focused Vue DOM test infrastructure and Play runtime seams, Components overview, catalog-backed
+> sidebar/API projections, rendered-doc validation, bounded link/anchor repairs, package manifests
+> and lockfile, this execution plan, roadmap, traceability, and verification/review evidence.
+
 ### 11.1 Specification tests
 
-- [ ] **11.1.1** Extend `component-catalog.spec.test.ts` with ST-4 through ST-7.
-- [ ] **11.1.2** Extend `component-pages.spec.test.ts` with ST-29 and full ST-31.
-- [ ] **11.1.3** Add explicit `@vitejs/plugin-vue`, `happy-dom`, and Vue Test Utils dev
+- [x] **11.1.1** Extend `component-catalog.spec.test.ts` with ST-4 through ST-7. ✅
+  (completed: 2026-07-29 16:53 CEST; docs-site typecheck passed)
+- [x] **11.1.2** Extend `component-pages.spec.test.ts` with ST-29 and full ST-31. ✅
+  (completed: 2026-07-29 16:54 CEST; docs-site typecheck passed)
+- [x] **11.1.3** Add explicit `@vitejs/plugin-vue`, `happy-dom`, and Vue Test Utils dev
   dependencies and update `yarn.lock`; add a `dom` Vitest project, a focused DOM test script, and
   make the normal docs `test` script run `unit` + `dom` under `yarn verify`; add
   `test-dom/play-example.spec.test.ts` for ST-30 using deterministic xterm/ResizeObserver seams;
-  extend build specifications for ST-32.
-- [ ] **11.1.4** Run RED for the old overview, unconsolidated API/sidebar mapping, any unresolved
-  links/anchors, or eager loading.
+  extend build specifications for ST-32. ✅ (completed: 2026-07-29 16:59 CEST; typecheck passed;
+  expected DOM RED: both cases fail because the injectable Play runtime seam does not yet exist;
+  log `/tmp/tmp.xBdL5Lkko3/red-11.1.3.log`)
+- [x] **11.1.4** Run RED for the old overview, unconsolidated API/sidebar mapping, any unresolved
+  links/anchors, or eager loading. ✅ (completed: 2026-07-29 17:01 CEST; expected RED: missing
+  Editable Data Grid heading anchor, 20 catalog/API parity rows, and both DOM cases awaiting the
+  injectable Play runtime seam; catalog/page log `/tmp/tmp.vjFNvN3sEb/red-11.1.4-corrected.log`)
 
 ### 11.2 Implementation
 
-- [ ] **11.2.1** Rewrite `components/index.md` as the catalog-backed family/composition overview.
-- [ ] **11.2.2** Complete catalog-backed standard/sidebar projection in `.vitepress/config.ts`.
-- [ ] **11.2.3** Consolidate or strictly validate `src/api/api-map.mjs` against catalog API targets.
-- [ ] **11.2.4** Repair related links and API anchors in bounded family batches of at most three pages.
-- [ ] **11.2.5** Remove every remaining `PlayComingSoon` from cataloged targets and every current-source
-  stale specialist route.
-- [ ] **11.2.6** Add the minimal injectable Play terminal/resize runtime seam required by the DOM
+- [x] **11.2.1** Rewrite `components/index.md` as the catalog-backed family/composition overview.
+  ✅ (completed: 2026-07-29 17:02 CEST; docs-site typecheck passed)
+- [x] **11.2.2** Complete catalog-backed standard/sidebar projection in `.vitepress/config.ts`.
+  ✅ (completed: 2026-07-29 17:05 CEST; production VitePress build passed)
+- [x] **11.2.3** Consolidate or strictly validate `src/api/api-map.mjs` against catalog API targets.
+  ✅ (completed: 2026-07-29 17:08 CEST; exact catalog parity and focused API backlink tests pass)
+- [x] **11.2.4** Repair related links and API anchors in bounded family batches of at most three pages.
+  ✅ (completed: 2026-07-29 17:09 CEST; catalog page/anchor and API backlink suites pass)
+- [x] **11.2.5** Remove every remaining `PlayComingSoon` from cataloged targets and every current-source
+  stale specialist route. ✅ (completed: 2026-07-29 17:10 CEST; global catalog-page and stale-route
+  specifications pass; unused placeholder component removed)
+- [x] **11.2.6** Add the minimal injectable Play terminal/resize runtime seam required by the DOM
   oracle; extend `scripts/check-docs-build.mjs` for rendered catalog targets, specialist sidebar
-  resolution, fragment-aware anchors, within-hub label uniqueness, and stale-route absence.
-- [ ] **11.2.7** Prove the union of immutable family/hub `catalogEntryIds` equals every catalog row
+  resolution, fragment-aware anchors, within-hub label uniqueness, and stale-route absence. ✅
+  (completed: 2026-07-29 17:20 CEST; typecheck, two DOM cases, production build, and all 21
+  rendered-doc checks pass)
+- [x] **11.2.7** Prove the union of immutable family/hub `catalogEntryIds` equals every catalog row
   ID and the `exampleIds` union equals every distinct catalog example ID, then run
-  ST-4…ST-7/ST-9…ST-17/ST-29…ST-32 globally until GREEN.
+  ST-4…ST-7/ST-9…ST-17/ST-29…ST-32 globally until GREEN. ✅
+  (completed: 2026-07-29 17:26 CEST; typecheck, 64 global integration/DOM cases, and the
+  production build contract pass)
 
 ### 11.3 Implementation tests and hardening
 
-- [ ] **11.3.1** Extend catalog/page implementation tests for rendered heading slugs,
+- [x] **11.3.1** Extend catalog/page implementation tests for rendered heading slugs,
   representative route-prefix resolution, duplicate navigation, profile diagnostics, fixed
-  adversarial catalog permutations, and API target/projection diagnostics.
-- [ ] **11.3.2** Run registry parity, snippet drift, paint smoke, accessibility, security, API
-  generation/backlinks, docs build, and link validation.
-- [ ] **11.3.3** Run `yarn plugin:check`; if impact mapping reports owned generated content, run
-  `yarn plugin:update` and recheck.
-- [ ] **11.3.4** Run `yarn verify`.
+  adversarial catalog permutations, and API target/projection diagnostics. ✅
+  (completed: 2026-07-29 17:29 CEST; typecheck and 34 focused implementation cases pass; duplicate
+  generic “Overview” labels were corrected to their specialist workspace names)
+- [x] **11.3.2** Run registry parity, snippet drift, paint smoke, accessibility, security, API
+  generation/backlinks, docs build, and link validation. ✅ (completed: 2026-07-29 17:36 CEST;
+  917 unit and 2 DOM tests, docs/API build, and 21/21 production checks pass; log
+  `/tmp/tmp.KRJP8QBIZI/verify-11.3.2.log`)
+- [x] **11.3.3** Run `yarn plugin:check`; if impact mapping reports owned generated content, run
+  `yarn plugin:update` and recheck. ✅ (completed: 2026-07-29 17:37 CEST; plugin integrity passes
+  with no generated update required)
+- [x] **11.3.4** Run `yarn verify`. ✅ (completed: 2026-07-29 17:43 CEST; authoritative full gate
+  passes; log `/tmp/tmp.gYhfiGFCiw/verify-11.3.4-retry.log`)
+
+### Phase 11 quality review
+
+Independent correctness and risk review accepted and closed five Major and two Minor findings.
+Startup cancellation now spans both Vue session ownership and the plain-TS controller's pending
+module-load terminal; the final reviewed state passes 48 focused integration cases, 12 DOM cases,
+12 Play controller cases, the production build, and 21/21 rendered-document checks. Full evidence
+is recorded in `16-phase-11-quality-review.md`.
 
 ## Phase 12 — Final Review and Handoff
 

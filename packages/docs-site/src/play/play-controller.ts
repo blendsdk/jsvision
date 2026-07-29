@@ -118,6 +118,9 @@ let activeController: PlayController | null = null;
  */
 export function createPlayController(opts: PlayControllerOptions): PlayController {
   let mounted: MountedApp | null = null;
+  // The terminal exists before the lazily loaded example module resolves. Keep it reachable so
+  // close/unmount can dispose it immediately instead of waiting for that import to settle.
+  let openingTerminal: TerminalLike | null = null;
   let detachReclaim: (() => void) | null = null;
   let element: HostElement | null = null;
   // Teardown callbacks the example registered via `ctx.onCleanup` (an animation timer, say). Run and
@@ -126,6 +129,7 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
   let size: PlaySize = opts.size ?? { width: 80, height: 24 };
   let depth: ColorDepth = opts.depth ?? 'truecolor';
   let open = false;
+  let lifecycleGeneration = 0;
 
   const controller: PlayController = {
     get isOpen() {
@@ -135,6 +139,10 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
     async open(el: HostElement): Promise<void> {
       // One-dialog singleton: close any other open Play before this one paints.
       if (activeController !== null && activeController !== controller) activeController.close();
+      if (activeController === controller || openingTerminal !== null || mounted !== null) {
+        controller.close();
+      }
+      const generation = ++lifecycleGeneration;
       activeController = controller;
       element = el;
       // Held outside the try so a failure after createTerminal but before mountApp still disposes it.
@@ -144,8 +152,19 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
         // truth. Building the app at the terminal's real cols/rows — not a hardcoded preset — keeps
         // the composed frame and the terminal grid from ever desyncing (the resize bug).
         term = opts.createTerminal(el);
+        openingTerminal = term;
         const dims = { width: term.cols || size.width, height: term.rows || size.height };
         const def = (await opts.entry.load()).default;
+        if (generation !== lifecycleGeneration) {
+          // close() already disposed an opening terminal when it owned this reference. If a
+          // different lifecycle invalidated us first, dispose here before abandoning the load.
+          if (term !== null && openingTerminal === term) {
+            term.dispose?.();
+            openingTerminal = null;
+          }
+          term = null;
+          return;
+        }
         const caps = buildBrowserCaps({ colorDepth: depth });
         const app = demoShell({
           build: (ctx) => def.build(ctx),
@@ -159,6 +178,7 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
           onCleanup: (fn) => cleanups.push(fn),
         });
         mounted = mountApp({ element: el, app, caps, term });
+        openingTerminal = null;
         term = null; // ownership transferred to `mounted` (its dispose() disposes the terminal)
         detachReclaim = attachKeyReclaim(mounted.term, {
           isFocused: opts.isFocused ?? (() => open),
@@ -168,6 +188,14 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
       } catch (error) {
         // Never leave a blank/half-painted terminal: dispose the orphan terminal (if mountApp did not
         // take ownership), tear down, then surface a readable message.
+        if (generation !== lifecycleGeneration) {
+          if (term !== null && openingTerminal === term) {
+            term.dispose?.();
+            openingTerminal = null;
+          }
+          return;
+        }
+        if (openingTerminal === term) openingTerminal = null;
         term?.dispose?.();
         controller.close();
         const message = error instanceof Error ? error.message : String(error);
@@ -177,6 +205,9 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
     },
 
     close(): void {
+      lifecycleGeneration += 1;
+      openingTerminal?.dispose?.();
+      openingTerminal = null;
       // Run the example's own teardown (animation timers, subscriptions) before tearing down the
       // mount, so a late timer tick cannot fire against a half-disposed app. Each guarded so one
       // throwing cleanup cannot strand the rest of the teardown.

@@ -143,15 +143,10 @@ describe('Code Editor catalog and page topology', () => {
 });
 
 describe('Code Editor specialist sidebar', () => {
-  test('uses the exact prefix and ordered links without the obsolete guide route', async () => {
+  test('uses the exact prefix and catalog projection without the obsolete guide route', async () => {
     const source = await readFile(join(PACKAGE_ROOT, '.vitepress/config.ts'), 'utf8');
     expect(source).toContain("'/components/code-editor/':");
-    let cursor = source.indexOf("'/components/code-editor/':");
-    for (const [, , route] of CODE_EDITOR_TOPICS) {
-      const next = source.indexOf(`link: '${route}'`, cursor);
-      expect(next, `missing or out-of-order Code Editor sidebar link ${route}`).toBeGreaterThan(cursor);
-      cursor = next;
-    }
+    expect(source).toContain('items: componentNavigation.codeEditor.map(sidebarItem)');
     expect(source).not.toContain('/guide/code-editor');
   });
 
