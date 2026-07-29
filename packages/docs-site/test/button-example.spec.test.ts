@@ -9,13 +9,14 @@
 import { test, expect } from 'vitest';
 import { classicTheme } from '@jsvision/core';
 import { Button, Group, createRoot } from '@jsvision/ui';
+import type { Size2D } from '@jsvision/ui';
 import buttonExample from '../examples/controls/button.js';
 import { EXAMPLES } from '../examples/index.js';
 import { absoluteOrigin, buildLabExample, frameText, key, viewsIn } from './example-lab-harness.js';
 
 /** Build the registered Button example through the same shell used by the browser. */
-function buildButtonExample() {
-  const { app, dialog } = buildLabExample('controls/button', buttonExample);
+function buildButtonExample(viewport?: Size2D) {
+  const { app, dialog } = buildLabExample('controls/button', buttonExample, { viewport });
   return { app, dialog, buttons: viewsIn(dialog).filter((view): view is Button => view instanceof Button) };
 }
 
@@ -62,6 +63,23 @@ test('the Button lab presents normal, default, disabled, and reactive actions to
     expect(frameText(app)).toContain('Reactive disabled state');
     expect(buttons.find((button) => button.activation.label === 'Unavailable')?.state.disabled).toBe(true);
     expect(buttons.find((button) => button.activation.label === 'Save changes')?.state.disabled).toBe(true);
+    dispose();
+  });
+});
+
+// A Button may consume additional horizontal room in a responsive layout, but its raised face is
+// always two terminal rows high. Maximizing the teaching dialog must not turn it into a tall panel.
+test('maximizing the Button dialog preserves every Button face height', () => {
+  createRoot((dispose) => {
+    const { app, dialog, buttons } = buildButtonExample({ width: 120, height: 40 });
+    const compactWidths = buttons.map((button) => button.bounds.width);
+
+    dialog.zoom();
+    app.loop.renderRoot.flush();
+
+    expect(buttons.map((button) => button.bounds.height)).toEqual(buttons.map((button) => button.measure().height));
+    expect(buttons.some((button, index) => button.bounds.width > (compactWidths[index] ?? 0))).toBe(true);
+    app.loop.dispose();
     dispose();
   });
 });
