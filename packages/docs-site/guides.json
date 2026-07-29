@@ -103,7 +103,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/views-focus-traversal", "guides/views-focus-modality"]
     },
     {
       "id": "events-commands-and-keymaps",

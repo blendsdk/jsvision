@@ -37,4 +37,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/reactive-lifetimes.ts',
     load: () => import('../../examples/guides/reactive-lifetimes.js'),
   },
+  {
+    id: 'guides/views-focus-traversal',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/views-focus-traversal.ts',
+    load: () => import('../../examples/guides/views-focus-traversal.js'),
+  },
+  {
+    id: 'guides/views-focus-modality',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/views-focus-modality.ts',
+    load: () => import('../../examples/guides/views-focus-modality.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];
