@@ -1,73 +1,79 @@
-/**
- * A modal file-open dialog browsing an in-memory virtual file tree — no backend,
- * no real disk. It seeds a small project tree (with a subdirectory) into
- * @jsvision/web's pure browser file system, then opens a FileDialog over it in the
- * full demo shell. Move with the arrows, Enter a directory to descend, pick a file
- * or Cancel. Because a bare-placed dialog would not be modal, the example returns a
- * whole application and opens the dialog on start.
- */
-import { openFile } from '@jsvision/files';
-import { createBrowserFileSystem, type FileTree } from '@jsvision/web';
-import { Button, Text, Window, at } from '@jsvision/ui';
+/** FileDialog laboratory for virtual browsing, filtering, modal launch, and denied reads. */
+import { FileDialog, FileInfoPane, FileInput, FileList } from '@jsvision/files';
+import { Button, Dialog, Group, Text, at, createKeymap, signal } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
+import { createDemoFileSystem, FILE_LAB_HOME } from '../../src/fixtures/file-lab.js';
 
-/** The home directory the dialog opens at. */
-export const HOME = '/home/demo';
+const CMD_FILTER = 'file-dialog-lab.filter';
+const CMD_ERROR = 'file-dialog-lab.error';
+const CMD_OPEN = 'file-dialog-lab.open';
+const CONTENT_WIDTH = 64;
+const CONTENT_HEIGHT = 14;
 
-/**
- * The seeded project tree. `notes.txt` deliberately carries a raw `ESC` escape in
- * its content: the docs-site paint path strips it (sanitize is the injection
- * boundary), so no control byte ever reaches the terminal.
- */
-export const FILE_TREE: FileTree = {
-  [HOME]: {
-    'README.md': '# Demo project\n\nA sample tree for the file-dialog example.\n',
-    'notes.txt': 'Session log: connected\x1b[2J then reset — control bytes are stripped when drawn.\n',
-    src: {
-      'index.ts': 'export const hello = (): string => "hi";\n',
-      'util.ts': 'export const add = (a: number, b: number): number => a + b;\n',
-    },
-  },
-};
-
-/** A fresh in-memory browser file system seeded with {@link FILE_TREE}, opening at {@link HOME}. */
-export function seedFs(): ReturnType<typeof createBrowserFileSystem> {
-  return createBrowserFileSystem({ tree: FILE_TREE, home: HOME });
-}
+/** Compatibility exports retained for the security and legacy virtual-tree specifications. */
+export const HOME = FILE_LAB_HOME;
+/** Create a fresh virtual filesystem for tests and consumers of the historical example fixture. */
+export const seedFs = (): ReturnType<typeof createDemoFileSystem>['fs'] => createDemoFileSystem().fs;
 
 export default defineExample({
-  title: 'File dialog',
-  blurb: 'Browse a virtual file tree in a modal dialog — no backend, entirely in-memory.',
+  title: 'File Dialog Lab',
+  blurb: 'Inspect the composed picker, navigate a virtual project, and launch the real modal FileDialog.',
   build: (ctx) => {
-    const app = demoApp(ctx);
-
-    // `openFile` handles the full modal lifecycle (add → execView → remove-on-close); a fresh
-    // `seedFs()` each time keeps the tree pristine. So reopening is just calling it again.
-    const openTheDialog = (): void => {
-      void openFile(app, { fs: seedFs(), directory: HOME, title: 'Open a file' });
-    };
-    app.onCommand('demo.openDialog', () => openTheDialog());
-
-    // A non-closable stage window with the reopen affordance, centered on the desktop.
-    const stage = new Window('File dialog');
-    stage.closable = false;
-    const sw = 46;
-    const sh = 7;
-    const { width: dw, height: dh } = app.desktop.bounds;
-    stage.setLayout({
-      rect: {
-        x: Math.max(0, Math.floor((dw - sw) / 2)),
-        y: Math.max(0, Math.floor((dh - sh) / 2)),
-        width: sw,
-        height: sh,
-      },
+    const app = demoApp(ctx, {
+      themeMenu: true,
+      keymap: createKeymap({ 'alt+f': CMD_FILTER, 'alt+e': CMD_ERROR, 'alt+o': CMD_OPEN }),
     });
-    stage.add(at(new Button('~O~pen the dialog', { command: 'demo.openDialog', default: true }), 12, 0, 20, 2));
-    stage.add(at(new Text('Pick a file or Cancel, then reopen the dialog here.'), 0, 3, sw - 2, 2));
-    app.desktop.addWindow(stage);
-
-    openTheDialog(); // start with it open once
+    const fixture = createDemoFileSystem();
+    const directory = signal(FILE_LAB_HOME);
+    const wildcard = signal('*');
+    const filename = signal('');
+    const status = signal('ready · virtual filesystem only');
+    const list = new FileList({ fs: fixture.fs, directory, wildcard });
+    const input = new FileInput({
+      value: filename,
+      focusedEntry: list.focusedEntry,
+      wildcard,
+      sep: fixture.fs.sep,
+    });
+    const info = new FileInfoPane({ fs: fixture.fs, directory, wildcard, focusedEntry: list.focusedEntry });
+    const dialog = new Dialog({ title: ' File Dialog Lab ', width: 68, height: 18 });
+    dialog.closable = false;
+    const content = new Group();
+    content.add(at(new Text('FileDialog composes these same public picker widgets.'), 0, 0, 64, 1));
+    content.add(at(input, 0, 2, 42, 1));
+    content.add(at(new Button('~O~pen dialog', { command: CMD_OPEN }), 46, 2, 16, 2));
+    content.add(at(list, 0, 4, 42, 6));
+    content.add(at(new Text(() => `Directory:\n${directory()}\nFilter: ${wildcard()}`), 45, 5, 19, 4));
+    content.add(at(info, 0, 10, 64, 2));
+    content.add(at(new Text(() => `Status: ${status()}`), 0, 12, 64, 1));
+    content.add(at(new Text('Alt+F enters src · Alt+E shows a denied read'), 0, 13, 64, 1));
+    app.onCommand(CMD_FILTER, () => {
+      fixture.reset();
+      wildcard.set('*.ts');
+      directory.set(`${FILE_LAB_HOME}/src`);
+      status.set('src · TypeScript filter');
+    });
+    app.onCommand(CMD_ERROR, () => {
+      fixture.setFault('denied');
+      try {
+        fixture.fs.readDir(directory());
+      } catch (error) {
+        status.set(error instanceof Error ? `access denied · ${error.message}` : 'access denied');
+      }
+    });
+    app.onCommand(CMD_OPEN, () => {
+      const modal = new FileDialog({
+        fs: createDemoFileSystem().fs,
+        directory: signal(FILE_LAB_HOME),
+        showError: (message) => status.set(message),
+      });
+      app.desktop.addWindow(modal);
+      void app.loop.execView(modal).finally(() => app.desktop.removeWindow(modal));
+    });
+    dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
+    app.desktop.addWindow(dialog);
+    app.loop.focusView(list.rows);
     return app;
   },
 });

@@ -1,14 +1,7 @@
 import type { ExampleEntry } from './types.js';
 
-/** Existing file and table examples pending their richer replacements. */
+/** Existing table example pending its specialist-hub replacement. */
 export const CONTAINER_FILE_TABLE_EXAMPLES = [
-  {
-    id: 'files/file-dialog',
-    category: 'files',
-    kind: 'app',
-    sourcePath: 'examples/files/file-dialog.ts',
-    load: () => import('../../examples/files/file-dialog.js'),
-  },
   {
     id: 'table/data-grid',
     category: 'table',

@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 68 / 180 tasks complete
+> **Progress**: 107 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -469,34 +469,57 @@
 
 ## Phase 8 — Forms and Files
 
+> **Phase baseline tree**: `360c645f8d410764d81b34f73453b2034da1cd35`
+> **Expected modification set**: Phase 8 forms/files behavior contracts, deterministic virtual
+> filesystem and fault fixtures, family specification and implementation tests, eight pages and
+> template1 examples, family registry modules, bounded integration corrections, this execution
+> plan, roadmap, traceability, and verification/review evidence.
+
 ### 8.1 Specification tests
 
-- [ ] **8.1.1** Add `test/contracts/files.ts`, a docs-test-local `FileSystem` fault adapter under
+- [x] **8.1.1** Add `test/contracts/files.ts`, a docs-test-local `FileSystem` fault adapter under
   `test/fixtures/`, and `test/file-components.spec.test.ts` for ST-22, including exact behavior
   contracts for Form Dialog and the seven-component file family over deterministic normal,
   denied, and I/O-error paths.
-- [ ] **8.1.2** Run RED for missing pages/examples and non-template existing examples.
+  ✅ (completed: 2026-07-29 07:17 CEST; docs-site typecheck passes)
+- [x] **8.1.2** Run RED for missing pages/examples and non-template existing examples.
+  ✅ (completed: 2026-07-29 07:17 CEST; expected RED: 32 failures covering eight page contracts,
+  six absent examples, two non-template examples, visible teaching lines, and behavior contracts)
 
 ### 8.2 Implementation
 
-- [ ] **8.2.1** Upgrade `components/controls/form-dialog.md` and rebuild
+- [x] **8.2.1** Upgrade `components/controls/form-dialog.md` and rebuild
   `examples/controls/form-dialog.ts`.
-- [ ] **8.2.2** Upgrade `components/files/file-dialog.md` and rebuild
+  ✅ (completed: 2026-07-29 07:22 CEST; page and template1 behavior contracts pass)
+- [x] **8.2.2** Upgrade `components/files/file-dialog.md` and rebuild
   `examples/files/file-dialog.ts`.
-- [ ] **8.2.3** Add Change Directory Dialog and File List pages.
-- [ ] **8.2.4** Add Change Directory Dialog and File List examples.
-- [ ] **8.2.5** Add Directory List and File Input pages.
-- [ ] **8.2.6** Add Directory List and File Input examples.
-- [ ] **8.2.7** Add File Info Pane and File Editor pages.
-- [ ] **8.2.8** Add File Info Pane and File Editor examples.
-- [ ] **8.2.9** Add/update all eight entries in the forms/files family registry modules.
-- [ ] **8.2.10** Run ST-22 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 07:22 CEST; page and template1 behavior contracts pass)
+- [x] **8.2.3** Add Change Directory Dialog and File List pages.
+  ✅ (completed: 2026-07-29 07:22 CEST; focused page contracts pass)
+- [x] **8.2.4** Add Change Directory Dialog and File List examples.
+  ✅ (completed: 2026-07-29 07:22 CEST; focused behavior contracts pass)
+- [x] **8.2.5** Add Directory List and File Input pages.
+  ✅ (completed: 2026-07-29 07:24 CEST; focused page contracts pass)
+- [x] **8.2.6** Add Directory List and File Input examples.
+  ✅ (completed: 2026-07-29 07:24 CEST; focused behavior contracts pass)
+- [x] **8.2.7** Add File Info Pane and File Editor pages.
+  ✅ (completed: 2026-07-29 07:22 CEST; focused page contracts pass)
+- [x] **8.2.8** Add File Info Pane and File Editor examples.
+  ✅ (completed: 2026-07-29 07:22 CEST; focused behavior contracts pass)
+- [x] **8.2.9** Add/update all eight entries in the forms/files family registry modules.
+  ✅ (completed: 2026-07-29 07:22 CEST; registry parity and architecture pass)
+- [x] **8.2.10** Run ST-22 and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 07:24 CEST; all 33 family page, template, visibility, and behavior
+  cases pass)
 
 ### 8.3 Implementation tests and hardening
 
-- [ ] **8.3.1** Add `test/file-components.impl.test.ts` for virtual-path validation, empty/error
+- [x] **8.3.1** Add `test/file-components.impl.test.ts` for virtual-path validation, empty/error
   states, dialog cancellation, fixture reset, file-editor save seams, and disposal.
-- [ ] **8.3.2** Complete security/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 07:25 CEST; 41/41 family specification/implementation cases pass)
+- [x] **8.3.2** Complete security/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 07:53 CEST; independent review corrected 5 Major and 2 Minor
+  findings; focused 46/46, docs-site 506/506, docs integrity 20/20, and final `yarn verify` pass)
 
 ## Phase 9 — Data Grid Specialist Hub
 
