@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-29 23:11
-> **Progress**: 38/246 tasks (15%)
+> **Progress**: 39/246 tasks (16%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -301,7 +301,7 @@ independent specification-first phase (AR-10).
 
 ### Step 5.3: Hardening
 
-- [ ] 5.3.1 Add canonical-versus-generated and stale-plugin diagnostics — `packages/docs-site/test/codex-plugin-guide.impl.test.ts`
+- [x] 5.3.1 Add canonical-versus-generated and stale-plugin diagnostics — `packages/docs-site/test/codex-plugin-guide.impl.test.ts` ✅ (completed: 2026-07-29 23:46) — 18/18 focused course/catalog tests and authoritative `yarn verify` pass across real tree equality, changed/missing/unexpected distribution fixtures, and independent stale plugin/tag diagnostics
 - [ ] 5.3.2 Run focused checks, promote Codex plugin, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Codex guide spec/impl tests, docs-site typecheck, and `yarn plugin:check`

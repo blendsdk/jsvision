@@ -36,6 +36,9 @@ export declare function checkGotchas(content: string, required: number): string[
 
 export declare function checkLinksInDir(dir: string): string[];
 
+/** Compare a canonical directory with its assembled distribution copy. */
+export declare function checkTreesEqual(expectedDir: string, actualDir: string): string[];
+
 export declare function checkManifestData(
   manifest: unknown,
   marketplace: unknown,
