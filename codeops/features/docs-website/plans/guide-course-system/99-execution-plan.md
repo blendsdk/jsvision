@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:37
-> **Progress**: 23/246 tasks (9%)
+> **Last Updated**: 2026-07-29 22:39
+> **Progress**: 24/246 tasks (10%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -204,7 +204,7 @@ independent specification-first phase (AR-10).
 ### Step 3.3: Hardening
 
 - [x] 3.3.1 Extend responsive, clipping, interaction, and restore edges — `packages/docs-site/test/layout-guide.impl.test.ts` ✅ (completed: 2026-07-29 22:37) — 15/15 focused spec/implementation tests and authoritative `yarn verify` passed across repeated geometry and hidden-state cycles
-- [ ] 3.3.2 Run the complete focused Layout suite and confirm the curriculum map remains synchronized
+- [x] 3.3.2 Run the complete focused Layout suite and confirm the curriculum map remains synchronized ✅ (completed: 2026-07-29 22:39) — 22/22 focused Layout/catalog tests and docs-site typecheck passed; the exact source state retains its authoritative `yarn verify` pass and Complete map entry
 
 **Verify**: Layout spec/impl tests and docs-site typecheck
 
