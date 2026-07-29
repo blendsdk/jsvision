@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 18 items resolved
-> **Last Updated**: 2026-07-29 22:22
+> **Status**: ✅ GATE PASSED — all 20 items resolved
+> **Last Updated**: 2026-07-29 22:32
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -23,6 +23,8 @@
 | 16 | Quality review (runtime) | How should the two Major Phase 1 review findings be resolved without weakening the approved course contract? | Correct the visible status-chord teaching and strengthen the immutable oracle across destinations, resize/maximize/restore, complete content, Classic surface, and reactive disposal / demote the course and defer correction / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted re-review before Phase 2. | ✅ Resolved |
 | 17 | Execution (runtime) | How should Phase 2 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 2.1.1–2.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 2 task IDs and resume per-task commits after 2.2.4. | ✅ Resolved |
 | 18 | Quality review (runtime) | How should the two Major and one Minor Phase 2 findings be resolved without weakening the completed orientation contract? | Compile a real bounded NodeNext consumer and probe real failure boundaries while correcting the course / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every technical correction, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 3. | ✅ Resolved |
+| 19 | Execution (runtime) | How should Phase 3 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 3.1.1–3.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 3 task IDs and resume per-task commits after 3.2.4. | ✅ Resolved |
+| 20 | API accuracy (runtime) | Does a `topRight` stack layer have to re-anchor in the same render flush after resize or in its documented settled frame? | Verify the documented one-extra-frame settled state / change the correct lab to satisfy an unsupported same-flush assertion | **Authority: AI — delegated by `--auto-design`.** Preserve the public stack contract and flush the second settling frame before asserting the final anchor. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -288,3 +290,52 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The real consumer no longer compiles, a negative fixture stops failing, the
   root export gains a CommonJS condition, or package-manager engine behavior changes.
+
+**AR-19 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red re-audit under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 3 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 3.1.1 and 3.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 3.2.4. Commit tasks 3.1.1–3.2.4 as one spec-to-green slice only after
+  focused specifications, docs-site typecheck, and `yarn verify` pass.
+- **Evidence:** The independent spec author reconciled twelve final-contract cases; the focused run
+  passed nine and exposed three content/evidence gaps.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening or quarantining
+  the oracle destroys the planned re-audit evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the previously approved and independently challenged policy applied
+  to the Layout re-audit task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a repeated challenge of the unchanged policy
+  was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before corrections, an unrelated failure blocks the
+  green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-20 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Test accuracy against an existing public layout behavior; no product or scope
+  choice is involved.
+- **Objective:** Verify the overlay laboratory's final responsive state without inventing a stronger
+  timing guarantee than the public stack contract.
+- **Decision:** Flush the second render frame before checking the top-right badge after maximize and
+  restore. Keep every geometry, padding, clipping, and anchor assertion intact.
+- **Evidence:** `packages/ui/src/view/dsl/stack.ts` documents that corner/edge layers self-correct
+  during draw and settle one frame later. Existing implementation coverage already uses two flushes.
+- **Rejected alternatives:** Changing the correct laboratory would encode an unsupported same-flush
+  guarantee and duplicate layout-engine behavior in a docs example.
+- **Strongest counterargument:** A test should prefer immediate results. Here immediacy contradicts
+  the documented public behavior, while the reader-visible settled frame is the required outcome.
+- **Confidence:** High — verified directly against stack source, public documentation, and existing
+  implementation coverage.
+- **Hardening:** The corrected oracle still drives a real SE-grip resize, maximize, restore, shared
+  template evidence, and exact final anchors.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Corner placement becomes same-frame, no longer settles after the second frame,
+  or any final geometry assertion fails.

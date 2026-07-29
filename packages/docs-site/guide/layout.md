@@ -1,6 +1,6 @@
 ---
 title: Layout
-description: A beginner-to-advanced course on composing responsive JSVision interfaces with rows, columns, cell sizing, spacing, alignment, overlays, and exact placement.
+description: A beginner-to-advanced course on composing responsive terminal-cell JSVision interfaces with rows, columns, sizing, spacing, alignment, overlays, and exact placement.
 ---
 
 # Layout
@@ -13,6 +13,18 @@ This guide starts with a two-pane screen and builds toward nested responsive wor
 overlays, resize-safe composition, and the failure modes that cause views to collapse or clip. The
 examples use the declarative helpers exported from `@jsvision/ui`; they build ordinary `Group` and
 `View` objects, so there is no second layout runtime to learn.
+
+## Who this course is for
+
+This course is for developers who have completed [Install & packages](/guide/install-and-packages)
+and can already create a Node 22+ ESM project. No previous terminal-layout experience is required.
+
+By the end, you should be able to:
+
+- build a responsive screen from nested rows and columns;
+- explain how auto, fixed, fractional, spacing, and alignment rules become cell rectangles;
+- diagnose collapsed, clipped, overlapping, and translation-sensitive layouts; and
+- verify flow and overlay behavior at compact, resized, maximized, and restored geometries.
 
 ## Mental model
 
@@ -449,7 +461,35 @@ rects.get(main); // { x: 21, y: 0, width: 59, height: 24 }
 The pass is pure and returns parent-relative rectangles. Each box instance must appear once in an
 acyclic tree; reusing one box at multiple positions would collide in the result map.
 
+## Composition and integration
+
+Layout decides geometry; it does not own application state or interaction. Keep those
+responsibilities at their natural seams:
+
+- compose `Group` and `View` instances with `row`, `col`, or `stack`, then add the resulting root to
+  the application, window, dialog, or component that owns it;
+- use [Reactive state](/guide/reactive-state) to change size tokens, visibility, or children from
+  signals instead of rebuilding unrelated parts of the tree;
+- use [Views & focus](/guide/views-and-focus) to establish keyboard order after the visual hierarchy
+  is stable—painting position does not automatically define focus order; and
+- let specialist components such as grids and editors own their internal geometry while the
+  surrounding Guide-level layout gives their principal pane flexible space.
+
+When a child has a minimum usable size, keep that knowledge with the child or the immediate parent
+that owns the relationship. A distant application shell should not guess the internal widths of a
+translated button group, editor gutter, or grid header.
+
 ## Common failure modes
+
+Use the symptom to choose one likely cause, apply the smallest correction, and verify the resulting
+geometry instead of changing several layout rules at once.
+
+| Symptom                          | Likely cause                                                                  | Correction                                                                            | Evidence to verify                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| A view has zero width or height  | Auto measurement or the cross-axis natural size is zero                       | Implement `measure()`, choose a justified track, or restore available content space   | Inspect the solved bounds; both dimensions are positive               |
+| A growing pane disappears        | Fixed, auto, gap, padding, and minimum tracks consume the available main axis | Reduce fixed geometry or negotiate a larger parent before adding a defensible minimum | Resize through the supported range; the principal pane remains usable |
+| An overlay moves normal siblings | The view is still in flow, often through `{ fill: true }`                     | Use `stack`, `cover`, `center`, or `at` for deliberate overlap                        | Toggle the overlay; in-flow sibling bounds remain unchanged           |
+| Translated text clips            | A fixed rectangle was guessed from JavaScript string length                   | Measure terminal display cells and negotiate the parent minimum                       | Render long and wide-glyph labels at 80×24, maximize, and restore     |
 
 ### “My view collapsed to zero”
 
@@ -511,6 +551,20 @@ retagging the same view.
   layers last.
 - **Test more than startup.** Verify the compact 80×24 state, resize or maximize, and restore. Check
   long translated text and the smallest supported viewport for clipping.
+
+## Practice
+
+1. Build a header/body/status column whose body contains a fixed navigation pane and two weighted
+   work panes. Drag-resize the window, maximize it, and restore it; record which cell counts remain
+   fixed and which tracks absorb the difference.
+2. Replace one short action label with a longer translation and one wide-glyph label. Measure the
+   controls, negotiate a usable minimum, and verify the screen at 80×24 without using
+   `string.length`.
+3. Add a centered card and a top-right badge to a `stack`. Toggle each overlay independently and
+   prove that the base layer keeps the same bounds while the overlays re-anchor after resize.
+4. Break one layout deliberately—remove a custom leaf's `measure()`, oversubscribe fixed tracks, or
+   forget to attach an `at()` view. Write down the symptom, cause, correction, and evidence that
+   confirms the repair.
 
 ## API reference
 

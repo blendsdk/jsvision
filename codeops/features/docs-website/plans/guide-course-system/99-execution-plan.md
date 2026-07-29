@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:22
-> **Progress**: 16/246 tasks (7%)
+> **Last Updated**: 2026-07-29 22:32
+> **Progress**: 22/246 tasks (9%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -178,17 +178,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-12 · `03-02` · `03-03`
 
+> **Phase baseline tree**: `ea4073e65404fe5663226a3000eb56adc1b7a69d`
+>
+> **Expected modification set**: `packages/docs-site/guide/layout.md`,
+> `packages/docs-site/examples/guides/layout-flow.ts`,
+> `packages/docs-site/examples/guides/layout-overlays.ts`,
+> `packages/docs-site/src/example-fixtures/layout/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/test/layout-guide.spec.test.ts`,
+> `packages/docs-site/test/layout-guide.impl.test.ts`, this execution plan, the ambiguity register,
+> and docs-website roadmap/traceability evidence required by the execution protocol.
+
 ### Step 3.1: Specification tests
 
-- [ ] 3.1.1 [spec-author] Reconcile the existing Layout oracle with the final contract — `packages/docs-site/test/layout-guide.spec.test.ts`
-- [ ] 3.1.2 Run the specification and record red gaps or justify a complete pre-existing pass
+- [x] 3.1.1 [spec-author] Reconcile the existing Layout oracle with the final contract — `packages/docs-site/test/layout-guide.spec.test.ts` ✅ (completed: 2026-07-29 22:27)
+- [x] 3.1.2 Run the specification and record red gaps or justify a complete pre-existing pass ✅ (completed: 2026-07-29 22:27) — expected red: 9 passed, 3 failed for prerequisite/backbone/diagnostic gaps and a corner-layer settle assertion; commit deferred to the green 3.2.4 checkpoint per runtime AR-19
 
 ### Step 3.2: Implementation
 
-- [ ] 3.2.1 Correct any content, snippet, failure, practice, or link gaps — `packages/docs-site/guide/layout.md`
-- [ ] 3.2.2 Correct flow/overlay labs or fixtures only where the audit requires it — `packages/docs-site/examples/guides/layout-*.ts`, `packages/docs-site/src/example-fixtures/layout/`
-- [ ] 3.2.3 Reconcile registry and catalog evidence without weakening the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 3.2.4 Run ST-12 green plus docs-site typecheck; fix implementation only
+- [x] 3.2.1 Correct any content, snippet, failure, practice, or link gaps — `packages/docs-site/guide/layout.md` ✅ (completed: 2026-07-29 22:29) — added prerequisite/audience/outcomes, composition, evidence-oriented diagnosis, and practice while preserving concise public snippets
+- [x] 3.2.2 Correct flow/overlay labs or fixtures only where the audit requires it — `packages/docs-site/examples/guides/layout-*.ts`, `packages/docs-site/src/example-fixtures/layout/` ✅ (completed: 2026-07-29 22:29) — source audit proved both labs correct; AR-20 aligned the oracle with the documented one-extra-frame corner settle
+- [x] 3.2.3 Reconcile registry and catalog evidence without weakening the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-29 22:29) — unchanged complete-stage metadata, prerequisites, outcomes, IDs, app kinds, and source paths pass the reconciled oracle
+- [x] 3.2.4 Run ST-12 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-29 22:32) — 12/12 reconciled specifications, docs-site typecheck, and authoritative `yarn verify` passed
 
 ### Step 3.3: Hardening
 
