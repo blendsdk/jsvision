@@ -14,7 +14,7 @@
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (166/187 tasks; Code Editor flagship pilots verified) · RD-04/07…10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-29 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (172/193 tasks; Code Editor flagship migration complete, overview integration next) · RD-04/07…10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-29 |
 
 ## Archived
 

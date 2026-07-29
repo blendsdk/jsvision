@@ -4,7 +4,7 @@ import { buildCodeEditorLab } from '#code-editor-lab';
 
 export default defineExample({
   title: 'Invisibles and Endings',
-  blurb: 'Inspect tabs, CRLF, and hostile controls through safe visible markers.',
+  blurb: 'Inspect tabs, trailing spaces, and CRLF metadata through safe visible markers.',
   build: (ctx) =>
     buildCodeEditorLab(ctx, {
       scenario: 'invisibles-line-endings',

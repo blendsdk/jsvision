@@ -55,7 +55,7 @@ const i18n = createI18n({ locale: 'nl', catalogs: [codeEditorNl] });
 
 <PlayExample id="code-editor/invisibles-line-endings"
   title="Invisible text and line endings"
-  blurb="Inspect LF, CRLF, tabs, and hostile control text through terminal-safe presentation without changing the source model."
+  blurb="Inspect tabs, trailing spaces, and CRLF metadata through visible markers without changing the source model."
 />
 
 ## Limits and practices

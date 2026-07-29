@@ -60,8 +60,8 @@ describe('Code Editor host recovery examples', () => {
     });
   });
 
-  test('failed state becomes ready only through the focused authorization action', () => {
-    createRoot((dispose) => {
+  test('failed state becomes ready only through the focused authorization action', async () => {
+    await createRoot(async (dispose) => {
       const { app, dialog } = buildLabExample('code-editor/host-recovery', hostRecovery);
       try {
         const probe = probeIn(dialog);
@@ -74,12 +74,37 @@ describe('Code Editor host recovery examples', () => {
         expect(editor.controller.publicState.serviceState).toBe('degraded');
         expect(probe.read('host-effects')).toBe('none');
         dispatchExampleAction(app, { kind: 'key', key: 'r', modifiers: ['Alt'] });
+        for (let turn = 0; turn < 5; turn += 1) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
         expect(
           editor.controller.degradation.snapshot().features.find((feature) => feature.feature === 'hostCallback'),
         ).toMatchObject({ status: 'enabled', reason: 'recovered' });
         expect(probe.read('service-state')).toBe('ready');
         expect(editor.controller.publicState.serviceState).toBe('ready');
         expect(probe.read('host-effects')).toContain('authorized navigate');
+
+        dispatchExampleAction(app, { kind: 'key', key: 'c', modifiers: ['Alt'] });
+        for (let turn = 0; turn < 5; turn += 1) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+        expect(
+          editor.controller.degradation.snapshot().features.find((feature) => feature.feature === 'hostCallback'),
+        ).toMatchObject({ status: 'degraded', reason: 'failure' });
+        expect(probe.read('service-state')).toBe('degraded');
+        expect(probe.read('host-effects')).toBe('none');
+
+        dispatchExampleAction(app, { kind: 'key', key: 'r', modifiers: ['Alt'] });
+        await Promise.resolve();
+        dispatchExampleAction(app, { kind: 'key', key: 'c', modifiers: ['Alt'] });
+        dispatchExampleAction(app, { kind: 'key', key: 'r', modifiers: ['Alt'] });
+        for (let turn = 0; turn < 5; turn += 1) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+        expect(probe.read('service-state')).toBe('ready');
+        expect(
+          editor.controller.degradation.snapshot().features.find((feature) => feature.feature === 'hostCallback'),
+        ).toMatchObject({ status: 'enabled', reason: 'recovered' });
       } finally {
         app.loop.dispose();
         dispose();

@@ -13,7 +13,7 @@ developers need them and linked to TypeDoc rather than split into artificial com
 
 | Order | Route under `/components/code-editor/` | Sidebar label | Profile | Required examples |
 |---:|---|---|---|---|
-| 1 | `index.md` | Overview | `landing` | `code-editor/quick-start` |
+| 1 | `index.md` | Overview | `landing` | `code-editor/lsp-completion`, `code-editor/lsp-diagnostics`, `code-editor/language-folding`, `code-editor/quick-start` |
 | 2 | `documents-and-lifecycle.md` | Documents & lifecycle | `capability` | `code-editor/document-controller`, `code-editor/external-changes` |
 | 3 | `editing-navigation-clipboard.md` | Editing, navigation & clipboard | `capability` | `code-editor/editing-navigation`, `code-editor/readonly-clipboard` |
 | 4 | `languages-and-syntax.md` | Languages & syntax | `capability` | `code-editor/language-gallery`, `code-editor/syntax-fallback`, `code-editor/invisibles-line-endings` |
@@ -67,7 +67,21 @@ from raw controller state:
 - retain technical probes as executable test seams, not as the primary explanation shown to users.
 
 Completion, diagnostics, and language folding establish the initial presentation patterns. Their
-visual review is a checkpoint before those patterns are applied to the remaining examples.
+visual review is the checkpoint before those patterns are applied to the remaining examples. The
+checkpoint passed on 2026-07-29. Every remaining example therefore follows the same visible
+teaching contract while retaining its existing focused behavior:
+
+- the foundation/lifecycle cohort covers Quick Start, document ownership, external changes,
+  editing/navigation, and read-only clipboard behavior;
+- the languages/search cohort covers adapter switching, fallback, invisibles, structural folding,
+  search, and replace; and
+- the platform/safety cohort covers LSP navigation, viewport/mouse behavior, large-document tiers,
+  themes, theme fallback, safe terminal text, and host recovery.
+
+The shared shell owns maximized responsive geometry, reset/disposal, and the teaching rail.
+Scenario definitions own source, language, instruction, named action, result wording, and the
+native state the reader should inspect. The original public action paths remain authoritative;
+teaching copy may describe their results but never substitute for them.
 
 The objective table is a capability summary. Before implementation,
 `test/contracts/code-editor/` supplies one typed behavior contract per example with its exact

@@ -83,7 +83,7 @@
         {
           "gate": "plan",
           "relation": "specified-by",
-          "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+          "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
           "upstream": "docs-website/SPEC-CODEEDITOR",
           "validatedAt": "2026-07-28T23:32:36Z"
         },
@@ -132,7 +132,7 @@
         {
           "gate": "execution",
           "relation": "specified-by",
-          "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+          "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
           "upstream": "docs-website/SPEC-CODEEDITOR",
           "validatedAt": "2026-07-28T23:32:36Z"
         },
@@ -336,7 +336,7 @@
         }
       ],
       "id": "SPEC-CODEEDITOR",
-      "revision": "sha256:beba7eab47a1534b1391f0f8a0777178b754b7182bdce2a790a586a0444111d3",
+      "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -444,7 +444,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
+          "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-29T07:04:47Z"
         }
@@ -459,10 +459,11 @@
         "Phase 6 feedback, date, and color: 44 focused cases and 408 docs-site cases passed after widget-bound rendering, real popup/input, date-boundary, pointer, and cleanup corrections.",
         "Phase 7 surface, general editing, and terminal: 39 focused cases and 454 docs-site cases passed after widget-bound surface, signal, scrollback, gadget, drag, and cleanup corrections.",
         "Phase 8 forms and files: 46 focused cases and 506 docs-site cases passed after real modal validation, submission, browsing, result, fault, path-confinement, save, backup, and cleanup corrections.",
-        "Phase 9 Data Grid hub: 100 focused cases and 629 docs-site cases passed after real editing, validation, personalization, bounded-source, export-safety, and template corrections."
+        "Phase 9 Data Grid hub: 100 focused cases and 629 docs-site cases passed after real editing, validation, personalization, bounded-source, export-safety, and template corrections.",
+        "Phase 10 Code Editor hub and Phase 10.7 flagship migration: 108 focused cases and 900 docs-site cases passed after distinct syntax-aware fixtures, native actions, complete compact teaching rails, race-safe reset, explicit structural folding, and independent review corrections."
       ],
       "id": "TEST-RD05",
-      "revision": "sha256:0394095d0e4cfe056dd06a373e2f5f35e0cc745218993fd8fa11c54a42689032",
+      "revision": "sha256:77d2dc036280fc299a359ac157d39f39e830533c20cb461df16f3ef5abc73628",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -488,10 +489,11 @@
         "Phase 6 verified: all six Feedback, Date, and Color pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
         "Phase 7 verified: all seven Surface, General Editing, and Terminal pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
         "Phase 8 verified: Form Dialog and all seven composable file-family pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
-        "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass."
+        "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass.",
+        "Phase 10.7 verified: all 21 Code Editor examples use the flagship teaching presentation; reviewer and auditor report zero residual findings and authoritative yarn verify passes."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
+      "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -513,7 +515,7 @@
         "The user confirmed the complete plan ambiguity register on 2026-07-29."
       ],
       "id": "DEC-RD05",
-      "revision": "sha256:21ac2ff2f075b85661dcbd7e773e3b383199def35b622879046f8ab209f9c03c",
+      "revision": "sha256:1eb25c349df4ed67f70fc55fa5823224df92593ec8eaba41b39c7313b9010d1e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -580,7 +582,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f8411060f1e11ac89580e4a3baa090d064ce7bbeb36db4133660eedb074becd9",
+          "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-29T07:04:47Z"
         }

@@ -4,7 +4,7 @@ import { buildCodeEditorLab } from '#code-editor-lab';
 
 export default defineExample({
   title: 'LSP Navigation',
-  blurb: 'Expose deterministic navigation and capability availability as host-owned effects.',
+  blurb: 'Validate a definition response and reveal its same-document target without filesystem authority.',
   build: (ctx) =>
     buildCodeEditorLab(ctx, {
       scenario: 'lsp-navigation',
