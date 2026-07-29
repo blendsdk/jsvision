@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { Button, createRoot } from '@jsvision/ui';
+import { Button, createRoot, layout, type LayoutBox } from '@jsvision/ui';
 import flowExample from '../examples/guides/layout-flow.js';
 import overlayExample from '../examples/guides/layout-overlays.js';
 import { EXAMPLES } from '../examples/index.js';
@@ -132,6 +132,29 @@ describe('Layout course content', () => {
     expect(GUIDE).toContain("import { Text, col, fixed, grow, row } from '@jsvision/ui';");
     expect(GUIDE).toContain("import { centered, stack, topRight } from '@jsvision/ui';");
     expect(GUIDE).toContain("import { layout, type LayoutBox } from '@jsvision/ui';");
+  });
+
+  test('should teach the exact proportional fallback when fractional minimums cannot all fit', () => {
+    const navigation: LayoutBox = {
+      props: { size: { kind: 'fr', weight: 1, min: 16 } },
+      children: [],
+    };
+    const editor: LayoutBox = {
+      props: { size: { kind: 'fr', weight: 3, min: 30 } },
+      children: [],
+    };
+    const root: LayoutBox = {
+      props: { direction: 'row' },
+      children: [navigation, editor],
+    };
+
+    const rects = layout(root, { width: 20, height: 1 });
+    const widths = [rects.get(navigation)?.width, rects.get(editor)?.width];
+
+    expect(widths).toEqual([7, 13]);
+    expect((widths[0] ?? 0) + (widths[1] ?? 0)).toBe(20);
+    expect(GUIDE).toMatch(/combined minimums[\s\S]*proportionally compresses[\s\S]*7 and 13 cells/iu);
+    expect(GUIDE).toMatch(/fixed and measured auto tracks[\s\S]*absolute rectangle[\s\S]*past its parent/iu);
   });
 
   test('should respect Guide, component, specialist, and API ownership boundaries', () => {
@@ -266,27 +289,48 @@ describe('Layout Overlay Workshop', () => {
         throw new Error('the overlay lesson is missing a layer');
       }
       const baseBounds = { ...base.bounds };
+      const badgeOrigin = absoluteOrigin(badge);
 
       app.loop.dispatch(key('c', { alt: true }));
       expect(card.state.visible).toBe(false);
       expect(base.bounds).toEqual(baseBounds);
       expect(frameText(app)).toContain('Card hidden');
+      expect(frameText(app)).not.toContain('Centered card');
 
       app.loop.dispatch(key('n', { alt: true }));
       expect(badge.state.visible).toBe(false);
       expect(base.bounds).toEqual(baseBounds);
+      expect(app.loop.renderRoot.buffer().get(badgeOrigin.x + 1, badgeOrigin.y)?.char).not.toBe('N');
       dispose();
     });
   });
 
-  test('should offer visible button controls for every documented overlay action', () => {
+  test('should make every documented overlay action immediately usable through visible buttons', () => {
     createRoot((dispose) => {
-      const { dialog } = buildOverlays();
-      const labels = viewsIn(dialog)
-        .filter((view): view is Button => view instanceof Button)
-        .map((button) => button.activation.label);
+      const { app, dialog, panels } = buildOverlays();
+      const buttons = viewsIn(dialog).filter((view): view is Button => view instanceof Button);
+      const card = panels.find((panel) => panel.lessonName === 'Centered card');
+      const badge = panels.find((panel) => panel.lessonName === 'NEW');
+      if (card === undefined || badge === undefined) {
+        throw new Error('the overlay lesson is missing a toggleable layer');
+      }
+      const badgeOrigin = absoluteOrigin(badge);
 
-      expect(labels).toEqual(['Toggle card', 'Toggle NEW']);
+      expect(buttons.map((button) => button.activation.label)).toEqual(['Toggle card', 'Toggle NEW']);
+
+      for (const button of buttons) {
+        const origin = absoluteOrigin(button);
+        dispatchExampleAction(app, {
+          kind: 'mouse',
+          gesture: 'click',
+          at: { x: origin.x + 1, y: origin.y },
+        });
+      }
+
+      expect(card.state.visible).toBe(false);
+      expect(badge.state.visible).toBe(false);
+      expect(frameText(app)).not.toContain('Centered card');
+      expect(app.loop.renderRoot.buffer().get(badgeOrigin.x + 1, badgeOrigin.y)?.char).not.toBe('N');
       dispose();
     });
   });

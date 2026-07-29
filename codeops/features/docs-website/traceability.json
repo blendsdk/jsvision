@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
+          "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -933,7 +933,9 @@
         "Phase 3 Layout re-audit: expected red was 9 passed and 3 failed; content and timing corrections then passed 12/12 reconciled specifications.",
         "Phase 3 Layout green checkpoint: docs-site typecheck and authoritative yarn verify passed with real resize, maximize, restore, Classic surface, padding, and clipping evidence.",
         "Phase 3 Layout hardening: 15/15 focused tests and authoritative yarn verify passed across repeated geometry, nested containment, interaction state, and hidden overlay state.",
-        "Phase 3 Layout synchronization: 22/22 focused Layout/catalog tests and docs-site typecheck passed; the curriculum map remains Complete."
+        "Phase 3 Layout synchronization: 22/22 focused Layout/catalog tests and docs-site typecheck passed; the curriculum map remains Complete.",
+        "Phase 3 review remediation: overlays disappear immediately after keyboard and mouse activation, infeasible fractional minimums are solver-proven, 23/23 focused tests and yarn verify pass.",
+        "Phase 3 fix-scoped re-review: both Major findings are resolved with no remaining Critical or Major finding."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -967,10 +969,11 @@
         "summary:Phase 2 independent review found two Major and one Minor issue; AR-18 applied every correction and the permitted re-review cleared all findings.",
         "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass.",
         "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass.",
-        "summary:Phase 3 task 3.3.2 passed 22 focused Layout/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry."
+        "summary:Phase 3 task 3.3.2 passed 22 focused Layout/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry.",
+        "summary:Phase 3 independent review found two Major issues; AR-21 applied both corrections and the permitted re-review cleared every Critical and Major finding."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
+      "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -992,10 +995,11 @@
         "The user confirmed all ten Guide-course planning decisions on 2026-07-29.",
         "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings.",
         "Auto-design AR-18 selected the mandatory compiler, runtime-probe, and engine-wording corrections for the Phase 2 quality findings.",
-        "Auto-design AR-19 preserved Phase 3 expected-red evidence through its green checkpoint; AR-20 aligned corner-layer evidence with the documented settled frame."
+        "Auto-design AR-19 preserved Phase 3 expected-red evidence through its green checkpoint; AR-20 aligned corner-layer evidence with the documented settled frame.",
+        "Auto-design AR-21 corrected both Phase 3 quality findings and the permitted re-review found no remaining Critical or Major issue."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:bbec5998d4e60a16f4d43d610754df716f9de1f167378e07dc9b00ad142ddefc",
+      "revision": "sha256:ce5fefabf00bcbf3a87eabab1078189d1d0fdcbc1a399f7b706cdf08a15ec5a4",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1064,7 +1068,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a2e2fbc8a3d5b94c95466cdcd66a786544bfd753ddc9061819a617959ef68655",
+          "revision": "sha256:075e97175485ead01c9b76bdf3840d3f5b54fa8cf873c4bc53917119b2fecb35",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1072,5 +1076,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:39:20Z"
+  "updated": "2026-07-29T20:48:00Z"
 }

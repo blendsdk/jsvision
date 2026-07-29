@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 20 items resolved
-> **Last Updated**: 2026-07-29 22:32
+> **Status**: ✅ GATE PASSED — all 21 items resolved
+> **Last Updated**: 2026-07-29 22:48
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -25,6 +25,7 @@
 | 18 | Quality review (runtime) | How should the two Major and one Minor Phase 2 findings be resolved without weakening the completed orientation contract? | Compile a real bounded NodeNext consumer and probe real failure boundaries while correcting the course / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every technical correction, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 3. | ✅ Resolved |
 | 19 | Execution (runtime) | How should Phase 3 preserve its re-audit's intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 3.1.1–3.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 3 task IDs and resume per-task commits after 3.2.4. | ✅ Resolved |
 | 20 | API accuracy (runtime) | Does a `topRight` stack layer have to re-anchor in the same render flush after resize or in its documented settled frame? | Verify the documented one-extra-frame settled state / change the correct lab to satisfy an unsupported same-flush assertion | **Authority: AI — delegated by `--auto-design`.** Preserve the public stack contract and flush the second settling frame before asserting the final anchor. | ✅ Resolved |
+| 21 | Quality review (runtime) | How should the two Major Phase 3 findings be resolved without weakening the completed Layout contract? | Invalidate overlay layout immediately and correct the infeasible-minimum lesson with rendered and solver evidence / demote and defer / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review before Phase 4. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -339,3 +340,36 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Corner placement becomes same-frame, no longer settles after the second frame,
   or any final geometry assertion fails.
+
+**AR-21 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness and evidence hardening inside the confirmed Layout course contract;
+  no product, scope, policy, or risk-acceptance choice is required.
+- **Objective:** Resolve every blocking Phase 3 review finding before the Reactive state re-audit.
+- **Decision:** Invalidate the shared overlay stack after every direct visibility mutation and teach
+  that mounted visibility state requires layout invalidation. Verify immediate rendered removal
+  through both documented Alt-hotkeys and visible mouse-button controls without an intervening
+  resize. Correct the fractional-minimum lesson to explain that feasible floors bind but
+  collectively infeasible floors proportionally compress, and prove the 16/30-to-7/13 result
+  through the public layout solver.
+- **Evidence:** The independent reviewer traced visibility to plain `ViewState` fields that require
+  explicit invalidation and showed that the previous resize masked stale composition. The public
+  apportionment solver proportionally redistributes an infeasible minimum set across the exact
+  available track.
+- **Rejected alternatives:** Demotion and deferral would leave known behavioral and conceptual
+  defects in a completed prerequisite course. Waiving either Major finding is prohibited by the
+  quality protocol.
+- **Strongest counterargument:** The status signal already requests repaint and the UI solver owns
+  its own unit tests. A repaint does not rebuild the stack's visible-child composition, and a
+  full-course guide must independently prove the exact behavior it teaches through public APIs.
+- **Confidence:** High — both corrections follow verified public source and are exercised through
+  the real application render/event loop and public solver.
+- **Hardening:** The one permitted fix-scoped re-review found no remaining Critical or Major issue.
+  The final correction passes 23/23 focused Layout/catalog tests, docs-site typecheck, and
+  authoritative `yarn verify`.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A hidden layer remains painted after either activation path, visibility
+  invalidation semantics change, infeasible fractional minimums stop filling the exact track, or
+  the documented 7/13 result changes.

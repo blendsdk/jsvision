@@ -166,9 +166,14 @@ import { grow, row } from '@jsvision/ui';
 const body = row(grow(navigation, 1, { min: 16 }), grow(editor, 3, { min: 30 }));
 ```
 
-A minimum is a floor, not a maximum. Do not add arbitrary minimums to every child: when their total
-exceeds the viewport, something still has to clip. Reserve floors for controls or workspaces that
-have a defensible minimum usable geometry.
+A fractional minimum is a floor while all requested floors fit. When the available track becomes
+smaller than their combined minimums, the solver proportionally compresses those flexible panes
+below their floors and still assigns every available cell. For example, panes with minimums 16 and
+30 resolve to 7 and 13 cells in a 20-cell track.
+
+Reserve minimums for controls or workspaces with defensible usable geometry. They cannot prevent
+every kind of clipping: fixed and measured auto tracks are removed before fractional space is
+solved, and an oversized fixed track or absolute rectangle can extend past its parent.
 
 ### Container size shorthand
 
@@ -322,8 +327,16 @@ import { col, fixed, grow } from '@jsvision/ui';
 const page = col(fixed(header, 1), grow(content), message !== null && fixed(messageView, 1));
 ```
 
-For a mounted view, setting `view.state.visible = false` removes it from layout and drawing. Its
-in-flow siblings reclaim the released space on the next reflow.
+For a mounted view, visibility is plain state. Change it and request layout invalidation so the
+parent recomposes immediately and in-flow siblings reclaim the released space:
+
+```ts
+messageView.state.visible = false;
+messageView.invalidateLayout();
+```
+
+When changing several siblings together, update all their visibility fields first and invalidate
+their shared layout container once.
 
 ### Measure translated controls before fixing a viewport
 

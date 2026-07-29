@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 22:39
+> **Last Updated**: 2026-07-29 22:48
 > **Progress**: 24/246 tasks (10%)
 > **CodeOps Artifact Schema**: 1
 
@@ -207,6 +207,26 @@ independent specification-first phase (AR-10).
 - [x] 3.3.2 Run the complete focused Layout suite and confirm the curriculum map remains synchronized ✅ (completed: 2026-07-29 22:39) — 22/22 focused Layout/catalog tests and docs-site typecheck passed; the exact source state retains its authoritative `yarn verify` pass and Complete map entry
 
 **Verify**: Layout spec/impl tests and docs-site typecheck
+
+**Phase quality review**:
+
+- Independent correctness review found two Major issues: overlay visibility mutations did not
+  invalidate layout and could leave hidden panels painted, while the minimum-sizing lesson
+  incorrectly claimed collectively infeasible fractional minimums must clip.
+- Auto-design AR-21 selected both technical corrections; no finding was waived. The laboratory now
+  invalidates its shared stack after each visibility change, and the course teaches both explicit
+  visibility invalidation and the solver's proportional compression fallback.
+- The corrected oracle drives both Alt-hotkeys and visible mouse-button controls without an
+  intervening resize, verifies immediate rendered disappearance, and proves through public
+  `layout()` that minimums 16 and 30 compress to 7 and 13 cells in a 20-cell track.
+- The correction passes 23/23 focused Layout/catalog tests, docs-site typecheck, and authoritative
+  `yarn verify`. The one permitted fix-scoped re-review found no remaining Critical or Major issue.
+- Security and performance auditors were explicitly skipped because the phase changes Guide prose,
+  bounded documentation interactions, and test evidence without a privileged-input boundary or
+  performance-critical runtime path.
+- Techdocs was not invoked because the phase changes consumer teaching and documentation-example
+  correctness without changing architecture, public APIs, integrations, data entities, or
+  infrastructure.
 
 ## Phase 4: Reactive state pilot re-audit
 
