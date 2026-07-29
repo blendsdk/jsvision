@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 15 items resolved
-> **Last Updated**: 2026-07-29 21:05
+> **Status**: ✅ GATE PASSED — all 16 items resolved
+> **Last Updated**: 2026-07-29 21:35
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -20,6 +20,7 @@
 | 13 | Execution (runtime) | How should auto-commit behave while the mandatory specification oracle intentionally makes the authoritative gate red? | Record the red tasks immediately and defer their commit until the first green checkpoint / commit a failing repository / skip or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Treat tasks 1.1.1–1.2.4 as one spec-to-green commit checkpoint, then resume per-task commits. | ✅ Resolved |
 | 14 | UX (runtime) | What single observable interaction proves the Introduction lab's application/runtime mental model? | Cycle a three-stage app → host runtime → terminal frame pipeline with visible keyboard-driven feedback / show a static greeting / expose host-specific controls | **Authority: AI — delegated by `--auto-design`.** Use a bounded three-stage runtime pipeline with an Alt-hotkey to advance and visible current-stage feedback. | ✅ Resolved |
 | 15 | API accuracy (runtime) | Which constructor belongs in the Introduction teaching snippet after the red oracle exposed a docs-only helper assumption? | Teach public `createApplication` / teach docs-only `demoApp` as if it were exported | **Authority: AI — delegated by `--auto-design`.** Correct the oracle before implementation and require `createApplication` from `@jsvision/ui`; retain `demoApp` only inside the live-example module. | ✅ Resolved |
+| 16 | Quality review (runtime) | How should the two Major Phase 1 review findings be resolved without weakening the approved course contract? | Correct the visible status-chord teaching and strengthen the immutable oracle across destinations, resize/maximize/restore, complete content, Classic surface, and reactive disposal / demote the course and defer correction / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted re-review before Phase 2. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -193,3 +194,34 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** `demoApp` becomes supported public API or `createApplication` ceases to be the
   public application constructor.
+
+**AR-16 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness and test-hardening changes inside the already approved Introduction
+  course contract; neither finding requires a product, scope, policy, or risk-acceptance decision.
+- **Objective:** Resolve every blocking Phase 1 review finding before the next course begins.
+- **Decision:** Display and bind **Alt+X** separately and accurately with
+  `statusItem('~Alt-X~ Quit', Commands.quit, 'Alt+X')`. Extend the immutable oracle to prove Node
+  terminal and browser-host destinations, render the visible quit chord, exercise intermediate
+  resize plus maximize/restore with complete content and shared template evidence, and prove the
+  stage-panel binding stops after application disposal. Correct the related practice exercise.
+- **Evidence:** The independent phase reviewer traced status rendering to the first `statusItem`
+  argument and chord matching to its `key` field. The reviewer also showed that the previous
+  maximize assertion could pass while meaningful content was clipped and that the catalog's runtime
+  destinations and reactive cleanup were not explicit oracle requirements.
+- **Rejected alternatives:** Demotion plus deferral would leave known defects in completed Phase 1
+  work and block dependent courses. Waiving either Major finding is forbidden by the quality
+  protocol and would weaken the confirmed completion contract.
+- **Strongest counterargument:** The shared template harness already covers frame, padding, Classic
+  surface, and clipping, so repeated calls add test cost. The new checks deliberately call that
+  shared evidence collector only at the three geometry states whose behavior must remain distinct.
+- **Confidence:** High — both fixes follow verified public source and reuse the real render/event
+  loop rather than introducing mocks.
+- **Hardening:** Independent phase review raised both findings. The correction must pass focused
+  course tests, docs-site typecheck, `yarn verify`, and one independent fix-scoped re-review.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The visible status API changes its label/key semantics, any geometry state
+  loses content or shared template evidence, reactive writes reach a disposed stage panel, or the
+  fix-scoped reviewer rejects the remediation.

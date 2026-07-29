@@ -9,9 +9,10 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { Button, createRoot } from '@jsvision/ui';
+import { Button, Commands, Text, createApplication, createRoot, signal, statusItem, statusLine } from '@jsvision/ui';
 import type { ExampleDefinition } from '../examples/_contract.js';
 import { EXAMPLES } from '../examples/index.js';
+import { RuntimeStagePanel } from '../src/example-fixtures/introduction/runtime-stage-panel.js';
 import { buildLabExample, collectTemplate1Evidence, frameText, key, viewsIn } from './example-lab-harness.js';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -40,8 +41,25 @@ describe('Introduction course content', () => {
 
     for (const lesson of requiredLessons) expect(GUIDE).toContain(lesson);
     expect(GUIDE).toMatch(/\bapplication\b[\s\S]*\b(?:host|runtime)\b[\s\S]*\b(?:terminal|frame)\b/iu);
+    expect(GUIDE).toMatch(/\bNode\b[\s\S]*\binteractive terminal\b/iu);
+    expect(GUIDE).toMatch(/\bbrowser host\b[\s\S]*\breal\s+application\b/iu);
     expect(GUIDE).toMatch(/```ts[\s\S]*from '@jsvision\/ui'[\s\S]*\bcreateApplication\s*\(/u);
+    expect(GUIDE).toContain("statusItem('~Alt-X~ Quit', Commands.quit, 'Alt+X')");
     expect(GUIDE).toContain(`<PlayExample id="${EXAMPLE_ID}"`);
+  });
+
+  test('should render the advertised quit chord and bind it to the standard command', () => {
+    const exit = statusItem('~Alt-X~ Quit', Commands.quit, 'Alt+X');
+    const app = createApplication({
+      content: new Text('Hello from JSVision'),
+      statusLine: statusLine([exit]),
+    });
+
+    app.loop.resize({ width: 80, height: 24 });
+    expect(frameText(app)).toContain('Alt-X Quit');
+    expect(exit.key).toBe('Alt+X');
+    expect(exit.command).toBe(Commands.quit);
+    app.loop.dispose();
   });
 
   test('should direct each beginner goal to a real follow-on course', () => {
@@ -109,28 +127,56 @@ describe('Introduction Runtime Lab', () => {
     });
   });
 
-  test('should expose visible controls and preserve responsive content on maximize and restore', async () => {
+  test('should preserve the complete Classic lesson through resize, maximize, and restore', async () => {
     const definition = await loadRuntimeExample();
 
     createRoot((dispose) => {
-      const { app, dialog } = buildLabExample(EXAMPLE_ID, definition, {
-        viewport: { width: 120, height: 40 },
-      });
+      const { app, dialog } = buildLabExample(EXAMPLE_ID, definition);
       const labels = viewsIn(dialog)
         .filter((view): view is Button => view instanceof Button)
         .map((button) => button.activation.label);
-      const compact = { ...dialog.bounds };
+      const requiredContent = ['Application', 'Host runtime', 'Terminal frame', 'Next stage', 'Reset', 'Alt+N next'];
 
       expect(labels).toEqual(['Next stage', 'Reset']);
+
+      app.loop.resize({ width: 100, height: 32 });
+      const resized = collectTemplate1Evidence(app, dialog);
+      const compact = { ...dialog.bounds };
+      for (const text of requiredContent) expect(frameText(app)).toContain(text);
+      expect(resized.dialogRect.width).toBeLessThan(resized.viewport.width);
+      expect(resized.dialogRect.height).toBeLessThan(resized.viewport.height - 2);
+
       dialog.zoom();
       app.loop.renderRoot.flush();
-      expect(dialog.bounds.width).toBeGreaterThan(compact.width);
-      expect(frameText(app)).toContain('Alt+N next');
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+      for (const text of requiredContent) expect(frameText(app)).toContain(text);
 
       dialog.zoom();
       app.loop.renderRoot.flush();
       expect(dialog.bounds).toEqual(compact);
+      collectTemplate1Evidence(app, dialog);
+      for (const text of requiredContent) expect(frameText(app)).toContain(text);
       dispose();
     });
+  });
+
+  test('should release the stage-panel reactive binding when its application is disposed', () => {
+    const active = signal(true);
+    let reads = 0;
+    const panel = new RuntimeStagePanel('Application', 'views + commands', () => {
+      reads += 1;
+      return active();
+    });
+    const app = createApplication({ content: panel });
+
+    app.loop.resize({ width: 80, height: 24 });
+    const mountedReads = reads;
+    active.set(false);
+    expect(reads).toBeGreaterThan(mountedReads);
+
+    app.loop.dispose();
+    const disposedReads = reads;
+    active.set(true);
+    expect(reads).toBe(disposedReads);
   });
 });

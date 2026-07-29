@@ -66,7 +66,7 @@ import { Commands, Text, createApplication, statusItem, statusLine } from '@jsvi
 
 const app = createApplication({
   content: new Text('Hello from JSVision'),
-  statusLine: statusLine([statusItem('~Q~uit', Commands.quit, 'Alt+X')]),
+  statusLine: statusLine([statusItem('~Alt-X~ Quit', Commands.quit, 'Alt+X')]),
 });
 
 const exitCode = await app.run();
@@ -77,8 +77,9 @@ Important details:
 
 - `content` is the application body. Passing a body creates a full-screen content application;
   omitting it gives you the classic `Desktop` window manager.
-- `statusItem()` makes the quit action visible instead of hiding it in code.
-- `~Q~` marks the accelerator in the label, while `Alt+X` is the displayed key chord.
+- `statusItem()` makes the quit action and its key chord visible instead of hiding them in code.
+- The first argument is the displayed label. `~Alt-X~` marks its emphasized segment, while the
+  third argument binds the real **Alt+X** chord.
 - `app.run()` resolves with the exit code carried by the quit command. Setting `process.exitCode`
   lets normal JavaScript cleanup finish.
 
@@ -146,8 +147,9 @@ desktops, windows, status composition, and the complete lifecycle.
    command. Advance the stages and check your answer.
 2. Change the greeting text in the snippet. Explain why this changes application state and the
    resulting frame but not the host runtime.
-3. Remove the visible status item without removing the quit command. The program can still be
-   terminated by emitted commands, but note why the interface is now harder to discover.
+3. As a reading exercise, temporarily remove the visible status item. Notice that this also removes
+   the snippet's **Alt+X** binding: registering `Commands.quit` does not create an input path by
+   itself. Restore the item before running the application.
 
 ## Learning path
 
