@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-29 21:39
+> **Last Updated**: 2026-07-29 21:49
 > **Progress**: 8/246 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
@@ -109,7 +109,14 @@ independent specification-first phase (AR-10).
   documentation examples, and their headless tests, with no privileged input or
   performance-critical path.
 - The correction passes 19/19 focused course/catalog tests, docs-site typecheck, and authoritative
-  `yarn verify`. One fix-scoped re-review remains before Phase 2.
+  `yarn verify`.
+- The one permitted fix-scoped re-review cleared the chord, destination, content, restore, cleanup,
+  and practice corrections but retained one Major because a terminal viewport resize does not
+  resize a compact dialog. The final correction now drives the real window-manager SE-grip path to
+  an intermediate size and verifies shared padding, frame, Classic surface, unclipped content,
+  maximize, and restore evidence. A third review is prohibited; focused and authoritative gates are
+  the closing evidence. The final state passes 19/19 focused tests, docs-site typecheck, and
+  authoritative `yarn verify`; Phase 1 is complete.
 
 ## Phase 2: Install & packages
 
