@@ -260,6 +260,29 @@ independent specification-first phase (AR-10).
 
 **Verify**: Reactive state spec/impl tests and docs-site typecheck
 
+### Phase 4 quality review
+
+- The independent reviewer found two Major issues and one Minor issue: both live examples created
+  build-time reactive work outside a host-owned lifetime, direct visibility guidance omitted
+  required layout invalidation, and repeated equal batch/reset actions claimed work that did not
+  rerun.
+- Auto-design AR-23 applied every technical correction without waiver. Both labs now bind their
+  complete reactive graphs to host cleanup with an idempotent dialog-unmount fallback. Authentic
+  host-lifecycle tests prove there is no unowned-root warning and no reactive work after teardown.
+- The guide now invalidates layout after direct mounted visibility changes and recommends one
+  shared-container invalidation for grouped sibling mutations. Batch/reset feedback now
+  distinguishes changed transactions from equal no-op writes.
+- The final corrective state passes 29/29 focused Reactive state/catalog tests, docs-site
+  typecheck, and authoritative `yarn verify`.
+- The one permitted fix-scoped re-review resolved both Major findings and the Minor finding with no
+  remaining Critical, Major, or Minor issue.
+- Security and performance auditors were not invoked because this correction contains bounded
+  documentation interactions and lifecycle ownership without a privileged-input boundary or
+  performance-critical runtime path.
+- Techdocs was not invoked because the phase changes consumer teaching and documentation-example
+  lifecycle correctness without changing architecture, public APIs, integrations, data entities,
+  or infrastructure.
+
 ## Phase 5: Codex plugin
 
 **Reference**: ST-14 · `03-02 §Authentic Substitutes` · AR-5

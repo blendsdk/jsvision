@@ -445,8 +445,17 @@ list.addDynamic(() =>
 updates each item's reactive `index`; removing a key disposes that item's scope. Keys must be unique
 among live items. In development, duplicates warn and resolve last-writer-wins.
 
-Use `Show`/`For` when absence should unmount and release a view. Toggle `view.state.visible` when the
-same instance and its internal state should remain alive while hidden.
+Use `Show`/`For` when absence should unmount and release a view. When the same instance and its
+internal state should remain alive while hidden, change its plain visibility state and request
+layout invalidation so geometry and painted cells update immediately:
+
+```ts
+details.state.visible = false;
+details.invalidateLayout();
+```
+
+When changing several siblings together, update all visibility fields first and invalidate their
+shared layout container once.
 
 ## Composition and integration
 

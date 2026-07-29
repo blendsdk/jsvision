@@ -4,12 +4,16 @@
  * The specifications prove the teaching outcomes. These checks cover the shared dialog's concrete
  * responsive geometry and the lifetime lesson's idempotent teardown mechanics.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { Group, createRoot } from '@jsvision/ui';
 import type { Application, Dialog } from '@jsvision/ui';
 import graphExample from '../examples/guides/reactive-graph.js';
 import lifetimeExample from '../examples/guides/reactive-lifetimes.js';
+import type { ExampleDefinition } from '../examples/_contract.js';
+import { demoShell } from '../src/demo-shell.js';
 import {
+  EXAMPLE_CAPS,
+  EXAMPLE_VIEWPORT,
   absoluteOrigin,
   buildLabExample,
   collectTemplate1Evidence,
@@ -36,6 +40,26 @@ function resizeDialog(app: Application, dialog: Dialog, widthDelta = 10, heightD
     at: grip,
     to: { x: grip.x + widthDelta, y: grip.y + heightDelta },
   });
+}
+
+/**
+ * Build through the browser-facing cleanup seam without an ambient reactive owner.
+ *
+ * This deliberately differs from the ordinary lab harness: a browser Play build happens before
+ * `mountApp`, so build-time computations must own themselves and register teardown explicitly.
+ */
+function buildThroughHostLifecycle(definition: ExampleDefinition): { app: Application; cleanups: Array<() => void> } {
+  const cleanups: Array<() => void> = [];
+  const app = demoShell({
+    build: (ctx) => definition.build(ctx),
+    title: definition.title,
+    kind: 'app',
+    caps: EXAMPLE_CAPS,
+    viewport: EXAMPLE_VIEWPORT,
+    onCleanup: (cleanup) => cleanups.push(cleanup),
+  });
+  app.loop.resize(EXAMPLE_VIEWPORT);
+  return { app, cleanups };
 }
 
 describe.each(LESSONS)('$id responsive implementation', ({ id, definition }) => {
@@ -83,21 +107,64 @@ test('repeated batched writes notify once per changed transaction and ignore equ
 
     app.loop.dispatch(key('b', { alt: true }));
     expect(frameText(app)).toContain('Effect runs: 2');
+    expect(frameText(app)).toContain('batch: price + quantity, one effect');
 
     app.loop.dispatch(key('b', { alt: true }));
     expect(frameText(app)).toContain('Effect runs: 2');
+    expect(frameText(app)).toContain('batch: values unchanged, no effect rerun');
 
     app.loop.dispatch(key('r', { alt: true }));
     expect(frameText(app)).toContain('Effect runs: 3');
+    expect(frameText(app)).toContain('reset batched to one consistent snapshot');
 
     app.loop.dispatch(key('r', { alt: true }));
     expect(frameText(app)).toContain('Effect runs: 3');
+    expect(frameText(app)).toContain('reset: values unchanged, no effect rerun');
 
     app.loop.dispatch(key('p', { alt: true }));
     app.loop.dispatch(key('q', { alt: true }));
     expect(frameText(app)).toContain('Effect runs: 5');
     expect(frameText(app)).toContain('$36');
     dispose();
+  });
+});
+
+describe.each([
+  {
+    id: 'graph',
+    definition: graphExample,
+    beforeCleanup: key('b', { alt: true }),
+    afterCleanup: key('p', { alt: true }),
+    beforeEvidence: 'Effect runs: 2',
+    afterEvidence: 'Effect runs: 2',
+  },
+  {
+    id: 'lifetimes',
+    definition: lifetimeExample,
+    beforeCleanup: key('a', { alt: true }),
+    afterCleanup: key('a', { alt: true }),
+    beforeEvidence: 'Runs 2 · cleanups 1 · scope active',
+    afterEvidence: 'Runs 2 · cleanups 2 · scope active',
+  },
+] as const)('$id host lifecycle', ({ definition, beforeCleanup, afterCleanup, beforeEvidence, afterEvidence }) => {
+  test('owns build-time computations and silences them when the browser host tears down', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { app, cleanups } = buildThroughHostLifecycle(definition);
+    try {
+      expect(cleanups).toHaveLength(1);
+      expect(warn.mock.calls.flat().join('\n')).not.toContain('created outside any createRoot() scope');
+
+      app.loop.dispatch(beforeCleanup);
+      expect(frameText(app)).toContain(beforeEvidence);
+
+      cleanups[0]?.();
+      app.loop.dispatch(afterCleanup);
+      app.loop.resize(EXAMPLE_VIEWPORT);
+      expect(frameText(app)).toContain(afterEvidence);
+    } finally {
+      app.loop.dispose();
+      warn.mockRestore();
+    }
   });
 });
 
