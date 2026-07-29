@@ -153,6 +153,10 @@ describe('Layout Overlay Workshop implementation', () => {
 
       app.loop.dispatch(key('c', { alt: true }));
       app.loop.dispatch(key('n', { alt: true }));
+      expect(card.state.visible).toBe(false);
+      expect(badge.state.visible).toBe(false);
+      expect(frameText(app)).not.toContain('Centered card');
+
       resizeDialog(app, dialog);
       dialog.zoom();
       app.loop.renderRoot.flush();

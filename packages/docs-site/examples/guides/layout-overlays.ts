@@ -31,12 +31,14 @@ export default defineExample({
       onClick: () => {
         cardVisible.update((value) => !value);
         card.state.visible = cardVisible();
+        stage.invalidateLayout();
       },
     });
     const toggleBadge = new Button('Toggle ~N~EW', {
       onClick: () => {
         badgeVisible.update((value) => !value);
         badge.state.visible = badgeVisible();
+        stage.invalidateLayout();
       },
     });
 
