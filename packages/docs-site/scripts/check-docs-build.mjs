@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { load as loadYaml } from 'js-yaml';
 import { API_MAP } from '../src/api/api-map.mjs';
 import { barrelExports } from '../src/api/barrel-exports.mjs';
+import { parseComponentTarget } from '../src/api/component-target.mjs';
 import { PACKAGES } from '../src/api/packages.mjs';
 import { validateApiMap } from '../src/api/validate-api-map.mjs';
 
@@ -579,13 +580,18 @@ check('API-LINKS', 'Every mapped apiPath resolves + every mapped component page 
       problems.push(`apiPath not built: ${link.apiPath}`);
       continue;
     }
-    const compRel = `${link.componentPage.replace(/^\//, '')}.html`;
+    const componentTarget = parseComponentTarget(link.componentPage);
+    const compRel = componentTarget.buildKey;
     if (!existsSync(join(distDir, compRel))) {
       problems.push(`component page not built: ${link.componentPage}`);
       continue;
     }
     const apiKey = pageKey(link.apiPath.replace(/^\//, ''));
     const html = readFileSync(join(distDir, compRel), 'utf8');
+    if (componentTarget.fragment && !html.includes(`id="${componentTarget.fragment}"`)) {
+      problems.push(`component heading not built: ${link.componentPage}`);
+      continue;
+    }
     if (!anchorHrefs(html).some((href) => resolveInternalLink(href, compRel) === apiKey)) {
       problems.push(`no forward link on ${link.componentPage} → ${link.apiPath}`);
     }

@@ -81,8 +81,8 @@ export interface DemoShellOptions {
   readonly theme?: Theme;
   /**
    * Show the `View ▸ Theme` preset submenu. Off by default: a theme switcher is a distraction in an
-   * example about something else, so only an example that is *about* theming asks for it. The theme
-   * commands stay wired either way — this hides the menu, it does not unwire the handlers.
+   * example about something else, so only examples that teach theme-dependent behavior ask for it.
+   * The theme commands stay wired either way — this hides the menu, it does not unwire the handlers.
    *
    * Applies to a `component` example, whose chrome this shell owns. An `app` example builds its own
    * menu bar, so it passes the same flag to {@link demoApp} instead.
@@ -278,7 +278,7 @@ function intendedSize(view: View): { width: number; height: number } {
 /**
  * The shared menu bar: System (About) + View (Depth, and Theme only when asked for) + (optionally) a
  * Window menu. The Theme submenu is opt-in because a preset switcher pulls attention away from the
- * component an example is there to show; the example about theming turns it on.
+ * component an example is there to show; theme-sensitive examples turn it on explicitly.
  */
 function buildMenuBar({
   windowMenu,
