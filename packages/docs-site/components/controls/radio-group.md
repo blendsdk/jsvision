@@ -1,63 +1,107 @@
 ---
-title: Radio group
-description: RadioGroup — a column of mutually-exclusive radio buttons bound to a number signal (the selected index).
+title: Radio Group
+description: Model one required choice with a vertically navigable RadioGroup bound to a selected-index signal.
 ---
 
-# Radio group
+# Radio Group
 
-`RadioGroup` is a column of mutually-exclusive radio buttons (`( )` / `(•)`) where **exactly one**
-item is selected. It binds two-way to a `Signal<number>` holding the selected index. `↑` / `↓` move
-**and** select — moving the highlight picks that option — and **Space**, a click, or **Alt**+a label's
-hotkey also select. Mark a hotkey with tildes, e.g. `'~L~eft'`.
+`RadioGroup` presents mutually exclusive choices as one focusable control. Its two-way
+`Signal<number>` stores the selected label's index, and moving the highlighted row with Up or Down
+selects immediately. That arrow behavior distinguishes a radio group from independent checkboxes.
+
+Use it when the user must choose exactly one option from a short, visible list. The `( )` and `(•)`
+markers keep the current value readable without relying on color.
 
 ## Usage
 
 ```ts
 import { RadioGroup, signal } from '@jsvision/ui';
 
-const align = signal(0); // 0 = Left
-const group = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: align });
-// Pressing ↓ moves the selection: align() becomes 1 (Center), then 2 (Right).
+const alignment = signal(0);
+const group = new RadioGroup({
+  labels: ['~L~eft', '~C~enter', '~R~ight'],
+  value: alignment,
+});
 ```
 
 ## Live example
 
-<PlayComingSoon title="Radio group" />
+<PlayExample id="controls/radio-group" title="Exclusive-selection laboratory" blurb="Move with arrows, choose by mouse or Alt-hotkey, and observe navigation skip a disabled option." />
+
+The selected name and numeric index update together. A disabled row remains visible so you can test
+wrapping navigation without losing the context of the complete choice set.
 
 ## Props
 
-`new RadioGroup(options)`.
+`RadioGroup` accepts `RadioGroupOptions`:
 
-| Prop     | Type                | Description                                         |
-| -------- | ------------------- | --------------------------------------------------- |
-| `labels` | `readonly string[]` | One label per option; each may mark a `~X~` hotkey. |
-| `value`  | `Signal<number>`    | Two-way binding to the selected option index.       |
+| Prop     | Type                | Purpose                                                       |
+| -------- | ------------------- | ------------------------------------------------------------- |
+| `labels` | `readonly string[]` | Ordered option captions; each may mark one `~X~` accelerator. |
+| `value`  | `Signal<number>`    | Two-way selected index and the initial highlighted row.       |
+
+Call `setItemEnabled(index, enabled)` to change whether a row can be selected. The method ignores an
+index outside the labels array.
+
+Seed the `Signal<number>` with a valid enabled index. The constructor uses that value as its initial
+highlight; later external writes repaint the marker but do not move the internal highlight.
+
+## Size and Layout
+
+The control needs one row per label. Each row reserves five cells for its `( )` marker and starts the
+caption in the sixth cell. Assign enough width for the longest display label after tilde markers are
+removed.
+
+Height smaller than the label count clips trailing choices; `RadioGroup` does not scroll internally.
+For a long or dynamic set, prefer a list-oriented control rather than hiding radio choices outside a
+scroll viewport.
+
+## Exclusive selection
+
+Selecting a row writes only its index, so two rows can never be on at the same time. Space and click
+select the highlighted or pointed row; Up and Down both move and commit selection. Re-selecting the
+current row writes the same value and leaves the display unchanged.
+
+Disabled choices are skipped during wrapped arrow movement and ignore click, Space, and accelerators.
+Disabling the currently bound index does not silently rewrite application state, so reconcile that
+value explicitly when availability rules change.
 
 ## Keyboard & mouse
 
-| Input          | Result                                                                 |
-| -------------- | ---------------------------------------------------------------------- |
-| **↑ / ↓**      | Move the highlight **and** select that option (wraps; skips disabled). |
-| **Space**      | Select the highlighted option.                                         |
-| **Click**      | Focus and select the clicked option.                                   |
-| **Alt**+hotkey | Select that option, from anywhere in the dialog.                       |
+| Input                    | Result                                                              |
+| ------------------------ | ------------------------------------------------------------------- |
+| **Up / Down**            | Move, wrap, skip disabled rows, and select the new highlighted row. |
+| **Space**                | Select the highlighted enabled row.                                 |
+| **Click** an enabled row | Focus the group, move the highlight, and select that row.           |
+| **Alt** + item hotkey    | Focus the group and select the matching enabled row dialog-wide.    |
 
-Because moving the highlight also selects, arrowing through a `RadioGroup` changes `value` on every
-step — that's what makes a radio group feel like one control rather than a stack of buttons.
+When no row is enabled, arrows are a handled no-op. This keeps focus stable rather than leaking
+navigation to a surrounding container.
 
-## Best practices
+## Best Practices
 
-- **Use it only for exclusive choices.** Exactly one option is always selected; if users should pick
-  several, use [`CheckGroup`](/components/controls/check-group).
-- **Seed `value` to a valid index.** The highlight starts on the currently-selected item.
+- Write labels as parallel alternatives and keep the list short enough to scan as one decision.
+- Use a valid initial index and update it when disabling the selected choice; do not make users infer
+  a hidden fallback.
+- Choose unique item accelerators inside the dialog.
+- Use [`CheckGroup`](/components/controls/check-group) when more than one item may be selected, or
+  [`Switch`](/components/controls/switch) for a single immediate on/off setting.
 
 ## Theming
 
-Shares the check/radio cluster roles: `clusterNormal`, `clusterSelected` (focused), `clusterShortcut`
-(the `~hotkey~` accent), and `clusterDisabled`.
+| Theme role        | Region                                               |
+| ----------------- | ---------------------------------------------------- |
+| `clusterNormal`   | Enabled rows outside the current keyboard highlight. |
+| `clusterSelected` | Highlighted row while the group owns focus.          |
+| `clusterShortcut` | Marked accelerator glyph on enabled rows.            |
+| `clusterDisabled` | Disabled marker, caption, and accelerator.           |
+
+The marker uses the same row role as its caption. Preserve a strong foreground distinction between
+normal and selected states, and keep the filled `•` glyph legible on both.
 
 ## Related
 
-- [Check group](/components/controls/check-group) — independent (multi-select) checkboxes.
-- [Switch](/components/controls/switch) — a single on/off toggle.
-- [API reference](/api/ui/classes/RadioGroup) — the generated `RadioGroup` signature.
+- [Check Group](/components/controls/check-group) — independent boolean choices.
+- [Multi-check Group](/components/controls/multi-check-group) — ordered multi-state choices.
+- [Switch](/components/controls/switch) — one immediate boolean choice.
+- [RadioGroup API](/api/ui/classes/RadioGroup) — generated `RadioGroupOptions` and methods.
