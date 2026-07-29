@@ -1,6 +1,7 @@
 import { APPLICATION_EXAMPLES } from './applications.js';
 import { CONTAINER_FILE_TABLE_EXAMPLES } from './containers-files-table.js';
 import { CONTROL_EXAMPLES } from './controls.js';
+import { FOUNDATION_EXAMPLES } from './foundations.js';
 import { THEMING_EXAMPLES } from './theming.js';
 import type { ExampleEntry } from './types.js';
 
@@ -23,6 +24,7 @@ export function composeExampleRegistry(...families: readonly (readonly ExampleEn
 /** Complete lazy example registry assembled from bounded family modules. */
 export const EXAMPLES = composeExampleRegistry(
   CONTROL_EXAMPLES,
+  FOUNDATION_EXAMPLES,
   CONTAINER_FILE_TABLE_EXAMPLES,
   APPLICATION_EXAMPLES,
   THEMING_EXAMPLES,
