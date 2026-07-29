@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f7d7666718c0b5877744a0aa35b6650e89fe669233d95cca6bf8b2b910ba4485",
+          "revision": "sha256:797473cd5ce3315747727bc9bca7f713876e7e615ed287d7c49dda3ab4d70d13",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -919,6 +919,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "Phase 1 Introduction: 19/19 focused course and catalog tests passed after review remediation.",
+        "Phase 1 Introduction: docs-site typecheck and authoritative yarn verify passed after review remediation."
+      ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
       "semanticSources": [
@@ -940,10 +944,12 @@
       "edges": [],
       "evidence": [
         "Execution entry: codeops/features/docs-website/plans/guide-course-system/99-execution-plan.md",
-        "summary:Execution started after the selected Guide plan passed its execution-entry readiness gate."
+        "summary:Execution started after the selected Guide plan passed its execution-entry readiness gate.",
+        "summary:Phase 1 independent review found two Major and one Minor issue; AR-16 applied every correction without waiver.",
+        "summary:Phase 1 review remediation passed 19 focused tests, docs-site typecheck, and authoritative yarn verify; fix-scoped re-review pending."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:f7d7666718c0b5877744a0aa35b6650e89fe669233d95cca6bf8b2b910ba4485",
+      "revision": "sha256:797473cd5ce3315747727bc9bca7f713876e7e615ed287d7c49dda3ab4d70d13",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -962,10 +968,11 @@
     {
       "edges": [],
       "evidence": [
-        "The user confirmed all ten Guide-course planning decisions on 2026-07-29."
+        "The user confirmed all ten Guide-course planning decisions on 2026-07-29.",
+        "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:6aa5e8a821ecffae4bb2905ddfaf3728adb2090eefdd4644863a9023ebeb0f2c",
+      "revision": "sha256:2cf74d8dc07a5523b03ecfd9b469fc7a1bddb8261530f66caa9f2a4f48847702",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1034,7 +1041,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f7d7666718c0b5877744a0aa35b6650e89fe669233d95cca6bf8b2b910ba4485",
+          "revision": "sha256:797473cd5ce3315747727bc9bca7f713876e7e615ed287d7c49dda3ab4d70d13",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1042,5 +1049,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T19:28:57Z"
+  "updated": "2026-07-29T19:39:55Z"
 }
