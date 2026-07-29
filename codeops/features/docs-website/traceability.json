@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:87fd15549de9ad1573b5c8488162d744d105ab85a956a792a5a73bed91ab8826",
+          "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -931,7 +931,8 @@
         "Phase 2 review remediation: real TypeScript consumer and Node CommonJS probes pass; invalid subpath and missing-extension fixtures fail as expected; 18/18 focused tests and yarn verify pass.",
         "Phase 2 fix-scoped re-review: both Major findings and the Minor engine wording issue are resolved with no remaining finding in scope.",
         "Phase 3 Layout re-audit: expected red was 9 passed and 3 failed; content and timing corrections then passed 12/12 reconciled specifications.",
-        "Phase 3 Layout green checkpoint: docs-site typecheck and authoritative yarn verify passed with real resize, maximize, restore, Classic surface, padding, and clipping evidence."
+        "Phase 3 Layout green checkpoint: docs-site typecheck and authoritative yarn verify passed with real resize, maximize, restore, Classic surface, padding, and clipping evidence.",
+        "Phase 3 Layout hardening: 15/15 focused tests and authoritative yarn verify passed across repeated geometry, nested containment, interaction state, and hidden overlay state."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -963,10 +964,11 @@
         "summary:Phase 2 task 2.3.1 added package-matrix, stale-version, and invalid-import hardening; 11 focused tests and yarn verify pass.",
         "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed.",
         "summary:Phase 2 independent review found two Major and one Minor issue; AR-18 applied every correction and the permitted re-review cleared all findings.",
-        "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass."
+        "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass.",
+        "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:87fd15549de9ad1573b5c8488162d744d105ab85a956a792a5a73bed91ab8826",
+      "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1060,7 +1062,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:87fd15549de9ad1573b5c8488162d744d105ab85a956a792a5a73bed91ab8826",
+          "revision": "sha256:3dac345f35a6c45f33ae0aed9cf856619b2502e2718316ec6b8dbf6e98950734",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1068,5 +1070,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T20:32:27Z"
+  "updated": "2026-07-29T20:37:56Z"
 }
