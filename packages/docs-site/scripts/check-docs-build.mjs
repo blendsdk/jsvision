@@ -17,12 +17,17 @@ import { fileURLToPath } from 'node:url';
 import { load as loadYaml } from 'js-yaml';
 import { API_MAP } from '../src/api/api-map.mjs';
 import { barrelExports } from '../src/api/barrel-exports.mjs';
+import { parseComponentTarget } from '../src/api/component-target.mjs';
 import { PACKAGES } from '../src/api/packages.mjs';
 import { validateApiMap } from '../src/api/validate-api-map.mjs';
+import { parseComponentCatalog, projectComponentNavigation } from '../src/components/component-catalog.mjs';
 
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(siteRoot, '..', '..');
 const distDir = join(siteRoot, '.vitepress', 'dist');
+const componentCatalogPath = join(siteRoot, 'components.json');
+const componentCatalog = parseComponentCatalog(readFileSync(componentCatalogPath, 'utf8'), componentCatalogPath);
+const componentNavigation = projectComponentNavigation(componentCatalog.entries);
 
 /** GitHub Pages project-site base — every root-absolute asset URL must carry it. */
 const BASE = '/jsvision/';
@@ -39,7 +44,7 @@ const SECTIONS = {
 
 /**
  * Every former repo-root `docs/` website page, at its new site route. Each must
- * render in `dist` and have a row in `redirects.md` (ST-11). The Technical
+ * render in `dist` and have a row in `redirects.md`. The Technical
  * Architecture landing (`docs/index.md`) folds into `/reference/architecture/`.
  */
 const MIGRATED_ROUTES = [
@@ -223,7 +228,7 @@ function metaContent(html, keyAttr, keyVal) {
   return null;
 }
 
-// --- ST-1: build produced a homepage with base-prefixed assets ------------
+// --- Build output and base-prefixed assets --------------------------------
 
 check('ST-1', 'Build output present + every root-absolute asset URL is base-prefixed', () => {
   if (!existsSync(distDir)) fail(`no build output at ${relative(siteRoot, distDir)} — run \`yarn docs:build\` first`);
@@ -243,7 +248,7 @@ check('ST-1', 'Build output present + every root-absolute asset URL is base-pref
   return `dist/index.html present; all asset URLs under ${BASE}`;
 });
 
-// --- ST-2: each nav section built a page ----------------------------------
+// --- Navigation sections --------------------------------------------------
 
 check('ST-2', 'Every nav section has a built HTML page', () => {
   const missing = Object.entries(SECTIONS)
@@ -253,7 +258,7 @@ check('ST-2', 'Every nav section has a built HTML page', () => {
   return `all ${Object.keys(SECTIONS).length} section pages built`;
 });
 
-// --- ST-4: no dead internal links + nav skeleton --------------------------
+// --- Internal links and navigation skeleton -------------------------------
 
 check('ST-4', 'No dead internal links + nav skeleton present', () => {
   const pages = htmlPages();
@@ -281,7 +286,7 @@ check('ST-4', 'No dead internal links + nav skeleton present', () => {
   return `${pages.length} pages, 0 broken links; nav skeleton present`;
 });
 
-// --- ST-5: local search index is emitted (no third-party search) ----------
+// --- Local search index ---------------------------------------------------
 
 check('ST-5', 'Local search index emitted (client-side, no external service)', () => {
   const indexChunks = walk(distDir)
@@ -291,7 +296,7 @@ check('ST-5', 'Local search index emitted (client-side, no external service)', (
   return `local search index present (${indexChunks.length} chunk(s))`;
 });
 
-// --- ST-6: TS code block renders with Shiki highlight + copy button --------
+// --- Syntax highlighting and copy affordance ------------------------------
 
 check('ST-6', 'A TS code block renders with Shiki markup and a copy button', () => {
   const hit = htmlPages().find((page) => {
@@ -315,7 +320,7 @@ check('MERMAID', '```mermaid fences render as diagrams (mermaid plugin active)',
   return `mermaid diagram container on ${withDiagram}; no raw fallbacks`;
 });
 
-// --- ST-7: both colour schemes defined + body contrast ≥ 4.5:1 ------------
+// --- Colour schemes and body contrast -------------------------------------
 
 check('ST-7', 'Light + dark schemes defined; body-text contrast ≥ 4.5:1 in each', () => {
   const cssPath = join(siteRoot, '.vitepress', 'theme', 'custom.css');
@@ -336,7 +341,7 @@ check('ST-7', 'Light + dark schemes defined; body-text contrast ≥ 4.5:1 in eac
   return 'both schemes defined; body-text contrast ≥ 4.5:1';
 });
 
-// --- ST-8: per-page SEO meta ----------------------------------------------
+// --- Per-page SEO metadata ------------------------------------------------
 
 check('ST-8', 'Unique <title> + og:title/description/image + twitter:card per page', () => {
   const pages = htmlPages();
@@ -364,7 +369,7 @@ check('ST-8', 'Unique <title> + og:title/description/image + twitter:card per pa
   return `${pages.length} pages: unique titles + og:* + twitter:card`;
 });
 
-// --- ST-9: meta CSP present, safe, and honestly enforced ------------------
+// --- Meta CSP enforcement -------------------------------------------------
 
 check('ST-9', 'Meta CSP on every page: no unsafe-eval, strict script-src hashes all inline scripts', () => {
   const problems = [];
@@ -381,7 +386,7 @@ check('ST-9', 'Meta CSP on every page: no unsafe-eval, strict script-src hashes 
     if (/'unsafe-inline'/.test(scriptSrc)) problems.push(`${page}: script-src allows 'unsafe-inline'`);
 
     // Every inline script VitePress emits must be covered by a hash, or the
-    // strict policy would block it at runtime (the PF-003 concern).
+    // strict policy would block it at runtime.
     for (const body of inlineScripts(html)) {
       if (!body.trim()) continue;
       const hash = scriptHash(body);
@@ -393,7 +398,7 @@ check('ST-9', 'Meta CSP on every page: no unsafe-eval, strict script-src hashes 
   return 'meta CSP present; no unsafe-eval; strict script-src hashes every inline script';
 });
 
-// --- ST-10: static SEO assets ---------------------------------------------
+// --- Static SEO assets ----------------------------------------------------
 
 check('ST-10', 'Static SEO assets present (sitemap.xml, robots.txt, favicon, 404.html)', () => {
   const missing = ['sitemap.xml', 'robots.txt', '404.html'].filter((f) => !existsSync(join(distDir, f)));
@@ -402,7 +407,7 @@ check('ST-10', 'Static SEO assets present (sitemap.xml, robots.txt, favicon, 404
   return 'sitemap.xml, robots.txt, favicon, 404.html all present';
 });
 
-// --- ST-11: docs/ migration completeness ----------------------------------
+// --- Documentation migration completeness --------------------------------
 
 check('ST-11', 'Every former docs/ page renders in dist and has a redirects.md row', () => {
   const redirectsPath = join(siteRoot, 'redirects.md');
@@ -419,7 +424,7 @@ check('ST-11', 'Every former docs/ page renders in dist and has a redirects.md r
   return `${MIGRATED_ROUTES.length} migrated pages rendered + mapped in redirects.md`;
 });
 
-// --- ST-12: the load-bearing spec-test oracle stays in place --------------
+// --- Load-bearing specification oracle -----------------------------------
 
 check('ST-12', 'docs/acceptance-gate.md kept in place (spec-test oracle intact)', () => {
   const gate = join(repoRoot, 'docs', 'acceptance-gate.md');
@@ -428,7 +433,7 @@ check('ST-12', 'docs/acceptance-gate.md kept in place (spec-test oracle intact)'
   return 'docs/acceptance-gate.md present (gate.spec oracle preserved)';
 });
 
-// --- ST-14: deploy workflow is well-formed and secret-safe ----------------
+// --- Deploy workflow safety ------------------------------------------------
 
 check('ST-14', 'docs.yml parses, triggers on site paths, safe permissions, only GITHUB_TOKEN', () => {
   const wfPath = join(repoRoot, '.github', 'workflows', 'docs.yml');
@@ -452,7 +457,7 @@ check('ST-14', 'docs.yml parses, triggers on site paths, safe permissions, only 
   const pushBranches = [].concat(on.push.branches ?? []);
   if (!pushBranches.includes('master')) fail('`push` does not target `master`');
 
-  // Both triggers must scope to the site inputs and NOT to docs/** (PF-009):
+  // Both triggers must scope to the site inputs and NOT to docs/**:
   // after migration docs/ holds only the non-website acceptance-gate.
   const required = ['packages/docs-site/**', '.github/workflows/docs.yml'];
   for (const [name, trig] of [
@@ -502,6 +507,73 @@ check('LIVE-EXAMPLES', 'Every live-example page mounts a labelled Play component
   if (problems.length) fail(`${problems.length} live-example issue(s):\n    ${problems.join('\n    ')}`);
   return `${pages.length} live-example pages: labelled Play component mounted`;
 });
+
+check(
+  'COMPONENT-CATALOG',
+  'Catalog routes, anchors, sidebars, labels, overview links, and stale routes are valid',
+  () => {
+    const problems = [];
+    const overview = readFileSync(join(distDir, 'components/index.html'), 'utf8');
+    const htmlByTarget = new Map();
+
+    for (const entry of componentCatalog.entries) {
+      const target = parseComponentTarget(entry.page);
+      const builtPath = join(distDir, target.buildKey);
+      if (!existsSync(builtPath)) {
+        problems.push(`${entry.id}: route not built (${entry.page})`);
+        continue;
+      }
+      const html = readFileSync(builtPath, 'utf8');
+      htmlByTarget.set(entry.id, html);
+      if (target.fragment && !html.includes(`id="${target.fragment}"`)) {
+        problems.push(`${entry.id}: heading not built (#${target.fragment})`);
+      }
+      if ((html.match(/<h1\b/g) ?? []).length !== 1) {
+        problems.push(`${entry.id}: expected exactly one rendered H1`);
+      }
+      if (entry.kind === 'component' && entry.complexity === 'standard' && entry.primary) {
+        const route = target.route.replace(/^\//, '');
+        if (!overview.includes(`href="${BASE}${route}`)) {
+          problems.push(`${entry.id}: Components overview does not link the primary page`);
+        }
+      }
+    }
+
+    for (const [hub, items] of [
+      ['data-grid', componentNavigation.dataGrid],
+      ['code-editor', componentNavigation.codeEditor],
+    ]) {
+      const labels = items.map((item) => item.text);
+      if (new Set(labels).size !== labels.length) {
+        problems.push(`${hub}: duplicate sidebar label`);
+      }
+      for (const item of items) {
+        const pageHtml = htmlByTarget.get(item.id);
+        if (pageHtml === undefined) continue;
+        for (const expected of items) {
+          const route = expected.link.replace(/^\//, '');
+          if (!pageHtml.includes(`href="${BASE}${route}`)) {
+            problems.push(`${item.id}: specialist sidebar is missing ${expected.id}`);
+            break;
+          }
+        }
+      }
+    }
+
+    const staleRoutes = ['/components/table/data-grid', '/guide/code-editor'];
+    for (const page of htmlPages()) {
+      const html = readFileSync(join(distDir, page), 'utf8');
+      for (const staleRoute of staleRoutes) {
+        if (html.includes(staleRoute)) problems.push(`${page}: contains stale route ${staleRoute}`);
+      }
+    }
+
+    if (problems.length) {
+      fail(`${problems.length} component integration issue(s):\n    ${problems.slice(0, 12).join('\n    ')}`);
+    }
+    return `${componentCatalog.entries.length} catalog entries: routes, anchors, sidebars, labels, overview, and stale-route scan pass`;
+  },
+);
 
 // --- API reference gate ---------------------------------------------------
 // The generated markdown lives under packages/docs-site/api/<pkg>/ (gitignored);
@@ -579,13 +651,18 @@ check('API-LINKS', 'Every mapped apiPath resolves + every mapped component page 
       problems.push(`apiPath not built: ${link.apiPath}`);
       continue;
     }
-    const compRel = `${link.componentPage.replace(/^\//, '')}.html`;
+    const componentTarget = parseComponentTarget(link.componentPage);
+    const compRel = componentTarget.buildKey;
     if (!existsSync(join(distDir, compRel))) {
       problems.push(`component page not built: ${link.componentPage}`);
       continue;
     }
     const apiKey = pageKey(link.apiPath.replace(/^\//, ''));
     const html = readFileSync(join(distDir, compRel), 'utf8');
+    if (componentTarget.fragment && !html.includes(`id="${componentTarget.fragment}"`)) {
+      problems.push(`component heading not built: ${link.componentPage}`);
+      continue;
+    }
     if (!anchorHrefs(html).some((href) => resolveInternalLink(href, compRel) === apiKey)) {
       problems.push(`no forward link on ${link.componentPage} → ${link.apiPath}`);
     }

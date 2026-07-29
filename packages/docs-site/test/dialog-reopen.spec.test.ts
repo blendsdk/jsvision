@@ -1,14 +1,12 @@
 /**
  * Specification test (immutable oracle) — dialog reopen (bug #7).
  *
- * The two dialog examples must be reopenable: after `build()` a modal dialog is
- * open; closing it (OK / Cancel / Esc) leaves the stage Window and its "Open the
- * dialog" Button alive on the desktop; emitting `demo.openDialog` re-activates a
- * fresh modal. Driven headlessly through the loop — no browser.
+ * The two rebuilt dialog laboratories must keep their template1 teaching dialog mounted while a
+ * real modal opens, cancels, and opens again. Driven headlessly through the loop — no browser.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { Dialog, Window, Button, Commands, createRoot } from '@jsvision/ui';
+import { Dialog, createRoot } from '@jsvision/ui';
 import type { Application, Desktop, View } from '@jsvision/ui';
 import formDialog from '../examples/controls/form-dialog.js';
 import fileDialog from '../examples/files/file-dialog.js';
@@ -36,12 +34,7 @@ function openDialogs(app: Application): View[] {
   return desktopOf(app).children.filter((c) => c instanceof Dialog);
 }
 
-/** The stage window — the only plain `Window` on the desktop (a `Dialog` is a `Window` subclass). */
-function stageWindow(app: Application): Window | undefined {
-  return desktopOf(app).children.find((c): c is Window => c instanceof Window && !(c instanceof Dialog));
-}
-
-/** Build one dialog example, run the open → close → reopen cycle, and assert the stage survives. */
+/** Build one laboratory, run the modal open → cancel → reopen cycle, and assert the lab survives. */
 async function assertReopenable(build: (ctx: { width: number; height: number; caps: typeof caps }) => Application) {
   let app!: Application;
   let dispose!: () => void;
@@ -49,35 +42,23 @@ async function assertReopenable(build: (ctx: { width: number; height: number; ca
     dispose = d;
     app = build({ width: VP.width, height: VP.height, caps });
   });
-  await tick(); // let the initial execView settle
-
-  // After build: a modal dialog is open, and a stage window hosts the reopen button.
-  expect(openDialogs(app).length, 'a modal is open after build').toBe(1);
-  const stage = stageWindow(app);
-  expect(stage, 'a stage window hosts the reopen affordance').toBeDefined();
-  expect(
-    stage!.children.some((c) => c instanceof Button),
-    'the stage carries an "Open the dialog" button',
-  ).toBe(true);
-
-  // Close it (Cancel always closes): the dialog is removed, the stage + button survive.
-  app.loop.emitCommand(Commands.cancel);
+  expect(openDialogs(app).length, 'the template1 teaching dialog is mounted').toBe(1);
+  app.loop.dispatch({ type: 'key', key: 'o', ctrl: false, alt: true, shift: false });
+  expect(openDialogs(app).length, 'the real modal opens over the laboratory').toBe(2);
+  app.loop.dispatch({ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false });
   await tick();
-  expect(openDialogs(app).length, 'the dialog closed and was removed').toBe(0);
-  expect(stageWindow(app), 'the stage window survives the close').toBeDefined();
+  expect(openDialogs(app).length, 'cancelling removes only the real modal').toBe(1);
 
-  // Reopen via the command the stage button emits: a fresh modal re-activates.
-  app.loop.emitCommand('demo.openDialog');
-  await tick();
-  expect(openDialogs(app).length, 'emitting demo.openDialog re-activates a modal').toBe(1);
+  app.loop.dispatch({ type: 'key', key: 'o', ctrl: false, alt: true, shift: false });
+  expect(openDialogs(app).length, 'the laboratory can open a fresh modal').toBe(2);
 
   dispose();
 }
 
-test('ST-C1: the form-dialog example reopens (build → close → demo.openDialog)', async () => {
+test('ST-C1: the form-dialog laboratory reopens its real modal', async () => {
   await assertReopenable((ctx) => formDialog.build(ctx) as Application);
 });
 
-test('ST-C1: the file-dialog example reopens (build → close → demo.openDialog)', async () => {
+test('ST-C1: the file-dialog laboratory reopens its real modal', async () => {
   await assertReopenable((ctx) => fileDialog.build(ctx) as Application);
 });

@@ -1,93 +1,116 @@
 ---
 title: Dialog
-description: Dialog — a movable, closable gray dialog window shown modally via execView, with a valid() close-gate over its hosted controls.
+description: Present modal or modeless work in a centered Dialog with validation-aware commands and familiar Classic window chrome.
 ---
 
 # Dialog
 
-`Dialog` is a modal or modeless window painted in the gray `dialog` frame role — a title and a close
-box, but no zoom box and not resizable. Host form controls in it ([`Input`](/components/controls/input),
-[`Check group`](/components/controls/check-group), [buttons](/components/controls/button), …); their
-bound signals hold the form data.
+`Dialog` is a focused task surface built on [`Window`](/components/application/window). It uses the
+Classic dialog role, includes movable and closable frame chrome, and deliberately omits resize and
+zoom affordances. Add controls as children, then either execute it modally or register it as a
+modeless desktop window.
 
-Show it **modally** with the event loop's `execView(dialog)`, which returns a promise that resolves to
-the terminating command (`'ok'` / `'cancel'` / `'yes'` / `'no'`) once it closes. Add it to a desktop
-instead (`desktop.add(dialog)`) to show it **modeless**, as an ordinary window.
+The important distinction is ownership: `app.loop.execView(dialog)` temporarily owns a modal dialog
+and resolves its terminating command, while `app.desktop.addWindow(dialog)` leaves lifetime and
+commands to the application.
 
 ## Usage
 
 ```ts
-import { Dialog, Input, Label, okButton, cancelButton, signal, range } from '@jsvision/ui';
+import { Dialog, Input, at, okButton, signal } from '@jsvision/ui';
 
-const age = signal('30');
-// A width/height with no explicit rect auto-centers the dialog and casts a drop-shadow.
-const dialog = new Dialog({ title: ' Person ', width: 34, height: 9 });
-const input = new Input({ value: age, validator: range(0, 120) });
-dialog.add(new Label('~A~ge (0–120)', input));
-dialog.add(input);
-dialog.add(okButton());
-dialog.add(cancelButton());
+const name = signal('');
+const dialog = new Dialog({ title: ' Profile ', width: 38, height: 9 });
+dialog.add(at(new Input({ value: name }), 1, 1, 30, 1));
+dialog.add(at(okButton(), 13, 4, 10, 2));
 
-// Resolves to 'ok' only once Age validates; an out-of-range Age keeps the dialog open.
-const command = await loop.execView<string>(dialog);
+const command = await app.loop.execView(dialog);
 ```
 
 ## Live example
 
-<PlayComingSoon title="Dialog" />
+<PlayExample id="containers/dialog" title="Dialog command laboratory" blurb="Inspect automatic centering, one-cell padding, validation-gated OK behavior, and the cancel bypass in a real Classic shell." />
 
-## Props
+The laboratory keeps its host dialog open so you can repeat every case. Its command readout calls
+the same public `valid(command)` gate that a modal host uses before resolving.
 
-`new Dialog(options)`.
+## Props and public state
 
-| Prop       | Type      | Default           | Description                                                                         |
-| ---------- | --------- | ----------------- | ----------------------------------------------------------------------------------- |
-| `title`    | `string`  | —                 | Centered in the top border.                                                         |
-| `width`    | `number`  | —                 | Dialog width; giving `width`+`height` (no `rect`) auto-centers.                     |
-| `height`   | `number`  | —                 | Dialog height; giving `width`+`height` (no `rect`) auto-centers.                    |
-| `rect`     | `Rect`    | —                 | Explicit absolute placement — honored verbatim, **not** centered.                   |
-| `centered` | `boolean` | `true` for a size | Center in the parent; defaults `true` with `width`/`height`, `false` with a `rect`. |
+`Dialog` accepts `DialogOptions`:
 
-## Keyboard & mouse
+| Prop               | Type      | Default  | Purpose                                                  |
+| ------------------ | --------- | -------- | -------------------------------------------------------- |
+| `title`            | `string`  | empty    | Centered frame caption.                                  |
+| `width` / `height` | `number`  | —        | Size-only placement that auto-centers in the parent.     |
+| `rect`             | `Rect`    | —        | Explicit position and size; treated as manual placement. |
+| `centered`         | `boolean` | inferred | Explicitly opt into or out of parent centering.          |
 
-| Input                         | Result                                                                |
-| ----------------------------- | --------------------------------------------------------------------- |
-| **Esc** (modal)               | Resolve as `cancel` (bypasses the `valid()` gate).                    |
-| **Click** the frame close box | Resolve as `cancel` (modal), or close the window (modeless).          |
-| **Drag** the title bar        | Move the window.                                                      |
-| An **OK / Yes / No** button   | Run the `valid()` gate; close only if every hosted control validates. |
-| A **Cancel** button           | Always closes (bypasses the gate).                                    |
+Inherited `closable` and `movable` remain available. Dialog construction sets `resizable` and
+`zoomable` to `false`, enables a shadow, and roots an accelerator scope for its child controls.
+Standard `Commands` values provide the modal termination vocabulary.
 
-The close-gate is the key behaviour: `cancel` always closes, while `ok` / `yes` / `no` close only if
-every hosted control's own `valid()` passes — otherwise the dialog stays open and focus jumps to the
-first invalid control.
+## Size and Layout
 
-## Sizing & layout
+A width and height without a positioned `rect` are the safest default: the parent computes the
+center on every reflow, and the dialog retains visible desktop margin as the viewport changes.
+Dialog layout includes one cell of internal padding; position children relative to that content
+area with `at`, `row`, `col`, or the other public layout helpers.
 
-Prefer `width` + `height` — the dialog auto-centers in its parent and casts a drop-shadow. An explicit
-`rect` is a manual placement, honored as given (set `centered: true` to override). The frame reserves a
-1-cell border via `padding: 1`, so lay hosted controls out relative to the interior.
+An explicit `rect` is honored verbatim. Use it only when position itself carries meaning, because
+manual coordinates can clip on smaller terminals. Content still clips at the dialog bounds, and
+the frame consumes the outermost row and column on each side.
 
-## Best practices
+## Modality and validation
 
-- **Size, don't place.** Pass `width`/`height` and let the dialog center itself; reach for an explicit
-  `rect` only when you truly need a fixed screen position.
-- **Bind the form to signals.** Each hosted control's bound signal _is_ the form's data model; read
-  them after `execView` resolves to `'ok'`.
-- **Use the standard button helpers.** `okButton()`, `cancelButton()`, `yesButton()`, `noButton()`
-  (and the `okCancelButtons()` / `yesNoButtons()` pairs) emit the exact terminating commands the gate
-  understands.
-- **Trust the gate.** You do not need to pre-check fields before closing — an invalid `ok` is vetoed
-  and refocuses the offending control for you.
+`execView` installs a modal host, mounts the dialog over the application, moves focus into it, and
+returns a promise for the terminating command. `ok`, `yes`, and `no` call `valid(command)` first.
+The default implementation walks descendants depth-first and calls each child control's zero-arg
+`valid()` method; the first invalid child receives focus and the dialog stays open.
+
+This makes validation compositional. An [`Input`](/components/controls/input) owns its validator,
+while the dialog owns only the decision to terminate.
+
+```ts
+import { Dialog, Input, range, signal } from '@jsvision/ui';
+
+const age = new Input({ value: signal('17'), validator: range(18, 120) });
+const dialog = new Dialog({ width: 34, height: 8 });
+dialog.add(age);
+
+dialog.valid('ok'); // false: age blocks termination
+dialog.valid('cancel'); // true: cancellation never traps the user
+```
+
+## Closing and commands
+
+Standard buttons emit `Commands.ok`, `Commands.cancel`, `Commands.yes`, or `Commands.no`. A modal
+dialog intercepts those commands, applies enablement and validation, then asks its modal host to
+resolve. Escape and the frame close box travel through the cancel path, so they also end modality
+without leaving a dangling promise.
+
+A modeless dialog has no modal host. It behaves as an ordinary desktop window: the application
+decides what button commands mean, while frame movement, activation, and closing follow `Window`
+rules.
+
+## Best Practices
+
+- Prefer size-only construction so the dialog remains centered across terminal sizes.
+- Keep validation in the controls that own the data; let the dialog aggregate their result.
+- Always offer cancel or an equivalent escape path, even when the task is destructive.
+- Use unique `~accelerator~` letters inside one dialog scope; duplicate accelerators are reported in
+  development.
+- Choose modeless behavior only when users genuinely need to interact with work behind the dialog.
 
 ## Theming
 
-The gray `dialog` role colours the chrome: `border` and `title` for the frame lines and title text,
-`icon` for the close-box `[×]` accent. Hosted controls use their own roles.
+The frame and interior use the `dialog` role, including the Classic menu-bar-compatible gray
+surface. An inactive modeless dialog may expose inherited `windowInactive` chrome. Child controls
+retain their own roles, so verify input text, focus, error text, and buttons against the dialog
+surface rather than overriding the background manually.
 
 ## Related
 
-- [Form dialog](/components/controls/form-dialog) — a worked dialog assembling several controls.
-- [File dialog](/components/files/file-dialog) — a `Dialog` subclass for picking files.
-- [Button](/components/controls/button) — the OK / Cancel controls that terminate a dialog.
-- [API reference](/api/ui/classes/Dialog) — the generated `Dialog` signature.
+- [Window](/components/application/window) — movable, resizable desktop surface underlying Dialog.
+- [Input](/components/controls/input) — validation-aware field used by the close gate.
+- [Form Dialog](/components/controls/form-dialog) — schema-driven form composition.
+- [Dialog API](/api/ui/classes/Dialog) — generated `Dialog`, `DialogOptions`, and command details.

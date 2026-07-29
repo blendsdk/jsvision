@@ -30,25 +30,32 @@ cal.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 
 
 ## Live example
 
-<PlayComingSoon title="Calendar" />
+<PlayExample id="date/calendar"
+  title="Calendar Lab"
+  blurb="Navigate a deterministic civil-date grid with week numbers, inclusive bounds, and disabled Sundays."
+/>
 
 ## Props
 
 `new Calendar(options)`.
 
-| Prop              | Type                                       | Default         | Description                                                     |
-| ----------------- | ------------------------------------------ | --------------- | --------------------------------------------------------------- |
-| `value`           | `Signal<CalendarDate \| null>`             | —               | Two-way selected day (`null` = none).                           |
-| `today`           | `CalendarDate`                             | system clock    | The day highlighted as "today"; pass it for reproducible tests. |
-| `min`             | `CalendarDate`                             | —               | Inclusive lower bound — the cursor never leaves `[min, max]`.   |
-| `max`             | `CalendarDate`                             | —               | Inclusive upper bound.                                          |
-| `isDisabled`      | `(date: CalendarDate) => boolean`          | —               | Dims a day: navigable but not committable.                      |
-| `firstDayOfWeek`  | `0 \| 1`                                   | `0` (Sunday)    | `1` = Monday (ISO).                                             |
-| `showWeekNumbers` | `boolean`                                  | `false`         | Leading ISO week-number column (adds 3 columns).                |
-| `density`         | `'compact' \| 'comfortable' \| 'spacious'` | `'comfortable'` | Trades screen space for roominess (see Sizing).                 |
-| `onChange`        | `(date: CalendarDate) => void`             | —               | Fired when `value` changes.                                     |
+The public surface is `Calendar`, `CalendarOptions`, the plain `CalendarDate` value, and its two-way
+`Signal<CalendarDate | null>`.
 
-## Keyboard & mouse
+| Prop              | Type                                       | Default         | Description                                                              |
+| ----------------- | ------------------------------------------ | --------------- | ------------------------------------------------------------------------ |
+| `value`           | `Signal<CalendarDate \| null>`             | —               | Two-way selected day (`null` = none).                                    |
+| `i18n`            | `I18n`                                     | English UI      | Localized month, weekday, footer, and accessible labels.                 |
+| `today`           | `CalendarDate`                             | system clock    | The day highlighted as "today"; pass it for reproducible tests.          |
+| `min`             | `CalendarDate`                             | —               | Inclusive lower bound — the cursor never leaves `[min, max]`.            |
+| `max`             | `CalendarDate`                             | —               | Inclusive upper bound.                                                   |
+| `isDisabled`      | `(date: CalendarDate) => boolean`          | —               | Dims a day: navigable but not committable.                               |
+| `firstDayOfWeek`  | `0 \| 1`                                   | locale-derived  | Explicit `0` = Sunday, `1` = Monday; English without `i18n` uses Sunday. |
+| `showWeekNumbers` | `boolean`                                  | `false`         | Leading ISO week-number column (adds 3 columns).                         |
+| `density`         | `'compact' \| 'comfortable' \| 'spacious'` | `'comfortable'` | Trades screen space for roominess (see Sizing).                          |
+| `onChange`        | `(date: CalendarDate) => void`             | —               | Fired when `value` changes.                                              |
+
+## Navigation and selection
 
 | Input                   | Result                                                    |
 | ----------------------- | --------------------------------------------------------- |
@@ -62,6 +69,13 @@ cal.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 
 | **Click** a day         | Move the cursor there and commit it.                      |
 | Header **↑↓** arrows    | Change the visible month (left pair) / year (right pair). |
 | Footer **Today** button | Jump to and select today (comfortable / spacious).        |
+
+## Bounds and disabled dates
+
+`min` and `max` are inclusive navigation bounds: cursor movement and month paging clamp to the
+allowed interval. `isDisabled` has a different purpose. It leaves a day visible and navigable while
+preventing commit, which preserves the shape of the calendar and explains why a date cannot be
+chosen. Supply a fixed `today` whenever output must be reproducible.
 
 ## Sizing & layout
 
