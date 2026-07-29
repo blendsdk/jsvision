@@ -4,7 +4,8 @@
  * The terminal canvas is opaque to assistive tech, so the accessible content lives
  * beside it: a prose blurb and a real ARIA-labelled Play button. This oracle checks
  * the Play component renders the labelled button + the blurb, and (as example pages
- * land) that every registry example has a page mounting its Play component.
+ * land) that every registry example has a guide, component, or app page mounting its Play
+ * component.
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -27,7 +28,7 @@ function walkMarkdown(dir: string): string[] {
   return out;
 }
 
-const EXAMPLE_PAGES = ['components', 'apps']
+const EXAMPLE_PAGES = ['guide', 'components', 'apps']
   .flatMap((dir) => walkMarkdown(join(PKG_ROOT, dir)))
   .map((p) => readFileSync(p, 'utf8'));
 

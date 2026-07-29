@@ -589,8 +589,458 @@
           "validatedAt": "2026-07-29T16:07:51Z"
         }
       ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-CURRICULUM"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-AUTHORING"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-EVIDENCE"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-SEQUENCE"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "RD-08",
+      "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/requirements/RD-08-reference-trust.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Reference, Guide curriculum and trust content",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+          "upstream": "docs-website/SPEC-GUIDE-AUTHORING",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+          "upstream": "docs-website/SPEC-GUIDE-CURRICULUM",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+          "upstream": "docs-website/SPEC-GUIDE-EVIDENCE",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+          "upstream": "docs-website/SPEC-GUIDE-SEQUENCE",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+          "upstream": "docs-website/SPEC-GUIDE-AUTHORING",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+          "upstream": "docs-website/SPEC-GUIDE-CURRICULUM",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+          "upstream": "docs-website/SPEC-GUIDE-EVIDENCE",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+          "upstream": "docs-website/SPEC-GUIDE-SEQUENCE",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-CURRICULUM",
+      "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-01-curriculum-contract.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide curriculum catalog and ownership contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-AUTHORING",
+      "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-02-course-authoring.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course authoring and snippet contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-EVIDENCE",
+      "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-03-laboratories-and-evidence.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide laboratories and evidence contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-SEQUENCE",
+      "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-04-curriculum-sequence.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide curriculum delivery sequence",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "docs-website/TEST-RD08-GUIDES"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "CRIT-RD08-GUIDES",
+      "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course system acceptance criteria",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+          "upstream": "docs-website/TASK-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD08-GUIDES",
+      "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "ST-1 through ST-47 Guide course evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution entry: codeops/features/docs-website/plans/guide-course-system/99-execution-plan.md",
+        "summary:Execution started after the selected Guide plan passed its execution-entry readiness gate."
+      ],
+      "id": "TASK-RD08-GUIDES",
+      "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "implemented",
+      "title": "Execute the Guide course system plan",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "The user confirmed all ten Guide-course planning decisions on 2026-07-29."
+      ],
+      "id": "DEC-RD08-GUIDES",
+      "revision": "sha256:aaecfb5284d152a304a82fdcc2d5fb6079f0268f8f6443a5270e33930de6dd12",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved Guide curriculum and execution decisions",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "docs-website/RD-08"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "evidence": [
+        "Entry point: codeops/features/docs-website/plans/guide-course-system/00-index.md",
+        "summary:Execution-entry snapshots validated for the complete approved Guide plan closure.",
+        "summary:The user confirmed all ten Guide-course decisions; the 31-phase plan maps 47 specification cases to 246 prerequisite-ordered tasks."
+      ],
+      "id": "PLAN-RD08-GUIDES",
+      "revision": "sha256:579ceaea0021d6732fba447c0c56fecfdd0155946c4267e12f3283fef05d06bb",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course system implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+          "upstream": "docs-website/RD-08",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+          "upstream": "docs-website/RD-08",
+          "validatedAt": "2026-07-29T18:54:59Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:3eb4efc67050d52f4d588fc521bfecb64a3c103852d37f4ceb04e28cff3a9ae1",
+          "upstream": "docs-website/TASK-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:59Z"
+        }
+      ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T16:07:51Z"
+  "updated": "2026-07-29T18:36:58Z"
 }

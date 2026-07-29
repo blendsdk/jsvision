@@ -103,6 +103,74 @@ process.exit(code);
 That is the whole program. Terminal capabilities are detected for you, the screen is set up and torn
 down for you, and `~x~` marks the keyboard shortcut letter in a label.
 
+## Learning path
+
+The Guide is a curriculum, not a symbol index. Follow it in order when you are new, or enter at a
+course whose prerequisites you already understand. **Complete** courses meet the current course and
+live-lab directive. **Upgrade** courses are available but still need that treatment. **Planned**
+courses are part of the confirmed curriculum and appear here before they enter the sidebar.
+
+### Getting started
+
+| Course                                            | Stage   | Purpose                                                                 |
+| ------------------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| [Introduction](/guide/)                           | Upgrade | Understand the product, run the live shell, and choose a learning path. |
+| [Install & packages](/guide/install-and-packages) | Upgrade | Choose packages and configure a Node 22+ ESM project.                   |
+| [Codex plugin](/guide/codex-plugin)               | Upgrade | Use the supported agent integration and canonical JSVision guidance.    |
+
+### Core concepts
+
+| Course                                                           | Stage    | Purpose                                                                              |
+| ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| [Layout](/guide/layout)                                          | Complete | Compose responsive cell layouts, overlays, and exact placement.                      |
+| [Reactive state](/guide/reactive-state)                          | Complete | Model state, derived values, bindings, effects, and lifetimes.                       |
+| [Views & focus](/guide/views-and-focus)                          | Upgrade  | Understand retained trees, mounting, invalidation, tab order, and focus restoration. |
+| [Events, commands & keymaps](/guide/events-commands-and-keymaps) | Upgrade  | Route input and design discoverable command systems.                                 |
+| [Keyboard & clipboard](/guide/keyboard-and-clipboard)            | Upgrade  | Use editing chords and authorized clipboard adapters.                                |
+| Text, Unicode & terminal cells                                   | Planned  | Handle graphemes, wide glyphs, wrapping, clipping, and ASCII-safe fallbacks.         |
+| Scrolling, lists & large content                                 | Planned  | Design viewports, selection, scrolling, and bounded rendering.                       |
+
+### Building applications
+
+| Course                                                     | Stage   | Purpose                                                                                  |
+| ---------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| [The application shell](/guide/application-shell)          | Upgrade | Build and run menus, status, commands, desktops, and windows.                            |
+| [Dialogs & modality](/guide/dialogs-and-modality)          | Upgrade | Await validated, cancellable, focus-safe modal workflows.                                |
+| Async work, cancellation & progress                        | Planned | Keep input responsive while handling progress, cancellation, cleanup, and stale results. |
+| [Forms](/guide/forms)                                      | Upgrade | Build typed field state, validation, async submission, and reset.                        |
+| [Files & the FileSystem seam](/guide/files-and-filesystem) | Upgrade | Run the same file workflows over native, virtual, and custom hosts.                      |
+| [Internationalization](/guide/i18n)                        | Upgrade | Author, load, validate, switch, format, and test locales.                                |
+| [Screens & routing](/guide/screens-and-routing)            | Upgrade | Build typed screen stacks with history, parameters, shared chrome, and focus.            |
+| [Theming & colour depth](/guide/theming-and-colour-depth)  | Upgrade | Author semantic themes that preserve meaning as color capabilities degrade.              |
+
+### Extending and integrating
+
+| Course                                                    | Stage   | Purpose                                                                         |
+| --------------------------------------------------------- | ------- | ------------------------------------------------------------------------------- |
+| [Running in the browser](/guide/running-in-the-browser)   | Upgrade | Mount unchanged applications through the browser host and virtual seams.        |
+| [Writing your own widget](/guide/writing-your-own-widget) | Upgrade | Implement measurement, drawing, focus, input, reactivity, and cleanup.          |
+| [Testing headlessly](/guide/testing-headlessly)           | Upgrade | Drive views, input, dialogs, resize, and failures without a real terminal.      |
+| Application architecture & best practices                 | Planned | Organize state, services, commands, screens, ownership, and feature boundaries. |
+
+### Specialist courses
+
+| Course                                         | Stage    | Purpose                                                                                |
+| ---------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| [Data Grid course](/components/data-grid/)     | Complete | Progress from typed sources and columns through editing, scaling, and personalization. |
+| [Code Editor course](/components/code-editor/) | Complete | Build editor experiences from documents through languages, LSP, safety, and recovery.  |
+
+### Operating a real app
+
+| Course                                                    | Stage   | Purpose                                                                                  |
+| --------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| [Debugging](/guide/debugging)                             | Upgrade | Diagnose layout, focus, commands, rendering, capabilities, and lifecycle failures.       |
+| [Crash safety & terminal restore](/guide/crash-safety)    | Upgrade | Understand restore guarantees, signals, essentials, and degradations.                    |
+| [Displaying untrusted text safely](/guide/untrusted-text) | Upgrade | Prevent terminal injection and redact sensitive diagnostics.                             |
+| Accessibility & resilient interaction                     | Planned | Design keyboard-complete, non-color-dependent, reduced-geometry interfaces.              |
+| Terminal capabilities & portability                       | Planned | Adapt honestly across color, mouse, glyph, SSH, tmux, Windows, and browser environments. |
+| [In production](/guide/in-production)                     | Upgrade | Package, deploy, observe, support, and set evidence-based expectations.                  |
+| Build a complete application                              | Planned | Apply the complete curriculum in one beginner-to-production release workflow.            |
+
 ## Where to next
 
 - **[Components](/components/)** — every widget, with a live example you can drive on each page.

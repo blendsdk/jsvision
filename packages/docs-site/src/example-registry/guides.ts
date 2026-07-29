@@ -1,0 +1,33 @@
+import type { ExampleEntry } from './types.js';
+
+/** Concept-guide laboratories in course order, each owning the complete template1 application shell. */
+export const GUIDE_EXAMPLES = [
+  {
+    id: 'guides/layout-flow',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/layout-flow.ts',
+    load: () => import('../../examples/guides/layout-flow.js'),
+  },
+  {
+    id: 'guides/layout-overlays',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/layout-overlays.ts',
+    load: () => import('../../examples/guides/layout-overlays.js'),
+  },
+  {
+    id: 'guides/reactive-graph',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/reactive-graph.ts',
+    load: () => import('../../examples/guides/reactive-graph.js'),
+  },
+  {
+    id: 'guides/reactive-lifetimes',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/reactive-lifetimes.ts',
+    load: () => import('../../examples/guides/reactive-lifetimes.js'),
+  },
+] as const satisfies readonly ExampleEntry[];
