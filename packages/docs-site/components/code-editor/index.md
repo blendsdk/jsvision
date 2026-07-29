@@ -84,6 +84,38 @@ surrounding status and scrollbar presentation when it needs a custom layout.
 Choose the window when the conventional title, horizontal and vertical scrollbars, and line/column
 status are useful as one unit. Its editor remains available as `window.editor`.
 
+## Standalone showcase
+
+Run the complete terminal showcase when you want to explore the component outside the browser
+documentation:
+
+```sh
+yarn workspace @jsvision/examples demo:code-editor
+```
+
+The showcase is deterministic and uses bounded in-process language services—no compiler,
+PostgreSQL connection, external language server, or implicit host authority. Its stable scenario
+facets make the full teaching inventory visible to both readers and release checks:
+
+| Scenario family                          | Stable facet key                            |
+| ---------------------------------------- | ------------------------------------------- |
+| Embedded editor and desktop window       | `editor-and-window`                         |
+| Editing, history, and document lifecycle | `editing-lifecycle`                         |
+| SQL, JavaScript, TypeScript, and plain   | `languages-sql-javascript-typescript-plain` |
+| Syntax, brackets, comments, and folding  | `local-language-features`                   |
+| Completion, hover, diagnostics, and LSP  | `lsp-intelligence`                          |
+| Explicit save/navigation approval        | `host-authorization`                        |
+| Hostile and invisible Unicode            | `hostile-and-unicode-text`                  |
+| Theme roles and terminal fallbacks       | `themes-and-capabilities`                   |
+| Keyboard access and responsive resize    | `accessibility-and-resize`                  |
+| Normal full-document behavior            | `full-document-tier`                        |
+| Bounded large-document behavior          | `large-document-tier`                       |
+| Confirmation-required document behavior  | `confirmation-document-tier`                |
+
+Choose a scenario to see its purpose, interaction steps, expected result, and current evidence.
+Resetting or switching scenarios clears prior evidence so a previous result cannot be mistaken for
+the current run.
+
 ## Related
 
 - [Themes & fallbacks](/components/code-editor/themes-and-fallbacks) — resolve editor colors against

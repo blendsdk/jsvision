@@ -1,0 +1,19 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/code-editor/package.json",
+        "$TURBO_ROOT$/packages/code-editor/README.md",
+        "$TURBO_ROOT$/packages/code-editor/CHANGELOG.md",
+        "$TURBO_ROOT$/packages/docs-site/components/code-editor/**",
+        "$TURBO_ROOT$/tools/jsvision-skill/references/component-catalog.md",
+        "$TURBO_ROOT$/tools/jsvision-skill/references/api/code-editor.md",
+        "$TURBO_ROOT$/plugins/jsvision-plugin/skills/jsvision/references/component-catalog.md",
+        "$TURBO_ROOT$/plugins/jsvision-plugin/skills/jsvision/references/api/code-editor.md"
+      ]
+    }
+  }
+}
