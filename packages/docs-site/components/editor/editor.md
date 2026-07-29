@@ -16,13 +16,15 @@ to bind the content to a signal inside a dialog, use [`Memo`](/components/editor
 ## Usage
 
 ```ts
+import { resolveCapabilities } from '@jsvision/core';
 import { Group, Editor, createEventLoop, effect } from '@jsvision/ui';
 
 const editor = new Editor({ clipboard: new Editor() }); // share one hidden editor as the clipboard
 const root = new Group();
 root.add(editor);
 
-const loop = createEventLoop({ width: 60, height: 20 }, {});
+const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+const loop = createEventLoop({ width: 60, height: 20 }, { caps });
 loop.mount(root);
 loop.focusView(editor);
 editor.setText('The quick brown fox\nSecond line.');
@@ -35,11 +37,17 @@ effect(() => {
 
 ## Live example
 
-<PlayComingSoon title="Editor" />
+<PlayExample id="editor/editor"
+  title="Editor Lab"
+  blurb="Edit multiline text with selection, undo/redo, modern clipboard bindings, scrolling, and reactive state."
+/>
 
 ## Props
 
 `new Editor(options)` — every field is optional; a bare `new Editor()` is fully usable.
+
+The public surface includes `Editor`, `EditorOptions`, executable `EditorAction` names, and the
+optional `EditorCommandSeam`.
 
 | Prop           | Type                     | Default    | Description                                                                                                                                                                                                      |
 | -------------- | ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +71,7 @@ Subscribe or bind these to reflect the editor in your UI: `modified`, `curPos` (
 e.g. `'lineDown'`, `'textEnd'`, `'selectAll'`), `copy` / `cut` / `paste`, `undo` / `redo`, and
 `find` / `replace` / `searchAgain` (async, resolve when the interaction is done).
 
-## Keyboard & mouse
+## Editing and navigation
 
 The editor claims keys before app chrome (so it can own the WordStar Ctrl-Q / Ctrl-K prefixes). With
 the default `'modern'` bindings:
@@ -78,6 +86,12 @@ the default `'modern'` bindings:
 | **Wheel**                             | Scroll the view.                                                    |
 
 Choose `keyBindings: 'wordstar'` for the classic control-key diamond instead.
+
+## Undo, clipboard, and dialogs
+
+Undo/redo retains the configured depth. Clipboard commands use the event loop's app-local buffer or
+an explicit clipboard Editor. Find/replace/save prompts cross the asynchronous `editorDialog` seam,
+keeping UI policy outside the text engine.
 
 ## Sizing & layout
 
@@ -104,4 +118,5 @@ palette).
 
 - [Edit window](/components/editor/edit-window) — an `Editor` framed with scroll bars + a `line:col` indicator.
 - [Memo](/components/editor/memo) — a signal-bound editor for placing inside a dialog.
+- [Code Editor hub](/components/code-editor/) — syntax-aware, extensible code editing documented separately.
 - [API reference](/api/ui/classes/Editor) — the generated `Editor` signature.

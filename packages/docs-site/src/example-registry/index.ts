@@ -5,9 +5,12 @@ import { CONTAINER_EXAMPLES } from './containers.js';
 import { CONTROL_EXAMPLES } from './controls.js';
 import { DATE_EXAMPLES } from './dates.js';
 import { DROPDOWN_EXAMPLES } from './dropdowns.js';
+import { EDITING_EXAMPLES } from './editing.js';
 import { FEEDBACK_EXAMPLES } from './feedback.js';
 import { FOUNDATION_EXAMPLES } from './foundations.js';
 import { THEMING_EXAMPLES } from './theming.js';
+import { SURFACE_EXAMPLES } from './surfaces.js';
+import { TERMINAL_EXAMPLES } from './terminals.js';
 import type { ExampleEntry } from './types.js';
 
 /**
@@ -37,6 +40,9 @@ export const EXAMPLES = composeExampleRegistry(
   FEEDBACK_EXAMPLES,
   DATE_EXAMPLES,
   COLOR_EXAMPLES,
+  SURFACE_EXAMPLES,
+  EDITING_EXAMPLES,
+  TERMINAL_EXAMPLES,
   THEMING_EXAMPLES,
 );
 
