@@ -14,6 +14,21 @@ The reactive core is exported from `@jsvision/ui`, but it is independent of widg
 You can use the same primitives to derive form state, coordinate services, or test state transitions
 without a terminal.
 
+## Who this course is for
+
+This course is for developers who have completed [Layout](/guide/layout) and are ready to make a
+retained interface respond to changing data. You should be comfortable constructing views and
+placing them in rows, columns, or exact rectangles. No previous reactive-programming experience is
+required.
+
+By the end, you will be able to:
+
+- model source facts and derived values with signals and computeds;
+- explain when effects run, how batching changes propagation, and why dependencies can change;
+- bind reactive state to built-in and custom views without leaking work;
+- diagnose stale values, redundant reruns, feedback cycles, and missing cleanup; and
+- verify that a state transition is consistent and that disposed work stays silent.
+
 ## Mental model
 
 Think of reactive code as a directed graph:
@@ -46,6 +61,28 @@ Prefer `signal → computed → view/effect`. Computed functions should be pure,
 at the edges where reactive state meets logging, timers, storage, network clients, or other
 imperative systems.
 :::
+
+## Your first reactive view
+
+A reactive UI needs a source value, a view that reads it, and an event that writes it. The `Text`
+getter below subscribes when mounted, so the button does not need to find or repaint the label:
+
+```ts
+import { Button, Text, col, signal } from '@jsvision/ui';
+
+const count = signal(0);
+
+const counter = col(
+  new Text(() => `Count: ${count()}`),
+  new Button('~A~dd one', {
+    onClick: () => count.update((value) => value + 1),
+  }),
+);
+```
+
+Pressing Alt+A changes the signal synchronously. The mounted `Text` binding observes the write and
+requests its own repaint. This small direction—event writes source state, view reads source
+state—is the foundation for the larger graphs in this course.
 
 ## Start with signals
 
@@ -411,18 +448,52 @@ among live items. In development, duplicates warn and resolve last-writer-wins.
 Use `Show`/`For` when absence should unmount and release a view. Toggle `view.state.visible` when the
 same instance and its internal state should remain alive while hidden.
 
+## Composition and integration
+
+Keep the reactive graph at the boundary that owns the state. A screen can create short-lived state
+in its mounted scope; an application service can open an explicit root and expose a `dispose`
+operation. Pass accessors or small action functions to child views instead of giving every control
+permission to rewrite every signal.
+
+The following state module owns its derived value, groups one logical action, and exposes a bounded
+write surface:
+
+```ts
+import { batch, computed, createRoot, signal } from '@jsvision/ui';
+
+const cart = createRoot((dispose) => {
+  const quantity = signal(1);
+  const unitPrice = signal(12);
+  const total = computed(() => quantity() * unitPrice());
+
+  const applyOffer = () =>
+    batch(() => {
+      quantity.set(2);
+      unitPrice.set(10);
+    });
+
+  return { quantity, unitPrice, total, applyOffer, dispose };
+});
+```
+
+Construct view-owned state during mount so unmounting releases its computeds and effects. For a
+longer-lived service, call its explicit disposer when the application or route owner ends. Keep
+host I/O, timers, persistence, and network work in effects with matching `onCleanup()` callbacks;
+keep domain calculations in computeds. `Show` and `For` then compose state with the retained view
+tree without turning view construction into an imperative synchronization loop.
+
 ## Common failure modes
 
-| Symptom                               | Cause                                                                     | Correction                                                                   |
-| ------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| An object update does not repaint     | The object or array was mutated and written back with the same reference. | Return a new reference from `.update()`, or use a justified equality policy. |
-| Derived values drift apart            | An effect copies one signal into another.                                 | Express the invariant as a `computed()`.                                     |
-| A computation leaks after navigation  | It was created without a view or `createRoot()` owner.                    | Create it in the mounted lifetime or an explicit disposable root.            |
-| A timer or listener duplicates        | An effect reruns without releasing the previous resource.                 | Register `onCleanup()` in the same run that acquires it.                     |
-| Output stays stale                    | A real dependency was read with `.peek()` or `untrack()`.                 | Use a normal tracked call.                                                   |
-| An effect runs once per field write   | Related writes were published separately.                                 | Group the logical transaction in `batch()`.                                  |
-| An effect loops until an error        | It writes a value that it also tracks without converging.                 | Move the write to an event or replace copied state with a computed.          |
-| Dynamic children survive their parent | `Show` or `For` was built outside `addDynamic()` and passed indirectly.   | Build the combinator inside the factory supplied to `addDynamic()`.          |
+| Symptom                               | Cause                                                                     | Correction                                                                   | Evidence to verify the fix                                     |
+| ------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| An object update does not repaint     | The object or array was mutated and written back with the same reference. | Return a new reference from `.update()`, or use a justified equality policy. | The bound view changes once after the immutable write.         |
+| Derived values drift apart            | An effect copies one signal into another.                                 | Express the invariant as a `computed()`.                                     | Change each source alone and assert the invariant immediately. |
+| A computation leaks after navigation  | It was created without a view or `createRoot()` owner.                    | Create it in the mounted lifetime or an explicit disposable root.            | After disposal, source writes leave the run counter unchanged. |
+| A timer or listener duplicates        | An effect reruns without releasing the previous resource.                 | Register `onCleanup()` in the same run that acquires it.                     | Active-resource count stays at one, then reaches zero.         |
+| Output stays stale                    | A real dependency was read with `.peek()` or `untrack()`.                 | Use a normal tracked call.                                                   | Changing that dependency now refreshes the visible output.     |
+| An effect runs once per field write   | Related writes were published separately.                                 | Group the logical transaction in `batch()`.                                  | One action increments the effect-run counter exactly once.     |
+| An effect loops until an error        | It writes a value that it also tracks without converging.                 | Move the write to an event or replace copied state with a computed.          | The event settles without a `ReactiveCycleError`.              |
+| Dynamic children survive their parent | `Show` or `For` was built outside `addDynamic()` and passed indirectly.   | Build the combinator inside the factory supplied to `addDynamic()`.          | Branch or item cleanup runs once when its owner unmounts.      |
 
 ## Best practices
 
@@ -437,6 +508,26 @@ same instance and its internal state should remain alive while hidden.
 - Use stable, unique domain keys with `For`; never use a changing array index as identity.
 - Bind reactive values at the narrowest view that needs them instead of invalidating an entire
   application manually.
+
+## Practice
+
+Work through these exercises in order. Use a visible value or counter as evidence rather than
+assuming that the graph behaved correctly.
+
+1. **Batch one domain transition.** Create `subtotal`, `discount`, and a computed `total`. Add one
+   action that changes both sources inside `batch()`. Verify with an observing effect counter that
+   the action publishes one final total and causes exactly one rerun.
+2. **Recollect a dynamic dependency.** Derive a displayed temperature from a unit selector plus
+   Celsius and Fahrenheit sources. Change the inactive source and verify there is no recomputation;
+   switch units, then verify the old source is ignored and the new source is tracked.
+3. **Dispose owned work.** Put an effect with `onCleanup()` inside `createRoot()`. Trigger two
+   reruns, dispose the root twice, and then change its source again. Verify cleanup ran before each
+   rerun and once at disposal, while the final write produces no new run.
+4. **Own a structural branch.** Mount a `Show` or keyed `For` through `Group.addDynamic()`. Remove a
+   branch or item and verify its view is unmounted and its cleanup runs exactly once.
+5. **Stress the real interface.** Repeat the two laboratories with buttons and Alt-hotkeys, then
+   resize, maximize, and restore them. Verify state, run counters, instructions, and controls remain
+   visible and consistent at every size.
 
 ## API reference
 
