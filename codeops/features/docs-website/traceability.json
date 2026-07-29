@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:91bd87e809ff5943d3dce9f907fcf96424d529cf8837f5c7f51acc18893de308",
+          "revision": "sha256:51970fc4d96b620c7852791db567e4d6975ea8dbc9a5e8a4fcad53b683e2f2b9",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:11Z"
         }
@@ -923,7 +923,9 @@
         "Phase 1 Introduction: 19/19 focused course and catalog tests passed after review remediation.",
         "Phase 1 Introduction: docs-site typecheck and authoritative yarn verify passed after review remediation.",
         "Phase 1 re-review correction: a real window-manager SE-grip drag exercises intermediate dialog resize, shared template evidence, maximize, and restore.",
-        "Phase 1 final state: 19/19 focused tests, docs-site typecheck, and authoritative yarn verify passed."
+        "Phase 1 final state: 19/19 focused tests, docs-site typecheck, and authoritative yarn verify passed.",
+        "Phase 2 Install & packages: expected-red baseline was 7 failed and 1 passed; implementation then passed 8/8 focused specifications.",
+        "Phase 2 Install & packages: docs-site typecheck and authoritative yarn verify passed at the first green checkpoint."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -950,10 +952,11 @@
         "summary:Phase 1 independent review found two Major and one Minor issue; AR-16 applied every correction without waiver.",
         "summary:Phase 1 review remediation passed 19 focused tests, docs-site typecheck, and authoritative yarn verify.",
         "summary:The permitted fix-scoped re-review retained one Major for a viewport-only resize; the final correction now drives the real dialog resize seam. A third review is prohibited.",
-        "summary:Phase 1 is complete after final focused, docs-site typecheck, and authoritative yarn verify gates passed."
+        "summary:Phase 1 is complete after final focused, docs-site typecheck, and authoritative yarn verify gates passed.",
+        "summary:Phase 2 tasks 2.1.1 through 2.2.4 reached the specification-to-green checkpoint with 8 focused tests, docs-site typecheck, and yarn verify passing."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:91bd87e809ff5943d3dce9f907fcf96424d529cf8837f5c7f51acc18893de308",
+      "revision": "sha256:51970fc4d96b620c7852791db567e4d6975ea8dbc9a5e8a4fcad53b683e2f2b9",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -976,7 +979,7 @@
         "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:3876487f2486205d770b15e52332667671b1382fb019c0183637f4d134cb92d9",
+      "revision": "sha256:5ce80700a9af5fba5f679adeca06a0879b3f01bf7de6295bb83a68f56d730bc2",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1045,7 +1048,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:91bd87e809ff5943d3dce9f907fcf96424d529cf8837f5c7f51acc18893de308",
+          "revision": "sha256:51970fc4d96b620c7852791db567e4d6975ea8dbc9a5e8a4fcad53b683e2f2b9",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-29T18:54:59Z"
         }
@@ -1053,5 +1056,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T19:49:07Z"
+  "updated": "2026-07-29T20:01:26Z"
 }

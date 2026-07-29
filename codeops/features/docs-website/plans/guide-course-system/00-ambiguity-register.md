@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 16 items resolved
-> **Last Updated**: 2026-07-29 21:45
+> **Status**: ✅ GATE PASSED — all 17 items resolved
+> **Last Updated**: 2026-07-29 21:54
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -21,6 +21,7 @@
 | 14 | UX (runtime) | What single observable interaction proves the Introduction lab's application/runtime mental model? | Cycle a three-stage app → host runtime → terminal frame pipeline with visible keyboard-driven feedback / show a static greeting / expose host-specific controls | **Authority: AI — delegated by `--auto-design`.** Use a bounded three-stage runtime pipeline with an Alt-hotkey to advance and visible current-stage feedback. | ✅ Resolved |
 | 15 | API accuracy (runtime) | Which constructor belongs in the Introduction teaching snippet after the red oracle exposed a docs-only helper assumption? | Teach public `createApplication` / teach docs-only `demoApp` as if it were exported | **Authority: AI — delegated by `--auto-design`.** Correct the oracle before implementation and require `createApplication` from `@jsvision/ui`; retain `demoApp` only inside the live-example module. | ✅ Resolved |
 | 16 | Quality review (runtime) | How should the two Major Phase 1 review findings be resolved without weakening the approved course contract? | Correct the visible status-chord teaching and strengthen the immutable oracle across destinations, resize/maximize/restore, complete content, Classic surface, and reactive disposal / demote the course and defer correction / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both technical corrections, rerun focused and authoritative gates, and use the one permitted re-review before Phase 2. | ✅ Resolved |
+| 17 | Execution (runtime) | How should Phase 2 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 2.1.1–2.2.4 only after all gates turn green / commit the failing oracle / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 2 task IDs and resume per-task commits after 2.2.4. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -230,3 +231,30 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** The visible status API changes its label/key semantics, any geometry state
   loses content or shared template evidence, reactive writes reach a disposed stage panel, or the
   fix-scoped reviewer rejects the remediation.
+
+**AR-17 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red specification phase under the already
+  confirmed specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 2 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 2.1.1 and 2.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 2.2.4. Commit and push tasks 2.1.1–2.2.4 as one spec-to-green slice
+  only after the focused specification, docs-site typecheck, and `yarn verify` pass.
+- **Evidence:** The independent spec author produced eight requirement-derived cases; the focused
+  run failed seven and passed only the existing public-export validation. The identical policy
+  conflict was independently challenged and resolved in AR-13.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening or quarantining
+  the oracle destroys the planned specification-first evidence.
+- **Strongest counterargument:** Bundling four task IDs reduces commit granularity. It remains the
+  smallest safe checkpoint because every earlier state intentionally fails the mandatory gate.
+- **Confidence:** High — this is the previously approved and independently challenged policy applied
+  to a new course's task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a second challenge of the same unchanged
+  policy was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle unexpectedly turns green before implementation, an unrelated
+  failure blocks the green checkpoint, or the repository gains an authoritative red-commit
+  mechanism.
