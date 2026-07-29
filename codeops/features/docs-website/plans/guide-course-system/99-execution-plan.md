@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 01:45
-> **Progress**: 54/246 tasks (22%)
+> **Last Updated**: 2026-07-30 01:51
+> **Progress**: 55/246 tasks (22%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -395,7 +395,7 @@ independent specification-first phase (AR-10).
 
 ### Step 7.3: Hardening
 
-- [ ] 7.3.1 Add propagation, disabled-command, collision, paste, and mouse edges — `packages/docs-site/test/events-commands-and-keymaps-guide.impl.test.ts`
+- [x] 7.3.1 Add propagation, disabled-command, collision, paste, and mouse edges — `packages/docs-site/test/events-commands-and-keymaps-guide.impl.test.ts` ✅ (completed: 2026-07-30 01:51) — added six cases for deterministic routing, outside-target clicks, collision/disable/re-enable stability, raw-key suppression, and repeated host teardown; 29/29 focused tests, docs-site typecheck, and authoritative `yarn verify` pass
 - [ ] 7.3.2 Run focused checks, promote the course, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Events/commands spec/impl tests and docs-site typecheck
