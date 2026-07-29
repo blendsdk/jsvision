@@ -444,9 +444,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:485267376bc7d95c0f65dfd98880f58405675b51dd50d9de5847d507145c49b1",
+          "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-29T05:53:00Z"
+          "validatedAt": "2026-07-29T07:04:47Z"
         }
       ]
     },
@@ -458,7 +458,8 @@
         "Phase 5 containers and navigation: 49 focused cases passed after accepted review fixes, including complete rendered teaching lines and guarded tab closure.",
         "Phase 6 feedback, date, and color: 44 focused cases and 408 docs-site cases passed after widget-bound rendering, real popup/input, date-boundary, pointer, and cleanup corrections.",
         "Phase 7 surface, general editing, and terminal: 39 focused cases and 454 docs-site cases passed after widget-bound surface, signal, scrollback, gadget, drag, and cleanup corrections.",
-        "Phase 8 forms and files: 46 focused cases and 506 docs-site cases passed after real modal validation, submission, browsing, result, fault, path-confinement, save, backup, and cleanup corrections."
+        "Phase 8 forms and files: 46 focused cases and 506 docs-site cases passed after real modal validation, submission, browsing, result, fault, path-confinement, save, backup, and cleanup corrections.",
+        "Phase 9 Data Grid hub: 100 focused cases and 629 docs-site cases passed after real editing, validation, personalization, bounded-source, export-safety, and template corrections."
       ],
       "id": "TEST-RD05",
       "revision": "sha256:0394095d0e4cfe056dd06a373e2f5f35e0cc745218993fd8fa11c54a42689032",
@@ -486,10 +487,11 @@
         "Phase 5 verified: all ten Containers and Navigation pages/examples complete; accepted review fixes pass the strengthened family suite.",
         "Phase 6 verified: all six Feedback, Date, and Color pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
         "Phase 7 verified: all seven Surface, General Editing, and Terminal pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
-        "Phase 8 verified: Form Dialog and all seven composable file-family pages/examples complete; post-review yarn verify and the 20-check documentation build pass."
+        "Phase 8 verified: Form Dialog and all seven composable file-family pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
+        "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:485267376bc7d95c0f65dfd98880f58405675b51dd50d9de5847d507145c49b1",
+      "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -578,13 +580,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:485267376bc7d95c0f65dfd98880f58405675b51dd50d9de5847d507145c49b1",
+          "revision": "sha256:b12ccf9a2bb73688aeb8b943a90e08aa82f171b43cc3ff50f102a587f6392c26",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-29T05:53:00Z"
+          "validatedAt": "2026-07-29T07:04:47Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T05:53:00Z"
+  "updated": "2026-07-29T07:04:47Z"
 }
