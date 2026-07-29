@@ -101,12 +101,13 @@ describe('multilingual harness documentation', () => {
     expect(source).not.toMatch(/\bat\s*\(\s*(?:okButton|cancelButton)\s*\(/u);
   });
 
-  // Existing English-only visual fixtures intentionally keep their exact historical geometry; the
-  // translated-layout sweep must not silently turn them into a different demonstration.
-  test('leaves the fixed English form fixture at its historical geometry', () => {
+  // The form laboratory remains intentionally English-only while following the shared template1
+  // geometry and delegating the real modal body to the public forms helper.
+  test('keeps the English form laboratory on template1 without locale coupling', () => {
     const source = read(FIXED_ENGLISH_FORM);
     expect(source).not.toMatch(/@jsvision\/i18n|\/locales\//u);
-    expect(source).toContain('at(okButton(), 9, 9, 10, 2)');
-    expect(source).toContain('at(cancelButton(), 22, 9, 12, 2)');
+    expect(source).toContain("new Dialog({ title: ' Form Dialog Lab ', width: 60, height: 14 })");
+    expect(source).toContain('dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT))');
+    expect(source).toContain('formDialog(app, {');
   });
 });

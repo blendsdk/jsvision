@@ -7,6 +7,7 @@ import { DATE_EXAMPLES } from './dates.js';
 import { DROPDOWN_EXAMPLES } from './dropdowns.js';
 import { EDITING_EXAMPLES } from './editing.js';
 import { FEEDBACK_EXAMPLES } from './feedback.js';
+import { FILE_EXAMPLES } from './files.js';
 import { FOUNDATION_EXAMPLES } from './foundations.js';
 import { THEMING_EXAMPLES } from './theming.js';
 import { SURFACE_EXAMPLES } from './surfaces.js';
@@ -36,6 +37,7 @@ export const EXAMPLES = composeExampleRegistry(
   CONTAINER_EXAMPLES,
   DROPDOWN_EXAMPLES,
   CONTAINER_FILE_TABLE_EXAMPLES,
+  FILE_EXAMPLES,
   APPLICATION_EXAMPLES,
   FEEDBACK_EXAMPLES,
   DATE_EXAMPLES,
