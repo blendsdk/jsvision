@@ -444,7 +444,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
+          "revision": "sha256:ee7534a90db8d1a95f0cd66565ee6a85abfb09b2268958243758f453019914ec",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-28T23:32:36Z"
         }
@@ -452,6 +452,9 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "Phase 3 controls: 53 focused page, template, behavior, and lifecycle cases passed after independent review."
+      ],
       "id": "TEST-RD05",
       "revision": "sha256:0394095d0e4cfe056dd06a373e2f5f35e0cc745218993fd8fa11c54a42689032",
       "semanticSources": [
@@ -472,10 +475,11 @@
     {
       "edges": [],
       "evidence": [
-        "Execution entry: codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md"
+        "Execution entry: codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md",
+        "Phase 3 verified: all nine Controls pages/examples complete; reviewed-state yarn verify passed across 19 packages."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
+      "revision": "sha256:ee7534a90db8d1a95f0cd66565ee6a85abfb09b2268958243758f453019914ec",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -497,7 +501,7 @@
         "The user confirmed the complete plan ambiguity register on 2026-07-29."
       ],
       "id": "DEC-RD05",
-      "revision": "sha256:ba3cdcbefa38054163fafa8935b0b2aa9e71ccf10b22c26f0ff213904e7e2f4d",
+      "revision": "sha256:ee4fde03fd987c17cef60723c44c8afb3ee4ad7b16ed78235727f192dfb9c43c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -564,7 +568,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b740f598cc3b579de1b5930f24785d095a4f3c0c452d5338b431db3ed3438ed5",
+          "revision": "sha256:ee7534a90db8d1a95f0cd66565ee6a85abfb09b2268958243758f453019914ec",
           "upstream": "docs-website/TASK-RD05",
           "validatedAt": "2026-07-28T23:32:36Z"
         }
@@ -572,5 +576,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-28T23:32:36Z"
+  "updated": "2026-07-29T02:55:00Z"
 }

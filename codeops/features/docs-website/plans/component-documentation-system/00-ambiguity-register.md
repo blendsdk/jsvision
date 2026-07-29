@@ -7,8 +7,9 @@
 
 This register records every material decision that the RD-05 refresh and implementation plan will
 rely on. `AR-N` identifiers are local to this plan. Rows sourced from the requirements register or
-the user's accepted five-part direction are authoritative. The repository inventory surfaced three
-additional decisions, all resolved by the user on 2026-07-29.
+the user's accepted five-part direction are authoritative. Repository review and preflight resolved
+the planning decisions before execution; delegated runtime decisions are appended with full
+provenance when real integration evidence requires them.
 
 ## Legend
 
@@ -16,7 +17,8 @@ Status: ✅ Resolved · ⏳ Open. Source: `requirements` = inherited from the do
 register; `accepted-five` = explicitly accepted by the user on 2026-07-29; `template directives` =
 the user-approved `AGENTS.md` documentation templates; `inventory` = repository evidence that does
 not require a product choice; `preflight` = a user-authorized technical remediation selected during
-the formal plan audit.
+the formal plan audit; `runtime-auto-design` = an implementation mechanism selected under the
+user-delegated auto-design policy.
 
 ## Register
 
@@ -42,6 +44,31 @@ the formal plan audit.
 | AR-18 | Documentation-unit granularity | Must every exported visual class have a separate Markdown file? | Use one page per primary standard component, while tightly coupled public subcomponents may map to a clearly anchored section in the owning page or specialist hub. Every cataloged symbol still needs an exact documentation target; this avoids shallow pages for pieces such as grid bands/popups that only make sense in composition. | ✅ | session |
 | AR-19 | Example ownership | Must every cataloged symbol have a unique live-example module? | Every primary standard component page owns at least one registered primary example. A focused example may cover multiple tightly coupled symbols, and specialist topic pages may contain several examples; every cataloged symbol must map to at least one example, but duplicate demos are not required. | ✅ | session |
 | AR-20 | Documentation source | Are page snippets extracted from full runnable modules? | No. Registry `sourcePath` identifies the compiled runnable module. Markdown snippets remain separately authored, essence-only teaching artifacts and must not paste or extract a whole example module. | ✅ | preflight |
+| AR-21 | Runtime interaction | Which accelerator can focus the vertical Slider without conflicting with the Classic application shell? | Use **Alt+T** on “verTical.” Alt+V is already owned by the always-present View menu and opened that menu instead of focusing the slider. | ✅ | runtime-auto-design |
+
+### AR-21 delegated decision provenance
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** The accelerator letter is a reversible implementation mechanism inside the
+  approved Slider example; it changes neither component behavior nor documentation scope.
+- **Objective:** Every template1 example must expose usable hotkeys while retaining the Classic
+  application shell.
+- **Decision:** Mark the `T` in “verTical” and drive the vertical-slider behavior case with Alt+T.
+- **Evidence:** The focused controls specification rendered the View menu after Alt+V and left the
+  vertical value at `50`; the shell always includes that menu.
+- **Rejected alternatives:** Keep Alt+V was rejected because it is unreachable; use Tab alone was
+  rejected because the example explicitly teaches linked-label accelerators; change the View menu
+  was rejected as out of scope and a public shell compatibility change.
+- **Strongest counterargument:** Alt+T is less mnemonic than the initial letter. The visible tilde
+  accent and on-screen instruction make the route discoverable.
+- **Confidence:** High — the conflict reproduced through the real shell and Alt+T is unclaimed in
+  this dialog.
+- **Hardening:** The replacement preserves the same real focus-and-step behavior and is covered by
+  the executable contract.
+- **Policy version:** 1.
+- **Root invocation ID:** `component-documentation-system-2026-07-29`.
+- **Reopen triggers:** The Classic View accelerator changes, or another control in the Slider
+  example claims Alt+T.
 
 ## Inventory evidence
 

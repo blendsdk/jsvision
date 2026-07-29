@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 25 / 180 tasks complete
+> **Progress**: 38 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -178,32 +178,58 @@
 
 ## Phase 3 — Controls
 
+> **Phase baseline tree**: `52881c5dc529b01500fe6fcc78975b7bcbfb0117`
+> **Expected modification set**: Phase 3 control behavior contracts, family specification and
+> implementation tests, six control pages and examples, the controls registry, bounded integration
+> corrections, this execution plan, roadmap, traceability, and verification/review evidence.
+
 ### 3.1 Specification tests
 
-- [ ] **3.1.1** Add `test/contracts/controls.ts` and
+- [x] **3.1.1** Add `test/contracts/controls.ts` and
   `test/controls-components.spec.test.ts` for ST-18/ST-19: the immutable control ID list, cumulative
   delivery set, component-specific sections, and exact initial/action/result contract per example.
-- [ ] **3.1.2** Run RED for Label, Check Group, Radio Group, Multi-check Group, Slider, and Switch.
+  ✅ (completed: 2026-07-29 04:11 CEST; docs-site typecheck passed)
+- [x] **3.1.2** Run RED for Label, Check Group, Radio Group, Multi-check Group, Slider, and Switch.
+  ✅ (completed: 2026-07-29 04:12 CEST; expected RED: 18 failed and 4 passed across 22 focused
+  cases, covering five incomplete pages, the missing Multi-check page, and all six absent
+  registrations/examples; log `/tmp/tmp.YlrgO3VjHJ`)
 
 ### 3.2 Implementation
 
-- [ ] **3.2.1** Upgrade `components/controls/label.md` and `check-group.md`.
-- [ ] **3.2.2** Add `examples/controls/label.ts` and `check-group.ts` as `template1` apps.
-- [ ] **3.2.3** Upgrade `components/controls/radio-group.md`; add
-  `components/controls/multi-check-group.md`.
-- [ ] **3.2.4** Add `examples/controls/radio-group.ts` and `multi-check-group.ts`.
-- [ ] **3.2.5** Upgrade `components/controls/slider.md` and `switch.md`.
-- [ ] **3.2.6** Add `examples/controls/slider.ts` and `switch.ts`.
-- [ ] **3.2.7** Register the six new lazy `kind:'app'` entries in the controls family registry
-  module; update page PlayExample metadata/source embeds in the page tasks above.
-- [ ] **3.2.8** Run ST-18/ST-19 and shared template specs until GREEN.
+- [x] **3.2.1** Upgrade `components/controls/label.md` and `check-group.md`. ✅ (completed:
+  2026-07-29 04:15 CEST; both focused page contracts pass)
+- [x] **3.2.2** Add `examples/controls/label.ts` and `check-group.ts` as `template1` apps.
+  ✅ (completed: 2026-07-29 04:17 CEST; docs-site typecheck passed)
+- [x] **3.2.3** Upgrade `components/controls/radio-group.md`; add
+  `components/controls/multi-check-group.md`. ✅ (completed: 2026-07-29 04:20 CEST; both focused
+  page contracts pass)
+- [x] **3.2.4** Add `examples/controls/radio-group.ts` and `multi-check-group.ts`.
+  ✅ (completed: 2026-07-29 04:22 CEST; docs-site typecheck passed)
+- [x] **3.2.5** Upgrade `components/controls/slider.md` and `switch.md`. ✅ (completed:
+  2026-07-29 04:25 CEST; both focused page contracts pass)
+- [x] **3.2.6** Add `examples/controls/slider.ts` and `switch.ts`. ✅ (completed:
+  2026-07-29 04:27 CEST; docs-site typecheck passed)
+- [x] **3.2.7** Register the six new lazy `kind:'app'` entries in the controls family registry
+  module; update page PlayExample metadata/source embeds in the page tasks above. ✅ (completed:
+  2026-07-29 04:28 CEST; four registry architecture cases and docs-site typecheck pass)
+- [x] **3.2.8** Run ST-18/ST-19 and shared template specs until GREEN. ✅ (completed:
+  2026-07-29 04:31 CEST; 29 focused controls/template cases pass after resolving the Classic
+  View-menu accelerator collision through AR-21)
 
 ### 3.3 Implementation tests and hardening
 
-- [ ] **3.3.1** Add `test/controls-components.impl.test.ts` for reset/focus, invalid/disabled state
-  edges, selection boundaries, and deterministic feedback.
-- [ ] **3.3.2** Complete the source-accuracy/content-review checklist for all nine controls.
-- [ ] **3.3.3** Run focused docs checks, then `yarn verify`.
+- [x] **3.3.1** Add `test/controls-components.impl.test.ts` for reset/focus, invalid/disabled state
+  edges, selection boundaries, and deterministic feedback. ✅ (completed: 2026-07-29 04:35 CEST;
+  docs-site typecheck and 13 focused implementation cases pass)
+- [x] **3.3.2** Complete the source-accuracy/content-review checklist for all nine controls.
+  ✅ (completed: 2026-07-29 04:39 CEST; public exports, options/defaults, measurement, key/mouse
+  handling, roles, related composition, API targets, unique accelerators, and absence of Coming
+  Soon were reviewed; docs-site typecheck and 48 focused cases pass)
+- [x] **3.3.3** Run focused docs checks, then `yarn verify`. ✅ (completed:
+  2026-07-29 04:45 CEST; 265 docs-site unit cases and the authoritative 19-package `yarn verify`
+  pass in 187s; the independent review found four major and two minor gaps, all were fixed, and the
+  one-time re-review closed every finding; exact reviewed-state `yarn verify` passed in 115s; logs
+  `/tmp/tmp.C7lECeSAu1` and `/tmp/tmp.oBSqJUNCl8`)
 
 ## Phase 4 — Foundations and Application Shell
 
