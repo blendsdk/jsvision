@@ -1,6 +1,8 @@
 import { APPLICATION_EXAMPLES } from './applications.js';
 import { CONTAINER_FILE_TABLE_EXAMPLES } from './containers-files-table.js';
+import { CONTAINER_EXAMPLES } from './containers.js';
 import { CONTROL_EXAMPLES } from './controls.js';
+import { DROPDOWN_EXAMPLES } from './dropdowns.js';
 import { FOUNDATION_EXAMPLES } from './foundations.js';
 import { THEMING_EXAMPLES } from './theming.js';
 import type { ExampleEntry } from './types.js';
@@ -25,6 +27,8 @@ export function composeExampleRegistry(...families: readonly (readonly ExampleEn
 export const EXAMPLES = composeExampleRegistry(
   CONTROL_EXAMPLES,
   FOUNDATION_EXAMPLES,
+  CONTAINER_EXAMPLES,
+  DROPDOWN_EXAMPLES,
   CONTAINER_FILE_TABLE_EXAMPLES,
   APPLICATION_EXAMPLES,
   THEMING_EXAMPLES,

@@ -4,7 +4,7 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 52 / 180 tasks complete
+> **Progress**: 68 / 180 tasks complete
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -299,38 +299,67 @@
 
 ## Phase 5 — Containers and Navigation
 
+> **Phase baseline tree**: `307635c50ddd6e86438086e896af6defbe2f8e70`
+> **Expected modification set**: Phase 5 container/dropdown behavior contracts, family
+> specification and implementation tests, ten pages and examples, container/dropdown registry
+> modules, bounded integration corrections, this execution plan, roadmap, traceability, and
+> verification/review evidence.
+
 ### 5.1 Specification tests
 
-- [ ] **5.1.1** Add `test/contracts/containers.ts` and
+- [x] **5.1.1** Add `test/contracts/containers.ts` and
   `test/container-components.spec.test.ts` for the container/navigation subset of ST-21, including
   its cumulative IDs and exact Dialog, list, scrolling, Tree/Tabs/SplitView, and dropdown/history
-  actions/results.
-- [ ] **5.1.2** Run RED for missing pages/examples and the old bare List Box example.
+  actions/results. ✅ (completed: 2026-07-29 05:34 CEST; docs-site typecheck passes)
+- [x] **5.1.2** Run RED for missing pages/examples and the old bare List Box example.
+  ✅ (completed: 2026-07-29 05:34 CEST; expected RED: 30 failures covering ten page contracts,
+  ten missing/non-template examples, and all ten behavior contracts; `/tmp/tmp.B6CunrgxDD`)
 
 ### 5.2 Implementation
 
-- [ ] **5.2.1** Upgrade `components/containers/dialog.md`; add
-  `components/containers/list-view.md`.
-- [ ] **5.2.2** Add `examples/containers/dialog.ts` and `list-view.ts`.
-- [ ] **5.2.3** Upgrade `components/containers/list-box.md` and rebuild
-  `examples/containers/list-box.ts` as `template1`.
-- [ ] **5.2.4** Upgrade `components/containers/scroller.md` and `scroll-bar.md`.
-- [ ] **5.2.5** Add `examples/containers/scroller.ts` and `scroll-bar.ts`.
-- [ ] **5.2.6** Upgrade `components/containers/tree.md` and `tabs.md`.
-- [ ] **5.2.7** Add `examples/containers/tree.ts` and `tabs.ts`.
-- [ ] **5.2.8** Add `components/containers/split-view.md` and
-  `examples/containers/split-view.ts`.
-- [ ] **5.2.9** Upgrade `components/dropdown/combo-box.md` and `history.md`.
-- [ ] **5.2.10** Add `examples/dropdown/combo-box.ts` and `history.ts`.
-- [ ] **5.2.11** Add/update all ten lazy app entries in the container/dropdown family registry
-  modules.
-- [ ] **5.2.12** Run the container ST-21 subset and shared contracts until GREEN.
+- [x] **5.2.1** Upgrade `components/containers/dialog.md`; add
+  `components/containers/list-view.md`. ✅ (completed: 2026-07-29 05:38 CEST; both focused page
+  contracts pass)
+- [x] **5.2.2** Add `examples/containers/dialog.ts` and `list-view.ts`.
+  ✅ (completed: 2026-07-29 05:41 CEST; docs-site typecheck passes)
+- [x] **5.2.3** Upgrade `components/containers/list-box.md` and rebuild
+  `examples/containers/list-box.ts` as `template1`. ✅ (completed: 2026-07-29 05:44 CEST;
+  typecheck and focused page contract pass)
+- [x] **5.2.4** Upgrade `components/containers/scroller.md` and `scroll-bar.md`.
+  ✅ (completed: 2026-07-29 05:47 CEST; both focused page contracts pass)
+- [x] **5.2.5** Add `examples/containers/scroller.ts` and `scroll-bar.ts`.
+  ✅ (completed: 2026-07-29 05:50 CEST; docs-site typecheck passes)
+- [x] **5.2.6** Upgrade `components/containers/tree.md` and `tabs.md`.
+  ✅ (completed: 2026-07-29 05:54 CEST; both focused page contracts pass)
+- [x] **5.2.7** Add `examples/containers/tree.ts` and `tabs.ts`.
+  ✅ (completed: 2026-07-29 05:57 CEST; docs-site typecheck passes)
+- [x] **5.2.8** Add `components/containers/split-view.md` and
+  `examples/containers/split-view.ts`. ✅ (completed: 2026-07-29 06:01 CEST; typecheck and focused
+  page contract pass)
+- [x] **5.2.9** Upgrade `components/dropdown/combo-box.md` and `history.md`.
+  ✅ (completed: 2026-07-29 06:05 CEST; both focused page contracts pass)
+- [x] **5.2.10** Add `examples/dropdown/combo-box.ts` and `history.ts`.
+  ✅ (completed: 2026-07-29 06:08 CEST; docs-site typecheck passes)
+- [x] **5.2.11** Add/update all ten lazy app entries in the container/dropdown family registry
+  modules. ✅ (completed: 2026-07-29 06:10 CEST; typecheck and 4 registry cases pass)
+- [x] **5.2.12** Run the container ST-21 subset and shared contracts until GREEN.
+  ✅ (completed: 2026-07-29 06:15 CEST; 31 family cases and 77 shared page/template/registry cases
+  pass; logs `/tmp/tmp.yoVpRPibLJ` and `/tmp/tmp.sTKyBcQE9e`)
 
 ### 5.3 Implementation tests and hardening
 
-- [ ] **5.3.1** Add `test/container-components.impl.test.ts` for scroll bounds, selection reset,
+- [x] **5.3.1** Add `test/container-components.impl.test.ts` for scroll bounds, selection reset,
   popup/modal disposal, split constraints, and history fixture isolation.
-- [ ] **5.3.2** Complete source-accuracy/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 06:20 CEST; typecheck and 7 focused implementation cases pass)
+- [x] **5.3.2** Complete source-accuracy/content review; run focused checks, then `yarn verify`.
+  ✅ (completed: 2026-07-29 06:27 CEST; public exports, options/defaults, measurement, interaction,
+  theme roles, composition, API targets, clipping, and cleanup reviewed; 357 docs-site cases and
+  `yarn docs:check` pass; authoritative `yarn verify` passes in 119 seconds; logs
+  `/tmp/tmp.WUkrgDDhWB`, `/tmp/tmp.Slymsi4zZH`, and `/tmp/tmp.STQXFLHLom`). The independent review
+  found two Major issues: clipped teaching lines and an inaccurate Tabs close policy. Both were
+  corrected; the one-time re-review closed clipping and prescribed one final real active-index
+  assertion for the Tabs fix, which now passes all 49 focused cases (`/tmp/tmp.ytHD1829er`). The
+  exact reviewed state passed `yarn verify` in 132 seconds (`/tmp/tmp.hSY9YujqG9`).
 
 ## Phase 6 — Feedback, Date, and Color
 

@@ -1,86 +1,107 @@
 ---
-title: Scroll bar
-description: ScrollBar — passive mouse-driven chrome (arrows, page track, proportional thumb) bound to a number signal; a container owns the keys.
+title: Scroll Bar
+description: Bind a passive vertical or horizontal ScrollBar to a numeric signal with clamped arrows, track paging, thumb dragging, and disabled ranges.
 ---
 
-# Scroll bar
+# Scroll Bar
 
-`ScrollBar` is passive chrome: two end arrows, a shaded page track, and a proportional thumb, driven
-entirely by the **mouse**. Its position is a two-way `Signal<number>` clamped to `[min, max]` —
-reading it renders the thumb, gestures write it back. It is **not** focusable and owns **no**
-keyboard; a container such as [`Scroller`](/components/containers/scroller),
-[`List box`](/components/containers/list-box), or [`Tree`](/components/containers/tree) owns the keys
-and drives the same `value` signal. When `max === min` the bar is disabled and the whole track draws
-with the disabled glyph.
+`ScrollBar` is passive navigation chrome bound two-way to a `Signal<number>`. It paints end arrows,
+a page track, and a proportional thumb; mouse and wheel gestures write the signal, while an owning
+viewer can drive that same signal from the keyboard.
+
+The bar is intentionally not focusable. Standalone use is appropriate when another component owns
+navigation semantics or when a signal already represents a scroll position.
 
 ## Usage
 
 ```ts
 import { ScrollBar, signal } from '@jsvision/ui';
 
-const pos = signal(0);
-const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
-// Click an arrow to step, click the track to jump the thumb there, drag the thumb, or wheel to move
-// by 3× the arrow step. pos.set(50) scrolls it externally — the thumb re-renders halfway down.
+const position = signal(0);
+const bar = new ScrollBar({
+  value: position,
+  min: 0,
+  max: 100,
+  pageStep: 10,
+  orientation: 'vertical',
+});
 ```
 
 ## Live example
 
-<PlayComingSoon title="Scroll bar" />
+<PlayExample id="containers/scroll-bar" title="Bound range laboratory" blurb="Compare vertical and horizontal bars sharing one value, move that value externally, and collapse the range into its disabled visual state." />
 
-## Props
+Both orientations bind to the same source, proving that the signal—not either painted thumb—is the
+source of truth.
 
-`new ScrollBar(options)`.
+## Props and public state
 
-| Prop          | Type                         | Default       | Description                                                     |
-| ------------- | ---------------------------- | ------------- | --------------------------------------------------------------- |
-| `value`       | `Signal<number>`             | —             | Two-way position; reading renders the thumb, gestures write it. |
-| `min`         | `number`                     | `0`           | Range minimum.                                                  |
-| `max`         | `number`                     | `0`           | Range maximum; `0` (⇒ `max === min`) disables the bar.          |
-| `pageStep`    | `number`                     | axis length−1 | Track-click / page step.                                        |
-| `arrowStep`   | `number`                     | `1`           | Arrow-click step; the wheel steps `3 × arrowStep`.              |
-| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'`  | The long axis (arrows `▲▼` vs `◄►`).                            |
+`ScrollBar` accepts `ScrollBarOptions`:
 
-## Keyboard & mouse
+| Prop          | Type                         | Default               | Purpose                                                 |
+| ------------- | ---------------------------- | --------------------- | ------------------------------------------------------- |
+| `value`       | `Signal<number>`             | —                     | Two-way position source.                                |
+| `min`         | `number`                     | `0`                   | Inclusive range start.                                  |
+| `max`         | `number`                     | `0`                   | Inclusive range end; equal endpoints disable the track. |
+| `pageStep`    | `number`                     | axis length minus one | Track-click step.                                       |
+| `arrowStep`   | `number`                     | `1`                   | Arrow step; wheel uses three times this value.          |
+| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'`          | Long axis and glyph direction.                          |
 
-The bar owns **no keyboard** — the focusable container that hosts it does.
+`setRange(min, max, pageStep?, arrowStep?)` updates a live range. `pageStep()` and `arrowStep()`
+expose the effective increments.
 
-| Input                    | Result                                                               |
-| ------------------------ | -------------------------------------------------------------------- |
-| **Click** an end arrow   | Step by `arrowStep`.                                                 |
-| **Click** the page track | Jump the thumb to that cell, then drag from there (pointer capture). |
-| **Drag** the thumb       | Track the pointer continuously.                                      |
-| **Wheel**                | Step by `3 × arrowStep`.                                             |
+## Size and Layout
 
-## Sizing & layout
+A vertical bar needs width `1` and a useful height; a horizontal bar needs height `1` and a useful
+width. At least three long-axis cells are needed for two arrows and one track/thumb cell. Longer
+tracks represent more distinct positions.
 
-`ScrollBar` has no `measure()` — give it bounds, either an absolute `rect` or a fixed 1-cell band in a
-flex row/column (a container reserves the rightmost column for a vertical bar, the bottom row for a
-horizontal one). The cross axis is 1 cell; the long axis is never shorter than 3 (an arrow at each end
-plus at least one track cell). Call `setRange(min, max, pageStep?, arrowStep?)` to re-limit it at
-runtime when the viewport or content extent changes.
+The bar does not calculate a content extent. Its owner must derive and update `max`, usually as
+`extent - viewport`. `setRange` repaints only when range values actually change, so it is safe to
+call during an owner’s draw pass.
 
-## Best practices
+## Range and binding
 
-- **You rarely build one directly.** `Scroller`, `ListView`/`ListBox`, and `Tree` each own a
-  `ScrollBar` and wire it for you. Reach for a standalone bar only when you own a custom viewport.
-- **Share one signal.** Bind the bar's `value` to the same signal that offsets your content, so a
-  drag and a keyboard scroll move in lockstep.
-- **Let `max === min` disable it.** A fully-visible content extent needs no scrolling; leaving `max`
-  at `0` draws the greyed, inert `▓` track automatically.
+Every read clamps the external signal into `[min, max]`, preventing a stray caller value from
+placing the thumb outside the track. Range collapse paints a disabled track without forcing a
+write back into the signal.
+
+```ts
+import { ScrollBar, signal } from '@jsvision/ui';
+
+bar.setRange(0, Math.max(0, itemCount - visibleRows), visibleRows - 1);
+position.set(12); // both owner and bar observe the same new position
+```
+
+This division lets `Scroller` and `ListView` own keyboard behavior while the bar owns pointer
+behavior.
+
+## Mouse interaction
+
+Clicking an end arrow moves by `arrowStep`. Clicking either page region moves by `pageStep`, while
+pressing the thumb captures the pointer and maps drag movement proportionally into the range.
+Wheel input moves by three arrow steps on the matching orientation.
+
+The thumb, page track, and arrows all use the current live range. A disabled bar consumes no
+meaningful movement and remains visually stable.
+
+## Best Practices
+
+- Keep navigation keys in the semantic owner rather than making the bar a competing tab stop.
+- Derive range limits from live content and viewport measurements.
+- Share one signal between the bar and owner; avoid mirroring values in callbacks.
+- Use a sufficiently long track when users need precise pointer placement.
+- Show a disabled range clearly instead of hiding it when stable layout is important.
 
 ## Theming
 
-| Role                | Applies to                             |
-| ------------------- | -------------------------------------- |
-| `scrollBarControls` | The `▲▼`/`◄►` end arrows and the thumb |
-| `scrollBarPage`     | The `▒` page track (and `▓` disabled)  |
-
-Both default to cyan on blue.
+`scrollBarControls` paints arrows and the `█` thumb. `scrollBarPage` paints the `▒` page track and
+the `▓` disabled track. Ensure the thumb contrasts with both enabled and disabled page glyphs in
+color and monochrome themes.
 
 ## Related
 
-- [Scroller](/components/containers/scroller) — a focusable viewport that owns bar(s) for you.
-- [List box](/components/containers/list-box) — a virtual-scroll list with an owned bar.
-- [Tree](/components/containers/tree) — an outline with an owned bar.
-- [API reference](/api/ui/classes/ScrollBar) — the generated `ScrollBar` signature.
+- [Scroller](/components/containers/scroller) — owns bars and two-axis offsets.
+- [List View](/components/containers/list-view) — virtual rows with an owned bar.
+- [Slider](/components/controls/slider) — focusable value input rather than passive navigation.
+- [ScrollBar API](/api/ui/classes/ScrollBar) — generated options and range methods.

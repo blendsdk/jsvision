@@ -1,17 +1,16 @@
 ---
 title: Tree
-description: Tree — a focusable, virtual-scrolling, expandable outline over a forest of nodes, with connector guides and a choice of expand markers.
+description: Navigate typed hierarchical data with a virtual-scrolling Tree, caller-owned selection, independent expansion state, and adaptive markers.
 ---
 
 # Tree
 
-`Tree<T>` is a focusable, virtual-scrolling outline: it takes a forest of `TreeNode` roots, flattens
-the currently-visible (expanded) nodes into an ordered row list, and paints only its visible window —
-so it stays fast over large trees. Nodes carry `│├└─` connector guides and a `+` / `─` expand marker,
-and it owns a vertical [`ScrollBar`](/components/containers/scroll-bar).
+`Tree<T>` renders a reactive forest of `TreeNode<T>` values as a focusable outline. It flattens only
+currently expanded nodes, paints only the visible row window, and keeps expansion state inside the
+view rather than mutating domain nodes.
 
-Expand state is **owned by the view**, keyed on node object identity — the node data stays plain and
-immutable, and the same node can live in more than one tree with independent expand state.
+Use it for project explorers, navigation outlines, and other hierarchies where parent/child
+structure and expansion are meaningful.
 
 ## Usage
 
@@ -19,88 +18,91 @@ immutable, and the same node can live in more than one tree with independent exp
 import { Tree, signal } from '@jsvision/ui';
 import type { TreeNode } from '@jsvision/ui';
 
-// A leaf is `children: []`.
-const n = (value: string, children: TreeNode<string>[] = []): TreeNode<string> => ({ value, children });
-const roots = signal<TreeNode<string>[]>([n('src', [n('index.ts'), n('engine', [n('buffer.ts')])]), n('README.md')]);
-
-const tree = new Tree({
-  roots,
-  getText: (name) => name,
-  command: 'open',
-  markerStyle: 'brackets', // `[+]`/`[-]` markers instead of the default `+`/`─`
-});
-tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } });
-// loop.focusView(tree.rows) — focus the rows renderer, not the group. tree.expandAll() to open all.
+const roots = signal<TreeNode<string>[]>([
+  { value: 'src', children: [{ value: 'index.ts', children: [] }] },
+  { value: 'README.md', children: [] },
+]);
+const tree = new Tree({ roots, getText: (name) => name, markerStyle: 'brackets' });
 ```
 
 ## Live example
 
-<PlayComingSoon title="Tree" />
+<PlayExample id="containers/tree" title="Outline navigation laboratory" blurb="Expand a project node, descend to its first child, activate it, and compare bracket markers with focused and selected row states." />
 
-## Props
+Press Right twice then Enter: the first Right expands, the second descends, and Enter commits the
+child without conflating navigation with selection.
 
-`new Tree(options)`.
+## Props and public state
 
-| Prop                | Type                               | Default     | Description                                                                   |
-| ------------------- | ---------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| `roots`             | `Signal<TreeNode<T>[]>`            | —           | The reactive forest of root nodes (a single-root tree is the 1-element case). |
-| `getText`           | `(value: T) => string`             | —           | Render a node's value to its row text.                                        |
-| `focused`           | `Signal<number>`                   | internal 0  | The highlighted flattened-visible index.                                      |
-| `selected`          | `Signal<number>`                   | internal −1 | The chosen flattened-visible index (`-1` = none).                             |
-| `onSelect`          | `(index, node) => void`            | —           | Activation callback (Enter / text double-click).                              |
-| `command`           | `string`                           | —           | Command emitted on activation, handled elsewhere.                             |
-| `expandedByDefault` | `boolean`                          | `false`     | Seed every node with children as expanded at construction.                    |
-| `guides`            | `boolean`                          | `true`      | Draw the `│├└─` connectors; `false` = flat indent.                            |
-| `markerStyle`       | `'tv' \| 'brackets' \| 'triangle'` | `'tv'`      | Expand-marker style (see below).                                              |
+`Tree<T>` accepts `TreeOptions<T>`:
 
-## Keyboard & mouse
+| Prop                   | Type                    | Default       | Purpose                                |
+| ---------------------- | ----------------------- | ------------- | -------------------------------------- |
+| `roots`                | `Signal<TreeNode<T>[]>` | —             | Reactive forest.                       |
+| `getText`              | `(value: T) => string`  | —             | Row label.                             |
+| `focused`              | `Signal<number>`        | internal `0`  | Highlighted flattened index.           |
+| `selected`             | `Signal<number>`        | internal `-1` | Activated flattened index.             |
+| `onSelect` / `command` | callback / string       | —             | Activation outputs.                    |
+| `expandedByDefault`    | `boolean`               | `false`       | Seed every branch expanded.            |
+| `guides`               | `boolean`               | `true`        | Draw connector guides.                 |
+| `markerStyle`          | `MarkerStyle`           | `'tv'`        | `'tv'`, `'brackets'`, or `'triangle'`. |
 
-| Input                 | Result                                         |
-| --------------------- | ---------------------------------------------- |
-| **↑ / ↓**             | Move the highlight.                            |
-| **PgUp / PgDn**       | Page the highlight.                            |
-| **Home / End**        | Jump to the first / last visible row.          |
-| **Ctrl+PgUp / PgDn**  | Jump to the ends.                              |
-| **+ / −**             | Expand / collapse the focused node.            |
-| **\***                | Expand the focused node's whole subtree.       |
-| **← / →**             | Collapse-or-parent / expand-or-child.          |
-| **Enter**             | Activate (fires `onSelect` / emits `command`). |
-| **Click** a guide     | Toggle that node.                              |
-| **Double-click** text | Activate that node.                            |
+Public `rows`, `focused`, and `selected` expose navigation state. `isExpanded`, `expand`,
+`collapse`, `toggle`, `expandAll`, `collapseAll`, and `expandSubtree` control view-owned expansion.
 
-## Sizing & layout
+## Size and Layout
 
-Give the `Tree` its own bounds (an absolute `rect` or a flex slot); internally it lays out as a row —
-the rows renderer fills the width, the owned scroll bar takes the rightmost column. Because a plain
-`Group` is not itself a focus target, **focus the exposed `tree.rows`**, not the tree.
+The outer group lays out virtual rows beside an owned one-cell vertical bar. Give it a bounded
+height to define the visible window and enough width for guides, marker, indentation, and useful
+text. Focus `tree.rows`, not the outer group.
 
-The marker style adapts to the terminal: `'tv'` is a faithful single `+`/`─`, `'brackets'` draws
-`[+]`/`[-]` (pure ASCII, the most legible), and `'triangle'` draws `▸`/`▾` but falls back to
-`'brackets'` where Unicode is unavailable. Only the marker column changes — indentation and connectors
-are identical across styles.
+Deep levels consume horizontal cells. Labels clip safely, but a very narrow tree can leave only
+connectors visible; choose a width appropriate to expected depth.
 
-## Best practices
+## Expansion and navigation
 
-- **Keep node data plain.** Expand state lives in the view, keyed on identity — never mutate the
-  `TreeNode` objects to track open/closed. Drive expansion with `expand` / `collapse` / `toggle` /
-  `expandAll` / `collapseAll` / `expandSubtree`.
-- **Focus `tree.rows`.** The group is not focusable; focusing it does nothing.
-- **Pick a marker for your audience.** `'brackets'` is the safest for legibility and ASCII terminals;
-  keep the default `'tv'` for a classic look.
+Plus expands and minus collapses the focused branch; `*` expands its subtree. Right expands a
+collapsed branch or descends to its first child. Left collapses an expanded branch or moves to its
+parent. Arrow, page, Home/End, and Ctrl+Page keys navigate the flattened visible rows.
+
+The same node objects may appear in multiple trees with independent expansion state because
+`TreeNode` remains plain immutable data.
+
+## Selection and markers
+
+Enter and text double-click activate the focused row, update `selected`, and invoke the optional
+callback/command. A guide-zone click toggles expansion without selecting.
+
+`'tv'` uses compact `+`/`─` markers, `'brackets'` uses ASCII `[+]`/`[-]`, and `'triangle'` uses
+`▸`/`▾` with an automatic bracket fallback when Unicode is unavailable. Marker choice changes only
+the marker column.
+
+```ts
+import { Tree } from '@jsvision/ui';
+
+tree.expandAll();
+tree.collapse(roots()[0]);
+if (tree.isExpanded(roots()[0])) openInspector();
+```
+
+## Best Practices
+
+- Keep `TreeNode` data immutable and let each Tree own expansion.
+- Focus `tree.rows`; use a linked Label for a dialog accelerator.
+- Preserve object identity when updating roots if expansion continuity matters.
+- Keep `getText` deterministic and concise enough for expected depth.
+- Treat focus as navigation and selection as activation.
 
 ## Theming
 
-| Role                 | Applies to                                           |
-| -------------------- | ---------------------------------------------------- |
-| `outlineNormal`      | A normal row (expanded node or leaf): yellow on blue |
-| `outlineFocused`     | The focused row — an inverted bar: blue on lightGray |
-| `outlineSelected`    | A selected row: brightGreen on blue                  |
-| `outlineNotExpanded` | A collapsed node's text (a hint it has children)     |
-
-The owned scroll bar uses the `scrollBar*` roles.
+`outlineNormal`, `outlineFocused`, and `outlineSelected` paint row states.
+`outlineNotExpanded` distinguishes collapsed branch text. Connector guides use `outlineNormal`, and
+the owned bar uses the scroll-bar roles. Ensure collapsed hints remain legible without overpowering
+focused and selected rows.
 
 ## Related
 
-- [List box](/components/containers/list-box) — a flat single-column list.
-- [Data grid](/components/table/data-grid) — a multi-column table.
-- [API reference](/api/ui/classes/Tree) — the generated `Tree` signature.
+- [List View](/components/containers/list-view) — flat typed rows.
+- [Scroller](/components/containers/scroller) — generic oversized content.
+- [File List](/components/files/file-list) — filesystem-specific composition.
+- [Tree API](/api/ui/classes/Tree) — generated `TreeOptions`, `TreeNode`, and methods.
