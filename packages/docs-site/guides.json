@@ -298,7 +298,7 @@
       "group": "Building applications",
       "page": "/guide/theming-and-colour-depth",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 8,
       "prerequisites": ["application-shell"],
       "learningOutcomes": [
@@ -307,7 +307,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/theme-role-states", "guides/color-depth-fallbacks"]
     },
     {
       "id": "running-in-the-browser",

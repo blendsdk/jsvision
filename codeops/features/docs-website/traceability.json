@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
+          "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:46:16Z"
+          "validatedAt": "2026-07-30T11:29:39Z"
         }
       ]
     },
@@ -1076,10 +1076,16 @@
         "summary:Phase 17 tasks 17.3.1 and 17.3.2 added unknown-route, history, rebuilt-focus, retention, reset, disposal, geometry, and interaction hardening and promoted Screens & routing after 30/30 focused checks passed.",
         "summary:Phase 17 independent review found five Major and one Minor issue; AR-63 corrected real shared chrome, focus semantics, logger boundaries, codec validation, lifecycle evidence, and visible action markers without waiver.",
         "summary:The permitted Phase 17 re-review cleared all original findings and identified correction-introduced Major RV-17-R1 through RV-17-R3; AR-64 corrected button clipping, unreachable nested-menu cues, and the stale Router API-link assertion. A third review is prohibited.",
-        "summary:Phase 17 completed after 30/30 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
+        "summary:Phase 17 completed after 30/30 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 18 tasks 18.1.1 and 18.1.2 established 18 independently authored cases; expected red was 6 public theming and renderer controls passing and 12 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 18 tasks 18.2.1 through 18.2.4 delivered semantic-role, theme-generation, contrast, capability-depth, monochrome, and glyph-fallback teaching plus two deterministic laboratories; 17/18 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 18 tasks 18.3.1 and 18.3.2 added invalid-input, palette-collapse, monochrome, ASCII, repeated-interaction, cleanup, and geometry hardening and promoted Theming & colour depth after corrected focused checks passed.",
+        "summary:Phase 18 independent review found three Major and one Minor issue; AR-67 corrected theme-input accuracy, shared-menu synchronization, rendered laboratory evidence, and Markdown structure without waiver.",
+        "summary:The permitted Phase 18 re-review cleared every original finding and identified two correction-introduced Minors; the final no-third-review correction aligned the selected-depth prose and composed host plus app-owned theme observers.",
+        "summary:Phase 18 completed after 43/43 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
+      "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1145,10 +1151,13 @@
         "Auto-design AR-61 partitions Phase 17 into typed-stack/shared-chrome and screen-lifecycle/focus laboratories so the two catalog outcomes remain independently observable.",
         "Auto-design AR-62 preserves Phase 17 expected-red evidence through its first green checkpoint.",
         "Auto-design AR-63 accepts RV-17-01 through RV-17-06 without waiver and requires real visible shared chrome, accurate focus semantics, a sanitizing logger boundary, validated codecs, observed lifecycle state, and visible action markers.",
-        "Auto-design AR-64 accepts correction-introduced RV-17-R1 through RV-17-R3 without waiver and requires naturally sized action faces, non-deceptive nested-menu chrome, and an oracle synchronized with the generated Router interface."
+        "Auto-design AR-64 accepts correction-introduced RV-17-R1 through RV-17-R3 without waiver and requires naturally sized action faces, non-deceptive nested-menu chrome, and an oracle synchronized with the generated Router interface.",
+        "Auto-design AR-65 partitions Phase 18 into semantic role/state and colour-depth/fallback laboratories so theme authoring and capability degradation remain independently observable.",
+        "Auto-design AR-66 preserves Phase 18 expected-red evidence through its first green checkpoint.",
+        "Auto-design AR-67 accepts RV-18-01 through RV-18-04 without waiver and requires accurate seed semantics, one synchronized theme model, rendered role and encoder evidence, and valid Markdown structure."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:98e09f559783c9091596e51353bc60e70c91e7f3bf75341b8b1960299362d00f",
+      "revision": "sha256:fa02c01896e46a0c2baadef9877222f0b7ea1d3f5adca8cf3c0072da693188a7",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1218,9 +1227,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
+          "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:46:16Z"
+          "validatedAt": "2026-07-30T11:29:39Z"
         }
       ]
     }
