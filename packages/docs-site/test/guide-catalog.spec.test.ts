@@ -114,10 +114,11 @@ describe('Guide curriculum catalog', () => {
       'running-in-the-browser',
       'writing-your-own-widget',
       'testing-headlessly',
+      'application-architecture',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);
-    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(4);
+    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(3);
   });
 
   test('gives every course prerequisites, outcomes, and an explicit example target', () => {
