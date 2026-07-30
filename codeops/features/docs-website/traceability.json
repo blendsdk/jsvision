@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:335f93f62199e39870878f2334edab194c1ab4e137f323270b287cb3df24ef4e",
+          "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T14:55:00Z"
+          "validatedAt": "2026-07-30T16:21:51Z"
         }
       ]
     },
@@ -1116,10 +1116,15 @@
         "summary:Phase 25 tasks 25.1.1 and 25.1.2 established 19 independently authored cases; expected red is four public sanitizer, rendered-cell, bounded-redaction, and non-validation controls passing and 15 placeholder course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
         "summary:Phase 25 tasks 25.2.1 through 25.3.1 delivered the complete course, one template1 unsafe/sanitized/redacted comparison laboratory, and bounded fixtures, repeated sanitization, sensitive-preview suppression, diagnostic eviction, keyboard, mouse, geometry, cleanup, and post-disposal hardening.",
         "summary:Phase 25 independent review found three Major and two Minor issues; AR-84 corrected compact row overlap, clipped instructions, divergent and falsely labeled Button routes, absent planned-page links, UTF-16 bounds, and premature promotion without waiver.",
-        "summary:The single permitted Phase 25 fix-scoped re-review cleared every substantive finding; final CodeOps synchronization resolved its residual Minor, and the promoted course passes 34/34 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify."
+        "summary:The single permitted Phase 25 fix-scoped re-review cleared every substantive finding; final CodeOps synchronization resolved its residual Minor, and the promoted course passes 34/34 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify.",
+        "summary:Phase 26 baseline 8918888033b0c925f293f31e4c220cb425547e69 and its expected Accessibility & resilient interaction modification set are recorded before specification work.",
+        "summary:Phase 26 tasks 26.1.1 and 26.1.2 established 24 independently authored cases; expected red is four public focus, accelerator, NO_COLOR, and ASCII controls passing and 20 absent course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 26 tasks 26.2.1 through 26.3.1 delivered the complete accessibility course, two template1 laboratories, and keyboard, pointer, focus-visible, semantic-state, rendered-profile, reduced-geometry, cleanup, and post-disposal hardening.",
+        "summary:Phase 26 independent review found three Major and two Minor issues; AR-85 replaced simulated profile labels with rendered style, fallback-glyph, semantic-cell, and solved-geometry evidence, activated Inspect through a shared command, and corrected Button semantics and snippets without waiver.",
+        "summary:The single permitted Phase 26 fix-scoped re-review cleared all five findings, and the promoted course passes 35/35 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:335f93f62199e39870878f2334edab194c1ab4e137f323270b287cb3df24ef4e",
+      "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1205,10 +1210,11 @@
         "Auto-design AR-81 accepts all five Phase 23 quality findings without waiver and requires registered command delivery, mounted exact-cell rendering, selected-boundary correction, rejected retained work, root-relative buffer coordinates, and direct regression assertions.",
         "Auto-design AR-82 selects a deterministic public createHost lifecycle trace plus a real Vitest module as the authentic zero-browser-lab substitute for native terminal restoration.",
         "Auto-design AR-83 accepts all Phase 24 findings without waiver and requires exact terminal-transition validation, correct restoration/backstop ordering, combined fatal and restoration-fault evidence, supported public imports, and final-only synchronization.",
-        "Auto-design AR-84 accepts all Phase 25 findings without waiver and requires disjoint compact geometry, complete instructions, shared command routing, resolvable links, Unicode-safe bounds, and final-only promotion synchronization."
+        "Auto-design AR-84 accepts all Phase 25 findings without waiver and requires disjoint compact geometry, complete instructions, shared command routing, resolvable links, Unicode-safe bounds, and final-only promotion synchronization.",
+        "Auto-design AR-85 accepts all Phase 26 findings without waiver and requires rendered profile evidence, solved narrow geometry, real shared-command Inspect behavior, exact Button semantics, and valid self-contained snippets."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:890653253aaf03e3f50791240c1d3cd7f2315233063597d48a089bc66f055249",
+      "revision": "sha256:79b49f0cc12db2933a8956c14485669acc0c9da245e4192dce9daf78fd66972e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1278,13 +1284,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:335f93f62199e39870878f2334edab194c1ab4e137f323270b287cb3df24ef4e",
+          "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T14:55:00Z"
+          "validatedAt": "2026-07-30T16:21:51Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T15:54:23Z"
+  "updated": "2026-07-30T16:21:51Z"
 }
