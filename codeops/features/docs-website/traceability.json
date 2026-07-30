@@ -444,9 +444,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
+          "revision": "sha256:48813eb1a8af1b266061802d428bb2fbcafb4049cfd8c13643d76eaa414c1a6e",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-30T19:29:42Z"
+          "validatedAt": "2026-07-30T19:37:15Z"
         }
       ]
     },
@@ -494,7 +494,7 @@
         "Phase 11 verified: catalog-backed overview, sidebars, API parity, rendered-route validation, and lazy Play DOM coverage are complete; every accepted independent-review finding is closed and authoritative yarn verify passes."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
+      "revision": "sha256:48813eb1a8af1b266061802d428bb2fbcafb4049cfd8c13643d76eaa414c1a6e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -584,9 +584,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
+          "revision": "sha256:48813eb1a8af1b266061802d428bb2fbcafb4049cfd8c13643d76eaa414c1a6e",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-30T19:29:42Z"
+          "validatedAt": "2026-07-30T19:37:15Z"
         }
       ]
     },
@@ -1298,5 +1298,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T19:29:42Z"
+  "updated": "2026-07-30T19:37:15Z"
 }
