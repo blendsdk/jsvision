@@ -257,4 +257,12 @@ export const GUIDE_EXAMPLES = [
     themeMenu: true,
     load: () => import('../../examples/guides/debugging-evidence.js'),
   },
+  {
+    id: 'guides/untrusted-text-boundary',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/untrusted-text-boundary.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/untrusted-text-boundary.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];
