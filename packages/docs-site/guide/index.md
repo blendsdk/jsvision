@@ -183,7 +183,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | Course                                                     | Stage    | Purpose                                                                                  |
 | ---------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
 | [The application shell](/guide/application-shell)          | Complete | Build and run menus, status, commands, desktops, and windows.                            |
-| [Dialogs & modality](/guide/dialogs-and-modality)          | Upgrade  | Await validated, cancellable, focus-safe modal workflows.                                |
+| [Dialogs & modality](/guide/dialogs-and-modality)          | Complete | Build validated, cancellable, focus-safe modal workflows.                                |
 | Async work, cancellation & progress                        | Planned  | Keep input responsive while handling progress, cancellation, cleanup, and stale results. |
 | [Forms](/guide/forms)                                      | Upgrade  | Build typed field state, validation, async submission, and reset.                        |
 | [Files & the FileSystem seam](/guide/files-and-filesystem) | Upgrade  | Run the same file workflows over native, virtual, and custom hosts.                      |

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 07:47
-> **Progress**: 88/246 tasks (36%)
+> **Last Updated**: 2026-07-30 08:59
+> **Progress**: 96/246 tasks (39%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -618,25 +618,49 @@ independent specification-first phase (AR-10).
 ## Phase 12: Dialogs & modality
 
 **Reference**: ST-21 · `03-02` · `03-03`
+> **Phase baseline tree**: `adfc3f07c353b72e6bb01d2335b7c92f7ac4c001`
+> **Expected modification set**: `packages/docs-site/guide/dialogs-and-modality.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/dialogs-and-modality/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, `packages/docs-site/components/containers/dialog.md`,
+> route-specific tests, the synchronized curriculum catalog assertion, and synchronized CodeOps
+> lifecycle artifacts. The Dialog component-page addition is the user-approved runtime AR-48
+> accuracy correction.
 
 ### Step 12.1: Specification tests
 
-- [ ] 12.1.1 [spec-author] Write the dialogs/modality oracle — `packages/docs-site/test/dialogs-and-modality-guide.spec.test.ts`
-- [ ] 12.1.2 Run the specification and record the expected red result
+- [x] 12.1.1 [spec-author] Write the dialogs/modality oracle — `packages/docs-site/test/dialogs-and-modality-guide.spec.test.ts` ✅ (completed: 2026-07-30 08:10)
+- [x] 12.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 08:10) — authoritative focused run: 4 public modal, validation, disposal, and helper controls passed; 15 final course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions failed as expected; commit deferred to the final green 12.3.2 checkpoint per runtime AR-47
 
 ### Step 12.2: Implementation
 
-- [ ] 12.2.1 Replace the placeholder with results, validation, nesting, cancellation, and focus teaching — `packages/docs-site/guide/dialogs-and-modality.md`
-- [ ] 12.2.2 Implement two focused template1 modal-workflow labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/dialogs-and-modality/`
-- [ ] 12.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 12.2.4 Run ST-21 green plus docs-site typecheck; fix implementation only
+- [x] 12.2.1 Replace the placeholder with results, validation, nesting, cancellation, and focus teaching — `packages/docs-site/guide/dialogs-and-modality.md` ✅ (completed: 2026-07-30 08:29)
+- [x] 12.2.2 Implement two focused template1 modal-workflow labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/dialogs-and-modality/` ✅ (completed: 2026-07-30 08:29)
+- [x] 12.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 08:29)
+- [x] 12.2.4 Run ST-21 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 08:29) — focused oracle reached its planned implementation checkpoint at 18/19, with only the final catalog-stage promotion assertion intentionally red; docs-site typecheck passed
 
 ### Step 12.3: Hardening
 
-- [ ] 12.3.1 Add cancel, invalid, nested, focus-restore, and cleanup edges — `packages/docs-site/test/dialogs-and-modality-guide.impl.test.ts`
-- [ ] 12.3.2 Run focused checks, promote Dialogs & modality, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 12.3.1 Add cancel, invalid, nested, focus-restore, and cleanup edges — `packages/docs-site/test/dialogs-and-modality-guide.impl.test.ts` ✅ (completed: 2026-07-30 08:32)
+- [x] 12.3.2 Run focused checks, promote Dialogs & modality, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 08:59) — runtime AR-49 corrected RV-012-001 without waiver; 24/24 focused Dialog checks, synchronized curriculum coverage, docs-site typecheck, production docs build, performance checks, plugin integrity, authoritative `yarn verify`, and the single permitted fix-scoped re-review passed
 
 **Verify**: Dialog spec/impl tests and docs-site typecheck
+
+### Phase 12 quality review summary
+
+- The independent review reported one Major finding: RV-012-001 showed that manually assigned
+  success labels could remain green without independently proving settled modal results, LIFO
+  promise order, exact focus identities, and real cleanup.
+- Runtime AR-49 accepted the full correction without waiver. The laboratories now distinguish the
+  synchronous modal-host boundary from asynchronous promise settlement, compare restored focus by
+  identity, count mounted-view cleanup callbacks, and publish disposal success only after both
+  promises resolve `undefined`.
+- The single permitted fix-scoped re-review cleared RV-012-001 and found no
+  correction-introduced Critical, Major, or Minor issue.
+- The promoted course passes 24/24 focused Dialog checks, curriculum synchronization, docs-site
+  typecheck, production docs build, performance checks, plugin integrity, and authoritative
+  `yarn verify`.
 
 ## Phase 13: Async work, cancellation & progress
 
