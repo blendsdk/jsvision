@@ -463,4 +463,5 @@ Continue with [In production](/guide/in-production) for deployment policy and ev
 Use the generated references for
 [`resolveCapabilities()`](/api/core/functions/resolveCapabilities),
 [`resolveCapabilitiesAsync()`](/api/core/functions/resolveCapabilitiesAsync), and
-[`buildBrowserCaps()`](/api/web/functions/buildBrowserCaps) when you need exact signatures.
+`buildBrowserCaps()` from the private `@jsvision/web` docs runtime when maintaining browser-host
+integration; that package is intentionally outside the generated public API reference.

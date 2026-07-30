@@ -15,7 +15,7 @@ const runtimeQuery: TerminalQuery = {
     yield new TextEncoder().encode('\x1b[?2026;2$yq');
   },
 };
-const runtimeResolution = await resolveCapabilitiesAsync({
+const runtimeResolution = resolveCapabilitiesAsync({
   env: {},
   platform: 'linux',
   query: runtimeQuery,

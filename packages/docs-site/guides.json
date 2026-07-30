@@ -502,7 +502,7 @@
       "group": "Operating a real app",
       "page": "/guide/in-production",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 6,
       "prerequisites": ["crash-safety", "untrusted-text", "terminal-capabilities"],
       "learningOutcomes": [
