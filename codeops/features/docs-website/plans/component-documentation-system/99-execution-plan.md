@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 188 / 193 tasks complete
-> **Last Updated**: 2026-07-30 21:27 CEST
+> **Progress**: 189 / 193 tasks complete
+> **Last Updated**: 2026-07-30 21:37 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -886,8 +886,12 @@ is recorded in `16-phase-11-quality-review.md`.
   visual-surface classification. ✅ (completed: 2026-07-30 21:27 CEST; all five current public
   barrels were classified in `17-phase-12-final-review.md`; 61 explicitly owned visual symbols and
   openers resolve through 51 component rows, with coupled and non-visual exports recorded)
-- [ ] **12.2** Review every standard page and hub topic against the content-quality checklist in
-  03-06; repair in tasks of at most three files.
+- [x] **12.2** Review every standard page and hub topic against the content-quality checklist in
+  03-06; repair in tasks of at most three files. ✅ (completed: 2026-07-30 21:37 CEST; all 71
+  unique routes passed the eight-part content review and 682 focused assertions; authoritative
+  verification passes with Turbo concurrency bounded to two after the i18n wall-clock benchmark
+  proved sensitive to preceding host contention; logs
+  `/tmp/tmp.sZHLhG2yHh/component-final-audit.log` and `/tmp/tmp.iBnMIycuhM`)
 - [ ] **12.3** Paint-smoke every example at 80×24 and sample keyboard/mouse interaction for every
   family and every specialist topic.
 - [ ] **12.4** Run docs production build and inspect Components, Data Grid, and Code Editor sidebar
