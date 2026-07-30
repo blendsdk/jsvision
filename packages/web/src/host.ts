@@ -114,6 +114,8 @@ export interface BrowserHost {
   render(buffer: ScreenBuffer): void;
   /** Position (or hide, when `null`) the hardware caret — wire to the loop's `onCaret`. */
   setCaret(cell: CaretCell | null): void;
+  /** Stop terminal input and pending decoder timers owned by this host. */
+  dispose(): void;
 }
 
 /** Options for {@link createBrowserHost}. */
@@ -153,6 +155,9 @@ export interface BrowserHostOptions {
  * const host = createBrowserHost({ term, caps, onInput: (event) => loop.dispatch(event) });
  * host.start();
  * host.render(loop.renderRoot.buffer()); // paint the first frame
+ *
+ * // Required when this direct host owner shuts down.
+ * host.dispose();
  */
 export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
   const { term, caps, onInput } = options;
@@ -162,6 +167,7 @@ export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
   let previous: ScreenBuffer | null = null;
   let decoderState = createDecoderState();
   let escTimer: TimerHandle | null = null;
+  let dataSubscription: { dispose(): void } | null = null;
 
   /** Disarm the lone-ESC flush timer if armed (a new byte cancels it). */
   function clearEscTimer(): void {
@@ -193,7 +199,8 @@ export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
   return {
     start(): void {
       term.write(ENTER_MODES);
-      term.onData(pump);
+      dataSubscription?.dispose();
+      dataSubscription = term.onData(pump);
     },
     render(buffer: ScreenBuffer): void {
       const out = serialize(buffer, previous, { caps });
@@ -204,6 +211,11 @@ export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
     },
     setCaret(cell: CaretCell | null): void {
       term.write(cell === null ? cursor.hide() : cursor.show() + cursor.to(cell.y + 1, cell.x + 1));
+    },
+    dispose(): void {
+      clearEscTimer();
+      dataSubscription?.dispose();
+      dataSubscription = null;
     },
   };
 }

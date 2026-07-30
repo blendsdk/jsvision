@@ -315,7 +315,7 @@
       "group": "Extending and integrating",
       "page": "/guide/running-in-the-browser",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 1,
       "prerequisites": ["application-shell", "files-and-filesystem"],
       "learningOutcomes": [
@@ -324,7 +324,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/browser-host-lifecycle", "guides/browser-capability-boundaries"]
     },
     {
       "id": "writing-your-own-widget",

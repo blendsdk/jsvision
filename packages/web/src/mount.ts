@@ -58,7 +58,7 @@ export interface MountedApp {
   readonly term: TerminalLike;
   /** The browser host driving the terminal. */
   readonly host: BrowserHost;
-  /** Tear down the resize listener and the terminal. */
+  /** Release host input, the app loop, browser bridges, resize handling, and the optional terminal. */
   dispose(): void;
 }
 
@@ -120,6 +120,7 @@ export function mountApp(options: MountAppOptions): MountedApp {
       // Mirror run()'s shutdown for a detached browser surface: stop the loop's painter and unmount
       // the view tree so every view's onCleanup fires (releasing timers/subscriptions) before the
       // terminal goes. Without this a long-lived page leaks an app's reactive tree on every close.
+      host.dispose();
       loop.dispose();
       loop.writeClipboardText = undefined;
       term.attachCustomKeyEventHandler?.(() => true);

@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
+          "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T11:29:39Z"
         }
@@ -1082,10 +1082,14 @@
         "summary:Phase 18 tasks 18.3.1 and 18.3.2 added invalid-input, palette-collapse, monochrome, ASCII, repeated-interaction, cleanup, and geometry hardening and promoted Theming & colour depth after corrected focused checks passed.",
         "summary:Phase 18 independent review found three Major and one Minor issue; AR-67 corrected theme-input accuracy, shared-menu synchronization, rendered laboratory evidence, and Markdown structure without waiver.",
         "summary:The permitted Phase 18 re-review cleared every original finding and identified two correction-introduced Minors; the final no-third-review correction aligned the selected-depth prose and composed host plus app-owned theme observers.",
-        "summary:Phase 18 completed after 43/43 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
+        "summary:Phase 18 completed after 43/43 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 19 tasks 19.1.1 and 19.1.2 established 20 independently authored cases; expected red was 5 public browser-runtime controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 19 tasks 19.2.1 through 19.3.1 delivered the private-boundary browser course, two deterministic laboratories, and lifecycle, authorization, virtual-file, geometry, and cleanup hardening; 32/33 final focused checks passed with only final stage promotion withheld.",
+        "summary:Phase 19 independent review found two Major and one Moderate issue; AR-70 corrected browser-host lifecycle ownership, Promise-derived capability evidence, focused reclaim evidence, and the root path guard without waiver.",
+        "summary:Phase 19 completed after the permitted re-review cleared every original Major, both Moderate correction details were fixed without a third review, and 33/33 Guide checks, 8/8 browser-runtime checks, typechecks, production docs build, plugin synchronization, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
+      "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1154,10 +1158,13 @@
         "Auto-design AR-64 accepts correction-introduced RV-17-R1 through RV-17-R3 without waiver and requires naturally sized action faces, non-deceptive nested-menu chrome, and an oracle synchronized with the generated Router interface.",
         "Auto-design AR-65 partitions Phase 18 into semantic role/state and colour-depth/fallback laboratories so theme authoring and capability degradation remain independently observable.",
         "Auto-design AR-66 preserves Phase 18 expected-red evidence through its first green checkpoint.",
-        "Auto-design AR-67 accepts RV-18-01 through RV-18-04 without waiver and requires accurate seed semantics, one synchronized theme model, rendered role and encoder evidence, and valid Markdown structure."
+        "Auto-design AR-67 accepts RV-18-01 through RV-18-04 without waiver and requires accurate seed semantics, one synchronized theme model, rendered role and encoder evidence, and valid Markdown structure.",
+        "Auto-design AR-68 partitions Phase 19 into browser host lifecycle and capability-boundary laboratories while preserving the private package release boundary.",
+        "Auto-design AR-69 preserves Phase 19 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-70 accepts the Phase 19 quality findings without waiver and requires owned host input/timer disposal, observable post-disposal inertia, Promise-derived capability outcomes, focused and unfocused reclaim evidence, and exact-root path authorization."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:fa02c01896e46a0c2baadef9877222f0b7ea1d3f5adca8cf3c0072da693188a7",
+      "revision": "sha256:0fe4fe137a17fb3c62f0cb93e1eba9a02baa150733255f3b94abe53a04dbbc58",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1227,7 +1234,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:ea68706fe2175ec808e6b7189f4c4fa2cec71def92e994b9f34fcbe3b2ffe424",
+          "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T11:29:39Z"
         }
@@ -1235,5 +1242,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T08:48:16Z"
+  "updated": "2026-07-30T12:07:52Z"
 }
