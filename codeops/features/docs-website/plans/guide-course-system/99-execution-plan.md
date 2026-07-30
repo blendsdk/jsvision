@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-30 18:49
-> **Progress**: 216/246 tasks (88%)
+> **Progress**: 224/246 tasks (91%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1125,22 +1125,31 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-37 · `03-02 §Authentic Substitutes`
 
+> **Phase baseline tree**: d305431e3bc7613d0048fa7bc2a8d798c4f58e7e
+>
+> **Expected modification set**: The Phase 28 production course, authentic operational
+> configuration/checklist and bounded diagnostic fixtures, focused specification and implementation
+> tests, Guide catalog/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 28.1: Specification tests
 
-- [ ] 28.1.1 [spec-author] Write the production course oracle — `packages/docs-site/test/in-production-guide.spec.test.ts`
-- [ ] 28.1.2 Run the specification and record the expected red result
+- [x] 28.1.1 [spec-author] Write the production course oracle — `packages/docs-site/test/in-production-guide.spec.test.ts`
+- [x] 28.1.2 Run the specification and record the expected red result
+  - Expected red: 18 failed and 4 passed assertions. The passing controls confirm the current
+    public package, capability, logger, and sanitization evidence; failures require the course and
+    its authentic operational artifacts.
 
 ### Step 28.2: Implementation
 
-- [ ] 28.2.1 Replace the placeholder with supervision, restoration, logs, capabilities, evidence, and readiness — `packages/docs-site/guide/in-production.md`
-- [ ] 28.2.2 Bind authentic operational configuration/checklist and bounded diagnostics — `packages/docs-site/guide/in-production.md`, `packages/docs-site/src/example-fixtures/in-production/`
-- [ ] 28.2.3 Revalidate the zero-lab exception and artifact evidence — `packages/docs-site/guides.json`
-- [ ] 28.2.4 Run ST-37 green plus docs-site typecheck; fix implementation only
+- [x] 28.2.1 Replace the placeholder with supervision, restoration, logs, capabilities, evidence, and readiness — `packages/docs-site/guide/in-production.md` ✅ (completed: 2026-07-30 19:04; question-led beginner-to-production course covers reproducible ESM packaging, Node/Bun claim boundaries, TTY and signal ownership, bounded supervision, diagnostics, capabilities, security, compatibility, performance, release decisions, diagnosis, and exercises with focused snippets)
+- [x] 28.2.2 Bind authentic operational configuration/checklist and bounded diagnostics — `packages/docs-site/guide/in-production.md`, `packages/docs-site/src/example-fixtures/in-production/` ✅ (completed: 2026-07-30 19:04; exact supervisor policy, deterministic release-readiness evaluator, bounded public-API diagnostic collector, and executable artifact tests cover ship/no-go, non-TTY startup, crash loops, redaction, and freshness)
+- [x] 28.2.3 Revalidate the zero-lab exception and artifact evidence — `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 19:04; the exact catalog exception remains justified because embedded browser terminals cannot prove deployment, supervision, container security, or real controlling-terminal behavior, and no live example or registry entry was added)
+- [x] 28.2.4 Run ST-37 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 19:23; after gated promotion, the immutable course oracle, authentic artifact checks, implementation hardening, shared catalog, and inherited capability regression checks pass 74/74, and docs-site TypeScript remains green)
 
 ### Step 28.3: Hardening
 
-- [ ] 28.3.1 Add failed startup, crash loop, restore, redaction, capability, and stale-evidence edges — `packages/docs-site/test/in-production-guide.impl.test.ts`
-- [ ] 28.3.2 Run focused checks, promote In production, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 28.3.1 Add failed startup, crash loop, restore, redaction, capability, and stale-evidence edges — `packages/docs-site/test/in-production-guide.impl.test.ts` ✅ (completed: 2026-07-30 19:04; eight hardening cases cover missing and cross-release evidence, future timestamps, explicit warnings, bounded records, sanitization/redaction separation, graceful/forced shutdown, and exact concern ordering)
+- [x] 28.3.2 Run focused checks, promote In production, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 19:24; the promoted course passes focused checks, production docs build, and authoritative `yarn verify`; independent review found five Major and two Minor issues, AR-87 corrected warning acceptance, duplicate evidence, secret retention and capacity bounds, executable supervisor policy, planned/private-package links, Unicode bounds, and public snippet imports without waiver, and the single permitted fix-scoped re-review plus direct final corrections closed the scoped findings)
 
 **Verify**: Production guide spec/impl tests and docs-site typecheck
 

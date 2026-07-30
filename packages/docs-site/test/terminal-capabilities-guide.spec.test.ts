@@ -51,6 +51,7 @@ interface CapabilityResolutionPanel extends View {
   readonly passthroughBytes: number;
   readonly resolution: CapabilityResolution;
   readonly cleanupCount: number;
+  whenRuntimeReady(): Promise<void>;
 }
 
 interface PortableFallbackPanel extends View {
@@ -339,7 +340,8 @@ describe('Terminal capabilities & portability course contract', () => {
     );
     expect(source).toContain('](/api/core/functions/resolveCapabilities)');
     expect(source).toContain('](/api/core/functions/resolveCapabilitiesAsync)');
-    expect(source).toContain('](/api/web/functions/buildBrowserCaps)');
+    expect(source).toContain('private `@jsvision/web` docs runtime');
+    expect(source).not.toContain('](/api/web/functions/buildBrowserCaps)');
   });
 });
 
@@ -484,6 +486,7 @@ describe('Terminal capability laboratories contract', () => {
   test('should explain unknown, environment, query, and override scenarios by keyboard', async () => {
     const { app, dialog } = buildLabExample(RESOLUTION_ID, await loadDefinition(RESOLUTION_ID));
     const panel = resolutionPanel(dialog);
+    await panel.whenRuntimeReady();
     const observed = new Set([panel.scenarioName]);
     for (let index = 0; index < 3; index += 1) {
       dispatchExampleAction(app, { kind: 'key', key: 'E', modifiers: ['Alt'] });
@@ -510,6 +513,7 @@ describe('Terminal capability laboratories contract', () => {
   test('should provide mouse parity for evidence inspection without accessing visitor state', async () => {
     const { app, dialog } = buildLabExample(RESOLUTION_ID, await loadDefinition(RESOLUTION_ID));
     const panel = resolutionPanel(dialog);
+    await panel.whenRuntimeReady();
     clickButton(app, dialog, 'Explain next');
     expect(panel.scenarioChanges).toBe(1);
     expect(panel.evidenceChecks).toBe(1);

@@ -7,7 +7,7 @@ export type ResolutionScenario = 'Unknown' | 'Environment' | 'Runtime query' | '
 
 /** Precomputed real resolutions supplied by the example's public detection boundaries. */
 export interface ResolutionFixtures {
-  readonly runtime: CapabilityResolution;
+  readonly runtime: Promise<CapabilityResolution>;
 }
 
 const SCENARIOS: readonly ResolutionScenario[] = ['Unknown', 'Environment', 'Runtime query', 'Override'];
@@ -15,8 +15,9 @@ const SCENARIOS: readonly ResolutionScenario[] = ['Unknown', 'Environment', 'Run
 /**
  * Exposes immutable profile and reason evidence for four deterministic resolution inputs.
  *
- * The runtime-query fixture is produced with `resolveCapabilitiesAsync()` before the example is
- * built. The panel never reads the visitor's environment or terminal.
+ * The runtime-query fixture is produced with `resolveCapabilitiesAsync()` through a deterministic
+ * promise. The panel never reads the visitor's environment or terminal, and the example module
+ * does not require browser-incompatible top-level await.
  */
 export class CapabilityResolutionPanel extends Group {
   /** Stable teaching identity used by the terminal-capabilities course contract. */
@@ -41,13 +42,32 @@ export class CapabilityResolutionPanel extends Group {
   protected readonly scenario = signal<ResolutionScenario>('Unknown');
   protected readonly selected = signal<CapabilityResolution>(resolveCapabilities({ env: {}, platform: 'linux' }));
   protected readonly evidence = signal('unknown input · default reason · PASS');
-  protected readonly fixtures: ResolutionFixtures;
+  protected runtimeResolution = resolveCapabilities({ env: {}, platform: 'linux' });
+  protected runtimeReady = false;
+  protected readonly runtimePromise: Promise<void>;
+  protected disposed = false;
   protected active = false;
 
   /** @param fixtures Real precomputed async resolution evidence. */
   public constructor(fixtures: ResolutionFixtures) {
     super();
-    this.fixtures = fixtures;
+    this.runtimePromise = fixtures.runtime.then(
+      (resolution) => {
+        if (this.disposed) return;
+        this.runtimeResolution = resolution;
+        this.runtimeReady = true;
+        if (this.scenario() === 'Runtime query') {
+          this.selected.set(resolution);
+          this.verifyResolution('Runtime query', resolution);
+        }
+      },
+      () => {
+        if (this.disposed) return;
+        this.runtimeReady = true;
+        this.unsupportedClaims = 1;
+        this.evidence.set('runtime query failed · evidence unavailable');
+      },
+    );
     this.add(at(new Text(() => `Scenario: ${this.scenario()} · immutable profile + reasons`), 0, 0, 54, 1));
     this.add(
       at(
@@ -83,6 +103,7 @@ export class CapabilityResolutionPanel extends Group {
       this.onCleanup(() => {
         if (!this.active) return;
         this.active = false;
+        this.disposed = true;
         this.cleanupCount += 1;
       });
     });
@@ -98,6 +119,11 @@ export class CapabilityResolutionPanel extends Group {
     return this.selected();
   }
 
+  /** Wait until the deterministic runtime-query fixture has resolved or failed. */
+  public async whenRuntimeReady(): Promise<void> {
+    await this.runtimePromise;
+  }
+
   /** Advance through unknown, environment, runtime-query, and override evidence. */
   public explainNext(): void {
     if (!this.active) return;
@@ -107,6 +133,10 @@ export class CapabilityResolutionPanel extends Group {
     this.scenario.set(next);
     this.selected.set(resolution);
     this.scenarioChanges += 1;
+    if (next === 'Runtime query' && !this.runtimeReady) {
+      this.evidence.set('runtime query pending · deterministic fixture');
+      return;
+    }
     this.verifyResolution(next, resolution);
   }
 
@@ -118,7 +148,7 @@ export class CapabilityResolutionPanel extends Group {
         platform: 'linux',
       });
     }
-    if (scenario === 'Runtime query') return this.fixtures.runtime;
+    if (scenario === 'Runtime query') return this.runtimeResolution;
     if (scenario === 'Override') {
       return resolveCapabilities({
         env: { TERM: 'xterm-256color' },

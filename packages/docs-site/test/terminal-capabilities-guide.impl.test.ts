@@ -104,6 +104,7 @@ describe('terminal-capabilities course laboratory hardening', () => {
   test('wraps all capability-resolution scenarios with authentic reason evidence', async () => {
     const { app, dialog } = buildLabExample(RESOLUTION_ID, await definition(RESOLUTION_ID));
     const panel = resolutionPanel(dialog);
+    await panel.whenRuntimeReady();
     for (let index = 0; index < 4; index += 1) {
       dispatchExampleAction(app, { kind: 'key', key: 'e', modifiers: ['Alt'] });
       expect(panel.unsupportedClaims).toBe(0);

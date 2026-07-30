@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "runtime": "node",
+  "entry": "dist/main.js",
+  "terminal": {
+    "requiresTty": true,
+    "forwardSignals": ["SIGINT", "SIGTERM", "SIGHUP"]
+  },
+  "restart": {
+    "mode": "on-failure",
+    "maxAttempts": 3,
+    "windowSeconds": 60,
+    "backoffSeconds": [1, 5, 15]
+  },
+  "shutdown": {
+    "graceSeconds": 15,
+    "forceSignal": "SIGKILL"
+  }
+}

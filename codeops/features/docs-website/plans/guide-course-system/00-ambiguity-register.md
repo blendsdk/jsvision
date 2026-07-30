@@ -2594,3 +2594,46 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** A snippet passes unsupported browser options, query cleanup claims to restore
   host modes, an untaught glyph is promised an ASCII fallback, layout uses an unbound method, or
   promotion precedes review clearance.
+
+**AR-87 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting Phase 28 course-owned operational artifacts, release decisions,
+  diagnostics, supervisor evidence, snippets, and unresolved navigation without changing the
+  public SDK or catalog outcomes.
+- **Objective:** Make the production course's ship/no-go, supervision, diagnostic-retention, and
+  navigation claims executable, deterministic, secret-safe, and honest at promotion.
+- **Decision:** Accept IP-28-001 through IP-28-007 without waiver. Require structured warning
+  acceptance and block unaccepted warnings. Reject duplicate concern evidence independently of
+  input order. Retain only allowlisted display categories in bounded diagnostic bundles and clamp
+  the ring capacity. Execute restart, clean-exit, permanent-startup, rolling-window, and breaker
+  decisions through a pure supervisor evaluator. Keep the planned Complete application course
+  unlinked until its page exists, correcting the immutable Phase 28 assertion under this ruling.
+  Bound Unicode by code point before sanitizing and replace the invented status-bar method with a
+  concrete reactive `Text` example. The production build additionally proved that the Phase 27
+  link to a generated `@jsvision/web` API page can never resolve because the private web package
+  is intentionally outside generated API scope; replace that link with accurate unlinked package
+  guidance and correct its immutable assertion under this same gate-derived ruling.
+- **Evidence:** Independent review found automatic shipping of fresh warnings, order-dependent
+  duplicate evidence, secret-bearing sanitized text in a bundle labelled secret-free, a supervisor
+  test that asserted a hand-written sentence rather than policy behavior, a link to an absent
+  planned course, a UTF-16-splitting bound, and an invented component method. `yarn docs:build`
+  independently failed on both the planned course link and the impossible private-web API link.
+- **Rejected alternatives:** Waivers are prohibited. Treating sanitization as redaction would
+  preserve sensitive printable text. Selecting the first or last duplicate would keep release
+  decisions order-dependent. Adding generated API for a private package would expand product
+  scope beyond this Guide phase.
+- **Strongest counterargument:** The extra pure supervisor evaluator is more machinery than a JSON
+  example alone. The course explicitly promises bounded restart and permanent-startup decisions,
+  so executing that policy is the minimum authentic evidence for the zero-lab exception.
+- **Confidence:** High — corrections are bounded to course fixtures and assertions, use the current
+  public logger/redaction/sanitization APIs, and follow the documented private-web API boundary.
+- **Hardening:** Add accepted/unaccepted/stale-warning, duplicate-order, capacity, retention, and
+  policy-timeline cases; rerun focused checks and typecheck; require the single fix-scoped
+  re-review to clear all seven findings; then promote and run production docs and repository gates.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A warning ships without named acceptance, duplicate order changes a result,
+  retained diagnostics contain caller text, supervisor behavior is asserted without execution, a
+  Complete course links to an absent page, snippets invent APIs or split surrogate pairs, or a
+  private package is linked into generated API.

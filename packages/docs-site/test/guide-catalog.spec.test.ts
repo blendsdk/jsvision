@@ -122,6 +122,7 @@ describe('Guide curriculum catalog', () => {
       'untrusted-text',
       'accessibility',
       'terminal-capabilities',
+      'in-production',
     ]);
     expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(1);
   });
