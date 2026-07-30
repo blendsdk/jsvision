@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 51 items resolved
-> **Last Updated**: 2026-07-30 09:25
+> **Status**: ✅ GATE PASSED — all 56 items resolved
+> **Last Updated**: 2026-07-30 10:38
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -56,6 +56,11 @@
 | 49 | Quality review (runtime) | How should RV-012-001 be resolved without inferring modal results, order, focus, or cleanup from assigned labels? | Observe the real modal-host and settled-promise boundaries and count real focus identities and cleanup callbacks / waive or defer the Major finding | **Authority: AI — delegated by `--auto-design`.** Apply the complete authentic-evidence correction, verify it, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 | 50 | Naming (runtime) | Which stable IDs and lesson split should identify the two Async work laboratories? | `guides/cancellable-work` plus `guides/latest-result-wins` / one kitchen-sink lab / privileged network examples | **Authority: AI — delegated by `--auto-design`.** Separate responsive cancellation from overlapping-generation publication using deterministic bounded fixtures. | ✅ Resolved |
 | 51 | Quality review (runtime) | How should RV-013-001 through RV-013-003 be resolved when the stale-result lab reports cancellation after no pending work remains? | Cancel genuinely pending controllers, expose exact abort/release evidence, then use a fresh pair for stale completion; also mark the accelerator and remove the unused snippet state / retain false-positive cancellation evidence / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every correction, update the oracle to require authentic pending cancellation, rerun all gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 52 | Naming (runtime) | Which stable IDs and lesson split should identify the two Forms laboratories? | `guides/form-state-validation` plus `guides/form-async-submit` / one kitchen-sink form / reuse the specialist Form Dialog component example | **Authority: AI — delegated by `--auto-design`.** Separate typed state, touched validation, submission, and reset from deterministic async validation, supersession, and submit gating. | ✅ Resolved |
+| 53 | Execution (runtime) | How should Phase 14 preserve its intentional red oracle and Upgrade-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 14.3.2 promotion and full verification / commit a failing repository / weaken the oracle / claim a partial green checkpoint | **Authority: AI — delegated by `--auto-design`.** Treat tasks 14.1.1–14.3.2 as one repository-green checkpoint and push only after final Complete promotion and authoritative gates pass. | ✅ Resolved |
+| 54 | API accuracy (runtime) | When may the Forms state laboratory claim a valid submission, given that `createForm.submit()` crosses an async validation barrier before `onValid` even with no async validators? | Await the real submit settlement before asserting success / pre-count the request synchronously / bypass `submit()` | **Authority: AI — delegated by `--auto-design`.** Correct the pre-implementation oracle to await settlement and require success evidence from the real `onValid` boundary. | ✅ Resolved |
+| 55 | Quality review (runtime) | How should RV-014-001 through RV-014-004 be resolved without inferring stale validation or persistence from assigned labels and without teaching unavailable button APIs or actions? | Drive real controlled Promise settlements and real `onValid` persistence, correct the Button snippet and phase availability, mark Alt+O, and strengthen focused evidence / retain label-authored outcomes and enabled no-op controls / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every correction without waiver, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 56 | Quality review (runtime) | How should correction-introduced RV-014-005 prevent newly authentic Promise continuations from publishing after teardown when the one permitted re-review has already been used? | Mark the fixture inactive before cleanup, abort and settle every owned run, clear ownership, guard every continuation, and add pending plus resolve-then-dispose evidence / leave Promises retained or waive the lifecycle finding / request a prohibited third review | **Authority: AI — delegated by `--auto-design`.** Apply the complete teardown correction without waiver, verify it through focused and authoritative gates, and record the source-and-test ruling without a third review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -1423,3 +1428,171 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** Cancellation cannot expose abort evidence without a public API expansion,
   abort counts disagree with released pending controllers, the revised sequence no longer proves
   out-of-order stale suppression, or re-review retains a Critical or Major issue.
+
+**AR-52 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable documentation registry naming and lesson partitioning within the
+  confirmed two-laboratory Forms course; no product behavior, scope, acceptance criterion,
+  compatibility, host authority, or security policy changes.
+- **Objective:** Give everyday typed form work and advanced asynchronous validation separate,
+  independently falsifiable laboratories.
+- **Decision:** Use `guides/form-state-validation` for raw and coerced typed values, direct field
+  binding, touched/error visibility, dirty state, valid submission, and reset. Use
+  `guides/form-async-submit` for deterministic async validation, superseded verdicts, forced submit
+  validation, sealed submitting state, failure feedback, retry, and disposal.
+- **Evidence:** The catalog outcomes separate typed state/bindings/validation/submit/reset from
+  async validation/loading and honest feedback. Public `createForm`, `bindField`,
+  `AsyncValidator`, `submitting()`, `validating()`, `asyncError()`, `submit()`, `reset()`, and
+  `dispose()` provide direct observable seams without privileged I/O.
+- **Rejected alternatives:** A kitchen-sink lab would obscure whether sync validation or async
+  ownership caused a state transition. Reusing the Form Dialog component lab would duplicate its
+  specialist modal framing and would not isolate the headless store mental model. Real network
+  validation would be nondeterministic and cross a host-authorization boundary.
+- **Strongest counterargument:** Both labs use the same headless store. Shared deterministic
+  fixture helpers can remove plumbing duplication while each visible workflow retains one learning
+  objective.
+- **Confidence:** High — the split follows the two catalog outcome axes and the public API's
+  explicit sync/async boundary.
+- **Hardening:** The choice is reversible documentation metadata with no public runtime effect; an
+  independent challenger is not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either ID already exists, public form state cannot expose the outcomes
+  without internal APIs, or the oracle cannot distinguish synchronous validation from asynchronous
+  supersession and submit gating.
+
+**AR-53 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Implementation sequencing and commit-boundary mechanics within the approved
+  specification-first plan; no acceptance criterion, product behavior, scope, or external action
+  changes.
+- **Objective:** Preserve the independently authored expected-red oracle without committing a
+  repository state that fails the authoritative gate.
+- **Decision:** Record tasks 14.1.1 and 14.1.2 immediately, keep Forms at Upgrade through
+  hardening, and defer the first Phase 14 commit until task 14.3.2 promotes the course to Complete
+  and every focused and authoritative gate passes.
+- **Evidence:** The immutable oracle must require the final Complete catalog state and both
+  registered labs, so committing it before implementation would make `yarn verify` fail. The same
+  constraint has been independently challenged and verified in earlier Guide phases.
+- **Rejected alternatives:** Committing the red oracle violates the green-commit gate. Weakening,
+  skipping, or quarantining it destroys specification-first evidence. Calling a partial
+  non-stage run green would misstate the catalog completion contract.
+- **Strongest counterargument:** A phase-wide checkpoint reduces commit granularity. It remains the
+  smallest truthful green unit because the oracle intentionally spans authoring, laboratories,
+  hardening, and promotion.
+- **Confidence:** High — the Forms catalog contract has the same final-stage dependency as the
+  preceding Guide courses.
+- **Hardening:** Reused the previously challenged green-checkpoint policy and reconciled it with
+  the exact Phase 14 tasks; another independent challenge of the unchanged sequencing rule would
+  not add material evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle can truthfully pass before final promotion, the repository adopts
+  an authorized expected-red commit mechanism, or any current public-control assertion already
+  fails.
+
+**AR-54 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Test timing and authentic laboratory evidence within the confirmed Forms submit
+  contract; no product behavior, public compatibility, scope, or acceptance criterion changes.
+- **Objective:** Ensure the state laboratory counts a valid submission only after the real
+  `onValid` boundary has run.
+- **Decision:** Preserve synchronous invalid-submit feedback, but await native promise settlement
+  after the valid Alt+S action before asserting `validSubmissions` and rendered success.
+- **Evidence:** `createForm.submit()` always awaits `runAllForced()` before calling `onValid`;
+  `runAllForced()` uses `Promise.all`, including for an empty async-validator set. The public
+  Forms oracle already proves `submitting()` remains true across the valid async boundary.
+- **Rejected alternatives:** Pre-counting a valid request would infer success before `onValid`.
+  Bypassing `submit()` would fail to prove touched, validation, typed-output, and callback behavior.
+  Making the public store synchronous would be a compatibility-changing runtime expansion.
+- **Strongest counterargument:** The extra `await settle()` makes the laboratory test less purely
+  synchronous. That is the behavior being taught: a valid submit is an async workflow even when
+  its schema validation is locally available.
+- **Confidence:** High — the source and existing public-control assertion agree on the settlement
+  boundary.
+- **Hardening:** Detected before implementation by comparing the immutable interaction step with
+  current public source. The correction strengthens authentic evidence and changes no outcome.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** `submit()` no longer awaits the async layer before `onValid`, or the lab no
+  longer uses the real form submission callback as success evidence.
+
+**AR-55 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Authentic asynchronous test-fixture mechanics, public-API snippet correction,
+  accelerator marking, and reactive action availability within the already confirmed Forms course
+  and laboratory outcomes; no product behavior, scope, acceptance criterion, compatibility,
+  authorization policy, or external action changes.
+- **Objective:** Make every advanced Forms claim independently falsifiable from real Promise,
+  generation, abort, `createForm.submit()`, and `onValid` boundaries while teaching only supported
+  public Button construction and honest action availability.
+- **Decision:** Replace command-authored stale labels with controlled Promise runs whose settled
+  continuations count accepted and dropped generations. Keep forced submit on the real form store,
+  expose persistence only from its real `onValid` callback, make unavailable settle/retry/submit
+  actions inert and visibly disabled through reactive getters, mark the Alt+O button accelerator,
+  correct the Button snippet to supply `disabled` at construction, and strengthen the oracle and
+  hardening assertions around exact settlement and availability transitions.
+- **Evidence:** RV-014-001 found that manual settle commands assigned expected strings without
+  resolving asynchronous work and that Allow assigned persistence state before `onValid`.
+  RV-014-002 verified that public `Button` accepts `disabled` only in `ButtonOptions`.
+  RV-014-003 found the registered and advertised Alt+O route absent from the button face.
+  RV-014-004 found phase-specific buttons enabled while their handlers silently ignored input or
+  fabricated feedback.
+- **Rejected alternatives:** Retaining label-driven transitions cannot prove cancellation or stale
+  suppression and would keep the central Major finding. Removing the advanced workflow would
+  weaken a confirmed learning outcome. Expanding public Forms runtime APIs is unnecessary because
+  controlled Promises, existing reactive accessors, and Button option getters provide the required
+  seams. Waiving or merely documenting enabled no-op controls is prohibited by the quality gate.
+- **Strongest counterargument:** A deterministic fixture still owns manual completion controls and
+  is not a real network request. That is intentional: real Promises, abort signals, generation
+  identity, and the actual form submit gate remain authentic while bounded in-memory completion
+  avoids nondeterminism and implicit host authorization.
+- **Confidence:** High — every correction maps directly to public source behavior and an
+  independently reported finding.
+- **Hardening:** The mandatory independent reviewer supplied two Major and two Minor findings.
+  Every finding is accepted without waiver, and the single permitted fix-scoped re-review will
+  challenge the corrected evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A settle action can publish without a pending Promise, persistence becomes
+  visible before `onValid`, stale/accepted counters diverge from actual completions, an unavailable
+  action remains enabled, the snippet fails public-API compilation, or re-review retains a Critical
+  or Major issue.
+
+**AR-56 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Lifecycle cleanup and asynchronous continuation guards inside the deterministic
+  Forms laboratory fixture, plus focused verification of the already confirmed no-post-teardown
+  publication outcome; no product behavior, scope, compatibility, authorization policy, or
+  acceptance criterion changes.
+- **Objective:** Resolve correction-introduced RV-014-005 without waiver so every Promise acquired
+  by the laboratory is settled or released and no completion can mutate the unmounted lesson.
+- **Decision:** Mark the panel inactive before teardown, abort and settle every incomplete manual
+  generation, clear manual ownership, dispose and settle real form-validator work, settle controlled
+  persistence, and guard manual and submit continuations before all state writes. Expose bounded
+  pending-run evidence and test both disposal while pending and settlement immediately followed by
+  disposal before the Promise continuation runs.
+- **Evidence:** The permitted re-review proved that a manual run with `pending=false` could still
+  have a queued continuation, while a run left `pending=true` retained an unsettled Promise and
+  resolver. The same fixture owns forced-validator and persistence Promises whose continuations
+  require the identical inactive boundary.
+- **Rejected alternatives:** Aborting without settling leaves the controlled Promise retained.
+  Settling without an inactive guard permits a queued microtask to publish after unmount. A third
+  review is prohibited by the quality profile and cannot substitute for source-grounded lifecycle
+  tests. Waiving the finding is prohibited.
+- **Strongest counterargument:** Settling a controlled Promise during cleanup adds microtasks after
+  teardown. The inactive guard makes those microtasks intentionally inert while settlement releases
+  ownership and avoids a permanently pending fixture resource.
+- **Confidence:** High — the race is deterministic and directly falsifiable through counters,
+  pending ownership, mounted state, and post-settlement assertions.
+- **Hardening:** The one permitted fix-scoped re-review identified the defect after clearing all
+  four original findings. The correction follows its exact guidance; no third review will run.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any owned run remains pending after cleanup, a manual or submit continuation
+  writes after inactive teardown, cleanup counts more than once, or focused lifecycle evidence fails.

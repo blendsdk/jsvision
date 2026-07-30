@@ -185,7 +185,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | [The application shell](/guide/application-shell)          | Complete | Build and run menus, status, commands, desktops, and windows.                            |
 | [Dialogs & modality](/guide/dialogs-and-modality)          | Complete | Build validated, cancellable, focus-safe modal workflows.                                |
 | [Async work, cancellation & progress](/guide/async-work)   | Complete | Keep input responsive while handling progress, cancellation, cleanup, and stale results. |
-| [Forms](/guide/forms)                                      | Upgrade  | Build typed field state, validation, async submission, and reset.                        |
+| [Forms](/guide/forms)                                      | Complete | Build typed field state, validation, async submission, and reset.                        |
 | [Files & the FileSystem seam](/guide/files-and-filesystem) | Upgrade  | Run the same file workflows over native, virtual, and custom hosts.                      |
 | [Internationalization](/guide/i18n)                        | Upgrade  | Author, load, validate, switch, format, and test locales.                                |
 | [Screens & routing](/guide/screens-and-routing)            | Upgrade  | Build typed screen stacks with history, parameters, shared chrome, and focus.            |

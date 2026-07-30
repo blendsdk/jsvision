@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 09:24
-> **Progress**: 104/246 tasks (42%)
+> **Last Updated**: 2026-07-30 10:48
+> **Progress**: 112/246 tasks (46%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -710,23 +710,56 @@ independent specification-first phase (AR-10).
 ## Phase 14: Forms
 
 **Reference**: ST-23 · `03-02` · `03-03`
+> **Phase baseline tree**: `e9aad443fc56279950f9ccc7e82bb6144644ad7c`
+> **Expected modification set**: `packages/docs-site/guide/forms.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/forms-guide/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, the synchronized curriculum catalog
+> assertion, and synchronized CodeOps lifecycle artifacts.
 
 ### Step 14.1: Specification tests
 
-- [ ] 14.1.1 [spec-author] Write the Forms course oracle — `packages/docs-site/test/forms-guide.spec.test.ts`
-- [ ] 14.1.2 Run the specification and record the expected red result
+- [x] 14.1.1 [spec-author] Write the Forms course oracle — `packages/docs-site/test/forms-guide.spec.test.ts` ✅ (completed: 2026-07-30 09:56)
+- [x] 14.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 09:56) — authoritative focused run: 5 public store, binding, validation, submission, loading, and disposal controls passed; 17 final course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions failed as expected
 
 ### Step 14.2: Implementation
 
-- [ ] 14.2.1 Replace the placeholder with typed state, binding, validation, submission, and reset teaching — `packages/docs-site/guide/forms.md`
-- [ ] 14.2.2 Implement two focused template1 form labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/forms-guide/`
-- [ ] 14.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 14.2.4 Run ST-23 green plus docs-site typecheck; fix implementation only
+- [x] 14.2.1 Replace the placeholder with typed state, binding, validation, submission, and reset teaching — `packages/docs-site/guide/forms.md` ✅ (completed: 2026-07-30 10:12)
+- [x] 14.2.2 Implement two focused template1 form labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/forms-guide/` ✅ (completed: 2026-07-30 10:12)
+- [x] 14.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 10:12)
+- [x] 14.2.4 Run ST-23 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 10:12) — 21/22 final-contract assertions pass with only the intentionally withheld Complete-stage promotion; docs-site typecheck passes
 
 ### Step 14.3: Hardening
 
-- [ ] 14.3.1 Add empty, invalid, async, reset, submit-race, and focus edges — `packages/docs-site/test/forms-guide.impl.test.ts`
-- [ ] 14.3.2 Run focused checks, promote Forms, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 14.3.1 Add empty, invalid, async, reset, submit-race, and focus edges — `packages/docs-site/test/forms-guide.impl.test.ts` ✅ (completed: 2026-07-30 10:14) — 7/7 hardening checks pass
+- [x] 14.3.2 Run focused checks, promote Forms, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 10:19) — runtime AR-55 and AR-56 corrected RV-014-001 through RV-014-005 without waiver; 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, authoritative `yarn verify`, and the permitted fix-scoped re-review pass
+
+**Phase 14 evidence**
+
+- The complete Forms course teaches raw and coerced state, direct and choice bindings, Zod issue
+  identity, submit/reset/load workflows, async generation ownership, retry, Form Dialog
+  composition, diagnosis, security boundaries, accessibility, and lifecycle cleanup.
+- `guides/form-state-validation` and `guides/form-async-submit` are compact Classic template1
+  applications with real inputs or real form-store gates, keyboard and mouse paths, deterministic
+  bounded fixtures, responsive geometry, and teardown evidence.
+- The final promoted state passes 36/36 focused course, laboratory, hardening, and catalog checks,
+  docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
+- Independent review found two Major and two Minor issues. Runtime AR-55 accepts every correction
+  without waiver: controlled Promise settlements now prove stale and accepted generations, real
+  `onValid` entry owns persistence, phase actions expose reactive availability, Alt+O is visibly
+  marked, and the submit snippet uses the public Button constructor contract.
+- The corrected course and laboratories pass 37/37 focused checks, docs-site typecheck, production
+  docs build, plugin integrity, and authoritative `yarn verify`. The permitted fix-scoped
+  re-review is the remaining phase gate.
+- The single permitted re-review cleared RV-014-001 through RV-014-004 and identified
+  correction-introduced Major RV-014-005: controlled Promises could remain retained or publish
+  after unmount. Runtime AR-56 resolves it without waiver or a prohibited third review by marking
+  the fixture inactive before cleanup, aborting and settling every incomplete operation, clearing
+  ownership, guarding all Promise and submit continuations, and testing pending-disposal,
+  resolve-then-dispose, and persistence-teardown races. The correction passes 39/39 focused checks,
+  docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
+  A third review is prohibited; source and lifecycle evidence close RV-014-005.
 
 **Verify**: Forms guide spec/impl tests and docs-site typecheck
 

@@ -106,6 +106,7 @@ describe('Guide curriculum catalog', () => {
       'application-shell',
       'dialogs-and-modality',
       'async-work',
+      'forms',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

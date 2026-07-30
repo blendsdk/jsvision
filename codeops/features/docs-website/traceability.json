@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
+          "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:41:15Z"
+          "validatedAt": "2026-07-30T07:46:16Z"
         }
       ]
     },
@@ -957,7 +957,12 @@
         "Phase 8 Keyboard & clipboard hardening: 33/33 focused checks and authoritative yarn verify pass across selection, key conflicts, browser denial, unavailable adapters, authorization cycling, and cleanup.",
         "Phase 8 Keyboard & clipboard promotion: 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
         "Phase 8 review remediation: the corrected demoted state passed 43/43 focused checks and every authoritative gate; the one permitted re-review cleared all original findings.",
-        "Phase 8 final promoted state: 44/44 focused checks and every authoritative gate pass after the early-Resolve state edge was corrected."
+        "Phase 8 final promoted state: 44/44 focused checks and every authoritative gate pass after the early-Resolve state edge was corrected.",
+        "Phase 14 Forms expected red: 5 public form controls pass and 17 course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions fail.",
+        "Phase 14 Forms green checkpoint: 21/22 final-contract assertions and docs-site typecheck pass with only final Complete-stage promotion withheld.",
+        "Phase 14 Forms promotion: 36/36 focused course, laboratory, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 14 review remediation: 37/37 focused checks and every authoritative gate pass with real Promise settlement, onValid-owned persistence, reactive action availability, marked Alt+O, and corrected Button construction evidence.",
+        "Phase 14 lifecycle closure: 39/39 focused checks and every authoritative gate pass after inactive guards, owned Promise settlement, pending-disposal, resolve-then-dispose, and persistence-teardown evidence close RV-014-005 without a prohibited third review."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -1045,10 +1050,18 @@
         "summary:Phase 13 tasks 13.1.1 and 13.1.2 established 19 independently authored cases; expected red was 4 public controls passing and 15 course, catalog, registry, and laboratory failures.",
         "summary:Phase 13 tasks 13.2.1 through 13.3.2 delivered the complete course, two deterministic laboratories, and cancellation, retry, stale-result, disposal, and resize hardening; corrected focused verification passes 27/27 plus docs-site typecheck.",
         "summary:Phase 13 independent review found one Major and two Minor issues; AR-51 corrected false pending-cancellation evidence, the accelerator marker, and the unused snippet state without waiver. The single permitted re-review cleared every finding.",
-        "summary:Phase 13 completed after 27/27 focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
+        "summary:Phase 13 completed after 27/27 focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed.",
+        "summary:Phase 14 baseline e9aad443fc56279950f9ccc7e82bb6144644ad7c and its expected Forms modification set are recorded before specification work.",
+        "summary:Phase 14 tasks 14.1.1 and 14.1.2 established 22 independently authored cases; expected red was 5 public controls passing and 17 course, catalog, registry, laboratory, interaction, geometry, and cleanup failures.",
+        "summary:Phase 14 tasks 14.2.1 through 14.2.4 delivered the complete course and two deterministic laboratories; 21/22 final-contract assertions and docs-site typecheck pass with only final stage promotion withheld.",
+        "summary:Phase 14 tasks 14.3.1 and 14.3.2 added repeated invalid, reset, submit-race, retry, disposal, and resize hardening and promoted Forms after 36/36 focused checks and every authoritative gate passed.",
+        "summary:Phase 14 independent review found two Major and two Minor issues; AR-55 accepted every correction without waiver.",
+        "summary:Phase 14 review remediation derives stale and accepted outcomes from real Promise settlement, enters persistence only through onValid, exposes reactive action availability, marks Alt+O, and corrects public Button construction; 37/37 focused checks and every authoritative gate pass.",
+        "summary:The permitted Phase 14 re-review cleared RV-014-001 through RV-014-004 and identified correction-introduced Major RV-014-005; AR-56 accepted the complete lifecycle correction without waiver.",
+        "summary:Phase 14 completed after inactive guards, owned Promise settlement, and pending-disposal, resolve-then-dispose, and persistence-teardown evidence passed 39/39 focused checks and every authoritative gate. A third review is prohibited."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
+      "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1101,10 +1114,15 @@
         "User-approved AR-48 expands Phase 12 narrowly to align the Dialog component page with caller-owned desktop add, execView, and finally-remove lifecycle behavior.",
         "Auto-design AR-49 accepts RV-012-001 without waiver and requires independent promise-result, focus-identity, cleanup-callback, and teardown-settlement evidence before re-review.",
         "Auto-design AR-50 partitions Phase 13 into guides/cancellable-work and guides/latest-result-wins so responsiveness/cancellation and stale-result protection remain independently observable.",
-        "Auto-design AR-51 corrects every Phase 13 review finding without waiver and requires real pending-controller abort evidence before the latest-result laboratory may claim cancellation."
+        "Auto-design AR-51 corrects every Phase 13 review finding without waiver and requires real pending-controller abort evidence before the latest-result laboratory may claim cancellation.",
+        "Auto-design AR-52 partitions Phase 14 into guides/form-state-validation and guides/form-async-submit so everyday typed state and advanced async ownership remain independently observable.",
+        "Auto-design AR-53 preserves Phase 14 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-54 aligns the valid-submit specification with createForm's real asynchronous Promise.all boundary while preserving the required synchronous submitting state.",
+        "Auto-design AR-55 accepts RV-014-001 through RV-014-004 without waiver and requires real Promise and onValid evidence, supported Button construction, marked accelerators, and honest reactive action availability.",
+        "Auto-design AR-56 accepts correction-introduced RV-014-005 without waiver and requires inactive teardown guards, settlement and release of every owned operation, and deterministic post-unmount suppression evidence."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:ceb40d05bdbc7c2bc6958c6604c92685f9934ea055bb17ed8ee94b0fe77607bf",
+      "revision": "sha256:d9d656d8b839a1d0dd4b85789ca883c121593b30fdfeed2d3cf0574a79b61078",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1174,13 +1192,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
+          "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:41:15Z"
+          "validatedAt": "2026-07-30T07:46:16Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T07:41:15Z"
+  "updated": "2026-07-30T08:48:16Z"
 }
