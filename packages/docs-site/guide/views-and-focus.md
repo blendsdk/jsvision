@@ -140,7 +140,7 @@ keyboard target.
 remembered by `Group.current`; without valid memory it enters the first focusable descendant.
 
 ```ts
-import { EventLoop, Group, Input } from '@jsvision/ui';
+import { Group, Input, type EventLoop } from '@jsvision/ui';
 
 declare const loop: EventLoop;
 declare const form: Group;
@@ -181,7 +181,7 @@ behind it are ignored. End the operation through the modal host—normally a `Di
 removing the window directly.
 
 ```ts
-import { Dialog, EventLoop } from '@jsvision/ui';
+import { Dialog, type EventLoop } from '@jsvision/ui';
 
 declare const loop: EventLoop;
 declare const dialog: Dialog;

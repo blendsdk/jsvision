@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 20:17
-> **Progress**: 238/246 tasks (97%)
+> **Last Updated**: 2026-07-30 20:54
+> **Progress**: 246/246 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1215,22 +1215,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-41–ST-47 · `03-01`–`03-04` · AR-9
 
+> **Phase baseline tree**: f6c51fb870321ae07c7b763a27ec7257e20b0f30
+>
+> **Expected modification set**: Curriculum-wide specification and implementation hardening,
+> catalog parser declarations where required by failing integration evidence, reconciled catalog,
+> curriculum, registry, and cross-course links, plus final plan/roadmap/traceability evidence.
+
 ### Step 31.1: Specification tests
 
-- [ ] 31.1.1 [spec-author] Write curriculum-wide route/link/snippet/lab integration oracles — `packages/docs-site/test/guide-integration.spec.test.ts`
-- [ ] 31.1.2 Run ST-41–ST-47 and record red integration gaps or justified pre-existing passes
+- [x] 31.1.1 [spec-author] Write curriculum-wide route/link/snippet/lab integration oracles — `packages/docs-site/test/guide-integration.spec.test.ts` ✅ (completed: 2026-07-30 20:29; immutable 15-assertion ST-41–ST-47 oracle covers the prerequisite DAG, internal links, 31-entry navigation/catalog/registry/file coherence, public snippets, all 43 Guide labs, safety/host evidence, trust boundaries, VitePress inputs, and final gates)
+- [x] 31.1.2 Run ST-41–ST-47 and record red integration gaps or justified pre-existing passes ✅ (completed: 2026-07-30 20:29; the initial run exposed a multiline Markdown-label parser defect rather than missing links, AR-89 corrected the pre-implementation oracle, and all 15 curriculum-wide assertions plus docs-site typecheck now pass as justified pre-existing implementation evidence)
 
 ### Step 31.2: Implementation
 
-- [ ] 31.2.1 Harden catalog cycle/completion validation and navigation projection — `packages/docs-site/src/guides/guide-catalog.mjs`, `packages/docs-site/src/guides/guide-catalog.d.mts`
-- [ ] 31.2.2 Reconcile all stages, routes, map rows, registry IDs, prerequisites, and next-step links — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`, `packages/docs-site/src/example-registry/guides.ts`
-- [ ] 31.2.3 Run the complete Guide specification suite green; fix implementation only
+- [x] 31.2.1 Harden catalog cycle/completion validation and navigation projection — `packages/docs-site/src/guides/guide-catalog.mjs`, `packages/docs-site/src/guides/guide-catalog.d.mts` ✅ (completed: 2026-07-30 20:32; validation now rejects duplicate routes, reports deterministic prerequisite cycles, prevents Complete entries from depending on incomplete prerequisites, optionally checks declared examples against registry evidence, and revalidates entries before projecting navigation)
+- [x] 31.2.2 Reconcile all stages, routes, map rows, registry IDs, prerequisites, and next-step links — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`, `packages/docs-site/src/example-registry/guides.ts` ✅ (completed: 2026-07-30 20:32; all 31 entries are Complete, all 29 Guide routes and two specialist hubs resolve, all 43 Guide lab IDs agree with the registry, prerequisite and onward links resolve, and stale planned-course prose now links to the completed courses)
+- [x] 31.2.3 Run the complete Guide specification suite green; fix implementation only ✅ (completed: 2026-07-30 20:34; all 559 assertions across 31 Guide specification files pass after AR-90 updated the superseded Phase 28 no-link assertion to require the now-Complete capstone route)
 
 ### Step 31.3: Hardening and final gates
 
-- [ ] 31.3.1 Complete catalog/parser and batch-diagnostic hardening — `packages/docs-site/test/guide-catalog.impl.test.ts`, `packages/docs-site/test/guide-integration.impl.test.ts`
-- [ ] 31.3.2 Run docs-site typecheck, all Guide tests, and focused docs checks
-- [ ] 31.3.3 Run `yarn docs:build`, then authoritative `yarn verify`; record final evidence
+- [x] 31.3.1 Complete catalog/parser and batch-diagnostic hardening — `packages/docs-site/test/guide-catalog.impl.test.ts`, `packages/docs-site/test/guide-integration.impl.test.ts` ✅ (completed: 2026-07-30 20:39; 26 implementation assertions cover complete-catalog registry evidence, cycles, duplicate routes, completion dependencies, malformed evidence, immutable projections, specialist ownership, prerequisite links, bounded aggregate diagnostics, and orphan detection; focused catalog and integration suites pass 41/41)
+- [x] 31.3.2 Run docs-site typecheck, all Guide tests, and focused docs checks ✅ (completed: 2026-07-30 20:40; docs-site TypeScript checking passes and the complete Guide inventory passes 799/799 specification and implementation assertions across 62 files)
+- [x] 31.3.3 Run `yarn docs:build`, then authoritative `yarn verify`; record final evidence ✅ (completed: 2026-07-30 20:54; the production VitePress build and authoritative repository gate pass after the auto-design quality correction; the complete Guide inventory passes 796/796, the full docs-site suite passes 1,776 unit plus 12 DOM assertions, plugin integrity is green, and the fix-scoped independent re-review cleared both Major findings with no new Critical or Major regression)
 
 **Verify**: `yarn docs:build && yarn verify`
 

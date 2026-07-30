@@ -26,6 +26,11 @@ export interface GuideCatalog {
   readonly entries: readonly GuideCatalogEntry[];
 }
 
+/** External completion evidence supplied without coupling the catalog module to the registry. */
+export interface GuideCatalogValidationOptions {
+  readonly registeredExampleIds?: readonly string[];
+}
+
 /** One catalog-owned navigation item. */
 export interface GuideNavigationItem {
   readonly id: string;
@@ -39,11 +44,15 @@ export interface GuideNavigationGroup {
   readonly items: readonly GuideNavigationItem[];
 }
 
-/** Validate an unknown curriculum document. */
-export declare function validateGuideCatalog(value: unknown): GuideCatalog;
+/** Validate an unknown curriculum document and optional registry evidence. */
+export declare function validateGuideCatalog(value: unknown, options?: GuideCatalogValidationOptions): GuideCatalog;
 
 /** Parse and validate Guide curriculum JSON. */
-export declare function parseGuideCatalog(source: string, sourceName?: string): GuideCatalog;
+export declare function parseGuideCatalog(
+  source: string,
+  sourceName?: string,
+  options?: GuideCatalogValidationOptions,
+): GuideCatalog;
 
 /** Project non-planned curriculum entries into stable Guide navigation. */
 export declare function projectGuideNavigation(entries: readonly GuideCatalogEntry[]): readonly GuideNavigationGroup[];

@@ -440,8 +440,8 @@ capability evidence.
 5. Rehearse `SIGINT`, `SIGTERM`, and `SIGHUP` against a real PTY and record the restore trace.
 6. Define maximum ages for security, compatibility, performance, restore, and support evidence.
 
-Continue with **Build a complete application** when that planned capstone course is published. For
-exact symbols, see
+Continue with [Build a complete application](/guide/complete-application) to compose these
+production controls into one release workflow. For exact symbols, see
 [`createLogger()`](/api/core/functions/createLogger),
 [`evaluateEssentials()`](/api/core/functions/evaluateEssentials), and
 [`dumpCaps()`](/api/core/functions/dumpCaps).
