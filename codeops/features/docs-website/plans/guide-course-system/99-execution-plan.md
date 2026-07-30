@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 05:35
-> **Progress**: 80/246 tasks (33%)
+> **Last Updated**: 2026-07-30 07:47
+> **Progress**: 88/246 tasks (36%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -566,25 +566,54 @@ independent specification-first phase (AR-10).
 ## Phase 11: The application shell
 
 **Reference**: ST-20 · `03-02` · `03-03`
+> **Phase baseline tree**: `87c9a9f2618560b8b389ce2711d99d99c6687d9a`
+> **Expected modification set**: `packages/docs-site/guide/application-shell.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/application-shell/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests,
+> `packages/ui/src/app/application.ts`, `packages/ui/test/app-shell.status.impl.test.ts`,
+> `tools/jsvision-plugin-impact.json`, and synchronized CodeOps lifecycle artifacts. The UI and
+> plugin-impact additions are the user-approved runtime AR-44 scope correction.
 
 ### Step 11.1: Specification tests
 
-- [ ] 11.1.1 [spec-author] Write the application-shell oracle — `packages/docs-site/test/application-shell-guide.spec.test.ts`
-- [ ] 11.1.2 Run the specification and record the expected red result
+- [x] 11.1.1 [spec-author] Write the application-shell oracle — `packages/docs-site/test/application-shell-guide.spec.test.ts` ✅ (completed: 2026-07-30 05:50)
+- [x] 11.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 05:50) — authoritative focused run: 4 public application controls passed and 15 final course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions failed as expected; commit deferred to the final green 11.3.2 checkpoint per runtime AR-42
 
 ### Step 11.2: Implementation
 
-- [ ] 11.2.1 Replace the placeholder with complete shell, body, command, window, and lifecycle teaching — `packages/docs-site/guide/application-shell.md`
-- [ ] 11.2.2 Implement two focused template1 shell labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/application-shell/`
-- [ ] 11.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 11.2.4 Run ST-20 green plus docs-site typecheck; fix implementation only
+- [x] 11.2.1 Replace the placeholder with complete shell, body, command, window, and lifecycle teaching — `packages/docs-site/guide/application-shell.md` ✅ (completed: 2026-07-30 05:55)
+- [x] 11.2.2 Implement two focused template1 shell labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/application-shell/` ✅ (completed: 2026-07-30 05:55)
+- [x] 11.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 05:55)
+- [x] 11.2.4 Run ST-20 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 05:55) — implementation checkpoint: 18/19 immutable assertions pass with only final Complete-stage promotion withheld, and docs-site typecheck passes
 
 ### Step 11.3: Hardening
 
-- [ ] 11.3.1 Add quit, window command, body choice, and lifecycle edges — `packages/docs-site/test/application-shell-guide.impl.test.ts`
-- [ ] 11.3.2 Run focused checks, promote Application shell, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 11.3.1 Add quit, window command, body choice, and lifecycle edges — `packages/docs-site/test/application-shell-guide.impl.test.ts` ✅ (completed: 2026-07-30 05:56) — 5/5 focused hardening checks pass across repeated quit requests, body switching, Desktop-only commands, and teardown
+- [x] 11.3.2 Run focused checks, promote Application shell, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 07:47) — runtime AR-43/AR-44 corrections, the no-third-review chrome-route correction, and runtime AR-45 drift repair pass 34/34 Guide checks, 15/15 focused UI checks, 7/7 native-clipboard documentation checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify`
 
 **Verify**: Application-shell spec/impl tests and docs-site typecheck
+
+### Phase 11 quality review summary
+
+- The independent review reported five Major findings and one Minor finding across Play quit
+  semantics, authentic menu/status interaction, Desktop/custom-body command outcomes,
+  `run()`/dispose lifecycle evidence, nested cleanup, and `statusBase()` composition.
+- Runtime AR-43 accepted every correction without waiver and held the course at Upgrade during
+  remediation. User-approved AR-44 aligned `statusBase()` with its existing command-item-only
+  contract and added focused UI/plugin evidence.
+- The single permitted fix-scoped re-review cleared RV-011-001 and RV-011-003 through RV-011-006,
+  found no distinct correction-introduced issue, and retained RV-011-002 because chrome mouse
+  actions still bypassed or mislabeled the shared command route. A third review is prohibited.
+- The final RV-011-002 correction routes keymap, real MenuBar/StatusLine, and content-button
+  activation through explicit command routes and drives the actual chrome pointer paths in the
+  immutable oracle.
+- Authoritative verification also exposed plan-owned Keyboard & clipboard drift. Runtime AR-45
+  synchronized that earlier course with the canonical native-clipboard contract; its existing
+  consumer oracle now passes 7/7.
+- The promoted Phase 11 state passes 34/34 Guide checks, 15/15 focused UI checks, docs-site
+  typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
 
 ## Phase 12: Dialogs & modality
 

@@ -124,6 +124,9 @@ Copy and cut are canonical-first:
 3. The optional host writer receives the same text.
 4. A denied, unavailable, or failed host never rolls back or breaks the local canonical value.
 
+The canonical value commits first, before host synchronization begins. That ordering is the reason
+a physical clipboard failure cannot undo a successful application copy.
+
 Exact means exact: Unicode, line endings, and other raw text are not normalized by the clipboard
 pipeline. A later application paste can therefore reproduce the same value.
 
@@ -174,6 +177,13 @@ Choose the narrowest boundary that matches the actual runtime.
 `Application.run()` installs the native operating-system clipboard lazily by default, but only
 when custom callbacks were not supplied. The optional adapter is loaded on the first relevant
 gesture rather than during application construction.
+
+The UI runtime loads `clipboardy` lazily for that automatic boundary. Its platform paths remain
+host-helper dependent: macOS uses `pbcopy`/`pbpaste`, Windows uses PowerShell/native helpers, and
+Linux support depends on the available X11 or Wayland selection helpers. Headless and SSH sessions
+often lack display access or a usable helper. A missing helper uses the canonical fallback, so the
+application remains usable instead of terminating. JSVision does not install platform helpers,
+retry failed effects, or poll for clipboard availability.
 
 Use `systemClipboard: false` to opt out of the automatic operating-system adapter:
 
@@ -256,6 +266,28 @@ function createHostedApp(clipboard: AuthorizedClipboard) {
     writeClipboardText: (text) => clipboard.writeText(text),
   });
 }
+```
+
+Applications created with `createApplication()` pass these callbacks into their owned event loop.
+A host that constructs the loop directly must supply the same boundary itself:
+
+```ts
+import { resolveCapabilities } from '@jsvision/core';
+import { createEventLoop } from '@jsvision/ui';
+
+declare const hostClipboard: {
+  read(): Promise<string>;
+  write(text: string): Promise<void>;
+};
+
+const loop = createEventLoop(
+  { width: 80, height: 24 },
+  {
+    caps: resolveCapabilities().profile,
+    readClipboardText: () => hostClipboard.read(),
+    writeClipboardText: (text) => hostClipboard.write(text),
+  },
+);
 ```
 
 Model at least three capability states: authorized, denied, and unavailable. Denied means the

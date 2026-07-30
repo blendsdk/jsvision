@@ -103,6 +103,7 @@ describe('Guide curriculum catalog', () => {
       'keyboard-and-clipboard',
       'text-unicode-and-cells',
       'scrolling-lists-and-large-content',
+      'application-shell',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);
