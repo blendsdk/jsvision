@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 187 / 193 tasks complete
-> **Last Updated**: 2026-07-29 17:43 CEST
+> **Progress**: 188 / 193 tasks complete
+> **Last Updated**: 2026-07-30 21:27 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -877,8 +877,15 @@ is recorded in `16-phase-11-quality-review.md`.
 
 ## Phase 12 — Final Review and Handoff
 
-- [ ] **12.1** Review the catalog against current public barrels and record every included/excluded
-  visual-surface classification.
+> **Phase baseline tree**: `f819cd13e54772d22e1318b5143cc5b366408b88`
+> **Expected modification set**: final component catalog/content/interaction audit evidence,
+> bounded documentation corrections discovered by the audit, this execution plan, docs-website
+> traceability, and the docs-website plus portfolio roadmaps.
+
+- [x] **12.1** Review the catalog against current public barrels and record every included/excluded
+  visual-surface classification. ✅ (completed: 2026-07-30 21:27 CEST; all five current public
+  barrels were classified in `17-phase-12-final-review.md`; 61 explicitly owned visual symbols and
+  openers resolve through 51 component rows, with coupled and non-visual exports recorded)
 - [ ] **12.2** Review every standard page and hub topic against the content-quality checklist in
   03-06; repair in tasks of at most three files.
 - [ ] **12.3** Paint-smoke every example at 80×24 and sample keyboard/mouse interaction for every
