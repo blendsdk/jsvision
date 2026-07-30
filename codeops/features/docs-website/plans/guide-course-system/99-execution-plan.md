@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 14:07
-> **Progress**: 152/246 tasks (62%)
+> **Last Updated**: 2026-07-30 14:53
+> **Progress**: 160/246 tasks (65%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -894,22 +894,27 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-29 · `03-02` · `03-03`
 
+> **Phase baseline tree**: fd30ecb17d8fbd971e3da2939e1ab329c0668925
+> **Expected modification set**: The Phase 20 custom-widget course, two template1 widget
+> laboratories and their fixtures, Guide registry/catalog/curriculum projection, focused
+> specification and implementation tests, and plan/roadmap/traceability evidence.
+
 ### Step 20.1: Specification tests
 
-- [ ] 20.1.1 [spec-author] Write the custom-widget course oracle — `packages/docs-site/test/writing-your-own-widget-guide.spec.test.ts`
-- [ ] 20.1.2 Run the specification and record the expected red result
+- [x] 20.1.1 [spec-author] Write the custom-widget course oracle — `packages/docs-site/test/writing-your-own-widget-guide.spec.test.ts` — ✅ (completed: 2026-07-30 14:18; 18-case immutable oracle covers the complete course, exact custom-View contract, two AR-71 laboratories, responsive geometry, interaction, capability fallback, ownership, cleanup, and headless evidence; docs-site typecheck passes)
+- [x] 20.1.2 Run the specification and record the expected red result — ✅ (completed: 2026-07-30 14:18; expected red: 15 course, catalog, registry, and laboratory failures with 3 existing public custom-View controls passing)
 
 ### Step 20.2: Implementation
 
-- [ ] 20.2.1 Replace the placeholder with measure/layout/render/input/reactivity/focus/theme teaching — `packages/docs-site/guide/writing-your-own-widget.md`
-- [ ] 20.2.2 Implement two focused template1 custom-widget labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/writing-your-own-widget/`
-- [ ] 20.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 20.2.4 Run ST-29 green plus docs-site typecheck; fix implementation only
+- [x] 20.2.1 Replace the placeholder with measure/layout/render/input/reactivity/focus/theme teaching — `packages/docs-site/guide/writing-your-own-widget.md` — ✅ (completed: 2026-07-30 14:23; all six course-content contracts pass, 13 bounded public-API snippets cover the complete custom-View lifecycle, and docs-site typecheck passes)
+- [x] 20.2.2 Implement two focused template1 custom-widget labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/writing-your-own-widget/` ✅ (completed: 2026-07-30 14:30; both template1 applications compile, render centered compact labs, preserve responsive content, expose keyboard/mouse evidence, and release mounted ownership)
+- [x] 20.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 14:30; both app-kind entries and exact catalog evidence are registered; 17/18 oracle cases pass with only the deliberately withheld complete-stage contract remaining)
+- [x] 20.2.4 Run ST-29 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 14:31; 17/18 immutable-oracle cases pass and docs-site typecheck is green; only final catalog promotion remains intentionally withheld for hardening)
 
 ### Step 20.3: Hardening
 
-- [ ] 20.3.1 Add zero-measure, invalidation, focus, Unicode, theme, and disposal edges — `packages/docs-site/test/writing-your-own-widget-guide.impl.test.ts`
-- [ ] 20.3.2 Run focused checks, promote Custom widget, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 20.3.1 Add zero-measure, invalidation, focus, Unicode, theme, and disposal edges — `packages/docs-site/test/writing-your-own-widget-guide.impl.test.ts` ✅ (completed: 2026-07-30 14:34; five hardening cases cover zero geometry, repaint/reflow, focus-role styling, glyph fallback evidence, deterministic headless checks, idempotent disposal, and repeated resize/maximize/restore)
+- [x] 20.3.2 Run focused checks, promote Custom widget, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 14:53; the course is Complete, the learner map is synchronized, all 30 focused guide/catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass; independent review found two Major authentic-evidence gaps, AR-73 corrected both without waiver, and the single permitted re-review cleared routed mouse evidence but exposed paint-order masking in the clipping correction; the final exact-row sentinel-before-probe correction passes every gate without a prohibited third review)
 
 **Verify**: Custom-widget guide spec/impl tests and docs-site typecheck
 
