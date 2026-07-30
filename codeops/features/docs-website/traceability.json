@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6cf066be353f09c0ddb43274b4a2e42da4b1dfeacf31059709ce404aed818c92",
+          "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-29T23:51:33Z"
+          "validatedAt": "2026-07-30T00:00:13Z"
         }
       ]
     },
@@ -948,7 +948,8 @@
         "Phase 6 Views & focus promotion: 35/35 focused course/implementation/catalog tests, docs-site typecheck, production docs build, plugin integrity, and yarn verify pass after the permitted re-review cleared every finding.",
         "Phase 7 Events, commands & keymaps expected red: 5 public controls pass and 18 course, catalog, registry, and laboratory cases fail across 23 independently authored final-contract tests.",
         "Phase 7 Events, commands & keymaps green checkpoint: 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
-        "Phase 7 Events, commands & keymaps hardening: 29/29 focused tests and yarn verify pass across repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown edges."
+        "Phase 7 Events, commands & keymaps hardening: 29/29 focused tests and yarn verify pass across repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown edges.",
+        "Phase 7 Events, commands & keymaps promotion: 36/36 focused course, hardening, and catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -998,10 +999,11 @@
         "summary:Phase 6 task 6.3.2 promoted Views & focus after AR-27 corrections passed 35/35 focused tests and every authoritative gate, and the permitted re-review cleared all findings.",
         "summary:Phase 7 tasks 7.1.1 and 7.1.2 established 23 independently authored cases; expected red is 5 public controls passing and 18 course/lab contract failures.",
         "summary:Phase 7 tasks 7.2.1 through 7.2.4 reached green with 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify passing.",
-        "summary:Phase 7 task 7.3.1 added repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown hardening; 29/29 focused tests and yarn verify pass."
+        "summary:Phase 7 task 7.3.1 added repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown hardening; 29/29 focused tests and yarn verify pass.",
+        "summary:Phase 7 task 7.3.2 promoted Events, commands & keymaps after 36/36 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:6cf066be353f09c0ddb43274b4a2e42da4b1dfeacf31059709ce404aed818c92",
+      "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1105,13 +1107,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6cf066be353f09c0ddb43274b4a2e42da4b1dfeacf31059709ce404aed818c92",
+          "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-29T23:51:33Z"
+          "validatedAt": "2026-07-30T00:00:13Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-29T23:51:33Z"
+  "updated": "2026-07-30T00:00:13Z"
 }
