@@ -4,6 +4,7 @@
  * Browser examples cannot prove process-signal or native terminal restoration. These contracts
  * therefore require a deterministic lifecycle trace and runnable test that exercise the public host.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,10 @@ const artifactPath = fileURLToPath(new URL('./crash-safety-example.spec.test.ts'
 const source = existsSync(guidePath) ? readFileSync(guidePath, 'utf8') : '';
 const fixtureSource = existsSync(fixturePath) ? readFileSync(fixturePath, 'utf8') : '';
 const artifactSource = existsSync(artifactPath) ? readFileSync(artifactPath, 'utf8') : '';
+const repositoryRoot = fileURLToPath(new URL('../../..', import.meta.url));
+const artifactCommit = '0d795822ae578da5cd193d98d30a0bfc4335fc58';
+const fixtureRepositoryPath = 'packages/docs-site/src/example-fixtures/crash-safety/lifecycle-trace.ts';
+const artifactRepositoryPath = 'packages/docs-site/test/crash-safety-example.spec.test.ts';
 const catalog = parseGuideCatalog(readFileSync(catalogPath, 'utf8'));
 const guide = catalog.entries.find((candidate) => candidate.id === 'crash-safety');
 const exactException =
@@ -344,12 +349,22 @@ describe('Crash safety course and authentic-substitute contract', () => {
       /(?:idempotent|at most once|exactly once)[\s\S]{0,500}(?:handler|remove|teardown)/iu,
     );
     expect(artifactSource).not.toMatch(/(?:document\.|window\.|@xterm|PlayExample|Template1Dialog)/u);
+    expect(source).toContain(`](https://github.com/blendsdk/jsvision/blob/${artifactCommit}/${fixtureRepositoryPath})`);
     expect(source).toContain(
-      '](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/src/example-fixtures/crash-safety/lifecycle-trace.ts)',
+      `](https://github.com/blendsdk/jsvision/blob/${artifactCommit}/${artifactRepositoryPath})`,
     );
-    expect(source).toContain(
-      '](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/test/crash-safety-example.spec.test.ts)',
-    );
+    expect(() =>
+      execFileSync('git', ['cat-file', '-e', `${artifactCommit}:${fixtureRepositoryPath}`], {
+        cwd: repositoryRoot,
+        stdio: 'ignore',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      execFileSync('git', ['cat-file', '-e', `${artifactCommit}:${artifactRepositoryPath}`], {
+        cwd: repositoryRoot,
+        stdio: 'ignore',
+      }),
+    ).not.toThrow();
   });
 });
 
