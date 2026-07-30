@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 10:48
-> **Progress**: 120/246 tasks (49%)
+> **Last Updated**: 2026-07-30 12:05
+> **Progress**: 128/246 tasks (52%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -792,20 +792,20 @@ independent specification-first phase (AR-10).
 
 ### Step 16.1: Specification tests
 
-- [ ] 16.1.1 [spec-author] Write the i18n course oracle — `packages/docs-site/test/i18n-guide.spec.test.ts`
-- [ ] 16.1.2 Run the specification and record the expected red result
+- [x] 16.1.1 [spec-author] Write the i18n course oracle — `packages/docs-site/test/i18n-guide.spec.test.ts` — ✅ (completed: 2026-07-30 11:36)
+- [x] 16.1.2 Run the specification and record the expected red result — ✅ (completed: 2026-07-30 11:36; expected red: 10 failed, 2 passed because the course, catalog promotion, and two registered labs are not implemented)
 
 ### Step 16.2: Implementation
 
-- [ ] 16.2.1 Upgrade locale definition, validation, switching, layout, and test teaching — `packages/docs-site/guide/i18n.md`
-- [ ] 16.2.2 Implement two focused template1 locale/layout labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/i18n-guide/`
-- [ ] 16.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 16.2.4 Run ST-25 green plus docs-site typecheck; fix implementation only
+- [x] 16.2.1 Upgrade locale definition, validation, switching, layout, and test teaching — `packages/docs-site/guide/i18n.md` — ✅ (completed: 2026-07-30 11:41)
+- [x] 16.2.2 Implement two focused template1 locale/layout labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/i18n-guide/` — ✅ (completed: 2026-07-30 11:41)
+- [x] 16.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` — ✅ (completed: 2026-07-30 11:41)
+- [x] 16.2.4 Run ST-25 green plus docs-site typecheck; fix implementation only — ✅ (completed: 2026-07-30 11:41; 11/12 course/lab assertions pass with only the deliberately withheld Complete-stage assertion, and docs-site typecheck passes)
 
 ### Step 16.3: Hardening
 
-- [ ] 16.3.1 Add missing-key, long-label, locale-switch, Unicode, and clipping edges — `packages/docs-site/test/i18n-guide.impl.test.ts`
-- [ ] 16.3.2 Run focused checks, promote Internationalization, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 16.3.1 Add missing-key, long-label, locale-switch, Unicode, and clipping edges — `packages/docs-site/test/i18n-guide.impl.test.ts` — ✅ (completed: 2026-07-30 11:42; 7 hardening checks pass)
+- [x] 16.3.2 Run focused checks, promote Internationalization, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` — ✅ (completed: 2026-07-30 12:05; 35/35 focused Guide, catalog, and locale checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass; the independent review found five Major and two Minor issues, AR-59 corrected all without waiver, the permitted re-review cleared six findings and identified correction-introduced Major RV-16-R1, and AR-60 corrected the locale handoff rollback boundary with success, replacement-failure, and old-cleanup-failure evidence; a third review is prohibited)
 
 **Verify**: i18n guide spec/impl tests, locale checks, and docs-site typecheck
 

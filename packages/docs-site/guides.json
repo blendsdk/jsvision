@@ -264,7 +264,7 @@
       "group": "Building applications",
       "page": "/guide/i18n",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 6,
       "prerequisites": ["application-shell", "text-unicode-and-cells"],
       "learningOutcomes": [
@@ -273,7 +273,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/i18n-catalogs", "guides/i18n-locale-layout"]
     },
     {
       "id": "screens-and-routing",

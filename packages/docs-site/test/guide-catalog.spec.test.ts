@@ -108,6 +108,7 @@ describe('Guide curriculum catalog', () => {
       'async-work',
       'forms',
       'files-and-filesystem',
+      'i18n',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

@@ -163,4 +163,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/filesystem-seams.ts',
     load: () => import('../../examples/guides/filesystem-seams.js'),
   },
+  {
+    id: 'guides/i18n-catalogs',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/i18n-catalogs.ts',
+    load: () => import('../../examples/guides/i18n-catalogs.js'),
+  },
+  {
+    id: 'guides/i18n-locale-layout',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/i18n-locale-layout.ts',
+    load: () => import('../../examples/guides/i18n-locale-layout.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

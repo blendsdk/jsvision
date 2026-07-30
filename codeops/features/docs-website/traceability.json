@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
+          "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }
@@ -1064,10 +1064,16 @@
         "summary:Phase 15 tasks 15.3.1 and 15.3.2 added virtual isolation, traversal, missing, denial, retry, responsive, and cleanup hardening and promoted Files after 32/32 focused checks passed.",
         "summary:AR-57 removed an invalid generated API link to private @jsvision/web after the required production docs build exposed the contradiction.",
         "summary:Phase 15 independent review found three Major and one Minor issue; AR-58 corrected complete path confinement, denial-versus-missing classification, synthetic cancellation evidence, and denial ordering without waiver. The permitted re-review cleared every finding with no introduced Critical or Major issue.",
-        "summary:Phase 15 completed after 32/32 focused checks, docs-site typecheck, corrected production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
+        "summary:Phase 15 completed after 32/32 focused checks, docs-site typecheck, corrected production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 16 tasks 16.1.1 and 16.1.2 established 12 independently authored cases; expected red was 2 public-control passes and 10 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 16 tasks 16.2.1 through 16.2.4 delivered the complete locale definition, loading, switching, formatting, layout, and test course plus two deterministic laboratories; 11/12 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 16 tasks 16.3.1 and 16.3.2 added missing-key, long-label, Unicode, locale-switch, geometry, interaction, and cleanup hardening and promoted Internationalization after 35/35 focused checks passed.",
+        "summary:Phase 16 independent review found five Major and two Minor issues; AR-59 corrected every finding without waiver.",
+        "summary:The permitted Phase 16 re-review cleared six findings and identified correction-introduced Major RV-16-R1; AR-60 corrected the locale handoff rollback boundary with deterministic success, replacement-failure, and old-cleanup-failure evidence. A third review is prohibited.",
+        "summary:Phase 16 completed after 35/35 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
+      "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1127,10 +1133,12 @@
         "Auto-design AR-55 accepts RV-014-001 through RV-014-004 without waiver and requires real Promise and onValid evidence, supported Button construction, marked accelerators, and honest reactive action availability.",
         "Auto-design AR-56 accepts correction-introduced RV-014-005 without waiver and requires inactive teardown guards, settlement and release of every owned operation, and deterministic post-unmount suppression evidence.",
         "Auto-design AR-57 removes an invalid generated API link to private @jsvision/web while retaining supported Files API links and the browser integration Guide.",
-        "Auto-design AR-58 accepts RV-15-01 through RV-15-04 without waiver and requires complete path confinement, distinct denial and missing evidence, authentic opener cancellation, and denial ordering bound to the application adapter."
+        "Auto-design AR-58 accepts RV-15-01 through RV-15-04 without waiver and requires complete path confinement, distinct denial and missing evidence, authentic opener cancellation, and denial ordering bound to the application adapter.",
+        "Auto-design AR-59 accepts RV-16-01 through RV-16-07 without waiver and requires robust semantic assertions, an application-owned atomic locale handoff, marker-free feedback, public loading and formatting controls, complete laboratory interaction and geometry evidence, generation-owned diagnostics, and literal escaped-placeholder teaching.",
+        "Auto-design AR-60 accepts correction-introduced RV-16-R1 without waiver and scopes rollback to publication failure so detached cleanup faults cannot dispose the active locale generation."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:49916aea7b0046dc04c401fd78404cc87419ce088485827a9dd6c65c2da05081",
+      "revision": "sha256:b18c89677d590ada28b5eede683f1bb224d174137d7db7849befee71025e6a7e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1200,7 +1208,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
+          "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }
