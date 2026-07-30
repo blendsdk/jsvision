@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 64 items resolved
-> **Last Updated**: 2026-07-30 12:45
+> **Status**: ✅ GATE PASSED — all 67 items resolved
+> **Last Updated**: 2026-07-30 13:20
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -1857,3 +1857,101 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Any action face is narrower than `measure()`, a route-owned menu displays an
   unusable accelerator, the generated Router symbol changes kind, or the API link stops resolving.
+
+**AR-65 (course/laboratories):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Naming and partitioning the two required Theming & colour depth laboratories
+  within the confirmed catalog outcomes; no public API, curriculum scope, compatibility, or host
+  policy change.
+- **Objective:** Make semantic role selection/theme switching and capability-depth degradation two
+  independently observable lessons while retaining a Classic template1 startup.
+- **Decision:** Use `guides/theme-role-states` for a real application theme swap, state-to-role
+  mapping, generated-theme authoring, and concrete contrast evidence. Use
+  `guides/color-depth-fallbacks` for truecolor/256/16/mono encoder evidence, attribute-preserving
+  monochrome behavior, and Unicode-to-ASCII fallback with explicit non-colour state cues.
+- **Evidence:** `Application.setTheme` repaints the retained tree without rebuilding state;
+  `createTheme` expands seeds through aliases into the complete role map; `encodeStyle` uses the
+  resolved capability depth and emits attributes but no colours at mono; `fallbackGlyph` is a
+  separate capability-driven glyph boundary. A preset-only gallery would not prove either catalog
+  outcome.
+- **Rejected alternatives:** Reusing the Button Lab repeats component states without teaching theme
+  authoring or degradation. A single kitchen-sink lab makes it difficult to distinguish a role
+  mapping defect from a capability fallback defect. Changing the embedded application's capability
+  profile at runtime would misrepresent immutable host capabilities; the depth lab instead exposes
+  deterministic public encoder evidence and labelled stand-ins.
+- **Strongest counterargument:** The depth lab cannot turn one mounted terminal into four physical
+  terminals. It remains truthful by labelling the comparison as encoder evidence and by testing the
+  exact public output for four explicit capability profiles rather than claiming a runtime host
+  mutation.
+- **Confidence:** High — the split follows the two catalog outcomes and public core/application
+  seams, with distinct falsifiable interaction and rendering evidence.
+- **Hardening:** The immutable oracle requires unique app IDs, Classic compact startup, keyboard and
+  mouse paths, responsive resize/maximize/restore, retained application state across theme swaps,
+  exact depth evidence, non-colour cues, ASCII fallbacks, and owned cleanup.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either lab cannot independently prove its outcome, host capabilities become
+  runtime mutable, or a public preview API supersedes the local evidence presentation.
+
+**AR-66 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required Phase 18 specification-first red checkpoint; no oracle
+  weakening or implementation change.
+- **Objective:** Preserve an immutable final-contract baseline before replacing the placeholder
+  course and adding its laboratories.
+- **Decision:** Accept 12 failing and 6 passing cases as the expected red result. The passing cases
+  prove existing public theme construction, override, switching, contrast, preset, serializer, and
+  monochrome contracts; failures identify only the intentionally absent complete course, promotion,
+  registry entries, and laboratories.
+- **Evidence:** The docs-site typecheck passes. The focused 18-case run reports exactly 12 failures
+  and 6 passes, and every failure names placeholder content, the Upgrade stage, or missing Guide
+  laboratory evidence.
+- **Rejected alternatives:** Requiring public API controls to fail would discard useful
+  implementation-independent anchors. Promoting or registering empty artifacts to reduce the red
+  count would violate the course completion gate.
+- **Strongest counterargument:** Six passing controls make the red ratio less dramatic. They are
+  necessary to distinguish missing teaching artifacts from a broken theming/rendering substrate.
+- **Confidence:** High — the failure names and current placeholder/catalog state align exactly.
+- **Hardening:** Implementation may change only Phase 18-owned course, fixture, example, registry,
+  catalog, and curriculum artifacts until the oracle is green; the oracle remains immutable unless
+  an independent reviewer authorizes stronger evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control fails, a failure is unrelated to the missing course/labs, or
+  implementation would require changing an oracle expectation.
+
+**AR-67 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting inaccurate theme-input teaching, synchronizing two existing theme
+  controls, and strengthening rendered evidence within the confirmed Phase 18 outcomes; no public
+  SDK, curriculum scope, compatibility, or host-policy change.
+- **Objective:** Resolve RV-18-01 through RV-18-04 without waiver and make every laboratory claim
+  falsifiable through public behavior or rendered cells.
+- **Decision:** Distinguish RGB-math `accent`/`neutral` inputs from directly assigned semantic
+  colors and test both categories. Add a demo-shell theme observer so shared preset commands and
+  lesson controls update one panel-owned evidence model. Strengthen the reviewer-authorized oracle
+  to inspect exact state-strip cells, retained view/focus identity, shell-menu synchronization,
+  exact encoder output, and the monochrome preview attribute. Replace the hardcoded focus claim
+  with the real selected-depth marker, and escape the Markdown table pipe.
+- **Evidence:** The independent review found three Major issues and one Minor issue: blanket
+  `'default'` guidance contradicted `createTheme`, the shell Theme menu bypassed panel state, tests
+  trusted authored pass labels instead of rendered evidence, and a raw pipe broke a diagnosis row.
+- **Rejected alternatives:** Waivers are prohibited. Hiding the required Theme menu would violate
+  the template1 shell contract. Keeping duplicated theme registries or self-reported pass labels
+  would leave the observed desynchronization and evidence gap intact. Expanding core validation
+  would change SDK behavior solely to fit inaccurate prose.
+- **Strongest counterargument:** A demo-shell observer adds a shared internal seam for one lesson.
+  The weakly held callback is preferable to special-casing command names in the example and keeps
+  the shared menu as the authoritative preset dispatcher.
+- **Confidence:** High — corrected input behavior is exercised against `createTheme`; theme state,
+  focus, role styles, encoder results, monochrome attributes, and selected-depth glyphs are all
+  directly asserted.
+- **Hardening:** The course remains at Upgrade until corrected focused checks pass. One fix-scoped
+  re-review will challenge only RV-18-01 through RV-18-04; no third review is permitted.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Direct semantic seeds become RGB-derived, shared preset commands bypass the
+  observer, laboratory tests regress to labels without cell evidence, or the table row breaks.

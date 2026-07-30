@@ -110,6 +110,7 @@ describe('Guide curriculum catalog', () => {
       'files-and-filesystem',
       'i18n',
       'screens-and-routing',
+      'theming-and-colour-depth',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

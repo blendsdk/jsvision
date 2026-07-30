@@ -191,4 +191,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/routing-lifecycle.ts',
     load: () => import('../../examples/guides/routing-lifecycle.js'),
   },
+  {
+    id: 'guides/theme-role-states',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/theme-role-states.ts',
+    load: () => import('../../examples/guides/theme-role-states.js'),
+  },
+  {
+    id: 'guides/color-depth-fallbacks',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/color-depth-fallbacks.ts',
+    load: () => import('../../examples/guides/color-depth-fallbacks.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

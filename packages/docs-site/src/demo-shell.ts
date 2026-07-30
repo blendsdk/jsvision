@@ -91,6 +91,8 @@ export interface DemoShellOptions {
    * menu bar, so it passes the same flag to {@link demoApp} instead.
    */
   readonly themeMenu?: boolean;
+  /** Observe preset changes made through the shared Theme menu after the application is repainted. */
+  readonly onThemeChange?: (theme: Theme, name: string) => void;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
   readonly onDepthChange?: (depth: Depth) => void;
   /**
@@ -110,6 +112,22 @@ export interface DemoShellOptions {
 interface Preset {
   readonly name: string;
   readonly theme: Theme;
+}
+
+/**
+ * Theme observers registered while an app example builds its own shell.
+ *
+ * `demoShell()` wires commands only after `build()` returns, so this module-owned weak registry
+ * carries the callback across that boundary without adding lesson state to the public Application.
+ */
+const APP_THEME_OBSERVERS = new WeakMap<Application, (theme: Theme, name: string) => void>();
+
+/** Notify host and app-owned observers once each after a shared preset is applied. */
+function notifyThemeObservers(app: Application, opts: DemoShellOptions, preset: Preset): void {
+  const hostObserver = opts.onThemeChange;
+  const appObserver = APP_THEME_OBSERVERS.get(app);
+  hostObserver?.(preset.theme, preset.name);
+  if (appObserver !== hostObserver) appObserver?.(preset.theme, preset.name);
 }
 
 /** The 13 shipped presets, in menu order (default open = Turbo Vision). */
@@ -211,6 +229,7 @@ export function demoApp(
     readonly menuItems?: readonly MenuItem[];
     readonly statusItems?: readonly View[];
     readonly onChrome?: (chrome: { readonly menuBar: MenuBar; readonly statusLine: StatusLine }) => void;
+    readonly onThemeChange?: (theme: Theme, name: string) => void;
   },
 ): DesktopApplication {
   const windowMenu = opts?.windowMenu ?? false;
@@ -227,6 +246,7 @@ export function demoApp(
     // an example can add a shortcut the shared chrome does not carry. Merges over the defaults.
     keymap: opts?.keymap,
   });
+  if (opts?.onThemeChange !== undefined) APP_THEME_OBSERVERS.set(app, opts.onThemeChange);
   opts?.onChrome?.({ menuBar: menu, statusLine: status });
   return app;
 }
@@ -359,7 +379,10 @@ function wireCommands(app: Application, opts: DemoShellOptions): void {
     );
   });
   PRESETS.forEach((preset, i) => {
-    app.onCommand(themeCmd(i), () => app.setTheme(preset.theme));
+    app.onCommand(themeCmd(i), () => {
+      app.setTheme(preset.theme);
+      notifyThemeObservers(app, opts, preset);
+    });
   });
   DEPTHS.forEach((depth) => {
     app.onCommand(depthCmd(depth), () => opts.onDepthChange?.(depth));

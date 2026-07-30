@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 12:50
-> **Progress**: 136/246 tasks (55%)
+> **Last Updated**: 2026-07-30 13:29
+> **Progress**: 144/246 tasks (59%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -836,22 +836,27 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-27 · `03-02` · `03-03`
 
+> **Phase baseline tree**: f22848f8189d0ca86c00b6063921626654ce2a15
+> **Expected modification set**: The Phase 18 course, two theme/capability laboratories and their
+> fixtures, Guide registry/catalog/curriculum projection, focused specification and implementation
+> tests, and plan/roadmap/traceability evidence.
+
 ### Step 18.1: Specification tests
 
-- [ ] 18.1.1 [spec-author] Write the theming/colour-depth oracle — `packages/docs-site/test/theming-and-colour-depth-guide.spec.test.ts`
-- [ ] 18.1.2 Run the specification and record the expected red result
+- [x] 18.1.1 [spec-author] Write the theming/colour-depth oracle — `packages/docs-site/test/theming-and-colour-depth-guide.spec.test.ts` — ✅ (completed: 2026-07-30 12:59; 18-case immutable oracle covers course structure, semantic authoring, exact roles, contrast, runtime switching, depth degradation, non-colour cues, public behavior, and two template1 laboratories; docs-site typecheck passes)
+- [x] 18.1.2 Run the specification and record the expected red result — ✅ (completed: 2026-07-30 12:59; expected red: 12 failed and 6 public theming/renderer controls passed because the placeholder course, Complete promotion, registry entries, and two laboratories are not implemented)
 
 ### Step 18.2: Implementation
 
-- [ ] 18.2.1 Replace the placeholder with theme roles, selection, contrast, and fallback teaching — `packages/docs-site/guide/theming-and-colour-depth.md`
-- [ ] 18.2.2 Implement two focused template1 theme/capability labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/theming-and-colour-depth/`
-- [ ] 18.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 18.2.4 Run ST-27 green plus docs-site typecheck; fix implementation only
+- [x] 18.2.1 Replace the placeholder with theme roles, selection, contrast, and fallback teaching — `packages/docs-site/guide/theming-and-colour-depth.md` — ✅ (completed: 2026-07-30 13:07)
+- [x] 18.2.2 Implement two focused template1 theme/capability labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/theming-and-colour-depth/` — ✅ (completed: 2026-07-30 13:07; semantic role/state switching and explicit depth/monochrome/ASCII evidence laboratories)
+- [x] 18.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` — ✅ (completed: 2026-07-30 13:07)
+- [x] 18.2.4 Run ST-27 green plus docs-site typecheck; fix implementation only — ✅ (completed: 2026-07-30 13:07; 17/18 final-contract assertions pass with only deliberately withheld Complete-stage promotion, and docs-site typecheck passes)
 
 ### Step 18.3: Hardening
 
-- [ ] 18.3.1 Add monochrome, low-contrast, missing-role, ASCII, and resize edges — `packages/docs-site/test/theming-and-colour-depth-guide.impl.test.ts`
-- [ ] 18.3.2 Run focused checks, promote Theming, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 18.3.1 Add monochrome, low-contrast, missing-role, ASCII, and resize edges — `packages/docs-site/test/theming-and-colour-depth-guide.impl.test.ts` — ✅ (completed: 2026-07-30 13:08; 7 invalid-input, palette-collapse, monochrome, ASCII, repeated-interaction, cleanup, and repeated-geometry hardening checks pass)
+- [x] 18.3.2 Run focused checks, promote Theming, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` — ✅ (completed: 2026-07-30 13:29; 43/43 focused course, shell, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass; the independent review found three Major and one Minor issue, AR-67 corrected all without waiver, the permitted re-review cleared every original finding, and its two correction-introduced Minors were fixed without a prohibited third review)
 
 **Verify**: Theming guide spec/impl tests and docs-site typecheck
 
