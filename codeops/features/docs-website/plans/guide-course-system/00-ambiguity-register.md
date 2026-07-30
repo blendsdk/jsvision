@@ -760,3 +760,150 @@ cross-course contracts after every authored route is complete.
   the real reader/delivery route, teardown retains a live loop, unavailable emits a fabricated
   failure, canonical seeding touches a host, state-order instructions drift, or the re-review
   retains a Critical or Major finding.
+
+**AR-34 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable documentation-example naming and laboratory decomposition within the
+  confirmed two-laboratory Text, Unicode & terminal cells scope; no product behavior, public
+  compatibility, or acceptance criterion changes.
+- **Objective:** Give each laboratory one observable learning objective while teaching the
+  renderer's real code-point, terminal-cell, and capability boundaries without overstating
+  grapheme support.
+- **Decision:** Register `guides/cell-width` for the cell-measurement laboratory and
+  `guides/glyph-fallback` for the capability-degradation laboratory. The first compares JavaScript
+  length, code points, display cells, combining marks, wide glyphs, wrapping, and clipping while
+  explicitly demonstrating that ZWJ sequences may wrap between code points. The second uses public
+  capability and glyph-fallback APIs with deterministic profiles to compare Unicode, adapted
+  chrome, and ASCII-safe output.
+- **Evidence:** `@jsvision/ui` publicly exports `stringWidth` and `wrapText`; their implementation
+  measures whole code points, assigns combining marks zero cells and wide CJK/emoji two cells, and
+  documents ZWJ/skin-tone/flag grapheme clusters as unsupported wrap boundaries.
+  `@jsvision/core` publicly exports `ScreenBuffer`, `charWidth`, `fallbackGlyph`,
+  `resolveCapabilities`, `degradeCapsFully`, and `isAsciiSafe`; the buffer stores wide lead and
+  continuation cells, composes combining marks onto a preceding base, and clips a wide glyph at
+  the final column rather than storing half a glyph. The catalog requires one outcome about
+  width/wrap/clip reasoning and one about Unicode/ASCII-safe profiles.
+- **Rejected alternatives:** One combined laboratory would mix measurement and host-capability
+  decisions and weaken the one-objective rule. A grapheme editor laboratory would duplicate the
+  Code Editor specialist course and imply support that plain `Input` and `wrapText` do not provide.
+  A simulated label-only fallback would not prove the public capability pipeline.
+- **Strongest counterargument:** The concise IDs omit the full course slug and the first does not
+  name graphemes. Both remain unique in the `guides/` namespace, express the durable observable
+  objective, and leave the course title and laboratory framing to explain the broader context.
+- **Confidence:** High — the split follows the catalog's two outcomes and current public exports
+  and tests.
+- **Hardening:** The design was stress-tested against the 10×-content case, future grapheme-aware
+  wrapping, specialist ownership, and capability API evolution. The two independent objectives
+  remain separable and reversible before publication; a blind challenger was not proportionate
+  for this low-risk naming and lesson-decomposition choice.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Public wrapping becomes grapheme-cluster aware, either objective changes,
+  an ID collision appears, or a published example proves the exact same outcome and framing.
+
+**AR-35 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red course implementation under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 9 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 9.1.1 and 9.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 9.2.4. Commit tasks 9.1.1–9.2.4 as one spec-to-green slice only after
+  the focused specification, docs-site typecheck, registry integration, and authoritative
+  `yarn verify` pass.
+- **Evidence:** The independently authored oracle executes twenty final-contract cases. Five public
+  code-point width, wrapping, buffer, fallback, and export-boundary controls pass; fifteen course,
+  catalog, registry, and laboratory cases expose the intentionally absent implementation.
+- **Rejected alternatives:** Committing the red oracle violates the repository gate. Weakening,
+  skipping, or quarantining it destroys the specification-first evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the independently challenged AR-13 policy applied without change
+  to the Phase 9 task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; another challenge of the identical
+  sequencing policy was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before implementation, an unrelated failure blocks
+  the first green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-36 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Verification and commit sequencing within the confirmed specification-first
+  Phase 9 tasks; no course outcome, product behavior, public compatibility, or completion criterion
+  changes.
+- **Objective:** Preserve the immutable final-contract oracle and the catalog rule that a route
+  remains Planned until hardening finishes, without claiming a false green checkpoint.
+- **Decision:** Interpret 9.2.4 as the implementation-contract checkpoint: all assertions except
+  the intentionally withheld `stage: complete` assertion must pass together with docs-site
+  typecheck. Keep the route Planned through 9.3.1. At 9.3.2, promote the catalog and curriculum,
+  require the entire immutable oracle and all authoritative gates to pass, and make that the first
+  commit/push checkpoint for Phase 9. This supersedes AR-35's predicted 9.2.4 commit boundary but
+  retains its prohibition on committing a failing repository.
+- **Evidence:** After the page, two laboratories, registry, and Planned catalog evidence were
+  implemented, nineteen of twenty immutable assertions passed and docs-site typecheck passed. The
+  only failure is the oracle's final `stage: complete` expectation. Promoting now would contradict
+  task 9.2.3 and the completion gate because route-specific hardening has not yet been added.
+- **Rejected alternatives:** Temporarily promoting and demoting would make catalog state
+  misleading and produce artificial churn. Weakening the immutable oracle is forbidden. Calling a
+  nineteen-of-twenty run fully green would falsify verification evidence.
+- **Strongest counterargument:** Deferring the first commit combines specification, implementation,
+  hardening, and promotion in one checkpoint. That is the smallest repository-green unit under the
+  immutable final-stage assertion and authoritative `yarn verify` gate.
+- **Confidence:** High — the remaining failure is isolated to the exact planned promotion step and
+  all runtime/course assertions already pass.
+- **Hardening:** Reconciled the plan wording, catalog stage-transition rule, immutable-oracle rule,
+  and actual focused/typecheck results. No independent challenge was proportionate because this is
+  a reversible sequencing correction with one viable policy-compliant path.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any non-stage specification fails at the implementation checkpoint, the
+  catalog permits verified pre-hardening completion, or `yarn verify` gains a supported expected-red
+  mechanism.
+
+**AR-37 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Documentation accuracy, authentic public fallback evidence, interaction-source
+  correctness, compact example layout, link integrity, and verification mechanics within the
+  confirmed Text, Unicode & terminal cells outcomes; no product behavior, public compatibility,
+  security policy, or acceptance criterion changes.
+- **Objective:** Resolve every Phase 9 quality finding so Complete teaches the renderer's exact
+  Unicode limits and both laboratories remain fully readable and behaviorally truthful.
+- **Decision:** Explain and demonstrate that UTF-8-off fallback examines a buffer cell's leading
+  code point, so a decomposed ASCII base plus combining suffix may still emit non-ASCII; require
+  application-owned ASCII wording or transliteration when pure ASCII content is mandatory, and
+  assert the serialized byte boundary. Shorten all four over-width laboratory headline/footer
+  rows and assert their complete presence at compact, resized, maximized, and restored geometry.
+  Pass an explicit action source through all cell-width panel actions and make the Cycle width and
+  Show grapheme buttons invoke mouse-specific callbacks, with keyboard/mouse assertions for every
+  action. Render the two not-yet-implemented next courses as planned non-links until their pages
+  exist. Escape the literal vertical bar in the Markdown fallback table and validate the rendered
+  row shape. Return the catalog, curriculum map, and task 9.3.2 to Upgrade / implemented until the
+  corrections, all gates, and the one permitted fix-scoped re-review pass.
+- **Evidence:** Independent review of the Phase 9 baseline diff reproduced a decomposed combining
+  suffix in UTF-8-off serialized output, measured four authored one-row strings at 75–80 cells
+  inside 66-cell bounds, observed two mouse buttons reporting keyboard, resolved two next-step
+  links to absent pages, and found an unescaped Markdown table delimiter.
+- **Rejected alternatives:** Waiving any Major finding is forbidden. Changing the core serializer
+  expands this docs-course phase into a public runtime behavior change and is unnecessary to teach
+  the current contract honestly. Increasing the dialog to fit 80-cell lines would remove the
+  required desktop margins at the standard viewport. Placeholder pages are prohibited.
+- **Strongest counterargument:** Documenting the composed-cell limitation exposes an undesirable
+  core edge rather than repairing it. That is still the only scope-correct choice: this course must
+  describe current public behavior, while a future core change can reopen the documented boundary
+  and its tests deliberately.
+- **Confidence:** High — each correction is directly tied to reproduced source/runtime evidence and
+  preserves the catalog outcomes.
+- **Hardening:** The mandatory independent reviewer supplied four Major and one Minor finding.
+  Every finding is accepted for correction without waiver; the required fix-scoped re-review will
+  challenge the corrected diff once.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Composed cells become fully code-point-fallback aware, any authored one-row
+  string exceeds its bound, a mouse action again reports keyboard, either planned page appears or
+  disappears, the fallback table becomes malformed, or re-review retains a Critical or Major
+  finding.

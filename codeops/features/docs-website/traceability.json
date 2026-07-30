@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
+          "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T01:34:36Z"
+          "validatedAt": "2026-07-30T02:05:42Z"
         }
       ]
     },
@@ -1015,10 +1015,16 @@
         "summary:Phase 8 task 8.3.1 added selection, key-conflict, browser-denial, unavailable-adapter, authorization-cycle, and cleanup hardening; 33/33 focused checks and authoritative yarn verify pass.",
         "summary:Phase 8 task 8.3.2 initially promoted after 40/40 focused checks and every authoritative gate passed.",
         "summary:Phase 8 independent review found four Major and one Minor issue; AR-33 demoted the course and selected every correction without waiver.",
-        "summary:Phase 8 task 8.3.2 completed after 44/44 focused checks and every authoritative gate passed; the permitted re-review cleared all Critical and Major findings and its one introduced Minor was corrected."
+        "summary:Phase 8 task 8.3.2 completed after 44/44 focused checks and every authoritative gate passed; the permitted re-review cleared all Critical and Major findings and its one introduced Minor was corrected.",
+        "summary:Phase 9 baseline 24c1b7c7fa73d352d651752915a25e611c54a3ca and its expected modification set are recorded before specification work.",
+        "summary:Phase 9 tasks 9.1.1 and 9.1.2 established 20 independently authored cases; expected red is 5 public controls passing and 15 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 9 tasks 9.2.1 through 9.2.4 delivered the complete Planned-stage course and two laboratories; 19/20 immutable assertions pass with only final stage promotion withheld, and docs-site typecheck passes.",
+        "summary:Phase 9 task 9.3.1 added repeated-width, combining, fallback, monochrome, geometry, and teardown hardening; the initial 9.3.2 promotion passed 39/39 focused checks and every authoritative gate.",
+        "summary:Phase 9 independent review found four Major and one Minor issue; AR-37 demoted the course and selected every correction without waiver.",
+        "summary:Phase 9 task 9.3.2 completed after 47/47 focused checks and every authoritative gate passed; the permitted re-review cleared RV-009-001 through RV-009-005 with zero remaining or introduced findings."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
+      "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1029,7 +1035,7 @@
           }
         }
       ],
-      "status": "implemented",
+      "status": "verified",
       "title": "Execute the Guide course system plan",
       "type": "task",
       "validations": []
@@ -1053,10 +1059,14 @@
         "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
         "Auto-design AR-31 preserves the Phase 8 expected-red specification evidence through its first green checkpoint.",
         "Auto-design AR-32 selected guides/clipboard-boundary for the one focused Keyboard & clipboard laboratory.",
-        "Auto-design AR-33 selected every mandatory correction for the four Major and one Minor Phase 8 quality findings; the permitted re-review cleared every original finding and the final introduced Minor was corrected."
+        "Auto-design AR-33 selected every mandatory correction for the four Major and one Minor Phase 8 quality findings; the permitted re-review cleared every original finding and the final introduced Minor was corrected.",
+        "Auto-design AR-34 split Phase 9 into public-API cell-width and glyph-fallback laboratories while preserving the renderer's documented grapheme limitations.",
+        "Auto-design AR-35 preserves Phase 9 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-36 keeps Phase 9 Planned through hardening and moves the first repository-green commit boundary to final promotion.",
+        "Auto-design AR-37 selected every mandatory correction for the four Major and one Minor Phase 9 quality findings; the course remains Upgrade until correction gates and the permitted re-review pass."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:dfdf9c534081cbf7a2ca9a31c1921c9567c0ad4220b2e66088eda74d31e4c108",
+      "revision": "sha256:9b8ac1c1060565a6820be3de02969b76dc7fddae3ef1af4063c82dd6f30c7563",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1126,13 +1136,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
+          "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T01:34:36Z"
+          "validatedAt": "2026-07-30T02:05:42Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T01:34:36Z"
+  "updated": "2026-07-30T02:30:33Z"
 }

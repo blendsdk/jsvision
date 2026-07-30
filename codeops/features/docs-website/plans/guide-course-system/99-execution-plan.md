@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 03:34
-> **Progress**: 64/246 tasks (26%)
+> **Last Updated**: 2026-07-30 04:30
+> **Progress**: 72/246 tasks (29%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -472,25 +472,47 @@ independent specification-first phase (AR-10).
 ## Phase 9: Text, Unicode & terminal cells
 
 **Reference**: ST-18 · `03-02` · `03-03`
+> **Phase baseline tree**: `24c1b7c7fa73d352d651752915a25e611c54a3ca`
+> **Expected modification set**: `packages/docs-site/guide/text-unicode-and-cells.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/text-unicode-and-cells/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, and synchronized CodeOps lifecycle
+> artifacts.
 
 ### Step 9.1: Specification tests
 
-- [ ] 9.1.1 [spec-author] Write the text/Unicode/cells oracle — `packages/docs-site/test/text-unicode-and-cells-guide.spec.test.ts`
-- [ ] 9.1.2 Run the specification and record the expected red result
+- [x] 9.1.1 [spec-author] Write the text/Unicode/cells oracle — `packages/docs-site/test/text-unicode-and-cells-guide.spec.test.ts` ✅ (completed: 2026-07-30 03:49)
+- [x] 9.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 03:49) — authoritative focused run: 5 public width/buffer/wrapping/fallback controls passed and 15 final course, catalog, registry, and laboratory assertions failed as expected; commit deferred to the first green checkpoint per runtime AR-35
 
 ### Step 9.2: Implementation
 
-- [ ] 9.2.1 Create the complete grapheme, cell-width, wrapping, clipping, and fallback course — `packages/docs-site/guide/text-unicode-and-cells.md`
-- [ ] 9.2.2 Implement two focused template1 labs with deterministic text fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/text-unicode-and-cells/`
-- [ ] 9.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 9.2.4 Run ST-18 green plus docs-site typecheck; fix implementation only
+- [x] 9.2.1 Create the complete grapheme, cell-width, wrapping, clipping, and fallback course — `packages/docs-site/guide/text-unicode-and-cells.md` ✅ (completed: 2026-07-30 03:57)
+- [x] 9.2.2 Implement two focused template1 labs with deterministic text fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/text-unicode-and-cells/` ✅ (completed: 2026-07-30 03:57)
+- [x] 9.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 03:57)
+- [x] 9.2.4 Run the ST-18 implementation-contract slice plus docs-site typecheck while the final Complete-stage assertion remains withheld; fix implementation only ✅ (completed: 2026-07-30 03:57) — 19/20 immutable assertions passed with only the final Complete-stage assertion intentionally withheld; docs-site typecheck passed; sequencing corrected by runtime AR-36 and the full oracle turns green at 9.3.2
 
 ### Step 9.3: Hardening
 
-- [ ] 9.3.1 Add combining, wide-cell boundary, ASCII, monochrome, and clipping edges — `packages/docs-site/test/text-unicode-and-cells-guide.impl.test.ts`
-- [ ] 9.3.2 Run focused checks, promote the route to Complete, and publish it in the map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 9.3.1 Add combining, wide-cell boundary, ASCII, monochrome, and clipping edges — `packages/docs-site/test/text-unicode-and-cells-guide.impl.test.ts` ✅ (completed: 2026-07-30 04:05) — 12/12 route hardening checks passed across repeated widths, combining and orphan edges, fallback footprints, monochrome capability, geometry, and teardown
+- [x] 9.3.2 Run focused checks, promote the route to Complete, and publish it in the map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 04:30) — runtime AR-37 corrections passed 47/47 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify`; the one permitted fix-scoped re-review resolved RV-009-001 through RV-009-005 with zero remaining or introduced findings
 
 **Verify**: Text/Unicode spec/impl tests and docs-site typecheck
+
+### Phase 9 quality review
+
+- The independent correctness review reported four Major findings and one Minor finding:
+  UTF-8-off fallback overstatement, clipped one-row laboratory copy, incorrect mouse action-source
+  reporting, two links to planned pages, and a malformed Markdown fallback-table row.
+- Runtime AR-37 accepted every correction without waiver. The corrected implementation exposes
+  the decomposed-cell serialization limit, preserves complete copy through compact/resize/maximize/
+  restore geometry, distinguishes keyboard and mouse activation for every action, keeps planned
+  courses as non-links, and validates the table shape.
+- The one permitted fix-scoped re-review marked RV-009-001 through RV-009-005 resolved and found
+  zero correction-introduced Critical, Major, or Minor findings.
+- Security and performance auditors were not separately invoked because this phase changes
+  documentation and bounded deterministic teaching views only; the correctness review covered the
+  Unicode output boundary and browser-laboratory claims.
 
 ## Phase 10: Scrolling, lists & large content
 
