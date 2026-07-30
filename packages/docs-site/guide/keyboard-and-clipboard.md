@@ -108,7 +108,7 @@ const app = createApplication({
 Use `'none'` only when the application or a specialist editing mode supplies the complete command
 model. Otherwise, disabling the defaults silently removes portable behavior.
 
-<PlayExample id="guides/clipboard-boundary" title="Clipboard boundary laboratory" blurb="Cycle the virtual host from authorized success to denied and then unavailable fallback. The deterministic adapter never requests the visitor clipboard; try Alt+A, Alt+C, Alt+F then Alt+V, and the pending-focus sequence." />
+<PlayExample id="guides/clipboard-boundary" title="Clipboard boundary laboratory" blurb="Compare authorized, denied, and unavailable outcomes. Start unavailable, then cycle to denied and authorized. The deterministic virtual host never requests the visitor clipboard; try real fallback and stale delivery." />
 
 The laboratory has one objective: observe that the canonical copy succeeds in all three
 authorization states while only the virtual host outcome changes. It uses a deterministic,
@@ -175,16 +175,32 @@ Choose the narrowest boundary that matches the actual runtime.
 when custom callbacks were not supplied. The optional adapter is loaded on the first relevant
 gesture rather than during application construction.
 
-Use `systemClipboard: false` to opt out and keep the application app-local:
+Use `systemClipboard: false` to opt out of the automatic operating-system adapter:
 
 ```ts
 import { createApplication } from '@jsvision/ui';
 
-const isolatedApp = createApplication({ systemClipboard: false });
+const noSystemAdapter = createApplication({ systemClipboard: false });
 ```
 
-This disables automatic native integration; it does not disable canonical copy/paste, direct
-terminal paste, or an explicitly selected outbound route.
+This is not strict clipboard isolation. It keeps canonical copy/paste and direct terminal paste,
+and `Application.run()` still installs the capability-gated OSC 52 writer when no raw-text writer
+exists.
+
+For strict app-local behavior, also supply an explicit no-op raw-text writer. Its presence consumes
+the outbound host seam, so `run()` does not install either the native adapter or OSC 52 fallback:
+
+```ts
+import { createApplication } from '@jsvision/ui';
+
+const appLocalOnly = createApplication({
+  systemClipboard: false,
+  writeClipboardText: () => undefined,
+});
+```
+
+An explicit capability profile with OSC 52 disabled is another valid host-level boundary, but the
+no-op writer makes the application intent visible beside the native opt-out.
 
 ### Browser boundary
 
@@ -274,7 +290,7 @@ interface ClipboardSession {
 }
 
 function ownClipboardSession(session: ClipboardSession) {
-  return createRoot((dispose) => {
+  return createRoot((disposeOwner) => {
     const controller = new AbortController();
     onCleanup(() => controller.abort());
 
@@ -283,13 +299,24 @@ function ownClipboardSession(session: ClipboardSession) {
       writeClipboardText: (text) => session.write(text, controller.signal),
     });
 
-    return { app, dispose };
+    let disposed = false;
+    return {
+      app,
+      dispose(): void {
+        if (disposed) return;
+        disposed = true;
+        app.loop.dispose();
+        disposeOwner();
+      },
+    };
   });
 }
 ```
 
-Call the returned `dispose()` when the embedding lifetime ends. Application stop/dispose and view
-unmount are also route boundaries; do not retain a focused view or clipboard payload beyond them.
+Call the returned `dispose()` when the embedding lifetime ends. It explicitly disposes the event
+loop before releasing the surrounding owner; the registered cleanup then aborts adapter work.
+Application stop/dispose and view unmount are route boundaries, so do not retain a focused view or
+clipboard payload beyond them.
 
 ## Advanced behavior
 
@@ -332,7 +359,8 @@ Use observable route evidence to separate similar symptoms.
 
 | Symptom                                         | Cause                                                 | Correction or fix                                                                  | Evidence                                                                 |
 | ----------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Copy works locally but not outside the app      | Host write was denied or unavailable                  | Keep canonical fallback; request authorization only from an explicit user action   | Local paste succeeds and a payload-free host-write diagnostic appears    |
+| Copy works locally and the host rejected it     | Host write was denied or failed                       | Keep canonical fallback; request authorization only from an explicit user action   | Local paste succeeds and a payload-free host-write diagnostic appears    |
+| Copy stays local because no bridge exists       | Browser/host adapter is unavailable                   | Continue app-local; offer an explicit setup or authorization action if appropriate | No bridge call occurs and no host-failure warning is promised            |
 | Paste uses the app-local value                  | Native read failed                                    | Repair or authorize the adapter; do not clear canonical state on failure           | One read-fail warning followed by canonical fallback                     |
 | Paste appears in no field after focus changed   | Async result became stale                             | Keep focus stable or ask the user to paste again                                   | Focus/modal/lifecycle revision changed before delivery                   |
 | Paste would target the wrong field or old focus | Route changed while the read was pending              | Discard the stale result; never redirect it to current focus                       | Original continuous focus route no longer matches                        |

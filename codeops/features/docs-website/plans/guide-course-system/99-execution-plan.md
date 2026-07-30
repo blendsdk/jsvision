@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 03:03
+> **Last Updated**: 2026-07-30 03:34
 > **Progress**: 64/246 tasks (26%)
 > **CodeOps Artifact Schema**: 1
 
@@ -446,9 +446,28 @@ independent specification-first phase (AR-10).
 ### Step 8.3: Hardening
 
 - [x] 8.3.1 Add browser-denial, unavailable-adapter, selection, and key-conflict edges — `packages/docs-site/test/keyboard-and-clipboard-guide.impl.test.ts` ✅ (completed: 2026-07-30 02:53) — 33/33 focused course and hardening checks plus authoritative `yarn verify` pass
-- [x] 8.3.2 Run focused checks, promote Keyboard & clipboard, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 03:03) — 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass
+- [x] 8.3.2 Run focused checks, promote Keyboard & clipboard, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 03:34) — promoted after AR-33 corrections passed 44/44 focused checks, docs-site typecheck, production docs build, plugin integrity, authoritative `yarn verify`, and the one permitted fix-scoped re-review cleared every Critical and Major finding
 
 **Verify**: Keyboard/clipboard spec/impl tests and docs-site typecheck
+
+### Phase 8 quality review
+
+- The independent reviewer found four Major and one Minor issue: native opt-out prose overclaimed
+  isolation despite OSC 52 fallback, the lab simulated native read failure and stale delivery,
+  custom-session cleanup left the event loop alive, unavailable browser capability was treated as
+  a rejected write and seeded on mount, and the learner instructions described the wrong state
+  order.
+- Auto-design AR-33 applies every correction without waiver and keeps the course at Upgrade until
+  remediation gates and the one permitted fix-scoped re-review pass.
+- The single permitted fix-scoped re-review resolved all four Major findings and the original
+  Minor finding. Its one correction-introduced Minor was fixed by rejecting Alt+R when no read is
+  pending and proving that an early resolve cannot arm the next read. A third review is prohibited.
+- The corrected demoted state passed 43/43 focused checks and every authoritative gate. The final
+  promoted state passed 44/44 focused checks, docs-site typecheck, production docs build, plugin
+  integrity, and authoritative `yarn verify`.
+- Security and performance auditors were not separately invoked because this is a docs-only phase
+  with a bounded virtual host and small fixed view tree; the correctness reviewer explicitly
+  audited the clipboard authorization and data-boundary claims.
 
 ## Phase 9: Text, Unicode & terminal cells
 
