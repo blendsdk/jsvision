@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
+          "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T01:03:55Z"
+          "validatedAt": "2026-07-30T01:34:36Z"
         }
       ]
     },
@@ -955,7 +955,9 @@
         "Phase 8 Keyboard & clipboard expected red: 9 cases pass, including all 7 public controls and 2 existing course details; 17 course, catalog, registry, and laboratory cases fail across the 26-case independent oracle.",
         "Phase 8 Keyboard & clipboard green checkpoint: 26/26 independent specifications, docs-site typecheck, JSON validation, documentation self-check, and authoritative yarn verify pass.",
         "Phase 8 Keyboard & clipboard hardening: 33/33 focused checks and authoritative yarn verify pass across selection, key conflicts, browser denial, unavailable adapters, authorization cycling, and cleanup.",
-        "Phase 8 Keyboard & clipboard promotion: 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
+        "Phase 8 Keyboard & clipboard promotion: 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 8 review remediation: the corrected demoted state passed 43/43 focused checks and every authoritative gate; the one permitted re-review cleared all original findings.",
+        "Phase 8 final promoted state: 44/44 focused checks and every authoritative gate pass after the early-Resolve state edge was corrected."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -1011,10 +1013,12 @@
         "summary:Phase 8 tasks 8.1.1 and 8.1.2 established 26 independently authored cases; expected red is 9 passing and 17 course/catalog/registry/laboratory contract failures.",
         "summary:Phase 8 tasks 8.2.1 through 8.2.4 reached green with the complete course, one deterministic virtual-host laboratory, 26/26 specifications, docs-site typecheck, and authoritative yarn verify passing.",
         "summary:Phase 8 task 8.3.1 added selection, key-conflict, browser-denial, unavailable-adapter, authorization-cycle, and cleanup hardening; 33/33 focused checks and authoritative yarn verify pass.",
-        "summary:Phase 8 task 8.3.2 promoted Keyboard & clipboard after 40/40 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
+        "summary:Phase 8 task 8.3.2 initially promoted after 40/40 focused checks and every authoritative gate passed.",
+        "summary:Phase 8 independent review found four Major and one Minor issue; AR-33 demoted the course and selected every correction without waiver.",
+        "summary:Phase 8 task 8.3.2 completed after 44/44 focused checks and every authoritative gate passed; the permitted re-review cleared all Critical and Major findings and its one introduced Minor was corrected."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
+      "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1048,10 +1052,11 @@
         "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint.",
         "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
         "Auto-design AR-31 preserves the Phase 8 expected-red specification evidence through its first green checkpoint.",
-        "Auto-design AR-32 selected guides/clipboard-boundary for the one focused Keyboard & clipboard laboratory."
+        "Auto-design AR-32 selected guides/clipboard-boundary for the one focused Keyboard & clipboard laboratory.",
+        "Auto-design AR-33 selected every mandatory correction for the four Major and one Minor Phase 8 quality findings; the permitted re-review cleared every original finding and the final introduced Minor was corrected."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:147095ae9c2ba988cad1a5b2e2c13d681644d151017702c0afa822725e8bc301",
+      "revision": "sha256:dfdf9c534081cbf7a2ca9a31c1921c9567c0ad4220b2e66088eda74d31e4c108",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1121,13 +1126,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
+          "revision": "sha256:f2b5eb69b9efd63ca5cf56cd5602b63fa6c43ab50a61bf7ee188d43f71dea65c",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T01:03:55Z"
+          "validatedAt": "2026-07-30T01:34:36Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T01:03:55Z"
+  "updated": "2026-07-30T01:34:36Z"
 }

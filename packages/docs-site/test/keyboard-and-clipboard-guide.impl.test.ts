@@ -7,6 +7,8 @@
  */
 import { createKeymap } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { Group, Input, buildKeymap, createEventLoop, createRoot, signal } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
@@ -21,6 +23,11 @@ import {
 } from '../src/example-fixtures/keyboard-and-clipboard/boundary.js';
 import { demoShell } from '../src/demo-shell.js';
 import { EXAMPLE_CAPS, EXAMPLE_VIEWPORT, buildLabExample, frameText, key } from './example-lab-harness.js';
+
+const GUIDE_SOURCE = readFileSync(
+  fileURLToPath(new URL('../guide/keyboard-and-clipboard.md', import.meta.url)),
+  'utf8',
+);
 
 /** Create a one-based mouse event for a zero-based local cell in the mounted input. */
 function mouse(kind: MouseEvent['kind'], x: number): MouseEvent {
@@ -154,6 +161,11 @@ test('an unavailable adapter leaves canonical copy and paste usable inside the a
   loop.dispose();
 });
 
+test('strict app-local guidance consumes outbound fallback and disposes the event loop', () => {
+  expect(GUIDE_SOURCE).toMatch(/systemClipboard:\s*false,[\s\S]{0,180}writeClipboardText:\s*\(\)\s*=>\s*undefined/);
+  expect(GUIDE_SOURCE).toMatch(/dispose\(\): void[\s\S]{0,220}app\.loop\.dispose\(\)[\s\S]{0,120}disposeOwner\(\)/);
+});
+
 test('the virtual authorization state and copy outcome wrap deterministically', () => {
   const states: ClipboardAuthorization[] = [];
   let state: ClipboardAuthorization = 'unavailable';
@@ -175,16 +187,100 @@ describe('clipboard laboratory lifecycle', () => {
   test('repeats authorization transitions without exposing a visitor clipboard', () => {
     createRoot((dispose) => {
       const { app } = buildLabExample('guides/clipboard-boundary', clipboardExample);
+      app.loop.dispatch(key('c', { alt: true }));
+      expect(frameText(app)).toContain('Host write: unavailable (no bridge call)');
+      expect(frameText(app)).toContain('Diagnostic: none');
+
       for (const expected of ['denied', 'authorized', 'unavailable']) {
         app.loop.dispatch(key('a', { alt: true }));
         app.loop.dispatch(key('c', { alt: true }));
         expect(frameText(app)).toContain(`Authorization: ${expected}`);
         expect(frameText(app)).toContain(`Copy: local success > host ${expected}`);
+        if (expected === 'denied') {
+          expect(frameText(app)).toContain('Diagnostic: host clipboard write failed');
+        } else {
+          expect(frameText(app)).toContain('Diagnostic: none');
+        }
         expect(frameText(app)).not.toContain('visitor-owned text');
       }
       app.loop.dispose();
       dispose();
     });
+  });
+
+  test('uses the real reader for failure fallback and accepted delivery', async () => {
+    const built = createRoot((dispose) => ({
+      ...buildLabExample('guides/clipboard-boundary', clipboardExample),
+      dispose,
+    }));
+    try {
+      built.app.loop.dispatch(key('f', { alt: true }));
+      built.app.loop.dispatch(key('v', { alt: true }));
+      await drainClipboardQueue();
+      expect(frameText(built.app)).toContain('Host reads: 1');
+      expect(frameText(built.app)).toContain('Paste events: 1');
+      expect(frameText(built.app)).toContain('Paste: canonical fallback');
+
+      built.app.loop.dispatch(key('p', { alt: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(frameText(built.app)).toContain('Host reads: 2');
+      expect(frameText(built.app)).toContain('Native read: pending');
+      built.app.loop.dispatch(key('r', { alt: true }));
+      await drainClipboardQueue();
+      expect(frameText(built.app)).toContain('Paste events: 2');
+      expect(frameText(built.app)).toContain('Paste: virtual result accepted');
+    } finally {
+      built.app.loop.dispose();
+      built.dispose();
+    }
+  });
+
+  test('does not let an early resolve arm the next pending read', async () => {
+    const built = createRoot((dispose) => ({
+      ...buildLabExample('guides/clipboard-boundary', clipboardExample),
+      dispose,
+    }));
+    try {
+      built.app.loop.dispatch(key('r', { alt: true }));
+      expect(frameText(built.app)).toContain('Paste: no read pending');
+
+      built.app.loop.dispatch(key('p', { alt: true }));
+      await drainClipboardQueue();
+      expect(frameText(built.app)).toContain('Native read: pending');
+      expect(frameText(built.app)).toContain('Paste events: 0');
+
+      built.app.loop.dispatch(key('r', { alt: true }));
+      await drainClipboardQueue();
+      expect(frameText(built.app)).toContain('Paste events: 1');
+      expect(frameText(built.app)).toContain('Paste: virtual result accepted');
+    } finally {
+      built.app.loop.dispose();
+      built.dispose();
+    }
+  });
+
+  test('discards a real deferred read after focus changes', async () => {
+    const built = createRoot((dispose) => ({
+      ...buildLabExample('guides/clipboard-boundary', clipboardExample),
+      dispose,
+    }));
+    try {
+      built.app.loop.dispatch(key('p', { alt: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(frameText(built.app)).toContain('Host reads: 1');
+      built.app.loop.dispatch(key('n', { alt: true }));
+      built.app.loop.dispatch(key('r', { alt: true }));
+      await drainClipboardQueue();
+
+      expect(frameText(built.app)).toContain('Paste: stale result discarded');
+      expect(frameText(built.app)).toContain('Paste events: 0');
+      expect(frameText(built.app)).toContain('Reason: focus changed');
+    } finally {
+      built.app.loop.dispose();
+      built.dispose();
+    }
   });
 
   test('registers one idempotent host cleanup and ignores commands after teardown', () => {

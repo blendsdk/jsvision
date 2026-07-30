@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 29 items resolved
-> **Last Updated**: 2026-07-30 01:31
+> **Status**: ✅ GATE PASSED — all 33 items resolved
+> **Last Updated**: 2026-07-30 03:13
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -34,6 +34,10 @@
 | 27 | Quality review (runtime) | How should the four Major and three Minor Phase 6 findings be resolved without weakening the Views & focus course contract? | Re-home newly ineligible focus synchronously, correct and assert the modal snippet, make pending modal teardown inert, restore 80×24 and ASCII evidence, clarify focus memory, and temporarily demote the course / defer or waive findings while retaining Complete status | **Authority: AI — delegated by `--auto-design`.** Apply every correction, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
 | 28 | Naming (runtime) | Which stable IDs should distinguish the two Events, commands & keymaps laboratories? | `guides/event-routing` plus `guides/command-precedence` / implementation-shaped control names / reuse unrelated component examples | **Authority: AI — delegated by `--auto-design`.** Use the two outcome-shaped Guide IDs so one lab proves event routing and the other proves command/keymap precedence. | ✅ Resolved |
 | 29 | Execution (runtime) | How should Phase 7 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 7.1.1–7.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 7 task IDs and resume per-task commits after 7.2.4. | ✅ Resolved |
+| 30 | Quality review (runtime) | How should the four Major and two Minor Phase 7 findings be resolved without weakening the course contract? | Apply every routing, availability, diagram, and accessibility correction while temporarily demoting the course / defer or waive findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Apply every correction, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
+| 31 | Execution (runtime) | How should Phase 8 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 8.1.1–8.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 8 task IDs and resume per-task commits after 8.2.4. | ✅ Resolved |
+| 32 | Naming (runtime) | Which stable ID should identify the focused Keyboard & clipboard laboratory? | `guides/clipboard-boundary` / reuse `apps/editor` / choose an implementation-shaped widget name | **Authority: AI — delegated by `--auto-design`.** Use the outcome-shaped Guide ID so the laboratory remains owned by the cross-host clipboard lesson. | ✅ Resolved |
+| 33 | Quality review (runtime) | How should the four Major and one Minor Phase 8 findings be resolved without weakening clipboard authorization, lifecycle, and authentic-laboratory evidence? | Correct every boundary and prove real event-loop reads while temporarily demoting the course / defer or waive findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Apply all five technical corrections, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -707,3 +711,52 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The laboratory objective changes away from clipboard authorization, an ID
   collision appears, or an existing published example proves the exact same outcome and framing.
+
+**AR-33 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Documentation accuracy, authentic public-seam examples, lifecycle cleanup,
+  capability-state diagnosis, and verification mechanics within the confirmed Keyboard &
+  clipboard outcomes; no product behavior, public compatibility, security policy, or acceptance
+  criterion changes.
+- **Objective:** Resolve every Phase 8 quality finding so Complete teaches the exact native,
+  browser, OSC 52, custom-adapter, and lifecycle boundaries and proves real asynchronous read
+  behavior.
+- **Decision:** Explain that `systemClipboard: false` disables only the automatic OS adapter and
+  retains capability-gated OSC 52, while strict app-local operation supplies an explicit no-op
+  raw-text writer or a profile without OSC 52. Replace simulated failure and staleness with a
+  deterministic `readClipboardText` adapter, real paste commands, real PasteEvent delivery, and
+  focused accepted/discarded assertions. Make the custom-session teardown idempotently dispose the
+  event loop and reactive owner. Treat unavailable as no adapter/no warning, denied as an attempted
+  rejected write with a payload-free warning, seed canonical state through a direct deterministic
+  paste rather than a host write, and correct the lab instructions to the actual
+  unavailable → denied → authorized order. Return the catalog, curriculum map, completion
+  allowlist, and task to Upgrade / in-progress until all gates and the one permitted fix-scoped
+  re-review pass.
+- **Evidence:** Independent review of the complete Phase 8 snapshot found that native opt-out prose
+  contradicted the retained OSC 52 fallback, the flagship lab never invoked a native reader,
+  lifecycle cleanup left the event loop alive, unavailable browser capability was presented as a
+  rejected write, initial seeding attempted a host write, and the learner instructions described
+  the wrong state order.
+- **Rejected alternatives:** Keeping Complete while correcting contradicts the Guide completion
+  gate. Waiving Major findings is forbidden. Label-only simulation cannot prove async ordering or
+  stale-route guards. Treating unavailable as denial contradicts the public browser bridge, while
+  removing unavailable from the lesson would weaken the confirmed authorization outcome.
+- **Strongest counterargument:** The lab still needs immediate learner feedback even though the
+  real read settles on a microtask. It may display that a deterministic outcome is pending, but
+  final accepted/fallback delivery counts and focused tests must come from the actual PasteEvent
+  route rather than labels alone.
+- **Confidence:** High — every correction follows the current public event-loop, browser bridge,
+  native run, OSC 52, and disposal implementations and has a direct observable assertion.
+- **Hardening:** The mandatory independent reviewer supplied four Major and one Minor finding. The
+  corrected demoted state passed 43/43 focused checks and every authoritative gate. The single
+  allowed fix-scoped re-review resolved all original findings and reported one
+  correction-introduced Minor: early Resolve armed the next pending read. That edge was corrected
+  and the final promoted state passed 44/44 focused checks, docs-site typecheck, production docs
+  build, plugin integrity, and authoritative `yarn verify`. No third review was requested.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Native opt-out is again called strict isolation, the lab no longer invokes
+  the real reader/delivery route, teardown retains a live loop, unavailable emits a fabricated
+  failure, canonical seeding touches a host, state-order instructions drift, or the re-review
+  retains a Critical or Major finding.

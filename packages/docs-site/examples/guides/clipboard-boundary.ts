@@ -1,9 +1,9 @@
 /**
  * Deterministic clipboard-boundary laboratory for the Keyboard & clipboard course.
  *
- * The application uses only an in-memory virtual adapter. Learners compare canonical-first copy,
- * host authorization states, failure fallback, and stale asynchronous delivery without granting
- * the docs page access to a visitor clipboard.
+ * The application uses only in-memory virtual adapters. Learners compare canonical-first copy,
+ * host authorization states, real native-read fallback, and stale asynchronous delivery without
+ * granting the docs page access to a visitor clipboard.
  */
 import {
   Button,
@@ -34,14 +34,17 @@ const CMD_FALLBACK = 'clipboard-boundary.fallback';
 const CMD_PENDING = 'clipboard-boundary.pending';
 const CMD_NEXT = 'clipboard-boundary.next-focus';
 const CMD_RESOLVE = 'clipboard-boundary.resolve';
+const VIRTUAL_HOST_TEXT = 'virtual host result';
 const CONTENT_WIDTH = 66;
 const CONTENT_HEIGHT = 15;
 
-/** Focused command target that owns canonical copy and fallback paste actions. */
+type ReadMode = 'success' | 'failure' | 'pending';
+
+/** Focused command target that owns canonical copy and receives real paste events. */
 class ClipboardTarget extends View {
   constructor(
     private readonly setCopy: (authorization: ClipboardAuthorization, source: 'keyboard' | 'mouse') => void,
-    private readonly setFallback: (text: string) => void,
+    private readonly receivePaste: (text: string, truncated: boolean) => void,
     private readonly authorization: () => ClipboardAuthorization,
   ) {
     super();
@@ -56,15 +59,14 @@ class ClipboardTarget extends View {
   }
 
   override onEvent(event: DispatchEvent): void {
-    if (event.event.type !== 'command') return;
-    if (event.event.command === CMD_COPY) {
+    if (event.event.type === 'command' && event.event.command === CMD_COPY) {
       event.setClipboard?.(CLIPBOARD_SAMPLE);
       this.setCopy(this.authorization(), event.event.arg === 'mouse' ? 'mouse' : 'keyboard');
       event.handled = true;
       return;
     }
-    if (event.event.command === CMD_FALLBACK) {
-      this.setFallback(event.readClipboard?.() ?? '');
+    if (event.event.type === 'paste') {
+      this.receivePaste(event.event.text, event.event.truncated);
       event.handled = true;
     }
   }
@@ -72,7 +74,7 @@ class ClipboardTarget extends View {
 
 export default defineExample({
   title: 'Clipboard Boundary Laboratory',
-  blurb: 'Compare canonical copy, virtual host authorization, failure fallback, and stale async delivery.',
+  blurb: 'Compare canonical copy, virtual host authorization, real failure fallback, and stale async delivery.',
   build: (ctx) =>
     createRoot((disposeReactive) => {
       let active = true;
@@ -97,31 +99,70 @@ export default defineExample({
       });
       const authorization = signal<ClipboardAuthorization>('unavailable');
       const canonical = signal('(empty)');
-      const copy = signal('Copy: ready');
+      const copy = signal('Copy: local ready > host not attempted');
       const hostWrite = signal('Host write: not attempted');
       const paste = signal('Paste: ready');
       const diagnostic = signal('Diagnostic: none');
       const nativeRead = signal('Native read: idle');
       const reason = signal('Reason: none');
       const actionSource = signal('Action source: keyboard');
-      let pendingFocus: View | null = null;
+      const hostReads = signal(0);
+      const pasteEvents = signal(0);
+      let nextReadMode: ReadMode = 'success';
+      let pendingResolve: ((text: string) => void) | null = null;
+      let readScheduled = false;
+      let resolutionRequested = false;
+      let seeding = true;
 
+      // The virtual wrapper is always installed so the browser host can never replace it with a
+      // visitor bridge. Its unavailable branch deliberately performs no bridge call and emits no
+      // failure, matching the public browser clipboard helper.
       app.loop.writeClipboardText = () => {
         const state = authorization.peek();
-        hostWrite.set(`Host write: ${state === 'authorized' ? 'success' : state}`);
-        if (state !== 'authorized') throw new Error('virtual host rejected clipboard write');
+        if (state === 'unavailable') {
+          hostWrite.set('Host write: unavailable (no bridge call)');
+          return;
+        }
+        hostWrite.set(`Host write: ${state === 'authorized' ? 'success' : 'denied'}`);
+        if (state === 'denied') throw new Error('virtual host rejected clipboard write');
+      };
+      app.loop.readClipboardText = () => {
+        hostReads.update((count) => count + 1);
+        const mode = nextReadMode;
+        nextReadMode = 'success';
+        if (mode === 'failure') throw new Error('virtual host read rejected');
+        if (mode === 'pending') {
+          return new Promise<string>((resolve) => {
+            pendingResolve = resolve;
+            if (resolutionRequested) {
+              resolutionRequested = false;
+              pendingResolve = null;
+              resolve(VIRTUAL_HOST_TEXT);
+            }
+          });
+        }
+        return VIRTUAL_HOST_TEXT;
       };
 
       const target = new ClipboardTarget(
         (state, source) => {
           canonical.set('Canonical: course sample');
           copy.set(copyOutcome(state));
-          diagnostic.set(state === 'authorized' ? 'Diagnostic: none' : 'Diagnostic: host clipboard write failed');
+          diagnostic.set(state === 'denied' ? 'Diagnostic: host clipboard write failed' : 'Diagnostic: none');
           actionSource.set(`Action source: ${source}`);
         },
-        (text) => {
-          paste.set(text === CLIPBOARD_SAMPLE ? 'Paste: canonical fallback' : 'Paste: empty fallback');
-          diagnostic.set('Diagnostic: host clipboard read failed');
+        (text, truncated) => {
+          canonical.set(text === CLIPBOARD_SAMPLE ? 'Canonical: course sample' : 'Canonical: virtual host result');
+          if (seeding) return;
+          pasteEvents.update((count) => count + 1);
+          nativeRead.set('Native read: settled');
+          if (text === CLIPBOARD_SAMPLE) {
+            paste.set('Paste: canonical fallback');
+            diagnostic.set('Diagnostic: host clipboard read failed');
+          } else {
+            paste.set(truncated ? 'Paste: virtual result accepted (truncated)' : 'Paste: virtual result accepted');
+            diagnostic.set('Diagnostic: none');
+          }
         },
         () => authorization(),
       );
@@ -141,24 +182,50 @@ export default defineExample({
         diagnostic.set('Diagnostic: none');
       });
       const offFailure = app.onCommand(CMD_FAIL, () => {
-        diagnostic.set('Diagnostic: next host read will fail safely');
+        nextReadMode = 'failure';
+        diagnostic.set('Diagnostic: next virtual read will fail');
         paste.set('Paste: ready for canonical fallback');
       });
-      const offPending = app.onCommand(CMD_PENDING, () => {
-        pendingFocus = app.loop.getFocused();
+      const offFallback = app.onCommand(CMD_FALLBACK, () => {
+        app.loop.focusView(target);
         nativeRead.set('Native read: pending');
+        paste.set('Paste: canonical fallback');
+        diagnostic.set('Diagnostic: host clipboard read failed');
+        app.loop.emitCommand('paste');
+      });
+      const offPending = app.onCommand(CMD_PENDING, () => {
+        app.loop.focusView(target);
+        nextReadMode = 'pending';
+        readScheduled = true;
+        nativeRead.set('Native read: pending');
+        paste.set('Paste: awaiting virtual result');
         reason.set('Reason: awaiting virtual host');
+        app.loop.emitCommand('paste');
       });
       const offNext = app.onCommand(CMD_NEXT, () => {
         app.loop.focusView(focusDestination);
         reason.set('Reason: focus changed');
       });
       const offResolve = app.onCommand(CMD_RESOLVE, () => {
-        const stale = pendingFocus !== null && app.loop.getFocused() !== pendingFocus;
+        if (!readScheduled) {
+          nativeRead.set('Native read: idle');
+          paste.set('Paste: no read pending');
+          reason.set('Reason: start with Alt+P');
+          resolutionRequested = false;
+          return;
+        }
+        readScheduled = false;
+        const stale = app.loop.getFocused() !== target;
         nativeRead.set('Native read: settled');
-        paste.set(stale ? 'Paste: stale result discarded' : 'Paste: virtual result accepted');
+        paste.set(stale ? 'Paste: stale result discarded' : 'Paste: resolving virtual result');
         reason.set(stale ? 'Reason: focus changed' : 'Reason: focus route unchanged');
-        pendingFocus = null;
+        const resolve = pendingResolve;
+        pendingResolve = null;
+        if (resolve === null) {
+          resolutionRequested = true;
+        } else {
+          resolve(VIRTUAL_HOST_TEXT);
+        }
       });
 
       const content = new Group();
@@ -170,13 +237,21 @@ export default defineExample({
       content.add(at(new Text(() => hostWrite()), 0, 5, 66, 1));
       content.add(at(new Text(() => paste()), 0, 6, 66, 1));
       content.add(at(new Text(() => diagnostic()), 0, 7, 66, 1));
-      content.add(at(new Text(() => `${nativeRead()} | ${reason()}`), 0, 8, 66, 1));
-      content.add(at(new Text(() => actionSource()), 0, 9, 66, 1));
+      content.add(
+        at(
+          new Text(() => `${nativeRead()} | Host reads: ${hostReads()} | Paste events: ${pasteEvents()}`),
+          0,
+          8,
+          66,
+          1,
+        ),
+      );
+      content.add(at(new Text(() => `${reason()} | ${actionSource()}`), 0, 9, 66, 1));
       content.add(at(target, 0, 11, 28, 1));
       content.add(at(focusDestination, 30, 10, 19, 2));
       content.add(at(copyButton, 50, 10, 16, 2));
-      content.add(at(new Text('Alt+A auth | Alt+C copy | Alt+F fail + Alt+V fallback'), 0, 13, 66, 1));
-      content.add(at(new Text('Alt+P pending | Alt+N move focus | Alt+R resolve | mouse Copy'), 0, 14, 66, 1));
+      content.add(at(new Text('Alt+A auth | Alt+C copy | Alt+F fail + Alt+V real fallback'), 0, 13, 66, 1));
+      content.add(at(new Text('Alt+P real pending | Alt+N move focus | Alt+R resolve | mouse Copy'), 0, 14, 66, 1));
 
       const dialog = new Template1Dialog({
         title: ' Clipboard Boundary Laboratory ',
@@ -190,18 +265,24 @@ export default defineExample({
           offResolve();
           offNext();
           offPending();
+          offFallback();
           offFailure();
           offAuthorization();
+          readScheduled = false;
+          resolutionRequested = false;
+          pendingResolve = null;
           app.loop.writeClipboardText = undefined;
+          app.loop.readClipboardText = undefined;
           disposeLesson();
         }),
       );
       dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
       app.desktop.addWindow(dialog);
       app.loop.focusView(target);
-      // Seed the canonical clipboard through the same public command route used by the lesson.
-      // This keeps the failure exercise deterministic even when it is the learner's first action.
-      app.loop.emitCommand(CMD_COPY);
+      // A direct deterministic paste seeds canonical state without attempting any host write.
+      app.loop.dispatch({ type: 'paste', text: CLIPBOARD_SAMPLE, truncated: false });
+      seeding = false;
+      paste.set('Paste: ready');
       return app;
     }),
 });
