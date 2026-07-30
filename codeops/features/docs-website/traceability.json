@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
+          "revision": "sha256:f94a076c435b10f2a6084ebc95fd03879fbafebc807b3b717813a93d632b20ec",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T02:05:42Z"
+          "validatedAt": "2026-07-30T05:49:17Z"
         }
       ]
     },
@@ -1028,10 +1028,17 @@
         "summary:Phase 10 tasks 10.3.1 and 10.3.2 added offset, large-data, empty, focus, selection, geometry, and lifecycle hardening and initially promoted the course after 37/37 focused checks and every authoritative gate passed.",
         "summary:Phase 10 independent review found five Major and one Minor issue; AR-40 demoted the course and selected every correction without waiver.",
         "summary:The single permitted Phase 10 fix-scoped re-review cleared five findings and retained RV-010-002; the final no-third-review correction now resets uncapped work at the real subtree draw boundary and exposes deliberate over-budget formatting.",
-        "summary:Phase 10 task 10.3.2 completed after the promoted course passed 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify."
+        "summary:Phase 10 task 10.3.2 completed after the promoted course passed 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify.",
+        "summary:Phase 11 baseline 87c9a9f2618560b8b389ce2711d99d99c6687d9a and its expected Application shell modification set are recorded before specification work.",
+        "summary:Phase 11 tasks 11.1.1 and 11.1.2 established 19 independently authored cases; expected red is 4 public application controls passing and 15 course/catalog/registry/laboratory failures.",
+        "summary:Phase 11 tasks 11.2.1 through 11.3.1 delivered the complete course, two authentic shell laboratories, command/body/lifecycle hardening, and an initial promoted checkpoint.",
+        "summary:Phase 11 independent review found five Major and one Minor issue; AR-43 accepted every correction without waiver and AR-44 authorized the narrow statusBase implementation alignment.",
+        "summary:The single permitted Phase 11 re-review cleared five findings and retained RV-011-002; the final no-third-review correction drives real MenuBar, MenuPopup, StatusLine, keymap, and button command routes with truthful feedback.",
+        "summary:AR-45 corrected plan-owned Keyboard & clipboard drift exposed by the authoritative gate; its existing native-clipboard consumer oracle passes 7/7.",
+        "summary:Phase 11 task 11.3.2 completed after 34/34 Guide checks, 15/15 focused UI checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
+      "revision": "sha256:f94a076c435b10f2a6084ebc95fd03879fbafebc807b3b717813a93d632b20ec",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1073,10 +1080,15 @@
         "Auto-design AR-37 selected every mandatory correction for the four Major and one Minor Phase 9 quality findings; the course remains Upgrade until correction gates and the permitted re-review pass.",
         "Auto-design AR-38 partitions Phase 10 into guides/viewport-strategies and guides/virtual-collections laboratories that teach the two distinct selection axes.",
         "Auto-design AR-39 preserves Phase 10 expected-red evidence and the Planned-until-hardened rule through the final repository-green promotion checkpoint.",
-        "Auto-design AR-40 selected every mandatory correction for the five Major and one Minor Phase 10 quality findings; the permitted re-review retained RV-010-002, and the final correction uses an actual subtree draw boundary plus over-budget falsification evidence without a prohibited third review."
+        "Auto-design AR-40 selected every mandatory correction for the five Major and one Minor Phase 10 quality findings; the permitted re-review retained RV-010-002, and the final correction uses an actual subtree draw boundary plus over-budget falsification evidence without a prohibited third review.",
+        "Auto-design AR-41 partitions Phase 11 into guides/application-chrome and guides/application-bodies laboratories so chrome/quit and body/window-command ownership remain separate observable decisions.",
+        "Auto-design AR-42 preserves Phase 11 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-43 selected every mandatory Phase 11 review correction; the permitted re-review cleared five findings and the final no-third-review correction resolved the retained authentic-chrome finding.",
+        "User-approved AR-44 expanded Phase 11 narrowly so statusBase matches its existing command-item-only public contract with focused UI and plugin-impact evidence.",
+        "Auto-design AR-45 synchronized the plan-owned Keyboard & clipboard course with the canonical native-clipboard documentation contract after authoritative verification exposed drift."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:dd05e09f6bdbe51ad2494fe56e3e91fee6db77566db0768c0c69449c471f0b2c",
+      "revision": "sha256:4f368111688914785c7247675d88a5cecb232314ff217fa7997feff65fe55328",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1146,13 +1158,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
+          "revision": "sha256:f94a076c435b10f2a6084ebc95fd03879fbafebc807b3b717813a93d632b20ec",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T02:05:42Z"
+          "validatedAt": "2026-07-30T05:49:17Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T03:39:42Z"
+  "updated": "2026-07-30T05:49:17Z"
 }

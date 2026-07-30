@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 40 items resolved
-> **Last Updated**: 2026-07-30 05:12
+> **Status**: ✅ GATE PASSED — all 45 items resolved
+> **Last Updated**: 2026-07-30 07:43
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -45,6 +45,11 @@
 | 38 | Naming (runtime) | Which stable IDs and lesson split should identify the two Scrolling, lists & large content laboratories? | `guides/viewport-strategies` plus `guides/virtual-collections` / one example per component / reuse component examples | **Authority: AI — delegated by `--auto-design`.** Use one comparative viewport lab and one comparative virtual-collections lab. | ✅ Resolved |
 | 39 | Execution (runtime) | How should Phase 10 preserve its intentional red oracle and Planned-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 10.3.2 promotion and full verification / temporarily promote then demote / commit a failing repository / weaken the oracle | **Authority: AI — delegated by `--auto-design`.** Treat tasks 10.1.1–10.3.2 as one repository-green checkpoint and push only after the final promotion and authoritative gates pass. | ✅ Resolved |
 | 40 | Quality review (runtime) | How should the five Major and one Minor Phase 10 findings be resolved without weakening offset, marker, bounded-rendering, compact-layout, or scrollbar teaching? | Apply all six source-grounded corrections while temporarily demoting the route / expand into a public runtime change / waive or defer findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Correct the course, instrumentation, compact lab, and focused evidence; keep the route Upgrade until all gates and the one permitted fix-scoped re-review pass. | ✅ Resolved |
+| 41 | Naming (runtime) | Which stable IDs and lesson split should identify the two Application shell laboratories? | `guides/application-chrome` plus `guides/application-bodies` / one kitchen-sink shell / reuse component examples | **Authority: AI — delegated by `--auto-design`.** Use one chrome-and-quit laboratory and one Desktop-versus-custom-body laboratory so each catalog outcome has one observable decision axis. | ✅ Resolved |
+| 42 | Execution (runtime) | How should Phase 11 preserve its intentional red oracle and Upgrade-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 11.3.2 promotion and full verification / commit a failing repository / weaken the oracle / claim a partial green checkpoint | **Authority: AI — delegated by `--auto-design`.** Treat tasks 11.1.1–11.3.2 as one repository-green checkpoint and push only after final Complete promotion and authoritative gates pass. | ✅ Resolved |
+| 43 | Quality review (runtime) | How should the five Major and one Minor Phase 11 findings be resolved without weakening host lifecycle, authentic chrome, body-command, or cleanup evidence? | Apply all six source-grounded corrections while temporarily demoting the route / expand the public host contract / waive or defer findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Correct the course, both labs, lifecycle evidence, nested cleanup proof, and status-base boundary; keep the route Upgrade until every gate and the one permitted fix-scoped re-review pass. | ✅ Resolved |
+| 44 | Scope (runtime) | May Phase 11 correct `statusBase()` so its implementation matches the existing documented command-item-only contract? | Expand the Phase 11 modification set to the narrow UI implementation fix, focused regression evidence, and generated plugin-impact snapshot / stop without changing the public implementation | **User approved** the recommended narrow scope expansion on 2026-07-30. | ✅ Resolved |
+| 45 | Verification drift (runtime) | How should execution handle the authoritative gate exposing that the completed Keyboard & clipboard course predates the repository's native-clipboard documentation oracle? | Correct the plan-owned Guide from canonical source evidence and rerun its existing oracle / weaken or skip the gate / leave the repository red | **Authority: AI — delegated by `--auto-design`.** Apply the focused plan-owned documentation correction and require the existing consumer oracle plus full verification to pass. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -1040,3 +1045,180 @@ cross-course contracts after every authored route is complete.
   ListView sorting/type-ahead or Tree flattening costs change, per-render instrumentation diverges
   from actual formatter calls, any authored one-row copy exceeds its bound, ScrollBar range writes
   begin re-limiting the bound value, or re-review retains a Critical or Major finding.
+
+**AR-41 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal documentation-laboratory naming and lesson partition within the
+  confirmed Phase 11 two-example target and catalog outcomes; no public API, product behavior,
+  acceptance criterion, or course scope changes.
+- **Objective:** Give menu/status/quit composition and body-selection/window-command behavior
+  separate observable laboratories without duplicating component pages or the Screens & routing
+  course.
+- **Decision:** Use `guides/application-chrome` for the complete shell's menu, status, content,
+  command, and quit-request flow. Use `guides/application-bodies` for the default Desktop versus
+  custom content body decision, including which window commands exist and how lifecycle ownership
+  differs. Both remain complete template1 applications; quit is taught through visible bounded
+  feedback so the embedded lesson itself stays open.
+- **Evidence:** The catalog declares exactly two outcomes and two laboratories.
+  `createApplication()` composes optional chrome around either its default Desktop or one custom
+  content view, returns precise DesktopApplication/RouterApplication types, and registers window
+  commands only for the Desktop body. The docs host must keep each embedded application alive after
+  opening, so an actual lesson-ending quit is unsuitable as the only observable proof.
+- **Rejected alternatives:** A single kitchen-sink shell would combine chrome, body selection,
+  window management, and lifecycle into one dense objective. Reusing MenuBar, StatusLine, Desktop,
+  Window, or Router component examples would not prove the cross-cutting application-ownership
+  decisions. A dedicated router workflow lab would duplicate the later Screens & routing course.
+- **Strongest counterargument:** A body-comparison lab lives inside the docs shell's own Desktop,
+  so it must clearly label modeled ownership versus the outer teaching host. Focused public-object
+  assertions will verify the real application types and command registration rather than relying
+  on labels alone.
+- **Confidence:** High — the split maps directly to the two catalog outcomes and current public
+  application contracts.
+- **Hardening:** Compared the catalog, prerequisite command course, application source/API
+  reference, lifecycle skill reference, existing component examples, and template1 host
+  constraint. No independent challenge was proportionate because the IDs and two-way teaching
+  split are reversible documentation mechanics.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The catalog target changes, custom content gains a Desktop or window command
+  registration, the embedded quit flow cannot stay alive, or either lab cannot remain readable at
+  80×24.
+
+**AR-42 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Verification and commit sequencing within the confirmed specification-first
+  Phase 11 tasks; no course outcome, acceptance criterion, public behavior, compatibility, or scope
+  changes.
+- **Objective:** Preserve the immutable final-contract oracle, the Upgrade-until-hardened learner
+  stage, and the repository-wide green-commit policy without falsifying intermediate evidence.
+- **Decision:** Record tasks 11.1.1 and 11.1.2 with their factual expected-red evidence and defer
+  their commit. Keep the catalog route Upgrade through task 11.3.1. Treat task 11.2.4 as an
+  implementation checkpoint where every non-stage assertion and docs-site typecheck must pass. At
+  task 11.3.2, promote the catalog and curriculum to Complete, require the entire immutable oracle,
+  focused implementation tests, docs build, plugin integrity, and authoritative `yarn verify` to
+  pass, then create and push the first Phase 11 commit.
+- **Evidence:** The independent oracle runs nineteen cases. Four controls over current public
+  application body selection, chrome geometry, safe base copies, and Desktop-only command
+  consumption pass before implementation. Fifteen final course, catalog, registry, shell,
+  interaction, geometry, and cleanup assertions fail because the route is a placeholder, the
+  catalog remains Upgrade, and neither laboratory exists.
+- **Rejected alternatives:** Committing the red oracle violates `yarn verify`. Weakening, skipping,
+  or quarantining the immutable oracle would destroy the specification-first evidence. Calling only
+  the four controls or non-stage assertions green would falsify verification.
+- **Strongest counterargument:** One checkpoint combines oracle, implementation, hardening, and
+  promotion, reducing commit granularity. It remains the smallest truthful repository-green unit
+  while the immutable oracle requires the final catalog stage.
+- **Confidence:** High — the observed failure set maps exactly to the withheld final course and
+  laboratory deliverables, with all public controls already passing.
+- **Hardening:** Reused the independently challenged green-checkpoint policy from prior Guide
+  phases and reconciled it with the exact Phase 11 oracle and current Upgrade-stage catalog. A
+  repeated independent challenge of the unchanged sequencing rule was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control turns red, a non-stage assertion cannot pass at the
+  implementation checkpoint, the catalog permits verified completion before hardening, or an
+  authoritative expected-red commit mechanism becomes available.
+
+**AR-43 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Documentation accuracy, deterministic teaching-lab behavior, focused evidence,
+  and cleanup observability within the confirmed Phase 11 outcomes; no public API, compatibility,
+  security policy, or course scope changes.
+- **Objective:** Resolve every independent-review finding so the course teaches actual Play-host
+  quit behavior, demonstrates real chrome and body command outcomes, distinguishes host restoration
+  from view disposal, and proves every nested application is released.
+- **Decision:** State that normal Play `Commands.quit` closes the embedded surface while these
+  persistent labs use a separate demonstration-only request command. Add real lesson menu and
+  status items through the shared docs shell and route menu, status, key, and button paths through
+  one command. Give the bodies lab real Desktop windows and custom-body command probes, emit a
+  window command in both modes, and show the resulting public state. Add injected-runtime tests for
+  non-zero quit and terminal restoration, explicitly distinguish `run()` stop/restoration from
+  `loop.dispose()` view cleanup, expose and assert exact-once nested-loop cleanup, and document that
+  `statusBase()` reconstructs command items only. Keep the route Upgrade and task 11.3.2
+  implemented until corrections, authoritative gates, and the single permitted re-review pass.
+- **Evidence:** The reviewer traced the actual docs quit handler to Play closure, found the chrome
+  lab's labels did not match its menu/status objects, found body switching changed labels without
+  emitting commands, confirmed the oracle never ran `app.run()`, showed outer-dialog cleanup tests
+  could not see two separately mounted nested loops, and verified passive status segments are
+  intentionally excluded from `statusBase()`.
+- **Rejected alternatives:** Waiving a Major is forbidden. Changing the public embedded-host quit
+  contract would expand a docs phase unnecessarily. Keeping label-only evidence, regex-only
+  lifecycle claims, or outer-only cleanup checks would leave catalog outcomes unproved.
+- **Strongest counterargument:** Authentic nested applications and injected host doubles add test
+  machinery to a documentation phase. That machinery is warranted because lifecycle and body
+  command ownership are explicit catalog outcomes and cannot be established by prose labels.
+- **Confidence:** High — every correction follows current public source and preserves the approved
+  course and example scope.
+- **Hardening:** The mandatory independent reviewer supplied five Major and one Minor finding.
+  Every finding is accepted without waiver; the required fix-scoped re-review will challenge the
+  corrected diff once.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Play changes its quit contract, custom content gains Desktop commands,
+  `run()` begins disposing the view tree, `statusBase()` starts retaining passive segments, nested
+  cleanup cannot be observed exactly once, or re-review retains a Critical or Major finding.
+
+**AR-44 (runtime):**
+
+- **Authority:** User approved the exact expanded modification set on 2026-07-30.
+- **Objective:** Resolve the mismatch between the documented `statusBase()` contract and its
+  implementation before the application-shell course teaches and tests that boundary.
+- **Recommended decision:** Expand the Phase 11 modification set narrowly to
+  `packages/ui/src/app/application.ts`, focused UI regression evidence, and the generated
+  `tools/jsvision-plugin-impact.json` snapshot. Filter out command-less `StatusItemView` children
+  together with existing spacer/widget exclusions, matching the public interface and internal
+  documentation that already say the composable base contains command items only.
+- **Evidence:** The public interface at `packages/ui/src/app/application.ts:198-205` and helper
+  documentation at lines 296-300 promise command items only. Before the provisional correction,
+  the helper filtered only by class, so a command-less `statusItem('Ready')` was copied. The
+  strengthened Phase 11 oracle observes the promised two command items from a three-item line.
+- **Rejected alternative:** Teaching the accidental inclusion would contradict the existing
+  public API documentation and would require weakening the independent oracle after it exposed the
+  mismatch.
+- **Compatibility risk:** A consumer relying on undocumented propagation of command-less status
+  labels would no longer receive those labels from `statusBase()`. The signature and documented
+  contract do not change.
+- **Confidence:** High that the implementation is inconsistent with its existing documented
+  contract; user approval is still mandatory because the fix crosses the plan's declared
+  docs-site modification boundary.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Decision:** Apply the implementation filter, focused UI regression evidence, generated plugin
+  impact update, and every required package/docs/plugin verification gate in the Phase 11
+  checkpoint.
+- **Reopen triggers:** The public `statusBase()` documentation changes to include command-less
+  items, a compatibility test establishes that passive labels must propagate, or the generated
+  plugin impact check reports unsynchronized references.
+
+**AR-45 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Accuracy correction in a Guide course already owned by this execution plan;
+  no public behavior, compatibility, security policy, curriculum outcome, or external scope
+  changes.
+- **Objective:** Restore the repository-wide documentation contract after the authoritative gate
+  exposed drift between the completed Keyboard & clipboard course and the newer native-clipboard
+  consumer oracle.
+- **Decision:** Add the direct `createEventLoop()` callback boundary, explicit canonical-before-host
+  ordering, lazy `clipboardy` behavior, macOS/Windows/Linux helper dependencies, headless/SSH
+  degradation, canonical fallback, and the no-install/no-retry/no-poll limits. Derive every claim
+  from the canonical agent-neutral architecture and gotchas references, then require the existing
+  examples-package oracle and full `yarn verify` to pass.
+- **Evidence:** The isolated
+  `packages/examples/test/native-clipboard-documentation.spec.test.ts` run reproduced nine missing
+  concepts. `tools/jsvision-skill/references/architecture.md` and `references/gotchas.md` already
+  teach all nine from the supported runtime contract.
+- **Rejected alternatives:** Skipping or weakening the oracle violates the authoritative gate.
+  Leaving the earlier Guide stale would make the learner-facing course contradict the canonical
+  supported skill. A runtime change is unnecessary because the implementation and canonical
+  references already agree.
+- **Confidence:** High — the correction is bounded prose plus one public-API snippet and is checked
+  by the pre-existing consumer specification.
+- **Hardening:** No additional quality review is invoked: the affected Phase 8 review allowance is
+  exhausted, the correction is mechanically constrained by an existing immutable oracle, and the
+  canonical source text plus full repository gate provide independent evidence.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The native adapter stops using lazy `clipboardy`, platform helper behavior
+  changes, direct event-loop callback options change, or the consumer oracle remains red.

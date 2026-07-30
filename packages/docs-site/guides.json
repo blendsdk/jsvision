@@ -179,7 +179,7 @@
       "group": "Building applications",
       "page": "/guide/application-shell",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 1,
       "prerequisites": ["events-commands-and-keymaps"],
       "learningOutcomes": [
@@ -188,7 +188,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/application-chrome", "guides/application-bodies"]
     },
     {
       "id": "dialogs-and-modality",

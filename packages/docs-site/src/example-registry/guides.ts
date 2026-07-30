@@ -100,4 +100,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/virtual-collections.ts',
     load: () => import('../../examples/guides/virtual-collections.js'),
   },
+  {
+    id: 'guides/application-chrome',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/application-chrome.ts',
+    load: () => import('../../examples/guides/application-chrome.js'),
+  },
+  {
+    id: 'guides/application-bodies',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/application-bodies.ts',
+    load: () => import('../../examples/guides/application-bodies.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];
