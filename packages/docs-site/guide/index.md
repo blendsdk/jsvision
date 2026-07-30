@@ -174,7 +174,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | [Reactive state](/guide/reactive-state)                          | Complete | Model state, derived values, bindings, effects, and lifetimes.                       |
 | [Views & focus](/guide/views-and-focus)                          | Complete | Understand retained trees, mounting, invalidation, tab order, and focus restoration. |
 | [Events, commands & keymaps](/guide/events-commands-and-keymaps) | Complete | Route input and design discoverable command systems.                                 |
-| [Keyboard & clipboard](/guide/keyboard-and-clipboard)            | Upgrade  | Use editing chords and authorized clipboard adapters.                                |
+| [Keyboard & clipboard](/guide/keyboard-and-clipboard)            | Complete | Use editing chords and authorized clipboard adapters.                                |
 | Text, Unicode & terminal cells                                   | Planned  | Handle graphemes, wide glyphs, wrapping, clipping, and ASCII-safe fallbacks.         |
 | Scrolling, lists & large content                                 | Planned  | Design viewports, selection, scrolling, and bounded rendering.                       |
 

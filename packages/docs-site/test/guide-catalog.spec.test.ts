@@ -100,6 +100,7 @@ describe('Guide curriculum catalog', () => {
       'reactive-state',
       'views-and-focus',
       'events-commands-and-keymaps',
+      'keyboard-and-clipboard',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

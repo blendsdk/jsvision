@@ -128,7 +128,7 @@
       "group": "Core concepts",
       "page": "/guide/keyboard-and-clipboard",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 5,
       "prerequisites": ["events-commands-and-keymaps"],
       "learningOutcomes": [
