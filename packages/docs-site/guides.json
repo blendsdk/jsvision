@@ -111,7 +111,7 @@
       "group": "Core concepts",
       "page": "/guide/events-commands-and-keymaps",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 4,
       "prerequisites": ["views-and-focus"],
       "learningOutcomes": [
