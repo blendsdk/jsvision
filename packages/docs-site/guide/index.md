@@ -197,7 +197,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | --------------------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
 | [Running in the browser](/guide/running-in-the-browser)   | Complete | Mount unchanged applications through the browser host and virtual seams.        |
 | [Writing your own widget](/guide/writing-your-own-widget) | Complete | Implement measurement, drawing, focus, input, reactivity, and cleanup.          |
-| [Testing headlessly](/guide/testing-headlessly)           | Upgrade  | Drive views, input, dialogs, resize, and failures without a real terminal.      |
+| [Testing headlessly](/guide/testing-headlessly)           | Complete | Drive views, input, dialogs, resize, and failures without a real terminal.      |
 | Application architecture & best practices                 | Planned  | Organize state, services, commands, screens, ownership, and feature boundaries. |
 
 ### Specialist courses

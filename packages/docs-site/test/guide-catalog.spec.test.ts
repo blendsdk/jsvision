@@ -113,6 +113,7 @@ describe('Guide curriculum catalog', () => {
       'theming-and-colour-depth',
       'running-in-the-browser',
       'writing-your-own-widget',
+      'testing-headlessly',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

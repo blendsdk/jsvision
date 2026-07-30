@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 73 items resolved
-> **Last Updated**: 2026-07-30 14:41
+> **Status**: ✅ GATE PASSED — all 76 items resolved
+> **Last Updated**: 2026-07-30 15:25
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -62,6 +62,9 @@
 | 55 | Quality review (runtime) | How should RV-014-001 through RV-014-004 be resolved without inferring stale validation or persistence from assigned labels and without teaching unavailable button APIs or actions? | Drive real controlled Promise settlements and real `onValid` persistence, correct the Button snippet and phase availability, mark Alt+O, and strengthen focused evidence / retain label-authored outcomes and enabled no-op controls / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every correction without waiver, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 | 56 | Quality review (runtime) | How should correction-introduced RV-014-005 prevent newly authentic Promise continuations from publishing after teardown when the one permitted re-review has already been used? | Mark the fixture inactive before cleanup, abort and settle every owned run, clear ownership, guard every continuation, and add pending plus resolve-then-dispose evidence / leave Promises retained or waive the lifecycle finding / request a prohibited third review | **Authority: AI — delegated by `--auto-design`.** Apply the complete teardown correction without waiver, verify it through focused and authoritative gates, and record the source-and-test ruling without a third review. | ✅ Resolved |
 | 73 | Quality review (runtime) | How should RV-20-001 and RV-20-002 replace self-authored mouse provenance and screen-edge-only clipping with authentic custom-widget evidence? | Route a real mouse event through hit-testing and clip a narrow child beside an in-buffer sentinel / retain label-derived provenance and screen-edge clipping / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both authentic-evidence corrections without waiver, strengthen implementation assertions, rerun every gate, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 74 | Artifact design (runtime) | What authentic zero-lab artifact should make the Testing headlessly course runnable and independently verifiable? | A public-API application fixture plus a real Vitest module that asserts frames, input, resize, failure, and disposal / an embedded terminal demo / a static transcript only | **Authority: AI — delegated by `--auto-design`.** Use the deterministic fixture-and-test-module pair; it directly embodies the lesson and preserves the catalog's zero-lab exception. | ✅ Resolved |
+| 75 | Testing (runtime) | Does the Phase 21 oracle provide a valid red checkpoint while public headless controls already exist? | Accept six passing public controls plus nine missing-course/artifact failures / require all tests to fail / create placeholder artifacts | **Authority: AI — delegated by `--auto-design`.** Accept the implementation-independent controls and preserve the nine focused failures until the complete course and artifact exist. | ✅ Resolved |
+| 76 | Quality review (runtime) | How should the Phase 21 artifact replace false redaction, modal, late-work, and style evidence without changing the zero-lab course scope? | Sanitize structured diagnostics at the app boundary and add routed confinement, retained-producer teardown, and exact semantic-style assertions / change the core logger contract / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every scoped authentic-evidence correction without waiver, verify it, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -2159,3 +2162,92 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The meter counter can change without a routed mouse event, local coordinates
   are absent, or an attempted child overflow can alter the sibling sentinel.
+
+**AR-74 (authentic substitute):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Selecting the implementation shape of the already-confirmed zero-lab substitute
+  without changing the course outcomes, catalog exception, or completion criteria.
+- **Objective:** Make headless testing executable, copyable, and observable without pretending that
+  a browser-hosted terminal demonstrates test-runner behavior.
+- **Decision:** Build one deterministic fixture from supported `@jsvision/core` and `@jsvision/ui`
+  entry points, with injected capabilities, viewport, and scheduling where needed. Pair it with a
+  real Vitest module that mounts the application, inspects exact rendered cells, drives routed
+  input and modal/failure paths, resizes, and proves idempotent teardown. The Guide presents focused
+  excerpts and expected bounded output; it does not register a live example.
+- **Evidence:** The catalog explicitly requires a real test module and test-runner output.
+  `createApplication`, `createEventLoop`, `renderRoot.buffer()`, `dispatch()`, `resize()`, and
+  `dispose()` are public host-neutral seams already used by repository tests.
+- **Rejected alternatives:** An embedded terminal cannot prove test-runner determinism. A static
+  transcript can drift and does not execute. A mock-heavy harness would bypass the rendering,
+  focus, event, modal, and cleanup boundaries the course must teach.
+- **Strongest counterargument:** A reusable fixture can hide the mechanics from beginners. The
+  course therefore starts with direct public-API snippets before introducing the fixture as the
+  maintainable form for repeated application tests.
+- **Confidence:** High — the repository already exercises these seams headlessly and the planned
+  artifact maps directly to both catalog outcomes and ST-30.
+- **Hardening:** The oracle must reject fake labels, timing sleeps, mutable global fixtures,
+  terminal dependencies, missing cleanup, and non-deterministic frame assertions.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public headless seam changes, the artifact requires a real TTY/DOM, or
+  deterministic modal/failure behavior cannot be proved with the selected public APIs.
+
+**AR-75 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required Phase 21 specification-first red checkpoint without
+  weakening the oracle or changing implementation.
+- **Objective:** Distinguish missing course and authentic-artifact work from a broken public
+  headless substrate.
+- **Decision:** Accept six passing public-control cases and nine failing final-contract cases as the
+  expected red result. The passing controls prove exact application cells, routed input/focus and
+  resize, modal settlement, injected scheduling, bounded failure isolation, and idempotent disposal.
+  The failures identify only the placeholder course, Upgrade stage, and absent AR-74 fixture/test.
+- **Evidence:** Docs-site typecheck passes and the 15-case focused run reports exactly the expected
+  6/9 split with no unrelated failure.
+- **Rejected alternatives:** Requiring public controls to fail would discard implementation-neutral
+  anchors. Empty fixture or artifact placeholders would violate the authentic-substitute contract.
+- **Strongest counterargument:** Six passing cases make the oracle less visibly red. They are the
+  evidence that the course can be implemented entirely against supported existing seams.
+- **Confidence:** High — every failing name maps to an absent learner artifact or final promotion.
+- **Hardening:** Keep the course at Upgrade until fixture, runnable test, implementation edges, and
+  repository-wide gates pass. The oracle remains immutable unless independent review authorizes
+  stronger evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control fails, a red failure is unrelated to missing teaching
+  artifacts, or implementation requires weakening an expectation.
+
+**AR-76 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting course-owned diagnostic, modal, lifecycle, and style evidence within
+  the confirmed zero-lab outcomes; no public SDK contract or product behavior changes.
+- **Objective:** Resolve RV-21-001 through RV-21-005 without waiver so every completion claim is
+  derived from the boundary it teaches.
+- **Decision:** Wrap the bounded ring logger with an application diagnostic sanitizer that replaces
+  structured error payloads before storage, and assert the serialized record contains no secret.
+  During a real modal, route a key and prove only the modal leaf changes before settlement and outer
+  focus restoration. Add a mounted producer whose retained callback is invoked after disposal and
+  prove no publication, scheduled frame, or diagnostic. Assert the exact focused semantic style
+  against the fixed theme, not merely the presence of style fields.
+- **Evidence:** Independent review found the sample payload in `entry.fields.error`, no input was
+  dispatched while the modal was active, queued-render suppression did not exercise application
+  producer state, and style checks accepted every populated cell.
+- **Rejected alternatives:** Changing the core logger would expand this documentation phase into an
+  unapproved SDK policy change. Waivers are prohibited. Removing the teaching claims would leave
+  the catalog's failure, modal, and cleanup outcomes incomplete.
+- **Strongest counterargument:** A fixture-local sanitizer could be mistaken for automatic framework
+  behavior. The course must explicitly name it as an application diagnostic boundary and state that
+  raw thrown error strings are otherwise recorded structurally.
+- **Confidence:** High — serialized records, independently counted modal/background events, retained
+  producer state, queued callbacks, diagnostics, and exact theme-role cells are directly assertable.
+- **Hardening:** Rerun focused tests, typecheck, docs build, full verification, and the single
+  permitted fix-scoped re-review. The re-review cleared four findings and retained the late-work
+  scheduling proof plus its regression guard; the final no-third-review correction counts scheduler
+  calls before draining and binds the authentic artifact to its redaction, modal, and theme evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Serialized diagnostics contain the payload, background input changes during a
+  modal, retained callbacks publish after disposal, or a wrong focus role passes style assertions.
