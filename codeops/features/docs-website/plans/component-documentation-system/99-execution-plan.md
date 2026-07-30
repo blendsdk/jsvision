@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 189 / 193 tasks complete
-> **Last Updated**: 2026-07-30 21:37 CEST
+> **Progress**: 190 / 193 tasks complete
+> **Last Updated**: 2026-07-30 21:40 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -892,8 +892,12 @@ is recorded in `16-phase-11-quality-review.md`.
   verification passes with Turbo concurrency bounded to two after the i18n wall-clock benchmark
   proved sensitive to preceding host contention; logs
   `/tmp/tmp.sZHLhG2yHh/component-final-audit.log` and `/tmp/tmp.iBnMIycuhM`)
-- [ ] **12.3** Paint-smoke every example at 80×24 and sample keyboard/mouse interaction for every
-  family and every specialist topic.
+- [x] **12.3** Paint-smoke every example at 80×24 and sample keyboard/mouse interaction for every
+  family and every specialist topic. ✅ (completed: 2026-07-30 21:40 CEST; all 96 component
+  laboratories have independently named 80×24 paint coverage; family and specialist suites sample
+  keyboard and mouse paths across standard components, all 12 Data Grid topics, and all 11 Code
+  Editor topics; 682 focused assertions and authoritative verification pass; logs
+  `/tmp/tmp.sZHLhG2yHh/component-final-audit.log` and `/tmp/tmp.OHXRPzhprH`)
 - [ ] **12.4** Run docs production build and inspect Components, Data Grid, and Code Editor sidebar
   transitions and representative pages in the built output.
 - [ ] **12.5** Run final `yarn verify`.
