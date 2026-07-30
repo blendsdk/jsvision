@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
+          "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }
@@ -1058,10 +1058,16 @@
         "summary:Phase 14 independent review found two Major and two Minor issues; AR-55 accepted every correction without waiver.",
         "summary:Phase 14 review remediation derives stale and accepted outcomes from real Promise settlement, enters persistence only through onValid, exposes reactive action availability, marks Alt+O, and corrects public Button construction; 37/37 focused checks and every authoritative gate pass.",
         "summary:The permitted Phase 14 re-review cleared RV-014-001 through RV-014-004 and identified correction-introduced Major RV-014-005; AR-56 accepted the complete lifecycle correction without waiver.",
-        "summary:Phase 14 completed after inactive guards, owned Promise settlement, and pending-disposal, resolve-then-dispose, and persistence-teardown evidence passed 39/39 focused checks and every authoritative gate. A third review is prohibited."
+        "summary:Phase 14 completed after inactive guards, owned Promise settlement, and pending-disposal, resolve-then-dispose, and persistence-teardown evidence passed 39/39 focused checks and every authoritative gate. A third review is prohibited.",
+        "summary:Phase 15 tasks 15.1.1 and 15.1.2 established 19 independently authored cases; expected red was 5 public controls passing and 14 course, catalog, registry, laboratory, interaction, geometry, and cleanup failures.",
+        "summary:Phase 15 tasks 15.2.1 through 15.2.4 delivered the complete host-neutral Files course and one deterministic virtual/custom laboratory; 18/19 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 15 tasks 15.3.1 and 15.3.2 added virtual isolation, traversal, missing, denial, retry, responsive, and cleanup hardening and promoted Files after 32/32 focused checks passed.",
+        "summary:AR-57 removed an invalid generated API link to private @jsvision/web after the required production docs build exposed the contradiction.",
+        "summary:Phase 15 independent review found three Major and one Minor issue; AR-58 corrected complete path confinement, denial-versus-missing classification, synthetic cancellation evidence, and denial ordering without waiver. The permitted re-review cleared every finding with no introduced Critical or Major issue.",
+        "summary:Phase 15 completed after 32/32 focused checks, docs-site typecheck, corrected production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
+      "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1119,10 +1125,12 @@
         "Auto-design AR-53 preserves Phase 14 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
         "Auto-design AR-54 aligns the valid-submit specification with createForm's real asynchronous Promise.all boundary while preserving the required synchronous submitting state.",
         "Auto-design AR-55 accepts RV-014-001 through RV-014-004 without waiver and requires real Promise and onValid evidence, supported Button construction, marked accelerators, and honest reactive action availability.",
-        "Auto-design AR-56 accepts correction-introduced RV-014-005 without waiver and requires inactive teardown guards, settlement and release of every owned operation, and deterministic post-unmount suppression evidence."
+        "Auto-design AR-56 accepts correction-introduced RV-014-005 without waiver and requires inactive teardown guards, settlement and release of every owned operation, and deterministic post-unmount suppression evidence.",
+        "Auto-design AR-57 removes an invalid generated API link to private @jsvision/web while retaining supported Files API links and the browser integration Guide.",
+        "Auto-design AR-58 accepts RV-15-01 through RV-15-04 without waiver and requires complete path confinement, distinct denial and missing evidence, authentic opener cancellation, and denial ordering bound to the application adapter."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:d9d656d8b839a1d0dd4b85789ca883c121593b30fdfeed2d3cf0574a79b61078",
+      "revision": "sha256:49916aea7b0046dc04c401fd78404cc87419ce088485827a9dd6c65c2da05081",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1192,7 +1200,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a6167f8a2415da1c62608a39e8d383c1287df3c06c6fa46413597ec6eae3debd",
+          "revision": "sha256:7f3a19f727d8e5b0a8c806647c9c300a255aa83fee05742f22c1fc65ec986a24",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }

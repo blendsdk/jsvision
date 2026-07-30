@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-30 10:48
-> **Progress**: 112/246 tasks (46%)
+> **Progress**: 120/246 tasks (49%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -769,20 +769,20 @@ independent specification-first phase (AR-10).
 
 ### Step 15.1: Specification tests
 
-- [ ] 15.1.1 [spec-author] Write the FileSystem course oracle — `packages/docs-site/test/files-and-filesystem-guide.spec.test.ts`
-- [ ] 15.1.2 Run the specification and record the expected red result
+- [x] 15.1.1 [spec-author] Write the FileSystem course oracle — `packages/docs-site/test/files-and-filesystem-guide.spec.test.ts` — done 2026-07-30 (646-line immutable oracle; docs-site typecheck and formatting pass)
+- [x] 15.1.2 Run the specification and record the expected red result — done 2026-07-30 (expected RED: 19 total, 5 public-control passes, 14 course/laboratory contract failures)
 
 ### Step 15.2: Implementation
 
-- [ ] 15.2.1 Replace the placeholder with host-neutral file workflows and authorization teaching — `packages/docs-site/guide/files-and-filesystem.md`
-- [ ] 15.2.2 Implement one focused template1 virtual/custom filesystem lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/files-and-filesystem/`
-- [ ] 15.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 15.2.4 Run ST-24 green plus docs-site typecheck; fix implementation only
+- [x] 15.2.1 Replace the placeholder with host-neutral file workflows and authorization teaching — `packages/docs-site/guide/files-and-filesystem.md` — done 2026-07-30
+- [x] 15.2.2 Implement one focused template1 virtual/custom filesystem lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/files-and-filesystem/` — done 2026-07-30
+- [x] 15.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` — done 2026-07-30
+- [x] 15.2.4 Run ST-24 green plus docs-site typecheck; fix implementation only — done 2026-07-30 (18/19 course/lab assertions pass; only deliberately withheld Complete-stage assertion remains; typecheck passes)
 
 ### Step 15.3: Hardening
 
-- [ ] 15.3.1 Add denied, cancelled, missing, traversal, virtual, and cleanup edges — `packages/docs-site/test/files-and-filesystem-guide.impl.test.ts`
-- [ ] 15.3.2 Run focused checks, promote Files, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 15.3.1 Add denied, cancelled, missing, traversal, virtual, and cleanup edges — `packages/docs-site/test/files-and-filesystem-guide.impl.test.ts` — done 2026-07-30 (6 hardening checks)
+- [x] 15.3.2 Run focused checks, promote Files, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` — done 2026-07-30 (32/32 focused checks and docs-site typecheck pass; production build corrected one private-package dead link; independent review found three Major and one Minor issue, AR-58 fixed all without waiver, the permitted re-review cleared every finding with no introduced Critical or Major issue, and the corrected production docs build plus authoritative `yarn verify` pass)
 
 **Verify**: Filesystem guide spec/impl tests and docs-site typecheck
 

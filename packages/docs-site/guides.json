@@ -247,7 +247,7 @@
       "group": "Building applications",
       "page": "/guide/files-and-filesystem",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 5,
       "prerequisites": ["dialogs-and-modality", "async-work"],
       "learningOutcomes": [
@@ -256,7 +256,7 @@
       ],
       "requiredLiveExamples": 1,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/filesystem-seams"]
     },
     {
       "id": "i18n",
