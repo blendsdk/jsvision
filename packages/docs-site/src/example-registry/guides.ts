@@ -265,4 +265,20 @@ export const GUIDE_EXAMPLES = [
     themeMenu: true,
     load: () => import('../../examples/guides/untrusted-text-boundary.js'),
   },
+  {
+    id: 'guides/accessible-interaction',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/accessible-interaction.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/accessible-interaction.js'),
+  },
+  {
+    id: 'guides/resilient-presentation',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/resilient-presentation.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/resilient-presentation.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 83 items resolved
-> **Last Updated**: 2026-07-30 17:18
+> **Status**: ✅ GATE PASSED — all 84 items resolved
+> **Last Updated**: 2026-07-30 18:14
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -2523,3 +2523,39 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** Any compact or restored row overlaps, an instruction clips, keyboard and
   mouse activations diverge, a Complete course links to an absent page, a snippet splits a surrogate,
   or promotion precedes review clearance.
+
+**AR-85 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting Phase 26 course-owned laboratory evidence, enabled actions, factual
+  Button teaching, and snippets without changing the public SDK or catalog outcomes.
+- **Objective:** Make the accessibility laboratories derive their claims from rendered styles,
+  glyphs, and solved geometry while every enabled action has an observable shared-command result.
+- **Decision:** Accept AC-26-001 through AC-26-005 without waiver. Replace labelled profile
+  simulation with deterministic rendered comparison surfaces whose semantic cells, monochrome
+  attributes, ASCII-safe chrome, and narrow essential bounds are inspected. Route Inspect through
+  a real command and verify Space, accelerator, and pointer outcomes. State that Space activates a
+  focused Button while Enter activates only a default Button when otherwise unconsumed. Render the
+  first snippet's reactive result and use a concrete Group in the cleanup snippet.
+- **Evidence:** Independent review found unconditional meaning counters and an unused clipping
+  counter, a Monochrome mode that changed only prose, a Narrow mode that never changed geometry,
+  three manually transformed ASCII glyphs instead of rendered evidence, an inert focusable Inspect
+  Button, an overbroad Enter statement, an undisplayed outcome signal, and an invalid abstract
+  `new View()` snippet.
+- **Rejected alternatives:** Waivers are prohibited. Renaming simulated labels as previews would not
+  satisfy the declared laboratory objective. Disabling or deleting Inspect would weaken the
+  two-target focus lesson; implementing its shared command preserves that lesson with honest
+  feedback.
+- **Strongest counterargument:** Rendering several deterministic surfaces adds fixture complexity.
+  The course's second learning outcome specifically promises resilience under those profiles, so
+  authentic cells, styles, and bounds are the minimum evidence needed to support the claim.
+- **Confidence:** High — the corrections use public capability/theme APIs, real mounted buffers,
+  existing Template1 geometry, and the exact Button event semantics verified in source and tests.
+- **Hardening:** Re-run the complete focused suite and typecheck, require the single fix-scoped
+  re-review to clear AC-26-001 through AC-26-005, then promote and run production docs and
+  repository gates.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A profile passes from counters alone, a narrow surface never changes solved
+  geometry, an enabled control has no outcome, Enter is described without the default-button
+  qualification, or a teaching snippet instantiates an abstract type.

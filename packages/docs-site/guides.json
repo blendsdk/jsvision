@@ -468,7 +468,7 @@
       "group": "Operating a real app",
       "page": "/guide/accessibility",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 4,
       "prerequisites": ["views-and-focus", "keyboard-and-clipboard", "theming-and-colour-depth"],
       "learningOutcomes": [
@@ -477,7 +477,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/accessible-interaction", "guides/resilient-presentation"]
     },
     {
       "id": "terminal-capabilities",

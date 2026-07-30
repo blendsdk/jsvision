@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 17:54
-> **Progress**: 200/246 tasks (81%)
+> **Last Updated**: 2026-07-30 18:21
+> **Progress**: 208/246 tasks (85%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1067,22 +1067,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-35 · `03-02` · `03-03`
 
+> **Phase baseline tree**: 8918888033b0c925f293f31e4c220cb425547e69
+>
+> **Expected modification set**: The Phase 26 accessibility course, two deterministic template1
+> resilient-interaction laboratories and fixtures, focused specification and implementation tests,
+> Guide catalog/registry/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 26.1: Specification tests
 
-- [ ] 26.1.1 [spec-author] Write the accessibility course oracle — `packages/docs-site/test/accessibility-guide.spec.test.ts`
-- [ ] 26.1.2 Run the specification and record the expected red result
+- [x] 26.1.1 [spec-author] Write the accessibility course oracle — `packages/docs-site/test/accessibility-guide.spec.test.ts` ✅ (completed: 2026-07-30 17:58; immutable 24-assertion oracle fixes the two lab IDs, full course backbone, keyboard/focus/non-colour and resilient-presentation outcomes, template1 behavior, cleanup, browser evidence limits, and public runtime controls)
+- [x] 26.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 17:59; focused Vitest produced the expected 20 failures for the absent course/catalog evidence/labs while all four independent public-runtime controls passed, and docs-site typecheck remained green)
 
 ### Step 26.2: Implementation
 
-- [ ] 26.2.1 Create the keyboard/focus/non-color/geometry/mono/ASCII course — `packages/docs-site/guide/accessibility.md`
-- [ ] 26.2.2 Implement two focused template1 resilient-interaction labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/accessibility/`
-- [ ] 26.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 26.2.4 Run ST-35 green plus docs-site typecheck; fix implementation only
+- [x] 26.2.1 Create the keyboard/focus/non-color/geometry/mono/ASCII course — `packages/docs-site/guide/accessibility.md` ✅ (completed: 2026-07-30 18:07; question-led beginner-to-production course covers the complete task graph, discovery, focus, command parity, semantic theme roles, `NO_COLOR`, monochrome attributes, ASCII fallback, geometry priorities, browser evidence limits, diagnosis, and exercises with twelve concise public-API snippets)
+- [x] 26.2.2 Implement two focused template1 resilient-interaction labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/accessibility/` ✅ (completed: 2026-07-30 18:07; centered compact Classic labs separately prove keyboard/pointer reachability and five-profile semantic resilience, preserve one-cell inset and visible margins through resize/maximize/restore, and clean up exactly once)
+- [x] 26.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 18:07; both stable `kind: 'app'` IDs, source modules, theme-menu flags, and catalog evidence are synchronized while the stage intentionally remains Planned pending review)
+- [x] 26.2.4 Run ST-35 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 18:21; after final-only promotion, the immutable oracle and implementation hardening pass 35/35 together and docs-site typecheck remains green)
 
 ### Step 26.3: Hardening
 
-- [ ] 26.3.1 Add keyboard-only, focus-visible, non-color, reduced-size, mono, and ASCII edges — `packages/docs-site/test/accessibility-guide.impl.test.ts`
-- [ ] 26.3.2 Run focused checks, promote Accessibility, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 26.3.1 Add keyboard-only, focus-visible, non-color, reduced-size, mono, and ASCII edges — `packages/docs-site/test/accessibility-guide.impl.test.ts` ✅ (completed: 2026-07-30 18:09; ten hardening cases cover bidirectional focus with disabled exclusion, Space/Enter/accelerator/pointer parity, five-profile wraparound, independent mono/ASCII facts, reduced 68×20 geometry, authored-row separation, and post-disposal inertia)
+- [x] 26.3.2 Run focused checks, promote Accessibility, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 18:21; the promoted course passes 35/35 focused checks, docs-site typecheck, production docs build, and authoritative `yarn verify`; independent review found three Major and two Minor issues, AR-85 replaced simulated profile labels with rendered style/glyph/bounds evidence, activated Inspect through a shared command, corrected Button semantics and both snippets without waiver, and the single permitted fix-scoped re-review cleared all five)
 
 **Verify**: Accessibility guide spec/impl tests and docs-site typecheck
 
