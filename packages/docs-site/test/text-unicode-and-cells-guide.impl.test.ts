@@ -240,8 +240,6 @@ describe('glyph-fallback fixture edges', () => {
   test('should link only to Guide routes that have real pages', () => {
     const guideLinks = [...COURSE_SOURCE.matchAll(/\]\(\/guide\/([^/)#]+)(?:#[^)]+)?\)/gu)].map(([, slug]) => slug);
 
-    expect(guideLinks).not.toContain('scrolling-lists-and-large-content');
-    expect(guideLinks).not.toContain('accessibility');
     for (const slug of guideLinks) {
       expect(existsSync(new URL(`../guide/${slug}.md`, import.meta.url)), `/guide/${slug} must resolve`).toBe(true);
     }

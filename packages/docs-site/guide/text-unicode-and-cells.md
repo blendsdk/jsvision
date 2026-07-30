@@ -393,10 +393,10 @@ generic outcome. Do not log sensitive user text merely to debug width.
 5. Repeat both laboratories using only keyboard actions. Switch to a monochrome theme and confirm
    every sample, profile, action, and status remains understandable without color.
 
-Continue with **Scrolling, lists & large content** (planned) to place large text collections inside
-bounded viewports. Use
+Continue with [Scrolling, lists & large content](/guide/scrolling-lists-and-large-content) to place
+large text collections inside bounded viewports. Use
 [Theming & colour depth](/guide/theming-and-colour-depth) for semantic color roles,
-**Accessibility & resilient interaction** (planned) for non-color interaction design, and the
+[Accessibility & resilient interaction](/guide/accessibility) for non-color interaction design, and the
 [Text component](/components/controls/text) for the focused static-text API.
 
 ## API reference

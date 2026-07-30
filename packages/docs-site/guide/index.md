@@ -155,8 +155,8 @@ desktops, windows, status composition, and the complete lifecycle.
 
 The Guide is a curriculum, not a symbol index. Follow it in order when you are new, or enter at a
 course whose prerequisites you already understand. **Complete** courses meet the current course and
-live-lab directive. **Upgrade** courses are available but still need that treatment. **Planned**
-courses are part of the confirmed curriculum and appear here before they enter the sidebar.
+live-lab directive. If future **Upgrade** or **Planned** entries appear, they remain visible here
+while incomplete pages stay out of the sidebar.
 
 ### Getting started
 

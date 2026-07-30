@@ -454,8 +454,8 @@ bounded ordering, identify its owner, change one boundary, and rerun the same sc
    input or secrets.
 
 Continue with [Displaying untrusted text safely](/guide/untrusted-text) and
-[In production](/guide/in-production). The planned Terminal capabilities & portability course will
-extend the degradation and platform matrix.
+[In production](/guide/in-production). [Terminal capabilities &
+portability](/guide/terminal-capabilities) extends the degradation and platform matrix.
 
 Public references:
 

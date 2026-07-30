@@ -467,9 +467,9 @@ Run these as bounded experiments:
 6. Retain a virtual stream callback, dispose its owner, and verify no later frame or log mutation.
 
 Continue with [Crash safety & terminal restore](/guide/crash-safety) for process ownership and
-[In production](/guide/in-production) for deployment and operational boundaries. **Accessibility &
-resilient interaction** and **Terminal capabilities & portability** are planned next steps and will
-be linked when their real course pages exist.
+[In production](/guide/in-production) for deployment and operational boundaries. Use
+[Accessibility & resilient interaction](/guide/accessibility) for non-color safety cues and
+[Terminal capabilities & portability](/guide/terminal-capabilities) for honest host degradation.
 
 Public API:
 

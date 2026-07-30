@@ -87,6 +87,41 @@ function freezeArray(values) {
   return Object.freeze([...values]);
 }
 
+/** Parse optional external evidence that cannot be discovered by this Node-independent module. */
+function parseValidationOptions(value) {
+  if (value === undefined) return Object.freeze({ registeredExampleIds: null });
+  const options = requireRecord(value, 'catalog validation options');
+  for (const key of Object.keys(options)) {
+    if (key !== 'registeredExampleIds') fail(`catalog validation options.${key}`, 'unknown field');
+  }
+  const registeredExampleIds =
+    options.registeredExampleIds === undefined
+      ? null
+      : new Set(requireStringArray(options.registeredExampleIds, 'catalog validation options.registeredExampleIds'));
+  return Object.freeze({ registeredExampleIds });
+}
+
+/** Reject a prerequisite cycle and include its deterministic traversal path in the diagnostic. */
+function validatePrerequisiteGraph(entries) {
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const visited = new Set();
+  const visiting = new Set();
+  const visit = (id, path) => {
+    if (visiting.has(id)) {
+      const cycleStart = path.indexOf(id);
+      const cycle = [...path.slice(cycleStart), id];
+      fail(`${id}.prerequisites`, `cycle detected: ${cycle.join(' -> ')}`);
+    }
+    if (visited.has(id)) return;
+    visiting.add(id);
+    const entry = byId.get(id);
+    for (const prerequisite of entry.prerequisites) visit(prerequisite, [...path, id]);
+    visiting.delete(id);
+    visited.add(id);
+  };
+  for (const entry of entries) visit(entry.id, []);
+}
+
 /** Parse one curriculum entry. */
 function parseEntry(value, index) {
   const path = `catalog.entries[${index}]`;
@@ -130,10 +165,13 @@ function parseEntry(value, index) {
  * Validate an unknown Guide curriculum document.
  *
  * @param {unknown} value Candidate value, normally parsed from `guides.json`.
+ * @param {{registeredExampleIds?: readonly string[]}} [options] Optional registry evidence used to
+ * validate completed example IDs without importing the docs-site registry into this shared module.
  * @returns {Readonly<{schemaVersion: 1, entries: readonly object[]}>} Deeply frozen curriculum.
  * @throws {TypeError} When the document contains an invalid field, relationship, or ordering key.
  */
-export function validateGuideCatalog(value) {
+export function validateGuideCatalog(value, options) {
+  const validation = parseValidationOptions(options);
   const document = requireRecord(value, 'catalog');
   for (const key of Object.keys(document)) {
     if (key !== 'schemaVersion' && key !== 'entries') fail(`catalog.${key}`, 'unknown field');
@@ -143,7 +181,10 @@ export function validateGuideCatalog(value) {
   const entries = document.entries.map(parseEntry);
   const ids = entries.map((entry) => entry.id);
   if (new Set(ids).size !== ids.length) fail('catalog.entries.id', 'contains duplicate values');
+  const pages = entries.map((entry) => entry.page);
+  if (new Set(pages).size !== pages.length) fail('catalog.entries.page', 'contains duplicate values');
   const knownIds = new Set(ids);
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
   const orderKeys = [];
   for (const entry of entries) {
     orderKeys.push(`${entry.group}:${entry.sidebarOrder}`);
@@ -154,8 +195,23 @@ export function validateGuideCatalog(value) {
     if (entry.stage === 'complete' && entry.examples.length < entry.requiredLiveExamples) {
       fail(`${entry.id}.examples`, 'a completed entry must satisfy its live-example target');
     }
+    if (entry.stage === 'complete') {
+      for (const prerequisite of entry.prerequisites) {
+        if (byId.get(prerequisite).stage !== 'complete') {
+          fail(`${entry.id}.prerequisites`, `completed entry depends on non-complete "${prerequisite}"`);
+        }
+      }
+      if (validation.registeredExampleIds !== null) {
+        for (const example of entry.examples) {
+          if (!validation.registeredExampleIds.has(example)) {
+            fail(`${entry.id}.examples`, `unregistered example "${example}"`);
+          }
+        }
+      }
+    }
   }
   if (new Set(orderKeys).size !== orderKeys.length) fail('catalog sidebar ordering', 'contains duplicate positions');
+  validatePrerequisiteGraph(entries);
   return Object.freeze({ schemaVersion: 1, entries: freezeArray(entries) });
 }
 
@@ -164,13 +220,14 @@ export function validateGuideCatalog(value) {
  *
  * @param {string} source UTF-8 JSON source.
  * @param {string} sourceName Diagnostic source name.
+ * @param {{registeredExampleIds?: readonly string[]}} [options] Optional registry evidence.
  * @returns {ReturnType<typeof validateGuideCatalog>} Validated curriculum.
  * @throws {SyntaxError|TypeError} When JSON or catalog validation fails.
  */
-export function parseGuideCatalog(source, sourceName = 'guides.json') {
+export function parseGuideCatalog(source, sourceName = 'guides.json', options) {
   if (typeof source !== 'string') fail('catalog source', 'expected a string');
   try {
-    return validateGuideCatalog(JSON.parse(source));
+    return validateGuideCatalog(JSON.parse(source), options);
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new SyntaxError(`${sourceName}: invalid JSON at $: ${error.message}`, { cause: error });
@@ -188,8 +245,9 @@ export function parseGuideCatalog(source, sourceName = 'guides.json') {
  * @returns {readonly object[]} VitePress-compatible Guide navigation groups.
  */
 export function projectGuideNavigation(entries) {
+  const validatedEntries = validateGuideCatalog({ schemaVersion: 1, entries }).entries;
   const groups = new Map();
-  for (const entry of entries) {
+  for (const entry of validatedEntries) {
     if (entry.stage === 'planned') continue;
     const items = groups.get(entry.group) ?? [];
     items.push(Object.freeze({ id: entry.id, text: entry.title, link: entry.page }));
@@ -201,8 +259,8 @@ export function projectGuideNavigation(entries) {
         text,
         items: freezeArray(
           items.sort((left, right) => {
-            const leftEntry = entries.find((entry) => entry.id === left.id);
-            const rightEntry = entries.find((entry) => entry.id === right.id);
+            const leftEntry = validatedEntries.find((entry) => entry.id === left.id);
+            const rightEntry = validatedEntries.find((entry) => entry.id === right.id);
             return leftEntry.sidebarOrder - rightEntry.sidebarOrder;
           }),
         ),

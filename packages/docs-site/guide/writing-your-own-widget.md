@@ -466,8 +466,8 @@ and repeat with ASCII capabilities where it applies.
 Continue with [Testing headlessly](/guide/testing-headlessly) for complete specification,
 implementation, and browser-integration test layers. Review [Theming & colour
 depth](/guide/theming-and-colour-depth) when a widget needs a new semantic role, and return to
-the planned **Accessibility & resilient interaction** course for project-wide keyboard and fallback
-decisions once that course is complete.
+[Accessibility & resilient interaction](/guide/accessibility) for project-wide keyboard and
+fallback decisions.
 
 Public API:
 

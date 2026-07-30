@@ -350,7 +350,7 @@ describe('In production course and authentic-substitute contract', () => {
     const practice = source.slice(source.indexOf('## What should I practice next?'));
     expect(practice.match(/^\d+\. /gmu)?.length ?? 0).toBeGreaterThanOrEqual(6);
     expect(practice).toContain('Build a complete application');
-    expect(practice).not.toContain('](/guide/complete-application)');
+    expect(practice).toContain('](/guide/complete-application)');
     expect(practice).toContain('](/api/core/functions/createLogger)');
     expect(practice).toContain('](/api/core/functions/evaluateEssentials)');
     expect(practice).toContain('](/api/core/functions/dumpCaps)');
