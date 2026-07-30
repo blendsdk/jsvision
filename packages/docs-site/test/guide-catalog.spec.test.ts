@@ -119,6 +119,7 @@ describe('Guide curriculum catalog', () => {
       'code-editor-specialist',
       'debugging',
       'crash-safety',
+      'untrusted-text',
     ]);
     expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(3);
   });

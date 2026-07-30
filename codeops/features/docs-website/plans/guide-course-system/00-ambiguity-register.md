@@ -2489,3 +2489,37 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** An unexpected payload receives a semantic transition label, the backstop is
   removed before restore, a secondary fault replaces the primary diagnostic, or a snippet calls an
   unimported API.
+
+**AR-84 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting Phase 25 course-owned laboratory geometry, interaction evidence,
+  links, snippets, promotion order, and tests without changing the public SDK or catalog outcomes.
+- **Objective:** Make the untrusted-text laboratory truthful and unclipped for every supported
+  input and window state while keeping every completed-course link resolvable.
+- **Decision:** Accept UT-25-001 through UT-25-005 without waiver. Reserve rows 8–9 for the
+  two-row buttons and row 10 for one complete 51-cell instruction. Route global shortcuts and all
+  Button activations through the same commands, remove unverifiable keyboard-versus-mouse source
+  labels, and add focused Space, default Enter, mouse, complete-instruction, and disjoint-geometry
+  hardening across compact, resized, maximized, and restored states. Keep planned courses unlinked
+  until their pages exist. Bound teaching snippets by Unicode code point instead of UTF-16 code
+  unit. Return the course to Upgrade until the correction gates and permitted re-review pass.
+- **Evidence:** Independent review observed the instruction overwriting the button shadow row and
+  clipping `zoom`, a focused Space activation reporting `mouse`, two links to absent planned pages,
+  UTF-16 slicing that can leave a lone surrogate, and Complete promotion ahead of task 25.3.2.
+- **Rejected alternatives:** Waivers are prohibited. Enlarging the dialog would still violate the
+  compact-margin contract after the required resize. Guessing the source inside `Button.onClick`
+  cannot distinguish Space, Enter, accelerator, and mouse. Creating placeholder pages would violate
+  the Guide directive.
+- **Strongest counterargument:** Removing source-channel feedback gives learners one less visible
+  detail. A stable `Route: shared command` cue is more truthful and directly teaches parity; tests
+  prove each public activation reaches the same semantic action exactly once.
+- **Confidence:** High — the corrections follow public Button activation semantics and exact
+  template1 geometry, and all destination links are checked against files already present.
+- **Hardening:** Re-run the full focused suite and typecheck, require the single fix-scoped re-review
+  to clear UT-25-001 through UT-25-005, then promote and run production docs and repository gates.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any compact or restored row overlaps, an instruction clips, keyboard and
+  mouse activations diverge, a Complete course links to an absent page, a snippet splits a surrogate,
+  or promotion precedes review clearance.

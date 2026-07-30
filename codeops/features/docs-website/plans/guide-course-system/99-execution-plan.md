@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 17:22
-> **Progress**: 192/246 tasks (78%)
+> **Last Updated**: 2026-07-30 17:54
+> **Progress**: 200/246 tasks (81%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1038,22 +1038,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-34 · `03-02` · `03-03`
 
+> **Phase baseline tree**: 0d795822ae578da5cd193d98d30a0bfc4335fc58
+>
+> **Expected modification set**: The Phase 25 untrusted-text course, one deterministic template1
+> unsafe/sanitized comparison laboratory and fixture, focused specification and implementation
+> tests, Guide catalog/registry/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 25.1: Specification tests
 
-- [ ] 25.1.1 [spec-author] Write the untrusted-text course oracle — `packages/docs-site/test/untrusted-text-guide.spec.test.ts`
-- [ ] 25.1.2 Run the specification and record the expected red result
+- [x] 25.1.1 [spec-author] Write the untrusted-text course oracle — `packages/docs-site/test/untrusted-text-guide.spec.test.ts` ✅ (completed: 2026-07-30 17:29; independent 19-case immutable oracle covers both catalog outcomes, the complete question-led course, exact public sanitizer/redaction controls, one template1 comparison laboratory, interaction, responsive geometry, non-colour evidence, and cleanup)
+- [x] 25.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 17:29; expected red: four public sanitization, rendered-cell, bounded-redaction, and non-validation controls pass while 15 placeholder course, catalog, registry, and absent-laboratory contracts fail; docs-site typecheck passes)
 
 ### Step 25.2: Implementation
 
-- [ ] 25.2.1 Replace the placeholder with injection boundary, sanitization, redaction, and diagnosis — `packages/docs-site/guide/untrusted-text.md`
-- [ ] 25.2.2 Implement one deterministic template1 unsafe/sanitized comparison lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/untrusted-text/`
-- [ ] 25.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 25.2.4 Run ST-34 green plus docs-site typecheck; fix implementation only
+- [x] 25.2.1 Replace the placeholder with injection boundary, sanitization, redaction, and diagnosis — `packages/docs-site/guide/untrusted-text.md` ✅ (completed: 2026-07-30 17:35; the complete course distinguishes sources, injection, the exact sanitizer rule, built-in versus explicit boundaries, redaction, multiline geometry, hosts, lifecycle, advanced design, diagnosis, practices, and experiments)
+- [x] 25.2.2 Implement one deterministic template1 unsafe/sanitized comparison lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/untrusted-text/` ✅ (completed: 2026-07-30 17:35; one compact Classic laboratory compares escaped hostile fixtures, sanitized output, bounded redacted diagnostics, keyboard and mouse actions, non-colour evidence, responsive geometry, and exact cleanup without replaying raw controls)
+- [x] 25.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 17:35; `guides/untrusted-text-boundary` is registered once as an app with theme-menu evidence and catalog ownership while the course remains Upgrade)
+- [x] 25.2.4 Run ST-34 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 17:35; 18/19 immutable course and laboratory assertions plus docs-site typecheck pass, with only final catalog promotion deliberately withheld)
 
 ### Step 25.3: Hardening
 
-- [ ] 25.3.1 Add escape, control, multiline, redaction, and display-boundary edges — `packages/docs-site/test/untrusted-text-guide.impl.test.ts`
-- [ ] 25.3.2 Run focused checks, promote Untrusted text, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 25.3.1 Add escape, control, multiline, redaction, and display-boundary edges — `packages/docs-site/test/untrusted-text-guide.impl.test.ts` ✅ (completed: 2026-07-30 17:37; seven hardening cases cover bounded fixture cycles, repeated sanitization, sensitive-preview suppression, bounded diagnostic eviction, mouse routing, all-frame control absence, exact cleanup, and post-disposal inertia)
+- [x] 25.3.2 Run focused checks, promote Untrusted text, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 17:54; the promoted course passes 34/34 focused checks, docs-site typecheck, production docs build, and authoritative `yarn verify`; independent review found three Major and two Minor issues, AR-84 corrected compact geometry, shared command routing, unresolved planned links, Unicode-safe bounds, and promotion order without waiver, and the single permitted fix-scoped re-review cleared every substantive finding before final CodeOps synchronization)
 
 **Verify**: Untrusted-text guide spec/impl tests and docs-site typecheck
 
