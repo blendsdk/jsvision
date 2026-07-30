@@ -1663,3 +1663,70 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** Any path-bearing method bypasses confinement, ENOENT increments denial,
   Deny can remain latent on the browser adapter, the lab advertises synthetic cancellation, or the
   real opener cancellation controls fail.
+
+**AR-59 (runtime/documentation):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Source-grounded corrections and verification strengthening within the confirmed
+  Internationalization course outcomes; no public API, compatibility, scope, authorization policy,
+  or external action changes.
+- **Objective:** Resolve RV-16-01 through RV-16-07 without waiver and make every catalog, locale
+  handoff, formatting, geometry, interaction, and cleanup claim independently falsifiable.
+- **Decision:** Replace the fragile combined QA prose assertion with separate semantic checks; teach
+  an application-owned atomic replacement seam that swaps a ready generation before disposing the
+  detached prior loop; publish marker-free route-neutral action feedback; add deterministic public
+  `loadI18n`, abort, formatting, collation, and typed-error controls; and extend both laboratories
+  with drag-resize, constrained geometry, keyboard/mouse parity, visible focus, and replaced-subtree
+  disposal evidence. Scope diagnostic sinks to the service generation rather than implying an
+  unsubscribe API, and make escaped-placeholder teaching literal-only.
+- **Evidence:** The mandatory reviewer found the promoted oracle red after formatting, contradictory
+  handoff order, raw accelerator markup in status text, missing behavioral evidence for the catalog
+  outcomes, incomplete Template1 interaction/geometry coverage, a nonexistent diagnostic-sink
+  unsubscribe implication, and a misleading escaped-placeholder example.
+- **Rejected alternatives:** Waiving findings is prohibited. Wordsmithing around the fragile regex
+  would not improve evidence. Mutating locale under mounted controls contradicts the public readonly
+  service. Inventing a framework host API would teach unsupported behavior. Keeping direct panel
+  calls or keyboard-only actions would not prove the advertised user paths.
+- **Strongest counterargument:** A small replacement seam adds setup to a concept snippet. It is
+  necessary because atomic publication and stale input routing cannot be expressed honestly with an
+  undefined `host.publish` call; the seam remains application-owned and deliberately minimal.
+- **Confidence:** High — every correction maps to public source behavior or a directly reproducible
+  live-laboratory deficiency.
+- **Hardening:** The mandatory independent review supplied five Major and two Minor findings. Every
+  finding is accepted without waiver, and the single permitted fix-scoped re-review will challenge
+  only the correction diff.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Focused tests are red, stale generations receive input, old translated
+  subtrees remain mounted, visible feedback contains accelerator markup or a false input route,
+  loading/formatting outcomes lack public controls, or any lab omits required resize and input paths.
+
+**AR-60 (runtime/documentation):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correction to the application-owned locale-generation handoff snippet and its
+  deterministic lifecycle evidence; no public API, compatibility, scope, or host policy changes.
+- **Objective:** Resolve correction-introduced RV-16-R1 without waiver while preserving the active
+  generation across both publication and cleanup failures.
+- **Decision:** Limit rollback to `slot.replace(next)`: dispose the unpublished candidate only when
+  replacement itself fails. After a successful atomic swap, dispose the detached previous loop
+  outside that catch. Let an old-generation cleanup exception surface while the published next
+  generation remains active. Add exact failure-path controls for both states.
+- **Evidence:** `EventLoop.dispose()` can surface reactive cleanup exceptions. The re-review proved
+  that catching replacement and previous-generation disposal together could dispose the already
+  published next application and leave input routed to a dead generation.
+- **Rejected alternatives:** Swallowing cleanup failure hides operational evidence. Rolling back
+  after the atomic host swap would require an unsupported reverse-handoff contract. A third quality
+  review is prohibited and cannot replace deterministic assertions.
+- **Strongest counterargument:** The switch function can now throw after the locale has visibly
+  changed. That is the honest state: publication succeeded and cleanup failed. The caller can report
+  the cleanup fault without misrepresenting or destroying the active generation.
+- **Confidence:** High — success, replacement failure, and detached-cleanup failure are separate,
+  deterministic branches with explicit active-generation and disposal evidence.
+- **Hardening:** The single permitted fix-scoped re-review cleared six original findings and found
+  this one correction-introduced Major issue. The fix follows its exact guidance; no third review
+  will run.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Replacement failure disposes the current generation, cleanup failure disposes
+  the published next generation, or the active slot and surfaced exception disagree.
