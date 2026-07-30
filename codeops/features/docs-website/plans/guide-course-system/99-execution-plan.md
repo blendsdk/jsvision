@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 14:53
-> **Progress**: 160/246 tasks (65%)
+> **Last Updated**: 2026-07-30 15:25
+> **Progress**: 168/246 tasks (68%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -922,22 +922,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-30 · `03-02 §Authentic Substitutes`
 
+> **Phase baseline tree**: cf6e7f2489857a6519cf0c01adaa0e83d89667ef
+>
+> **Expected modification set**: The Phase 21 headless-testing course, its authentic rendered-frame
+> fixture and runnable test artifact, focused specification and implementation tests, Guide
+> catalog/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 21.1: Specification tests
 
-- [ ] 21.1.1 [spec-author] Write the headless-testing course oracle — `packages/docs-site/test/testing-headlessly-guide.spec.test.ts`
-- [ ] 21.1.2 Run the specification and record the expected red result
+- [x] 21.1.1 [spec-author] Write the headless-testing course oracle — `packages/docs-site/test/testing-headlessly-guide.spec.test.ts` ✅ (completed: 2026-07-30 15:02; 15-case immutable oracle covers the complete zero-lab course, AR-74 fixture/test artifact, exact frames, routed input, deterministic scheduling, modal settlement, resize, failure isolation, evidence layers, and disposal)
+- [x] 21.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 15:02; expected red: six public headless controls pass and nine course, catalog, fixture, and authentic-artifact contracts fail)
 
 ### Step 21.2: Implementation
 
-- [ ] 21.2.1 Replace the placeholder with deterministic host/frame/input and test-layer teaching — `packages/docs-site/guide/testing-headlessly.md`
-- [ ] 21.2.2 Implement the authentic headless test artifact and rendered-frame fixture — `packages/docs-site/src/example-fixtures/testing-headlessly/`, `packages/docs-site/test/testing-headlessly-example.spec.test.ts`
-- [ ] 21.2.3 Revalidate the zero-lab catalog exception and artifact evidence — `packages/docs-site/guides.json`
-- [ ] 21.2.4 Run ST-30 green plus docs-site typecheck; fix implementation only
+- [x] 21.2.1 Replace the placeholder with deterministic host/frame/input and test-layer teaching — `packages/docs-site/guide/testing-headlessly.md` ✅ (completed: 2026-07-30 15:06; all seven course-content contracts pass, 12 bounded public-API snippets cover direct render/application seams through advanced failure and teardown evidence, and docs-site typecheck is green)
+- [x] 21.2.2 Implement the authentic headless test artifact and rendered-frame fixture — `packages/docs-site/src/example-fixtures/testing-headlessly/`, `packages/docs-site/test/testing-headlessly-example.spec.test.ts` ✅ (completed: 2026-07-30 15:09; the four-case runnable Vitest artifact proves exact cells, routed key/mouse/command input, modal settlement, resize, idempotent cleanup, failure isolation, and redaction; 14/15 course-oracle cases pass with only final promotion withheld)
+- [x] 21.2.3 Revalidate the zero-lab catalog exception and artifact evidence — `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 15:09; the exact zero-lab exception remains intact, examples stay empty, no registry entry exists, and both authentic artifact files are present)
+- [x] 21.2.4 Run ST-30 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 15:09; 18/19 course and authentic-artifact cases plus docs-site typecheck pass, with only final catalog promotion deliberately withheld)
 
 ### Step 21.3: Hardening
 
-- [ ] 21.3.1 Add deterministic input, viewport, frame, teardown, and false-positive edges — `packages/docs-site/test/testing-headlessly-guide.impl.test.ts`
-- [ ] 21.3.2 Run focused checks, promote Testing headlessly, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 21.3.1 Add deterministic input, viewport, frame, teardown, and false-positive edges — `packages/docs-site/test/testing-headlessly-guide.impl.test.ts` ✅ (completed: 2026-07-30 15:25; six hardening cases cover fixture isolation, inert input, disabled commands, constrained/expanded anchors, queued repaint suppression, pending modal settlement, retained-producer inertia, authentic-evidence regression guards, idempotent cleanup, and bounded repeatable failures)
+- [x] 21.3.2 Run focused checks, promote Testing headlessly, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 15:27; the zero-lab course is Complete, the learner map and catalog oracle are synchronized, all 32 focused course/artifact/hardening/catalog checks, docs-site typecheck, production docs build, and authoritative `yarn verify` pass; independent review found three Major and two Minor evidence gaps, AR-76 corrected every finding without waiver, and the single permitted re-review cleared four findings while the final scheduler-counter and regression-guard correction resolved the retained Major and Minor without a prohibited third review)
 
 **Verify**: Headless guide/artifact tests and docs-site typecheck
 

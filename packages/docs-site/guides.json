@@ -349,7 +349,7 @@
       "group": "Extending and integrating",
       "page": "/guide/testing-headlessly",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 3,
       "prerequisites": ["application-shell", "events-commands-and-keymaps"],
       "learningOutcomes": [
