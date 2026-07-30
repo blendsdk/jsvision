@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
+          "revision": "sha256:d3e08eb64197b3e5fc201950918a369ce71178195941e487bae463ce58321687",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T11:29:39Z"
+          "validatedAt": "2026-07-30T12:53:09Z"
         }
       ]
     },
@@ -1086,10 +1086,16 @@
         "summary:Phase 19 tasks 19.1.1 and 19.1.2 established 20 independently authored cases; expected red was 5 public browser-runtime controls passing and 15 course, catalog, registry, and laboratory failures.",
         "summary:Phase 19 tasks 19.2.1 through 19.3.1 delivered the private-boundary browser course, two deterministic laboratories, and lifecycle, authorization, virtual-file, geometry, and cleanup hardening; 32/33 final focused checks passed with only final stage promotion withheld.",
         "summary:Phase 19 independent review found two Major and one Moderate issue; AR-70 corrected browser-host lifecycle ownership, Promise-derived capability evidence, focused reclaim evidence, and the root path guard without waiver.",
-        "summary:Phase 19 completed after the permitted re-review cleared every original Major, both Moderate correction details were fixed without a third review, and 33/33 Guide checks, 8/8 browser-runtime checks, typechecks, production docs build, plugin synchronization, and authoritative yarn verify passed."
+        "summary:Phase 19 completed after the permitted re-review cleared every original Major, both Moderate correction details were fixed without a third review, and 33/33 Guide checks, 8/8 browser-runtime checks, typechecks, production docs build, plugin synchronization, and authoritative yarn verify passed.",
+        "summary:Phase 20 baseline fd30ecb17d8fbd971e3da2939e1ab329c0668925 and its expected Writing your own widget modification set are recorded before specification work.",
+        "summary:Phase 20 tasks 20.1.1 and 20.1.2 established 18 independently authored cases; expected red is 3 public custom-View controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 20 tasks 20.2.1 through 20.3.2 delivered the complete custom-View course, two deterministic laboratories, and zero-geometry, invalidation, focus-theme, capability, headless, cleanup, and resize hardening; all 30 focused guide and catalog checks plus docs-site typecheck pass.",
+        "summary:Phase 20 independent review found two Major authentic-evidence gaps; AR-73 corrects both without waiver by routing a real mouse event through meter hit-testing and protecting adjacent in-buffer sentinels with child clipping under Unicode and ASCII profiles.",
+        "summary:The single permitted Phase 20 re-review cleared routed mouse evidence and found paint-order masking in the clipping correction; the final sentinel-first, negative-local-write, exact-row correction passes all 30 focused checks and docs-site typecheck without a prohibited third review.",
+        "summary:Phase 20 completed after focused checks, docs-site typecheck, production documentation build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
+      "revision": "sha256:d3e08eb64197b3e5fc201950918a369ce71178195941e487bae463ce58321687",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1161,10 +1167,13 @@
         "Auto-design AR-67 accepts RV-18-01 through RV-18-04 without waiver and requires accurate seed semantics, one synchronized theme model, rendered role and encoder evidence, and valid Markdown structure.",
         "Auto-design AR-68 partitions Phase 19 into browser host lifecycle and capability-boundary laboratories while preserving the private package release boundary.",
         "Auto-design AR-69 preserves Phase 19 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
-        "Auto-design AR-70 accepts the Phase 19 quality findings without waiver and requires owned host input/timer disposal, observable post-disposal inertia, Promise-derived capability outcomes, focused and unfocused reclaim evidence, and exact-root path authorization."
+        "Auto-design AR-70 accepts the Phase 19 quality findings without waiver and requires owned host input/timer disposal, observable post-disposal inertia, Promise-derived capability outcomes, focused and unfocused reclaim evidence, and exact-root path authorization.",
+        "Auto-design AR-71 partitions Phase 20 into widget anatomy and widget composition laboratories so leaf-contract and parent-integration evidence remain independently diagnosable.",
+        "Auto-design AR-72 preserves Phase 20 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-73 accepts RV-20-001 and RV-20-002 without waiver and requires routed local-coordinate mouse evidence plus adjacent in-buffer sentinel clipping evidence."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:0fe4fe137a17fb3c62f0cb93e1eba9a02baa150733255f3b94abe53a04dbbc58",
+      "revision": "sha256:06f0569ed6ea4065dafd83e2dabb6ffe5e60eca4066bc46a80e8472fc26da1ef",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1234,13 +1243,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:994aa537ce3edd625787aebcefedd618cc1436c723c1c6883592599a0945706b",
+          "revision": "sha256:d3e08eb64197b3e5fc201950918a369ce71178195941e487bae463ce58321687",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T11:29:39Z"
+          "validatedAt": "2026-07-30T12:53:09Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T12:07:52Z"
+  "updated": "2026-07-30T12:53:09Z"
 }

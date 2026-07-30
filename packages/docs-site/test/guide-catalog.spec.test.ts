@@ -112,6 +112,7 @@ describe('Guide curriculum catalog', () => {
       'screens-and-routing',
       'theming-and-colour-depth',
       'running-in-the-browser',
+      'writing-your-own-widget',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);

@@ -219,4 +219,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/browser-capability-boundaries.ts',
     load: () => import('../../examples/guides/browser-capability-boundaries.js'),
   },
+  {
+    id: 'guides/widget-anatomy',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/widget-anatomy.ts',
+    load: () => import('../../examples/guides/widget-anatomy.js'),
+  },
+  {
+    id: 'guides/widget-composition',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/widget-composition.ts',
+    load: () => import('../../examples/guides/widget-composition.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

@@ -332,7 +332,7 @@
       "group": "Extending and integrating",
       "page": "/guide/writing-your-own-widget",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 2,
       "prerequisites": ["layout", "reactive-state", "views-and-focus", "events-commands-and-keymaps"],
       "learningOutcomes": [
@@ -341,7 +341,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/widget-anatomy", "guides/widget-composition"]
     },
     {
       "id": "testing-headlessly",

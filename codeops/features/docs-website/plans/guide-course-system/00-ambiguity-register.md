@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 70 items resolved
-> **Last Updated**: 2026-07-30 13:48
+> **Status**: ✅ GATE PASSED — all 73 items resolved
+> **Last Updated**: 2026-07-30 14:41
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -61,6 +61,7 @@
 | 54 | API accuracy (runtime) | When may the Forms state laboratory claim a valid submission, given that `createForm.submit()` crosses an async validation barrier before `onValid` even with no async validators? | Await the real submit settlement before asserting success / pre-count the request synchronously / bypass `submit()` | **Authority: AI — delegated by `--auto-design`.** Correct the pre-implementation oracle to await settlement and require success evidence from the real `onValid` boundary. | ✅ Resolved |
 | 55 | Quality review (runtime) | How should RV-014-001 through RV-014-004 be resolved without inferring stale validation or persistence from assigned labels and without teaching unavailable button APIs or actions? | Drive real controlled Promise settlements and real `onValid` persistence, correct the Button snippet and phase availability, mark Alt+O, and strengthen focused evidence / retain label-authored outcomes and enabled no-op controls / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every correction without waiver, rerun focused and authoritative gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 | 56 | Quality review (runtime) | How should correction-introduced RV-014-005 prevent newly authentic Promise continuations from publishing after teardown when the one permitted re-review has already been used? | Mark the fixture inactive before cleanup, abort and settle every owned run, clear ownership, guard every continuation, and add pending plus resolve-then-dispose evidence / leave Promises retained or waive the lifecycle finding / request a prohibited third review | **Authority: AI — delegated by `--auto-design`.** Apply the complete teardown correction without waiver, verify it through focused and authoritative gates, and record the source-and-test ruling without a third review. | ✅ Resolved |
+| 73 | Quality review (runtime) | How should RV-20-001 and RV-20-002 replace self-authored mouse provenance and screen-edge-only clipping with authentic custom-widget evidence? | Route a real mouse event through hit-testing and clip a narrow child beside an in-buffer sentinel / retain label-derived provenance and screen-edge clipping / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply both authentic-evidence corrections without waiver, strengthen implementation assertions, rerun every gate, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -2054,3 +2055,107 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Post-disposal input or resize still reaches the loop, focus/disposal remains
   label-derived, clipboard status precedes settlement, or root authorization rejects the root.
+
+**AR-71 (laboratory design):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Selecting stable laboratory identities and partitioning the confirmed custom
+  widget outcomes without changing scope, behavior, prerequisites, or acceptance criteria.
+- **Objective:** Teach the complete public `View` contract through two independently observable
+  laboratories instead of one overloaded showcase.
+- **Decision:** Use `guides/widget-anatomy` for one focusable custom leaf that proves intrinsic
+  measurement, clipped and capability-aware drawing, semantic theme roles, reactive repaint,
+  keyboard and mouse input, handled-event boundaries, and a non-colour focus cue. Use
+  `guides/widget-composition` for responsive composition, repaint-versus-reflow decisions, mounted
+  ownership and exact cleanup, Unicode/ASCII behavior, constrained clipping, and headless evidence
+  across resize, maximize, and restore.
+- **Evidence:** The public `View` surface exposes `measure(available)`, local clipped
+  `draw(DrawContext)`, `focusable`, `onEvent(DispatchEvent)`, `invalidate()`,
+  `invalidateLayout()`, `bind()` inside `onMount()`, and `onCleanup()`. The catalog outcomes
+  separately require implementing the leaf contract and composing/testing reusable widgets without
+  ownership or clipping violations. The canonical agent-neutral widget-authoring reference already
+  treats custom `View` subclasses as the sanctioned escape hatch.
+- **Rejected alternatives:** One kitchen-sink lab would make rendering/input failures
+  indistinguishable from ownership/composition failures. Reusing a built-in component example
+  would not prove subclass authoring. Splitting by keyboard versus mouse would duplicate the same
+  widget state rather than teach distinct outcomes.
+- **Strongest counterargument:** The anatomy lab necessarily touches lifecycle and composition
+  because every real view mounts in a tree. Its assertions stay limited to the leaf contract; the
+  second lab owns parent integration, geometry transitions, teardown, and reusable test strategy.
+- **Confidence:** High — the split follows the two catalog outcomes and maps directly to supported
+  public APIs, prerequisite courses, and deterministic headless evidence.
+- **Hardening:** Both labs must be complete template1 applications with keyboard and mouse paths,
+  compact Classic geometry, visible non-colour evidence, and real resize/maximize/restore and
+  cleanup assertions. The specification must reject constructor-time binding, zero natural
+  measurement, raw layout mutation, unhandled owned input, and theme- or Unicode-only cues.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The public custom-view lifecycle changes, the catalog outcomes change, or a
+  single authentic laboratory can independently prove both leaf and composition outcomes without
+  obscuring diagnosis.
+
+**AR-72 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required Phase 20 specification-first red checkpoint; no oracle
+  weakening or implementation change.
+- **Objective:** Preserve an immutable final-contract baseline before replacing the custom-widget
+  placeholder and adding its laboratories.
+- **Decision:** Accept 15 failing and 3 passing cases as the expected red result. The passing cases
+  independently prove the existing public custom-View controls: intrinsic measurement and bounded
+  drawing/input/reactivity/cleanup, repaint versus reflow, and capability-driven Unicode/ASCII
+  fallback. The failures identify only the absent complete course, promotion, registry entries, and
+  learner-visible laboratories.
+- **Evidence:** The docs-site typecheck passes. The focused 18-case run reports exactly 15 failures
+  and 3 passes. Every failure names placeholder content, Upgrade-stage metadata, missing registry
+  modules, or absent course/laboratory evidence.
+- **Rejected alternatives:** Requiring public `View` controls to fail would discard
+  implementation-independent anchors. Registering empty labs or promoting the placeholder would
+  violate the Guide completion gate.
+- **Strongest counterargument:** Three passing controls reduce the red proportion. They are required
+  to distinguish missing teaching artifacts from a broken widget substrate and keep the oracle
+  independent of the future course implementation.
+- **Confidence:** High — the failure categories align exactly with the current catalog, filesystem,
+  and placeholder page.
+- **Hardening:** Implementation may change only the recorded Phase 20 course, fixture, example,
+  registry, catalog, curriculum, and implementation-test artifacts until the oracle is green. The
+  oracle remains immutable unless an independent reviewer authorizes stronger evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control fails, a red failure is unrelated to missing teaching
+  artifacts, or implementation would require weakening an oracle expectation.
+
+**AR-73 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Replacing two laboratory proof mechanisms without changing the confirmed course
+  outcomes, public behavior, scope, or acceptance criteria.
+- **Objective:** Resolve RV-20-001 and RV-20-002 without waiver so the completed course derives
+  mouse routing and child clipping claims from observable event-loop and buffer behavior.
+- **Decision:** Remove the anatomy meter's synthetic provenance flag. Make the learner-visible
+  Increment action dispatch a real mouse-down at the mounted meter's absolute cell through the
+  application event loop, derive mouse provenance only from the routed event and its local
+  coordinate, and assert that coordinate. Replace every course-owned clipping probe with a narrow
+  child after a sentinel sibling in a wider buffer; paint the sentinel first, attempt a
+  negative-local-coordinate write backward into its in-buffer region, and require the exact row to
+  preserve the sentinel under constrained, Unicode, and ASCII profiles.
+- **Evidence:** Independent review found that the existing Increment action dispatched Right and
+  relabeled it as mouse, while each clipping probe wrote beyond the complete render buffer. Those
+  mechanisms could pass without mouse hit-testing or child-bound clipping.
+- **Rejected alternatives:** A direct `onEvent()` call bypasses routing and contradicts the course's
+  own testing guidance. Screen-edge clipping cannot protect an adjacent child. Waiving either
+  finding is prohibited.
+- **Strongest counterargument:** Dispatching a mouse event from a button remains a synthetic learner
+  trigger. The event itself still crosses the real application hit-test and local-coordinate
+  translation path, while the button keeps the required visible mouse affordance deterministic.
+- **Confidence:** High — counters and local coordinates derive only from the meter's routed
+  `DispatchEvent`, and sentinel survival directly distinguishes child clipping from screen clipping.
+- **Hardening:** Add focused implementation assertions for routed local coordinates and sibling
+  sentinels, rerun the immutable oracle, docs typecheck/build, and full repository gate, then
+  perform the single permitted fix-scoped re-review. That re-review cleared RV-20-001 and exposed
+  that a later-painted sentinel masked RV-20-002; paint-order-independent exact-row evidence is the
+  required final correction, and a third review is prohibited.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The meter counter can change without a routed mouse event, local coordinates
+  are absent, or an attempted child overflow can alter the sibling sentinel.
