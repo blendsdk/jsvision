@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 13:29
-> **Progress**: 144/246 tasks (59%)
+> **Last Updated**: 2026-07-30 14:07
+> **Progress**: 152/246 tasks (62%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -864,22 +864,29 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-28 · `03-02` · `03-03`
 
+> **Phase baseline tree**: ed019f7e9422709582e0cc4ace9636a92a4a07e7
+> **Expected modification set**: The Phase 19 browser-host course, two virtualized browser
+> laboratories and their fixtures, Guide registry/catalog/curriculum projection, focused
+> specification and implementation tests, browser-host lifecycle ownership and regression tests,
+> generated web skill/plugin references and impact snapshot, and plan/roadmap/traceability
+> evidence. The runtime and generated-reference expansion is authorized by AR-70.
+
 ### Step 19.1: Specification tests
 
-- [ ] 19.1.1 [spec-author] Write the browser-host course oracle — `packages/docs-site/test/running-in-the-browser-guide.spec.test.ts`
-- [ ] 19.1.2 Run the specification and record the expected red result
+- [x] 19.1.1 [spec-author] Write the browser-host course oracle — `packages/docs-site/test/running-in-the-browser-guide.spec.test.ts` — ✅ (completed: 2026-07-30 13:34; 20-case immutable oracle covers the complete course, private release boundary, mount lifecycle, input/resize/focus/cleanup, reclaim, clipboard authorization, virtual-file isolation, and two template1 laboratories; docs-site typecheck passes)
+- [x] 19.1.2 Run the specification and record the expected red result — ✅ (completed: 2026-07-30 13:34; expected red: 15 course, catalog, registry, and laboratory failures with 5 existing public browser-runtime controls passing)
 
 ### Step 19.2: Implementation
 
-- [ ] 19.2.1 Replace the placeholder with mounting, resize, key, clipboard, and virtual-file boundaries — `packages/docs-site/guide/running-in-the-browser.md`
-- [ ] 19.2.2 Implement two focused browser-host template1 labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/running-in-the-browser/`
-- [ ] 19.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 19.2.4 Run ST-28 green plus docs-site typecheck; fix implementation only
+- [x] 19.2.1 Replace the placeholder with mounting, resize, key, clipboard, and virtual-file boundaries — `packages/docs-site/guide/running-in-the-browser.md` — ✅ (completed: 2026-07-30 13:42; private release boundary and repository-internal architecture evidence are explicit)
+- [x] 19.2.2 Implement two focused browser-host template1 labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/running-in-the-browser/` — ✅ (completed: 2026-07-30 13:42; real injected mount lifecycle plus focused reclaim, authorized/denied clipboard, and virtual-file boundary laboratories)
+- [x] 19.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` — ✅ (completed: 2026-07-30 13:42)
+- [x] 19.2.4 Run ST-28 green plus docs-site typecheck; fix implementation only — ✅ (completed: 2026-07-30 13:42; 19/20 final-contract assertions pass with only deliberately withheld Complete-stage promotion, and docs-site typecheck passes)
 
 ### Step 19.3: Hardening
 
-- [ ] 19.3.1 Add denied capability, resize, reclaimed key, virtual-file, and cleanup edges — `packages/docs-site/test/running-in-the-browser-guide.impl.test.ts`
-- [ ] 19.3.2 Run focused checks, promote Browser, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 19.3.1 Add denied capability, resize, reclaimed key, virtual-file, and cleanup edges — `packages/docs-site/test/running-in-the-browser-guide.impl.test.ts` — ✅ (completed: 2026-07-30 13:43; missing-terminal, repeated mount/disposal, authorization, virtual traversal/missing, cleanup, and repeated-geometry hardening)
+- [x] 19.3.2 Run focused checks, promote Browser, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` — ✅ (completed: 2026-07-30 14:07; 33/33 focused Guide/catalog checks, 8/8 focused browser-runtime checks, docs-site and web typechecks, production docs build, plugin synchronization/integrity, and authoritative `yarn verify` pass; the independent review found two Major and one Moderate issue, AR-70 corrected all without waiver, the permitted re-review cleared every original Major and retained two Moderate correction details, and both were fixed without a prohibited third review)
 
 **Verify**: Browser guide spec/impl tests and docs-site typecheck
 

@@ -205,4 +205,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/color-depth-fallbacks.ts',
     load: () => import('../../examples/guides/color-depth-fallbacks.js'),
   },
+  {
+    id: 'guides/browser-host-lifecycle',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/browser-host-lifecycle.ts',
+    load: () => import('../../examples/guides/browser-host-lifecycle.js'),
+  },
+  {
+    id: 'guides/browser-capability-boundaries',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/browser-capability-boundaries.ts',
+    load: () => import('../../examples/guides/browser-capability-boundaries.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

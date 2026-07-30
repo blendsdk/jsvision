@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 67 items resolved
-> **Last Updated**: 2026-07-30 13:20
+> **Status**: ✅ GATE PASSED — all 70 items resolved
+> **Last Updated**: 2026-07-30 13:48
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -1955,3 +1955,102 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Direct semantic seeds become RGB-derived, shared preset commands bypass the
   observer, laboratory tests regress to labels without cell evidence, or the table row breaks.
+
+**AR-68 (course/laboratories):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Naming and partitioning the two required Running in the browser laboratories
+  within the confirmed catalog outcomes and current private-package status; no SDK publication,
+  curriculum scope, compatibility, or host-policy change.
+- **Objective:** Teach the real browser mount lifecycle separately from browser capability and
+  authorization boundaries without touching visitor-owned resources.
+- **Decision:** Use `guides/browser-host-lifecycle` for deterministic `mountApp` first-paint, decoded
+  input, resize, optional focus, and complete disposal evidence over an in-memory terminal. Use
+  `guides/browser-capability-boundaries` for focused key reclaim, unreclaimable-remap judgment,
+  outbound-only clipboard authorization outcomes, and virtual-file isolation. State prominently
+  that `@jsvision/web` remains private, unavailable from npm, and not yet a supported consumer
+  deployment target; teach its current in-repository public exports and link the release boundary.
+- **Evidence:** `mountApp` wires the existing application loop to a structural `TerminalLike`,
+  paints immediately, maps terminal resize, routes the browser copy gesture, and disposes loop,
+  resize subscription, and terminal. `attachKeyReclaim`, `setClipboard`, and
+  `createBrowserFileSystem` expose separate deterministic seams whose tests require focus scoping,
+  write-only clipboard access, cleanup, and in-memory-only storage. The installation course
+  explicitly marks `@jsvision/web` private.
+- **Rejected alternatives:** A nested real xterm lab would duplicate the docs host and depend on DOM
+  and GPU behavior. A single kitchen-sink lab would blur lifecycle cleanup with authorization
+  decisions. Reading the visitor clipboard, files, or network would violate the Guide laboratory
+  security contract. Presenting npm installation would contradict the package manifest and
+  installation course.
+- **Strongest counterargument:** A virtual terminal cannot prove every browser/xterm integration
+  quirk. It does prove the package-owned contract deterministically; the course separately points
+  to the repository dogfood application for real DOM integration and labels its evidence scope.
+- **Confidence:** High — the split follows the two catalog outcomes and exact public web package
+  seams, with observable output, input, geometry, authorization, isolation, and teardown evidence.
+- **Hardening:** The immutable oracle must require two app labs, Classic compact template1 shells,
+  exact public behavior controls, keyboard and mouse paths, resize/maximize/restore, bounded
+  fixtures, no privileged globals, and cleanup.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** `@jsvision/web` becomes published, mount lifecycle ownership changes, browser
+  clipboard gains a read seam, or the virtual filesystem gains host persistence or network access.
+
+**AR-69 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required Phase 19 specification-first red checkpoint; no oracle
+  weakening or implementation change.
+- **Objective:** Preserve an immutable final-contract baseline before replacing the browser-course
+  placeholder and adding its laboratories.
+- **Decision:** Accept 15 failing and 5 passing cases as the expected red result. The passing cases
+  prove injected mount/paint/input/resize/focus/disposal, authorized and denied outbound clipboard,
+  browser-copy routing without reads, focused key reclaim/detach, and deterministic virtual files;
+  failures identify only the absent complete course, promotion, registry entries, and labs.
+- **Evidence:** The docs-site typecheck passes. The focused 20-case run reports exactly 15 failures
+  and 5 passes, and every failure names placeholder content, Upgrade-stage metadata, missing
+  registry modules, or missing learner-visible laboratory evidence.
+- **Rejected alternatives:** Requiring the existing web runtime controls to fail would discard
+  implementation-independent anchors. Registering empty labs or promoting the placeholder would
+  violate the Guide completion gate.
+- **Strongest counterargument:** Five passing controls reduce the red proportion. They are necessary
+  to distinguish missing documentation artifacts from a broken browser-runtime substrate.
+- **Confidence:** High — the failure names align exactly with the current catalog and filesystem.
+- **Hardening:** Implementation may change only Phase 19-owned course, fixture, example, registry,
+  catalog, and curriculum artifacts until the oracle is green; the oracle remains immutable unless
+  an independent reviewer authorizes stronger evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control fails, a red failure is unrelated to missing teaching
+  artifacts, or implementation would require weakening an oracle expectation.
+
+**AR-70 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting evidence and lifecycle ownership required by the confirmed browser
+  mount outcome, plus one path-authorization snippet; the additive host disposal contract remains
+  within the existing browser runtime and requires normal plugin-impact synchronization.
+- **Objective:** Resolve RV-19-01 through RV-19-03 without waiver and derive every success claim
+  from observable public behavior.
+- **Decision:** Make `BrowserHost.dispose()` retain and release its `onData` subscription and pending
+  Escape timer, and have `mountApp().dispose()` invoke it even when the structural terminal has no
+  disposer. Retain the lesson terminal after close and prove input and resize are inert, while
+  surfacing observed focus and disposal counts. Drive focused and unfocused reclaim events, and
+  publish clipboard counters/status only after injected promises actually resolve or reject.
+  Correct root authorization to accept the root itself or a separator-delimited descendant.
+- **Evidence:** The initial independent review found two Major issues and one Moderate issue:
+  self-authored reclaim/clipboard labels, a dropped `onData` disposer masked by the fixture, and a
+  root guard that rejected `/workspace`.
+- **Rejected alternatives:** Waivers are prohibited. Narrowing the course would leave the catalog's
+  cleanup outcome incomplete and preserve a real runtime leak seam. Requiring terminal disposal
+  would contradict the optional structural contract. Keeping pre-set clipboard labels would not
+  prove authorization outcomes.
+- **Strongest counterargument:** Adding `dispose()` to `BrowserHost` changes an SDK surface during a
+  documentation phase. It is additive, directly closes ownership already promised by `mountApp`,
+  and will be synchronized through the canonical plugin-impact workflow.
+- **Confidence:** High — subscription, timer, resize, loop, focus, terminal, Promise, and path
+  outcomes can all be asserted independently.
+- **Hardening:** Keep the course at Upgrade through correction gates. Run `yarn plugin:update` and
+  `yarn plugin:check`, then one fix-scoped re-review; no third review is permitted.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Post-disposal input or resize still reaches the loop, focus/disposal remains
+  label-derived, clipboard status precedes settlement, or root authorization rejects the root.
