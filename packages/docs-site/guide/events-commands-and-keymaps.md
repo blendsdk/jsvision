@@ -28,8 +28,13 @@ Input arrives as an `AppEvent`. The event loop wraps it in a mutable `DispatchEv
 helpers such as `emit`, and offers it to the active view scope. The route depends on the input kind:
 
 ```text
-key / paste / command
+key
   -> keymap and Tab rules
+  -> pre-process: root down
+  -> focused leaf, then ancestors
+  -> post-process: final fallback
+
+paste / command
   -> pre-process: root down
   -> focused leaf, then ancestors
   -> post-process: final fallback
@@ -194,9 +199,11 @@ loop.emitCommand('document.save'); // Dropped silently; it does not route.
 console.log(loop.isCommandEnabled('document.save')); // false
 ```
 
-Menu, status, and button affordances can observe command enablement and grey themselves. An
-unmatched or misspelled command that survives every view produces a development warning naming the
-command; do not parse that warning in application logic.
+Attached menu and status affordances observe command enablement. A plain `Button({ command })` does
+not attach that seam automatically: bind its reactive `disabled` option to the same availability
+state so it greys itself and leaves the focus order. If disabling it while focused, move focus to an
+eligible control in the same action. An unmatched or misspelled command that survives every view
+produces a development warning naming the command; do not parse that warning in application logic.
 
 A modal changes the active scope. While it is open, commands are confined to the modal subtree, so
 a general application `onCommand()` handler behind it does not fire. The modal may handle or end

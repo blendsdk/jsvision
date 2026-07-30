@@ -38,12 +38,17 @@ class RouteProbe extends View {
   override draw(ctx: DrawContext): void {
     const role = this.state.focused ? 'buttonFocused' : 'button';
     ctx.fill(' ', ctx.color(role));
-    ctx.text(1, 0, this.caption, ctx.color(role));
+    const label = this.state.focused ? `${this.caption} [FOCUSED]` : this.caption;
+    ctx.text(1, 0, label, ctx.color(role));
   }
 
   override onEvent(event: DispatchEvent): void {
     if (event.event.type === 'wheel') return;
-    this.record(event, event.event.type === 'mouse' ? 'target' : this.phase);
+    if (event.event.type === 'mouse') {
+      if (event.event.kind === 'down') this.record(event, 'target');
+      return;
+    }
+    this.record(event, this.phase);
   }
 }
 
@@ -54,7 +59,7 @@ class RouteParent extends Group {
   }
 
   override onEvent(event: DispatchEvent): void {
-    if (event.event.type === 'mouse') this.record(event, 'parent');
+    if (event.event.type === 'mouse' && event.event.kind === 'down') this.record(event, 'parent');
   }
 }
 
@@ -93,7 +98,7 @@ export default defineExample({
 
       const pre = new RouteProbe('pre-process', 'pre', record);
       pre.preProcess = true;
-      const focused = new RouteProbe('Mouse target / focused leaf', 'focused', record);
+      const focused = new RouteProbe('Mouse target', 'focused', record);
       focused.focusable = true;
       const parent = new RouteParent(record);
       parent.add(at(focused, 1, 0, 29, 1));
@@ -101,10 +106,16 @@ export default defineExample({
       post.postProcess = true;
 
       const sendPaste = new Button('Send ~p~aste', {
-        onClick: () => app.loop.dispatch({ type: 'paste', text: 'sample', truncated: false }),
+        onClick: () => {
+          app.loop.focusView(focused);
+          app.loop.dispatch({ type: 'paste', text: 'sample', truncated: false });
+        },
       });
       const sendCommand = new Button('Emit ~c~ommand', {
-        onClick: () => app.loop.emitCommand(CMD_INSPECT),
+        onClick: () => {
+          app.loop.focusView(focused);
+          app.loop.emitCommand(CMD_INSPECT);
+        },
       });
       const reset = new Button('~R~eset trace', {
         onClick: () => trace.set('Route trace: pre > focused > post'),

@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 02:00
+> **Last Updated**: 2026-07-30 02:23
 > **Progress**: 56/246 tasks (23%)
 > **CodeOps Artifact Schema**: 1
 
@@ -396,9 +396,29 @@ independent specification-first phase (AR-10).
 ### Step 7.3: Hardening
 
 - [x] 7.3.1 Add propagation, disabled-command, collision, paste, and mouse edges — `packages/docs-site/test/events-commands-and-keymaps-guide.impl.test.ts` ✅ (completed: 2026-07-30 01:51) — added six cases for deterministic routing, outside-target clicks, collision/disable/re-enable stability, raw-key suppression, and repeated host teardown; 29/29 focused tests, docs-site typecheck, and authoritative `yarn verify` pass
-- [x] 7.3.2 Run focused checks, promote the course, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 02:00) — promoted the synchronized catalog and curriculum entry after 36/36 focused course/hardening/catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` passed
+- [x] 7.3.2 Run focused checks, promote the course, and update the curriculum map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 02:23) — promoted after AR-30 corrections passed 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, authoritative `yarn verify`, and the permitted fix-scoped re-review with no remaining finding
 
 **Verify**: Events/commands spec/impl tests and docs-site typecheck
+
+### Phase 7 quality review
+
+- The independent reviewer found four Major and two Minor issues: the live Paste and Command buttons
+  moved focus away from the route probe, mouse-up polluted the mouse-down trace, the Save button did
+  not reflect command disablement or leave focus, completion was premature, the opening diagram
+  applied key-only preprocessing to every event kind, and custom focus targets relied on colour.
+- Auto-design AR-30 applied every correction without waiver and kept the course at Upgrade until
+  remediation gates and the one permitted fix-scoped re-review passed.
+- The corrected routing controls preserve the intended focused route for mouse and keyboard
+  activation, mouse evidence ends exactly after down bubbles to the parent, disabled Save leaves
+  focus and the Tab order, and both custom targets expose ASCII `[FOCUSED]` cues. The Guide now
+  separates key preprocessing and explains explicit Button availability binding.
+- The one permitted fix-scoped re-review resolved all four Major and two Minor findings with no
+  correction-introduced regression and no remaining Critical, Major, or Minor issue.
+- The corrected demoted state and final promoted state each passed 38/38 focused tests, docs-site
+  typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
+- Security and performance auditors were not invoked because the phase uses bounded deterministic
+  local events, no visitor or privileged host capability, small fixed view trees, and bounded
+  traces.
 
 ## Phase 8: Keyboard & clipboard
 
