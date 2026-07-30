@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 45 items resolved
-> **Last Updated**: 2026-07-30 07:43
+> **Status**: ✅ GATE PASSED — all 48 items resolved
+> **Last Updated**: 2026-07-30 08:16
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -50,6 +50,9 @@
 | 43 | Quality review (runtime) | How should the five Major and one Minor Phase 11 findings be resolved without weakening host lifecycle, authentic chrome, body-command, or cleanup evidence? | Apply all six source-grounded corrections while temporarily demoting the route / expand the public host contract / waive or defer findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Correct the course, both labs, lifecycle evidence, nested cleanup proof, and status-base boundary; keep the route Upgrade until every gate and the one permitted fix-scoped re-review pass. | ✅ Resolved |
 | 44 | Scope (runtime) | May Phase 11 correct `statusBase()` so its implementation matches the existing documented command-item-only contract? | Expand the Phase 11 modification set to the narrow UI implementation fix, focused regression evidence, and generated plugin-impact snapshot / stop without changing the public implementation | **User approved** the recommended narrow scope expansion on 2026-07-30. | ✅ Resolved |
 | 45 | Verification drift (runtime) | How should execution handle the authoritative gate exposing that the completed Keyboard & clipboard course predates the repository's native-clipboard documentation oracle? | Correct the plan-owned Guide from canonical source evidence and rerun its existing oracle / weaken or skip the gate / leave the repository red | **Authority: AI — delegated by `--auto-design`.** Apply the focused plan-owned documentation correction and require the existing consumer oracle plus full verification to pass. | ✅ Resolved |
+| 46 | Naming (runtime) | Which stable IDs and lesson split should identify the two Dialogs & modality laboratories? | `guides/dialog-results` plus `guides/modal-workflows` / one kitchen-sink modal lab / reuse component examples | **Authority: AI — delegated by `--auto-design`.** Use one result-and-validation lab and one nested-workflow-and-focus lab so each catalog outcome has distinct observable evidence. | ✅ Resolved |
+| 47 | Execution (runtime) | How should Phase 12 preserve its intentional red oracle and Upgrade-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 12.3.2 promotion and full verification / commit a failing repository / weaken the oracle / claim a partial green checkpoint | **Authority: AI — delegated by `--auto-design`.** Treat tasks 12.1.1–12.3.2 as one repository-green checkpoint and push only after final Complete promotion and authoritative gates pass. | ✅ Resolved |
+| 48 | Scope (runtime) | May Phase 12 correct the Dialog component page's inaccurate claim that `execView()` mounts the dialog, when source and canonical skill require caller-owned desktop add/remove? | Expand the Phase 12 modification set narrowly to the Dialog component page and its lifecycle assertion / publish a Guide that contradicts its owning component page | **User approved** the recommended narrow scope expansion on 2026-07-30. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -1222,3 +1225,128 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The native adapter stops using lazy `clipboardy`, platform helper behavior
   changes, direct event-loop callback options change, or the consumer oracle remains red.
+
+**AR-46 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable internal documentation registry naming and lesson partitioning within
+  the confirmed two-laboratory course contract; no product behavior, scope, acceptance criterion,
+  compatibility, or security policy changes.
+- **Objective:** Give each catalog learning outcome a focused, durable laboratory whose ID remains
+  meaningful if its component composition changes.
+- **Decision:** Use `guides/dialog-results` for command/value interpretation, validation veto, and
+  cancel behavior. Use `guides/modal-workflows` for nested confirmation, LIFO resolution,
+  cancellation, and exact focus restoration.
+- **Evidence:** The catalog separates result interpretation from nested focus-safe workflows.
+  Public `Dialog` and message-box tests prove the result/validation axis, while modal-manager tests
+  independently prove input confinement, LIFO nesting, focus restoration, and disposal.
+- **Rejected alternatives:** One kitchen-sink lab would obscure the two outcome axes and make
+  failures harder to diagnose. Reusing the Dialog component example would teach widget
+  configuration rather than the Guide-owned application workflow. Component-shaped IDs would
+  become misleading if the lab later adopts helper APIs.
+- **Strongest counterargument:** The two labs both open dialogs and therefore share some setup.
+  That duplication is bounded and preserves a single explicit learning objective per laboratory.
+- **Confidence:** High — the split follows both catalog language and independently tested public
+  behavior.
+- **Hardening:** The choice is reversible documentation metadata and follows the established
+  outcome-shaped naming convention from prior Guide phases; no independent challenger is
+  proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The catalog outcomes merge, either ID already exists, or source evidence
+  shows nested focus handling cannot be demonstrated independently from result validation.
+
+**AR-47 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Implementation sequencing and green-commit mechanics within the confirmed plan;
+  no change to scope, product behavior, acceptance criteria, or commit permission.
+- **Objective:** Preserve truthful specification-first red evidence while honoring auto-commit,
+  the Upgrade-until-hardened catalog rule, and the repository-wide green-commit policy.
+- **Decision:** Record the expected-red tasks immediately but defer the first Phase 12 commit.
+  Keep the route Upgrade through hardening. Treat task 12.3.2, final Complete promotion, focused
+  checks, docs build, plugin integrity, and authoritative `yarn verify` as the first repository-green
+  commit and push checkpoint.
+- **Evidence:** The course oracle must require the final Complete catalog state and both registered
+  labs, so committing it before implementation would make `yarn verify` fail. The same constraint
+  was observed and independently challenged in earlier Guide phases.
+- **Rejected alternatives:** Committing the red oracle violates the green-commit gate. Weakening,
+  skipping, or quarantining the immutable oracle destroys the specification-first evidence.
+  Calling only non-stage assertions green would misstate the catalog completion contract.
+- **Strongest counterargument:** A phase-wide checkpoint reduces commit granularity. It remains the
+  smallest truthful green unit because the immutable oracle intentionally spans authoring,
+  laboratories, hardening, and promotion.
+- **Confidence:** High — the sequencing rule is unchanged and the Phase 12 catalog contract has the
+  same final-stage dependency as the preceding Guide courses.
+- **Hardening:** Reused the previously challenged green-checkpoint policy and reconciled it with
+  the exact Phase 12 tasks. Repeating an independent challenge of the unchanged sequencing rule
+  would not add material evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle can truthfully pass before final promotion, the repository adopts
+  an authorized expected-red commit mechanism, or any current public-control assertion is already
+  failing.
+
+**AR-48 (runtime):**
+
+- **Authority:** User approved the exact expanded modification set on 2026-07-30.
+- **Objective:** Keep the new course, its owning Dialog component page, public source, tests, and
+  canonical agent-neutral skill aligned on who mounts and removes a desktop modal.
+- **Recommended decision:** Add
+  `packages/docs-site/components/containers/dialog.md` and one focused lifecycle assertion to the
+  Phase 12 modification set. Correct its overview, Usage snippet, and Modality section so a custom
+  desktop dialog is added before `execView()` and removed in `finally`; retain helper guidance that
+  `messageBox`, `confirm`, and `inputBox` own that lifecycle internally.
+- **Evidence:** `packages/ui/src/event/event-loop.ts:458-460` says the caller has already added the
+  view. `packages/ui/src/dialog/message-box.ts:168-183` implements add, await, and finally-remove.
+  `tools/jsvision-skill/references/recipes/forms-dialogs.md:15-16` teaches the same lifecycle.
+  `packages/docs-site/components/containers/dialog.md:13-15`, `:27`, and `:65-66` instead imply
+  that `execView()` owns or mounts the dialog.
+- **Rejected alternative:** Leaving the component page unchanged would make the Guide contradict
+  its owning surface and teach two incompatible lifecycles. Changing runtime behavior would be a
+  disproportionate public API expansion and is unsupported by existing tests and helpers.
+- **Compatibility risk:** None; this changes documentation only and describes existing public
+  behavior.
+- **Confidence:** High — source, helper implementation, tests, and canonical skill agree.
+- **Hardening:** Source/test/skill evidence converges on one viable correction; no independent
+  challenger is needed for a narrow reversible documentation alignment.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Decision:** Apply the component-page lifecycle correction and focused assertion in the same
+  verified Phase 12 checkpoint.
+- **Reopen triggers:** `execView()` begins mounting views itself, public helper ownership changes,
+  or a source-level test establishes that an unmounted dialog is supported.
+
+**AR-49 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal laboratory evidence and testing design within the confirmed course,
+  example, and public-behavior contract; no scope, product behavior, acceptance criterion,
+  compatibility, security policy, or external action changes.
+- **Objective:** Resolve RV-012-001 without waiver so the laboratories prove the modal results,
+  LIFO settlement order, focus restoration, and cleanup behavior they teach.
+- **Decision:** Retain synchronous close-request feedback only when it is observed at the real
+  modal-host boundary and label it as request evidence. Add separate settled-result evidence
+  derived from every `execView()` promise. Derive focus claims from exact `getFocused()` identity,
+  count cleanup only from mounted-view cleanup callbacks, and publish disposal success only after
+  both promises resolve `undefined`. Extend implementation tests to await and assert those
+  independent observations. Keep the immutable specification oracle unchanged.
+- **Evidence:** The reviewer showed that both fixtures discarded promise results and assigned
+  expected labels/counters. `EventLoop.execView()` returns the modal result asynchronously,
+  `endModal()` restores focus synchronously, and mounted-view cleanup callbacks expose actual
+  unmounts. These three seams can independently falsify result, focus, and cleanup regressions.
+- **Rejected alternatives:** Waiving a Major is forbidden. Removing synchronous feedback would
+  weaken the interactive lesson and contradict the immutable oracle's immediate interaction
+  contract. Modifying the oracle after red confirmation is prohibited. Changing `EventLoop` to
+  settle native promises synchronously is impossible and would expand public runtime behavior.
+- **Strongest counterargument:** Maintaining both close-request and settled-promise readouts adds
+  state to small labs. The distinction is the lesson: modal termination is synchronous, promise
+  continuation is asynchronous, and either boundary can fail independently.
+- **Confidence:** High — the correction uses current public lifecycle seams, preserves all learner
+  actions, and adds falsifiable evidence instead of inferred labels.
+- **Hardening:** The independent reviewer supplied the Major finding. Every correction is accepted
+  without waiver, and the single permitted fix-scoped re-review will challenge the corrected diff.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Promise settlement order differs from host resolution order, focus
+  restoration becomes asynchronous, cleanup callbacks do not fire exactly once, the immutable
+  oracle can no longer retain immediate feedback, or re-review retains a Critical or Major issue.

@@ -114,4 +114,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/application-bodies.ts',
     load: () => import('../../examples/guides/application-bodies.js'),
   },
+  {
+    id: 'guides/dialog-results',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/dialog-results.ts',
+    load: () => import('../../examples/guides/dialog-results.js'),
+  },
+  {
+    id: 'guides/modal-workflows',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/modal-workflows.ts',
+    load: () => import('../../examples/guides/modal-workflows.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

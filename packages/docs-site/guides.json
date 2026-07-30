@@ -196,7 +196,7 @@
       "group": "Building applications",
       "page": "/guide/dialogs-and-modality",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 2,
       "prerequisites": ["application-shell", "views-and-focus"],
       "learningOutcomes": [
@@ -205,7 +205,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/dialog-results", "guides/modal-workflows"]
     },
     {
       "id": "async-work",
