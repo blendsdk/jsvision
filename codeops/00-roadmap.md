@@ -14,7 +14,7 @@
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (187/193 tasks) · RD-08 🔄 executing (112/246 Guide tasks; Phase 14 Complete) · RD-04/07/09/10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-30 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (187/193 tasks) · RD-08 🔄 executing (120/246 Guide tasks; Phase 15 Complete) · RD-04/07/09/10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-30 |
 
 ## Archived
 

@@ -156,4 +156,11 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/form-async-submit.ts',
     load: () => import('../../examples/guides/form-async-submit.js'),
   },
+  {
+    id: 'guides/filesystem-seams',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/filesystem-seams.ts',
+    load: () => import('../../examples/guides/filesystem-seams.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

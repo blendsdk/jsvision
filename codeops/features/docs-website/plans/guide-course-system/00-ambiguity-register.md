@@ -1596,3 +1596,70 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Any owned run remains pending after cleanup, a manual or submit continuation
   writes after inactive teardown, cleanup counts more than once, or focused lifecycle evidence fails.
+
+**AR-57 (documentation):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Source-grounded correction of one invalid Guide link assertion discovered by the
+  required production documentation build; no product behavior, public API, course outcome,
+  acceptance criterion, authorization policy, or external action changes.
+- **Objective:** Keep the Files course's related links resolvable without representing the private
+  browser runtime as part of the generated public API reference.
+- **Decision:** Remove the dead `/api/web/functions/createBrowserFileSystem` course link and its
+  oracle assertion. Retain the source-verified `createBrowserFileSystem` teaching and supported
+  public Files API links, and direct learners to the existing Running in the browser Guide for
+  browser-host integration.
+- **Evidence:** `yarn docs:build` rejected the link. `packages/docs-site/src/api/packages.mjs`
+  explicitly excludes private `@jsvision/web` from generated API documentation, and
+  `packages/docs-site/scripts/gen-api.mjs` generates references only for that declared public set.
+- **Rejected alternatives:** A hand-authored page under generated `api/web/` would be deleted on
+  regeneration and would misrepresent a private package as public. Expanding the public API
+  generator is a separate SDK-surface decision outside this Guide phase.
+- **Strongest counterargument:** The course teaches `createBrowserFileSystem`, so a symbol-level
+  lookup would help readers. The existing browser Guide is the supported site destination until
+  the package is deliberately added to the public documentation set.
+- **Confidence:** High — the generator's package allowlist and the VitePress dead-link gate agree.
+- **Hardening:** The mandatory build discovered the contradiction before commit; the correction
+  removes rather than suppresses the dead link and will be rechecked by the same build.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** `@jsvision/web` enters the generated public API package set or an official
+  generated `createBrowserFileSystem` route is added.
+
+**AR-58 (runtime/documentation):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Corrections to course snippets, deterministic laboratory evidence, failure
+  classification, action availability, and source-grounded tests within the confirmed Files course
+  outcome; no product API, scope, compatibility, authorization policy, or external action changes.
+- **Objective:** Resolve RV-15-01 through RV-15-04 without waiver so authorization, operational
+  failure, and cancellation claims are authentic and distinguishable.
+- **Decision:** Teach and test a complete confined adapter that canonicalizes every path-bearing
+  operation and both rename operands. Give policy denial a recognizable `EACCES` code, present
+  missing-file failures separately while preserving the last successful content, and make Deny
+  select the application-owned adapter before arming its one-shot policy. Remove synthetic
+  cancellation from the live laboratory objective and retain cancellation teaching through real
+  `openFile` and `changeDir` public-control evidence.
+- **Evidence:** RV-15-01 found that the teaching wrapper guarded only content methods despite the
+  course requiring per-operation checks. RV-15-02 found that the panel mapped every exception to
+  denial. RV-15-03 found that Cancel only assigned a label rather than cancelling real work.
+  RV-15-04 found a latent denial could be armed while the browser adapter remained active.
+- **Rejected alternatives:** A partial wrapper normalizes disclosure and mutation outside the
+  confined root. Treating ENOENT as authorization denial defeats diagnosis. Keeping a synthetic
+  Cancel button would present state assignment as behavioral proof. Launching another modal solely
+  to satisfy the lab would duplicate the prerequisite dialog course when real opener cancellation
+  is already exercised in this course's specification.
+- **Strongest counterargument:** Removing cancellation from the live lab makes one workflow lesson
+  less visually comprehensive. The course still teaches and executes real OK/Cancel opener paths;
+  the lab now concentrates on the cross-adapter and authorization outcome that requires visual
+  comparison.
+- **Confidence:** High — all corrections are directly falsifiable through public operations,
+  counters, rendered states, and canonical traversal cases.
+- **Hardening:** The mandatory independent reviewer reported three Major and one Minor finding.
+  Every finding is accepted without waiver, and the single permitted fix-scoped re-review will
+  challenge only these corrections.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any path-bearing method bypasses confinement, ENOENT increments denial,
+  Deny can remain latent on the browser adapter, the lab advertises synthetic cancellation, or the
+  real opener cancellation controls fail.
