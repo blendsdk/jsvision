@@ -5,7 +5,7 @@
  * curriculum without becoming dead sidebar links, while every navigable entry resolves to a real
  * page. Course completion requires the repository-level guide directive and registered examples.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
@@ -24,6 +24,40 @@ const CATALOG_SOURCE = readFileSync(join(PACKAGE_ROOT, 'guides.json'), 'utf8');
 const CATALOG = parseGuideCatalog(CATALOG_SOURCE);
 const DIRECTIVE = readFileSync(join(REPOSITORY_ROOT, 'AGENTS.md'), 'utf8');
 const CURRICULUM = readFileSync(join(PACKAGE_ROOT, 'guide', 'index.md'), 'utf8');
+const GUIDE_ROOT = join(PACKAGE_ROOT, 'guide');
+const GUIDE_SOURCES = readdirSync(GUIDE_ROOT)
+  .filter((name) => name.endsWith('.md'))
+  .map((name) => ({ name, source: readFileSync(join(GUIDE_ROOT, name), 'utf8') }));
+
+const SPECIALIST_CONTRACTS = [
+  {
+    id: 'data-grid-specialist',
+    route: '/components/data-grid/',
+    hubPath: join(PACKAGE_ROOT, 'components', 'data-grid', 'index.md'),
+    prerequisites: ['reactive-state', 'scrolling-lists-and-large-content', 'forms'],
+    forbiddenGuideHeadings: [
+      '# Data Grid',
+      '## Data & columns',
+      '## Sorting & filtering',
+      '## Editing & cell editors',
+      '## Data at scale',
+    ],
+  },
+  {
+    id: 'code-editor-specialist',
+    route: '/components/code-editor/',
+    hubPath: join(PACKAGE_ROOT, 'components', 'code-editor', 'index.md'),
+    prerequisites: ['reactive-state', 'text-unicode-and-cells', 'scrolling-lists-and-large-content'],
+    forbiddenGuideHeadings: [
+      '# Code Editor',
+      '## Documents & lifecycle',
+      '## Languages & syntax',
+      '## Folding',
+      '## Language intelligence',
+      '## Viewport & large documents',
+    ],
+  },
+] as const;
 
 const EXPECTED_IDS = [
   'introduction',
@@ -175,6 +209,61 @@ describe('Guide curriculum catalog', () => {
       );
     }
   });
+});
+
+describe('Specialist course ownership and reciprocal navigation', () => {
+  test('keeps the two catalog specialists on their exact component hubs with no duplicate Guide routes', () => {
+    const specialists = CATALOG.entries.filter((entry) => entry.profile === 'specialist');
+    expect(specialists.map(({ id, page }) => ({ id, page }))).toEqual(
+      SPECIALIST_CONTRACTS.map(({ id, route }) => ({ id, page: route })),
+    );
+    expect(specialists).toHaveLength(2);
+    expect(CATALOG.entries.filter((entry) => /\/guide\/(?:data-grid|code-editor)(?:\/|$)/u.test(entry.page))).toEqual(
+      [],
+    );
+    for (const duplicate of ['data-grid.md', 'code-editor.md', 'data-grid', 'code-editor']) {
+      expect(existsSync(join(GUIDE_ROOT, duplicate)), duplicate).toBe(false);
+    }
+  });
+
+  test('makes both authoritative component hubs directly reachable from the learner curriculum', () => {
+    for (const { id, route } of SPECIALIST_CONTRACTS) {
+      expect(CURRICULUM, id).toContain(`](${route})`);
+      expect(readFileSync(routeSource(route), 'utf8'), id).not.toHaveLength(0);
+      const sidebarItem = guideSidebar()
+        .flatMap((group) => group.items)
+        .find((item) => item.link === route);
+      expect(sidebarItem, id).toBeDefined();
+    }
+  });
+
+  test.each(SPECIALIST_CONTRACTS)(
+    '$id is linked from every catalog prerequisite Guide instead of being re-authored there',
+    ({ id, route, prerequisites, forbiddenGuideHeadings }) => {
+      for (const prerequisite of prerequisites) {
+        const prerequisiteSource = readFileSync(join(GUIDE_ROOT, `${prerequisite}.md`), 'utf8');
+        expect(prerequisiteSource, `${id}: ${prerequisite} must link to its owning hub`).toContain(`](${route})`);
+      }
+      for (const { name, source: guideSource } of GUIDE_SOURCES) {
+        for (const heading of forbiddenGuideHeadings) {
+          expect(guideSource, `${id}: ${name} duplicates specialist chapter "${heading}"`).not.toMatch(
+            new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}$`, 'mu'),
+          );
+        }
+      }
+    },
+  );
+
+  test.each(SPECIALIST_CONTRACTS)(
+    '$id links learners back to the Guide curriculum and each catalog prerequisite',
+    ({ id, hubPath, prerequisites }) => {
+      const hub = readFileSync(hubPath, 'utf8');
+      expect(hub, `${id}: return to the Guide curriculum`).toContain('](/guide/)');
+      for (const prerequisite of prerequisites) {
+        expect(hub, `${id}: return to ${prerequisite}`).toContain(`](/guide/${prerequisite})`);
+      }
+    },
+  );
 });
 
 describe('Guide course prime directive', () => {

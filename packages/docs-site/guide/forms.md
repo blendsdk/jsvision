@@ -479,4 +479,6 @@ Continue with the [Reactive state course](/guide/reactive-state), [Dialogs and m
 course](/guide/dialogs-and-modality), and [Async work course](/guide/async-work) when you need to
 revisit their owning mental models. For modal presentation, use the [Form Dialog
 component](/components/controls/form-dialog). For exact generic signatures, see the generated
-[`createForm` API reference](/api/forms/functions/createForm).
+[`createForm` API reference](/api/forms/functions/createForm). Continue with the
+[Data Grid course](/components/data-grid/) when validated fields become typed cell editors and
+commit gates inside a tabular workflow.

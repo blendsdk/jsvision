@@ -550,4 +550,7 @@ assuming that the graph behaved correctly.
 - [`ReactiveCycleError`](/api/ui/classes/ReactiveCycleError)
 
 Continue with [Views and focus](/guide/views-and-focus) to connect reactive state to retained view
-lifecycles and input routing, or [Forms](/guide/forms) for validation and submission state.
+lifecycles and input routing, or [Forms](/guide/forms) for validation and submission state. When
+reactive collections become a specialized workspace, continue with the
+[Data Grid course](/components/data-grid/) for typed tabular state or the
+[Code Editor course](/components/code-editor/) for document and language-service state.

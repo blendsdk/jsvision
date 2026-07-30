@@ -118,6 +118,12 @@ the current run.
 
 ## Related
 
+- [Guide curriculum](/guide/) — return to the complete framework learning path.
+- [Reactive state](/guide/reactive-state) — model derived presentation and owned lifetimes.
+- [Text, Unicode & terminal cells](/guide/text-unicode-and-cells) — understand display-cell
+  geometry, graphemes, clipping, and fallbacks.
+- [Scrolling, lists & large content](/guide/scrolling-lists-and-large-content) — choose viewport
+  ownership and verify bounded rendering work.
 - [Themes & fallbacks](/components/code-editor/themes-and-fallbacks) — resolve editor colors against
   application roles.
 - [Code Editor API map](/components/code-editor/api) — find visual and supporting public APIs.
