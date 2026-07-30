@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
+          "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }
@@ -1070,10 +1070,16 @@
         "summary:Phase 16 tasks 16.3.1 and 16.3.2 added missing-key, long-label, Unicode, locale-switch, geometry, interaction, and cleanup hardening and promoted Internationalization after 35/35 focused checks passed.",
         "summary:Phase 16 independent review found five Major and two Minor issues; AR-59 corrected every finding without waiver.",
         "summary:The permitted Phase 16 re-review cleared six findings and identified correction-introduced Major RV-16-R1; AR-60 corrected the locale handoff rollback boundary with deterministic success, replacement-failure, and old-cleanup-failure evidence. A third review is prohibited.",
-        "summary:Phase 16 completed after 35/35 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
+        "summary:Phase 16 completed after 35/35 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 17 tasks 17.1.1 and 17.1.2 established 16 independently authored cases; expected red was 4 public Router controls passing and 12 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 17 tasks 17.2.1 through 17.2.4 delivered typed-stack, shared-chrome, lifecycle, focus, host-boundary, and diagnosis teaching plus two deterministic laboratories; 15/16 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 17 tasks 17.3.1 and 17.3.2 added unknown-route, history, rebuilt-focus, retention, reset, disposal, geometry, and interaction hardening and promoted Screens & routing after 30/30 focused checks passed.",
+        "summary:Phase 17 independent review found five Major and one Minor issue; AR-63 corrected real shared chrome, focus semantics, logger boundaries, codec validation, lifecycle evidence, and visible action markers without waiver.",
+        "summary:The permitted Phase 17 re-review cleared all original findings and identified correction-introduced Major RV-17-R1 through RV-17-R3; AR-64 corrected button clipping, unreachable nested-menu cues, and the stale Router API-link assertion. A third review is prohibited.",
+        "summary:Phase 17 completed after 30/30 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
+      "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1135,10 +1141,14 @@
         "Auto-design AR-57 removes an invalid generated API link to private @jsvision/web while retaining supported Files API links and the browser integration Guide.",
         "Auto-design AR-58 accepts RV-15-01 through RV-15-04 without waiver and requires complete path confinement, distinct denial and missing evidence, authentic opener cancellation, and denial ordering bound to the application adapter.",
         "Auto-design AR-59 accepts RV-16-01 through RV-16-07 without waiver and requires robust semantic assertions, an application-owned atomic locale handoff, marker-free feedback, public loading and formatting controls, complete laboratory interaction and geometry evidence, generation-owned diagnostics, and literal escaped-placeholder teaching.",
-        "Auto-design AR-60 accepts correction-introduced RV-16-R1 without waiver and scopes rollback to publication failure so detached cleanup faults cannot dispose the active locale generation."
+        "Auto-design AR-60 accepts correction-introduced RV-16-R1 without waiver and scopes rollback to publication failure so detached cleanup faults cannot dispose the active locale generation.",
+        "Auto-design AR-61 partitions Phase 17 into typed-stack/shared-chrome and screen-lifecycle/focus laboratories so the two catalog outcomes remain independently observable.",
+        "Auto-design AR-62 preserves Phase 17 expected-red evidence through its first green checkpoint.",
+        "Auto-design AR-63 accepts RV-17-01 through RV-17-06 without waiver and requires real visible shared chrome, accurate focus semantics, a sanitizing logger boundary, validated codecs, observed lifecycle state, and visible action markers.",
+        "Auto-design AR-64 accepts correction-introduced RV-17-R1 through RV-17-R3 without waiver and requires naturally sized action faces, non-deceptive nested-menu chrome, and an oracle synchronized with the generated Router interface."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:b18c89677d590ada28b5eede683f1bb224d174137d7db7849befee71025e6a7e",
+      "revision": "sha256:98e09f559783c9091596e51353bc60e70c91e7f3bf75341b8b1960299362d00f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1208,7 +1218,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:12944a05563fa3ad6f712731c1e2ca658dd801e2c3aee493478e7fc1a2a04483",
+          "revision": "sha256:50dcf8cad4fc81ab88ef5577f98d66f38812d778fbb3ad5f941085ca8edce78b",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T07:46:16Z"
         }

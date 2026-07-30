@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 56 items resolved
-> **Last Updated**: 2026-07-30 10:38
+> **Status**: ✅ GATE PASSED — all 64 items resolved
+> **Last Updated**: 2026-07-30 12:45
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -1730,3 +1730,130 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Replacement failure disposes the current generation, cleanup failure disposes
   the published next generation, or the active slot and surfaced exception disagree.
+
+**AR-61 (course/laboratories):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Naming and partitioning the two required Screens & routing laboratories within
+  the confirmed course outcomes; no public API, curriculum scope, compatibility, or host-policy
+  change.
+- **Objective:** Give typed navigation/history and screen ownership/focus two independently
+  observable learning objectives without duplicating the basic Router component demonstration.
+- **Decision:** Use `guides/routing-stack` for typed params, push/back/replace/reset, root-back
+  policy, and shared chrome. Use `guides/routing-lifecycle` for rebuild versus keep-alive, local
+  state, focus restoration, and exact cleanup. Both remain deterministic template1 applications.
+- **Evidence:** The existing `application/router` component example demonstrates the four stack
+  controls but does not prove the Guide outcomes for root policy, per-screen architecture,
+  retention tradeoffs, focus tiers, or route-owned cleanup. Combining all outcomes into one lab
+  would make distinct history and lifetime decisions difficult to falsify.
+- **Rejected alternatives:** Reusing only the component demo leaves the second catalog outcome
+  unproved. Splitting by route name repeats sample data rather than teaching a new decision.
+  A single kitchen-sink lab obscures which operation caused state or cleanup changes.
+- **Strongest counterargument:** Two labs repeat a small amount of router setup. The repetition is
+  limited to the public constructor and is justified because the interaction objectives and
+  observable evidence are different.
+- **Confidence:** High — the partition follows the catalog outcomes and the Router's public stack,
+  retention, focus, and cleanup contracts.
+- **Hardening:** The immutable oracle requires unique IDs, distinct lesson names, keyboard and mouse
+  routes, compact/responsive template1 behavior, and exact counters for each objective.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either lab cannot independently prove its objective, the component demo gains
+  exact equivalent Guide evidence, or the public Router contract changes.
+
+**AR-62 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required specification-first red checkpoint; no oracle weakening or
+  implementation change.
+- **Objective:** Preserve an immutable baseline before replacing the placeholder course.
+- **Decision:** Accept 12 failing and 4 passing cases as the expected red result. The passing cases
+  prove existing public Router behavior; failures identify only the intentionally absent complete
+  course, promotion, registry entries, and laboratories.
+- **Evidence:** The docs-site typecheck passes. The focused 16-case run reports exactly 12 failures
+  and 4 passes, with every failure attributable to the current placeholder or missing Guide
+  evidence.
+- **Rejected alternatives:** Requiring every case to fail would discard useful public-contract
+  evidence. Promoting or registering empty artifacts to reduce failures would violate the
+  completion gate.
+- **Strongest counterargument:** Passing public behavior tests make the red ratio less dramatic.
+  They are necessary controls that distinguish missing teaching artifacts from a broken Router.
+- **Confidence:** High — failure output names only the expected unimplemented course and lab
+  surfaces.
+- **Hardening:** The implementation may change only course-owned artifacts until this oracle is
+  green; the oracle itself remains immutable.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public behavior control fails, a failure is unrelated to the placeholder or
+  missing labs, or implementation requires changing an oracle expectation.
+
+**AR-63 (quality):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Source-grounded documentation, laboratory, and evidence corrections within the
+  confirmed Screens & routing outcomes; no public API, compatibility, curriculum scope, or external
+  host-policy change.
+- **Objective:** Resolve RV-17-01 through RV-17-06 without waiver before the course returns to
+  Complete.
+- **Decision:** Render and swap real bounded MenuBar and StatusLine surfaces through the Router
+  chrome host; describe focus target attempts and no-ops exactly as implemented rather than claiming
+  tier fallthrough; teach an application-supplied sanitizing Logger boundary and assert the raw
+  metadata it receives; validate required numeric codec input before returning typed params; replace
+  policy-derived lifecycle claims with observed screen identity, generation, and local-value
+  evidence; and mark every advertised Alt accelerator visibly. Strengthen the immutable oracle only
+  where the independent review exposed evidence that could pass without proving the requirement.
+- **Evidence:** The mandatory reviewer found five Major and one Minor issue: simulated chrome,
+  unsupported focus fallthrough, raw error metadata hidden by the test logger, unsafe codec parsing,
+  self-reported lifecycle identity/state, and unmarked Alt actions.
+- **Rejected alternatives:** Waivers are prohibited. Changing the Router focus or logger API would
+  expand SDK scope when accurate Guide teaching satisfies the confirmed outcome. Retaining
+  self-authored status labels cannot prove runtime state. Removing chrome, codec, or lifecycle
+  lessons would leave catalog outcomes incomplete.
+- **Strongest counterargument:** A real bounded chrome host and observed lifecycle state add fixture
+  complexity. That complexity is necessary because these are the behaviors the labs claim to prove;
+  deterministic counters alone cannot establish visible chrome replacement or instance identity.
+- **Confidence:** High — every correction is derived from current public source and can be falsified
+  through rendered bars, captured logger fields, validation cases, view identity, local value, and
+  cleanup evidence.
+- **Hardening:** The initial independent review reported five Major and one Minor issue. All are
+  accepted without waiver, and the single permitted fix-scoped re-review will challenge only these
+  corrections.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The actual bars do not change, an ineligible focus target is described as
+  Router fallthrough, raw metadata is called safe, invalid codec input reaches navigation,
+  lifecycle claims remain policy-derived, or an advertised Alt action lacks a visible marker.
+
+**AR-64 (quality re-review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting laboratory geometry, non-functional discoverability cues, and one
+  stale link assertion within the confirmed Screens & routing teaching contract; no public API,
+  curriculum scope, compatibility, or host-policy change.
+- **Objective:** Resolve correction-introduced RV-17-R1 through RV-17-R3 without waiver after the
+  single permitted fix-scoped re-review.
+- **Decision:** Shorten all stack-action labels while preserving their visible N/P/B/R markers and
+  assert each complete rendered label fits its natural Button width at standard and constrained
+  viewports. Render the route-owned menu contributions without accelerator markers because this
+  lab teaches shared-chrome replacement, not nested-menu operation. Synchronize the immutable
+  reference assertion with the generated Router interface page.
+- **Evidence:** The final re-review found a 13-cell rectangle around a 20-cell natural Push button,
+  route-owned menu accelerators that conflict with application commands and lack an attached menu
+  controller, and an oracle assertion that still named the removed Router class URL.
+- **Rejected alternatives:** Widening the four verbose buttons would crowd the bounded 60-cell
+  action row. Wiring a second overlay/controller seam would add unrelated menu interaction and
+  duplicate the application-shell course. Retaining the stale URL would make the production docs
+  build and focused oracle disagree with generated API evidence.
+- **Strongest counterargument:** Short action labels carry less route context. The adjacent
+  instructions, route readouts, and visible operation feedback preserve that meaning while the
+  buttons remain fully readable at reduced geometry.
+- **Confidence:** High — Button natural size is public measured evidence, non-marked menu titles no
+  longer promise an unreachable chord, and the generated interface file exists.
+- **Hardening:** The single permitted re-review cleared all six original findings and reported
+  these three correction-introduced Majors. The fixes add natural-size and full-label assertions at
+  80×24 and 70×24, preserve the four working app-level accelerators, and rerun focused, build, and
+  repository-wide gates. A third review is prohibited.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any action face is narrower than `measure()`, a route-owned menu displays an
+  unusable accelerator, the generated Router symbol changes kind, or the API link stops resolving.

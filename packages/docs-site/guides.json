@@ -281,7 +281,7 @@
       "group": "Building applications",
       "page": "/guide/screens-and-routing",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 7,
       "prerequisites": ["application-shell", "views-and-focus"],
       "learningOutcomes": [
@@ -290,7 +290,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/routing-stack", "guides/routing-lifecycle"]
     },
     {
       "id": "theming-and-colour-depth",
