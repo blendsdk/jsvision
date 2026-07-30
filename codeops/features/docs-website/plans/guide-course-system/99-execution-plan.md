@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 16:55
-> **Progress**: 184/246 tasks (75%)
+> **Last Updated**: 2026-07-30 17:22
+> **Progress**: 192/246 tasks (78%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1009,22 +1009,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-33 · `03-02 §Authentic Substitutes`
 
+> **Phase baseline tree**: cba64eb04912f07d3afb63cdfae82c843216e966
+>
+> **Expected modification set**: The Phase 24 Crash safety course, deterministic native-lifecycle
+> trace fixture and authentic test artifact, focused specification and implementation tests,
+> Guide catalog/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 24.1: Specification tests
 
-- [ ] 24.1.1 [spec-author] Write the crash-safety course oracle — `packages/docs-site/test/crash-safety-guide.spec.test.ts`
-- [ ] 24.1.2 Run the specification and record the expected red result
+- [x] 24.1.1 [spec-author] Write the crash-safety course oracle — `packages/docs-site/test/crash-safety-guide.spec.test.ts` ✅ (completed: 2026-07-30 17:05; independent 16-case immutable oracle covers the full course, zero-lab contract, AR-82 lifecycle trace and authentic artifact, ownership, exit paths, partial startup, handlers, degradations, safe diagnostics, and public controls)
+- [x] 24.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 17:05; expected red: six public host/essentials controls pass and ten placeholder course, catalog, and absent authentic-substitute contracts fail; docs-site typecheck passes)
 
 ### Step 24.2: Implementation
 
-- [ ] 24.2.1 Replace the placeholder with terminal ownership, restoration, and failure teaching — `packages/docs-site/guide/crash-safety.md`
-- [ ] 24.2.2 Implement the authentic lifecycle/restore test and annotated trace fixture — `packages/docs-site/src/example-fixtures/crash-safety/`, `packages/docs-site/test/crash-safety-example.spec.test.ts`
-- [ ] 24.2.3 Revalidate the zero-lab exception and artifact evidence — `packages/docs-site/guides.json`
-- [ ] 24.2.4 Run ST-33 green plus docs-site typecheck; fix implementation only
+- [x] 24.2.1 Replace the placeholder with terminal ownership, restoration, and failure teaching — `packages/docs-site/guide/crash-safety.md` ✅ (completed: 2026-07-30 17:10; the complete question-led course teaches one-owner restoration across normal, exception, rejection, signal, suspend/resume, partial-start, handler, degradation, diagnostic, shell-integration, and production boundaries)
+- [x] 24.2.2 Implement the authentic lifecycle/restore test and annotated trace fixture — `packages/docs-site/src/example-fixtures/crash-safety/`, `packages/docs-site/test/crash-safety-example.spec.test.ts` ✅ (completed: 2026-07-30 17:10; the public createHost path produces bounded payload-free traces for normal, fatal, signal, partial-start, idempotent, coexistence, and restore-failure scenarios without touching visitor or process resources)
+- [x] 24.2.3 Revalidate the zero-lab exception and artifact evidence — `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 17:10; requiredLiveExamples remains zero with the exact native raw-mode, alternate-screen, cursor, and process-signal exception; no browser lab or registry entry exists)
+- [x] 24.2.4 Run ST-33 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 17:10; 23/24 course and authentic-artifact assertions plus docs-site typecheck pass, with only final catalog promotion deliberately withheld)
 
 ### Step 24.3: Hardening
 
-- [ ] 24.3.1 Add normal/error/signal/idempotent restore and partial-start edges — `packages/docs-site/test/crash-safety-guide.impl.test.ts`
-- [ ] 24.3.2 Run focused checks, promote Crash safety, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 24.3.1 Add normal/error/signal/idempotent restore and partial-start edges — `packages/docs-site/test/crash-safety-guide.impl.test.ts` ✅ (completed: 2026-07-30 17:10; ten hardening cases cover repeated ownership, all terminating codes and ordering, exception/rejection redaction, partial startup, exact repeated-stop inertia, secondary restore-failure tolerance, bounded traces, and handler baselines)
+- [x] 24.3.2 Run focused checks, promote Crash safety, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 17:22; the promoted course passes 43/43 focused checks, docs-site typecheck, production docs build, and authoritative `yarn verify`; independent review found three Major and two Minor issues, AR-83 corrected byte validation, restoration/backstop ordering, combined fatal-and-restore evidence, snippet imports, and premature synchronization without waiver, and the single permitted fix-scoped re-review cleared every substantive finding before final CodeOps synchronization)
 
 **Verify**: Crash-safety guide/artifact tests and docs-site typecheck
 
