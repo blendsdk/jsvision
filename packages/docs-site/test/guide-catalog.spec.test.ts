@@ -102,10 +102,11 @@ describe('Guide curriculum catalog', () => {
       'events-commands-and-keymaps',
       'keyboard-and-clipboard',
       'text-unicode-and-cells',
+      'scrolling-lists-and-large-content',
       'data-grid-specialist',
       'code-editor-specialist',
     ]);
-    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(6);
+    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(5);
   });
 
   test('gives every course prerequisites, outcomes, and an explicit example target', () => {

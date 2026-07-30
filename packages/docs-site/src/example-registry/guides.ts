@@ -86,4 +86,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/glyph-fallback.ts',
     load: () => import('../../examples/guides/glyph-fallback.js'),
   },
+  {
+    id: 'guides/viewport-strategies',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/viewport-strategies.ts',
+    load: () => import('../../examples/guides/viewport-strategies.js'),
+  },
+  {
+    id: 'guides/virtual-collections',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/virtual-collections.ts',
+    load: () => import('../../examples/guides/virtual-collections.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

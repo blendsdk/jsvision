@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
+          "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T02:05:42Z"
         }
@@ -1021,10 +1021,17 @@
         "summary:Phase 9 tasks 9.2.1 through 9.2.4 delivered the complete Planned-stage course and two laboratories; 19/20 immutable assertions pass with only final stage promotion withheld, and docs-site typecheck passes.",
         "summary:Phase 9 task 9.3.1 added repeated-width, combining, fallback, monochrome, geometry, and teardown hardening; the initial 9.3.2 promotion passed 39/39 focused checks and every authoritative gate.",
         "summary:Phase 9 independent review found four Major and one Minor issue; AR-37 demoted the course and selected every correction without waiver.",
-        "summary:Phase 9 task 9.3.2 completed after 47/47 focused checks and every authoritative gate passed; the permitted re-review cleared RV-009-001 through RV-009-005 with zero remaining or introduced findings."
+        "summary:Phase 9 task 9.3.2 completed after 47/47 focused checks and every authoritative gate passed; the permitted re-review cleared RV-009-001 through RV-009-005 with zero remaining or introduced findings.",
+        "summary:Phase 10 baseline 8d798f931d5d9fc95acb1e4d233faf2b1994523c and its expected modification set are recorded before specification work.",
+        "summary:Phase 10 tasks 10.1.1 and 10.1.2 established 20 independently authored cases; expected red is 5 public controls passing and 15 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 10 tasks 10.2.1 through 10.2.4 delivered the Planned-stage course and two laboratories; 19/20 immutable assertions pass with only final stage promotion withheld, and docs-site typecheck passes.",
+        "summary:Phase 10 tasks 10.3.1 and 10.3.2 added offset, large-data, empty, focus, selection, geometry, and lifecycle hardening and initially promoted the course after 37/37 focused checks and every authoritative gate passed.",
+        "summary:Phase 10 independent review found five Major and one Minor issue; AR-40 demoted the course and selected every correction without waiver.",
+        "summary:The single permitted Phase 10 fix-scoped re-review cleared five findings and retained RV-010-002; the final no-third-review correction now resets uncapped work at the real subtree draw boundary and exposes deliberate over-budget formatting.",
+        "summary:Phase 10 task 10.3.2 completed after the promoted course passed 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
+      "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1063,10 +1070,13 @@
         "Auto-design AR-34 split Phase 9 into public-API cell-width and glyph-fallback laboratories while preserving the renderer's documented grapheme limitations.",
         "Auto-design AR-35 preserves Phase 9 expected-red specification evidence through its first green checkpoint.",
         "Auto-design AR-36 keeps Phase 9 Planned through hardening and moves the first repository-green commit boundary to final promotion.",
-        "Auto-design AR-37 selected every mandatory correction for the four Major and one Minor Phase 9 quality findings; the course remains Upgrade until correction gates and the permitted re-review pass."
+        "Auto-design AR-37 selected every mandatory correction for the four Major and one Minor Phase 9 quality findings; the course remains Upgrade until correction gates and the permitted re-review pass.",
+        "Auto-design AR-38 partitions Phase 10 into guides/viewport-strategies and guides/virtual-collections laboratories that teach the two distinct selection axes.",
+        "Auto-design AR-39 preserves Phase 10 expected-red evidence and the Planned-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-40 selected every mandatory correction for the five Major and one Minor Phase 10 quality findings; the permitted re-review retained RV-010-002, and the final correction uses an actual subtree draw boundary plus over-budget falsification evidence without a prohibited third review."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:9b8ac1c1060565a6820be3de02969b76dc7fddae3ef1af4063c82dd6f30c7563",
+      "revision": "sha256:dd05e09f6bdbe51ad2494fe56e3e91fee6db77566db0768c0c69449c471f0b2c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1136,7 +1146,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c4df3af9d6c77bc5b6f3c8468bb76efc6943270a3d24ea26c12b2b92e1587513",
+          "revision": "sha256:7e0d1b316f7e6313c377af358a3494b8298ce20ec4255612e28b636597575bff",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T02:05:42Z"
         }
@@ -1144,5 +1154,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T02:30:33Z"
+  "updated": "2026-07-30T03:39:42Z"
 }

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 04:30
-> **Progress**: 72/246 tasks (29%)
+> **Last Updated**: 2026-07-30 05:35
+> **Progress**: 80/246 tasks (33%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -428,8 +428,9 @@ independent specification-first phase (AR-10).
 > `packages/docs-site/examples/guides/clipboard-boundary.ts`,
 > `packages/docs-site/src/example-fixtures/keyboard-and-clipboard/`,
 > `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
-> `packages/docs-site/guide/index.md`, route-specific tests, and synchronized CodeOps lifecycle
-> artifacts.
+> `packages/docs-site/guide/index.md`, route-specific tests,
+> `packages/docs-site/test/guide-catalog.spec.test.ts` (mechanical Complete-stage allowlist), and
+> synchronized CodeOps lifecycle artifacts.
 
 ### Step 8.1: Specification tests
 
@@ -517,25 +518,50 @@ independent specification-first phase (AR-10).
 ## Phase 10: Scrolling, lists & large content
 
 **Reference**: ST-19 · `03-02` · `03-03`
+> **Phase baseline tree**: `8d798f931d5d9fc95acb1e4d233faf2b1994523c`
+> **Expected modification set**: `packages/docs-site/guide/scrolling-lists-and-large-content.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/scrolling-lists-and-large-content/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, and synchronized CodeOps lifecycle
+> artifacts.
 
 ### Step 10.1: Specification tests
 
-- [ ] 10.1.1 [spec-author] Write the scrolling/list course oracle — `packages/docs-site/test/scrolling-lists-and-large-content-guide.spec.test.ts`
-- [ ] 10.1.2 Run the specification and record the expected red result
+- [x] 10.1.1 [spec-author] Write the scrolling/list course oracle — `packages/docs-site/test/scrolling-lists-and-large-content-guide.spec.test.ts` ✅ (completed: 2026-07-30 04:44)
+- [x] 10.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 04:45) — authoritative focused run: 15 final course/catalog/laboratory assertions failed as expected, while all 5 public viewport and collection controls passed; commit deferred to the final green 10.3.2 checkpoint per runtime AR-39
 
 ### Step 10.2: Implementation
 
-- [ ] 10.2.1 Create the surface-selection, viewport, selection, and bounded-rendering course — `packages/docs-site/guide/scrolling-lists-and-large-content.md`
-- [ ] 10.2.2 Implement two focused template1 labs with bounded large-data fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/scrolling-lists-and-large-content/`
-- [ ] 10.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 10.2.4 Run ST-19 green plus docs-site typecheck; fix implementation only
+- [x] 10.2.1 Create the surface-selection, viewport, selection, and bounded-rendering course — `packages/docs-site/guide/scrolling-lists-and-large-content.md` ✅ (completed: 2026-07-30 04:51) — all six page-content contract assertions pass; only the deliberately deferred final catalog-stage assertion remains red
+- [x] 10.2.2 Implement two focused template1 labs with bounded large-data fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/scrolling-lists-and-large-content/` ✅ (completed: 2026-07-30 04:54)
+- [x] 10.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 04:56) — 19/20 immutable assertions pass; the only withheld assertion is final Complete-stage promotion
+- [x] 10.2.4 Run ST-19 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 04:57) — implementation checkpoint: 19/20 immutable assertions pass, the sole deferred final-stage assertion remains red by design, and docs-site typecheck passes
 
 ### Step 10.3: Hardening
 
-- [ ] 10.3.1 Add empty, huge, offset, resize, focus, and selection edges — `packages/docs-site/test/scrolling-lists-and-large-content-guide.impl.test.ts`
-- [ ] 10.3.2 Run focused checks, promote the route, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 10.3.1 Add empty, huge, offset, resize, focus, and selection edges — `packages/docs-site/test/scrolling-lists-and-large-content-guide.impl.test.ts` ✅ (completed: 2026-07-30 04:59)
+- [x] 10.3.2 Run focused checks, promote the route, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 05:35) — runtime AR-40 corrections passed 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify`; the one permitted fix-scoped re-review cleared five findings and retained RV-010-002, whose final no-third-review correction now counts from a real subtree draw boundary and proves that over-budget formatting remains visible
 
 **Verify**: Scrolling/list spec/impl tests and docs-site typecheck
+
+### Phase 10 quality review
+
+- The independent correctness review reported five Major findings and one Minor finding: stale
+  Scroller-delta teaching, a capped formatter-work display, the wrong default Tree marker,
+  overbroad bounded-work claims, clipped compact copy, and an incomplete ScrollBar range lesson.
+- Runtime AR-40 accepted every correction without waiver and held the course at Upgrade through
+  remediation.
+- The one permitted fix-scoped re-review resolved RV-010-001 and RV-010-003 through RV-010-006,
+  found no distinct correction-introduced issues, and retained RV-010-002 because a
+  capacity-triggered reset could still hide resident-scale work. A third review is prohibited.
+- The final RV-010-002 correction resets at the real parent-subtree draw boundary, increments
+  without a cap, publishes after both row children paint, and includes a falsification test that
+  forces work above viewport capacity. The promoted state passes 39/39 focused checks, docs-site
+  typecheck, production docs build, plugin integrity, and authoritative `yarn verify`.
+- Security and performance auditors were not separately invoked because this phase changes
+  documentation and bounded deterministic teaching views only; the correctness reviewer explicitly
+  audited the source-backed performance and browser-safety claims.
 
 ## Phase 11: The application shell
 

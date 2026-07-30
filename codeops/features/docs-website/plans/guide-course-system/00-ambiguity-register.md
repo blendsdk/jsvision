@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 33 items resolved
-> **Last Updated**: 2026-07-30 03:13
+> **Status**: ✅ GATE PASSED — all 40 items resolved
+> **Last Updated**: 2026-07-30 05:12
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -38,6 +38,13 @@
 | 31 | Execution (runtime) | How should Phase 8 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint and commit tasks 8.1.1–8.2.4 only after all gates turn green / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Apply the independently challenged AR-13 policy to the Phase 8 task IDs and resume per-task commits after 8.2.4. | ✅ Resolved |
 | 32 | Naming (runtime) | Which stable ID should identify the focused Keyboard & clipboard laboratory? | `guides/clipboard-boundary` / reuse `apps/editor` / choose an implementation-shaped widget name | **Authority: AI — delegated by `--auto-design`.** Use the outcome-shaped Guide ID so the laboratory remains owned by the cross-host clipboard lesson. | ✅ Resolved |
 | 33 | Quality review (runtime) | How should the four Major and one Minor Phase 8 findings be resolved without weakening clipboard authorization, lifecycle, and authentic-laboratory evidence? | Correct every boundary and prove real event-loop reads while temporarily demoting the course / defer or waive findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Apply all five technical corrections, keep the course at Upgrade until all gates and the one permitted fix-scoped re-review pass, then promote it in the same verified change. | ✅ Resolved |
+| 34 | Naming (runtime) | Which stable IDs and lesson split should identify the two Text, Unicode & terminal cells laboratories? | `guides/cell-width` plus `guides/glyph-fallback` / one combined laboratory / a grapheme-editor laboratory | **Authority: AI — delegated by `--auto-design`.** Use the two outcome-shaped IDs and keep measurement separate from capability degradation. | ✅ Resolved |
+| 35 | Execution (runtime) | How should Phase 9 preserve its intentional red oracle under auto-commit? | Reuse the approved spec-to-green checkpoint / commit a failing repository / weaken or quarantine the oracle | **Authority: AI — delegated by `--auto-design`.** Preserve the red evidence and defer the first commit until a repository-green checkpoint. | ✅ Resolved |
+| 36 | Execution (runtime) | Where is Phase 9's first truthful green checkpoint when the oracle requires final catalog promotion? | Commit only after 9.3.2 promotion and full verification / temporarily promote then demote / call a partial run green | **Authority: AI — delegated by `--auto-design`.** Keep the route Planned through hardening and make verified 9.3.2 the first commit/push checkpoint. | ✅ Resolved |
+| 37 | Quality review (runtime) | How should all Phase 9 review findings be resolved without weakening Unicode accuracy or compact laboratory behavior? | Correct all five findings and re-review once / expand runtime scope / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every scoped correction, rerun all gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 38 | Naming (runtime) | Which stable IDs and lesson split should identify the two Scrolling, lists & large content laboratories? | `guides/viewport-strategies` plus `guides/virtual-collections` / one example per component / reuse component examples | **Authority: AI — delegated by `--auto-design`.** Use one comparative viewport lab and one comparative virtual-collections lab. | ✅ Resolved |
+| 39 | Execution (runtime) | How should Phase 10 preserve its intentional red oracle and Planned-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 10.3.2 promotion and full verification / temporarily promote then demote / commit a failing repository / weaken the oracle | **Authority: AI — delegated by `--auto-design`.** Treat tasks 10.1.1–10.3.2 as one repository-green checkpoint and push only after the final promotion and authoritative gates pass. | ✅ Resolved |
+| 40 | Quality review (runtime) | How should the five Major and one Minor Phase 10 findings be resolved without weakening offset, marker, bounded-rendering, compact-layout, or scrollbar teaching? | Apply all six source-grounded corrections while temporarily demoting the route / expand into a public runtime change / waive or defer findings while retaining Complete | **Authority: AI — delegated by `--auto-design`.** Correct the course, instrumentation, compact lab, and focused evidence; keep the route Upgrade until all gates and the one permitted fix-scoped re-review pass. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -907,3 +914,129 @@ cross-course contracts after every authored route is complete.
   string exceeds its bound, a mouse action again reports keyboard, either planned page appears or
   disappears, the fallback table becomes malformed, or re-review retains a Critical or Major
   finding.
+
+**AR-38 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal documentation-laboratory naming and lesson partition within the
+  confirmed Phase 10 two-example target and catalog outcomes; no course scope, acceptance
+  criterion, public API, or product behavior changes.
+- **Objective:** Make the two laboratories teach the course's cross-surface decisions without
+  duplicating six component pages or the specialist Data Grid and Code Editor courses.
+- **Decision:** Use `guides/viewport-strategies` for one comparative viewport laboratory covering
+  focusable live-child Scroller behavior versus caller-driven offscreen SurfaceView behavior,
+  including clamped offsets and scroll-bar ownership. Use `guides/virtual-collections` for one
+  comparative collection laboratory covering typed ListView, string-specialized ListBox, and
+  hierarchical Tree behavior, including bounded visible-row work, focus, selection, expansion,
+  empty/shrinking data, and the boundary to specialist windowed sources.
+- **Evidence:** The public source and tests distinguish Scroller as a focusable owner over one
+  oversized live child, SurfaceView as a passive projection over an offscreen Surface, and
+  ListView/ListBox/Tree as virtual row renderers over fully resident reactive collections. The
+  catalog requires exactly two laboratories and explicitly requires a choice among those surfaces
+  plus specialist windowed sources. Existing component examples teach one widget at a time but do
+  not prove the Guide-level selection decision.
+- **Rejected alternatives:** One laboratory per surface would exceed the confirmed two-example
+  target and duplicate component ownership. Reusing two component examples would leave the
+  cross-surface decision and specialist-source boundary unproved. A single kitchen-sink laboratory
+  would combine viewport and collection state into one dense objective.
+- **Strongest counterargument:** A comparative laboratory can become visually dense. Each selected
+  lab therefore owns one decision axis and switches bounded modes inside a compact responsive
+  workspace instead of displaying every surface simultaneously.
+- **Confidence:** High — the split maps directly to the two catalog outcomes and the verified
+  public ownership models.
+- **Hardening:** Compared the catalog, prerequisite courses, public exports/source/tests, component
+  pages, specialist hubs, and canonical skill references. No independent challenge was
+  proportionate because the names and two-way lesson partition are reversible documentation
+  mechanics.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The catalog example target changes, a selected surface changes its focus or
+  data-ownership model, or the two laboratories cannot remain readable and interactive at 80×24.
+
+**AR-39 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Verification and commit sequencing within the confirmed specification-first
+  Phase 10 tasks; no course outcome, catalog acceptance criterion, product behavior, public
+  compatibility, or scope changes.
+- **Objective:** Preserve the immutable final-contract oracle, the Planned-until-hardened catalog
+  rule, and the repository-wide green-commit policy without falsifying intermediate evidence.
+- **Decision:** Record tasks 10.1.1 and 10.1.2 with their factual expected-red evidence and defer
+  their commit. Keep the catalog route Planned through task 10.3.1. Treat task 10.2.4 as an
+  implementation-contract checkpoint where every non-stage assertion and docs-site typecheck must
+  pass. At task 10.3.2, promote the catalog and curriculum, require the entire immutable oracle,
+  focused implementation tests, docs build, plugin integrity, and authoritative `yarn verify` to
+  pass, then create and push the first Phase 10 commit.
+- **Evidence:** The independent oracle runs twenty cases: all five controls over current public
+  Scroller, ScrollBar, SurfaceView, ListView/ListBox, and Tree behavior pass before implementation;
+  fifteen final course, catalog, registry, shell, interaction, geometry, and cleanup assertions
+  fail because the Phase 10 page and laboratories do not exist and the catalog remains Planned.
+  The oracle explicitly requires `stage: complete`, while task 10.2.3 explicitly retains Planned
+  status until route-specific hardening finishes.
+- **Rejected alternatives:** Committing the red oracle violates `yarn verify`. Temporarily
+  promoting and demoting would misrepresent learner-facing completion and create artificial
+  catalog churn. Weakening, skipping, or quarantining the immutable oracle would destroy the
+  specification-first evidence. Calling a partial run green would falsify verification.
+- **Strongest counterargument:** One checkpoint combines oracle, implementation, hardening, and
+  promotion, reducing commit granularity. It is nevertheless the smallest truthful
+  repository-green unit under the immutable final-stage assertion.
+- **Confidence:** High — this applies the independently challenged AR-13 policy and the proven
+  Phase 9 final-promotion sequencing without changing either rule.
+- **Hardening:** Reused the prior blind challenger ruling and reconciled it with the exact Phase 10
+  oracle, task order, and actual red result. A repeated independent challenge of the unchanged
+  policy was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A non-stage assertion cannot pass at the implementation checkpoint, the
+  catalog permits verified completion before hardening, or the repository gains an authoritative
+  expected-red commit mechanism.
+
+**AR-40 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Documentation accuracy, laboratory instrumentation, compact copy, and focused
+  evidence within the confirmed Phase 10 outcomes; no product behavior, public compatibility,
+  acceptance criterion, security policy, or scope changes.
+- **Objective:** Resolve every independent-review finding so the completed course teaches the
+  current public offset, marker, resident-data, and scrollbar contracts and proves bounded work
+  with truthful unclipped evidence.
+- **Decision:** Explain that a dynamic Scroller extent visually clamps composition but does not
+  rewrite the public delta signal until a later owning navigation write, and assert both states.
+  Replace cumulative capped formatter feedback with uncapped, per-render evidence tied to real
+  viewport capacity and verify it after navigation, expansion, data changes, resize, maximize, and
+  restore. Correct Tree marker teaching to name `tv` as the default and brackets/triangles as
+  explicit alternatives, including triangle fallback evidence. Limit bounded-rendering claims to
+  unsorted visible-row painting and teach sorting, type-ahead, and expanded-tree flattening costs.
+  Shorten the compact collection headline below 66 cells and assert its complete cell-width-safe
+  rendering. Rewrite the ScrollBar lesson around extent, viewport, max-offset, page-step, and
+  explicit bound-value re-limiting. Keep the catalog and curriculum at Upgrade and task 10.3.2
+  implemented until every correction, focused and authoritative gate, and the single permitted
+  fix-scoped re-review pass.
+- **Evidence:** The independent reviewer reproduced a stale public Scroller delta after dynamic
+  extent shrink, found cumulative work hidden behind a capped display, verified the default Tree
+  marker is `tv`, traced full-array `getText` calls for sorting/type-ahead and whole expanded-tree
+  flattening, measured the compact headline at 68 cells inside a 66-cell region, and found the
+  scrollbar snippet used an unexplained range update without re-limiting the bound value.
+- **Rejected alternatives:** Waiving any Major finding is forbidden. Changing Scroller or
+  ScrollBar public behavior would expand a documentation phase into an unnecessary compatibility
+  change. Retaining a cumulative capped counter or over-width copy would keep the live evidence
+  false. Treating every resident operation as bounded by paint would preserve an unsafe
+  performance generalization.
+- **Strongest counterargument:** Per-render work instrumentation adds teaching-fixture machinery
+  that production applications would not normally expose. The counter is worthwhile here because
+  the catalog outcome explicitly requires observable bounded rendering, and the implementation
+  remains isolated to a deterministic documentation fixture.
+- **Confidence:** High — all six corrections follow directly from reproduced source/runtime
+  evidence and preserve the approved course outcomes.
+- **Hardening:** The mandatory independent reviewer supplied five Major and one Minor finding.
+  Every finding was accepted without waiver. The single permitted fix-scoped re-review resolved
+  five findings and retained RV-010-002 because capacity-triggered resets could still hide a full
+  resident scan. The final correction measures from the real parent-subtree draw boundary,
+  increments without a cap, publishes after child painting, and deliberately proves that
+  over-budget formatter work exceeds viewport capacity. A third review is prohibited.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Scroller begins rewriting delta during draw, Tree marker defaults change,
+  ListView sorting/type-ahead or Tree flattening costs change, per-render instrumentation diverges
+  from actual formatter calls, any authored one-row copy exceeds its bound, ScrollBar range writes
+  begin re-limiting the bound value, or re-review retains a Critical or Major finding.
