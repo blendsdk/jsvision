@@ -655,3 +655,55 @@ cross-course contracts after every authored route is complete.
   disabled Save button remains focusable or visually enabled, focus feedback again relies on
   colour, the diagram routes non-key events through keymaps, or the re-review retains a Critical or
   Major finding.
+
+**AR-31 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Commit sequencing for an expected-red course upgrade under the confirmed
+  specification-first and auto-commit policies.
+- **Objective:** Preserve the Phase 8 oracle's authoritative red evidence without committing a
+  repository that fails `yarn verify`.
+- **Decision:** Mark 8.1.1 and 8.1.2 complete with their factual focused-red evidence, defer their
+  commit, and continue through 8.2.4. Commit tasks 8.1.1–8.2.4 as one spec-to-green slice only after
+  focused specifications, docs-site typecheck, registry integration, and `yarn verify` pass.
+- **Evidence:** Phase 8 upgrades an existing thin course and reuses public clipboard behavior, so
+  the independent final-contract oracle is expected to pass public controls while exposing course,
+  catalog, registry, and focused-laboratory gaps.
+- **Rejected alternatives:** Committing red violates the repository gate. Weakening, skipping, or
+  quarantining the oracle destroys specification-first evidence.
+- **Strongest counterargument:** Six task IDs in one checkpoint reduce commit granularity. They are
+  the smallest safe unit because the intermediate oracle is intentionally red.
+- **Confidence:** High — this is the independently challenged AR-13 policy applied to the Phase 8
+  task IDs.
+- **Hardening:** Reused AR-13's blind challenger ruling; a repeated challenge of the unchanged
+  policy was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The oracle turns green before implementation, an unrelated failure blocks
+  the green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-32 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable documentation-example naming within the confirmed one-laboratory
+  Keyboard & clipboard scope; no product behavior or external compatibility decision changes.
+- **Objective:** Give the focused laboratory a durable ID that expresses its cross-host clipboard
+  authorization lesson rather than a particular editor implementation.
+- **Decision:** Register the laboratory as `guides/clipboard-boundary`.
+- **Evidence:** The catalog requires one lab and names both consistent editing chords and
+  native/browser/custom authorization choices. The lab must use deterministic virtual host seams,
+  so the boundary is its durable learning objective.
+- **Rejected alternatives:** Reusing `apps/editor` does not expose denial or adapter choice and is
+  owned by a component/application example. A widget-shaped ID would become stale if the editing
+  control changes.
+- **Strongest counterargument:** The name does not mention keyboard chords. Chords are one visible
+  input path within the broader canonical-versus-host boundary, while the course title and lab
+  framing provide the keyboard context.
+- **Confidence:** High — the name matches the catalog outcome and the existing
+  `guides/<objective>` namespace.
+- **Hardening:** Low-risk naming choice checked against the registry, catalog, and one-lab
+  constraint; independent challenge was not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The laboratory objective changes away from clipboard authorization, an ID
+  collision appears, or an existing published example proves the exact same outcome and framing.
