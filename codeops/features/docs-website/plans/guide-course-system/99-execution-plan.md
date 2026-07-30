@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 02:44
-> **Progress**: 62/246 tasks (25%)
+> **Last Updated**: 2026-07-30 02:53
+> **Progress**: 63/246 tasks (26%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -445,7 +445,7 @@ independent specification-first phase (AR-10).
 
 ### Step 8.3: Hardening
 
-- [ ] 8.3.1 Add browser-denial, unavailable-adapter, selection, and key-conflict edges — `packages/docs-site/test/keyboard-and-clipboard-guide.impl.test.ts`
+- [x] 8.3.1 Add browser-denial, unavailable-adapter, selection, and key-conflict edges — `packages/docs-site/test/keyboard-and-clipboard-guide.impl.test.ts` ✅ (completed: 2026-07-30 02:53) — 33/33 focused course and hardening checks plus authoritative `yarn verify` pass
 - [ ] 8.3.2 Run focused checks, promote Keyboard & clipboard, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
 
 **Verify**: Keyboard/clipboard spec/impl tests and docs-site typecheck
