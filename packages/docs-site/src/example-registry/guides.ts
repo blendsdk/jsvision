@@ -65,4 +65,11 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/command-precedence.ts',
     load: () => import('../../examples/guides/command-precedence.js'),
   },
+  {
+    id: 'guides/clipboard-boundary',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/clipboard-boundary.ts',
+    load: () => import('../../examples/guides/clipboard-boundary.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

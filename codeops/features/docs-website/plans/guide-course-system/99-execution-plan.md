@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 02:23
-> **Progress**: 56/246 tasks (23%)
+> **Last Updated**: 2026-07-30 02:44
+> **Progress**: 62/246 tasks (25%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -423,18 +423,25 @@ independent specification-first phase (AR-10).
 ## Phase 8: Keyboard & clipboard
 
 **Reference**: ST-17 · `03-02` · `03-03`
+> **Phase baseline tree**: `b0d7f6218190f9289407cc21a9dc30386ff8b1d4`
+> **Expected modification set**: `packages/docs-site/guide/keyboard-and-clipboard.md`,
+> `packages/docs-site/examples/guides/clipboard-boundary.ts`,
+> `packages/docs-site/src/example-fixtures/keyboard-and-clipboard/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, and synchronized CodeOps lifecycle
+> artifacts.
 
 ### Step 8.1: Specification tests
 
-- [ ] 8.1.1 [spec-author] Write the Keyboard & clipboard oracle — `packages/docs-site/test/keyboard-and-clipboard-guide.spec.test.ts`
-- [ ] 8.1.2 Run the specification and record the expected red result
+- [x] 8.1.1 [spec-author] Write the Keyboard & clipboard oracle — `packages/docs-site/test/keyboard-and-clipboard-guide.spec.test.ts` ✅ (completed: 2026-07-30 02:33) — independent specification author produced 26 executed cases covering the full course, seven public keyboard/clipboard controls, one template1 virtual-boundary lab, interaction outcomes, responsive evidence, authorization, staleness, and cleanup
+- [x] 8.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 02:33) — expected red: nine cases pass, including all seven public controls and two existing course details; seventeen final-contract cases fail across eleven course/catalog gaps and six missing registry/laboratory contracts; commit deferred to the green 8.2.4 checkpoint per AR-31
 
 ### Step 8.2: Implementation
 
-- [ ] 8.2.1 Upgrade chords, selection, adapter choice, authorization, and failures — `packages/docs-site/guide/keyboard-and-clipboard.md`
-- [ ] 8.2.2 Implement or adapt one focused template1 clipboard lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/keyboard-and-clipboard/`
-- [ ] 8.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 8.2.4 Run ST-17 green plus docs-site typecheck; fix implementation only
+- [x] 8.2.1 Upgrade chords, selection, adapter choice, authorization, and failures — `packages/docs-site/guide/keyboard-and-clipboard.md` ✅ (completed: 2026-07-30 02:44)
+- [x] 8.2.2 Implement or adapt one focused template1 clipboard lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/keyboard-and-clipboard/` ✅ (completed: 2026-07-30 02:44)
+- [x] 8.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 02:44)
+- [x] 8.2.4 Run ST-17 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 02:44) — 26/26 independent specifications, docs-site typecheck, JSON validation, documentation self-check, and authoritative `yarn verify` pass; expected-red work is committed only at this first green checkpoint per AR-31
 
 ### Step 8.3: Hardening
 

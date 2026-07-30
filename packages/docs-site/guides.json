@@ -137,7 +137,7 @@
       ],
       "requiredLiveExamples": 1,
       "liveExampleException": null,
-      "examples": ["apps/editor"]
+      "examples": ["guides/clipboard-boundary"]
     },
     {
       "id": "text-unicode-and-cells",

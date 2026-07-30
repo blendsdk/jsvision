@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
+          "revision": "sha256:1613ba738d82f2c08d2c7de6cc6e1db8f9d98ed6c8687a576f77bcde9a935d2f",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:23:00Z"
+          "validatedAt": "2026-07-30T00:44:45Z"
         }
       ]
     },
@@ -951,7 +951,9 @@
         "Phase 7 Events, commands & keymaps hardening: 29/29 focused tests and yarn verify pass across repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown edges.",
         "Phase 7 Events, commands & keymaps promotion: 36/36 focused course, hardening, and catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
         "Phase 7 review remediation: 38/38 focused tests and every authoritative gate pass after real button routing, exact mouse-down, disabled-focus, ASCII cue, and diagram corrections; the permitted re-review cleared all findings.",
-        "Phase 7 final promoted state: 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
+        "Phase 7 final promoted state: 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 8 Keyboard & clipboard expected red: 9 cases pass, including all 7 public controls and 2 existing course details; 17 course, catalog, registry, and laboratory cases fail across the 26-case independent oracle.",
+        "Phase 8 Keyboard & clipboard green checkpoint: 26/26 independent specifications, docs-site typecheck, JSON validation, documentation self-check, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -1002,10 +1004,13 @@
         "summary:Phase 7 tasks 7.1.1 and 7.1.2 established 23 independently authored cases; expected red is 5 public controls passing and 18 course/lab contract failures.",
         "summary:Phase 7 tasks 7.2.1 through 7.2.4 reached green with 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify passing.",
         "summary:Phase 7 task 7.3.1 added repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown hardening; 29/29 focused tests and yarn verify pass.",
-        "summary:Phase 7 task 7.3.2 promoted after AR-30 corrections passed 38/38 focused tests and every authoritative gate, and the permitted re-review cleared all four Major and two Minor findings."
+        "summary:Phase 7 task 7.3.2 promoted after AR-30 corrections passed 38/38 focused tests and every authoritative gate, and the permitted re-review cleared all four Major and two Minor findings.",
+        "summary:Phase 8 baseline b0d7f6218190f9289407cc21a9dc30386ff8b1d4 and its expected modification set are recorded before specification work.",
+        "summary:Phase 8 tasks 8.1.1 and 8.1.2 established 26 independently authored cases; expected red is 9 passing and 17 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 8 tasks 8.2.1 through 8.2.4 reached green with the complete course, one deterministic virtual-host laboratory, 26/26 specifications, docs-site typecheck, and authoritative yarn verify passing."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
+      "revision": "sha256:1613ba738d82f2c08d2c7de6cc6e1db8f9d98ed6c8687a576f77bcde9a935d2f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1037,10 +1042,12 @@
         "Auto-design AR-27 applied every mandatory Phase 6 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
         "Auto-design AR-28 selected outcome-shaped IDs for the two Events, commands & keymaps laboratories.",
         "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint.",
-        "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete."
+        "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
+        "Auto-design AR-31 preserves the Phase 8 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-32 selected guides/clipboard-boundary for the one focused Keyboard & clipboard laboratory."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:675eb58dc6cead2491c0afa73cf15565ba6be44f5648ab6bc6997d9346000817",
+      "revision": "sha256:147095ae9c2ba988cad1a5b2e2c13d681644d151017702c0afa822725e8bc301",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1110,13 +1117,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
+          "revision": "sha256:1613ba738d82f2c08d2c7de6cc6e1db8f9d98ed6c8687a576f77bcde9a935d2f",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:23:00Z"
+          "validatedAt": "2026-07-30T00:44:45Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T00:23:00Z"
+  "updated": "2026-07-30T00:44:45Z"
 }
