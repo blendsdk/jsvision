@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 20:00
-> **Progress**: 232/246 tasks (94%)
+> **Last Updated**: 2026-07-30 20:17
+> **Progress**: 238/246 tasks (97%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1187,20 +1187,27 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-39–ST-40 · `03-01 §Ownership Boundaries` · AR-3
 
+> **Phase baseline tree**: 4fc067e687e21a50acefebc269c03edad45e390c
+>
+> **Expected modification set**: Specialist-boundary specification and hardening tests, the Guide
+> curriculum and related-course links, reciprocal links in the Data Grid and Code Editor specialist
+> hubs, and plan/roadmap evidence. Specialist chapter content and public SDK behavior remain
+> unchanged.
+
 ### Step 30.1: Specification tests
 
-- [ ] 30.1.1 [spec-author] Extend specialist-boundary specifications — `packages/docs-site/test/guide-catalog.spec.test.ts`
-- [ ] 30.1.2 Run ST-39–ST-40 and record red link/ownership gaps
+- [x] 30.1.1 [spec-author] Extend specialist-boundary specifications — `packages/docs-site/test/guide-catalog.spec.test.ts` ✅ (completed: 2026-07-30 20:06; immutable ST-39/ST-40 assertions fix exact specialist routes, prevent duplicate Guide courses and chapter headings, require curriculum/prerequisite forward links, and require reciprocal hub links to the Guide curriculum and catalog prerequisites)
+- [x] 30.1.2 Run ST-39–ST-40 and record red link/ownership gaps ✅ (completed: 2026-07-30 20:06; focused Vitest produced the expected four failures for Data Grid/Code Editor prerequisite forward links and reciprocal hub links while nine route, projection, file, and ownership assertions passed; docs-site typecheck remained green)
 
 ### Step 30.2: Implementation
 
-- [ ] 30.2.1 Correct Guide curriculum and related-course links to both specialist hubs — `packages/docs-site/guide/index.md`, `packages/docs-site/guide/*.md`
-- [ ] 30.2.2 Run specialist specifications green and confirm no duplicate Guide routes exist
+- [x] 30.2.1 Correct Guide curriculum and related-course links to both specialist hubs — `packages/docs-site/guide/index.md`, `packages/docs-site/guide/*.md` ✅ (completed: 2026-07-30 20:07; Reactive state links to both specialist hubs, Forms links to Data Grid, and both component hubs return to the Guide curriculum plus every catalog prerequisite without duplicating specialist lessons)
+- [x] 30.2.2 Run specialist specifications green and confirm no duplicate Guide routes exist ✅ (completed: 2026-07-30 20:07; all 13 specialist catalog/ownership assertions pass, the exact component routes remain authoritative, no duplicate Guide route or chapter heading exists, and docs-site typecheck is green)
 
 ### Step 30.3: Hardening
 
-- [ ] 30.3.1 Add bidirectional-link and duplicate-topic heuristics — `packages/docs-site/test/guide-integration.impl.test.ts`
-- [ ] 30.3.2 Run focused Guide plus Data Grid/Code Editor navigation checks
+- [x] 30.3.1 Add bidirectional-link and duplicate-topic heuristics — `packages/docs-site/test/guide-integration.impl.test.ts` ✅ (completed: 2026-07-30 20:08; catalog-derived hardening checks exact prerequisite/hub reciprocity, dynamically compares specialist-owned H1/H2 topics against every Guide heading, and prevents duplicate specialist filenames and Guide routes)
+- [x] 30.3.2 Run focused Guide plus Data Grid/Code Editor navigation checks ✅ (completed: 2026-07-30 20:17; docs-site typecheck and 49 focused catalog, bidirectional-boundary, component-navigation, Data Grid topology, and Code Editor topology assertions pass; production docs build and authoritative `yarn verify` are green; independent review found no Critical or Major issue and reported P30-001 as a non-blocking limitation of exact-heading duplication heuristics)
 
 **Verify**: ST-39–ST-40 and focused specialist navigation tests
 

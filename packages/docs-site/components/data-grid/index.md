@@ -75,6 +75,12 @@ The generated API documents [EditableDataGrid](/api/datagrid/classes/EditableDat
 
 ## Related
 
+- [Guide curriculum](/guide/) — return to the complete framework learning path.
+- [Reactive state](/guide/reactive-state) — model source rows, derivations, and owned updates.
+- [Scrolling, lists & large content](/guide/scrolling-lists-and-large-content) — choose viewport
+  ownership and distinguish resident data from windowed sources.
+- [Forms](/guide/forms) — understand typed validation, async work, and persistence boundaries
+  before composing editable cells.
 - [Data & columns](/components/data-grid/data-and-columns) — establish the data model first.
 - [API map](/components/data-grid/api) — find each visual and non-visual public surface.
 - [DataGrid API](/api/ui/classes/DataGrid) and
