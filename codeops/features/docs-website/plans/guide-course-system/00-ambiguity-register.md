@@ -613,3 +613,45 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** The oracle turns green before implementation, an unrelated failure blocks the
   green checkpoint, or the repository gains an authoritative red-commit mechanism.
+
+**AR-30 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correctness, focus eligibility, documentation accuracy, accessible feedback, and
+  verification mechanics inside the confirmed Events, commands & keymaps outcomes; no product
+  behavior, public compatibility policy, security boundary, or acceptance criterion changes.
+- **Objective:** Resolve every Phase 7 quality finding and make Complete mean that the real
+  laboratory controls prove the routing, mouse, command-availability, and non-colour claims.
+- **Decision:** Refocus the route probe before the Paste and Command buttons dispatch their teaching
+  events, and cover both buttons through real mouse and keyboard activation. Record only mouse-down
+  for the target-to-parent lesson and require an exact bounded trace. Bind the Save button's
+  reactive `disabled` state to command availability, synchronously re-home focus before disabling
+  it, and explain that plain command buttons need this explicit binding. Add `[FOCUSED]` ASCII cues
+  to both custom targets and split the opening diagram so only key input enters keymap and Tab
+  preprocessing. Return the catalog, curriculum map, completion allowlist, and task to Upgrade /
+  in-progress until all gates and the single permitted fix-scoped re-review pass.
+- **Evidence:** Independent review of `da449549c..b9ba9a93c` reproduced incomplete traces from the
+  real Paste and Command buttons, a `target > parent > target` click trace, an enabled-looking
+  focusable Save button after command disablement, over-broad routing prose, and colour-only custom
+  focus state.
+- **Rejected alternatives:** Keeping Complete while correcting contradicts the Guide completion
+  gate. Waiving Major findings is forbidden. Testing direct loop dispatch again would not cover the
+  learner-visible controls. Hiding the Save button would remove the state comparison instead of
+  teaching correct availability.
+- **Strongest counterargument:** Refocusing inside button callbacks changes focus immediately after
+  activation. That transition is intentional and visible: the lab's objective is to demonstrate
+  the focused route probe, and the persistent `[FOCUSED]` cue explains the active destination.
+- **Confidence:** High — each correction follows public focus, Button, dispatch, and reactive
+  contracts and has an observable implementation assertion.
+- **Hardening:** The mandatory independent reviewer supplied the findings. The corrected demoted
+  state passed 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity,
+  and authoritative `yarn verify`. The single allowed fix-scoped re-review resolved all four Major
+  and two Minor findings with no correction-introduced regression and no remaining Critical,
+  Major, or Minor issue. The final promoted state repeated the same focused and authoritative
+  gates successfully.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either real routing button omits a phase, mouse-up re-enters the trace, the
+  disabled Save button remains focusable or visually enabled, focus feedback again relies on
+  colour, the diagram routes non-key events through keymaps, or the re-review retains a Critical or
+  Major finding.

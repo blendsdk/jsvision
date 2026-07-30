@@ -4,7 +4,7 @@
  * The specification proves the learner-facing contract. These checks stress repeated command
  * enablement, raw-key suppression, pointer boundaries, deterministic paste, and host-owned cleanup.
  */
-import { createRoot } from '@jsvision/ui';
+import { Button, createRoot } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import { describe, expect, test, vi } from 'vitest';
 import precedenceExample from '../examples/guides/command-precedence.js';
@@ -18,6 +18,7 @@ import {
   dispatchExampleAction,
   frameText,
   key,
+  viewsIn,
 } from './example-lab-harness.js';
 
 /** Find the first rendered occurrence of a learner-visible label. */
@@ -55,6 +56,7 @@ test('routing trace remains deterministic across key, paste, command, reset, and
   createRoot((dispose) => {
     const { app } = buildLabExample('guides/event-routing', routingExample);
 
+    expect(frameText(app)).toContain('Mouse target [FOCUSED]');
     app.loop.dispatch(key('x'));
     expect(frameText(app)).toContain('Key x: pre > focused > post');
 
@@ -71,6 +73,36 @@ test('routing trace remains deterministic across key, paste, command, reset, and
       at: { x: target.x + 1, y: target.y },
     });
     expect(frameText(app)).toContain('Mouse: target > parent');
+    expect(frameText(app)).not.toContain('Mouse: target > parent >');
+    dispose();
+  });
+});
+
+test('routing buttons preserve the focused route for mouse and keyboard activation', () => {
+  createRoot((dispose) => {
+    const { app, dialog } = buildLabExample('guides/event-routing', routingExample);
+    const buttons = viewsIn(dialog).filter((view): view is Button => view instanceof Button);
+    const paste = buttons.find((button) => button.activation.label === 'Send paste');
+    const command = buttons.find((button) => button.activation.label === 'Emit command');
+    if (paste === undefined || command === undefined) throw new Error('routing lesson buttons are missing');
+
+    for (const button of [paste, command]) {
+      const origin = renderedTextOrigin(app, button.activation.label);
+      dispatchExampleAction(app, {
+        kind: 'mouse',
+        gesture: 'click',
+        at: { x: origin.x, y: origin.y },
+      });
+      const expected = button === paste ? 'Paste sample' : 'Command inspect';
+      expect(frameText(app)).toContain(`${expected}: pre > focused > post`);
+      expect(frameText(app)).toContain('Mouse target [FOCUSED]');
+
+      app.loop.focusView(button);
+      expect(app.loop.getFocused()).toBe(button);
+      app.loop.dispatch(key('space'));
+      expect(frameText(app)).toContain(`${expected}: pre > focused > post`);
+      expect(frameText(app)).toContain('Mouse target [FOCUSED]');
+    }
     dispose();
   });
 });
@@ -126,6 +158,30 @@ test('only unbound keys reach the precedence laboratory raw-key target', () => {
     app.loop.dispatch(key('x'));
     expect(frameText(app)).toContain('Raw key deliveries: 1');
     expect(frameText(app)).toContain('unbound raw key reached the focused view');
+    dispose();
+  });
+});
+
+test('disabling Save greys its button, removes it from focus, and exposes a non-colour focus cue', () => {
+  createRoot((dispose) => {
+    const { app, dialog } = buildLabExample('guides/command-precedence', precedenceExample);
+    const emitSave = viewsIn(dialog)
+      .filter((view): view is Button => view instanceof Button)
+      .find((button) => button.activation.label === 'Emit save');
+    if (emitSave === undefined) throw new Error('precedence lesson Save button is missing');
+
+    app.loop.focusView(emitSave);
+    expect(app.loop.getFocused()).toBe(emitSave);
+    app.loop.dispatch(key('d', { alt: true }));
+
+    expect(emitSave.state.disabled).toBe(true);
+    expect(app.loop.getFocused()).not.toBe(emitSave);
+    expect(frameText(app)).toContain('Raw-key target [FOCUSED]');
+    app.loop.focusView(emitSave);
+    expect(app.loop.getFocused()).not.toBe(emitSave);
+
+    app.loop.dispatch(key('d', { alt: true }));
+    expect(emitSave.state.disabled).toBe(false);
     dispose();
   });
 });

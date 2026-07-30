@@ -36,7 +36,8 @@ class RawKeyProbe extends View {
   override draw(ctx: DrawContext): void {
     const role = this.state.focused ? 'buttonFocused' : 'button';
     ctx.fill(' ', ctx.color(role));
-    ctx.text(1, 0, 'Raw-key focus target', ctx.color(role));
+    const label = this.state.focused ? 'Raw-key target [FOCUSED]' : 'Raw-key focus target';
+    ctx.text(0, 0, label, ctx.color(role));
   }
 
   override onEvent(event: DispatchEvent): void {
@@ -70,6 +71,16 @@ export default defineExample({
       const status = signal('Status: mapped chords become commands before the focused view');
       const rawKeys = signal(0);
 
+      const rawTarget = new RawKeyProbe(() => {
+        rawKeys.update((count) => count + 1);
+        status.set('Status: an unbound raw key reached the focused view');
+      });
+      const emitSave = new Button('Emit ~s~ave', {
+        command: CMD_SAVE,
+        disabled: () => !enabled(),
+      });
+      const toggle = new Button('Toggle ~d~isabled', { command: CMD_TOGGLE });
+
       const offSave = app.onCommand(CMD_SAVE, () => {
         winner.set('app onCommand');
         status.set('Status: save handled once by the app command owner');
@@ -80,6 +91,8 @@ export default defineExample({
       });
       const offToggle = app.onCommand(CMD_TOGGLE, () => {
         const next = !enabled.peek();
+        const moveFocus = !next && app.loop.getFocused() === emitSave;
+        if (moveFocus) app.loop.focusView(rawTarget);
         enabled.set(next);
         app.loop.enableCommand(CMD_SAVE, next);
         status.set(
@@ -88,13 +101,6 @@ export default defineExample({
             : 'Status: save disabled; mapped save commands are dropped',
         );
       });
-
-      const rawTarget = new RawKeyProbe(() => {
-        rawKeys.update((count) => count + 1);
-        status.set('Status: an unbound raw key reached the focused view');
-      });
-      const emitSave = new Button('Emit ~s~ave', { command: CMD_SAVE });
-      const toggle = new Button('Toggle ~d~isabled', { command: CMD_TOGGLE });
 
       const content = new Group();
       content.add(

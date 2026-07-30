@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
+          "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:00:13Z"
+          "validatedAt": "2026-07-30T00:23:00Z"
         }
       ]
     },
@@ -949,7 +949,9 @@
         "Phase 7 Events, commands & keymaps expected red: 5 public controls pass and 18 course, catalog, registry, and laboratory cases fail across 23 independently authored final-contract tests.",
         "Phase 7 Events, commands & keymaps green checkpoint: 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
         "Phase 7 Events, commands & keymaps hardening: 29/29 focused tests and yarn verify pass across repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown edges.",
-        "Phase 7 Events, commands & keymaps promotion: 36/36 focused course, hardening, and catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
+        "Phase 7 Events, commands & keymaps promotion: 36/36 focused course, hardening, and catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 7 review remediation: 38/38 focused tests and every authoritative gate pass after real button routing, exact mouse-down, disabled-focus, ASCII cue, and diagram corrections; the permitted re-review cleared all findings.",
+        "Phase 7 final promoted state: 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -1000,10 +1002,10 @@
         "summary:Phase 7 tasks 7.1.1 and 7.1.2 established 23 independently authored cases; expected red is 5 public controls passing and 18 course/lab contract failures.",
         "summary:Phase 7 tasks 7.2.1 through 7.2.4 reached green with 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify passing.",
         "summary:Phase 7 task 7.3.1 added repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown hardening; 29/29 focused tests and yarn verify pass.",
-        "summary:Phase 7 task 7.3.2 promoted Events, commands & keymaps after 36/36 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
+        "summary:Phase 7 task 7.3.2 promoted after AR-30 corrections passed 38/38 focused tests and every authoritative gate, and the permitted re-review cleared all four Major and two Minor findings."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
+      "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1034,10 +1036,11 @@
         "Auto-design AR-26 preserves the Phase 6 expected-red specification evidence through its first green checkpoint.",
         "Auto-design AR-27 applied every mandatory Phase 6 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
         "Auto-design AR-28 selected outcome-shaped IDs for the two Events, commands & keymaps laboratories.",
-        "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint."
+        "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:9077cc1e2d65a780473db03d692005188c4d2fda594df29d234820e37635e649",
+      "revision": "sha256:675eb58dc6cead2491c0afa73cf15565ba6be44f5648ab6bc6997d9346000817",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1107,13 +1110,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:fae32919f4b6e57650fc087803b1df5eab765274be2f244f7d5f78073b0ded78",
+          "revision": "sha256:aeef2234935280f9d52615432e980a61cb54b80714cfc35b5590219a91fd6645",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:00:13Z"
+          "validatedAt": "2026-07-30T00:23:00Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T00:00:13Z"
+  "updated": "2026-07-30T00:23:00Z"
 }
