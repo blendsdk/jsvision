@@ -118,6 +118,7 @@ describe('Guide curriculum catalog', () => {
       'data-grid-specialist',
       'code-editor-specialist',
       'debugging',
+      'crash-safety',
     ]);
     expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(3);
   });

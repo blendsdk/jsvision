@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 81 items resolved
-> **Last Updated**: 2026-07-30 16:46
+> **Status**: ✅ GATE PASSED — all 83 items resolved
+> **Last Updated**: 2026-07-30 17:18
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -70,6 +70,8 @@
 | 79 | Quality review (runtime) | How should Phase 22 replace command-parity, failure, stale-result, application-resource, snippet, and coverage false positives without weakening the course? | Route every button through commands, use real injected failure/resource objects and publishable generations, correct the snippet, and exercise every mouse path / remove the teaching claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every authentic-evidence correction in AR-79 and use the single permitted fix-scoped re-review. | ✅ Resolved |
 | 80 | Laboratory design (runtime) | How should one compact Debugging laboratory distinguish six failure boundaries without becoming a dashboard of self-authored labels? | Use one staged evidence ladder with real boundary probes and correction verification / show six static category cards / expand into several laboratories | **Authority: AI — delegated by `--auto-design`.** Use `guides/debugging-evidence` as one staged reproduce → classify → inspect → correct → verify laboratory, with authentic geometry, focus, command/event, reactive/render, capability, and lifecycle evidence as detailed in AR-80. | ✅ Resolved |
 | 81 | Quality review (runtime) | How should Phase 23 replace command, render, generic-verification, lifecycle, and frame-coordinate false positives without weakening the course? | Exercise and re-observe every real boundary, correct root coordinates, and strengthen implementation assertions / remove the claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply all five authentic-evidence corrections in AR-81 and use the single permitted fix-scoped re-review. | ✅ Resolved |
+| 82 | Authentic substitute (runtime) | How should a zero-lab Crash safety course prove native restoration without pretending a browser terminal can exercise process ownership? | Drive the public host through an injected deterministic runtime and annotated payload-free trace / embed a fake terminal lab / provide prose only | **Authority: AI — delegated by `--auto-design`.** Use the real public `createHost` lifecycle with a deterministic runtime/stream recorder and authentic test artifact as detailed in AR-82; keep the zero-lab exception. | ✅ Resolved |
+| 83 | Quality review (runtime) | How should Phase 24 replace write-order labels, correct backstop ordering, and prove a secondary restore fault preserves the primary fatal path? | Validate exact fixed-profile transition bytes, correct ownership order, and add fatal-plus-restore-failure evidence / remove the claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply all CS-24 corrections in AR-83 without waiver and use the single permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -2416,3 +2418,74 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** A handler result can be authored without emission, a signal is not consumed
   by a mounted view, Verify can pass an unrelated category, late work mutates after owner disposal,
   or a root-buffer read omits ancestor offsets.
+
+**AR-82 (authentic substitute):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Selecting the deterministic evidence shape for the catalog's already-approved
+  zero-live-example exception without changing public runtime behavior or course outcomes.
+- **Objective:** Prove native lifecycle ordering and ownership through the real host path while
+  refusing to represent browser emulation as process-signal evidence.
+- **Decision:** Keep `requiredLiveExamples: 0` and the existing exception. Add one fixture under
+  `packages/docs-site/src/example-fixtures/crash-safety/` that drives public `createHost()` through
+  injected `RuntimeAdapter`, input, and output recorders. Produce bounded payload-free annotated
+  traces for normal stop, uncaught failure, terminating signal, setup failure plus synchronous exit
+  backstop, and idempotent repeated stop. The authentic docs-site test artifact asserts restoration
+  precedes exit, handlers are owned and removed without replacing an existing observer, partial
+  startup remains recoverable, and essential TTY failure is distinguished from mouse/colour/
+  alternate-screen degradation.
+- **Evidence:** Public `Host.start()` installs the exit backstop before raw mode and terminal entry;
+  `Host.stop()` removes ordinary input, signal, uncaught, and rejection handlers, runs idempotent
+  restoration while the exit backstop remains armed, then removes that backstop and releases
+  streams. Fatal and terminating-signal paths restore before diagnostics/callback/exit.
+  `evaluateEssentials()` identifies interactive TTY as the sole hard requirement and reports mouse,
+  colour, and alternate screen as degradations. Existing core suites prove the same injected seam
+  and real child-process signal behavior.
+- **Rejected alternatives:** A template1/browser lab cannot own native signals, raw mode, or the
+  synchronous process-exit channel. Prose-only teaching does not satisfy the authentic-substitute
+  contract. Importing host internals would teach unsupported paths and duplicate core ownership.
+- **Strongest counterargument:** An injected adapter does not prove the operating system delivered a
+  real signal. The artifact proves host ordering deterministically and links to the core
+  child-process signal suite for OS delivery; the course labels that evidence boundary explicitly.
+- **Confidence:** High — every trace fact comes from a public host call or injected public runtime
+  effect, while payloads are represented only by stable category and length metadata.
+- **Hardening:** Cover normal, error, interrupt/terminate/hangup, setup failure, double stop,
+  non-TTY, handler coexistence/removal, restore-step failure tolerance, and trace redaction.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** The fixture fabricates restore ordering without calling `createHost`, retains
+  raw failure payloads, imports host internals, publishes a browser lab, or omits a catalog outcome.
+
+**AR-83 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting course-owned evidence, snippets, and lifecycle wording without
+  changing the public SDK contract, catalog outcomes, or zero-lab scope.
+- **Objective:** Make every annotated terminal transition derive from actual validated bytes and
+  preserve the primary fatal diagnosis when restoration itself encounters a secondary failure.
+- **Decision:** Validate each captured asynchronous and synchronous payload against the exact
+  fixed-profile enter/leave transition contract before publishing `screen:enter`,
+  `screen:restore`, or `screen:restore-sync`; publish `screen:unexpected` for any mismatch. Inject
+  partial startup only after the attempted bytes validate as entry. Correct normal-stop teaching
+  to restore while the exit backstop remains armed and remove it afterward. Add exact
+  restore-write → raw-off failure → diagnostic → callback → exit evidence for a fatal exception
+  plus secondary restoration fault. Import every API used by the essentials snippet.
+- **Evidence:** Independent review traced the fixture's semantic labels to write position rather
+  than bytes, found the course and AR-82 disarmed the backstop too early, and showed that
+  containment-only restore-failure assertions could not protect primary-failure ordering.
+- **Rejected alternatives:** Waivers are prohibited. Removing transition claims would fail the
+  authentic-substitute outcome. Importing private mode builders would violate the public-boundary
+  lesson; the fixture instead validates the stable terminal protocol used by its fixed capability
+  profile.
+- **Strongest counterargument:** The local expected transition strings mirror a host protocol that
+  could evolve. That is intentional evidence: a protocol change must update and re-review the
+  course artifact rather than silently retaining stale semantic labels.
+- **Confidence:** High — unexpected or reordered bytes now remain explicitly unexpected, and the
+  fatal-plus-secondary-failure path asserts one bounded primary diagnostic and exit code 1.
+- **Hardening:** Re-run the complete focused suite and typecheck, require the single fix-scoped
+  re-review to clear CS-24-001 through CS-24-005, then run production docs and repository gates.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** An unexpected payload receives a semantic transition label, the backstop is
+  removed before restore, a secondary fault replaces the primary diagnostic, or a snippet calls an
+  unimported API.

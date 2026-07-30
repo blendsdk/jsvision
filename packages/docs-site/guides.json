@@ -434,7 +434,7 @@
       "group": "Operating a real app",
       "page": "/guide/crash-safety",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 2,
       "prerequisites": ["application-shell", "debugging"],
       "learningOutcomes": [
