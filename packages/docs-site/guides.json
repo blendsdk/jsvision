@@ -230,7 +230,7 @@
       "group": "Building applications",
       "page": "/guide/forms",
       "profile": "course",
-      "stage": "upgrade",
+      "stage": "complete",
       "sidebarOrder": 4,
       "prerequisites": ["reactive-state", "dialogs-and-modality", "async-work"],
       "learningOutcomes": [
@@ -239,7 +239,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/form-state-validation", "guides/form-async-submit"]
     },
     {
       "id": "files-and-filesystem",

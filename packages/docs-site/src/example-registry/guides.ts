@@ -142,4 +142,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/latest-result-wins.ts',
     load: () => import('../../examples/guides/latest-result-wins.js'),
   },
+  {
+    id: 'guides/form-state-validation',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/form-state-validation.ts',
+    load: () => import('../../examples/guides/form-state-validation.js'),
+  },
+  {
+    id: 'guides/form-async-submit',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/form-async-submit.ts',
+    load: () => import('../../examples/guides/form-async-submit.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];
