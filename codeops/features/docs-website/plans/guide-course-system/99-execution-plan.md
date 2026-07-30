@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 08:59
-> **Progress**: 96/246 tasks (39%)
+> **Last Updated**: 2026-07-30 09:24
+> **Progress**: 104/246 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -665,25 +665,47 @@ independent specification-first phase (AR-10).
 ## Phase 13: Async work, cancellation & progress
 
 **Reference**: ST-22 · `03-02` · `03-03`
+> **Phase baseline tree**: `c9492058a69c3aa5fb54521f9577e5685e7e6a8b`
+> **Expected modification set**: `packages/docs-site/guide/async-work.md`,
+> `packages/docs-site/examples/guides/`,
+> `packages/docs-site/src/example-fixtures/async-work/`,
+> `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`,
+> `packages/docs-site/guide/index.md`, route-specific tests, the synchronized curriculum catalog
+> assertion, and synchronized CodeOps lifecycle artifacts.
 
 ### Step 13.1: Specification tests
 
-- [ ] 13.1.1 [spec-author] Write the async-work oracle — `packages/docs-site/test/async-work-guide.spec.test.ts`
-- [ ] 13.1.2 Run the specification and record the expected red result
+- [x] 13.1.1 [spec-author] Write the async-work oracle — `packages/docs-site/test/async-work-guide.spec.test.ts` ✅ (completed: 2026-07-30 09:12)
+- [x] 13.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 09:12) — authoritative focused run: 4 public progress, timer, cancellation, generation, and diagnostics controls passed; 15 final course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions failed as expected
 
 ### Step 13.2: Implementation
 
-- [ ] 13.2.1 Create the responsive async, progress, cancellation, errors, cleanup, and stale-result course — `packages/docs-site/guide/async-work.md`
-- [ ] 13.2.2 Implement two deterministic template1 async labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/async-work/`
-- [ ] 13.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 13.2.4 Run ST-22 green plus docs-site typecheck; fix implementation only
+- [x] 13.2.1 Create the responsive async, progress, cancellation, errors, cleanup, and stale-result course — `packages/docs-site/guide/async-work.md` ✅ (completed: 2026-07-30 09:22)
+- [x] 13.2.2 Implement two deterministic template1 async labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/async-work/` ✅ (completed: 2026-07-30 09:22)
+- [x] 13.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 09:22)
+- [x] 13.2.4 Run ST-22 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 09:22) — 18/19 final assertions passed while the route remained Planned; the sole expected failure was the final catalog-stage promotion gate
 
 ### Step 13.3: Hardening
 
-- [ ] 13.3.1 Add cancellation races, stale completion, error, disposal, and resize edges — `packages/docs-site/test/async-work-guide.impl.test.ts`
-- [ ] 13.3.2 Run focused checks, promote Async work, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 13.3.1 Add cancellation races, stale completion, error, disposal, and resize edges — `packages/docs-site/test/async-work-guide.impl.test.ts` ✅ (completed: 2026-07-30 09:23) — 7/7 focused hardening checks passed
+- [x] 13.3.2 Run focused checks, promote Async work, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 09:24) — runtime AR-51 corrections passed 27/27 focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build, plugin integrity, authoritative `yarn verify`, and the single permitted fix-scoped re-review
 
 **Verify**: Async-work spec/impl tests and docs-site typecheck
+
+### Phase 13 quality review summary
+
+- The independent review reported one Major and two Minor findings. RV-013-001 showed that the
+  stale-result laboratory claimed cancellation after both request controllers had already been
+  released. RV-013-002 found an unmarked request accelerator, and RV-013-003 found an unused
+  beginner-snippet signal.
+- Runtime AR-51 accepted every correction without waiver. Cancellation now requires genuinely
+  pending work, counts real controller aborts and exact releases, and is independently separated
+  from the fresh pair used to prove newest publication and stale rejection. The request accelerator
+  is visibly marked, and the snippet contains only its used state.
+- The single permitted fix-scoped re-review cleared RV-013-001 through RV-013-003 with no
+  correction-introduced Critical, Major, or Minor finding. The corrected course passes 27/27
+  focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build,
+  plugin integrity, and authoritative `yarn verify`.
 
 ## Phase 14: Forms
 

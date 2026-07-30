@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:760912944d97356cd2e4edc4733fed2d444abc257388981da912b0caf590dddb",
+          "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:00:00Z"
+          "validatedAt": "2026-07-30T07:41:15Z"
         }
       ]
     },
@@ -1040,10 +1040,15 @@
         "summary:Phase 12 tasks 12.1.1 and 12.1.2 established 19 independently authored cases; expected red is 4 public modal controls passing and 15 course, catalog, registry, and laboratory failures.",
         "summary:Phase 12 tasks 12.2.1 through 12.3.1 delivered the complete course, two focused modal laboratories, corrected Dialog ownership guidance, and repeated result, nesting, focus, and cleanup hardening; 24/24 focused checks and docs-site typecheck pass.",
         "summary:Phase 12 independent review found one Major issue: RV-012-001 showed that success labels did not independently prove settled results, focus identities, and exact cleanup. AR-49 accepted the full correction without waiver.",
-        "summary:Phase 12 task 12.3.2 completed after the corrected promise, focus, and cleanup evidence passed 24/24 focused checks, every authoritative gate, and the single permitted re-review with no remaining or introduced findings."
+        "summary:Phase 12 task 12.3.2 completed after the corrected promise, focus, and cleanup evidence passed 24/24 focused checks, every authoritative gate, and the single permitted re-review with no remaining or introduced findings.",
+        "summary:Phase 13 baseline c9492058a69c3aa5fb54521f9577e5685e7e6a8b and its expected Async work modification set are recorded before specification work.",
+        "summary:Phase 13 tasks 13.1.1 and 13.1.2 established 19 independently authored cases; expected red was 4 public controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 13 tasks 13.2.1 through 13.3.2 delivered the complete course, two deterministic laboratories, and cancellation, retry, stale-result, disposal, and resize hardening; corrected focused verification passes 27/27 plus docs-site typecheck.",
+        "summary:Phase 13 independent review found one Major and two Minor issues; AR-51 corrected false pending-cancellation evidence, the accelerator marker, and the unused snippet state without waiver. The single permitted re-review cleared every finding.",
+        "summary:Phase 13 completed after 27/27 focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:760912944d97356cd2e4edc4733fed2d444abc257388981da912b0caf590dddb",
+      "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1094,10 +1099,12 @@
         "Auto-design AR-46 partitions Phase 12 into guides/dialog-results and guides/modal-workflows laboratories so result validation and nested focus-safe workflow evidence stay independently observable.",
         "Auto-design AR-47 preserves Phase 12 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
         "User-approved AR-48 expands Phase 12 narrowly to align the Dialog component page with caller-owned desktop add, execView, and finally-remove lifecycle behavior.",
-        "Auto-design AR-49 accepts RV-012-001 without waiver and requires independent promise-result, focus-identity, cleanup-callback, and teardown-settlement evidence before re-review."
+        "Auto-design AR-49 accepts RV-012-001 without waiver and requires independent promise-result, focus-identity, cleanup-callback, and teardown-settlement evidence before re-review.",
+        "Auto-design AR-50 partitions Phase 13 into guides/cancellable-work and guides/latest-result-wins so responsiveness/cancellation and stale-result protection remain independently observable.",
+        "Auto-design AR-51 corrects every Phase 13 review finding without waiver and requires real pending-controller abort evidence before the latest-result laboratory may claim cancellation."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:5807838cf75c263f9be108c1d6a38f22bea6b6436c386349e26ed2e3a1cec8e1",
+      "revision": "sha256:ceb40d05bdbc7c2bc6958c6604c92685f9934ea055bb17ed8ee94b0fe77607bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1167,13 +1174,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:760912944d97356cd2e4edc4733fed2d444abc257388981da912b0caf590dddb",
+          "revision": "sha256:7f3d6088d62b760b43d271d1912e3f089309882d99bb5fd5b308f04f4397104e",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T07:00:00Z"
+          "validatedAt": "2026-07-30T07:41:15Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T07:00:00Z"
+  "updated": "2026-07-30T07:41:15Z"
 }

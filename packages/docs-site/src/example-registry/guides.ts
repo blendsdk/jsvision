@@ -128,4 +128,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/modal-workflows.ts',
     load: () => import('../../examples/guides/modal-workflows.js'),
   },
+  {
+    id: 'guides/cancellable-work',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/cancellable-work.ts',
+    load: () => import('../../examples/guides/cancellable-work.js'),
+  },
+  {
+    id: 'guides/latest-result-wins',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/latest-result-wins.ts',
+    load: () => import('../../examples/guides/latest-result-wins.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

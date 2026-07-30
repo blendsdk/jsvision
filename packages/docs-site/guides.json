@@ -213,7 +213,7 @@
       "group": "Building applications",
       "page": "/guide/async-work",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 3,
       "prerequisites": ["reactive-state", "dialogs-and-modality"],
       "learningOutcomes": [
@@ -222,7 +222,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/cancellable-work", "guides/latest-result-wins"]
     },
     {
       "id": "forms",
