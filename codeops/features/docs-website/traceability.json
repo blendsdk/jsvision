@@ -444,9 +444,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:7f40c978d73db74d50c620bb54b87e8879b922732e78b4838cb641140f194b28",
+          "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-29T07:04:47Z"
+          "validatedAt": "2026-07-30T19:29:42Z"
         }
       ]
     },
@@ -494,7 +494,7 @@
         "Phase 11 verified: catalog-backed overview, sidebars, API parity, rendered-route validation, and lazy Play DOM coverage are complete; every accepted independent-review finding is closed and authoritative yarn verify passes."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:77328bd928fe3931db66bbdc9738aa15398ab23fe653575aa6f033523c3ed816",
+      "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -584,9 +584,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:77328bd928fe3931db66bbdc9738aa15398ab23fe653575aa6f033523c3ed816",
+          "revision": "sha256:29f45cc13f27cf7e43deefcf301bbe9a9d5e52b3db72a270f6790bfafe11cce8",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-29T16:07:51Z"
+          "validatedAt": "2026-07-30T19:29:42Z"
         }
       ]
     },
@@ -911,7 +911,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
+          "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T16:49:32Z"
         }
@@ -1129,7 +1129,7 @@
         "summary:The single permitted Phase 27 fix-scoped re-review cleared all five findings, and the promoted course passes 42/42 focused checks, docs-site typecheck and DOM tests, production docs build, and authoritative yarn verify."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
+      "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1220,7 +1220,7 @@
         "Auto-design AR-86 accepts all Phase 27 findings without waiver and requires exact terminal-query and browser-builder signatures, correct host-mode ownership, supported glyph fallback scope, valid responsive construction, and final-only promotion synchronization."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:f730ee73cf9d59ab01de1d18caabf125085b9fab0fc860da51535ee9da5b1027",
+      "revision": "sha256:3cdf2f2346cb753be78e37d1cad05794b4bf849a48f83b2f3256d817e5bb55f8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1290,7 +1290,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
+          "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
           "upstream": "docs-website/TASK-RD08-GUIDES",
           "validatedAt": "2026-07-30T16:49:32Z"
         }
@@ -1298,5 +1298,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T16:49:32Z"
+  "updated": "2026-07-30T19:29:42Z"
 }
