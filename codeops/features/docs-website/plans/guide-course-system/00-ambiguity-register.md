@@ -2765,20 +2765,22 @@ cross-course contracts after every authored route is complete.
   authentic artifacts without changing their content, learning objective, or ownership.
 - **Objective:** Keep the Crash safety course's authentic trace and runnable-test links usable from
   the deployed VitePress site.
-- **Decision:** Link both artifacts to their canonical `master`-branch GitHub blob URLs and update
-  the immutable course oracle to require those deployable destinations.
+- **Decision:** Link both artifacts to immutable GitHub blob URLs at the already-pushed commit that
+  introduced them, and require the course oracle to prove both repository objects exist.
 - **Evidence:** The production build rendered the former `../src/...` and `../test/...` destinations
-  under `/guide/`, and the built-output checker reported both as dead links. The repository already
-  uses canonical GitHub `master` links for source material.
+  under `/guide/`, and the built-output checker reported both as dead links. Independent review
+  then proved `master` URLs would remain 404s before merge, while commit `0d795822…` and both blobs
+  are already reachable on the pushed feature branch.
 - **Rejected alternatives:** Copying the artifacts into public docs would create drift. Excluding
   source/test links from link validation would hide learner-facing failures. Leaving browser-relative
   links would keep the deployed course broken.
-- **Strongest counterargument:** Branch-qualified links can lag until a feature merges. The site is
-  deployed from `master`, so the same merge that publishes the page also publishes both targets.
+- **Strongest counterargument:** Commit-qualified links do not automatically follow later artifact
+  corrections. These links intentionally preserve the exact authentic substitutes reviewed by the
+  course, and their local Git objects are asserted by the immutable oracle.
 - **Confidence:** High — the focused course oracle is red against the broken destinations and green
   against the canonical repository URLs.
 - **Hardening:** Rebuild the production site and rerun all 21 built-output checks.
 - **Policy version:** 1.
 - **Root invocation ID:** `exec-docs-phase3-20260730`.
-- **Reopen triggers:** The deployment branch changes, the artifacts move, or the repository host no
-  longer supports stable blob URLs.
+- **Reopen triggers:** The linked commit becomes unreachable from every published remote, the
+  artifacts need a correctness correction, or the repository host stops serving immutable blobs.

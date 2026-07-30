@@ -19,9 +19,9 @@ mode, the cursor stays hidden, or the user is stranded on the alternate screen.
 
 This is a native-process course. A browser terminal cannot prove operating-system signal delivery,
 raw-mode restoration, or the synchronous process-exit channel, so there is no embedded lab. The
-[deterministic trace](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/src/example-fixtures/crash-safety/lifecycle-trace.ts)
+[deterministic trace](https://github.com/blendsdk/jsvision/blob/0d795822ae578da5cd193d98d30a0bfc4335fc58/packages/docs-site/src/example-fixtures/crash-safety/lifecycle-trace.ts)
 and
-[runnable artifact](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/test/crash-safety-example.spec.test.ts)
+[runnable artifact](https://github.com/blendsdk/jsvision/blob/0d795822ae578da5cd193d98d30a0bfc4335fc58/packages/docs-site/test/crash-safety-example.spec.test.ts)
 exercise the real public host through an injected runtime.
 
 ## What is the terminal-ownership mental model?
