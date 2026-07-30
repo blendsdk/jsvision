@@ -249,4 +249,12 @@ export const GUIDE_EXAMPLES = [
     themeMenu: true,
     load: () => import('../../examples/guides/architecture-ownership.js'),
   },
+  {
+    id: 'guides/debugging-evidence',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/debugging-evidence.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/debugging-evidence.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

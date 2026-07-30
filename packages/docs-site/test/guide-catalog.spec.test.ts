@@ -117,6 +117,7 @@ describe('Guide curriculum catalog', () => {
       'application-architecture',
       'data-grid-specialist',
       'code-editor-specialist',
+      'debugging',
     ]);
     expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(3);
   });

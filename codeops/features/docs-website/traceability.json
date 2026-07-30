@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
+          "revision": "sha256:78de83309449dedc457ffb8ad648bb90e6141cf870dd8e8381519db43cfb5faf",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T13:49:58Z"
+          "validatedAt": "2026-07-30T14:55:00Z"
         }
       ]
     },
@@ -1101,10 +1101,15 @@
         "summary:Phase 22 baseline 7ba9ba8b5eb6af8856e33c4e218467d09e23d40a and its expected Application architecture modification set are recorded before specification work.",
         "summary:Phase 22 tasks 22.1.1 and 22.1.2 established 19 independently authored cases; expected red is four public architecture controls passing and 15 course, catalog, registry, and laboratory failures.",
         "summary:Phase 22 tasks 22.2.1 through 22.3.2 delivered the complete application-architecture course, two template1 comparison laboratories, and boundary, ownership, stale-work, failure, cleanup, package, and command-routed mouse hardening; all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass.",
-        "summary:Phase 22 independent review found four Major and two Minor authentic-evidence gaps; AR-79 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all six with no residual findings."
+        "summary:Phase 22 independent review found four Major and two Minor authentic-evidence gaps; AR-79 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all six with no residual findings.",
+        "summary:Phase 23 baseline 8ecced72a3cc26583d4174e1d49f270dd95ec962 and its expected Debugging modification set are recorded before specification work.",
+        "summary:Phase 23 tasks 23.1.1 and 23.1.2 established 18 independently authored cases; expected red is four public diagnostic controls passing and 14 course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 23 tasks 23.2.1 through 23.3.1 delivered the complete Debugging course, one template1 evidence-ladder laboratory, and bounded diagnostic, six-boundary, interaction, disposal, geometry, and repeated-use hardening.",
+        "summary:Phase 23 independent review found five Major authentic-evidence gaps; AR-81 corrected command delivery, mounted rendering, selected-boundary verification, rejected retained work, and root-relative buffer coordinates without waiver, and the single permitted fix-scoped re-review cleared all five.",
+        "summary:Phase 23 completed after 32/32 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
+      "revision": "sha256:78de83309449dedc457ffb8ad648bb90e6141cf870dd8e8381519db43cfb5faf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1185,10 +1190,12 @@
         "Auto-design AR-76 accepts every Phase 21 review finding without waiver and requires application-boundary structured redaction, modal confinement, retained-producer inertia, exact theme evidence, and durable regression guards.",
         "Auto-design AR-77 partitions Phase 22 into dependency-and-command boundaries plus lifetime-and-cleanup ownership laboratories.",
         "Auto-design AR-78 preserves Phase 22 expected-red evidence through its complete course and laboratory checkpoint.",
-        "Auto-design AR-79 accepts all six Phase 22 quality findings without waiver and requires command-routed mouse actions, injected failure/resource evidence, falsifiable stale publication, a corrected snippet, and complete mouse coverage."
+        "Auto-design AR-79 accepts all six Phase 22 quality findings without waiver and requires command-routed mouse actions, injected failure/resource evidence, falsifiable stale publication, a corrected snippet, and complete mouse coverage.",
+        "Auto-design AR-80 selects one staged Debugging evidence-ladder laboratory with authentic geometry, focus, command/event, reactive/render, capability, lifecycle, correction, redaction, and cleanup evidence.",
+        "Auto-design AR-81 accepts all five Phase 23 quality findings without waiver and requires registered command delivery, mounted exact-cell rendering, selected-boundary correction, rejected retained work, root-relative buffer coordinates, and direct regression assertions."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:c09369bde0b03da09fb6dd017f3a2fad9d2f96c293fea4c396a5f8da2ac00b98",
+      "revision": "sha256:9b871fa401eda0d842b7045983c24c365b3b5973c822355079e976fcd0d70157",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1258,13 +1265,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
+          "revision": "sha256:78de83309449dedc457ffb8ad648bb90e6141cf870dd8e8381519db43cfb5faf",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T13:49:58Z"
+          "validatedAt": "2026-07-30T14:55:00Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T14:10:24Z"
+  "updated": "2026-07-30T14:55:00Z"
 }

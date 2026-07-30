@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 79 items resolved
-> **Last Updated**: 2026-07-30 15:57
+> **Status**: ✅ GATE PASSED — all 81 items resolved
+> **Last Updated**: 2026-07-30 16:46
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -68,6 +68,8 @@
 | 77 | UX (runtime) | How should the two required Application architecture laboratories divide one broad architecture outcome into independently observable lessons? | Compare layered dependency/command flow separately from lifetime/error/cleanup ownership / place every boundary in one dense laboratory / repeat the same architecture with different sample data | **Authority: AI — delegated by `--auto-design`.** Use `guides/architecture-boundaries` for dependency and command flow, and `guides/architecture-ownership` for lifetime, failure, and cleanup evidence, as detailed in AR-77. | ✅ Resolved |
 | 78 | Testing (runtime) | Does the Phase 22 oracle's four-pass/fifteen-fail result form the required specification-first red checkpoint? | Accept public architecture controls as passing anchors while final course/lab contracts fail / require all tests to fail / weaken or quarantine final contracts | **Authority: AI — delegated by `--auto-design`.** Preserve the 4/15 split as the expected red checkpoint described in AR-78. | ✅ Resolved |
 | 79 | Quality review (runtime) | How should Phase 22 replace command-parity, failure, stale-result, application-resource, snippet, and coverage false positives without weakening the course? | Route every button through commands, use real injected failure/resource objects and publishable generations, correct the snippet, and exercise every mouse path / remove the teaching claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every authentic-evidence correction in AR-79 and use the single permitted fix-scoped re-review. | ✅ Resolved |
+| 80 | Laboratory design (runtime) | How should one compact Debugging laboratory distinguish six failure boundaries without becoming a dashboard of self-authored labels? | Use one staged evidence ladder with real boundary probes and correction verification / show six static category cards / expand into several laboratories | **Authority: AI — delegated by `--auto-design`.** Use `guides/debugging-evidence` as one staged reproduce → classify → inspect → correct → verify laboratory, with authentic geometry, focus, command/event, reactive/render, capability, and lifecycle evidence as detailed in AR-80. | ✅ Resolved |
+| 81 | Quality review (runtime) | How should Phase 23 replace command, render, generic-verification, lifecycle, and frame-coordinate false positives without weakening the course? | Exercise and re-observe every real boundary, correct root coordinates, and strengthen implementation assertions / remove the claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply all five authentic-evidence corrections in AR-81 and use the single permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -2344,3 +2346,73 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Any button can change feature state without its command, raw failure data
   enters evidence, stale payloads publish, or resource disposal is missing or duplicated.
+
+**AR-80 (laboratory design):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal teaching-fixture and interaction design within the confirmed Debugging
+  outcome, one-laboratory target, public behavior, and template1 contract.
+- **Objective:** Teach a repeatable diagnostic process that distinguishes similar failures through
+  observable evidence at 80×24 instead of asking learners to memorize disconnected tips.
+- **Decision:** Use the stable ID `guides/debugging-evidence` for one staged evidence ladder:
+  reproduce and minimize, classify the boundary, inspect authentic geometry/focus/command-event/
+  reactive-render/capability/lifecycle facts, apply the bounded correction, and verify the result.
+  Every category uses a real fixture boundary and contributes a redacted bounded diagnostic code;
+  keyboard commands and mouse actions enter the same application command vocabulary.
+- **Evidence:** The catalog requires one lab and both outcomes span six related failure classes.
+  The independent oracle fixes the laboratory ID and checks each diagnostic counter, systematic
+  evidence labels, bounded redaction, responsive template1 behavior, correction, and cleanup.
+  Public source exposes exact bounds, focus identity, command enablement, frame buffers, capability
+  resolution, screen-safe logging/redaction, and idempotent loop disposal.
+- **Rejected alternatives:** Six static cards fit poorly at 80×24 and can agree with broken
+  behavior because their claims are authored labels. Multiple labs exceed the planned focused
+  course shape and fragment the one observation ladder without adding an independent workflow.
+- **Strongest counterargument:** A staged fixture can still fake its evidence by incrementing
+  counters beside labels. Each counter must therefore be derived from the real boundary it names,
+  with frame/state correlation and post-disposal checks in focused tests.
+- **Confidence:** High — the public boundaries and independent oracle make every stage directly
+  assertable without privileged host access.
+- **Hardening:** Exercise every category by keyboard, the meaningful mouse path, compact and
+  expanded geometry, bounded diagnostic eviction/redaction, exact correction evidence, and
+  idempotent cleanup before promotion.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any category relies only on an assigned label/counter, diagnostic payloads
+  leak, categories cannot be distinguished at compact geometry, or correction lacks observable
+  verification.
+
+**AR-81 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting course-owned fixture behavior, teaching snippets, and hardening
+  evidence without changing the public SDK contract, catalog outcomes, or course scope.
+- **Objective:** Ensure each debugging result comes from the boundary under diagnosis and that
+  verification cannot report success for an unrelated correction.
+- **Decision:** Register and emit the probe command while observing its handler run count. Bind the
+  render version into mounted text, flush, and inspect its exact root-buffer cells. Dispatch
+  correction and re-observation by the selected category: solved layout cells, exact focus leaf,
+  delivered command handler, changed render cells, rendered ASCII fallback, or rejected retained
+  callback after disposing its owner. Accumulate every parent-relative bound before indexing the
+  root buffer. Retain bounded stable codes only and strengthen implementation tests around the real
+  outcomes.
+- **Evidence:** Independent review found a disabled command with no handler, an unread signal, a
+  generic correction that could false-pass, lifecycle counters without stale work, and a snippet
+  that treated parent-relative bounds as root coordinates. The corrected 32-case focused suite
+  asserts handler delivery, exact focus, solved geometry, changed cells, fallback text, and rejected
+  post-disposal work.
+- **Rejected alternatives:** Removing the claims would fail the catalog outcomes. Waivers are
+  prohibited. Expanding core APIs is unnecessary because the public command, focus, render-buffer,
+  layout, signal, and cleanup seams already expose the required facts.
+- **Strongest counterargument:** A deterministic nested callback owner does not reproduce a native
+  process failure. The lesson explicitly assigns native restoration to terminal evidence; the
+  browser-safe laboratory proves the cross-cutting stale-owner invariant without pretending to
+  simulate signals or raw mode.
+- **Confidence:** High — every corrected outcome is independently readable from mounted state,
+  root-buffer cells, command delivery, or disposed-owner counters.
+- **Hardening:** Require one fix-scoped re-review to clear RV-23-001 through RV-23-005, then rerun
+  focused checks, docs-site typecheck, production docs build, and authoritative `yarn verify`.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A handler result can be authored without emission, a signal is not consumed
+  by a mounted view, Verify can pass an unrelated category, late work mutates after owner disposal,
+  or a root-buffer read omits ancestor offsets.
