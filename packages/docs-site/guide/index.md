@@ -217,7 +217,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | [Accessibility & resilient interaction](/guide/accessibility)       | Complete | Design keyboard-complete, non-color-dependent, reduced-geometry interfaces.              |
 | [Terminal capabilities & portability](/guide/terminal-capabilities) | Complete | Adapt honestly across color, mouse, glyph, SSH, tmux, Windows, and browser environments. |
 | [In production](/guide/in-production)                               | Complete | Package, deploy, observe, support, and set evidence-based expectations.                  |
-| Build a complete application                                        | Planned  | Apply the complete curriculum in one beginner-to-production release workflow.            |
+| [Build a complete application](/guide/complete-application)         | Complete | Apply the complete curriculum in one beginner-to-production release workflow.            |
 
 ## Where to next
 

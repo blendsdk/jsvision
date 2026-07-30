@@ -297,4 +297,20 @@ export const GUIDE_EXAMPLES = [
     themeMenu: true,
     load: () => import('../../examples/guides/portable-fallbacks.js'),
   },
+  {
+    id: 'guides/capstone-workflow',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/capstone-workflow.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/capstone-workflow.js'),
+  },
+  {
+    id: 'guides/capstone-release-rehearsal',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/capstone-release-rehearsal.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/capstone-release-rehearsal.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

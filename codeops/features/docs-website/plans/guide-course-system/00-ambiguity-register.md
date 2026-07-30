@@ -2637,3 +2637,38 @@ cross-course contracts after every authored route is complete.
   retained diagnostics contain caller text, supervisor behavior is asserted without execution, a
   Complete course links to an absent page, snippets invent APIs or split surrogate pairs, or a
   private package is linked into generated API.
+
+**AR-88 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting Phase 29 course-owned capstone fixtures, laboratories, snippets, and
+  focused tests without changing the public SDK or catalog outcomes.
+- **Objective:** Make the capstone prove one real form/router/async/persistence workflow and derive
+  release rehearsal outcomes from authentic deterministic artifacts rather than labels.
+- **Decision:** Accept CA-29-001 through CA-29-006 without waiver. Derive release scenarios from
+  production-readiness, bounded diagnostic, and supervisor artifacts. Inject real deferred refresh
+  work and count suppression only when its late completion is observed. Put authorization inside
+  the persistence adapter and distinguish attempts from writes. Preserve validated domain text in
+  storage and sanitize only its rendered representation, correcting the immutable independent
+  control under this ruling. Use a bound Input plus real Router and focus restoration in the live
+  workflow. Add and test documented Alt+Z maximize/restore and remove overlapping rectangles.
+- **Evidence:** Independent review found self-authored release counters, cancellation without async
+  work, nominal authorization, display sanitization incorrectly mutating persistence, no editable
+  control/router/focused invalid field in the flagship lab, and unreachable zoom with overlapping
+  authored rows.
+- **Rejected alternatives:** Waivers are prohibited. Renaming counters as evidence would preserve
+  the same circular proof. Keeping signal-only route labels or programmatic validation would not
+  make the learner workflow authentic.
+- **Strongest counterargument:** A real Router and derived release artifacts increase fixture
+  complexity. This is the curriculum capstone, so those integration boundaries are precisely the
+  behavior the laboratories must prove.
+- **Confidence:** High — corrections reuse current public form/router/focus APIs and the verified
+  Phase 28 operational artifacts.
+- **Hardening:** Add observer-derived late-result, denied-write, focused-invalid-input,
+  route-restoration, derived release-reason, keyboard zoom, and non-overlap assertions; rerun the
+  full focused suite and typecheck; require one fix-scoped re-review before promotion.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A release decision comes from a label, cancellation increments proof before
+  a result arrives, authorization is inferred from naming, stored text is display-sanitized, live
+  validation/navigation bypasses controls, or zoom is not learner-reachable.
