@@ -444,9 +444,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:eefcbd6a20091974b79c818b3a597872454a1b705069583cb70f3a60484ee0a1",
+          "revision": "sha256:e0ff0696ca582a8ae8462f46555dab2f7e6a79c0ab2da8ef131e8d0c0d32cac0",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-30T19:40:30Z"
+          "validatedAt": "2026-07-30T19:56:34Z"
         }
       ]
     },
@@ -494,7 +494,7 @@
         "Phase 11 verified: catalog-backed overview, sidebars, API parity, rendered-route validation, and lazy Play DOM coverage are complete; every accepted independent-review finding is closed and authoritative yarn verify passes."
       ],
       "id": "TASK-RD05",
-      "revision": "sha256:eefcbd6a20091974b79c818b3a597872454a1b705069583cb70f3a60484ee0a1",
+      "revision": "sha256:e0ff0696ca582a8ae8462f46555dab2f7e6a79c0ab2da8ef131e8d0c0d32cac0",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -584,9 +584,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:eefcbd6a20091974b79c818b3a597872454a1b705069583cb70f3a60484ee0a1",
+          "revision": "sha256:e0ff0696ca582a8ae8462f46555dab2f7e6a79c0ab2da8ef131e8d0c0d32cac0",
           "upstream": "docs-website/TASK-RD05",
-          "validatedAt": "2026-07-30T19:40:30Z"
+          "validatedAt": "2026-07-30T19:56:34Z"
         }
       ]
     },
@@ -1220,7 +1220,7 @@
         "Auto-design AR-86 accepts all Phase 27 findings without waiver and requires exact terminal-query and browser-builder signatures, correct host-mode ownership, supported glyph fallback scope, valid responsive construction, and final-only promotion synchronization."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:3cdf2f2346cb753be78e37d1cad05794b4bf849a48f83b2f3256d817e5bb55f8",
+      "revision": "sha256:bcfe4afd2cb71ffd443a19eedf44eded73b57cb4800f4cbcc159ff23454af345",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1298,5 +1298,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T19:40:30Z"
+  "updated": "2026-07-30T19:56:34Z"
 }

@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 84 items resolved
-> **Last Updated**: 2026-07-30 18:14
+> **Status**: ✅ GATE PASSED — all 92 items resolved
+> **Last Updated**: 2026-07-30 21:49
 
 | #   | Category                       | Ambiguity / Gap                                                                                                                                                                                                                     | Options Presented                                                                                                                                                                                                                                                                         | User Decision                                                                                                                                                                                                                                                                          | Status      |
 | --- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
@@ -2757,3 +2757,28 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** A risk-bearing lab stops exposing observer-derived outcomes, a snippet import
   cannot be distinguished as type or value, or the ambient-capability audit gains a false negative.
+
+**AR-92 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting the link mechanism for two already approved, repository-owned
+  authentic artifacts without changing their content, learning objective, or ownership.
+- **Objective:** Keep the Crash safety course's authentic trace and runnable-test links usable from
+  the deployed VitePress site.
+- **Decision:** Link both artifacts to their canonical `master`-branch GitHub blob URLs and update
+  the immutable course oracle to require those deployable destinations.
+- **Evidence:** The production build rendered the former `../src/...` and `../test/...` destinations
+  under `/guide/`, and the built-output checker reported both as dead links. The repository already
+  uses canonical GitHub `master` links for source material.
+- **Rejected alternatives:** Copying the artifacts into public docs would create drift. Excluding
+  source/test links from link validation would hide learner-facing failures. Leaving browser-relative
+  links would keep the deployed course broken.
+- **Strongest counterargument:** Branch-qualified links can lag until a feature merges. The site is
+  deployed from `master`, so the same merge that publishes the page also publishes both targets.
+- **Confidence:** High — the focused course oracle is red against the broken destinations and green
+  against the canonical repository URLs.
+- **Hardening:** Rebuild the production site and rerun all 21 built-output checks.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-docs-phase3-20260730`.
+- **Reopen triggers:** The deployment branch changes, the artifacts move, or the repository host no
+  longer supports stable blob URLs.

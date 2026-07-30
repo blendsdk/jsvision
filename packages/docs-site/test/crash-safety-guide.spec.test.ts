@@ -344,8 +344,12 @@ describe('Crash safety course and authentic-substitute contract', () => {
       /(?:idempotent|at most once|exactly once)[\s\S]{0,500}(?:handler|remove|teardown)/iu,
     );
     expect(artifactSource).not.toMatch(/(?:document\.|window\.|@xterm|PlayExample|Template1Dialog)/u);
-    expect(source).toContain('](../src/example-fixtures/crash-safety/lifecycle-trace.ts)');
-    expect(source).toContain('](../test/crash-safety-example.spec.test.ts)');
+    expect(source).toContain(
+      '](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/src/example-fixtures/crash-safety/lifecycle-trace.ts)',
+    );
+    expect(source).toContain(
+      '](https://github.com/blendsdk/jsvision/blob/master/packages/docs-site/test/crash-safety-example.spec.test.ts)',
+    );
   });
 });
 

@@ -4,8 +4,8 @@
 > **Implements**: docs-website/RD-05
 > **Plan**: component-documentation-system
 > **Status**: In progress
-> **Progress**: 190 / 193 tasks complete
-> **Last Updated**: 2026-07-30 21:40 CEST
+> **Progress**: 192 / 193 tasks complete
+> **Last Updated**: 2026-07-30 21:56 CEST
 > **Ordering**: Canonical CodeOps specification-first protocol: spec tests → red → implementation →
 > green → implementation tests → verification.
 
@@ -898,9 +898,15 @@ is recorded in `16-phase-11-quality-review.md`.
   keyboard and mouse paths across standard components, all 12 Data Grid topics, and all 11 Code
   Editor topics; 682 focused assertions and authoritative verification pass; logs
   `/tmp/tmp.sZHLhG2yHh/component-final-audit.log` and `/tmp/tmp.OHXRPzhprH`)
-- [ ] **12.4** Run docs production build and inspect Components, Data Grid, and Code Editor sidebar
-  transitions and representative pages in the built output.
-- [ ] **12.5** Run final `yarn verify`.
+- [x] **12.4** Run docs production build and inspect Components, Data Grid, and Code Editor sidebar
+  transitions and representative pages in the built output. ✅ (completed: 2026-07-30 21:53 CEST;
+  the first scan exposed two broken Crash safety artifact links, which were corrected
+  specification-first under AR-92; the rebuilt 1,026-page site passes all 21 output checks,
+  including 74 catalog routes/sidebars/anchors and 61 API backlinks; logs
+  `/tmp/tmp.faVYAQNQew` and `/tmp/tmp.MVs7PjCrLm`)
+- [x] **12.5** Run final `yarn verify`. ✅ (completed: 2026-07-30 21:56 CEST;
+  authoritative repository verification passes with Turbo concurrency bounded to two; log
+  `/tmp/tmp.Zt6LZG4kwR`)
 - [ ] **12.6** Update execution evidence, traceability status, and roadmap only after all gates pass.
 
 ## Completion Definition
