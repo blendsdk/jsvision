@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 48 items resolved
-> **Last Updated**: 2026-07-30 08:16
+> **Status**: ✅ GATE PASSED — all 51 items resolved
+> **Last Updated**: 2026-07-30 09:25
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -53,6 +53,9 @@
 | 46 | Naming (runtime) | Which stable IDs and lesson split should identify the two Dialogs & modality laboratories? | `guides/dialog-results` plus `guides/modal-workflows` / one kitchen-sink modal lab / reuse component examples | **Authority: AI — delegated by `--auto-design`.** Use one result-and-validation lab and one nested-workflow-and-focus lab so each catalog outcome has distinct observable evidence. | ✅ Resolved |
 | 47 | Execution (runtime) | How should Phase 12 preserve its intentional red oracle and Upgrade-until-hardened catalog rule under auto-commit? | Preserve the red evidence and commit only after final 12.3.2 promotion and full verification / commit a failing repository / weaken the oracle / claim a partial green checkpoint | **Authority: AI — delegated by `--auto-design`.** Treat tasks 12.1.1–12.3.2 as one repository-green checkpoint and push only after final Complete promotion and authoritative gates pass. | ✅ Resolved |
 | 48 | Scope (runtime) | May Phase 12 correct the Dialog component page's inaccurate claim that `execView()` mounts the dialog, when source and canonical skill require caller-owned desktop add/remove? | Expand the Phase 12 modification set narrowly to the Dialog component page and its lifecycle assertion / publish a Guide that contradicts its owning component page | **User approved** the recommended narrow scope expansion on 2026-07-30. | ✅ Resolved |
+| 49 | Quality review (runtime) | How should RV-012-001 be resolved without inferring modal results, order, focus, or cleanup from assigned labels? | Observe the real modal-host and settled-promise boundaries and count real focus identities and cleanup callbacks / waive or defer the Major finding | **Authority: AI — delegated by `--auto-design`.** Apply the complete authentic-evidence correction, verify it, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 50 | Naming (runtime) | Which stable IDs and lesson split should identify the two Async work laboratories? | `guides/cancellable-work` plus `guides/latest-result-wins` / one kitchen-sink lab / privileged network examples | **Authority: AI — delegated by `--auto-design`.** Separate responsive cancellation from overlapping-generation publication using deterministic bounded fixtures. | ✅ Resolved |
+| 51 | Quality review (runtime) | How should RV-013-001 through RV-013-003 be resolved when the stale-result lab reports cancellation after no pending work remains? | Cancel genuinely pending controllers, expose exact abort/release evidence, then use a fresh pair for stale completion; also mark the accelerator and remove the unused snippet state / retain false-positive cancellation evidence / waive findings | **Authority: AI — delegated by `--auto-design`.** Apply every correction, update the oracle to require authentic pending cancellation, rerun all gates, and use the one permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -1350,3 +1353,73 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** Promise settlement order differs from host resolution order, focus
   restoration becomes asynchronous, cleanup callbacks do not fire exactly once, the immutable
   oracle can no longer retain immediate feedback, or re-review retains a Critical or Major issue.
+
+**AR-50 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Stable documentation registry naming and lesson partitioning within the
+  confirmed two-laboratory Async work course; no product behavior, scope, acceptance criterion,
+  compatibility, host authority, or security policy changes.
+- **Objective:** Give responsiveness/cancellation and stale-result protection separate,
+  independently falsifiable laboratories.
+- **Decision:** Use `guides/cancellable-work` for a deterministic cooperative job that exposes
+  responsive input, bounded progress, cancellation, failure, retry, and cleanup. Use
+  `guides/latest-result-wins` for overlapping request generations, out-of-order completion,
+  stale-result suppression, unmount/disposal invalidation, and latest-result publication.
+- **Evidence:** The catalog has two distinct outcomes: non-blocking progress/cancellation and
+  cancellation/error/cleanup/stale-result modeling. Public `ProgressBar`, `Spinner`, reactive
+  ownership, event-loop flush, and `AbortController`/request-identity seams support deterministic
+  teaching without browser network or visitor resources.
+- **Rejected alternatives:** One kitchen-sink lab would make stale suppression hard to distinguish
+  from ordinary cancellation. A real network demo would be nondeterministic and cross a host
+  authorization boundary. Component-shaped IDs would overstate ProgressBar or Spinner ownership of
+  application-level async architecture.
+- **Strongest counterargument:** Both labs model asynchronous state and share a scheduler seam. A
+  shared deterministic fixture can remove plumbing duplication while the two visible workflows
+  retain one learning objective each.
+- **Confidence:** High — the partition follows the two catalog outcome axes and the project-wide
+  deterministic laboratory convention.
+- **Hardening:** The choice is reversible documentation metadata with no public runtime effect; an
+  independent challenger is not proportionate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either ID already exists, the public progress/cancellation seams cannot
+  model the outcomes without privileged I/O, or the specification oracle cannot distinguish stale
+  suppression from ordinary cancellation.
+
+**AR-51 (runtime):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal laboratory sequencing, evidence, test design, accelerator naming, and
+  snippet focus within the confirmed Async work course; no product scope, public compatibility,
+  security policy, host authority, or external action changes.
+- **Objective:** Resolve RV-013-001 through RV-013-003 without waiver so cancellation evidence
+  proves real owned work was aborted and released.
+- **Decision:** Make cancellation a no-op when no request is pending. In the laboratory contract,
+  start a request pair and cancel it while both controllers are still owned, then assert pending
+  count zero, two real controller releases, and cancellation state. Start a fresh pair afterward
+  for newest-result publication and stale-result rejection. Expose an abort count so cancellation
+  cannot pass on cleanup labels alone. Change the request-pair accelerator to marked Alt+R and
+  remove the unused beginner-snippet signal.
+- **Evidence:** The reviewer traced the existing interaction sequence through both completions
+  before cancellation, leaving `Pending: 0`; the fixture still incremented cancellation state and
+  therefore proved no abort. The fixture already owns real `AbortController` objects and can count
+  their aborted state at the release boundary without adding privileged I/O.
+- **Rejected alternatives:** Waiving a Major is forbidden. Preserving the oracle's false-positive
+  sequence would make the course's cancellation claim unfalsifiable. Removing cancellation from
+  the latest-result lab would weaken the confirmed outcome. Real network work would be
+  nondeterministic and cross a host-authorization boundary.
+- **Strongest counterargument:** Correcting a confirmed immutable oracle is exceptional. Here the
+  independent review proves the oracle itself accepts impossible evidence: it requests
+  cancellation only after both controllers have been released. Keeping it unchanged would protect
+  a known false contract rather than the confirmed requirement.
+- **Confidence:** High — pending-controller count, abort state, and cleanup count are direct
+  observations at the existing ownership seam.
+- **Hardening:** The mandatory independent reviewer supplied the Major and both Minor findings.
+  Every correction is accepted without waiver, and the single permitted fix-scoped re-review will
+  challenge the corrected sequence and evidence.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Cancellation cannot expose abort evidence without a public API expansion,
+  abort counts disagree with released pending controllers, the revised sequence no longer proves
+  out-of-order stale suppression, or re-review retains a Critical or Major issue.
