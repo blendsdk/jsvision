@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 16:10
-> **Progress**: 176/246 tasks (72%)
+> **Last Updated**: 2026-07-30 16:55
+> **Progress**: 184/246 tasks (75%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -980,22 +980,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-32 · `03-02` · `03-03`
 
+> **Phase baseline tree**: 8ecced72a3cc26583d4174e1d49f270dd95ec962
+>
+> **Expected modification set**: The Phase 23 Debugging course, one focused diagnostic
+> laboratory and fixture, focused specification and implementation tests, Guide
+> registry/catalog/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 23.1: Specification tests
 
-- [ ] 23.1.1 [spec-author] Write the Debugging course oracle — `packages/docs-site/test/debugging-guide.spec.test.ts`
-- [ ] 23.1.2 Run the specification and record the expected red result
+- [x] 23.1.1 [spec-author] Write the Debugging course oracle — `packages/docs-site/test/debugging-guide.spec.test.ts` ✅ (completed: 2026-07-30 16:19; independent 18-case immutable oracle covers the complete course, AR-80 evidence-ladder laboratory, systematic diagnosis, bounded redaction, template1 behavior, interaction, responsiveness, and cleanup)
+- [x] 23.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 16:19; expected red: four public diagnostic controls pass and 14 absent course, catalog, registry, and laboratory contracts fail; docs-site typecheck passes)
 
 ### Step 23.2: Implementation
 
-- [ ] 23.2.1 Replace the placeholder with bounded evidence and failure-isolation teaching — `packages/docs-site/guide/debugging.md`
-- [ ] 23.2.2 Implement one focused template1 diagnostic lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/debugging/`
-- [ ] 23.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 23.2.4 Run ST-32 green plus docs-site typecheck; fix implementation only
+- [x] 23.2.1 Replace the placeholder with bounded evidence and failure-isolation teaching — `packages/docs-site/guide/debugging.md` ✅ (completed: 2026-07-30 16:30; the complete question-led course teaches the observation ladder, six failure boundaries, screen-safe evidence, host selection, isolation, diagnosis, practices, exercises, and public APIs)
+- [x] 23.2.2 Implement one focused template1 diagnostic lab — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/debugging/` ✅ (completed: 2026-07-30 16:30; the compact command-driven evidence ladder uses authentic mounted geometry, focus, command, reactive-render, capability, lifecycle, bounded redaction, correction, and cleanup evidence)
+- [x] 23.2.3 Register the lab and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 16:30; the kind-app debugging-evidence lab is registered with theme controls and the Upgrade catalog entry owns its exact ID)
+- [x] 23.2.4 Run ST-32 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 16:30; 17/18 course and laboratory assertions plus docs-site typecheck pass, with only final catalog promotion deliberately withheld)
 
 ### Step 23.3: Hardening
 
-- [ ] 23.3.1 Add layout/focus/event/reactive/host distinction and redaction edges — `packages/docs-site/test/debugging-guide.impl.test.ts`
-- [ ] 23.3.2 Run focused checks, promote Debugging, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 23.3.1 Add layout/focus/event/reactive/host distinction and redaction edges — `packages/docs-site/test/debugging-guide.impl.test.ts` ✅ (completed: 2026-07-30 16:35; six hardening cases cover bounded diagnostic eviction and redaction, distinct evidence for all six owning boundaries, command-routed mouse parity, post-disposal inertia, compact non-colour instructions, and repeated diagnosis without resource growth)
+- [x] 23.3.2 Run focused checks, promote Debugging, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 16:55; the course is Complete and learner-visible; 32 focused course/laboratory/catalog checks, docs-site typecheck, production docs build, and authoritative `yarn verify` pass; independent review found five Major evidence gaps, AR-81 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all five with no residual findings)
 
 **Verify**: Debugging guide spec/impl tests and docs-site typecheck
 
