@@ -72,4 +72,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/clipboard-boundary.ts',
     load: () => import('../../examples/guides/clipboard-boundary.js'),
   },
+  {
+    id: 'guides/cell-width',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/cell-width.ts',
+    load: () => import('../../examples/guides/cell-width.js'),
+  },
+  {
+    id: 'guides/glyph-fallback',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/glyph-fallback.ts',
+    load: () => import('../../examples/guides/glyph-fallback.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

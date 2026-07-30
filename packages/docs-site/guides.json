@@ -145,7 +145,7 @@
       "group": "Core concepts",
       "page": "/guide/text-unicode-and-cells",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 6,
       "prerequisites": ["layout"],
       "learningOutcomes": [
@@ -154,7 +154,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/cell-width", "guides/glyph-fallback"]
     },
     {
       "id": "scrolling-lists-and-large-content",
