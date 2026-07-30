@@ -168,15 +168,15 @@ courses are part of the confirmed curriculum and appear here before they enter t
 
 ### Core concepts
 
-| Course                                                           | Stage    | Purpose                                                                              |
-| ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
-| [Layout](/guide/layout)                                          | Complete | Compose responsive cell layouts, overlays, and exact placement.                      |
-| [Reactive state](/guide/reactive-state)                          | Complete | Model state, derived values, bindings, effects, and lifetimes.                       |
-| [Views & focus](/guide/views-and-focus)                          | Complete | Understand retained trees, mounting, invalidation, tab order, and focus restoration. |
-| [Events, commands & keymaps](/guide/events-commands-and-keymaps) | Complete | Route input and design discoverable command systems.                                 |
-| [Keyboard & clipboard](/guide/keyboard-and-clipboard)            | Complete | Use editing chords and authorized clipboard adapters.                                |
-| [Text, Unicode & terminal cells](/guide/text-unicode-and-cells)  | Complete | Handle graphemes, wide glyphs, wrapping, clipping, and ASCII-safe fallbacks.         |
-| Scrolling, lists & large content                                 | Planned  | Design viewports, selection, scrolling, and bounded rendering.                       |
+| Course                                                                       | Stage    | Purpose                                                                              |
+| ---------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| [Layout](/guide/layout)                                                      | Complete | Compose responsive cell layouts, overlays, and exact placement.                      |
+| [Reactive state](/guide/reactive-state)                                      | Complete | Model state, derived values, bindings, effects, and lifetimes.                       |
+| [Views & focus](/guide/views-and-focus)                                      | Complete | Understand retained trees, mounting, invalidation, tab order, and focus restoration. |
+| [Events, commands & keymaps](/guide/events-commands-and-keymaps)             | Complete | Route input and design discoverable command systems.                                 |
+| [Keyboard & clipboard](/guide/keyboard-and-clipboard)                        | Complete | Use editing chords and authorized clipboard adapters.                                |
+| [Text, Unicode & terminal cells](/guide/text-unicode-and-cells)              | Complete | Handle graphemes, wide glyphs, wrapping, clipping, and ASCII-safe fallbacks.         |
+| [Scrolling, lists & large content](/guide/scrolling-lists-and-large-content) | Complete | Design viewports, selection, scrolling, and bounded rendering.                       |
 
 ### Building applications
 

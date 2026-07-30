@@ -162,7 +162,7 @@
       "group": "Core concepts",
       "page": "/guide/scrolling-lists-and-large-content",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 7,
       "prerequisites": ["layout", "views-and-focus"],
       "learningOutcomes": [
@@ -171,7 +171,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/viewport-strategies", "guides/virtual-collections"]
     },
     {
       "id": "application-shell",
