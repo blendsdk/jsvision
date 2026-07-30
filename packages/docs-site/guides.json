@@ -485,7 +485,7 @@
       "group": "Operating a real app",
       "page": "/guide/terminal-capabilities",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 5,
       "prerequisites": ["theming-and-colour-depth", "crash-safety"],
       "learningOutcomes": [
@@ -494,7 +494,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/capability-resolution", "guides/portable-fallbacks"]
     },
     {
       "id": "in-production",

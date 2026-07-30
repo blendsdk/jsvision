@@ -209,15 +209,15 @@ courses are part of the confirmed curriculum and appear here before they enter t
 
 ### Operating a real app
 
-| Course                                                        | Stage    | Purpose                                                                                  |
-| ------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
-| [Debugging](/guide/debugging)                                 | Complete | Diagnose layout, focus, commands, rendering, capabilities, and lifecycle failures.       |
-| [Crash safety & terminal restore](/guide/crash-safety)        | Complete | Understand restore guarantees, signals, essentials, and degradations.                    |
-| [Displaying untrusted text safely](/guide/untrusted-text)     | Complete | Prevent terminal injection and redact sensitive diagnostics.                             |
-| [Accessibility & resilient interaction](/guide/accessibility) | Complete | Design keyboard-complete, non-color-dependent, reduced-geometry interfaces.              |
-| Terminal capabilities & portability                           | Planned  | Adapt honestly across color, mouse, glyph, SSH, tmux, Windows, and browser environments. |
-| [In production](/guide/in-production)                         | Upgrade  | Package, deploy, observe, support, and set evidence-based expectations.                  |
-| Build a complete application                                  | Planned  | Apply the complete curriculum in one beginner-to-production release workflow.            |
+| Course                                                              | Stage    | Purpose                                                                                  |
+| ------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
+| [Debugging](/guide/debugging)                                       | Complete | Diagnose layout, focus, commands, rendering, capabilities, and lifecycle failures.       |
+| [Crash safety & terminal restore](/guide/crash-safety)              | Complete | Understand restore guarantees, signals, essentials, and degradations.                    |
+| [Displaying untrusted text safely](/guide/untrusted-text)           | Complete | Prevent terminal injection and redact sensitive diagnostics.                             |
+| [Accessibility & resilient interaction](/guide/accessibility)       | Complete | Design keyboard-complete, non-color-dependent, reduced-geometry interfaces.              |
+| [Terminal capabilities & portability](/guide/terminal-capabilities) | Complete | Adapt honestly across color, mouse, glyph, SSH, tmux, Windows, and browser environments. |
+| [In production](/guide/in-production)                               | Upgrade  | Package, deploy, observe, support, and set evidence-based expectations.                  |
+| Build a complete application                                        | Planned  | Apply the complete curriculum in one beginner-to-production release workflow.            |
 
 ## Where to next
 

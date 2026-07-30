@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
+          "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T16:21:51Z"
+          "validatedAt": "2026-07-30T16:49:32Z"
         }
       ]
     },
@@ -1121,10 +1121,15 @@
         "summary:Phase 26 tasks 26.1.1 and 26.1.2 established 24 independently authored cases; expected red is four public focus, accelerator, NO_COLOR, and ASCII controls passing and 20 absent course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
         "summary:Phase 26 tasks 26.2.1 through 26.3.1 delivered the complete accessibility course, two template1 laboratories, and keyboard, pointer, focus-visible, semantic-state, rendered-profile, reduced-geometry, cleanup, and post-disposal hardening.",
         "summary:Phase 26 independent review found three Major and two Minor issues; AR-85 replaced simulated profile labels with rendered style, fallback-glyph, semantic-cell, and solved-geometry evidence, activated Inspect through a shared command, and corrected Button semantics and snippets without waiver.",
-        "summary:The single permitted Phase 26 fix-scoped re-review cleared all five findings, and the promoted course passes 35/35 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify."
+        "summary:The single permitted Phase 26 fix-scoped re-review cleared all five findings, and the promoted course passes 35/35 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify.",
+        "summary:Phase 27 baseline af5d056625d5c976e0ff56cbc2f31d47a8303ec1 and its expected Terminal capabilities & portability modification set are recorded before specification work.",
+        "summary:Phase 27 tasks 27.1.1 and 27.1.2 established 26 independently authored cases; expected red is five public capability controls passing and 21 absent course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 27 tasks 27.2.1 through 27.3.1 delivered the complete terminal-capabilities course, two template1 laboratories, and conservative, environment, runtime-query, override, host-profile, rendered-glyph, reduced-geometry, cleanup, and public-signature hardening.",
+        "summary:Phase 27 independent review found four Major and one Minor issue; AR-86 corrected terminal-query and browser-builder signatures, host-mode ownership, supported glyph fallback scope, responsive construction, and promotion order without waiver.",
+        "summary:The single permitted Phase 27 fix-scoped re-review cleared all five findings, and the promoted course passes 42/42 focused checks, docs-site typecheck and DOM tests, production docs build, and authoritative yarn verify."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
+      "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1211,10 +1216,11 @@
         "Auto-design AR-82 selects a deterministic public createHost lifecycle trace plus a real Vitest module as the authentic zero-browser-lab substitute for native terminal restoration.",
         "Auto-design AR-83 accepts all Phase 24 findings without waiver and requires exact terminal-transition validation, correct restoration/backstop ordering, combined fatal and restoration-fault evidence, supported public imports, and final-only synchronization.",
         "Auto-design AR-84 accepts all Phase 25 findings without waiver and requires disjoint compact geometry, complete instructions, shared command routing, resolvable links, Unicode-safe bounds, and final-only promotion synchronization.",
-        "Auto-design AR-85 accepts all Phase 26 findings without waiver and requires rendered profile evidence, solved narrow geometry, real shared-command Inspect behavior, exact Button semantics, and valid self-contained snippets."
+        "Auto-design AR-85 accepts all Phase 26 findings without waiver and requires rendered profile evidence, solved narrow geometry, real shared-command Inspect behavior, exact Button semantics, and valid self-contained snippets.",
+        "Auto-design AR-86 accepts all Phase 27 findings without waiver and requires exact terminal-query and browser-builder signatures, correct host-mode ownership, supported glyph fallback scope, valid responsive construction, and final-only promotion synchronization."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:79b49f0cc12db2933a8956c14485669acc0c9da245e4192dce9daf78fd66972e",
+      "revision": "sha256:f730ee73cf9d59ab01de1d18caabf125085b9fab0fc860da51535ee9da5b1027",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1284,13 +1290,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:6165dd47cc06786aabb9c520518df8fd0a5a3129125849ec28e3088dd93613fa",
+          "revision": "sha256:e2ea91bbc84294bda4736c305767befebfd530dc7d003d59218714e6e1948721",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T16:21:51Z"
+          "validatedAt": "2026-07-30T16:49:32Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T16:21:51Z"
+  "updated": "2026-07-30T16:49:32Z"
 }

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 18:21
-> **Progress**: 208/246 tasks (85%)
+> **Last Updated**: 2026-07-30 18:49
+> **Progress**: 216/246 tasks (88%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1096,22 +1096,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-36 · `03-02` · `03-03`
 
+> **Phase baseline tree**: af5d056625d5c976e0ff56cbc2f31d47a8303ec1
+>
+> **Expected modification set**: The Phase 27 terminal-capabilities course, two deterministic
+> template1 capability/fallback laboratories and fixtures, focused specification and implementation
+> tests, Guide catalog/registry/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 27.1: Specification tests
 
-- [ ] 27.1.1 [spec-author] Write the terminal-capabilities oracle — `packages/docs-site/test/terminal-capabilities-guide.spec.test.ts`
-- [ ] 27.1.2 Run the specification and record the expected red result
+- [x] 27.1.1 [spec-author] Write the terminal-capabilities oracle — `packages/docs-site/test/terminal-capabilities-guide.spec.test.ts` ✅ (completed: 2026-07-30 18:28; immutable 26-assertion oracle fixes both lab IDs, the complete capability/portability backbone, honest evidence boundaries, public detection/query/fallback controls, authentic profile/reason/rendered-glyph facts, template1 behavior, and cleanup)
+- [x] 27.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 18:29; focused Vitest produced the expected 21 failures for the absent course/catalog evidence/labs while five independent public controls passed, and docs-site typecheck remained green)
 
 ### Step 27.2: Implementation
 
-- [ ] 27.2.1 Create the capability-detection, fallback, and evidence-scope course — `packages/docs-site/guide/terminal-capabilities.md`
-- [ ] 27.2.2 Implement two focused template1 capability/fallback labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/terminal-capabilities/`
-- [ ] 27.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 27.2.4 Run ST-36 green plus docs-site typecheck; fix implementation only
+- [x] 27.2.1 Create the capability-detection, fallback, and evidence-scope course — `packages/docs-site/guide/terminal-capabilities.md` ✅ (completed: 2026-07-30 18:38; the question-led course progresses from immutable profiles/reasons and conservative synchronous detection through bounded live queries, honest overrides, independent degradations, SSH/tmux/Windows/browser evidence, rendered glyph adaptation, reduced geometry, diagnosis, and production judgment with eleven concise public-API snippets)
+- [x] 27.2.2 Implement two focused template1 capability/fallback labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/terminal-capabilities/` ✅ (completed: 2026-07-30 18:38; Capability Resolution cycles real default/env/runtime/override resolutions with passthrough evidence, while Portable Fallbacks draws actual profile-derived border/block glyphs across nine bounded host/degradation profiles and preserves keyboard access)
+- [x] 27.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 18:38; both stable Guide IDs are registered as Classic template1 applications and were attached to the planned catalog course before promotion)
+- [x] 27.2.4 Run ST-36 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 18:38; after the explicit promotion assertion, the immutable course/lab oracle and shared catalog suite pass without specification edits and docs-site TypeScript remains green)
 
 ### Step 27.3: Hardening
 
-- [ ] 27.3.1 Add unknown, mono, no-mouse, ASCII, reduced-geometry, and unsupported-claim edges — `packages/docs-site/test/terminal-capabilities-guide.impl.test.ts`
-- [ ] 27.3.2 Run focused checks, promote Terminal capabilities, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 27.3.1 Add unknown, mono, no-mouse, ASCII, reduced-geometry, and unsupported-claim edges — `packages/docs-site/test/terminal-capabilities-guide.impl.test.ts` ✅ (completed: 2026-07-30 18:43; nine hardening cases cover conservative frozen unknown evidence, independent monochrome/no-mouse/ASCII axes, exact query/browser option contracts, complete scenario/profile wraparound, draw-derived glyph and clipping checks, reduced 68×20 hosts, and post-disposal inertia)
+- [x] 27.3.2 Run focused checks, promote Terminal capabilities, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 18:49; the promoted course passes 42/42 focused checks, docs-site typecheck and DOM tests, production docs build, and authoritative `yarn verify`; independent review found four Major and one Minor issue, AR-86 corrected terminal-query and browser-builder signatures, host-mode ownership, supported glyph fallback scope, responsive construction, and promotion order without waiver, and the single permitted fix-scoped re-review cleared all five)
 
 **Verify**: Capability guide spec/impl tests and docs-site typecheck
 
