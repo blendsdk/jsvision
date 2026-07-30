@@ -519,7 +519,7 @@
       "group": "Operating a real app",
       "page": "/guide/complete-application",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 7,
       "prerequisites": [
         "application-architecture",
@@ -534,7 +534,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/capstone-workflow", "guides/capstone-release-rehearsal"]
     }
   ]
 }

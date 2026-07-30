@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 18:49
-> **Progress**: 224/246 tasks (91%)
+> **Last Updated**: 2026-07-30 20:00
+> **Progress**: 232/246 tasks (94%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -1157,22 +1157,29 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-38 · `03-02` · `03-03`
 
+> **Phase baseline tree**: d651ae476359281e5bc9b6ae88342fa67c5cec2c
+>
+> **Expected modification set**: The Phase 29 complete-application capstone course, two
+> deterministic template1 workflow laboratories and fixtures, focused specification and
+> implementation tests, Guide catalog/registry/curriculum projection, and plan/roadmap/traceability
+> evidence.
+
 ### Step 29.1: Specification tests
 
-- [ ] 29.1.1 [spec-author] Write the complete-application oracle — `packages/docs-site/test/complete-application-guide.spec.test.ts`
-- [ ] 29.1.2 Run the specification and record the expected red result
+- [x] 29.1.1 [spec-author] Write the complete-application oracle — `packages/docs-site/test/complete-application-guide.spec.test.ts` ✅ (completed: 2026-07-30 19:30; immutable 24-assertion oracle fixes the two capstone lab IDs, coherent workflow/release backbone, deterministic persistence/cancellation/recovery/release fixtures, template1 behavior, cleanup, reduced geometry, and current public controls)
+- [x] 29.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 19:30; focused Vitest produced the expected 21 failures for the absent course/catalog evidence/fixtures/labs while three independent public integration controls passed, and docs-site typecheck remained green)
 
 ### Step 29.2: Implementation
 
-- [ ] 29.2.1 Create the coherent build/test/diagnose/production-capstone course — `packages/docs-site/guide/complete-application.md`
-- [ ] 29.2.2 Implement two capstone template1 labs with deterministic application fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/complete-application/`
-- [ ] 29.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 29.2.4 Run ST-38 green plus docs-site typecheck; fix implementation only
+- [x] 29.2.1 Create the coherent build/test/diagnose/production-capstone course — `packages/docs-site/guide/complete-application.md` ✅ (completed: 2026-07-30 19:37; question-led capstone composes one record vertical slice through ownership, project structure, forms, state/actions, routing/focus, cancellation, authorized persistence, rendered tests, accessibility/security, safe recovery, packaging, and release verification without duplicating prerequisite chapters)
+- [x] 29.2.2 Implement two capstone template1 labs with deterministic application fixtures — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/complete-application/` ✅ (completed: 2026-07-30 19:37; Complete Workflow proves navigation, validated authorized save, cancellation, stale suppression, failure/retry, and cleanup, while Release Rehearsal cycles bounded ship/no-go fixtures with an explicit browser evidence boundary)
+- [x] 29.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 19:37; both stable IDs are registered as Classic template1 applications and attached to the still-Planned catalog course pending review)
+- [x] 29.2.4 Run ST-38 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 19:53; all 32 focused capstone specification and hardening assertions plus the 7 shared catalog assertions pass, and docs-site typecheck is green after the authorized quality corrections)
 
 ### Step 29.3: Hardening
 
-- [ ] 29.3.1 Add end-to-end state, cancellation, navigation, failure, cleanup, and reduced-geometry edges — `packages/docs-site/test/complete-application-guide.impl.test.ts`
-- [ ] 29.3.2 Run focused checks, promote Complete application, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 29.3.1 Add end-to-end state, cancellation, navigation, failure, cleanup, and reduced-geometry edges — `packages/docs-site/test/complete-application-guide.impl.test.ts` ✅ (completed: 2026-07-30 19:37; eight hardening cases cover invalid and denied saves, post-cleanup stale completion, idempotent cancellation, post-disposal inertia, all release scenarios, stale-evidence recovery limits, and exact cleanup)
+- [x] 29.3.2 Run focused checks, promote Complete application, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 20:00; the promoted course passes 39 focused capstone/catalog assertions, docs-site typecheck, production docs build, and authoritative `yarn verify`; independent review found five Major and one Minor issue, AR-88 corrected derived release evidence, real late-result cancellation, authorization, persistence/display sanitization, routed form/focus behavior, keyboard zoom, and authored geometry without waiver, and the permitted fix-scoped re-review plus direct final corrections closed the scoped findings)
 
 **Verify**: Capstone guide spec/impl tests and docs-site typecheck
 

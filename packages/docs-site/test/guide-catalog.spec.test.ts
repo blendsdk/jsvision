@@ -123,8 +123,9 @@ describe('Guide curriculum catalog', () => {
       'accessibility',
       'terminal-capabilities',
       'in-production',
+      'complete-application',
     ]);
-    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(1);
+    expect(CATALOG.entries.filter((entry) => entry.stage === 'planned')).toHaveLength(0);
   });
 
   test('gives every course prerequisites, outcomes, and an explicit example target', () => {
