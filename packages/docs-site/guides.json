@@ -366,7 +366,7 @@
       "group": "Extending and integrating",
       "page": "/guide/application-architecture",
       "profile": "course",
-      "stage": "planned",
+      "stage": "complete",
       "sidebarOrder": 4,
       "prerequisites": ["application-shell", "reactive-state", "screens-and-routing"],
       "learningOutcomes": [
@@ -375,7 +375,7 @@
       ],
       "requiredLiveExamples": 2,
       "liveExampleException": null,
-      "examples": []
+      "examples": ["guides/architecture-boundaries", "guides/architecture-ownership"]
     },
     {
       "id": "data-grid-specialist",

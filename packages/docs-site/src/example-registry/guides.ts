@@ -233,4 +233,20 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/widget-composition.ts',
     load: () => import('../../examples/guides/widget-composition.js'),
   },
+  {
+    id: 'guides/architecture-boundaries',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/architecture-boundaries.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/architecture-boundaries.js'),
+  },
+  {
+    id: 'guides/architecture-ownership',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/architecture-ownership.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/architecture-ownership.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:9699103d6e0584a6b54200de32c8e6748ef7aa6294b6d794f62aa7a1b8a81390",
+          "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T13:30:52Z"
+          "validatedAt": "2026-07-30T13:49:58Z"
         }
       ]
     },
@@ -1097,10 +1097,14 @@
         "summary:Phase 21 tasks 21.1.1 and 21.1.2 established 15 independently authored cases; expected red is six public headless controls passing and nine placeholder course, catalog, fixture, and authentic-artifact failures.",
         "summary:Phase 21 tasks 21.2.1 through 21.3.2 delivered the complete zero-lab course, deterministic application fixture, real Vitest artifact, and isolation, inert-input, viewport, queued-work, modal, cleanup, and failure hardening.",
         "summary:Phase 21 independent review found three Major and two Minor evidence gaps; AR-76 corrected structured diagnostic redaction, modal confinement, retained-producer inertia, exact theme evidence, and regression guards without waiver.",
-        "summary:The single permitted Phase 21 re-review cleared four findings and retained scheduler observation plus regression guarding; the final no-third-review correction counts scheduler calls directly and all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass."
+        "summary:The single permitted Phase 21 re-review cleared four findings and retained scheduler observation plus regression guarding; the final no-third-review correction counts scheduler calls directly and all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass.",
+        "summary:Phase 22 baseline 7ba9ba8b5eb6af8856e33c4e218467d09e23d40a and its expected Application architecture modification set are recorded before specification work.",
+        "summary:Phase 22 tasks 22.1.1 and 22.1.2 established 19 independently authored cases; expected red is four public architecture controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 22 tasks 22.2.1 through 22.3.2 delivered the complete application-architecture course, two template1 comparison laboratories, and boundary, ownership, stale-work, failure, cleanup, package, and command-routed mouse hardening; all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass.",
+        "summary:Phase 22 independent review found four Major and two Minor authentic-evidence gaps; AR-79 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all six with no residual findings."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:9699103d6e0584a6b54200de32c8e6748ef7aa6294b6d794f62aa7a1b8a81390",
+      "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1178,10 +1182,13 @@
         "Auto-design AR-73 accepts RV-20-001 and RV-20-002 without waiver and requires routed local-coordinate mouse evidence plus adjacent in-buffer sentinel clipping evidence.",
         "Auto-design AR-74 selects a deterministic public-API fixture plus real Vitest module as the authentic zero-lab substitute for Testing headlessly.",
         "Auto-design AR-75 preserves Phase 21 expected-red evidence through the complete course and artifact checkpoint.",
-        "Auto-design AR-76 accepts every Phase 21 review finding without waiver and requires application-boundary structured redaction, modal confinement, retained-producer inertia, exact theme evidence, and durable regression guards."
+        "Auto-design AR-76 accepts every Phase 21 review finding without waiver and requires application-boundary structured redaction, modal confinement, retained-producer inertia, exact theme evidence, and durable regression guards.",
+        "Auto-design AR-77 partitions Phase 22 into dependency-and-command boundaries plus lifetime-and-cleanup ownership laboratories.",
+        "Auto-design AR-78 preserves Phase 22 expected-red evidence through its complete course and laboratory checkpoint.",
+        "Auto-design AR-79 accepts all six Phase 22 quality findings without waiver and requires command-routed mouse actions, injected failure/resource evidence, falsifiable stale publication, a corrected snippet, and complete mouse coverage."
       ],
       "id": "DEC-RD08-GUIDES",
-      "revision": "sha256:105573ea5419736183d1508bc72358cbd9a66dc448fc31316607c1a78b3a15d7",
+      "revision": "sha256:c09369bde0b03da09fb6dd017f3a2fad9d2f96c293fea4c396a5f8da2ac00b98",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1251,13 +1258,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:9699103d6e0584a6b54200de32c8e6748ef7aa6294b6d794f62aa7a1b8a81390",
+          "revision": "sha256:bb528fa421c0b15701f21faa79bf243c96f73313310cb7ab1cf24da02de0f532",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T13:30:52Z"
+          "validatedAt": "2026-07-30T13:49:58Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T13:30:52Z"
+  "updated": "2026-07-30T14:10:24Z"
 }

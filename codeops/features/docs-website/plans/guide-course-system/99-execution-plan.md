@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 15:25
-> **Progress**: 168/246 tasks (68%)
+> **Last Updated**: 2026-07-30 16:10
+> **Progress**: 176/246 tasks (72%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -951,22 +951,28 @@ independent specification-first phase (AR-10).
 
 **Reference**: ST-31 · `03-02` · `03-03`
 
+> **Phase baseline tree**: 7ba9ba8b5eb6af8856e33c4e218467d09e23d40a
+>
+> **Expected modification set**: The Phase 22 application-architecture course, two focused
+> architecture-comparison laboratories and fixtures, focused specification and implementation
+> tests, Guide registry/catalog/curriculum projection, and plan/roadmap/traceability evidence.
+
 ### Step 22.1: Specification tests
 
-- [ ] 22.1.1 [spec-author] Write the application-architecture oracle — `packages/docs-site/test/application-architecture-guide.spec.test.ts`
-- [ ] 22.1.2 Run the specification and record the expected red result
+- [x] 22.1.1 [spec-author] Write the application-architecture oracle — `packages/docs-site/test/application-architecture-guide.spec.test.ts` ✅ (completed: 2026-07-30 15:43; independent 19-case immutable oracle covers the complete course, both AR-77 laboratories, exact architecture flows, template1 behavior, failure isolation, stale work, and disposal)
+- [x] 22.1.2 Run the specification and record the expected red result ✅ (completed: 2026-07-30 15:43; expected red: four public architecture controls pass and 15 absent course, catalog, registry, and laboratory contracts fail)
 
 ### Step 22.2: Implementation
 
-- [ ] 22.2.1 Create the state/command/service/screen/ownership/error/package-boundary course — `packages/docs-site/guide/application-architecture.md`
-- [ ] 22.2.2 Implement two focused template1 architecture-comparison labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/application-architecture/`
-- [ ] 22.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 22.2.4 Run ST-31 green plus docs-site typecheck; fix implementation only
+- [x] 22.2.1 Create the state/command/service/screen/ownership/error/package-boundary course — `packages/docs-site/guide/application-architecture.md` ✅ (completed: 2026-07-30 15:47; the full 17-section course, 12 focused public-API snippets, failure diagnosis, practices, exercises, specialist links, and API links satisfy every content contract)
+- [x] 22.2.2 Implement two focused template1 architecture-comparison labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/application-architecture/` ✅ (completed: 2026-07-30 15:47; compact Classic laboratories prove coupled versus layered flow and application/screen/widget ownership with keyboard/mouse parity, responsive geometry, failure isolation, stale suppression, and cleanup)
+- [x] 22.2.3 Register labs and add catalog evidence while the route remains Planned — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` ✅ (completed: 2026-07-30 15:47; both kind-app labs are registered with theme controls and the Planned catalog entry owns their exact IDs)
+- [x] 22.2.4 Run ST-31 green plus docs-site typecheck; fix implementation only ✅ (completed: 2026-07-30 15:47; 18/19 architecture cases plus docs-site typecheck pass, with only final catalog promotion deliberately withheld)
 
 ### Step 22.3: Hardening
 
-- [ ] 22.3.1 Add ownership, circular-dependency, stale-state, error-boundary, and cleanup edges — `packages/docs-site/test/application-architecture-guide.impl.test.ts`
-- [ ] 22.3.2 Run focused checks, promote Architecture, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 22.3.1 Add ownership, circular-dependency, stale-state, error-boundary, and cleanup edges — `packages/docs-site/test/application-architecture-guide.impl.test.ts` ✅ (completed: 2026-07-30 15:50; six hardening cases cover repeated boundary flow, exact screen/widget ownership, post-disposal inertia, bounded value-free failure evidence, circular-dependency repair, public package boundaries, and command-routed mouse coverage for every laboratory action)
+- [x] 22.3.2 Run focused checks, promote Architecture, and publish it in map/sidebar — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` ✅ (completed: 2026-07-30 16:10; the course is Complete, both labs are learner-visible, all 32 focused architecture/catalog checks, docs-site typecheck, production docs build, and authoritative `yarn verify` pass; independent review found four Major and two Minor evidence gaps, AR-79 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all six with no residual findings)
 
 **Verify**: Architecture guide spec/impl tests and docs-site typecheck
 

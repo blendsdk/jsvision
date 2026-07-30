@@ -1,7 +1,7 @@
 ## Ambiguity Register: Guide Course System
 
-> **Status**: ✅ GATE PASSED — all 76 items resolved
-> **Last Updated**: 2026-07-30 15:25
+> **Status**: ✅ GATE PASSED — all 79 items resolved
+> **Last Updated**: 2026-07-30 15:57
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|---|---|---|---|---|
@@ -65,6 +65,9 @@
 | 74 | Artifact design (runtime) | What authentic zero-lab artifact should make the Testing headlessly course runnable and independently verifiable? | A public-API application fixture plus a real Vitest module that asserts frames, input, resize, failure, and disposal / an embedded terminal demo / a static transcript only | **Authority: AI — delegated by `--auto-design`.** Use the deterministic fixture-and-test-module pair; it directly embodies the lesson and preserves the catalog's zero-lab exception. | ✅ Resolved |
 | 75 | Testing (runtime) | Does the Phase 21 oracle provide a valid red checkpoint while public headless controls already exist? | Accept six passing public controls plus nine missing-course/artifact failures / require all tests to fail / create placeholder artifacts | **Authority: AI — delegated by `--auto-design`.** Accept the implementation-independent controls and preserve the nine focused failures until the complete course and artifact exist. | ✅ Resolved |
 | 76 | Quality review (runtime) | How should the Phase 21 artifact replace false redaction, modal, late-work, and style evidence without changing the zero-lab course scope? | Sanitize structured diagnostics at the app boundary and add routed confinement, retained-producer teardown, and exact semantic-style assertions / change the core logger contract / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every scoped authentic-evidence correction without waiver, verify it, and use the one permitted fix-scoped re-review. | ✅ Resolved |
+| 77 | UX (runtime) | How should the two required Application architecture laboratories divide one broad architecture outcome into independently observable lessons? | Compare layered dependency/command flow separately from lifetime/error/cleanup ownership / place every boundary in one dense laboratory / repeat the same architecture with different sample data | **Authority: AI — delegated by `--auto-design`.** Use `guides/architecture-boundaries` for dependency and command flow, and `guides/architecture-ownership` for lifetime, failure, and cleanup evidence, as detailed in AR-77. | ✅ Resolved |
+| 78 | Testing (runtime) | Does the Phase 22 oracle's four-pass/fifteen-fail result form the required specification-first red checkpoint? | Accept public architecture controls as passing anchors while final course/lab contracts fail / require all tests to fail / weaken or quarantine final contracts | **Authority: AI — delegated by `--auto-design`.** Preserve the 4/15 split as the expected red checkpoint described in AR-78. | ✅ Resolved |
+| 79 | Quality review (runtime) | How should Phase 22 replace command-parity, failure, stale-result, application-resource, snippet, and coverage false positives without weakening the course? | Route every button through commands, use real injected failure/resource objects and publishable generations, correct the snippet, and exercise every mouse path / remove the teaching claims / waive the findings | **Authority: AI — delegated by `--auto-design`.** Apply every authentic-evidence correction in AR-79 and use the single permitted fix-scoped re-review. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -2251,3 +2254,93 @@ cross-course contracts after every authored route is complete.
 - **Root invocation ID:** `exec-guides-20260729T185023Z`.
 - **Reopen triggers:** Serialized diagnostics contain the payload, background input changes during a
   modal, retained callbacks publish after disposal, or a wrong focus role passes style assertions.
+
+**AR-77 (laboratory partition):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Selecting stable IDs and lesson boundaries for the two already-required
+  laboratories without changing catalog outcomes or implementation scope.
+- **Objective:** Keep architecture tradeoffs observable without turning one terminal dialog into a
+  dense diagram or repeating the same lesson with different labels.
+- **Decision:** Use `guides/architecture-boundaries` to compare direct view-to-service coupling with
+  layered domain state, injected services, and one command vocabulary. Use
+  `guides/architecture-ownership` to compare application, screen, and widget lifetimes while making
+  cleanup, stale work, and isolated failure evidence visible.
+- **Evidence:** The catalog outcome has two distinct axes: durable dependency boundaries and
+  disposable ownership. The canonical JSVision architecture reference likewise separates its
+  four-layer dependency model from shell and lifecycle ownership.
+- **Rejected alternatives:** One combined laboratory would overload the 80×24 teaching surface.
+  Two data variants would not prove distinct outcomes. A laboratory that performs real external
+  I/O would obscure architecture with host authorization and violate deterministic docs fixtures.
+- **Strongest counterargument:** Showing intentionally coupled design could normalize it. The first
+  laboratory must label the coupled path as a diagnostic comparison, keep its fixture bounded, and
+  make the corrected layered direction the actionable result.
+- **Confidence:** High — each lab maps to one catalog learning outcome and can expose exact state,
+  command, dependency, cleanup, and failure counters through existing public UI seams.
+- **Hardening:** Require unique registry IDs, keyboard/mouse parity, compact and responsive
+  template1 evidence, non-color cues, idempotent cleanup, and a falsifiable distinction between the
+  compared paths.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Either lab must teach the other lab's primary outcome to remain coherent, or
+  the comparison cannot be made observable with bounded host-neutral fixtures.
+
+**AR-78 (testing):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Recording the required specification-first red checkpoint without changing the
+  independently authored oracle or implementation scope.
+- **Objective:** Prove the selected public seams support the architecture lessons while preserving
+  every missing learner artifact as an explicit failure.
+- **Decision:** Accept four passing public controls and 15 failing final-contract cases as the
+  expected red result. The passing controls prove command-to-service-to-state flow, explicit failure
+  state, generation/disposal suppression, and distinct application/screen/widget cleanup. Every
+  failure is caused by the absent course, planned catalog stage, or missing AR-77 laboratories.
+- **Evidence:** Docs-site typecheck passes and the 19-case focused run reports exactly the 4/15
+  split with no unrelated source or harness failure.
+- **Rejected alternatives:** Requiring established public controls to fail would remove
+  implementation-neutral anchors. Weakening or quarantining course and laboratory assertions would
+  bypass the completion contract.
+- **Strongest counterargument:** Four green controls make the red phase less visually absolute.
+  Their purpose is to separate missing documentation implementation from missing SDK capability.
+- **Confidence:** High — the 15 failure names map directly to the planned page, catalog, registry,
+  template1, interaction, and lifecycle work.
+- **Hardening:** Keep the course Planned until both labs, implementation edges, focused checks,
+  production docs build, quality review, and authoritative verification pass.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A public control fails, implementation requires changing the oracle, or a
+  failing case cannot be explained by a missing final artifact.
+
+**AR-79 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting course-owned laboratory and hardening evidence without changing the
+  public SDK contract, catalog outcomes, or implementation scope.
+- **Objective:** Make every architecture claim derive from the boundary it teaches rather than a
+  label or counter that can agree with broken behavior.
+- **Decision:** Give every laboratory button its real command and use its callback only to annotate
+  mouse provenance after the command handler runs. Replace authored failure text with an injected
+  service result and bounded value-free diagnostic sink. Give stale work both accepted-publication
+  and rejected-generation branches with an observable result that stale payloads cannot overwrite.
+  Acquire, use, and dispose a concrete application resource exactly once. Correct the unused-action
+  snippet and add mouse interaction coverage for every button.
+- **Evidence:** Independent review showed mouse buttons called panels directly, failure and
+  application-resource fields had no underlying boundary, stale completion had no publish branch,
+  the screen snippet ignored its action, and four button paths were untested.
+- **Rejected alternatives:** Removing the claims would leave both catalog outcomes incomplete.
+  Waivers are prohibited. Expanding core SDK behavior is unnecessary because every gap belongs to
+  the deterministic docs fixtures and course.
+- **Strongest counterargument:** A button callback that records provenance still touches the panel.
+  It may update only the visible input-source annotation; the architectural action must already
+  have crossed the button command and application command registry.
+- **Confidence:** High — command metadata, injected calls/results, bounded diagnostic entries,
+  accepted versus stale payload state, resource use/disposal counts, and mouse-routed counters are
+  directly assertable.
+- **Hardening:** The single permitted fix-scoped re-review cleared RV-22-001 through RV-22-006
+  with no residual findings. All 32 focused checks, docs-site typecheck, and the production docs
+  build pass, and authoritative `yarn verify` closes the commit gate.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** Any button can change feature state without its command, raw failure data
+  enters evidence, stale payloads publish, or resource disposal is missing or duplicated.
