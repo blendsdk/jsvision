@@ -911,9 +911,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0ace0f8eadb63e9db85c7645fd2723d038e814840b4d090f6c45f4cb1f9e3a17",
+          "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:53:52Z"
+          "validatedAt": "2026-07-30T01:03:55Z"
         }
       ]
     },
@@ -954,7 +954,8 @@
         "Phase 7 final promoted state: 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
         "Phase 8 Keyboard & clipboard expected red: 9 cases pass, including all 7 public controls and 2 existing course details; 17 course, catalog, registry, and laboratory cases fail across the 26-case independent oracle.",
         "Phase 8 Keyboard & clipboard green checkpoint: 26/26 independent specifications, docs-site typecheck, JSON validation, documentation self-check, and authoritative yarn verify pass.",
-        "Phase 8 Keyboard & clipboard hardening: 33/33 focused checks and authoritative yarn verify pass across selection, key conflicts, browser denial, unavailable adapters, authorization cycling, and cleanup."
+        "Phase 8 Keyboard & clipboard hardening: 33/33 focused checks and authoritative yarn verify pass across selection, key conflicts, browser denial, unavailable adapters, authorization cycling, and cleanup.",
+        "Phase 8 Keyboard & clipboard promotion: 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass."
       ],
       "id": "TEST-RD08-GUIDES",
       "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
@@ -1009,10 +1010,11 @@
         "summary:Phase 8 baseline b0d7f6218190f9289407cc21a9dc30386ff8b1d4 and its expected modification set are recorded before specification work.",
         "summary:Phase 8 tasks 8.1.1 and 8.1.2 established 26 independently authored cases; expected red is 9 passing and 17 course/catalog/registry/laboratory contract failures.",
         "summary:Phase 8 tasks 8.2.1 through 8.2.4 reached green with the complete course, one deterministic virtual-host laboratory, 26/26 specifications, docs-site typecheck, and authoritative yarn verify passing.",
-        "summary:Phase 8 task 8.3.1 added selection, key-conflict, browser-denial, unavailable-adapter, authorization-cycle, and cleanup hardening; 33/33 focused checks and authoritative yarn verify pass."
+        "summary:Phase 8 task 8.3.1 added selection, key-conflict, browser-denial, unavailable-adapter, authorization-cycle, and cleanup hardening; 33/33 focused checks and authoritative yarn verify pass.",
+        "summary:Phase 8 task 8.3.2 promoted Keyboard & clipboard after 40/40 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed."
       ],
       "id": "TASK-RD08-GUIDES",
-      "revision": "sha256:0ace0f8eadb63e9db85c7645fd2723d038e814840b4d090f6c45f4cb1f9e3a17",
+      "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1119,13 +1121,13 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:0ace0f8eadb63e9db85c7645fd2723d038e814840b4d090f6c45f4cb1f9e3a17",
+          "revision": "sha256:c8a6d7e3bb873079a162f79147e65985c530b100bb715c459f21f46c5750952c",
           "upstream": "docs-website/TASK-RD08-GUIDES",
-          "validatedAt": "2026-07-30T00:53:52Z"
+          "validatedAt": "2026-07-30T01:03:55Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-30T00:53:52Z"
+  "updated": "2026-07-30T01:03:55Z"
 }
