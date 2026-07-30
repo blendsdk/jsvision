@@ -281,4 +281,20 @@ export const GUIDE_EXAMPLES = [
     themeMenu: true,
     load: () => import('../../examples/guides/resilient-presentation.js'),
   },
+  {
+    id: 'guides/capability-resolution',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/capability-resolution.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/capability-resolution.js'),
+  },
+  {
+    id: 'guides/portable-fallbacks',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/portable-fallbacks.ts',
+    themeMenu: true,
+    load: () => import('../../examples/guides/portable-fallbacks.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

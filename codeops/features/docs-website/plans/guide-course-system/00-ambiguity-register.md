@@ -2559,3 +2559,38 @@ cross-course contracts after every authored route is complete.
 - **Reopen triggers:** A profile passes from counters alone, a narrow surface never changes solved
   geometry, an enabled control has no outcome, Enter is described without the default-button
   qualification, or a teaching snippet instantiates an abstract type.
+
+**AR-86 (quality review):**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Correcting Phase 27 course-owned public-API teaching, glyph fallback scope,
+  responsive construction, and promotion order without changing the public SDK or catalog
+  outcomes.
+- **Objective:** Make every capability and portability claim executable against the current public
+  APIs while keeping learner-visible promotion behind independent review clearance.
+- **Decision:** Accept TC-27-001 through TC-27-005 without waiver. Call `createTerminalQuery()` with
+  its options object, assign raw/flowing preparation and restoration to the surrounding host, and
+  limit query cleanup claims to its listener and buffered input. Pass only `colorDepth` to
+  `buildBrowserCaps()` and explain its injected browser facts. Teach the supported `►` chrome
+  fallback and assert its `>` result under a fully degraded profile. Replace the unbound
+  `setLayout()` call with conditional `row()`/`col()` construction. Return the course to Planned
+  until the correction gates and permitted re-review pass.
+- **Evidence:** Independent review found two invalid public calls, incorrect terminal-mode
+  ownership, an unsupported `→` fallback claim, a layout method used as a free function, and
+  Complete promotion before task 27.3.2 and review clearance.
+- **Rejected alternatives:** Waivers are prohibited. Expanding `buildBrowserCaps()` or the glyph
+  fallback map would change the SDK beyond this Guide phase. Keeping the course Complete during
+  correction would contradict the catalog's trust meaning and the execution order.
+- **Strongest counterargument:** Conditional construction omits the retained container update that
+  a full responsive application would perform. The snippet deliberately isolates the public
+  layout choice; the live laboratories separately prove resize, maximize, and restore behavior.
+- **Confidence:** High — the corrections are grounded in the exported option types, terminal-query
+  ownership documentation, glyph fallback table, and public layout helpers.
+- **Hardening:** Add exact public-signature and `►` ASCII assertions, rerun the focused suite and
+  typecheck, require the single fix-scoped re-review to clear TC-27-001 through TC-27-005, then
+  promote and run production docs and repository gates.
+- **Policy version:** 1.
+- **Root invocation ID:** `exec-guides-20260729T185023Z`.
+- **Reopen triggers:** A snippet passes unsupported browser options, query cleanup claims to restore
+  host modes, an untaught glyph is promised an ASCII fallback, layout uses an unbound method, or
+  promotion precedes review clearance.
