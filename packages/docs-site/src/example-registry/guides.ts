@@ -177,4 +177,18 @@ export const GUIDE_EXAMPLES = [
     sourcePath: 'examples/guides/i18n-locale-layout.ts',
     load: () => import('../../examples/guides/i18n-locale-layout.js'),
   },
+  {
+    id: 'guides/routing-stack',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/routing-stack.ts',
+    load: () => import('../../examples/guides/routing-stack.js'),
+  },
+  {
+    id: 'guides/routing-lifecycle',
+    category: 'guides',
+    kind: 'app',
+    sourcePath: 'examples/guides/routing-lifecycle.ts',
+    load: () => import('../../examples/guides/routing-lifecycle.js'),
+  },
 ] as const satisfies readonly ExampleEntry[];

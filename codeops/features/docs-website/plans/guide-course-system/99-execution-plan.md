@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-30 12:05
-> **Progress**: 128/246 tasks (52%)
+> **Last Updated**: 2026-07-30 12:50
+> **Progress**: 136/246 tasks (55%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -815,20 +815,20 @@ independent specification-first phase (AR-10).
 
 ### Step 17.1: Specification tests
 
-- [ ] 17.1.1 [spec-author] Write the screens/routing oracle — `packages/docs-site/test/screens-and-routing-guide.spec.test.ts`
-- [ ] 17.1.2 Run the specification and record the expected red result
+- [x] 17.1.1 [spec-author] Write the screens/routing oracle — `packages/docs-site/test/screens-and-routing-guide.spec.test.ts` — ✅ (completed: 2026-07-30 12:15; 17-case immutable oracle covers course structure, typed stacks, chrome, retention, focus, host boundaries, public behavior, codec validation, and two template1 laboratories; docs-site typecheck passes)
+- [x] 17.1.2 Run the specification and record the expected red result — ✅ (completed: 2026-07-30 12:15; expected red: 12 failed and 4 public Router behavior checks passed because the placeholder course, Complete promotion, registry entries, and two laboratories are not implemented)
 
 ### Step 17.2: Implementation
 
-- [ ] 17.2.1 Replace the placeholder with state, history, focus, ownership, and cleanup teaching — `packages/docs-site/guide/screens-and-routing.md`
-- [ ] 17.2.2 Implement two focused template1 routing labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/screens-and-routing/`
-- [ ] 17.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json`
-- [ ] 17.2.4 Run ST-26 green plus docs-site typecheck; fix implementation only
+- [x] 17.2.1 Replace the placeholder with state, history, focus, ownership, and cleanup teaching — `packages/docs-site/guide/screens-and-routing.md` — ✅ (completed: 2026-07-30 12:21)
+- [x] 17.2.2 Implement two focused template1 routing labs — `packages/docs-site/examples/guides/`, `packages/docs-site/src/example-fixtures/screens-and-routing/` — ✅ (completed: 2026-07-30 12:21; typed stack/chrome and screen lifecycle/focus laboratories)
+- [x] 17.2.3 Register labs and add catalog evidence without promoting the stage — `packages/docs-site/src/example-registry/guides.ts`, `packages/docs-site/guides.json` — ✅ (completed: 2026-07-30 12:21)
+- [x] 17.2.4 Run ST-26 green plus docs-site typecheck; fix implementation only — ✅ (completed: 2026-07-30 12:21; 15/16 final-contract assertions pass with only deliberately withheld Complete-stage promotion, and docs-site typecheck passes)
 
 ### Step 17.3: Hardening
 
-- [ ] 17.3.1 Add unknown-route, back/forward, focus-restore, and disposal edges — `packages/docs-site/test/screens-and-routing-guide.impl.test.ts`
-- [ ] 17.3.2 Run focused checks, promote Screens & routing, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md`
+- [x] 17.3.1 Add unknown-route, back/forward, focus-restore, and disposal edges — `packages/docs-site/test/screens-and-routing-guide.impl.test.ts` — ✅ (completed: 2026-07-30 12:23; 6 runtime-unknown, repeated-history, rebuilt-focus-attempt, keep-alive, reset, and disposal hardening checks pass)
+- [x] 17.3.2 Run focused checks, promote Screens & routing, and update the map — `packages/docs-site/guides.json`, `packages/docs-site/guide/index.md` — ✅ (completed: 2026-07-30 12:50; 30/30 focused course, laboratory, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative `yarn verify` pass; the independent review found five Major and one Minor issue, AR-63 corrected all without waiver, the permitted re-review cleared the originals and found correction-introduced Major RV-17-R1 through RV-17-R3, and AR-64 resolved button clipping, unreachable menu cues, and the stale API-link oracle without a prohibited third review)
 
 **Verify**: Routing guide spec/impl tests and docs-site typecheck
 

@@ -188,7 +188,7 @@ courses are part of the confirmed curriculum and appear here before they enter t
 | [Forms](/guide/forms)                                      | Complete | Build typed field state, validation, async submission, and reset.                        |
 | [Files & the FileSystem seam](/guide/files-and-filesystem) | Complete | Run the same file workflows over native, virtual, and custom hosts.                      |
 | [Internationalization](/guide/i18n)                        | Complete | Author, load, validate, switch, format, and test locales.                                |
-| [Screens & routing](/guide/screens-and-routing)            | Upgrade  | Build typed screen stacks with history, parameters, shared chrome, and focus.            |
+| [Screens & routing](/guide/screens-and-routing)            | Complete | Build typed screen stacks with history, parameters, shared chrome, and focus.            |
 | [Theming & colour depth](/guide/theming-and-colour-depth)  | Upgrade  | Author semantic themes that preserve meaning as color capabilities degrade.              |
 
 ### Extending and integrating
