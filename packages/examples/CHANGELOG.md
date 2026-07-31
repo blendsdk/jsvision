@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-31
+
+## Fixed
+- Updated the standalone showcase oracle to point at the replacement component hub.  
+- Documented the showcase facets and hashed every external artifact read by the examples test.
+
+## Changed
+- Modified the `code-editor-demo.spec.test.ts` file to align with Code Editor documentation hub requirements.  
+- Updated the `turbo.json` file for improved configuration consistency.
+
 ## [1.3.0] - 2026-07-28
 
 ### Added
