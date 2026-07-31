@@ -12,6 +12,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { Application, View } from '@jsvision/ui';
 import { parseComponentTarget } from '../src/api/component-target.mjs';
 import { parseComponentCatalog } from '../src/components/component-catalog.mjs';
+import { parseGuideCatalog } from '../src/guides/guide-catalog.mjs';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(PACKAGE_ROOT, '..', '..');
@@ -23,6 +24,7 @@ const ENTRY_POINT_REFERENCE_PATH = join(PACKAGE_ROOT, 'reference', 'i18n-entry-p
 const CONFIG_PATH = join(PACKAGE_ROOT, '.vitepress', 'config.ts');
 const API_PACKAGES_PATH = join(PACKAGE_ROOT, 'src', 'api', 'packages.mjs');
 const COMPONENT_CATALOG_PATH = join(PACKAGE_ROOT, 'components.json');
+const GUIDE_CATALOG_PATH = join(PACKAGE_ROOT, 'guides.json');
 
 function readRequired(path: string): string {
   expect(existsSync(path), path).toBe(true);
@@ -134,7 +136,8 @@ describe('generated internationalization API navigation', () => {
     const reference = readRequired(REFERENCE_PATH);
     const config = readRequired(CONFIG_PATH);
     expect(reference).toMatch(/\/api\/i18n\//u);
-    expect(config).toMatch(/\/guide\/i18n/u);
+    const guideCatalog = parseGuideCatalog(readRequired(GUIDE_CATALOG_PATH), GUIDE_CATALOG_PATH);
+    expect(guideCatalog.entries.find((entry) => entry.id === 'i18n')?.page).toBe('/guide/i18n');
     expect(config).toMatch(/\/reference\/i18n/u);
     for (const packageName of ['ui', 'forms', 'files', 'datagrid', 'code-editor']) {
       expect(reference).toContain(`@jsvision/${packageName}/locales/`);

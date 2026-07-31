@@ -3,11 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type DefaultTheme, type HeadConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
-import {
-  parseComponentCatalog,
-  projectComponentNavigation,
-  type CatalogNavigationItem,
-} from '../src/components/component-catalog.mjs';
+import { parseComponentCatalog, projectComponentNavigation } from '../src/components/component-catalog.mjs';
+import { parseGuideCatalog, projectGuideNavigation } from '../src/guides/guide-catalog.mjs';
 
 const BASE = process.env.DOCS_BASE ?? '/jsvision/';
 
@@ -62,9 +59,13 @@ const componentCatalogPath = fileURLToPath(new URL('../components.json', import.
 const componentNavigation = projectComponentNavigation(
   parseComponentCatalog(readFileSync(componentCatalogPath, 'utf8'), componentCatalogPath).entries,
 );
+const guideCatalogPath = fileURLToPath(new URL('../guides.json', import.meta.url));
+const guideNavigation = projectGuideNavigation(
+  parseGuideCatalog(readFileSync(guideCatalogPath, 'utf8'), guideCatalogPath).entries,
+);
 
 /** Remove catalog-only IDs before handing a navigation row to VitePress. */
-function sidebarItem({ text, link }: CatalogNavigationItem): { text: string; link: string } {
+function sidebarItem({ text, link }: { readonly text: string; readonly link: string }): { text: string; link: string } {
   return { text, link };
 }
 
@@ -168,56 +169,10 @@ export default withMermaid(
       // One sidebar per section. Every link targets an existing page (no dead
       // links); the trees fill out as later milestones add content.
       sidebar: {
-        '/guide/': [
-          {
-            text: 'Getting started',
-            items: [
-              { text: 'Introduction', link: '/guide/' },
-              { text: 'Install & packages', link: '/guide/install-and-packages' },
-              { text: 'Codex plugin', link: '/guide/codex-plugin' },
-            ],
-          },
-          {
-            text: 'Core concepts',
-            items: [
-              { text: 'Layout', link: '/guide/layout' },
-              { text: 'Reactive state', link: '/guide/reactive-state' },
-              { text: 'Views & focus', link: '/guide/views-and-focus' },
-              { text: 'Events, commands & keymaps', link: '/guide/events-commands-and-keymaps' },
-              { text: 'Keyboard & clipboard', link: '/guide/keyboard-and-clipboard' },
-            ],
-          },
-          {
-            text: 'Building applications',
-            items: [
-              { text: 'The application shell', link: '/guide/application-shell' },
-              { text: 'Internationalization', link: '/guide/i18n' },
-              { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
-              { text: 'Forms', link: '/guide/forms' },
-              { text: 'Data grid', link: '/guide/data-grid' },
-              { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
-            ],
-          },
-          {
-            text: 'Going further',
-            items: [
-              { text: 'Theming & colour depth', link: '/guide/theming-and-colour-depth' },
-              { text: 'Running in the browser', link: '/guide/running-in-the-browser' },
-              { text: 'Screens & routing', link: '/guide/screens-and-routing' },
-              { text: 'Writing your own widget', link: '/guide/writing-your-own-widget' },
-              { text: 'Testing headlessly', link: '/guide/testing-headlessly' },
-            ],
-          },
-          {
-            text: 'Operating a real app',
-            items: [
-              { text: 'Debugging', link: '/guide/debugging' },
-              { text: 'Crash safety & terminal restore', link: '/guide/crash-safety' },
-              { text: 'Displaying untrusted text safely', link: '/guide/untrusted-text' },
-              { text: 'In production', link: '/guide/in-production' },
-            ],
-          },
-        ],
+        '/guide/': guideNavigation.map((group) => ({
+          text: group.text,
+          items: group.items.map(sidebarItem),
+        })),
         '/components/data-grid/': [
           {
             text: 'Data Grid',

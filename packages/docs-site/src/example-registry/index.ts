@@ -10,6 +10,7 @@ import { EDITING_EXAMPLES } from './editing.js';
 import { FEEDBACK_EXAMPLES } from './feedback.js';
 import { FILE_EXAMPLES } from './files.js';
 import { FOUNDATION_EXAMPLES } from './foundations.js';
+import { GUIDE_EXAMPLES } from './guides.js';
 import { THEMING_EXAMPLES } from './theming.js';
 import { SURFACE_EXAMPLES } from './surfaces.js';
 import { TERMINAL_EXAMPLES } from './terminals.js';
@@ -35,6 +36,7 @@ export function composeExampleRegistry(...families: readonly (readonly ExampleEn
 export const EXAMPLES = composeExampleRegistry(
   CONTROL_EXAMPLES,
   FOUNDATION_EXAMPLES,
+  GUIDE_EXAMPLES,
   CONTAINER_EXAMPLES,
   DROPDOWN_EXAMPLES,
   FILE_EXAMPLES,

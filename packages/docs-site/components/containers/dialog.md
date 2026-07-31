@@ -10,9 +10,10 @@ Classic dialog role, includes movable and closable frame chrome, and deliberatel
 zoom affordances. Add controls as children, then either execute it modally or register it as a
 modeless desktop window.
 
-The important distinction is ownership: `app.loop.execView(dialog)` temporarily owns a modal dialog
-and resolves its terminating command, while `app.desktop.addWindow(dialog)` leaves lifetime and
-commands to the application.
+The important distinction is interaction: `app.loop.execView(dialog)` makes an already-mounted
+dialog modal and resolves its terminating command. The application still owns the desktop
+membership and must remove a custom dialog after it resolves. Adding a dialog without `execView`
+leaves it modeless, with lifetime and commands owned entirely by the application.
 
 ## Usage
 
@@ -24,7 +25,13 @@ const dialog = new Dialog({ title: ' Profile ', width: 38, height: 9 });
 dialog.add(at(new Input({ value: name }), 1, 1, 30, 1));
 dialog.add(at(okButton(), 13, 4, 10, 2));
 
-const command = await app.loop.execView(dialog);
+app.desktop.addWindow(dialog);
+try {
+  const command = await app.loop.execView(dialog);
+  if (command === 'ok') save(name());
+} finally {
+  app.desktop.removeWindow(dialog);
+}
 ```
 
 ## Live example
@@ -62,9 +69,10 @@ the frame consumes the outermost row and column on each side.
 
 ## Modality and validation
 
-`execView` installs a modal host, mounts the dialog over the application, moves focus into it, and
-returns a promise for the terminating command. `ok`, `yes`, and `no` call `valid(command)` first.
-The default implementation walks descendants depth-first and calls each child control's zero-arg
+After the caller adds the dialog to the desktop, `execView` installs a modal host, moves focus into
+the dialog, and returns a promise for the terminating command. Remove the dialog in `finally`;
+`execView` does not own desktop membership. `ok`, `yes`, and `no` call `valid(command)` first. The
+default implementation walks descendants depth-first and calls each child control's zero-arg
 `valid()` method; the first invalid child receives focus and the dialog stays open.
 
 This makes validation compositional. An [`Input`](/components/controls/input) owns its validator,
