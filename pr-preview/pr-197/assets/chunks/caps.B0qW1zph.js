@@ -1,1 +1,0 @@
-import{r as o}from"./buttons.Bm6llxTd.js";function l(r={}){return o({env:{COLORTERM:"truecolor",TERM:"xterm-256color",LANG:"en_US.UTF-8"},platform:"linux",override:{colorDepth:r.colorDepth??"truecolor"}}).profile}export{l as b};
