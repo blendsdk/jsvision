@@ -54,6 +54,22 @@ describe('release preflight', () => {
     expect(workflow).not.toContain('DRY_RUN');
   });
 
+  // A public announcement must describe an artifact that npm and GitHub users can already fetch.
+  test('publishes generated GitHub release notes only after npm and the version tag succeed', () => {
+    const workflow = readRepositoryFile('.github/workflows/release.yml');
+    const publishIndex = workflow.indexOf('lockstep publish');
+    const pushTagIndex = workflow.indexOf('name: Push the version tag');
+    const createReleaseIndex = workflow.indexOf('gh release create');
+
+    expect(publishIndex).toBeGreaterThan(-1);
+    expect(pushTagIndex).toBeGreaterThan(publishIndex);
+    expect(createReleaseIndex).toBeGreaterThan(pushTagIndex);
+    expect(workflow).toContain('--generate-notes');
+    expect(workflow).toContain('--notes-start-tag "${PREVIOUS_TAG}"');
+    expect(workflow).toContain('--verify-tag');
+    expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
+  });
+
   test('simulates release preparation only for pull requests targeting master', () => {
     const workflow = readRepositoryFile('.github/workflows/ci.yml');
 
