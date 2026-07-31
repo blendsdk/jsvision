@@ -5,6 +5,8 @@
 - This is a Node 22+, ESM TypeScript monorepo managed with Yarn 1 workspaces and Turborepo.
 - `develop` is the CodeOps integration branch; the remote repository's default branch is `master`.
 - Conventional Commits are enforced through commitlint and the Husky commit-message hook.
+- Never add a `Co-authored-by` trailer. Local hooks and CI reject all additional co-author
+  attribution, including attribution to AI tools.
 - Public SDK packages live under `packages/`; consumer-facing documentation lives in
   `packages/docs-site/`.
 - Use `yarn verify:local` as the normal local gate; it checks only changed files for whitespace,

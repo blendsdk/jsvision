@@ -1,1 +1,2 @@
+node scripts/check-commit-attribution.mjs --message-file "$1"
 npx --no-install commitlint --edit "$1"

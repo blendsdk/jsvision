@@ -83,6 +83,9 @@ Shared config: tsconfig.base.json · turbo.json · per-package vitest.config.ts 
 
 ## Git conventions
 
+- Never add a `Co-authored-by` trailer. Repository hooks and CI reject all additional co-author
+  attribution, including attribution to AI tools.
+
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
 - **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/jsvision.git`. Publish (with provenance) is still deferred to a later milestone.
 - **Pre-push lint (NON-NEGOTIABLE).** Run `yarn lint:fix` before the final `git push` that creates or
