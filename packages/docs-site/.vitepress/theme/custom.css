@@ -55,3 +55,9 @@
 .VPDoc.has-aside .content-container {
   max-width: none;
 }
+
+/* VitePress hides its global footer whenever a page has a sidebar. Keep the
+ * project notice visible throughout the documentation, including those pages. */
+.Layout .VPFooter.has-sidebar {
+  display: block;
+}

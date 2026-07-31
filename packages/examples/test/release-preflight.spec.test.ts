@@ -33,6 +33,9 @@ describe('release preflight', () => {
     expect(command).toBe(
       'yarn lockstep:version --no-git-commit && node scripts/sync-package-versions.mjs && yarn plugin:version && yarn plugin:update && yarn plugin:check',
     );
+
+    const versionSync = readRepositoryFile('scripts/sync-package-versions.mjs');
+    expect(versionSync).toContain("documentationFile: 'packages/docs-site/guide/install-and-packages.md'");
   });
 
   test('uses the shared preparation command in the publishing workflow', () => {
@@ -52,6 +55,22 @@ describe('release preflight', () => {
     expect(workflow).toContain('RELEASE_DIST_TAG: latest');
     expect(workflow).not.toContain('workflow_dispatch:');
     expect(workflow).not.toContain('DRY_RUN');
+  });
+
+  // A public announcement must describe an artifact that npm and GitHub users can already fetch.
+  test('publishes generated GitHub release notes only after npm and the version tag succeed', () => {
+    const workflow = readRepositoryFile('.github/workflows/release.yml');
+    const publishIndex = workflow.indexOf('lockstep publish');
+    const pushTagIndex = workflow.indexOf('name: Push the version tag');
+    const createReleaseIndex = workflow.indexOf('gh release create');
+
+    expect(publishIndex).toBeGreaterThan(-1);
+    expect(pushTagIndex).toBeGreaterThan(publishIndex);
+    expect(createReleaseIndex).toBeGreaterThan(pushTagIndex);
+    expect(workflow).toContain('--generate-notes');
+    expect(workflow).toContain('--notes-start-tag "${PREVIOUS_TAG}"');
+    expect(workflow).toContain('--verify-tag');
+    expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
   });
 
   test('simulates release preparation only for pull requests targeting master', () => {

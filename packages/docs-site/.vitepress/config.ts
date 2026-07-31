@@ -262,6 +262,9 @@ export default withMermaid(
         { icon: 'github', link: GITHUB_URL },
         { icon: { svg: NPM_ICON }, link: NPM_URL, ariaLabel: 'npm' },
       ],
+      footer: {
+        copyright: `Copyright © 2026 <a href="${GITHUB_URL}">BlendSDK</a>`,
+      },
       editLink: {
         pattern: `${GITHUB_URL}/edit/master/packages/docs-site/:path`,
         text: 'Edit this page on GitHub',
