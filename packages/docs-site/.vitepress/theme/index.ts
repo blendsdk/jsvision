@@ -1,5 +1,6 @@
 import DefaultTheme from 'vitepress/theme';
 import type { Theme } from 'vitepress';
+import AppsGallery from './components/AppsGallery.vue';
 import PlayExample from './components/PlayExample.vue';
 import './custom.css';
 
@@ -9,6 +10,7 @@ import './custom.css';
 const theme: Theme = {
   extends: DefaultTheme,
   enhanceApp({ app }) {
+    app.component('AppsGallery', AppsGallery);
     app.component('PlayExample', PlayExample);
   },
 };
