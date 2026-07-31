@@ -1,14 +1,19 @@
 /**
- * Capture one deployed JSVision live-example modal as a README screenshot.
+ * Capture one deployed JSVision live-example modal as a documentation screenshot.
  *
  * The docs page may scroll before opening an example, so fixed viewport crops are unreliable. This
  * helper connects to headless Chrome, resets the page scroll, measures `.play-modal`, and captures
- * that exact element. Outputs are deliberately restricted to `assets/readme/*.png`.
+ * that exact element. Outputs are deliberately restricted to the repository's README and docs-site
+ * screenshot directories.
  *
  * Usage:
  *   node scripts/capture-readme-example.mjs \
  *     'https://blendsdk.github.io/jsvision/apps/matrix?example=apps%2Fmatrix' \
  *     assets/readme/matrix-rain.png
+ *
+ *   node scripts/capture-readme-example.mjs \
+ *     'https://blendsdk.github.io/jsvision/apps/life?example=apps%2Flife' \
+ *     packages/docs-site/public/apps/life.png
  *
  * Set `CHROME_BIN` when Chrome is installed somewhere other than `/usr/bin/google-chrome`.
  */
@@ -23,7 +28,10 @@ const PAGE_WIDTH = 1440;
 const PAGE_HEIGHT = 1000;
 const LOAD_WAIT_MS = 8000;
 const REPOSITORY_ROOT = fileURLToPath(new URL('..', import.meta.url));
-const README_ASSET_DIRECTORY = resolve(REPOSITORY_ROOT, 'assets/readme');
+const SCREENSHOT_DIRECTORIES = new Set([
+  resolve(REPOSITORY_ROOT, 'assets/readme'),
+  resolve(REPOSITORY_ROOT, 'packages/docs-site/public/apps'),
+]);
 
 /** Wait without blocking Chrome's debugging messages. */
 function delay(milliseconds) {
@@ -43,11 +51,11 @@ function validateExampleUrl(value) {
   return url.href;
 }
 
-/** Resolve one lowercase PNG name inside the repository's README asset directory. */
+/** Resolve one lowercase PNG name inside an approved repository screenshot directory. */
 function validateOutputPath(value) {
   const output = resolve(REPOSITORY_ROOT, value);
-  if (dirname(output) !== README_ASSET_DIRECTORY || !/^[a-z0-9-]+\.png$/u.test(basename(output))) {
-    throw new Error('output must be a lowercase assets/readme/*.png path');
+  if (!SCREENSHOT_DIRECTORIES.has(dirname(output)) || !/^[a-z0-9-]+\.png$/u.test(basename(output))) {
+    throw new Error('output must be a lowercase PNG in an approved screenshot directory');
   }
   return output;
 }
@@ -173,7 +181,7 @@ async function captureExample(url, output) {
 async function main() {
   const [urlValue, outputValue, ...extra] = process.argv.slice(2);
   if (urlValue === undefined || outputValue === undefined || extra.length !== 0) {
-    throw new Error('usage: node scripts/capture-readme-example.mjs URL assets/readme/NAME.png');
+    throw new Error('usage: node scripts/capture-readme-example.mjs URL SCREENSHOT.png');
   }
   const url = validateExampleUrl(urlValue);
   const output = validateOutputPath(outputValue);
