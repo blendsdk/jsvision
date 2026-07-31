@@ -1,1 +1,0 @@
-import{I as u}from"./input.C6AkOa_s.js";import{u as i}from"./button.BQ6XfzoM.js";class s extends u{constructor(a){super({value:a.value,maxLength:a.maxLength,validator:a.validator});const n=a.value;this.onMount(()=>{this.bind(()=>a.focusedEntry(),e=>{e!==void 0&&(this.state.focused||n.set(e.kind==="dir"?e.name+a.sep+i(()=>a.wildcard()):e.name))})})}}export{s as F};

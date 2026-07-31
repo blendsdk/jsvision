@@ -1,1 +1,0 @@
-import{a}from"./charset.Bp9Yq1nW.js";const s="+0123456789",u="+-0123456789",c=/^[+-]?\d+$/;function N(e,n){const o=new Set(e>=0?s:u),r=t=>a(t,o);return{isValidInput:r,isValid:t=>r(t)&&c.test(t)&&Number(t)>=e&&Number(t)<=n,error:`Value must be an integer between ${e} and ${n}.`}}export{N as r};
