@@ -5,6 +5,14 @@ All notable changes to this package will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-31
+
+Added:
+- Completed migration of flagship lesson with distinct syntax-aware teaching workbenches and capability-specific actions.
+
+Changed:
+- Enhanced compact rendering and improved language switching reliability.
+
 ## [1.3.0] - 2026-07-28
 
 ### Added

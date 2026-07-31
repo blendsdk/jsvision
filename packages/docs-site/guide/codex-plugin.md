@@ -28,7 +28,7 @@ Add the marketplace at the tag matching the stable JSVision packages in your pro
 the plugin:
 
 ```sh
-codex plugin marketplace add blendsdk/jsvision --ref v1.3.0
+codex plugin marketplace add blendsdk/jsvision --ref v1.4.0
 codex plugin add jsvision-plugin@jsvision-marketplace
 ```
 
