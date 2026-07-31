@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-07-31
+
+Changed:
+- Improved type checking in the commit attribution checker to declare exports for TypeScript tests.
+- Aligned release verification contract with the attribution gate requirements.
+- Implemented verification process with yarn verify and updated repository commit hooks.
+
+Fixed:
+- Enforced single-author commits through commit-message and pre-push hooks to reject additional authors.
+- Enhanced CI and local verification gates to scan reachable history and cover various identity scenarios, including malformed input.
+
+Added:
+- New tests to verify commit attribution functionality in various scenarios in the test suite.
+
 ## [1.5.0] - 2026-07-31
 
 Added:

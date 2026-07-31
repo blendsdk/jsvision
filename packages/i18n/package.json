@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/i18n",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Zero-dependency internationalization for JSVision applications and packages",
   "keywords": [
     "i18n",

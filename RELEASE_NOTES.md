@@ -1,17 +1,13 @@
-# Release Notes — v1.5.0
+# Release Notes — v1.5.1
 
 **Released**: 2026-07-31
 
-We are excited to announce the release of version 1.5.0, which brings several important updates aimed at enhancing your experience with our software. These updates focus on improving documentation accessibility and showcasing practical applications of our features, making it easier for you to understand and utilize our tools effectively.
+We are excited to announce the release of version 1.5.1, which brings important updates to enhance user experience and ensure improved performance across our platforms. This release includes key changes that work behind the scenes to streamline processes and improve the reliability of our tools.
 
-Highlights of this release include:
+Highlights of this version include:
 
-1. **Updated Installation Guide**: We have synchronized the installation guide with the latest version, ensuring that you have the most accurate and up-to-date information for setting up and using our applications. This change helps reduce confusion and streamlines the onboarding process for new users.
+- **Updated Documentation Site**: We have removed a historical dependency from the crash guide, resulting in a more straightforward and efficient documentation site. This provides users with quicker access to information without unnecessary complications.
 
-2. **Showcasing Runnable Applications**: We introduced a new feature that showcases runnable applications directly in the documentation. This allows you to see practical examples of how our tools work, enhancing your understanding and allowing you to visualize their real-world applications.
+- **Improved Example Package**: We've implemented enhancements to the commit attribution checker within our example package. This ensures that the contributions of team members are accurately recognized. Additionally, we have adjusted the system to reject any additional commit authors that are not approved, which simplifies the commit history and maintains clarity for users. 
 
-3. **Lightweight Local Verification**: We have added a lightweight local verification tool to assist users in ensuring their setups are correct. This improvement simplifies the process of checking your installation and helps prevent common issues before they arise.
-
-4. **Project Release Announcements**: In our examples package, we have also implemented a system for publishing release announcements, keeping you informed about the latest updates and features available in our example projects.
-
-These enhancements reflect our commitment to providing you with reliable and user-friendly resources, allowing you to make the most of our software. We hope you enjoy the improvements in version 1.5.0!
+These updates are part of our ongoing commitment to refining our software and making it easier for users to navigate and utilize our tools effectively. Thank you for your continued support as we work to deliver the best possible experience.
