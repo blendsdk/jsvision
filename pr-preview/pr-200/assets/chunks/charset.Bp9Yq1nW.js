@@ -1,1 +1,0 @@
-function f(c){const t=[...c],e=new Set;let n=0;for(;n<t.length;){const o=t[n],r=t[n+1],i=t[n+2];if(r==="-"&&i!==void 0&&o!==void 0&&o.codePointAt(0)<=i.codePointAt(0)){for(let d=o.codePointAt(0);d<=i.codePointAt(0);d+=1)e.add(String.fromCodePoint(d));n+=3;continue}o!==void 0&&e.add(o),n+=1}return e}function a(c,t){for(const e of c)if(!t.has(e))return!1;return!0}export{a,f as e};
