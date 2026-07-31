@@ -106,3 +106,30 @@ test('the singleton disposes the previously-active controller on a new open', as
   c2.close();
   expect(f.live()).toBe(0);
 });
+
+test('close disposes the opening terminal before a pending example module resolves', async () => {
+  const f = headlessFactory();
+  const baseEntry = fakeEntry('component', () => markerContent());
+  const loadedModule = await baseEntry.load();
+  let resolveLoad: (value: typeof loadedModule) => void = () => undefined;
+  const pendingLoad = new Promise<typeof loadedModule>((resolve) => {
+    resolveLoad = resolve;
+  });
+  const controller = createPlayController({
+    entry: { ...baseEntry, load: () => pendingLoad },
+    createTerminal: f.createTerminal,
+  });
+
+  const opening = controller.open(EL);
+  await Promise.resolve();
+  expect(f.live()).toBe(1);
+
+  controller.close();
+  expect(f.live()).toBe(0);
+  expect(controller.isOpen).toBe(false);
+
+  resolveLoad(loadedModule);
+  await opening;
+  expect(f.live()).toBe(0);
+  expect(controller.isOpen).toBe(false);
+});

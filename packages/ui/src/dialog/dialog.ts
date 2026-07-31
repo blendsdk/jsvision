@@ -1,7 +1,8 @@
 /**
  * A modal or modeless dialog window — a movable, closable {@link Window} painted in the gray `dialog`
- * frame role (title + close box, but no zoom box and not resizable). Host form controls in it
- * (`Input`, `CheckGroup`, buttons, …); their bound signals hold the form data.
+ * frame role. Dialogs are fixed-size by default, with no resize grip or zoom box; a specialized
+ * modeless dialog may opt into the inherited `resizable` and `zoomable` window capabilities. Host
+ * form controls in it (`Input`, `CheckGroup`, buttons, …); their bound signals hold the form data.
  *
  * Show it **modally** with the event loop's `execView(dialog)`, which returns a promise that resolves
  * to the terminating command string (`'ok'` / `'cancel'` / `'yes'` / `'no'`) once the dialog closes.
@@ -145,7 +146,10 @@ export class Dialog extends Window implements ModalHostAware {
     this.modalHost = host;
   }
 
-  /** Paint the frame in the `dialog` role — close box, no zoom box. A modal dialog always draws active. */
+  /**
+   * Paint the frame in the `dialog` role. The inherited window flags remain opt-in, so ordinary
+   * dialogs keep their fixed frame while a specialized modeless dialog can expose resize and zoom.
+   */
   override draw(ctx: DrawContext): void {
     const active = this.manager !== null ? this.manager.activeWindow() === this : true;
     drawFrame(
@@ -154,10 +158,10 @@ export class Dialog extends Window implements ModalHostAware {
       {
         title: this.title(),
         active,
-        zoomed: false,
+        zoomed: this.isZoomed(),
         resizable: this.resizable,
         closable: this.closable,
-        zoomable: false,
+        zoomable: this.zoomable,
       },
       'dialog',
     );
@@ -214,7 +218,12 @@ export class Dialog extends Window implements ModalHostAware {
       // remove the view without ending modality and leave the `execView` promise hanging forever.
       if (inner.type === 'mouse' && inner.kind === 'down' && ev.local !== undefined) {
         const size = { width: this.bounds.width, height: this.bounds.height };
-        const flags = { movable: this.movable, resizable: this.resizable, zoomable: false, closable: this.closable };
+        const flags = {
+          movable: this.movable,
+          resizable: this.resizable,
+          zoomable: this.zoomable,
+          closable: this.closable,
+        };
         if (frameZoneAt(size, ev.local, flags) === 'close') {
           this.resolveCancel(ev);
           return;

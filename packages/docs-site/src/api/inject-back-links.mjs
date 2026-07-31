@@ -3,7 +3,7 @@
 // generation (after TypeDoc writes the tree). Idempotent: generation reruns every
 // build, so a page that already carries the note is returned unchanged.
 
-import { pageLabel } from './api-map.mjs';
+import { parseComponentTarget } from './component-target.mjs';
 
 /** The note marker — also the idempotency sentinel. */
 const MARKER = '> **Documented in:**';
@@ -33,7 +33,8 @@ const HEADING = /^# .*$/m;
 export function injectBackLink(markdown, link) {
   if (markdown.includes(MARKER)) return markdown;
 
-  const note = `${MARKER} [${pageLabel(link.componentPage)}](${link.componentPage})`;
+  const target = parseComponentTarget(link.componentPage);
+  const note = `${MARKER} [${target.label}](${link.componentPage})`;
 
   const frontmatter = FRONTMATTER.exec(markdown);
   if (frontmatter) {

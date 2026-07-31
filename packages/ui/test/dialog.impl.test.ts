@@ -3,8 +3,8 @@
  *
  * Covers children-without-`valid()` treated valid, nested modal LIFO, the frame close-`[×]`-click AND
  * Esc both resolving `execView` to `cancel` (bypassing `valid()`, PF-002 — no hang), a disabled
- * terminating command ignored by the catch (PF-007), and the `dialog` frame showing the close box +
- * NO zoom box (PF-001). Real `View`/`EventLoop`. `.js` per NodeNext.
+ * terminating command ignored by the catch (PF-007), and the `dialog` frame keeping its fixed
+ * default while honoring an explicit zoom opt-in. Real `View`/`EventLoop`. `.js` per NodeNext.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme } from '@jsvision/core';
@@ -140,6 +140,22 @@ test('PF-001: the dialog frame shows the close box and no zoom box', () => {
     expect(ch).not.toBe('↑');
     expect(ch).not.toBe('↕');
   }
+});
+
+test('a specialized dialog can opt into maximize and restore chrome', () => {
+  const dlg = new Dialog({ title: 'Resizable', width: 20, height: 6, centered: false });
+  dlg.resizable = true;
+  dlg.zoomable = true;
+  const root = new Group();
+  root.add(dlg);
+  const rr = createRenderRoot({ width: 30, height: 10 }, { caps });
+  rr.mount(root);
+
+  expect(rr.buffer().get(16, 0)?.char).toBe('↑');
+  dlg.zoom();
+  rr.flush();
+  expect(dlg.isZoomed()).toBe(true);
+  expect(rr.buffer().get(26, 0)?.char).toBe('↕');
 });
 
 // TV fidelity: `TDialog` is a `TWindow`, whose ctor sets `state |= sfShadow` unconditionally

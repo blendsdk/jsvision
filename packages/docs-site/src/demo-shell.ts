@@ -31,12 +31,15 @@ import {
   separator,
   statusLine,
   statusItem,
+  spacer,
   messageBox,
+  MenuBar,
+  StatusLine,
   Window,
   View,
   Commands,
 } from '@jsvision/ui';
-import type { Application, DesktopApplication } from '@jsvision/ui';
+import type { Application, DesktopApplication, MenuItem } from '@jsvision/ui';
 import {
   classicTheme,
   monochromeTheme,
@@ -81,13 +84,15 @@ export interface DemoShellOptions {
   readonly theme?: Theme;
   /**
    * Show the `View ▸ Theme` preset submenu. Off by default: a theme switcher is a distraction in an
-   * example about something else, so only an example that is *about* theming asks for it. The theme
-   * commands stay wired either way — this hides the menu, it does not unwire the handlers.
+   * example about something else, so only examples that teach theme-dependent behavior ask for it.
+   * The theme commands stay wired either way — this hides the menu, it does not unwire the handlers.
    *
    * Applies to a `component` example, whose chrome this shell owns. An `app` example builds its own
    * menu bar, so it passes the same flag to {@link demoApp} instead.
    */
   readonly themeMenu?: boolean;
+  /** Observe preset changes made through the shared Theme menu after the application is repainted. */
+  readonly onThemeChange?: (theme: Theme, name: string) => void;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
   readonly onDepthChange?: (depth: Depth) => void;
   /**
@@ -107,6 +112,22 @@ export interface DemoShellOptions {
 interface Preset {
   readonly name: string;
   readonly theme: Theme;
+}
+
+/**
+ * Theme observers registered while an app example builds its own shell.
+ *
+ * `demoShell()` wires commands only after `build()` returns, so this module-owned weak registry
+ * carries the callback across that boundary without adding lesson state to the public Application.
+ */
+const APP_THEME_OBSERVERS = new WeakMap<Application, (theme: Theme, name: string) => void>();
+
+/** Notify host and app-owned observers once each after a shared preset is applied. */
+function notifyThemeObservers(app: Application, opts: DemoShellOptions, preset: Preset): void {
+  const hostObserver = opts.onThemeChange;
+  const appObserver = APP_THEME_OBSERVERS.get(app);
+  hostObserver?.(preset.theme, preset.name);
+  if (appObserver !== hostObserver) appObserver?.(preset.theme, preset.name);
 }
 
 /** The 13 shipped presets, in menu order (default open = Turbo Vision). */
@@ -180,9 +201,9 @@ export function demoShell(opts: DemoShellOptions): Application {
  * application, so those controls work without the example repeating them.
  *
  * @param ctx - the example context: the terminal `caps` plus the cell grid.
- * @param opts - optional flags; `windowMenu` adds the `Window` menu + window hints for a windowing
- * app, `themeMenu` adds the `View ▸ Theme` preset submenu (off by default — see
- * {@link DemoShellOptions.themeMenu}).
+ * @param opts - optional shell extensions: `windowMenu` adds window management, `themeMenu` adds
+ * presets, `keymap` adds app-wide chords, `menuItems`/`statusItems` add example-owned chrome, and
+ * `onChrome` exposes the constructed bars when a lesson needs to demonstrate live replacement.
  * @returns a mountable {@link Application} with the demo chrome already in place.
  * @example
  * import { defineExample } from '../_contract.js';
@@ -201,20 +222,33 @@ export function demoShell(opts: DemoShellOptions): Application {
  */
 export function demoApp(
   ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
-  opts?: { readonly windowMenu?: boolean; readonly themeMenu?: boolean; readonly keymap?: Keymap },
+  opts?: {
+    readonly windowMenu?: boolean;
+    readonly themeMenu?: boolean;
+    readonly keymap?: Keymap;
+    readonly menuItems?: readonly MenuItem[];
+    readonly statusItems?: readonly View[];
+    readonly onChrome?: (chrome: { readonly menuBar: MenuBar; readonly statusLine: StatusLine }) => void;
+    readonly onThemeChange?: (theme: Theme, name: string) => void;
+  },
 ): DesktopApplication {
   const windowMenu = opts?.windowMenu ?? false;
   const themeMenu = opts?.themeMenu ?? false;
-  return createApplication({
+  const menu = buildMenuBar({ windowMenu, themeMenu, extraItems: opts?.menuItems ?? [] });
+  const status = buildStatusLine(opts?.statusItems ?? []);
+  const app = createApplication({
     caps: ctx.caps,
     viewport: { width: ctx.width, height: ctx.height },
     theme: classicTheme,
-    menuBar: buildMenuBar({ windowMenu, themeMenu }),
-    statusLine: buildStatusLine(),
+    menuBar: menu,
+    statusLine: status,
     // App-wide extra chords (e.g. an app's own F-key) — bound regardless of which view has focus, so
     // an example can add a shortcut the shared chrome does not carry. Merges over the defaults.
     keymap: opts?.keymap,
   });
+  if (opts?.onThemeChange !== undefined) APP_THEME_OBSERVERS.set(app, opts.onThemeChange);
+  opts?.onChrome?.({ menuBar: menu, statusLine: status });
+  return app;
 }
 
 /** Build an owned application with the shared chrome and host the component in a stage Window. */
@@ -223,7 +257,7 @@ function shellForView(opts: DemoShellOptions): Application {
     caps: opts.caps,
     viewport: opts.viewport,
     theme: opts.theme ?? classicTheme,
-    menuBar: buildMenuBar({ windowMenu: false, themeMenu: opts.themeMenu ?? false }),
+    menuBar: buildMenuBar({ windowMenu: false, themeMenu: opts.themeMenu ?? false, extraItems: [] }),
     statusLine: buildStatusLine(),
   });
   // The stage window fills the desktop minus a 1-cell margin, so the desktop pattern frames it.
@@ -278,14 +312,16 @@ function intendedSize(view: View): { width: number; height: number } {
 /**
  * The shared menu bar: System (About) + View (Depth, and Theme only when asked for) + (optionally) a
  * Window menu. The Theme submenu is opt-in because a preset switcher pulls attention away from the
- * component an example is there to show; the example about theming turns it on.
+ * component an example is there to show; theme-sensitive examples turn it on explicitly.
  */
 function buildMenuBar({
   windowMenu,
   themeMenu,
+  extraItems,
 }: {
   windowMenu: boolean;
   themeMenu: boolean;
+  extraItems: readonly MenuItem[];
 }): ReturnType<typeof menuBar> {
   const viewItems = [
     subMenu(
@@ -318,6 +354,7 @@ function buildMenuBar({
       ]),
     );
   }
+  menus.push(...extraItems);
   return menuBar(menus);
 }
 
@@ -326,8 +363,9 @@ function buildMenuBar({
  * forwards to `onClose` so the host (the Play modal) dismisses itself. Everything else — About,
  * Theme, Depth, window management — lives in the menu bar, reached via F10 / Alt+hotkey / click.
  */
-function buildStatusLine(): ReturnType<typeof statusLine> {
-  return statusLine([statusItem('~Alt+X~ Exit', Commands.quit, 'Alt+X')]);
+function buildStatusLine(extraItems: readonly View[] = []): ReturnType<typeof statusLine> {
+  const separation = extraItems.length > 0 ? [spacer()] : [];
+  return statusLine([...extraItems, ...separation, statusItem('~Alt+X~ Exit', Commands.quit, 'Alt+X')]);
 }
 
 /** Wire the shared About/Theme/Depth command handlers onto an application's loop. */
@@ -341,7 +379,10 @@ function wireCommands(app: Application, opts: DemoShellOptions): void {
     );
   });
   PRESETS.forEach((preset, i) => {
-    app.onCommand(themeCmd(i), () => app.setTheme(preset.theme));
+    app.onCommand(themeCmd(i), () => {
+      app.setTheme(preset.theme);
+      notifyThemeObservers(app, opts, preset);
+    });
   });
   DEPTHS.forEach((depth) => {
     app.onCommand(depthCmd(depth), () => opts.onDepthChange?.(depth));

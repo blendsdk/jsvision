@@ -9,10 +9,10 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent } from '@jsvision/core';
-import { View } from '../src/view/index.js';
+import { Group, View, spacer } from '../src/view/index.js';
 import type { DrawContext, DispatchEvent } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
-import { StatusLine, statusLine, statusItem } from '../src/status/index.js';
+import { StatusItemView, StatusLine, statusLine, statusItem } from '../src/status/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -147,4 +147,25 @@ test('a StatusLine is inert until attached; createApplication attaches it', () =
   const { status } = statusApp([statusItem('~Q~uit', 'quit')]);
   expect(status).toBeInstanceOf(StatusLine);
   expect(status.seam).not.toBeNull(); // createApplication attached it
+});
+
+test('statusBase rebuilds command items while excluding passive status segments', () => {
+  const line = statusLine([
+    statusItem('~S~ave', 'save', 'Ctrl+S'),
+    statusItem('Ready'),
+    spacer(),
+    new Group(),
+    statusItem('~Q~uit', 'quit', 'Alt+Q'),
+  ]);
+  const app = createApplication({ caps, statusLine: line, viewport: { width: 40, height: 12 } });
+
+  const first = app.statusBase();
+  const second = app.statusBase();
+
+  expect(first).toHaveLength(2);
+  expect(first.every((entry) => entry instanceof StatusItemView && entry.command !== undefined)).toBe(true);
+  expect(first).not.toBe(second);
+  expect(first[0]).not.toBe(second[0]);
+  expect(first.every((entry) => line.children.includes(entry))).toBe(false);
+  app.loop.dispose();
 });

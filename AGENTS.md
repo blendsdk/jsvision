@@ -25,3 +25,317 @@
 - CodeOps lifecycle artifacts and configuration live under `codeops/`.
 
 <!-- CODEOPS-PROJECT:END -->
+
+## Prime directive: docs-site `template1` (NON-NEGOTIABLE)
+
+When a request says to create or update a docs-site example **“based on `template1`”**, use the
+following live-example structure:
+
+1. Build a complete docs application with `demoApp(ctx, { themeMenu: true })`; do not return a bare
+   component for the generic stage-window wrapper. Keep `demoApp`'s default **Classic theme**.
+2. Put the example inside the shared docs-site `Template1Dialog` from
+   `packages/docs-site/src/template1-dialog.ts`, add it to `app.desktop`, and register the example
+   with `kind: 'app'` in `packages/docs-site/examples/index.ts`.
+3. Construct the `Template1Dialog` with `width` and `height` but no positioned `rect`, so JSVision
+   auto-centers it. Size it tightly around the content: by default it must not fill the desktop, and
+   the patterned desktop must remain visibly exposed on every side at the standard 80×24 viewport.
+   Every template1 dialog is resizable and maximizable, but `startMaximized` must remain `false`
+   unless the user explicitly approves maximized startup for that individual example after manual
+   review. The complete Data Grid example family is explicitly approved to start maximized.
+4. Inset the dialog's content by one cell on every side, in addition to the frame's own inset, so
+   controls and text never touch the inside edge of the border. Supply responsive layout behavior
+   that preserves this inset and uses the additional room without clipping after resize, maximize,
+   and restore. Set `preserveChildHeights: true` for primitive galleries whose direct content
+   children all have deliberately authored row heights. For mixed workspaces, pass a predicate that
+   preserves labels, buttons, inputs, status text, and instructions while allowing the principal
+   grid, editor, list, tree, terminal, canvas, or other workspace pane to grow vertically.
+5. Use the theme-controlled `dialog` surface without a custom background. Under the Classic theme,
+   the dialog background must match the application's menu-bar background.
+6. Keep the showcase alive after opening. `Template1Dialog` is non-closable by default; use a
+   separate intentionally closable nested dialog when closing and reopening is part of the
+   component demonstration.
+7. Make the example a polished interactive showcase, not a minimal smoke sample. Present the
+   component's meaningful visual and behavioral states together, exercise reactive behavior where
+   applicable, include visible action feedback, mark usable Alt-hotkeys, and provide concise keyboard
+   and mouse instructions without clipping.
+8. Update the component page's `<PlayExample>` title and blurb to describe the actual interaction.
+   Add focused specification coverage that renders the real example and verifies its centered
+   compact state, resize/maximize/restore behavior, responsive unclipped content, Classic surface,
+   and component-specific states and interactions. When maximized startup is explicitly approved,
+   also verify that exact startup state.
+
+The Button Lab in `packages/docs-site/examples/controls/button.ts` remains the canonical content and
+interaction reference while existing examples migrate to the shared shell. `Template1Dialog` is the
+canonical window-behavior implementation; do not duplicate its resize, maximize, restore, minimum
+size, or startup-mode logic in an individual example.
+
+## Prime directive: docs-site `component-page-template1` (NON-NEGOTIABLE)
+
+When a request says to create or update a docs-site component page **“based on
+`component-page-template1`”**, produce a complete teaching page modeled on
+`packages/docs-site/components/controls/button.md`. The page must teach developers how and when to
+use the component; it must not be only a brief description wrapped around a demo or a duplicate of
+the generated API reference.
+
+### Required page backbone
+
+Use the following order unless the component has a concrete usability reason to move a section:
+
+1. **Frontmatter and title** — provide an accurate title and a search-friendly description that
+   identifies the component, its primary purpose, and its most important behavior.
+2. **Overview** — explain what the component is, when to use it, its main capabilities, its state or
+   data model, and the most important user-visible behavior. A reader should understand the
+   component before seeing code.
+3. **Quick usage** — show the normal construction path in one small TypeScript snippet. Include only
+   the imports and setup needed to communicate that path.
+4. **Primary live example** — provide one polished flagship showcase near the top of the page. Build
+   every newly created live example with the docs-site `template1` directive unless the request
+   explicitly overrides its shell.
+5. **Props or public configuration** — document the constructor shape, option types, defaults,
+   reactive getters or signals, and important interactions between options. Use a table when the
+   API is naturally tabular. Cover the practical public surface without reproducing the generated
+   API reference.
+6. **Sizing & layout** — explain natural or measured size, minimum usable dimensions, terminal-cell
+   behavior, parent/container requirements, padding, clipping, wrapping, scrolling, and resize
+   behavior wherever they apply.
+7. **Component-specific sections** — add the sections required to teach the component's actual
+   capabilities. Do not force irrelevant generic headings.
+8. **Best practices** — give concrete recommendations, common mistakes, preferred helpers, and
+   composition guidance. Explain the consequence of ignoring each important recommendation.
+9. **Theming** — name the exact theme roles used by the component and map them to visual states or
+   regions. Use a compact table when several roles are involved, and call out contrast or fallback
+   requirements when relevant.
+10. **Related** — link only to genuinely related components or guides, followed by the generated API
+    reference.
+
+### Component-specific sections and live examples
+
+Choose component-specific sections from the component's real behavior. Relevant subjects may
+include keyboard and mouse interaction, commands and events, reactive state, selection and
+navigation, validation, data modeling, columns and sorting, editing, clipboard behavior, scrolling,
+virtualization, async work, lifecycle, accessibility, internationalization, performance, host
+authorization, security boundaries, or composition with other controls.
+
+A component-specific section may contain **multiple live examples**, and complex components are
+expected to use several when that improves teaching:
+
+- Place each live example beside the prose for the behavior it demonstrates; do not collect every
+  demo at the top when later sections need focused interaction.
+- Give every example a single, explicit learning objective and a unique registry ID. Several
+  examples in one section are appropriate when they cover distinct states, workflows, scales, or
+  interaction modes.
+- Do not create multiple examples that merely repeat the same capability with different sample
+  data. Combine closely related states into one lab when comparison is the lesson.
+- Make every new example a polished `template1` application: Classic theme, app shell, centered
+  padded dialog, visible desktop margin, usable hotkeys, concise instructions, and focused
+  specification coverage.
+- Update each `<PlayExample>` title and blurb so the reader knows exactly what to try and what the
+  example proves.
+
+For a large component, keep the main page complete at the everyday-use level and link to focused
+guides for genuinely deep subjects. Do not make readers leave the component page to discover its
+basic construction, configuration, sizing, interaction model, or theming.
+
+### Code-snippet standard
+
+Code snippets are explanatory, not miniature applications:
+
+- Demonstrate one concept at a time and show only its essence. Do not add an app shell, unrelated
+  controls, sample infrastructure, or defensive plumbing that does not help explain the section.
+- Keep imports minimal and use the public package entry point. Names, types, option defaults, helper
+  behavior, and control flow must remain accurate even when surrounding application setup is
+  intentionally omitted.
+- Prefer a short, concrete example over prose-shaped pseudocode. Comments should explain the
+  non-obvious reason for a line, not narrate the syntax.
+- Split unrelated concepts into separate snippets near the prose that explains them. Do not build
+  one accumulating kitchen-sink snippet that readers must mentally dismantle.
+- Do not paste the live-example module into the page. The interactive example and the teaching
+  snippet serve different purposes.
+
+### Accuracy and completion gate
+
+Before writing, inspect the component's public source, exports, tests, theme roles, existing docs,
+and related helpers. Never infer or invent props, defaults, events, commands, keyboard behavior,
+layout limits, performance claims, or theme roles.
+
+A page based on `component-page-template1` is complete only when:
+
+- every required backbone section is present or its omission is explicitly justified by the
+  component's actual behavior;
+- every meaningful public behavior is either taught on the page or linked to a focused guide;
+- examples and snippets use current public APIs and do not contradict source or tests;
+- all live examples are registered, render without clipping at the standard 80×24 viewport, and
+  have focused specification coverage for their stated learning objectives;
+- the page links to the generated API reference instead of duplicating its exhaustive signatures;
+  and
+- focused docs checks and the repository's full `yarn verify` gate pass.
+
+The Button page in `packages/docs-site/components/controls/button.md` is the canonical structural
+reference. Preserve its concise, concept-focused teaching style while allowing richer components
+such as data grids and code editors to add multiple specialized sections and multiple live examples
+within each section.
+
+## Prime directive: docs-site `guide-course-template1` (NON-NEGOTIABLE)
+
+When a request says to create, upgrade, or complete a docs-site Guide course, use this directive.
+Guide pages teach developers how to think and work in JSVision from beginner level through advanced,
+production-aware use. They are not expanded API summaries, collections of disconnected recipes, or
+thin prose around a demo.
+
+`packages/docs-site/guides.json` is the curriculum source of truth. Before changing a Guide page,
+inspect its catalog entry, prerequisites, profile, learning outcomes, target live-example count, and
+stage. Keep the catalog, Guide sidebar, page, example registry, and tests synchronized. A planned
+entry belongs in the learner-facing curriculum but must not enter the visible sidebar until a real
+page exists. Never create a placeholder page merely to make a navigation link resolve.
+
+### Documentation boundaries
+
+- **Guide** owns framework mental models, cross-cutting concepts, complete workflows, and application
+  architecture.
+- **Components** owns individual widgets and the specialist Data Grid and Code Editor courses. Guide
+  pages link to those hubs and may teach cross-cutting workflows that use them, but must not duplicate
+  their capability chapters.
+- **API** owns exhaustive signatures and symbol lookup.
+- **Reference** owns architecture evidence, ADRs, generated compatibility data, benchmark evidence,
+  security posture, stability policy, and other trust material. A Guide explains how to act on that
+  evidence and links to its source.
+
+### Learning contract
+
+Before authoring prose or examples:
+
+1. Read the catalog entry and every prerequisite course it names.
+2. Inspect the relevant public source, package exports, public types, defaults, tests, theme roles,
+   warnings, existing component pages, specialist hubs, and agent-neutral JSVision skill references.
+3. Turn every catalog learning outcome into concrete lessons and observable evidence.
+4. State the assumed starting knowledge and what the reader will be able to build, explain, diagnose,
+   and verify after the course.
+5. Define the course's beginner, intermediate, and advanced boundary. Do not hide required everyday
+   behavior in an “advanced” section or defer it entirely to API reference.
+6. Identify adjacent courses and remove duplicated teaching. Link to the owning course and give only
+   the context needed for the current lesson.
+
+Each major section must answer a learner question. Progress from mental model → smallest useful
+example → composition → realistic workflow → advanced behavior → failure recovery → production
+judgment. Introduce terminology before using it and explain why a technique is chosen, not only what
+to type.
+
+### Course backbone
+
+Use this order unless the subject has a concrete teaching reason to vary it:
+
+1. **Frontmatter and title** — a search-friendly description naming the concept, primary tasks, and
+   important behavior.
+2. **Course introduction** — audience, prerequisites, final capabilities, and a motivating real-world
+   problem.
+3. **Mental model** — the smallest accurate conceptual model, including ownership, data flow,
+   lifecycle, geometry, or event sequence where relevant.
+4. **First useful result** — one minimal public-API snippet that produces a meaningful outcome.
+5. **Primary live laboratory** — a polished example near the first complete workflow.
+6. **Core lessons** — concept-focused sections that build capability in dependency order.
+7. **Composition and integration** — how the subject interacts with layout, reactivity, focus,
+   commands, async work, theming, hosts, or packages where relevant.
+8. **Advanced behavior** — lifecycle, scaling, customization, authorization, performance, or
+   host-specific behavior grounded in the real implementation.
+9. **Failure modes and diagnosis** — symptoms, causes, corrections, and the evidence that
+   distinguishes similar failures.
+10. **Best practices** — specific recommendations with consequences and decision boundaries.
+11. **Practice and next steps** — exercises or experiments, related courses, specialist hubs, and
+    generated API links.
+
+Use tables for comparisons, state/command mappings, defaults, failure diagnosis, and decision
+boundaries. Use a small diagram only when it clarifies a graph, lifecycle, hierarchy, or event flow
+better than prose.
+
+Orientation and integration profiles may be shorter, but they still require an explicit audience,
+task-oriented flow, accurate snippets, failure guidance, and next steps. Do not inflate installation,
+tool integration, native process restoration, or deployment pages with fake interactive demos.
+
+### Code-snippet standard
+
+Snippets are teaching artifacts, not miniature applications:
+
+- Demonstrate one concept at a time with the smallest accurate public API.
+- Import only from supported public package entry points. Never teach internal paths.
+- Keep setup that matters to the lesson and omit shell, sample-data, or defensive plumbing that does
+  not.
+- Use real names, defaults, return types, ownership, async behavior, and control flow verified against
+  current source and tests. Never use prose-shaped pseudocode in a TypeScript fence.
+- Put snippets beside the lesson they explain. Split unrelated ideas instead of accumulating a
+  kitchen-sink block.
+- Comments explain a non-obvious reason, invariant, security boundary, or cleanup obligation; they do
+  not narrate syntax.
+- Show broken code only when the failure is the lesson. Mark it clearly, explain the observable
+  symptom, and follow it immediately with the correction.
+- Never paste a live-example module into Markdown. The lab proves behavior; the snippet isolates the
+  idea.
+- Do not assign to readonly layout state or bypass lifecycle APIs. Use current helpers such as
+  `row`, `col`, `at`, `setLayout`, public command APIs, and owned reactive scopes.
+
+### Live-example standard
+
+Every course uses at least the `requiredLiveExamples` declared in `guides.json`. A zero target
+requires a specific `liveExampleException` explaining why an embedded terminal would be misleading;
+replace it with an authentic artifact such as a test module, generated matrix, log trace, or deployment
+configuration.
+
+For each live laboratory:
+
+- Give it one explicit learning objective and a unique `guides/...` registry ID.
+- Place it beside the concept it proves, with a title and blurb that tell the reader what to try and
+  what to observe.
+- Build every new lab with the docs-site `template1` directive: complete `demoApp` shell, Classic
+  theme, centered compact `Template1Dialog`, inset content, visible desktop margin, responsive
+  resize/maximize/restore, non-closable main lesson, usable hotkeys, concise instructions, and visible
+  action feedback.
+- Present meaningful states together when comparison is the lesson. Split labs when interactions,
+  workflows, or scaling modes have different learning objectives.
+- Use deterministic bounded fixtures. Browser labs must use virtual or explicitly authorized host
+  seams and never visitor files, clipboard, network, or other privileged capabilities implicitly.
+- Keep the lab alive after opening and make every documented action reachable by keyboard. Add mouse
+  interaction when it materially teaches the concept.
+- Reuse an existing component or specialist example only when its interaction and framing exactly
+  prove the Guide outcome. Update its teaching blurb or build a focused Guide lab otherwise.
+
+### Failure, security, accessibility, and production teaching
+
+Every full course must identify relevant failure modes. Cover invalid input, lifecycle cleanup,
+focus loss, clipping, capability degradation, cancellation, stale async work, unsafe text, and host
+authorization when the subject crosses those boundaries.
+
+- Never claim terminal, browser, clipboard, filesystem, network, accessibility, performance, or
+  security behavior without source or generated evidence.
+- Treat keyboard reachability, visible focus, non-color cues, reduced geometry, monochrome, and
+  ASCII-safe fallbacks as design requirements, not a final accessibility paragraph.
+- Sanitize untrusted display text at the documented boundary, redact sensitive diagnostics, and
+  avoid examples that normalize unsafe raw terminal output.
+- Label benchmark and compatibility results with their evidence scope. Do not present informational
+  measurements as guarantees.
+- Show acquisition and cleanup together for timers, subscriptions, modal work, host resources, and
+  reactive owners.
+
+### Accuracy and completion gate
+
+A Guide course is complete only when:
+
+- every catalog learning outcome is taught and covered by a specification assertion;
+- prerequisites and cross-links resolve, and the page neither duplicates nor contradicts its owning
+  component, specialist, API, or Reference material;
+- snippets compile where practical and every API, default, event, command, key, lifecycle,
+  capability, theme role, and failure claim agrees with source and tests;
+- the page contains the required course backbone or records a concrete profile-specific reason for an
+  omission;
+- every declared live example is registered as `kind: 'app'`, smoke-renders, remains unclipped at the
+  standard 80×24 viewport, and has focused specification coverage for compact centering, Classic
+  surface, interaction outcomes, resize, maximize, restore, cleanup, and relevant accessibility or
+  security behavior;
+- failure modes, best practices, exercises/experiments, related courses, specialist hubs, and API
+  links are present where relevant;
+- `guides.json`, the learner-facing curriculum, and the generated sidebar agree;
+- focused docs typecheck/tests, `yarn docs:build`, and the repository's full `yarn verify` gate pass;
+  and
+- the catalog stage changes to `complete` only in the same verified change that satisfies every
+  completion condition.
+
+The completed Layout and Reactive state courses are structural pilots, not unquestionable content
+oracles. Re-audit them against this directive when the full curriculum plan reaches their phase.

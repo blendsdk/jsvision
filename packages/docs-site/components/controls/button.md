@@ -32,7 +32,10 @@ const submit = new Button('Submit', { disabled: () => !formValid() });
 
 ## Live example
 
-<PlayExample id="controls/button" title="Button" blurb="A push button bound to a click counter, with a live count echo." />
+<PlayExample id="controls/button"
+  title="Button Lab"
+  blurb="Explore normal, default, focused, pressed, disabled, and reactively enabled Buttons in a centered Classic-theme dialog. Try the keyboard shortcuts, type a project name to enable Save, and compare themes from the View menu."
+/>
 
 ## Props
 

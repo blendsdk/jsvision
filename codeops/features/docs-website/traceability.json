@@ -1,0 +1,1306 @@
+{
+  "feature": "docs-website",
+  "nodes": [
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CATALOG"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CONTRACT"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-STANDARD"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-DATAGRID"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-CODEEDITOR"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-QUALITY"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "RD-05",
+      "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/requirements/RD-05-component-docs.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component documentation system",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+          "upstream": "docs-website/SPEC-CATALOG",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+          "upstream": "docs-website/SPEC-CONTRACT",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+          "upstream": "docs-website/SPEC-STANDARD",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+          "upstream": "docs-website/SPEC-DATAGRID",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
+          "upstream": "docs-website/SPEC-CODEEDITOR",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+          "upstream": "docs-website/SPEC-QUALITY",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+          "upstream": "docs-website/SPEC-CATALOG",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+          "upstream": "docs-website/SPEC-CONTRACT",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+          "upstream": "docs-website/SPEC-STANDARD",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+          "upstream": "docs-website/SPEC-DATAGRID",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
+          "upstream": "docs-website/SPEC-CODEEDITOR",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+          "upstream": "docs-website/SPEC-QUALITY",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CATALOG",
+      "revision": "sha256:d049e8c5fde3448a020b6e83d31c976b822f8eb23f8edeba748055e967ecd3ea",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-01-catalog-and-navigation.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component catalog and navigation",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CONTRACT",
+      "revision": "sha256:ba0dcbdc3da489e95bcf0107cdf9025cabb570798fba3768f426a60f2ddf7e5e",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-02-page-and-example-contract.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Standard page and example contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-STANDARD",
+      "revision": "sha256:80e554da53ab65c889ec495e8c8ac672d5b71d6b5556f2d5ad476bc4ea3b8509",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-03-standard-component-migration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Standard component migration",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-DATAGRID",
+      "revision": "sha256:d692af9d0e189f14191a6b39afe239fda345c3a81a41ee7d315611ea08c8accc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-04-data-grid-hub.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Data Grid documentation hub",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-CODEEDITOR",
+      "revision": "sha256:8ef22a142c81012c2bb228c8d1e905a318829db85f117aa360580683d42c62dc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-05-code-editor-hub.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor documentation hub",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "SPEC-QUALITY",
+      "revision": "sha256:a105d9c6263162a2ddb7ba5d9fe867316d053f964ca9e21966dc606e72220c71",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/03-06-overview-links-and-quality.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Overview, links, and content quality",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+          "upstream": "docs-website/CRIT-RD05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "docs-website/TEST-RD05"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "id": "CRIT-RD05",
+      "revision": "sha256:d349706da08d96268a8d4f7239c7f1267780da4069ce126e24a8e49ac6bc7dc6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "RD-05 acceptance mapping",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:bd22ab9edbe2fc53736087902af95d1b49284307339a1e4ee44ab1a1f65947e3",
+          "upstream": "docs-website/TASK-RD05",
+          "validatedAt": "2026-07-30T20:14:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Phase 3 controls: 53 focused page, template, behavior, and lifecycle cases passed after independent review.",
+        "Phase 4 foundations and application shell: 32 focused cases passed after accepted fixes; the one-time re-review closed every finding.",
+        "Phase 5 containers and navigation: 49 focused cases passed after accepted review fixes, including complete rendered teaching lines and guarded tab closure.",
+        "Phase 6 feedback, date, and color: 44 focused cases and 408 docs-site cases passed after widget-bound rendering, real popup/input, date-boundary, pointer, and cleanup corrections.",
+        "Phase 7 surface, general editing, and terminal: 39 focused cases and 454 docs-site cases passed after widget-bound surface, signal, scrollback, gadget, drag, and cleanup corrections.",
+        "Phase 8 forms and files: 46 focused cases and 506 docs-site cases passed after real modal validation, submission, browsing, result, fault, path-confinement, save, backup, and cleanup corrections.",
+        "Phase 9 Data Grid hub: 100 focused cases and 629 docs-site cases passed after real editing, validation, personalization, bounded-source, export-safety, and template corrections.",
+        "Phase 10 Code Editor hub and Phase 10.7 flagship migration: 108 focused cases and 900 docs-site cases passed after distinct syntax-aware fixtures, native actions, complete compact teaching rails, race-safe reset, explicit structural folding, and independent review corrections.",
+        "Phase 12 final audit: 682 focused component assertions, all 21 built-output checks across 1,026 pages, and authoritative repository verification passed."
+      ],
+      "id": "TEST-RD05",
+      "revision": "sha256:77d2dc036280fc299a359ac157d39f39e830533c20cb461df16f3ef5abc73628",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "passing",
+      "title": "ST-1 through ST-32 component-documentation evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution entry: codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md",
+        "Phase 3 verified: all nine Controls pages/examples complete; reviewed-state yarn verify passed across 19 packages.",
+        "Phase 4 verified: all eight Foundations and Application Shell pages/examples complete; every independent-review finding is closed.",
+        "Phase 5 verified: all ten Containers and Navigation pages/examples complete; accepted review fixes pass the strengthened family suite.",
+        "Phase 6 verified: all six Feedback, Date, and Color pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
+        "Phase 7 verified: all seven Surface, General Editing, and Terminal pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
+        "Phase 8 verified: Form Dialog and all seven composable file-family pages/examples complete; post-review yarn verify and the 20-check documentation build pass.",
+        "Phase 9 verified: all 12 Data Grid specialist pages and 24 focused examples complete; post-review yarn verify and snippet compilation pass.",
+        "Phase 10.7 verified: all 21 Code Editor examples use the flagship teaching presentation; reviewer and auditor report zero residual findings and authoritative yarn verify passes.",
+        "Phase 11 verified: catalog-backed overview, sidebars, API parity, rendered-route validation, and lazy Play DOM coverage are complete; every accepted independent-review finding is closed and authoritative yarn verify passes.",
+        "Phase 12 verified: all public surfaces, 71 catalog routes, and 96 component laboratories passed final content, interaction, production-build, and repository-wide gates.",
+        "The public transition API was attempted for final lifecycle synchronization but refused because unrelated malformed feature graphs fail its portfolio-wide structural precondition; the docs-website graph was synchronized directly and revalidated through its canonical target.",
+        "Phase 12 independent review found one Major artifact-link defect; immutable pushed-commit links and repository-object assertions cleared RV-012-001 on the permitted fix-scoped re-review with no residual finding."
+      ],
+      "id": "TASK-RD05",
+      "revision": "sha256:bd22ab9edbe2fc53736087902af95d1b49284307339a1e4ee44ab1a1f65947e3",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Execute the component documentation system plan",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "The user confirmed the complete plan ambiguity register on 2026-07-29.",
+        "Phase 11 auto-design selected mount-scoped Vue runtime injection and generation-aware lazy-session cancellation with bounded persisted terminal dimensions."
+      ],
+      "id": "DEC-RD05",
+      "revision": "sha256:8044cb066f31b3fa0fefc4c4c538f30880457eeb0e56cb5e104ed7e44900efc7",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved RD-05 documentation architecture decisions",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "docs-website/RD-05"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD05"
+        }
+      ],
+      "evidence": [
+        "Entry point: codeops/features/docs-website/plans/component-documentation-system/00-index.md"
+      ],
+      "id": "PLAN-RD05",
+      "revision": "sha256:9a8dd52a1bcc2625502d009ab5207736346d9e51d6cb3d998a50932bd4e93370",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/component-documentation-system/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Component documentation system implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+          "upstream": "docs-website/RD-05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:3cdf0d8202096a840905680e00b66f1951fd6c48194acd640b1b3f72b4918ce9",
+          "upstream": "docs-website/RD-05",
+          "validatedAt": "2026-07-28T23:32:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:bd22ab9edbe2fc53736087902af95d1b49284307339a1e4ee44ab1a1f65947e3",
+          "upstream": "docs-website/TASK-RD05",
+          "validatedAt": "2026-07-30T20:14:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-CURRICULUM"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-AUTHORING"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-EVIDENCE"
+        },
+        {
+          "relation": "specified-by",
+          "target": "docs-website/SPEC-GUIDE-SEQUENCE"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "RD-08",
+      "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/requirements/RD-08-reference-trust.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Reference, Guide curriculum and trust content",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+          "upstream": "docs-website/SPEC-GUIDE-AUTHORING",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+          "upstream": "docs-website/SPEC-GUIDE-CURRICULUM",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+          "upstream": "docs-website/SPEC-GUIDE-EVIDENCE",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+          "upstream": "docs-website/SPEC-GUIDE-SEQUENCE",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+          "upstream": "docs-website/SPEC-GUIDE-AUTHORING",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+          "upstream": "docs-website/SPEC-GUIDE-CURRICULUM",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+          "upstream": "docs-website/SPEC-GUIDE-EVIDENCE",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+          "upstream": "docs-website/SPEC-GUIDE-SEQUENCE",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-CURRICULUM",
+      "revision": "sha256:abcfdbc803a5363d3896494896a1db98ad2d4ad55b8d97e89b0b9c003719982b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-01-curriculum-contract.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide curriculum catalog and ownership contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-AUTHORING",
+      "revision": "sha256:feadd4cf94c82047d47857867a3305cd7110c83f1158789502e0d6ef795c9097",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-02-course-authoring.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course authoring and snippet contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-EVIDENCE",
+      "revision": "sha256:d623e01f567e79efe832bf924d19a56645c3d6282557c2645b4b1a277da30714",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-03-laboratories-and-evidence.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide laboratories and evidence contract",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "docs-website/CRIT-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "SPEC-GUIDE-SEQUENCE",
+      "revision": "sha256:7c9bfdb5183301a25416e66e7f5f1d26c4263584c1b53ab10a7d461b8f645cbb",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/03-04-curriculum-sequence.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide curriculum delivery sequence",
+      "type": "specification",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+          "upstream": "docs-website/CRIT-RD08-GUIDES",
+          "validatedAt": "2026-07-29T18:54:11Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "docs-website/TEST-RD08-GUIDES"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "id": "CRIT-RD08-GUIDES",
+      "revision": "sha256:c053d60730bd4a6cfa2e9ce45b56377b7d6bd9340ce2fe1837f83efd22e3fcb5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course system acceptance criteria",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
+          "upstream": "docs-website/TASK-RD08-GUIDES",
+          "validatedAt": "2026-07-30T16:49:32Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Phase 1 Introduction: 19/19 focused course and catalog tests passed after review remediation.",
+        "Phase 1 Introduction: docs-site typecheck and authoritative yarn verify passed after review remediation.",
+        "Phase 1 re-review correction: a real window-manager SE-grip drag exercises intermediate dialog resize, shared template evidence, maximize, and restore.",
+        "Phase 1 final state: 19/19 focused tests, docs-site typecheck, and authoritative yarn verify passed.",
+        "Phase 2 Install & packages: expected-red baseline was 7 failed and 1 passed; implementation then passed 8/8 focused specifications.",
+        "Phase 2 Install & packages: docs-site typecheck and authoritative yarn verify passed at the first green checkpoint.",
+        "Phase 2 Install & packages hardening: package-matrix, stale-version, and invalid-import checks passed with the full 11/11 focused suite and authoritative yarn verify.",
+        "Phase 2 Install & packages promotion: 18/18 focused course/catalog tests, docs-site typecheck, and authoritative yarn verify passed before the catalog stage became complete.",
+        "Phase 2 review remediation: real TypeScript consumer and Node CommonJS probes pass; invalid subpath and missing-extension fixtures fail as expected; 18/18 focused tests and yarn verify pass.",
+        "Phase 2 fix-scoped re-review: both Major findings and the Minor engine wording issue are resolved with no remaining finding in scope.",
+        "Phase 3 Layout re-audit: expected red was 9 passed and 3 failed; content and timing corrections then passed 12/12 reconciled specifications.",
+        "Phase 3 Layout green checkpoint: docs-site typecheck and authoritative yarn verify passed with real resize, maximize, restore, Classic surface, padding, and clipping evidence.",
+        "Phase 3 Layout hardening: 15/15 focused tests and authoritative yarn verify passed across repeated geometry, nested containment, interaction state, and hidden overlay state.",
+        "Phase 3 Layout synchronization: 22/22 focused Layout/catalog tests and docs-site typecheck passed; the curriculum map remains Complete.",
+        "Phase 3 review remediation: overlays disappear immediately after keyboard and mouse activation, infeasible fractional minimums are solver-proven, 23/23 focused tests and yarn verify pass.",
+        "Phase 3 fix-scoped re-review: both Major findings are resolved with no remaining Critical or Major finding.",
+        "Phase 4 Reactive state: 29/29 focused course/catalog tests, docs-site typecheck, and authoritative yarn verify passed after review remediation.",
+        "Phase 4 host-lifecycle evidence: both labs build without an ambient owner, emit no unowned-root warning, and stop reactive work after host teardown.",
+        "Phase 4 fix-scoped re-review: both Major findings and the Minor finding are resolved with no remaining Critical, Major, or Minor issue.",
+        "Phase 5 Codex plugin expected red: 2 passed and 6 failed across eight independently authored final-contract specifications.",
+        "Phase 5 Codex plugin green checkpoint: 8/8 specifications and 15/15 focused course/catalog tests pass with docs-site typecheck, plugin integrity, and authoritative yarn verify.",
+        "Phase 5 Codex plugin hardening: 18/18 focused tests and yarn verify pass across real tree equality, synthetic distribution drift, and independent stale-version diagnostics.",
+        "Phase 6 Views & focus expected red: 3 passed and 16 failed across 19 independently authored final-contract specifications.",
+        "Phase 6 Views & focus green checkpoint: 19/19 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
+        "Phase 6 Views & focus hardening: 26/26 focused tests and yarn verify pass across retained order, eligibility fallback, modal restoration, responsive geometry, and host cleanup.",
+        "Phase 6 Views & focus promotion: 35/35 focused course/implementation/catalog tests, docs-site typecheck, production docs build, plugin integrity, and yarn verify pass after the permitted re-review cleared every finding.",
+        "Phase 7 Events, commands & keymaps expected red: 5 public controls pass and 18 course, catalog, registry, and laboratory cases fail across 23 independently authored final-contract tests.",
+        "Phase 7 Events, commands & keymaps green checkpoint: 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify pass.",
+        "Phase 7 Events, commands & keymaps hardening: 29/29 focused tests and yarn verify pass across repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown edges.",
+        "Phase 7 Events, commands & keymaps promotion: 36/36 focused course, hardening, and catalog tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 7 review remediation: 38/38 focused tests and every authoritative gate pass after real button routing, exact mouse-down, disabled-focus, ASCII cue, and diagram corrections; the permitted re-review cleared all findings.",
+        "Phase 7 final promoted state: 38/38 focused tests, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 8 Keyboard & clipboard expected red: 9 cases pass, including all 7 public controls and 2 existing course details; 17 course, catalog, registry, and laboratory cases fail across the 26-case independent oracle.",
+        "Phase 8 Keyboard & clipboard green checkpoint: 26/26 independent specifications, docs-site typecheck, JSON validation, documentation self-check, and authoritative yarn verify pass.",
+        "Phase 8 Keyboard & clipboard hardening: 33/33 focused checks and authoritative yarn verify pass across selection, key conflicts, browser denial, unavailable adapters, authorization cycling, and cleanup.",
+        "Phase 8 Keyboard & clipboard promotion: 40/40 focused course, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 8 review remediation: the corrected demoted state passed 43/43 focused checks and every authoritative gate; the one permitted re-review cleared all original findings.",
+        "Phase 8 final promoted state: 44/44 focused checks and every authoritative gate pass after the early-Resolve state edge was corrected.",
+        "Phase 14 Forms expected red: 5 public form controls pass and 17 course, catalog, registry, laboratory, interaction, geometry, and cleanup assertions fail.",
+        "Phase 14 Forms green checkpoint: 21/22 final-contract assertions and docs-site typecheck pass with only final Complete-stage promotion withheld.",
+        "Phase 14 Forms promotion: 36/36 focused course, laboratory, hardening, and catalog checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify pass.",
+        "Phase 14 review remediation: 37/37 focused checks and every authoritative gate pass with real Promise settlement, onValid-owned persistence, reactive action availability, marked Alt+O, and corrected Button construction evidence.",
+        "Phase 14 lifecycle closure: 39/39 focused checks and every authoritative gate pass after inactive guards, owned Promise settlement, pending-disposal, resolve-then-dispose, and persistence-teardown evidence close RV-014-005 without a prohibited third review."
+      ],
+      "id": "TEST-RD08-GUIDES",
+      "revision": "sha256:f0baba3cb4f5786d9b09eb5f772dd3d9128169f733648534b662787a9722cb0a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "ST-1 through ST-47 Guide course evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution entry: codeops/features/docs-website/plans/guide-course-system/99-execution-plan.md",
+        "summary:Execution started after the selected Guide plan passed its execution-entry readiness gate.",
+        "summary:Phase 1 independent review found two Major and one Minor issue; AR-16 applied every correction without waiver.",
+        "summary:Phase 1 review remediation passed 19 focused tests, docs-site typecheck, and authoritative yarn verify.",
+        "summary:The permitted fix-scoped re-review retained one Major for a viewport-only resize; the final correction now drives the real dialog resize seam. A third review is prohibited.",
+        "summary:Phase 1 is complete after final focused, docs-site typecheck, and authoritative yarn verify gates passed.",
+        "summary:Phase 2 tasks 2.1.1 through 2.2.4 reached the specification-to-green checkpoint with 8 focused tests, docs-site typecheck, and yarn verify passing.",
+        "summary:Phase 2 task 2.3.1 added package-matrix, stale-version, and invalid-import hardening; 11 focused tests and yarn verify pass.",
+        "summary:Phase 2 task 2.3.2 promoted Install & packages after 18 focused course/catalog tests, docs-site typecheck, and yarn verify passed.",
+        "summary:Phase 2 independent review found two Major and one Minor issue; AR-18 applied every correction and the permitted re-review cleared all findings.",
+        "summary:Phase 3 tasks 3.1.1 through 3.2.4 reconciled Layout against the final contract; 12 focused specifications, docs-site typecheck, and yarn verify pass.",
+        "summary:Phase 3 task 3.3.1 extended Layout hardening to repeated geometry, nested containment, interaction state, and hidden overlays; 15 focused tests and yarn verify pass.",
+        "summary:Phase 3 task 3.3.2 passed 22 focused Layout/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry.",
+        "summary:Phase 3 independent review found two Major issues; AR-21 applied both corrections and the permitted re-review cleared every Critical and Major finding.",
+        "summary:Phase 4 tasks 4.1.1 and 4.1.2 reconciled fifteen Reactive state cases; expected red is 13 passed and 2 failed for course-content gaps.",
+        "summary:Phase 4 tasks 4.2.1 through 4.2.3 corrected only course-content gaps; both labs and catalog evidence remain valid and 15/15 specifications pass.",
+        "summary:Phase 4 task 4.2.4 reached green with 15/15 specifications, docs-site typecheck, and authoritative yarn verify passing.",
+        "summary:Phase 4 task 4.3.1 added real resize, repeated batching, alternating dependency, exact cleanup, and post-disposal hardening; 20/20 focused tests and yarn verify pass.",
+        "summary:Phase 4 task 4.3.2 passed 27/27 focused Reactive state/catalog tests and docs-site typecheck while confirming the synchronized Complete curriculum entry.",
+        "summary:Phase 4 independent review found two Major and one Minor issue; AR-23 applied every correction and the permitted re-review cleared all findings.",
+        "summary:Phase 5 tasks 5.1.1 and 5.1.2 established eight Codex plugin cases; expected red is 2 passed and 6 failed for course and authentic-substitute gaps.",
+        "summary:Phase 5 tasks 5.2.1 through 5.2.4 reached green with 8/8 specifications, 15/15 focused tests, docs-site typecheck, plugin integrity, and yarn verify passing.",
+        "summary:Phase 5 task 5.3.1 added actionable canonical/distribution and stale-version diagnostics; 18/18 focused tests and yarn verify pass.",
+        "summary:Phase 6 tasks 6.1.1 through 6.2.4 delivered the complete Views & focus course and two template1 laboratories; 19/19 specifications, docs-site typecheck, registry integration, and yarn verify pass.",
+        "summary:Phase 6 task 6.3.1 added retained-order, eligibility, focus-memory, modal-restoration, geometry, and cleanup hardening; 26/26 focused tests and yarn verify pass.",
+        "summary:Phase 6 task 6.3.2 promoted Views & focus after AR-27 corrections passed 35/35 focused tests and every authoritative gate, and the permitted re-review cleared all findings.",
+        "summary:Phase 7 tasks 7.1.1 and 7.1.2 established 23 independently authored cases; expected red is 5 public controls passing and 18 course/lab contract failures.",
+        "summary:Phase 7 tasks 7.2.1 through 7.2.4 reached green with 23/23 specifications, docs-site typecheck, registry integration, and authoritative yarn verify passing.",
+        "summary:Phase 7 task 7.3.1 added repeated routing, collision, disabled-command, raw-key, pointer-boundary, and host-teardown hardening; 29/29 focused tests and yarn verify pass.",
+        "summary:Phase 7 task 7.3.2 promoted after AR-30 corrections passed 38/38 focused tests and every authoritative gate, and the permitted re-review cleared all four Major and two Minor findings.",
+        "summary:Phase 8 baseline b0d7f6218190f9289407cc21a9dc30386ff8b1d4 and its expected modification set are recorded before specification work.",
+        "summary:Phase 8 tasks 8.1.1 and 8.1.2 established 26 independently authored cases; expected red is 9 passing and 17 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 8 tasks 8.2.1 through 8.2.4 reached green with the complete course, one deterministic virtual-host laboratory, 26/26 specifications, docs-site typecheck, and authoritative yarn verify passing.",
+        "summary:Phase 8 task 8.3.1 added selection, key-conflict, browser-denial, unavailable-adapter, authorization-cycle, and cleanup hardening; 33/33 focused checks and authoritative yarn verify pass.",
+        "summary:Phase 8 task 8.3.2 initially promoted after 40/40 focused checks and every authoritative gate passed.",
+        "summary:Phase 8 independent review found four Major and one Minor issue; AR-33 demoted the course and selected every correction without waiver.",
+        "summary:Phase 8 task 8.3.2 completed after 44/44 focused checks and every authoritative gate passed; the permitted re-review cleared all Critical and Major findings and its one introduced Minor was corrected.",
+        "summary:Phase 9 baseline 24c1b7c7fa73d352d651752915a25e611c54a3ca and its expected modification set are recorded before specification work.",
+        "summary:Phase 9 tasks 9.1.1 and 9.1.2 established 20 independently authored cases; expected red is 5 public controls passing and 15 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 9 tasks 9.2.1 through 9.2.4 delivered the complete Planned-stage course and two laboratories; 19/20 immutable assertions pass with only final stage promotion withheld, and docs-site typecheck passes.",
+        "summary:Phase 9 task 9.3.1 added repeated-width, combining, fallback, monochrome, geometry, and teardown hardening; the initial 9.3.2 promotion passed 39/39 focused checks and every authoritative gate.",
+        "summary:Phase 9 independent review found four Major and one Minor issue; AR-37 demoted the course and selected every correction without waiver.",
+        "summary:Phase 9 task 9.3.2 completed after 47/47 focused checks and every authoritative gate passed; the permitted re-review cleared RV-009-001 through RV-009-005 with zero remaining or introduced findings.",
+        "summary:Phase 10 baseline 8d798f931d5d9fc95acb1e4d233faf2b1994523c and its expected modification set are recorded before specification work.",
+        "summary:Phase 10 tasks 10.1.1 and 10.1.2 established 20 independently authored cases; expected red is 5 public controls passing and 15 course/catalog/registry/laboratory contract failures.",
+        "summary:Phase 10 tasks 10.2.1 through 10.2.4 delivered the Planned-stage course and two laboratories; 19/20 immutable assertions pass with only final stage promotion withheld, and docs-site typecheck passes.",
+        "summary:Phase 10 tasks 10.3.1 and 10.3.2 added offset, large-data, empty, focus, selection, geometry, and lifecycle hardening and initially promoted the course after 37/37 focused checks and every authoritative gate passed.",
+        "summary:Phase 10 independent review found five Major and one Minor issue; AR-40 demoted the course and selected every correction without waiver.",
+        "summary:The single permitted Phase 10 fix-scoped re-review cleared five findings and retained RV-010-002; the final no-third-review correction now resets uncapped work at the real subtree draw boundary and exposes deliberate over-budget formatting.",
+        "summary:Phase 10 task 10.3.2 completed after the promoted course passed 39/39 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify.",
+        "summary:Phase 11 baseline 87c9a9f2618560b8b389ce2711d99d99c6687d9a and its expected Application shell modification set are recorded before specification work.",
+        "summary:Phase 11 tasks 11.1.1 and 11.1.2 established 19 independently authored cases; expected red is 4 public application controls passing and 15 course/catalog/registry/laboratory failures.",
+        "summary:Phase 11 tasks 11.2.1 through 11.3.1 delivered the complete course, two authentic shell laboratories, command/body/lifecycle hardening, and an initial promoted checkpoint.",
+        "summary:Phase 11 independent review found five Major and one Minor issue; AR-43 accepted every correction without waiver and AR-44 authorized the narrow statusBase implementation alignment.",
+        "summary:The single permitted Phase 11 re-review cleared five findings and retained RV-011-002; the final no-third-review correction drives real MenuBar, MenuPopup, StatusLine, keymap, and button command routes with truthful feedback.",
+        "summary:AR-45 corrected plan-owned Keyboard & clipboard drift exposed by the authoritative gate; its existing native-clipboard consumer oracle passes 7/7.",
+        "summary:Phase 11 task 11.3.2 completed after 34/34 Guide checks, 15/15 focused UI checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed.",
+        "summary:Phase 12 baseline adfc3f07c353b72e6bb01d2335b7c92f7ac4c001 and its expected Dialogs & modality modification set are recorded before specification work.",
+        "summary:Phase 12 tasks 12.1.1 and 12.1.2 established 19 independently authored cases; expected red is 4 public modal controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 12 tasks 12.2.1 through 12.3.1 delivered the complete course, two focused modal laboratories, corrected Dialog ownership guidance, and repeated result, nesting, focus, and cleanup hardening; 24/24 focused checks and docs-site typecheck pass.",
+        "summary:Phase 12 independent review found one Major issue: RV-012-001 showed that success labels did not independently prove settled results, focus identities, and exact cleanup. AR-49 accepted the full correction without waiver.",
+        "summary:Phase 12 task 12.3.2 completed after the corrected promise, focus, and cleanup evidence passed 24/24 focused checks, every authoritative gate, and the single permitted re-review with no remaining or introduced findings.",
+        "summary:Phase 13 baseline c9492058a69c3aa5fb54521f9577e5685e7e6a8b and its expected Async work modification set are recorded before specification work.",
+        "summary:Phase 13 tasks 13.1.1 and 13.1.2 established 19 independently authored cases; expected red was 4 public controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 13 tasks 13.2.1 through 13.3.2 delivered the complete course, two deterministic laboratories, and cancellation, retry, stale-result, disposal, and resize hardening; corrected focused verification passes 27/27 plus docs-site typecheck.",
+        "summary:Phase 13 independent review found one Major and two Minor issues; AR-51 corrected false pending-cancellation evidence, the accelerator marker, and the unused snippet state without waiver. The single permitted re-review cleared every finding.",
+        "summary:Phase 13 completed after 27/27 focused checks, synchronized curriculum coverage, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed.",
+        "summary:Phase 14 baseline e9aad443fc56279950f9ccc7e82bb6144644ad7c and its expected Forms modification set are recorded before specification work.",
+        "summary:Phase 14 tasks 14.1.1 and 14.1.2 established 22 independently authored cases; expected red was 5 public controls passing and 17 course, catalog, registry, laboratory, interaction, geometry, and cleanup failures.",
+        "summary:Phase 14 tasks 14.2.1 through 14.2.4 delivered the complete course and two deterministic laboratories; 21/22 final-contract assertions and docs-site typecheck pass with only final stage promotion withheld.",
+        "summary:Phase 14 tasks 14.3.1 and 14.3.2 added repeated invalid, reset, submit-race, retry, disposal, and resize hardening and promoted Forms after 36/36 focused checks and every authoritative gate passed.",
+        "summary:Phase 14 independent review found two Major and two Minor issues; AR-55 accepted every correction without waiver.",
+        "summary:Phase 14 review remediation derives stale and accepted outcomes from real Promise settlement, enters persistence only through onValid, exposes reactive action availability, marks Alt+O, and corrects public Button construction; 37/37 focused checks and every authoritative gate pass.",
+        "summary:The permitted Phase 14 re-review cleared RV-014-001 through RV-014-004 and identified correction-introduced Major RV-014-005; AR-56 accepted the complete lifecycle correction without waiver.",
+        "summary:Phase 14 completed after inactive guards, owned Promise settlement, and pending-disposal, resolve-then-dispose, and persistence-teardown evidence passed 39/39 focused checks and every authoritative gate. A third review is prohibited.",
+        "summary:Phase 15 tasks 15.1.1 and 15.1.2 established 19 independently authored cases; expected red was 5 public controls passing and 14 course, catalog, registry, laboratory, interaction, geometry, and cleanup failures.",
+        "summary:Phase 15 tasks 15.2.1 through 15.2.4 delivered the complete host-neutral Files course and one deterministic virtual/custom laboratory; 18/19 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 15 tasks 15.3.1 and 15.3.2 added virtual isolation, traversal, missing, denial, retry, responsive, and cleanup hardening and promoted Files after 32/32 focused checks passed.",
+        "summary:AR-57 removed an invalid generated API link to private @jsvision/web after the required production docs build exposed the contradiction.",
+        "summary:Phase 15 independent review found three Major and one Minor issue; AR-58 corrected complete path confinement, denial-versus-missing classification, synthetic cancellation evidence, and denial ordering without waiver. The permitted re-review cleared every finding with no introduced Critical or Major issue.",
+        "summary:Phase 15 completed after 32/32 focused checks, docs-site typecheck, corrected production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 16 tasks 16.1.1 and 16.1.2 established 12 independently authored cases; expected red was 2 public-control passes and 10 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 16 tasks 16.2.1 through 16.2.4 delivered the complete locale definition, loading, switching, formatting, layout, and test course plus two deterministic laboratories; 11/12 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 16 tasks 16.3.1 and 16.3.2 added missing-key, long-label, Unicode, locale-switch, geometry, interaction, and cleanup hardening and promoted Internationalization after 35/35 focused checks passed.",
+        "summary:Phase 16 independent review found five Major and two Minor issues; AR-59 corrected every finding without waiver.",
+        "summary:The permitted Phase 16 re-review cleared six findings and identified correction-introduced Major RV-16-R1; AR-60 corrected the locale handoff rollback boundary with deterministic success, replacement-failure, and old-cleanup-failure evidence. A third review is prohibited.",
+        "summary:Phase 16 completed after 35/35 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 17 tasks 17.1.1 and 17.1.2 established 16 independently authored cases; expected red was 4 public Router controls passing and 12 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 17 tasks 17.2.1 through 17.2.4 delivered typed-stack, shared-chrome, lifecycle, focus, host-boundary, and diagnosis teaching plus two deterministic laboratories; 15/16 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 17 tasks 17.3.1 and 17.3.2 added unknown-route, history, rebuilt-focus, retention, reset, disposal, geometry, and interaction hardening and promoted Screens & routing after 30/30 focused checks passed.",
+        "summary:Phase 17 independent review found five Major and one Minor issue; AR-63 corrected real shared chrome, focus semantics, logger boundaries, codec validation, lifecycle evidence, and visible action markers without waiver.",
+        "summary:The permitted Phase 17 re-review cleared all original findings and identified correction-introduced Major RV-17-R1 through RV-17-R3; AR-64 corrected button clipping, unreachable nested-menu cues, and the stale Router API-link assertion. A third review is prohibited.",
+        "summary:Phase 17 completed after 30/30 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 18 tasks 18.1.1 and 18.1.2 established 18 independently authored cases; expected red was 6 public theming and renderer controls passing and 12 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 18 tasks 18.2.1 through 18.2.4 delivered semantic-role, theme-generation, contrast, capability-depth, monochrome, and glyph-fallback teaching plus two deterministic laboratories; 17/18 final-contract assertions and docs-site typecheck passed with only final stage promotion withheld.",
+        "summary:Phase 18 tasks 18.3.1 and 18.3.2 added invalid-input, palette-collapse, monochrome, ASCII, repeated-interaction, cleanup, and geometry hardening and promoted Theming & colour depth after corrected focused checks passed.",
+        "summary:Phase 18 independent review found three Major and one Minor issue; AR-67 corrected theme-input accuracy, shared-menu synchronization, rendered laboratory evidence, and Markdown structure without waiver.",
+        "summary:The permitted Phase 18 re-review cleared every original finding and identified two correction-introduced Minors; the final no-third-review correction aligned the selected-depth prose and composed host plus app-owned theme observers.",
+        "summary:Phase 18 completed after 43/43 focused checks, docs-site typecheck, production docs build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 19 tasks 19.1.1 and 19.1.2 established 20 independently authored cases; expected red was 5 public browser-runtime controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 19 tasks 19.2.1 through 19.3.1 delivered the private-boundary browser course, two deterministic laboratories, and lifecycle, authorization, virtual-file, geometry, and cleanup hardening; 32/33 final focused checks passed with only final stage promotion withheld.",
+        "summary:Phase 19 independent review found two Major and one Moderate issue; AR-70 corrected browser-host lifecycle ownership, Promise-derived capability evidence, focused reclaim evidence, and the root path guard without waiver.",
+        "summary:Phase 19 completed after the permitted re-review cleared every original Major, both Moderate correction details were fixed without a third review, and 33/33 Guide checks, 8/8 browser-runtime checks, typechecks, production docs build, plugin synchronization, and authoritative yarn verify passed.",
+        "summary:Phase 20 baseline fd30ecb17d8fbd971e3da2939e1ab329c0668925 and its expected Writing your own widget modification set are recorded before specification work.",
+        "summary:Phase 20 tasks 20.1.1 and 20.1.2 established 18 independently authored cases; expected red is 3 public custom-View controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 20 tasks 20.2.1 through 20.3.2 delivered the complete custom-View course, two deterministic laboratories, and zero-geometry, invalidation, focus-theme, capability, headless, cleanup, and resize hardening; all 30 focused guide and catalog checks plus docs-site typecheck pass.",
+        "summary:Phase 20 independent review found two Major authentic-evidence gaps; AR-73 corrects both without waiver by routing a real mouse event through meter hit-testing and protecting adjacent in-buffer sentinels with child clipping under Unicode and ASCII profiles.",
+        "summary:The single permitted Phase 20 re-review cleared routed mouse evidence and found paint-order masking in the clipping correction; the final sentinel-first, negative-local-write, exact-row correction passes all 30 focused checks and docs-site typecheck without a prohibited third review.",
+        "summary:Phase 20 completed after focused checks, docs-site typecheck, production documentation build, plugin integrity, targeted traceability readiness, and authoritative yarn verify passed.",
+        "summary:Phase 21 baseline cf6e7f2489857a6519cf0c01adaa0e83d89667ef and its expected Testing headlessly modification set are recorded before specification work.",
+        "summary:Phase 21 tasks 21.1.1 and 21.1.2 established 15 independently authored cases; expected red is six public headless controls passing and nine placeholder course, catalog, fixture, and authentic-artifact failures.",
+        "summary:Phase 21 tasks 21.2.1 through 21.3.2 delivered the complete zero-lab course, deterministic application fixture, real Vitest artifact, and isolation, inert-input, viewport, queued-work, modal, cleanup, and failure hardening.",
+        "summary:Phase 21 independent review found three Major and two Minor evidence gaps; AR-76 corrected structured diagnostic redaction, modal confinement, retained-producer inertia, exact theme evidence, and regression guards without waiver.",
+        "summary:The single permitted Phase 21 re-review cleared four findings and retained scheduler observation plus regression guarding; the final no-third-review correction counts scheduler calls directly and all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass.",
+        "summary:Phase 22 baseline 7ba9ba8b5eb6af8856e33c4e218467d09e23d40a and its expected Application architecture modification set are recorded before specification work.",
+        "summary:Phase 22 tasks 22.1.1 and 22.1.2 established 19 independently authored cases; expected red is four public architecture controls passing and 15 course, catalog, registry, and laboratory failures.",
+        "summary:Phase 22 tasks 22.2.1 through 22.3.2 delivered the complete application-architecture course, two template1 comparison laboratories, and boundary, ownership, stale-work, failure, cleanup, package, and command-routed mouse hardening; all 32 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify pass.",
+        "summary:Phase 22 independent review found four Major and two Minor authentic-evidence gaps; AR-79 corrected every finding without waiver, and the single permitted fix-scoped re-review cleared all six with no residual findings.",
+        "summary:Phase 23 baseline 8ecced72a3cc26583d4174e1d49f270dd95ec962 and its expected Debugging modification set are recorded before specification work.",
+        "summary:Phase 23 tasks 23.1.1 and 23.1.2 established 18 independently authored cases; expected red is four public diagnostic controls passing and 14 course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 23 tasks 23.2.1 through 23.3.1 delivered the complete Debugging course, one template1 evidence-ladder laboratory, and bounded diagnostic, six-boundary, interaction, disposal, geometry, and repeated-use hardening.",
+        "summary:Phase 23 independent review found five Major authentic-evidence gaps; AR-81 corrected command delivery, mounted rendering, selected-boundary verification, rejected retained work, and root-relative buffer coordinates without waiver, and the single permitted fix-scoped re-review cleared all five.",
+        "summary:Phase 23 completed after 32/32 focused checks, docs-site typecheck, production docs build, plugin integrity, and authoritative yarn verify passed.",
+        "summary:Phase 24 baseline cba64eb04912f07d3afb63cdfae82c843216e966 and its expected Crash safety modification set are recorded before specification work.",
+        "summary:Phase 24 tasks 24.1.1 and 24.1.2 established 16 independently authored cases; expected red is six public host and essentials controls passing and ten placeholder course, catalog, and authentic-substitute failures while docs-site typecheck passes.",
+        "summary:Phase 24 tasks 24.2.1 through 24.3.1 delivered the complete zero-browser-lab course, deterministic public createHost lifecycle trace, real Vitest artifact, and normal, fatal, signal, partial-start, idempotence, restoration-fault, bounded-diagnostic, and handler-coexistence hardening.",
+        "summary:Phase 24 independent review found three Major and two Minor issues; AR-83 corrected exact transition-byte validation, restoration while the exit backstop remains armed, fatal plus secondary restoration-fault evidence, the missing public import, and premature synchronization without waiver.",
+        "summary:The single permitted Phase 24 fix-scoped re-review cleared every substantive finding; final CodeOps synchronization resolved its residual Minor, and the promoted course passes 43/43 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify.",
+        "summary:Phase 25 baseline 0d795822ae578da5cd193d98d30a0bfc4335fc58 and its expected Displaying untrusted text safely modification set are recorded before specification work.",
+        "summary:Phase 25 tasks 25.1.1 and 25.1.2 established 19 independently authored cases; expected red is four public sanitizer, rendered-cell, bounded-redaction, and non-validation controls passing and 15 placeholder course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 25 tasks 25.2.1 through 25.3.1 delivered the complete course, one template1 unsafe/sanitized/redacted comparison laboratory, and bounded fixtures, repeated sanitization, sensitive-preview suppression, diagnostic eviction, keyboard, mouse, geometry, cleanup, and post-disposal hardening.",
+        "summary:Phase 25 independent review found three Major and two Minor issues; AR-84 corrected compact row overlap, clipped instructions, divergent and falsely labeled Button routes, absent planned-page links, UTF-16 bounds, and premature promotion without waiver.",
+        "summary:The single permitted Phase 25 fix-scoped re-review cleared every substantive finding; final CodeOps synchronization resolved its residual Minor, and the promoted course passes 34/34 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify.",
+        "summary:Phase 26 baseline 8918888033b0c925f293f31e4c220cb425547e69 and its expected Accessibility & resilient interaction modification set are recorded before specification work.",
+        "summary:Phase 26 tasks 26.1.1 and 26.1.2 established 24 independently authored cases; expected red is four public focus, accelerator, NO_COLOR, and ASCII controls passing and 20 absent course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 26 tasks 26.2.1 through 26.3.1 delivered the complete accessibility course, two template1 laboratories, and keyboard, pointer, focus-visible, semantic-state, rendered-profile, reduced-geometry, cleanup, and post-disposal hardening.",
+        "summary:Phase 26 independent review found three Major and two Minor issues; AR-85 replaced simulated profile labels with rendered style, fallback-glyph, semantic-cell, and solved-geometry evidence, activated Inspect through a shared command, and corrected Button semantics and snippets without waiver.",
+        "summary:The single permitted Phase 26 fix-scoped re-review cleared all five findings, and the promoted course passes 35/35 focused checks, docs-site typecheck, production docs build, and authoritative yarn verify.",
+        "summary:Phase 27 baseline af5d056625d5c976e0ff56cbc2f31d47a8303ec1 and its expected Terminal capabilities & portability modification set are recorded before specification work.",
+        "summary:Phase 27 tasks 27.1.1 and 27.1.2 established 26 independently authored cases; expected red is five public capability controls passing and 21 absent course, catalog, registry, and laboratory failures while docs-site typecheck passes.",
+        "summary:Phase 27 tasks 27.2.1 through 27.3.1 delivered the complete terminal-capabilities course, two template1 laboratories, and conservative, environment, runtime-query, override, host-profile, rendered-glyph, reduced-geometry, cleanup, and public-signature hardening.",
+        "summary:Phase 27 independent review found four Major and one Minor issue; AR-86 corrected terminal-query and browser-builder signatures, host-mode ownership, supported glyph fallback scope, responsive construction, and promotion order without waiver.",
+        "summary:The single permitted Phase 27 fix-scoped re-review cleared all five findings, and the promoted course passes 42/42 focused checks, docs-site typecheck and DOM tests, production docs build, and authoritative yarn verify."
+      ],
+      "id": "TASK-RD08-GUIDES",
+      "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Execute the Guide course system plan",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "The user confirmed all ten Guide-course planning decisions on 2026-07-29.",
+        "Auto-design AR-16 selected the mandatory technical corrections for the Phase 1 quality findings.",
+        "Auto-design AR-18 selected the mandatory compiler, runtime-probe, and engine-wording corrections for the Phase 2 quality findings.",
+        "Auto-design AR-19 preserved Phase 3 expected-red evidence through its green checkpoint; AR-20 aligned corner-layer evidence with the documented settled frame.",
+        "Auto-design AR-21 corrected both Phase 3 quality findings and the permitted re-review found no remaining Critical or Major issue.",
+        "Auto-design AR-22 preserves Phase 4 expected-red evidence until its green checkpoint.",
+        "Auto-design AR-23 corrected every Phase 4 quality finding and the permitted re-review found no remaining Critical, Major, or Minor issue.",
+        "Auto-design AR-24 preserves Phase 5 expected-red evidence until its first green checkpoint.",
+        "Auto-design AR-25 corrected the package-manager renderer commands; the permitted Phase 5 re-review found no remaining issue.",
+        "Auto-design AR-26 preserves the Phase 6 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-27 applied every mandatory Phase 6 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
+        "Auto-design AR-28 selected outcome-shaped IDs for the two Events, commands & keymaps laboratories.",
+        "Auto-design AR-29 preserves the Phase 7 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-30 applied every mandatory Phase 7 review correction; the permitted re-review cleared all findings before the course returned to Complete.",
+        "Auto-design AR-31 preserves the Phase 8 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-32 selected guides/clipboard-boundary for the one focused Keyboard & clipboard laboratory.",
+        "Auto-design AR-33 selected every mandatory correction for the four Major and one Minor Phase 8 quality findings; the permitted re-review cleared every original finding and the final introduced Minor was corrected.",
+        "Auto-design AR-34 split Phase 9 into public-API cell-width and glyph-fallback laboratories while preserving the renderer's documented grapheme limitations.",
+        "Auto-design AR-35 preserves Phase 9 expected-red specification evidence through its first green checkpoint.",
+        "Auto-design AR-36 keeps Phase 9 Planned through hardening and moves the first repository-green commit boundary to final promotion.",
+        "Auto-design AR-37 selected every mandatory correction for the four Major and one Minor Phase 9 quality findings; the course remains Upgrade until correction gates and the permitted re-review pass.",
+        "Auto-design AR-38 partitions Phase 10 into guides/viewport-strategies and guides/virtual-collections laboratories that teach the two distinct selection axes.",
+        "Auto-design AR-39 preserves Phase 10 expected-red evidence and the Planned-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-40 selected every mandatory correction for the five Major and one Minor Phase 10 quality findings; the permitted re-review retained RV-010-002, and the final correction uses an actual subtree draw boundary plus over-budget falsification evidence without a prohibited third review.",
+        "Auto-design AR-41 partitions Phase 11 into guides/application-chrome and guides/application-bodies laboratories so chrome/quit and body/window-command ownership remain separate observable decisions.",
+        "Auto-design AR-42 preserves Phase 11 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-43 selected every mandatory Phase 11 review correction; the permitted re-review cleared five findings and the final no-third-review correction resolved the retained authentic-chrome finding.",
+        "User-approved AR-44 expanded Phase 11 narrowly so statusBase matches its existing command-item-only public contract with focused UI and plugin-impact evidence.",
+        "Auto-design AR-45 synchronized the plan-owned Keyboard & clipboard course with the canonical native-clipboard documentation contract after authoritative verification exposed drift.",
+        "Auto-design AR-46 partitions Phase 12 into guides/dialog-results and guides/modal-workflows laboratories so result validation and nested focus-safe workflow evidence stay independently observable.",
+        "Auto-design AR-47 preserves Phase 12 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "User-approved AR-48 expands Phase 12 narrowly to align the Dialog component page with caller-owned desktop add, execView, and finally-remove lifecycle behavior.",
+        "Auto-design AR-49 accepts RV-012-001 without waiver and requires independent promise-result, focus-identity, cleanup-callback, and teardown-settlement evidence before re-review.",
+        "Auto-design AR-50 partitions Phase 13 into guides/cancellable-work and guides/latest-result-wins so responsiveness/cancellation and stale-result protection remain independently observable.",
+        "Auto-design AR-51 corrects every Phase 13 review finding without waiver and requires real pending-controller abort evidence before the latest-result laboratory may claim cancellation.",
+        "Auto-design AR-52 partitions Phase 14 into guides/form-state-validation and guides/form-async-submit so everyday typed state and advanced async ownership remain independently observable.",
+        "Auto-design AR-53 preserves Phase 14 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-54 aligns the valid-submit specification with createForm's real asynchronous Promise.all boundary while preserving the required synchronous submitting state.",
+        "Auto-design AR-55 accepts RV-014-001 through RV-014-004 without waiver and requires real Promise and onValid evidence, supported Button construction, marked accelerators, and honest reactive action availability.",
+        "Auto-design AR-56 accepts correction-introduced RV-014-005 without waiver and requires inactive teardown guards, settlement and release of every owned operation, and deterministic post-unmount suppression evidence.",
+        "Auto-design AR-57 removes an invalid generated API link to private @jsvision/web while retaining supported Files API links and the browser integration Guide.",
+        "Auto-design AR-58 accepts RV-15-01 through RV-15-04 without waiver and requires complete path confinement, distinct denial and missing evidence, authentic opener cancellation, and denial ordering bound to the application adapter.",
+        "Auto-design AR-59 accepts RV-16-01 through RV-16-07 without waiver and requires robust semantic assertions, an application-owned atomic locale handoff, marker-free feedback, public loading and formatting controls, complete laboratory interaction and geometry evidence, generation-owned diagnostics, and literal escaped-placeholder teaching.",
+        "Auto-design AR-60 accepts correction-introduced RV-16-R1 without waiver and scopes rollback to publication failure so detached cleanup faults cannot dispose the active locale generation.",
+        "Auto-design AR-61 partitions Phase 17 into typed-stack/shared-chrome and screen-lifecycle/focus laboratories so the two catalog outcomes remain independently observable.",
+        "Auto-design AR-62 preserves Phase 17 expected-red evidence through its first green checkpoint.",
+        "Auto-design AR-63 accepts RV-17-01 through RV-17-06 without waiver and requires real visible shared chrome, accurate focus semantics, a sanitizing logger boundary, validated codecs, observed lifecycle state, and visible action markers.",
+        "Auto-design AR-64 accepts correction-introduced RV-17-R1 through RV-17-R3 without waiver and requires naturally sized action faces, non-deceptive nested-menu chrome, and an oracle synchronized with the generated Router interface.",
+        "Auto-design AR-65 partitions Phase 18 into semantic role/state and colour-depth/fallback laboratories so theme authoring and capability degradation remain independently observable.",
+        "Auto-design AR-66 preserves Phase 18 expected-red evidence through its first green checkpoint.",
+        "Auto-design AR-67 accepts RV-18-01 through RV-18-04 without waiver and requires accurate seed semantics, one synchronized theme model, rendered role and encoder evidence, and valid Markdown structure.",
+        "Auto-design AR-68 partitions Phase 19 into browser host lifecycle and capability-boundary laboratories while preserving the private package release boundary.",
+        "Auto-design AR-69 preserves Phase 19 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-70 accepts the Phase 19 quality findings without waiver and requires owned host input/timer disposal, observable post-disposal inertia, Promise-derived capability outcomes, focused and unfocused reclaim evidence, and exact-root path authorization.",
+        "Auto-design AR-71 partitions Phase 20 into widget anatomy and widget composition laboratories so leaf-contract and parent-integration evidence remain independently diagnosable.",
+        "Auto-design AR-72 preserves Phase 20 expected-red evidence and the Upgrade-until-hardened rule through the final repository-green promotion checkpoint.",
+        "Auto-design AR-73 accepts RV-20-001 and RV-20-002 without waiver and requires routed local-coordinate mouse evidence plus adjacent in-buffer sentinel clipping evidence.",
+        "Auto-design AR-74 selects a deterministic public-API fixture plus real Vitest module as the authentic zero-lab substitute for Testing headlessly.",
+        "Auto-design AR-75 preserves Phase 21 expected-red evidence through the complete course and artifact checkpoint.",
+        "Auto-design AR-76 accepts every Phase 21 review finding without waiver and requires application-boundary structured redaction, modal confinement, retained-producer inertia, exact theme evidence, and durable regression guards.",
+        "Auto-design AR-77 partitions Phase 22 into dependency-and-command boundaries plus lifetime-and-cleanup ownership laboratories.",
+        "Auto-design AR-78 preserves Phase 22 expected-red evidence through its complete course and laboratory checkpoint.",
+        "Auto-design AR-79 accepts all six Phase 22 quality findings without waiver and requires command-routed mouse actions, injected failure/resource evidence, falsifiable stale publication, a corrected snippet, and complete mouse coverage.",
+        "Auto-design AR-80 selects one staged Debugging evidence-ladder laboratory with authentic geometry, focus, command/event, reactive/render, capability, lifecycle, correction, redaction, and cleanup evidence.",
+        "Auto-design AR-81 accepts all five Phase 23 quality findings without waiver and requires registered command delivery, mounted exact-cell rendering, selected-boundary correction, rejected retained work, root-relative buffer coordinates, and direct regression assertions.",
+        "Auto-design AR-82 selects a deterministic public createHost lifecycle trace plus a real Vitest module as the authentic zero-browser-lab substitute for native terminal restoration.",
+        "Auto-design AR-83 accepts all Phase 24 findings without waiver and requires exact terminal-transition validation, correct restoration/backstop ordering, combined fatal and restoration-fault evidence, supported public imports, and final-only synchronization.",
+        "Auto-design AR-84 accepts all Phase 25 findings without waiver and requires disjoint compact geometry, complete instructions, shared command routing, resolvable links, Unicode-safe bounds, and final-only promotion synchronization.",
+        "Auto-design AR-85 accepts all Phase 26 findings without waiver and requires rendered profile evidence, solved narrow geometry, real shared-command Inspect behavior, exact Button semantics, and valid self-contained snippets.",
+        "Auto-design AR-86 accepts all Phase 27 findings without waiver and requires exact terminal-query and browser-builder signatures, correct host-mode ownership, supported glyph fallback scope, valid responsive construction, and final-only promotion synchronization."
+      ],
+      "id": "DEC-RD08-GUIDES",
+      "revision": "sha256:5eaf8587444e7dc04cd57894cdf818f255a7580f3634b799d668dc9fb312a57b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved Guide curriculum and execution decisions",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "docs-website/RD-08"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "docs-website/TASK-RD08-GUIDES"
+        },
+        {
+          "relation": "affected-by",
+          "target": "docs-website/DEC-RD08-GUIDES"
+        }
+      ],
+      "evidence": [
+        "Entry point: codeops/features/docs-website/plans/guide-course-system/00-index.md",
+        "summary:Execution-entry snapshots validated for the complete approved Guide plan closure.",
+        "summary:The user confirmed all ten Guide-course decisions; the 31-phase plan maps 47 specification cases to 246 prerequisite-ordered tasks.",
+        "summary:Task 5.3.2 promoted the verified Codex plugin course to Complete and synchronized the catalog and learner-facing curriculum at 40/246 tasks."
+      ],
+      "id": "PLAN-RD08-GUIDES",
+      "revision": "sha256:579ceaea0021d6732fba447c0c56fecfdd0155946c4267e12f3283fef05d06bb",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/docs-website/plans/guide-course-system/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Guide course system implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+          "upstream": "docs-website/RD-08",
+          "validatedAt": "2026-07-29T18:36:58Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:59bcd8dbd846463852b168ac4bc06baf177867af39fe0d5afb7d52cc27c49600",
+          "upstream": "docs-website/RD-08",
+          "validatedAt": "2026-07-29T18:54:59Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:7c0f434d5195a836fca1109c45ab30204ec1cfca1bfa5e3fcc1a17ecdff91e19",
+          "upstream": "docs-website/TASK-RD08-GUIDES",
+          "validatedAt": "2026-07-30T16:49:32Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-30T20:14:00Z"
+}

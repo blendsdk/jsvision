@@ -20,9 +20,15 @@
  * Escape is deliberately NOT bound here — it flows into the terminal so the hosted TUI
  * keeps its own Escape.
  */
-import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
-import { isNoKeyboardDevice, screenshotPath } from '../../../src/play/no-keyboard';
+import { inject, ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
+import { screenshotPath } from '../../../src/play/no-keyboard';
 import { deepLinkTarget } from '../../../src/play/deep-link';
+import {
+  browserPlayRuntime,
+  PLAY_RUNTIME_KEY,
+  type PlayResizeObserver,
+  type PlaySession,
+} from '../../../src/play/play-runtime';
 
 const props = defineProps<{ id: string; title?: string; blurb?: string }>();
 
@@ -37,20 +43,14 @@ const screenshotMissing = ref(false);
 const highlighted = ref(false);
 
 type SizeSpec = { width: number; height: number };
-type Controller = {
-  open(el: HTMLElement): Promise<void>;
-  close(): void;
-  remount(next: { size?: SizeSpec }): Promise<void>;
-};
-let controller: Controller | null = null;
+const runtime = inject(PLAY_RUNTIME_KEY, browserPlayRuntime);
+let controller: PlaySession | null = null;
 let focused = false;
+let lifecycleGeneration = 0;
 
 // Resize wiring: the fit addon (lifted out of createTerminal so the observer can drive it), the
 // container observer, the measured cell size (to persist the size in cells), and a rAF debounce guard.
-let currentFit: { fit(): void } | null = null;
-let resizeObserver: ResizeObserver | null = null;
-let cellW = 0;
-let cellH = 0;
+let resizeObserver: PlayResizeObserver | null = null;
 let rafPending = false;
 // The <html> overflow we swap for a scroll-lock while the modal is open (restored verbatim on close).
 let prevHtmlOverflow = '';
@@ -63,20 +63,43 @@ const preventWheel = (e: WheelEvent): void => e.preventDefault();
 
 /** The modal's default cell grid — comfortably larger than a bare 80×24, and still fits a laptop screen. */
 const DEFAULT_CELLS: SizeSpec = { width: 120, height: 36 };
+/** Smallest remembered grid that keeps the hosted application usable. */
+const MIN_CELLS: SizeSpec = { width: 40, height: 12 };
+/** Largest remembered grid accepted before xterm allocates its backing buffers. */
+const MAX_CELLS: SizeSpec = { width: 240, height: 80 };
 
 // The modal is user-resizable (CSS `resize: both`); we persist the resulting size in cells so the next
 // open restores it. Cells (not pixels) survive font/zoom changes. Reset clears it back to the default.
 const SIZE_KEY = 'jsvision:play-modal-size';
+
+/** Validate and bound an untrusted persisted cell grid before terminal construction. */
+function normalizeRememberedSize(value: unknown): SizeSpec | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const width = Reflect.get(value, 'width');
+  const height = Reflect.get(value, 'height');
+  if (
+    typeof width !== 'number' ||
+    typeof height !== 'number' ||
+    !Number.isSafeInteger(width) ||
+    !Number.isSafeInteger(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return null;
+  }
+  return {
+    width: Math.min(MAX_CELLS.width, Math.max(MIN_CELLS.width, width)),
+    height: Math.min(MAX_CELLS.height, Math.max(MIN_CELLS.height, height)),
+  };
+}
 
 /** The remembered modal size in cells, or null when none is saved or storage is unavailable. */
 function loadRememberedSize(): SizeSpec | null {
   try {
     const raw = localStorage.getItem(SIZE_KEY);
     if (raw === null) return null;
-    const parsed = JSON.parse(raw) as Partial<SizeSpec>;
-    if (typeof parsed.width === 'number' && typeof parsed.height === 'number') {
-      return { width: parsed.width, height: parsed.height };
-    }
+    const parsed: unknown = JSON.parse(raw);
+    return normalizeRememberedSize(parsed);
   } catch {
     /* storage blocked (private mode) or malformed JSON — fall back to the default */
   }
@@ -85,8 +108,10 @@ function loadRememberedSize(): SizeSpec | null {
 
 /** Persist the modal size (in cells) so the next open restores it. Best-effort — storage may be blocked. */
 function saveRememberedSize(cells: SizeSpec): void {
+  const bounded = normalizeRememberedSize(cells);
+  if (bounded === null) return;
   try {
-    localStorage.setItem(SIZE_KEY, JSON.stringify(cells));
+    localStorage.setItem(SIZE_KEY, JSON.stringify(bounded));
   } catch {
     /* storage blocked — remembering is best-effort */
   }
@@ -104,115 +129,104 @@ function clearRememberedSize(): void {
 /** Save the modal's current cell grid, derived from the host's pixel size and the measured cell size. */
 function rememberCurrentSize(): void {
   const host = termHost.value;
-  if (host === null || cellW <= 0 || cellH <= 0) return;
-  saveRememberedSize({
-    width: Math.max(1, Math.round(host.clientWidth / cellW)),
-    height: Math.max(1, Math.round(host.clientHeight / cellH)),
-  });
+  if (host === null) return;
+  const size = controller?.sizeInCells(host);
+  if (size !== null && size !== undefined) saveRememberedSize(size);
 }
 
-async function buildController(): Promise<Controller | null> {
-  const [xterm, fitAddon, webglAddon, playController, registry] = await Promise.all([
-    import('@xterm/xterm'),
-    import('@xterm/addon-fit'),
-    import('@xterm/addon-webgl'),
-    import('../../../src/play/play-controller'),
-    import('../../../examples/index'),
-  ]);
-  await import('@xterm/xterm/css/xterm.css');
-
-  const entry = registry.EXAMPLES.find((e) => e.id === props.id);
-  if (!entry) {
-    errorMessage.value = `Unknown example: ${props.id}`;
-    return null;
-  }
-
-  return playController.createPlayController({
-    entry,
-    size: DEFAULT_CELLS,
-    createTerminal: (el: HTMLElement) => {
-      // Open at the remembered size (or the default) so the modal restores whatever the user last
-      // dragged it to. The fit addon then trims it to the viewport if it is larger than the screen.
-      const preset = loadRememberedSize() ?? DEFAULT_CELLS;
-      const term = new xterm.Terminal({
-        cols: preset.width,
-        rows: preset.height,
-        allowProposedApi: true,
-        cursorBlink: true,
-        fontSize: 14,
-      });
-      const fit = new fitAddon.FitAddon();
-      term.loadAddon(fit);
-      term.open(el);
-      try {
-        term.loadAddon(new webglAddon.WebglAddon()); // crisp box-drawing; falls back to DOM renderer
-      } catch {
-        /* no WebGL — the DOM renderer still draws Unicode */
-      }
-      fit.fit();
-      // Lift the fit addon + measure the cell size so the observer can refit and persist the size in cells.
-      currentFit = fit;
-      cellW = el.clientWidth / Math.max(1, term.cols);
-      cellH = el.clientHeight / Math.max(1, term.rows);
-      term.textarea?.addEventListener('focus', () => (focused = true));
-      term.textarea?.addEventListener('blur', () => (focused = false));
-      return term;
-    },
-    // Reclaim browser chords only while the dialog is open AND the terminal has focus.
-    isFocused: () => isOpen.value && focused,
-    onError: (message: string) => {
-      errorMessage.value = message;
-    },
-    // The hosted app's own Exit (System ▸ Exit → quit) dismisses the modal, just like the × button.
-    onClose: () => close(),
-  });
+/** Convert an unknown startup failure into safe, readable error-panel text. */
+function startupErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 async function open(): Promise<void> {
+  if (isOpen.value) return;
+  const generation = ++lifecycleGeneration;
   errorMessage.value = null;
   isOpen.value = true;
   await nextTick(); // let the modal (and its terminal host div) render before mounting
 
   const host = termHost.value;
-  if (!host) return;
-  controller = await buildController();
-  if (!controller) return;
-  await controller.open(host);
+  if (host === null || generation !== lifecycleGeneration) return;
 
-  // Freeze the fitted box as the resize handle's starting size, then make it genuinely resizable:
-  // a ResizeObserver refits the terminal on every drag, and mountApp routes the terminal's onResize
-  // to loop.resize, so the app tracks any size live — no remount, no viewport/terminal desync.
-  host.style.width = `${host.clientWidth}px`;
-  host.style.height = `${host.clientHeight}px`;
-  resizeObserver = new ResizeObserver(() => {
-    if (rafPending) return;
-    rafPending = true;
-    requestAnimationFrame(() => {
-      rafPending = false;
-      currentFit?.fit();
-      rememberCurrentSize(); // persist the dragged size so the next open restores it
-    });
-  });
-  resizeObserver.observe(host);
-  // Capture phase (see preventWheel) so the listener runs before xterm stops the event's propagation.
-  host.addEventListener('wheel', preventWheel, { capture: true, passive: false });
-
-  // Lock the page scroll behind the modal — conventional modal behaviour, and a robust second line
-  // of defence for the wheel: the background cannot scroll no matter how the wheel event is routed.
+  // Lock and focus as soon as the modal exists. A close during lazy startup restores this state,
+  // and the generation check prevents the pending continuation from applying it again.
   prevHtmlOverflow = document.documentElement.style.overflow;
   document.documentElement.style.overflow = 'hidden';
-
-  // Move focus into the dialog (not the terminal) so keyboard users are not trapped.
   closeButton.value?.focus();
+
+  let pendingSession: PlaySession | null = null;
+  let startupFailed = false;
+  try {
+    pendingSession = await runtime.createSession({
+      id: props.id,
+      size: DEFAULT_CELLS,
+      loadRememberedSize,
+      isFocused: () => isOpen.value && focused,
+      onFocusChange: (nextFocused) => {
+        focused = nextFocused;
+      },
+      onError: (message) => {
+        if (generation === lifecycleGeneration) {
+          startupFailed = true;
+          errorMessage.value = message;
+        }
+      },
+      onClose: () => close(),
+    });
+    if (pendingSession === null) return;
+    if (generation !== lifecycleGeneration || !isOpen.value || !host.isConnected) {
+      pendingSession.close();
+      return;
+    }
+
+    // Publish the opening session before awaiting it so close/unmount can cancel its controller
+    // and dispose the terminal even while the lazily loaded example module is still pending.
+    controller = pendingSession;
+    await pendingSession.open(host);
+    if (startupFailed || generation !== lifecycleGeneration || !isOpen.value || !host.isConnected) {
+      if (controller === pendingSession) {
+        pendingSession.close();
+        controller = null;
+      }
+      return;
+    }
+
+    // Freeze the fitted box as the resize handle's starting size, then make it genuinely resizable:
+    // a ResizeObserver refits the terminal on every drag, and mountApp routes the terminal's onResize
+    // to loop.resize, so the app tracks any size live — no remount, no viewport/terminal desync.
+    host.style.width = `${host.clientWidth}px`;
+    host.style.height = `${host.clientHeight}px`;
+    resizeObserver = runtime.createResizeObserver(() => {
+      if (rafPending) return;
+      rafPending = true;
+      runtime.requestAnimationFrame(() => {
+        rafPending = false;
+        controller?.fit();
+        rememberCurrentSize(); // persist the dragged size so the next open restores it
+      });
+    });
+    resizeObserver.observe(host);
+    // Capture phase (see preventWheel) so the listener runs before xterm stops the event's propagation.
+    host.addEventListener('wheel', preventWheel, { capture: true, passive: false });
+  } catch (error) {
+    if (pendingSession !== null && controller === pendingSession) {
+      pendingSession.close();
+      controller = null;
+    }
+    if (generation === lifecycleGeneration && isOpen.value) {
+      errorMessage.value = startupErrorMessage(error);
+    }
+  }
 }
 
 function close(): void {
+  lifecycleGeneration += 1;
   controller?.close();
   controller = null;
   // Tear down the resize wiring while the terminal host is still mounted (before the v-if unmounts it).
   resizeObserver?.disconnect();
   resizeObserver = null;
-  currentFit = null;
   // Restore the page scroll-lock unconditionally (even if the terminal host is already gone).
   document.documentElement.style.overflow = prevHtmlOverflow;
   const host = termHost.value;
@@ -229,11 +243,27 @@ function close(): void {
 
 async function reset(): Promise<void> {
   clearRememberedSize(); // Reset restores the default size too, not just the app state
-  await controller?.remount({});
+  const host = termHost.value;
+  if (host !== null) {
+    host.style.width = '';
+    host.style.height = '';
+  }
+  await controller?.remount({ size: DEFAULT_CELLS });
+  if (host !== null && controller !== null) {
+    host.style.width = `${host.clientWidth}px`;
+    host.style.height = `${host.clientHeight}px`;
+  }
+}
+
+/** Activate the native button deterministically in DOM and assistive-technology environments. */
+function activateFromKeyboard(event: KeyboardEvent): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  void open();
 }
 
 onMounted(() => {
-  noKeyboard.value = isNoKeyboardDevice();
+  noKeyboard.value = runtime.isNoKeyboardDevice();
   // Deep-link: open this example if the URL targets it — scroll to + highlight, but never
   // auto-focus the terminal, and never open on a no-keyboard device (it shows the fallback).
   const target = deepLinkTarget(window.location.search, [props.id], noKeyboard.value);
@@ -272,6 +302,7 @@ onBeforeUnmount(close);
       type="button"
       :aria-label="`Run the ${props.title ?? props.id} example in a terminal`"
       @click="open"
+      @keydown="activateFromKeyboard"
     >
       ▶ Play
     </button>

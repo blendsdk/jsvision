@@ -302,7 +302,7 @@ function isFocusHostAware(view: View): view is View & FocusHostAware {
 function freshStatusBase(statusLine: StatusLine | undefined): () => View[] {
   const specs = statusLine
     ? statusLine.children
-        .filter((child): child is StatusItemView => child instanceof StatusItemView)
+        .filter((child): child is StatusItemView => child instanceof StatusItemView && child.command !== undefined)
         .map((child) => ({ text: child.text, command: child.command, key: child.key }))
     : [];
   return () => specs.map((spec) => statusItem(spec.text, spec.command, spec.key));

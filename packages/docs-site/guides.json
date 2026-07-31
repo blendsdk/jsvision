@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "introduction",
+      "title": "Introduction",
+      "group": "Getting started",
+      "page": "/guide/",
+      "profile": "orientation",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": [],
+      "learningOutcomes": [
+        "Explain what kind of applications JSVision builds and where they run.",
+        "Run the live shell and identify the next course for a chosen goal."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["guides/introduction-runtime"]
+    },
+    {
+      "id": "install-and-packages",
+      "title": "Install & packages",
+      "group": "Getting started",
+      "page": "/guide/install-and-packages",
+      "profile": "orientation",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["introduction"],
+      "learningOutcomes": [
+        "Choose the smallest package set for a terminal, browser, forms, files, grid, or editor application.",
+        "Configure a Node 22+ ESM TypeScript project that imports public JSVision entry points."
+      ],
+      "requiredLiveExamples": 0,
+      "liveExampleException": "Package installation and module resolution are build-time behaviors that an in-page terminal cannot demonstrate honestly.",
+      "examples": []
+    },
+    {
+      "id": "codex-plugin",
+      "title": "Codex plugin",
+      "group": "Getting started",
+      "page": "/guide/codex-plugin",
+      "profile": "integration",
+      "stage": "complete",
+      "sidebarOrder": 3,
+      "prerequisites": ["install-and-packages"],
+      "learningOutcomes": [
+        "Install and invoke the supported JSVision Codex plugin workflow.",
+        "Distinguish generated plugin guidance from canonical repository sources."
+      ],
+      "requiredLiveExamples": 0,
+      "liveExampleException": "Codex installation and host integration happen outside the browser documentation runtime.",
+      "examples": []
+    },
+    {
+      "id": "layout",
+      "title": "Layout",
+      "group": "Core concepts",
+      "page": "/guide/layout",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": ["install-and-packages"],
+      "learningOutcomes": [
+        "Compose responsive terminal-cell interfaces with rows, columns, sizing, spacing, and alignment.",
+        "Choose deliberately between flow layout, overlays, and exact placement.",
+        "Diagnose collapsed, clipped, and translation-sensitive layouts."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/layout-flow", "guides/layout-overlays"]
+    },
+    {
+      "id": "reactive-state",
+      "title": "Reactive state",
+      "group": "Core concepts",
+      "page": "/guide/reactive-state",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["layout"],
+      "learningOutcomes": [
+        "Model source and derived state with signals and computed values.",
+        "Bind state to views and coordinate effects, batching, and dynamic dependencies.",
+        "Own, clean up, and dispose reactive work safely."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/reactive-graph", "guides/reactive-lifetimes"]
+    },
+    {
+      "id": "views-and-focus",
+      "title": "Views & focus",
+      "group": "Core concepts",
+      "page": "/guide/views-and-focus",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 3,
+      "prerequisites": ["layout", "reactive-state"],
+      "learningOutcomes": [
+        "Explain retained view trees, mounting, invalidation, and ownership.",
+        "Design predictable tab order, focus entry, restoration, and modal focus behavior."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/views-focus-traversal", "guides/views-focus-modality"]
+    },
+    {
+      "id": "events-commands-and-keymaps",
+      "title": "Events, commands & keymaps",
+      "group": "Core concepts",
+      "page": "/guide/events-commands-and-keymaps",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 4,
+      "prerequisites": ["views-and-focus"],
+      "learningOutcomes": [
+        "Trace keyboard, mouse, paste, and command events through the view tree.",
+        "Define discoverable commands and resolve keymap precedence without collisions."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/event-routing", "guides/command-precedence"]
+    },
+    {
+      "id": "keyboard-and-clipboard",
+      "title": "Keyboard & clipboard",
+      "group": "Core concepts",
+      "page": "/guide/keyboard-and-clipboard",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 5,
+      "prerequisites": ["events-commands-and-keymaps"],
+      "learningOutcomes": [
+        "Use the default editing and selection chords consistently.",
+        "Choose native, browser, or custom clipboard adapters and explain their authorization boundaries."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["guides/clipboard-boundary"]
+    },
+    {
+      "id": "text-unicode-and-cells",
+      "title": "Text, Unicode & terminal cells",
+      "group": "Core concepts",
+      "page": "/guide/text-unicode-and-cells",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 6,
+      "prerequisites": ["layout"],
+      "learningOutcomes": [
+        "Reason about terminal cells, graphemes, wide glyphs, combining marks, wrapping, and clipping.",
+        "Build text interfaces that remain legible across Unicode and ASCII-safe capability profiles."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/cell-width", "guides/glyph-fallback"]
+    },
+    {
+      "id": "scrolling-lists-and-large-content",
+      "title": "Scrolling, lists & large content",
+      "group": "Core concepts",
+      "page": "/guide/scrolling-lists-and-large-content",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 7,
+      "prerequisites": ["layout", "views-and-focus"],
+      "learningOutcomes": [
+        "Choose between Scroller, ListView, ListBox, Tree, SurfaceView, and windowed data sources.",
+        "Coordinate viewport offsets, focus, selection, scroll bars, and bounded rendering."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/viewport-strategies", "guides/virtual-collections"]
+    },
+    {
+      "id": "application-shell",
+      "title": "The application shell",
+      "group": "Building applications",
+      "page": "/guide/application-shell",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": ["events-commands-and-keymaps"],
+      "learningOutcomes": [
+        "Construct and run a complete application with menu, status, content, and quit behavior.",
+        "Choose a Desktop or Router body and manage window commands and lifecycle."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/application-chrome", "guides/application-bodies"]
+    },
+    {
+      "id": "dialogs-and-modality",
+      "title": "Dialogs & modality",
+      "group": "Building applications",
+      "page": "/guide/dialogs-and-modality",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["application-shell", "views-and-focus"],
+      "learningOutcomes": [
+        "Await modal dialogs and interpret the command or value that resolves them.",
+        "Build validation, nested confirmation, cancellation, and focus-safe dialog workflows."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/dialog-results", "guides/modal-workflows"]
+    },
+    {
+      "id": "async-work",
+      "title": "Async work, cancellation & progress",
+      "group": "Building applications",
+      "page": "/guide/async-work",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 3,
+      "prerequisites": ["reactive-state", "dialogs-and-modality"],
+      "learningOutcomes": [
+        "Run asynchronous work without blocking input or rendering.",
+        "Model cancellation, progress, errors, cleanup, and stale-result protection."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/cancellable-work", "guides/latest-result-wins"]
+    },
+    {
+      "id": "forms",
+      "title": "Forms",
+      "group": "Building applications",
+      "page": "/guide/forms",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 4,
+      "prerequisites": ["reactive-state", "dialogs-and-modality", "async-work"],
+      "learningOutcomes": [
+        "Build typed form state, field bindings, validation, submission, and reset workflows.",
+        "Coordinate async validation and loading while preserving honest user feedback."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/form-state-validation", "guides/form-async-submit"]
+    },
+    {
+      "id": "files-and-filesystem",
+      "title": "Files & the FileSystem seam",
+      "group": "Building applications",
+      "page": "/guide/files-and-filesystem",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 5,
+      "prerequisites": ["dialogs-and-modality", "async-work"],
+      "learningOutcomes": [
+        "Use file and directory workflows through the host-neutral FileSystem seam.",
+        "Run the same file UI against Node, browser-virtual, and application-defined file systems."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["guides/filesystem-seams"]
+    },
+    {
+      "id": "i18n",
+      "title": "Internationalization",
+      "group": "Building applications",
+      "page": "/guide/i18n",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 6,
+      "prerequisites": ["application-shell", "text-unicode-and-cells"],
+      "learningOutcomes": [
+        "Define, load, validate, and switch locale catalogs through public entry points.",
+        "Design translated layouts, formatted values, diagnostics, and multilingual QA."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/i18n-catalogs", "guides/i18n-locale-layout"]
+    },
+    {
+      "id": "screens-and-routing",
+      "title": "Screens & routing",
+      "group": "Building applications",
+      "page": "/guide/screens-and-routing",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 7,
+      "prerequisites": ["application-shell", "views-and-focus"],
+      "learningOutcomes": [
+        "Model full-screen navigation with typed routes, parameters, history, and shared chrome.",
+        "Preserve or release screen state and focus deliberately across navigation."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/routing-stack", "guides/routing-lifecycle"]
+    },
+    {
+      "id": "theming-and-colour-depth",
+      "title": "Theming & colour depth",
+      "group": "Building applications",
+      "page": "/guide/theming-and-colour-depth",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 8,
+      "prerequisites": ["application-shell"],
+      "learningOutcomes": [
+        "Author semantic themes and select exact roles for component states.",
+        "Preserve contrast and meaning through truecolor, 256-color, 16-color, and monochrome degradation."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/theme-role-states", "guides/color-depth-fallbacks"]
+    },
+    {
+      "id": "running-in-the-browser",
+      "title": "Running in the browser",
+      "group": "Extending and integrating",
+      "page": "/guide/running-in-the-browser",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": ["application-shell", "files-and-filesystem"],
+      "learningOutcomes": [
+        "Mount an unchanged application through the browser runtime and xterm.js host.",
+        "Handle browser capabilities, clipboard authorization, keyboard reclaim, resize, and virtual files."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/browser-host-lifecycle", "guides/browser-capability-boundaries"]
+    },
+    {
+      "id": "writing-your-own-widget",
+      "title": "Writing your own widget",
+      "group": "Extending and integrating",
+      "page": "/guide/writing-your-own-widget",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["layout", "reactive-state", "views-and-focus", "events-commands-and-keymaps"],
+      "learningOutcomes": [
+        "Implement measurement, drawing, invalidation, focus, and input for a custom View.",
+        "Compose and test reusable widgets without bypassing ownership or clipping boundaries."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/widget-anatomy", "guides/widget-composition"]
+    },
+    {
+      "id": "testing-headlessly",
+      "title": "Testing headlessly",
+      "group": "Extending and integrating",
+      "page": "/guide/testing-headlessly",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 3,
+      "prerequisites": ["application-shell", "events-commands-and-keymaps"],
+      "learningOutcomes": [
+        "Mount views and applications without a real terminal and inspect rendered cells.",
+        "Drive input, modal flows, resize, cleanup, and failure paths deterministically."
+      ],
+      "requiredLiveExamples": 0,
+      "liveExampleException": "The authentic runnable artifact is a test module and test-runner output, not an interactive terminal demonstration.",
+      "examples": []
+    },
+    {
+      "id": "application-architecture",
+      "title": "Application architecture & best practices",
+      "group": "Extending and integrating",
+      "page": "/guide/application-architecture",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 4,
+      "prerequisites": ["application-shell", "reactive-state", "screens-and-routing"],
+      "learningOutcomes": [
+        "Separate domain state, services, commands, screens, and view composition into durable boundaries.",
+        "Choose ownership and dependency directions that keep a growing application testable and disposable."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/architecture-boundaries", "guides/architecture-ownership"]
+    },
+    {
+      "id": "data-grid-specialist",
+      "title": "Data Grid course",
+      "group": "Specialist courses",
+      "page": "/components/data-grid/",
+      "profile": "specialist",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": ["reactive-state", "scrolling-lists-and-large-content", "forms"],
+      "learningOutcomes": [
+        "Build typed read-only and editable grids from quick start through windowed data.",
+        "Apply sorting, filtering, editing, validation, aggregation, personalization, accessibility, and performance guidance."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["data-grid/quick-start"]
+    },
+    {
+      "id": "code-editor-specialist",
+      "title": "Code Editor course",
+      "group": "Specialist courses",
+      "page": "/components/code-editor/",
+      "profile": "specialist",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["reactive-state", "text-unicode-and-cells", "scrolling-lists-and-large-content"],
+      "learningOutcomes": [
+        "Build terminal-native editing experiences with documents, controllers, navigation, languages, and folding.",
+        "Integrate LSP features, themes, large-document behavior, authorization, safety, and recovery."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["code-editor/quick-start"]
+    },
+    {
+      "id": "debugging",
+      "title": "Debugging",
+      "group": "Operating a real app",
+      "page": "/guide/debugging",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 1,
+      "prerequisites": ["application-shell", "testing-headlessly"],
+      "learningOutcomes": [
+        "Diagnose layout, focus, command, rendering, capability, and host-lifecycle failures.",
+        "Collect safe logs, frame evidence, and minimal reproductions without corrupting the terminal."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["guides/debugging-evidence"]
+    },
+    {
+      "id": "crash-safety",
+      "title": "Crash safety & terminal restore",
+      "group": "Operating a real app",
+      "page": "/guide/crash-safety",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 2,
+      "prerequisites": ["application-shell", "debugging"],
+      "learningOutcomes": [
+        "Explain restoration guarantees across normal exit, exceptions, and process signals.",
+        "Distinguish essential terminal requirements from graceful capability degradations."
+      ],
+      "requiredLiveExamples": 0,
+      "liveExampleException": "A browser terminal cannot prove native raw-mode, alternate-screen, cursor, or process-signal restoration.",
+      "examples": []
+    },
+    {
+      "id": "untrusted-text",
+      "title": "Displaying untrusted text safely",
+      "group": "Operating a real app",
+      "page": "/guide/untrusted-text",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 3,
+      "prerequisites": ["text-unicode-and-cells", "debugging"],
+      "learningOutcomes": [
+        "Identify terminal-injection and sensitive-log threats at every raw text boundary.",
+        "Use built-in sanitization, explicit sanitization, and redaction without making false security claims."
+      ],
+      "requiredLiveExamples": 1,
+      "liveExampleException": null,
+      "examples": ["guides/untrusted-text-boundary"]
+    },
+    {
+      "id": "accessibility",
+      "title": "Accessibility & resilient interaction",
+      "group": "Operating a real app",
+      "page": "/guide/accessibility",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 4,
+      "prerequisites": ["views-and-focus", "keyboard-and-clipboard", "theming-and-colour-depth"],
+      "learningOutcomes": [
+        "Design keyboard-complete, discoverable interactions with visible focus and non-color state cues.",
+        "Preserve meaning under NO_COLOR, monochrome, ASCII fallback, reduced geometry, and browser documentation constraints."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/accessible-interaction", "guides/resilient-presentation"]
+    },
+    {
+      "id": "terminal-capabilities",
+      "title": "Terminal capabilities & portability",
+      "group": "Operating a real app",
+      "page": "/guide/terminal-capabilities",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 5,
+      "prerequisites": ["theming-and-colour-depth", "crash-safety"],
+      "learningOutcomes": [
+        "Explain capability detection, profiles, queries, overrides, and degradations.",
+        "Adapt applications honestly across SSH, tmux, Windows, browser, color, mouse, and glyph differences."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/capability-resolution", "guides/portable-fallbacks"]
+    },
+    {
+      "id": "in-production",
+      "title": "In production",
+      "group": "Operating a real app",
+      "page": "/guide/in-production",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 6,
+      "prerequisites": ["crash-safety", "untrusted-text", "terminal-capabilities"],
+      "learningOutcomes": [
+        "Package, deploy, observe, and support a Node or Bun ESM terminal application.",
+        "Set evidence-based compatibility, security, performance, and operational expectations."
+      ],
+      "requiredLiveExamples": 0,
+      "liveExampleException": "Deployment, process supervision, container security, and production terminal evidence cannot be reproduced by an embedded browser terminal.",
+      "examples": []
+    },
+    {
+      "id": "complete-application",
+      "title": "Build a complete application",
+      "group": "Operating a real app",
+      "page": "/guide/complete-application",
+      "profile": "course",
+      "stage": "complete",
+      "sidebarOrder": 7,
+      "prerequisites": [
+        "application-architecture",
+        "forms",
+        "screens-and-routing",
+        "testing-headlessly",
+        "in-production"
+      ],
+      "learningOutcomes": [
+        "Build a cohesive application from project setup through state, navigation, async work, persistence, and tests.",
+        "Apply accessibility, security, failure recovery, packaging, and production verification as one release workflow."
+      ],
+      "requiredLiveExamples": 2,
+      "liveExampleException": null,
+      "examples": ["guides/capstone-workflow", "guides/capstone-release-rehearsal"]
+    }
+  ]
+}

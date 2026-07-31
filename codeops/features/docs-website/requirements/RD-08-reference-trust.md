@@ -1,8 +1,9 @@
 # RD-08: Reference & Trust Content
 
 > **Document**: RD-08-reference-trust.md
-> **Status**: Draft
+> **Status**: Approved
 > **Created**: 2026-07-09
+> **Revised**: 2026-07-29
 > **Project**: jsvision
 > **Feature-Set**: docs-website
 > **Depends On**: RD-03 (live examples), RD-05 (component pages)
@@ -30,9 +31,12 @@ expands the existing repo `docs/` techdocs (architecture, ADRs, guides) placed b
 - [ ] **Architecture / "How it works"** — the host-agnostic pure-engine model (`serialize`/`decode`,
       the `RuntimeAdapter` seam, why the same engine runs native *and* in a browser), the subsystem
       map, and the absorbed ADRs. This is the differentiator the landing page teases (RD-04).
-- [ ] **Guides / Cookbook** — task-oriented how-tos, each with a live example: e.g. "make a modal
-      dialog", "two-way bind state", "keyboard shortcuts & commands", "async modality", "theme an
-      app", "build a custom control", "handle resize", "go NO_COLOR / ASCII-safe".
+- [ ] **Guide course system** — a beginner-to-production curriculum governed by the
+      `guide-course-template1` directive and machine-readable `packages/docs-site/guides.json`.
+      Full courses progress from mental model through realistic composition, advanced behavior,
+      failure diagnosis, best practices, practice, and next steps. Each course has source-verified
+      snippets and focused live laboratories; a zero-lab target is permitted only with a cataloged
+      exception where an embedded terminal would be misleading.
 - [ ] **Best Practices** hub — the cross-cutting gotchas (e.g. `measure()` or a view collapses to
       0×0; reactive vs imperative seams; disposing resources; focus management), linkable from
       component pages.
@@ -57,6 +61,27 @@ expands the existing repo `docs/` techdocs (architecture, ADRs, guides) placed b
       planned (aligned with the component status badges from RD-05).
 - [ ] **Contributing / development** — how to set up the monorepo, the test tiers, `yarn verify`, the
       docs conventions, and how to add a component doc + example (feeding RD-09's directive).
+
+### Guide Curriculum
+
+The Guide teaches framework thinking and complete workflows. Component pages teach individual
+widgets; the existing Data Grid and Code Editor hubs remain the authoritative specialist courses.
+API owns exhaustive signatures, while Reference owns evidence and trust artifacts.
+
+| Group | Curriculum |
+|---|---|
+| Getting started | Introduction · Install & packages · Codex plugin |
+| Core concepts | Layout · Reactive state · Views & focus · Events, commands & keymaps · Keyboard & clipboard · Text, Unicode & terminal cells · Scrolling, lists & large content |
+| Building applications | The application shell · Dialogs & modality · Async work, cancellation & progress · Forms · Files & the FileSystem seam · Internationalization · Screens & routing · Theming & colour depth |
+| Extending and integrating | Running in the browser · Writing your own widget · Testing headlessly · Application architecture & best practices |
+| Specialist courses | Data Grid course · Code Editor course |
+| Operating a real app | Debugging · Crash safety & terminal restore · Displaying untrusted text safely · Accessibility & resilient interaction · Terminal capabilities & portability · In production · Build a complete application |
+
+The catalog contains all 31 entries, including planned courses. Planned entries appear in the
+learner-facing curriculum but do not enter the VitePress sidebar and do not receive placeholder
+pages. Navigation is projected from the catalog for real pages only. A catalog stage changes to
+`complete` only when the page, examples, learning-outcome specifications, documentation build, and
+full repository verification pass together.
 
 ### Should Have
 
@@ -126,10 +151,12 @@ expands the existing repo `docs/` techdocs (architecture, ADRs, guides) placed b
 
 ## Acceptance Criteria
 
-1. [ ] Each required page exists and renders: Architecture, Guides/Cookbook (≥6 how-tos each with a
-       live example), Best Practices, FAQ, Accessibility, Security, Performance, Compatibility matrix,
-       Theming (gallery + role reference + embedded designer), Versioning/Changelog/Roadmap,
-       Contributing — reachable from the Reference nav with no dead links.
+1. [ ] Each required trust page exists and renders: Architecture, Best Practices, FAQ,
+       Accessibility, Security, Performance, Compatibility matrix, Theming (gallery + role reference
+       + embedded designer), Versioning/Changelog/Roadmap, and Contributing. The Guide curriculum
+       contains exactly the 31 confirmed entries, projects only real pages into navigation, and
+       satisfies the `guide-course-template1` completion gate without duplicating the Data Grid or
+       Code Editor specialist hubs.
 2. [ ] The Architecture page explains the byte-in/byte-out engine and why the same code runs native
        and in-browser, and links to a live demo demonstrating it.
 3. [ ] The theming gallery shows all 13 presets and lets the reader switch a live component between

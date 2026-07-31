@@ -1,77 +1,80 @@
-/**
- * A modal form dialog: a text input (age, 0–120), a checkbox group, and a radio
- * group, with OK / Cancel. OK is vetoed while the age is out of range — the
- * valid() gate refuses to close and returns focus to the offending field; Cancel,
- * Esc, or [×] always close. The dialog opens on start; once you close it, the
- * "Open the dialog" button on the stage window reopens a fresh one (its fields
- * reset each time), so the demo is never a dead end.
- */
-import {
-  Dialog,
-  Input,
-  Label,
-  CheckGroup,
-  RadioGroup,
-  okButton,
-  cancelButton,
-  Button,
-  Text,
-  Window,
-  signal,
-  range,
-  at,
-} from '@jsvision/ui';
+/** FormDialog laboratory with a schema preview and the real modal submission lifecycle. */
+import { formDialog } from '@jsvision/forms';
+import { Button, Group, Input, Label, Text, at, createKeymap, signal } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
+import { z } from 'zod';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
 
+const CMD_OPEN = 'form-dialog-lab.open';
+const CMD_SUBMIT = 'form-dialog-lab.submit';
+const CMD_CANCEL = 'form-dialog-lab.cancel';
+const CONTENT_WIDTH = 56;
+const CONTENT_HEIGHT = 10;
+const profileSchema = z.object({ name: z.string().min(1), age: z.coerce.number().int().min(0).max(120) });
+
 export default defineExample({
-  title: 'Form dialog',
-  blurb: 'A modal form — input + checks + radios with OK/Cancel; OK is vetoed while Age is out of range.',
+  title: 'Form Dialog Lab',
+  blurb: 'Validate and coerce a profile, then launch the same fields through the real modal formDialog helper.',
   build: (ctx) => {
-    const app = demoApp(ctx);
-
-    // Build and open a FRESH dialog each time, so its fields reset on every open and we never
-    // re-add a disposed view. The dialog removes itself from the desktop once it resolves, handing
-    // focus back to the stage window's button.
-    const openTheDialog = (): void => {
-      const age = signal('30');
-      const styles = signal([true, false]);
-      const size = signal(1);
-
-      // A size with no explicit rect auto-centers the dialog and casts its drop-shadow.
-      const dlg = new Dialog({ title: ' Person ', width: 44, height: 13 });
-      const ageInput = new Input({ value: age, validator: range(0, 120) });
-      dlg.add(at(new Label('~A~ge (0–120)', ageInput), 2, 2, 14, 1));
-      dlg.add(at(ageInput, 17, 2, 22, 1));
-      dlg.add(at(new CheckGroup({ labels: ['~B~old', '~I~talic'], value: styles }), 2, 4, 18, 2));
-      dlg.add(at(new RadioGroup({ labels: ['~S~mall', '~M~edium', '~L~arge'], value: size }), 23, 4, 16, 3));
-      dlg.add(at(okButton(), 9, 9, 10, 2));
-      dlg.add(at(cancelButton(), 22, 9, 12, 2));
-
-      app.desktop.addWindow(dlg);
-      void app.loop.execView(dlg).finally(() => app.desktop.removeWindow(dlg));
-    };
-    app.onCommand('demo.openDialog', () => openTheDialog());
-
-    // A non-closable stage window with the reopen affordance, centered on the desktop.
-    const stage = new Window('Form dialog');
-    stage.closable = false;
-    const sw = 46;
-    const sh = 7;
-    const { width: dw, height: dh } = app.desktop.bounds;
-    stage.setLayout({
-      rect: {
-        x: Math.max(0, Math.floor((dw - sw) / 2)),
-        y: Math.max(0, Math.floor((dh - sh) / 2)),
-        width: sw,
-        height: sh,
-      },
+    const app = demoApp(ctx, {
+      themeMenu: true,
+      keymap: createKeymap({ 'alt+o': CMD_OPEN, 'alt+s': CMD_SUBMIT, 'alt+c': CMD_CANCEL }),
     });
-    stage.add(at(new Button('~O~pen the dialog', { command: 'demo.openDialog', default: true }), 12, 0, 20, 2));
-    stage.add(at(new Text('Close the dialog (OK / Cancel / Esc), then reopen it here.'), 0, 3, sw - 2, 2));
-    app.desktop.addWindow(stage);
+    const name = signal('');
+    const age = signal('');
+    const status = signal('ready · enter a name and age');
+    const nameInput = new Input({ value: name });
+    const ageInput = new Input({ value: age });
+    const dialog = new Template1Dialog({
+      title: ' Form Dialog Lab ',
+      width: 60,
+      height: 14,
+      preserveChildHeights: true,
+    });
+    const content = new Group();
+    content.add(at(new Text('Schema fields, coercion, errors, and modal lifecycle.'), 0, 0, 56, 1));
+    content.add(at(new Label('~N~ame', nameInput), 0, 2, 10, 1));
+    content.add(at(nameInput, 11, 2, 22, 1));
+    content.add(at(new Label('~A~ge', ageInput), 0, 4, 10, 1));
+    content.add(at(ageInput, 11, 4, 22, 1));
+    content.add(at(new Button('~S~ubmit', { command: CMD_SUBMIT, default: true }), 36, 2, 14, 2));
+    content.add(at(new Button('~O~pen modal', { command: CMD_OPEN }), 36, 5, 16, 2));
+    content.add(at(new Text(() => `Result: ${status()}`), 0, 7, 56, 1));
+    content.add(at(new Text('Alt+O opens · complete fields · Esc cancels'), 0, 9, 56, 1));
 
-    openTheDialog(); // start with it open once
+    app.onCommand(CMD_SUBMIT, () => {
+      const result = profileSchema.safeParse({ name: name(), age: age() });
+      status.set(result.success ? `${result.data.name} · ${result.data.age}` : 'invalid · both fields stay editable');
+    });
+    app.onCommand(CMD_CANCEL, () => status.set('cancelled · no values committed'));
+    app.onCommand(CMD_OPEN, () => {
+      const pending = formDialog(app, {
+        schema: profileSchema,
+        initial: { name: '', age: '' },
+        title: ' Profile form ',
+        width: 46,
+        height: 10,
+        body: (form) => {
+          const body = new Group();
+          const modalName = new Input({ value: form.field('name').value });
+          const modalAge = new Input({ value: form.field('age').value });
+          body.add(at(new Label('~N~ame', modalName), 2, 1, 10, 1));
+          body.add(at(modalName, 13, 1, 24, 1));
+          body.add(at(new Label('~A~ge', modalAge), 2, 3, 10, 1));
+          body.add(at(modalAge, 13, 3, 24, 1));
+          return body;
+        },
+      });
+      void pending.then((result) =>
+        status.set(
+          result === null ? 'cancelled · modal returned null' : `modal result · ${result.name} · ${result.age}`,
+        ),
+      );
+    });
+    dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
+    app.desktop.addWindow(dialog);
+    app.loop.focusView(nameInput);
     return app;
   },
 });

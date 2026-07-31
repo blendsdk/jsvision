@@ -6,3 +6,6 @@
 
 /** The monorepo root package.json version, injected at build time. */
 declare const __JSVISION_VERSION__: string;
+
+/** Stylesheets loaded lazily by browser-only modules through Vite. */
+declare module '*.css';
