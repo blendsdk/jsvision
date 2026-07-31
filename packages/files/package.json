@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/files",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "jsvision files — a classic file-system dialog family (FileDialog/ChDirDialog + FileList/DirList/FileInput/FileInfoPane) for @jsvision/ui.",
   "keywords": [
     "tui",
@@ -90,9 +90,9 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "1.5.1",
-    "@jsvision/i18n": "1.5.1",
-    "@jsvision/ui": "1.5.1"
+    "@jsvision/core": "1.5.2",
+    "@jsvision/i18n": "1.5.2",
+    "@jsvision/ui": "1.5.2"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

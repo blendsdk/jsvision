@@ -1531,7 +1531,7 @@ interface UnicodeCaps {
 The published package version of `@jsvision/core`.
 
 ```ts
-const VERSION: "1.5.1"
+const VERSION: "1.5.2"
 ```
 
 ## VERSION
@@ -1539,7 +1539,7 @@ const VERSION: "1.5.1"
 The package version of `@jsvision/ui`.
 
 ```ts
-const VERSION: "1.5.1"
+const VERSION: "1.5.2"
 ```
 
 ## WIDTH_ADAPTED_MESSAGE
