@@ -174,3 +174,168 @@ The Button page in `packages/docs-site/components/controls/button.md` is the can
 reference. Preserve its concise, concept-focused teaching style while allowing richer components
 such as data grids and code editors to add multiple specialized sections and multiple live examples
 within each section.
+
+## Prime directive: docs-site `guide-course-template1` (NON-NEGOTIABLE)
+
+When a request says to create, upgrade, or complete a docs-site Guide course, use this directive.
+Guide pages teach developers how to think and work in JSVision from beginner level through advanced,
+production-aware use. They are not expanded API summaries, collections of disconnected recipes, or
+thin prose around a demo.
+
+`packages/docs-site/guides.json` is the curriculum source of truth. Before changing a Guide page,
+inspect its catalog entry, prerequisites, profile, learning outcomes, target live-example count, and
+stage. Keep the catalog, Guide sidebar, page, example registry, and tests synchronized. A planned
+entry belongs in the learner-facing curriculum but must not enter the visible sidebar until a real
+page exists. Never create a placeholder page merely to make a navigation link resolve.
+
+### Documentation boundaries
+
+- **Guide** owns framework mental models, cross-cutting concepts, complete workflows, and application
+  architecture.
+- **Components** owns individual widgets and the specialist Data Grid and Code Editor courses. Guide
+  pages link to those hubs and may teach cross-cutting workflows that use them, but must not duplicate
+  their capability chapters.
+- **API** owns exhaustive signatures and symbol lookup.
+- **Reference** owns architecture evidence, ADRs, generated compatibility data, benchmark evidence,
+  security posture, stability policy, and other trust material. A Guide explains how to act on that
+  evidence and links to its source.
+
+### Learning contract
+
+Before authoring prose or examples:
+
+1. Read the catalog entry and every prerequisite course it names.
+2. Inspect the relevant public source, package exports, public types, defaults, tests, theme roles,
+   warnings, existing component pages, specialist hubs, and agent-neutral JSVision skill references.
+3. Turn every catalog learning outcome into concrete lessons and observable evidence.
+4. State the assumed starting knowledge and what the reader will be able to build, explain, diagnose,
+   and verify after the course.
+5. Define the course's beginner, intermediate, and advanced boundary. Do not hide required everyday
+   behavior in an “advanced” section or defer it entirely to API reference.
+6. Identify adjacent courses and remove duplicated teaching. Link to the owning course and give only
+   the context needed for the current lesson.
+
+Each major section must answer a learner question. Progress from mental model → smallest useful
+example → composition → realistic workflow → advanced behavior → failure recovery → production
+judgment. Introduce terminology before using it and explain why a technique is chosen, not only what
+to type.
+
+### Course backbone
+
+Use this order unless the subject has a concrete teaching reason to vary it:
+
+1. **Frontmatter and title** — a search-friendly description naming the concept, primary tasks, and
+   important behavior.
+2. **Course introduction** — audience, prerequisites, final capabilities, and a motivating real-world
+   problem.
+3. **Mental model** — the smallest accurate conceptual model, including ownership, data flow,
+   lifecycle, geometry, or event sequence where relevant.
+4. **First useful result** — one minimal public-API snippet that produces a meaningful outcome.
+5. **Primary live laboratory** — a polished example near the first complete workflow.
+6. **Core lessons** — concept-focused sections that build capability in dependency order.
+7. **Composition and integration** — how the subject interacts with layout, reactivity, focus,
+   commands, async work, theming, hosts, or packages where relevant.
+8. **Advanced behavior** — lifecycle, scaling, customization, authorization, performance, or
+   host-specific behavior grounded in the real implementation.
+9. **Failure modes and diagnosis** — symptoms, causes, corrections, and the evidence that
+   distinguishes similar failures.
+10. **Best practices** — specific recommendations with consequences and decision boundaries.
+11. **Practice and next steps** — exercises or experiments, related courses, specialist hubs, and
+    generated API links.
+
+Use tables for comparisons, state/command mappings, defaults, failure diagnosis, and decision
+boundaries. Use a small diagram only when it clarifies a graph, lifecycle, hierarchy, or event flow
+better than prose.
+
+Orientation and integration profiles may be shorter, but they still require an explicit audience,
+task-oriented flow, accurate snippets, failure guidance, and next steps. Do not inflate installation,
+tool integration, native process restoration, or deployment pages with fake interactive demos.
+
+### Code-snippet standard
+
+Snippets are teaching artifacts, not miniature applications:
+
+- Demonstrate one concept at a time with the smallest accurate public API.
+- Import only from supported public package entry points. Never teach internal paths.
+- Keep setup that matters to the lesson and omit shell, sample-data, or defensive plumbing that does
+  not.
+- Use real names, defaults, return types, ownership, async behavior, and control flow verified against
+  current source and tests. Never use prose-shaped pseudocode in a TypeScript fence.
+- Put snippets beside the lesson they explain. Split unrelated ideas instead of accumulating a
+  kitchen-sink block.
+- Comments explain a non-obvious reason, invariant, security boundary, or cleanup obligation; they do
+  not narrate syntax.
+- Show broken code only when the failure is the lesson. Mark it clearly, explain the observable
+  symptom, and follow it immediately with the correction.
+- Never paste a live-example module into Markdown. The lab proves behavior; the snippet isolates the
+  idea.
+- Do not assign to readonly layout state or bypass lifecycle APIs. Use current helpers such as
+  `row`, `col`, `at`, `setLayout`, public command APIs, and owned reactive scopes.
+
+### Live-example standard
+
+Every course uses at least the `requiredLiveExamples` declared in `guides.json`. A zero target
+requires a specific `liveExampleException` explaining why an embedded terminal would be misleading;
+replace it with an authentic artifact such as a test module, generated matrix, log trace, or deployment
+configuration.
+
+For each live laboratory:
+
+- Give it one explicit learning objective and a unique `guides/...` registry ID.
+- Place it beside the concept it proves, with a title and blurb that tell the reader what to try and
+  what to observe.
+- Build every new lab with the docs-site `template1` directive: complete `demoApp` shell, Classic
+  theme, centered compact `Template1Dialog`, inset content, visible desktop margin, responsive
+  resize/maximize/restore, non-closable main lesson, usable hotkeys, concise instructions, and visible
+  action feedback.
+- Present meaningful states together when comparison is the lesson. Split labs when interactions,
+  workflows, or scaling modes have different learning objectives.
+- Use deterministic bounded fixtures. Browser labs must use virtual or explicitly authorized host
+  seams and never visitor files, clipboard, network, or other privileged capabilities implicitly.
+- Keep the lab alive after opening and make every documented action reachable by keyboard. Add mouse
+  interaction when it materially teaches the concept.
+- Reuse an existing component or specialist example only when its interaction and framing exactly
+  prove the Guide outcome. Update its teaching blurb or build a focused Guide lab otherwise.
+
+### Failure, security, accessibility, and production teaching
+
+Every full course must identify relevant failure modes. Cover invalid input, lifecycle cleanup,
+focus loss, clipping, capability degradation, cancellation, stale async work, unsafe text, and host
+authorization when the subject crosses those boundaries.
+
+- Never claim terminal, browser, clipboard, filesystem, network, accessibility, performance, or
+  security behavior without source or generated evidence.
+- Treat keyboard reachability, visible focus, non-color cues, reduced geometry, monochrome, and
+  ASCII-safe fallbacks as design requirements, not a final accessibility paragraph.
+- Sanitize untrusted display text at the documented boundary, redact sensitive diagnostics, and
+  avoid examples that normalize unsafe raw terminal output.
+- Label benchmark and compatibility results with their evidence scope. Do not present informational
+  measurements as guarantees.
+- Show acquisition and cleanup together for timers, subscriptions, modal work, host resources, and
+  reactive owners.
+
+### Accuracy and completion gate
+
+A Guide course is complete only when:
+
+- every catalog learning outcome is taught and covered by a specification assertion;
+- prerequisites and cross-links resolve, and the page neither duplicates nor contradicts its owning
+  component, specialist, API, or Reference material;
+- snippets compile where practical and every API, default, event, command, key, lifecycle,
+  capability, theme role, and failure claim agrees with source and tests;
+- the page contains the required course backbone or records a concrete profile-specific reason for an
+  omission;
+- every declared live example is registered as `kind: 'app'`, smoke-renders, remains unclipped at the
+  standard 80×24 viewport, and has focused specification coverage for compact centering, Classic
+  surface, interaction outcomes, resize, maximize, restore, cleanup, and relevant accessibility or
+  security behavior;
+- failure modes, best practices, exercises/experiments, related courses, specialist hubs, and API
+  links are present where relevant;
+- `guides.json`, the learner-facing curriculum, and the generated sidebar agree;
+- focused docs typecheck/tests, `yarn docs:build`, and the repository's full `yarn verify` gate pass;
+  and
+- the catalog stage changes to `complete` only in the same verified change that satisfies every
+  completion condition.
+
+The completed Layout and Reactive state courses are structural pilots, not unquestionable content
+oracles. Re-audit them against this directive when the full curriculum plan reaches their phase.

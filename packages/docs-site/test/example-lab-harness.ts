@@ -171,13 +171,14 @@ export function buildLabExample(
  *
  * @param app Real application built through the docs demo shell.
  * @param dialog Mounted laboratory dialog owned by the example.
+ * @param options Expected compact, maximized, or user-resized window state.
  * @returns Immutable geometry and rendered cell evidence.
  * @throws When chrome, centering, margins, padding, surface color, or frame bounds are invalid.
  */
 export function collectTemplate1Evidence(
   app: Application,
   dialog: Dialog,
-  options: { readonly startup?: 'compact' | 'maximized' } = {},
+  options: { readonly startup?: 'compact' | 'maximized' | 'resized' } = {},
 ): Template1Evidence {
   const desktop = app.desktop;
   if (desktop === undefined) throw new Error('template1 requires a desktop');
@@ -195,12 +196,14 @@ export function collectTemplate1Evidence(
       throw new Error('template1 dialog must start maximized to the complete desktop');
     }
   } else {
-    const expectedX = Math.floor((desktop.bounds.width - dialog.bounds.width) / 2);
-    const expectedY = Math.floor((desktop.bounds.height - dialog.bounds.height) / 2);
-    if (dialog.bounds.x !== expectedX || dialog.bounds.y !== expectedY) {
-      throw new Error(`template1 dialog is not centered: ${dialog.bounds.x},${dialog.bounds.y}`);
+    if (options.startup !== 'resized') {
+      const expectedX = Math.floor((desktop.bounds.width - dialog.bounds.width) / 2);
+      const expectedY = Math.floor((desktop.bounds.height - dialog.bounds.height) / 2);
+      if (dialog.bounds.x !== expectedX || dialog.bounds.y !== expectedY) {
+        throw new Error(`template1 dialog is not centered: ${dialog.bounds.x},${dialog.bounds.y}`);
+      }
+      if (!dialog.centered) throw new Error('template1 dialog must use automatic centering');
     }
-    if (!dialog.centered) throw new Error('template1 dialog must use automatic centering');
     if (
       dialog.bounds.x <= 0 ||
       dialog.bounds.y <= 0 ||

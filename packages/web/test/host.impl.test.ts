@@ -1,5 +1,5 @@
 /**
- * Implementation tests — `createBrowserHost` internals/edges (beyond the ST-2/ST-3 spec oracle):
+ * Implementation tests for `createBrowserHost` internals and lifecycle edges beyond its public contract.
  * chunked decode across two `onData` calls, the exact caret show/hide/position sequences, and the
  * render no-op when a re-render produces no damage. `.js` per NodeNext.
  */
@@ -55,4 +55,25 @@ test('render is a no-op when the frame is unchanged', () => {
 
   host.render(buffer); // identical frame → empty diff → no write
   expect(harness.writes.length).toBe(afterFirst);
+});
+
+test('dispose releases terminal input and a pending Escape timer without terminal disposal', () => {
+  const harness = createFakeTerminal();
+  const timer = createFakeTimer();
+  const events: InputEvent[] = [];
+  const host = createBrowserHost({
+    term: harness.term,
+    caps,
+    onInput: (event) => events.push(event),
+    timer: timer.seam,
+  });
+  host.start();
+  harness.sendData('\x1b');
+  expect(timer.armed()).toBe(true);
+
+  host.dispose();
+  expect(timer.armed()).toBe(false);
+  harness.sendData('\x1b[A');
+  timer.fire();
+  expect(events).toEqual([]);
 });

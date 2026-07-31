@@ -16,6 +16,7 @@ export default tseslint.config(
       '**/.turbo/**',
       '**/.vitepress/dist/**',
       '**/.vitepress/cache/**',
+      '**/.vitepress/.temp/**',
     ],
   },
   ...tseslint.configs.recommended,

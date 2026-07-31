@@ -1,7 +1,6 @@
 // Hand-written declaration for the JS static footgun linter (jsvision-doctor.mjs). It has no
 // build step of its own, so this file exists only to let TS test files import it without
-// TS7016/TS7006. It declares just the two exports the spec test consumes (lintText, lintPaths);
-// formatFindings stays untyped since no test imports it.
+// TS7016/TS7006. Keep it aligned with every export consumed by TypeScript tests.
 
 /** One footgun finding: a source location plus the rule that fired and its human-readable fix. */
 export interface DoctorFinding {
@@ -23,3 +22,8 @@ export declare function lintText(source: string, fileName?: string): DoctorFindi
  * .turbo, and test files), reusing `lintText` per file.
  */
 export declare function lintPaths(paths: readonly string[], cwd?: string): DoctorFinding[];
+
+/**
+ * Render doctor findings as the same bounded human-readable transcript produced by the CLI.
+ */
+export declare function formatFindings(findings: readonly DoctorFinding[]): string;

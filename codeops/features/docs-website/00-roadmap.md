@@ -3,8 +3,8 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-29
-> **Progress**: 4 / 10 (40%)
+> **Last Updated**: 2026-07-30
+> **Progress**: 5 / 10 (50%)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
@@ -27,10 +27,10 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 | RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | [web-runtime](plans/web-runtime/00-index.md) · [preflight](plans/web-runtime/00-preflight-report.md) | Done | ✅ | 2026-07-09 | Shipped — @jsvision/web browser runtime: createBrowserHost/mountApp · buildBrowserCaps · virtual FileSystem · key-reclaim · outbound clipboard · browser-stubs · dogfooded into web-xterm. |
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | [live-example-system](plans/live-example-system/00-index.md) · [register](plans/live-example-system/00-ambiguity-register.md) · [preflight](plans/live-example-system/00-preflight-report.md) | Done | ✅ | 2026-07-10 | Shipped — docs samples run live in xterm.js via mountApp (shown == running) · 8 seed examples · DemoShell · Play · ↳ remediation ✅ (resize · draggable shell · reopen dialogs · Source fix). |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — landing/pitch: hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter · depends RD-01, RD-03. |
-| RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | [component-documentation-system](plans/component-documentation-system/00-index.md) · [preflight](plans/component-documentation-system/00-preflight-report.md) | Executing | 🔄 | 2026-07-29 | 187/193 tasks · Phase 11 full integration, lifecycle hardening, independent quality review, and authoritative verification are green. |
+| RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | [component-documentation-system](plans/component-documentation-system/00-index.md) · [preflight](plans/component-documentation-system/00-preflight-report.md) | Done | ✅ | 2026-07-30 | Shipped — 193/193 tasks · 51 component entries · 23 specialist topics · 96 component laboratories · 682 focused final-audit assertions · 21/21 production checks · authoritative verification green. |
 | RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | [api-reference](plans/api-reference/00-index.md) | Done | ✅ | 2026-07-11 | Done — generated TypeDoc→md→VitePress reference for 4 public barrels · gitignored/regen per-package · bidirectional symbol↔page cross-links · drift-gated 20/20 · TypeDoc devDeps only. |
 | RD-07 | Sample applications | [RD-07](requirements/RD-07-sample-apps.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — sample apps: Todo · tvedit (virtual FS + local files) · polished kitchen-sink · file/data browser, each in DemoShell · depends RD-02, RD-03. |
-| RD-08 | Reference & trust content | [RD-08](requirements/RD-08-reference-trust.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — reference/trust: architecture · guides/cookbook · FAQ · a11y · security · perf · compat · theming gallery · versioning · contributing · absorbs docs/ techdocs · depends RD-03, RD-05. |
+| RD-08 | Reference, Guide curriculum & trust content | [RD-08](requirements/RD-08-reference-trust.md) | [guide-course-system](plans/guide-course-system/00-index.md) | Executing | 🔄 | 2026-07-30 | 246/246 Guide tasks · the Guide course system is complete: all 31 curriculum entries, 29 Guide routes, two specialist hubs, and 43 registered laboratories pass curriculum integration, production build, authoritative verification, and independent review. Separate Reference/trust planning remains for architecture · FAQ · a11y · security · perf · compat · theming gallery · versioning · contributing. |
 | RD-09 | Anti-drift governance & automation | [RD-09](requirements/RD-09-anti-drift-governance.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — anti-drift: CLAUDE.md prime directive · hard-fail check:docs-site gate · example compile/smoke in CI · Playwright screenshots/OG · README · llms.txt · depends RD-03, RD-05. |
 | RD-10 | Non-functional requirements | [RD-10](requirements/RD-10-non-functional.md) | — | RD Drafted | ✏️ | 2026-07-09 | Spans all. Perf budgets (lazy terminals) · a11y (WCAG) · security/CSP · SEO · browser support · content-ops. |
 
