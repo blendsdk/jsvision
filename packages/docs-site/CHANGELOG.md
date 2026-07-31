@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-31
+
+### Added
+- Complete the Phase 3 lifecycle handoff by closing the 193-task component plan and marking RD-05 done.
+- Pin authentic Crash safety artifacts to resolvable immutable blobs.
+- Develop and validate the complete course catalog graph, including routes and evidence.
+- Integrate reciprocal curriculum links to various technical hubs.
+- Build multiple courses including debugging, application architecture, accessibility, crash safety, and forms.
+- Establish the Guide course system with validated curriculum catalog and navigation.
+- Add specialist component hubs with live examples for editing surfaces and navigation.
+
+### Changed
+- Update all curriculum-wide lab, snippet, trust, and build integrations across various courses.
+- Enhance the education framework for multiple specialist and foundational courses.
+- Improve documentation for various component behaviors and lifecycle tracking.
+
+### Fixed
+- Repair deployable Crash safety artifact links with specification coverage in production audits.
+- Address errors in keyboard clipboard behavior and event routing, ensuring correct functionality.
+- Correct renderer package commands for npm, Yarn, pnpm, and Bun invocation forms.
+
+### Deprecated
+- Mark the phased approach for specific curriculum topics and structures for future revisions.
+
+### Removed
+- N/A
+
+### Security
+- N/A
+
 ## [1.3.0] - 2026-07-28
 
 ### Added

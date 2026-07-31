@@ -1,21 +1,17 @@
-# Release Notes — v1.3.0
+# Release Notes — v1.4.0
 
-**Released**: 2026-07-28
+**Released**: 2026-07-31
 
-We are excited to announce the release of version 1.3.0, featuring significant enhancements to user experience, internationalization, and performance across multiple packages.
+We are excited to announce the release of version 1.4.0, which brings significant improvements and new educational resources to enhance your experience with our platform. This update focuses on refining our documentation and expanding the curriculum, ensuring that users have access to valuable learning materials and resources to get the most out of our software.
 
-This update primarily focuses on improving the clipboard functionality across applications, ensuring users can easily copy and paste content without issues. These adjustments follow user feedback and a commitment to making interactions smoother and more intuitive. Alongside this, our internationalization tools have been expanded and refined, allowing better support for multilingual users and ensuring that applications can cater to a global audience.
+### Highlights:
 
-Key Highlights:
+- **Enhanced Curriculum**: We have made substantial progress in our educational offerings. This release includes the completion of numerous courses, covering essential topics such as accessibility, debugging, application architecture, and more. These resources are designed to guide users through various aspects of software development and improve skills.
 
-- **Enhanced Clipboard Functionality:** Users will benefit from an improved clipboard experience that supports native operations by default, making copying and pasting easier across different platforms.
-  
-- **Internationalization Improvements:** The release includes completed tools and documentation for translating the user interface, making it accessible to a wider audience. We’ve also localized various presentation surfaces, helping users interact with the software in their preferred language.
+- **Improved Documentation**: Our documentation has undergone extensive updates, making it easier for you to find the information you need. We have established a comprehensive component documentation system, which includes detailed guides and resources for better understanding our features and functions.
 
-- **Performance Refinements:** The latest version addresses several quality and performance metrics, contributing to a more responsive experience when using the code editor and related interfaces.
+- **User Experience Updates**: The update includes several adjustments to improve the overall user interface and promote smoother navigation. This includes responsive design enhancements and the addition of specialized hubs to help users quickly locate relevant information about specific features.
 
-- **Updated Guides and Documentation:** To assist users further, our documentation site has been aligned with these new features, providing clear guidelines on how to utilize the improvements effectively.
+- **New Capstone Projects**: We've introduced a complete application capstone project and various production-focused courses that allow users to apply what they have learned in practical scenarios.
 
-- **General Bug Fixes and Usability Enhancements:** We've focused on overall decreasing friction within the user experience. This includes ensuring smoother navigation and improved interaction across all platforms.
-
-Version 1.3.0 represents our ongoing commitment to enhancing usability and accessibility in our software. We encourage all users to update to this release to take full advantage of the new features and improvements.
+These changes aim to enrich your educational journey and streamline your interaction with our platform. We believe these improvements will empower users to gain the skills and knowledge necessary to excel in their work. Thank you for your continued support and feedback!
