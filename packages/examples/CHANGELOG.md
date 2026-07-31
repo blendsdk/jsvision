@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-31
+
+Added:
+- Lightweight local verification to check only staged, unstaged, and untracked files.
+
+Changed:
+- Preserved the complete yarn verify command for GitHub Actions.
+- Updated README with live-linked screenshots, status badges, and current package catalog.
+- Derived documented UI version during every release preparation.
+
+Fixed:
+- Synchronized installation guide version to 1.4.0 in the teaching manifest.
+
 ## [1.4.0] - 2026-07-31
 
 ## Fixed

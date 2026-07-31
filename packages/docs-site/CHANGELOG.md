@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-31
+
+Added:
+- Showcase runnable applications with a responsive eight-app gallery and live entry points.
+- Reusable, consistently sized screenshots added for various applications.
+
+Changed:
+- Synchronized installation guide version to match the released 1.4.0 package version.
+- Documented UI version will now be derived during every release preparation.
+
+Fixed:
+- Focused content related to release ownership and version drift.
+
 ## [1.4.0] - 2026-07-31
 
 ### Added
