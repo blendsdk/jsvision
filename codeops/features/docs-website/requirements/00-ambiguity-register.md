@@ -1,7 +1,7 @@
 # Ambiguity Register: docs-website (JSVision documentation & showcase website)
 
-> **Status**: ✅ GATE PASSED — all 33 items resolved
-> **Last Updated**: 2026-07-09
+> **Status**: ✅ GATE PASSED — all 42 items resolved
+> **Last Updated**: 2026-07-29
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|----------|-----------------|-------------------|---------------|--------|
@@ -39,6 +39,15 @@
 | 31 | Scope | Kitchen-sink treatment | Keep as-is / polish (UX+DX) + make the docs live-navigator | Polish in both UX and DX; it becomes the reference showcase + live component navigator | ✅ Resolved — User: specified in the original task (#5, "current kitchen sink is not top notch") |
 | 32 | Technical | Compatibility-matrix source | Hand-authored / generated from `terminal-matrix.json` | Generated from `terminal-matrix.json` | ✅ Resolved — User: accepted recommendation (stays accurate as evidence accrues) |
 | 33 | Non-functional | Lighthouse/perf CI gating strictness | Hard-gate / informational (+ optional budget) | Informational (+ optional bundle budget) — avoid flaky CI blocks while still measuring | ✅ Resolved — User: accepted recommendation |
+| 34 | Scope/UX | What structure should every standard component page follow? | Old fixed skeleton / richer reusable component-page template | Use `component-page-template1`: description and focused usage, live example(s), Props, Size and Layout, component-specific sections (each may contain multiple live examples), Best Practices, Theming, and Related/API links | ✅ Resolved — user-directed |
+| 35 | UX/Consistency | How should component live examples be presented? | Existing mixed shells / one reusable presentation contract | Use `template1`: Classic theme, complete app shell, menu-bar-matching window background, centered non-full-screen dialog, and padding `1`; Button/Input/Text are the completed references and every other existing component example must be rebuilt to match | ✅ Resolved — user-directed |
+| 36 | Information architecture | How should large Data Grid and Code Editor documentation be organized? | One long page each / dedicated multi-page hubs | Dedicated `/components/data-grid/` and `/components/code-editor/` hubs, each with its own sidebar and multiple focused live examples distributed across capability pages | ✅ Resolved — user accepted recommendation |
+| 37 | Coverage | Does "all components" mean every public export? | Full barrel including helpers/types/engines / public visual surfaces and major app surfaces | Cover all public user-facing visual components and major application surfaces; keep helpers, types, algorithms, controllers, and engines in guides/API unless needed to explain a visual surface | ✅ Resolved — user accepted recommendation |
+| 38 | Governance | What metadata drives coverage, and should maturity badges remain? | Status-bearing catalog / coverage catalog without invented status | Add a machine-readable coverage/navigation catalog, but omit visible maturity badges until an authoritative stability policy exists | ✅ Resolved — user accepted recommendation |
+| 39 | Page granularity | Does every cataloged visual symbol need its own Markdown file? | One file per symbol / primary pages with anchored coupled symbols | One page per primary standard component; tightly coupled public subcomponents may target an anchored section in the owning page or specialist hub | ✅ Resolved — user accepted recommendation |
+| 40 | Migration | Should the old Data Grid and Code Editor pages remain as compatibility pages? | Keep orientation/redirect pages / remove and replace | Remove the old/broken pages, install the new hub routes, and update internal links; no compatibility pages are required | ✅ Resolved — user-directed |
+| 41 | Example ownership | Does each cataloged symbol need a unique demo? | Unique demo per symbol / primary examples with deliberate sharing | Every primary standard page owns a registered live example; tightly coupled symbols may share a focused example, and specialist pages may contain several examples | ✅ Resolved — user accepted recommendation |
+| 42 | Documentation source | Must page snippets be extracted from runnable examples? | Extract full runnable modules / keep runnable source identity and essence-only teaching snippets separate | Registry `sourcePath` identifies the compiled runnable module; page snippets are separately authored, concise teaching artifacts and never paste or extract the full example module | ✅ Resolved — user authorized the preflight recommendation |
 
 ### Resolution Notes
 
@@ -48,6 +57,12 @@ three decision rounds this session (see `_draft/discovery-notes.md`).
 **AR-28..33:** Formalized during Phase-4 cross-reference validation — scope decisions that were
 user-stated in the original task or folded-in-and-accepted, given explicit register rows so every RD
 scope-decision back-references a numbered entry (no "pre-set"/"adjacent" placeholders remain).
+
+**AR-34..42:** Resolved during the 2026-07-29 component-documentation planning session. The user
+created the two reusable documentation directives, accepted the catalog/coverage/hub architecture,
+required all pre-existing examples except the newly completed Button/Input/Text references to be
+rebuilt, explicitly rejected retaining the old Data Grid and Code Editor pages, and authorized the
+separation between runnable example source identity and essence-only teaching snippets.
 
 **AR-23:** The repo already has a VitePress-shaped root `docs/` (index.md + `.vitepress/` +
 architecture/decisions/guides) authored but never built. A live-demo docs site needs to import the

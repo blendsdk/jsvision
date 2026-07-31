@@ -1,24 +1,77 @@
 /**
- * A push button bound to a click counter, with a live text echo of the count.
- * The simplest end-to-end live example: one component, centered in the minimal
- * demo shell. Focus it with Tab, activate with Space / Enter (or Alt-C), and the
- * count beside it updates reactively.
+ * An interactive Button laboratory showing normal, default, disabled, focused, pressed, and
+ * reactively enabled states. The first action receives focus, while clicking and holding any
+ * enabled face reveals the transient pressed treatment.
  */
-import { Group, Button, Text, signal, at } from '@jsvision/ui';
+import { Button, Group, Input, Label, Text, signal, at } from '@jsvision/ui';
+import { Template1Dialog } from '../../src/template1-dialog.js';
 import { defineExample } from '../_contract.js';
+import { demoApp } from '../../src/demo-shell.js';
 
-const WIDTH = 44;
-const HEIGHT = 6;
+const CONTENT_PADDING = 1;
+const CONTENT_WIDTH = 66;
+const CONTENT_HEIGHT = 14;
+const DIALOG_WIDTH = CONTENT_WIDTH + (CONTENT_PADDING + 1) * 2;
+const DIALOG_HEIGHT = CONTENT_HEIGHT + (CONTENT_PADDING + 1) * 2;
 
 export default defineExample({
-  title: 'Button',
-  blurb: 'A push button bound to a click counter, with a live count echo.',
-  build: () => {
-    const clicks = signal(0);
-    const group = at(new Group(), 0, 0, WIDTH, HEIGHT);
-    group.add(at(new Button('~C~lick me', { default: true, onClick: () => clicks.set(clicks() + 1) }), 0, 0, 14, 2));
-    group.add(at(new Text(() => `Clicks: ${clicks()}`), 0, 3, WIDTH, 1));
-    group.add(at(new Text('Space / Enter activates · Alt-C jumps to it.'), 0, 5, WIDTH, 1));
-    return group;
+  title: 'Button Lab',
+  blurb: 'Compare every Button state, exercise its keyboard paths, and enable an action reactively.',
+  build: (ctx) => {
+    const app = demoApp(ctx, { themeMenu: true });
+    const projectName = signal('');
+    const lastAction = signal('Nothing yet');
+    const nameInput = new Input({ value: projectName, maxLength: 20, placeholder: 'Type to enable Save' });
+    const content = new Group();
+
+    content.add(at(new Text('State gallery — hold the mouse button to see the pressed face'), 0, 0, CONTENT_WIDTH, 1));
+    content.add(at(new Button('~P~review', { onClick: () => lastAction.set('Preview callback') }), 0, 2, 14, 2));
+    content.add(
+      at(
+        new Button('~D~eploy', {
+          command: 'demo.button.deploy',
+          default: true,
+          onClick: () => lastAction.set('Deploy command + callback'),
+        }),
+        16,
+        2,
+        14,
+        2,
+      ),
+    );
+    content.add(at(new Button('~U~navailable', { disabled: true }), 32, 2, 16, 2));
+
+    content.add(at(new Text('Reactive disabled state'), 0, 5, CONTENT_WIDTH, 1));
+    content.add(at(new Label('Project ~n~ame', nameInput), 0, 7, 14, 1));
+    content.add(at(nameInput, 15, 7, 27, 1));
+    content.add(
+      at(
+        new Button('~S~ave changes', {
+          disabled: () => projectName().trim() === '',
+          onClick: () => lastAction.set(`Saved "${projectName().trim()}"`),
+        }),
+        44,
+        6,
+        18,
+        2,
+      ),
+    );
+
+    content.add(at(new Text(() => `Last action: ${lastAction()}`), 0, 10, CONTENT_WIDTH, 1));
+    content.add(
+      at(new Text('Tab / Shift+Tab moves focus · Space activates the focused button'), 0, 12, CONTENT_WIDTH, 1),
+    );
+    content.add(at(new Text('Enter runs Deploy · Alt+P/D/U/N/S uses the marked hotkeys'), 0, 13, CONTENT_WIDTH, 1));
+
+    const dialog = new Template1Dialog({
+      title: ' Button Lab ',
+      width: DIALOG_WIDTH,
+      height: DIALOG_HEIGHT,
+      preserveChildHeights: true,
+    });
+    app.onCommand('demo.button.deploy', () => lastAction.set('Deploy command + callback'));
+    dialog.add(at(content, CONTENT_PADDING, CONTENT_PADDING, CONTENT_WIDTH, CONTENT_HEIGHT));
+    app.desktop.addWindow(dialog);
+    return app;
   },
 });

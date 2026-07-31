@@ -1,0 +1,103 @@
+import type { ExampleEntry } from './types.js';
+
+/** Application-shell component laboratories followed by complete application showcases. */
+export const APPLICATION_EXAMPLES = [
+  {
+    id: 'application/application',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/application.ts',
+    load: () => import('../../examples/application/application.js'),
+  },
+  {
+    id: 'application/desktop',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/desktop.ts',
+    load: () => import('../../examples/application/desktop.js'),
+  },
+  {
+    id: 'application/router',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/router.ts',
+    load: () => import('../../examples/application/router.js'),
+  },
+  {
+    id: 'application/window',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/window.ts',
+    load: () => import('../../examples/application/window.js'),
+  },
+  {
+    id: 'application/menu-bar',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/menu-bar.ts',
+    load: () => import('../../examples/application/menu-bar.js'),
+  },
+  {
+    id: 'application/status-line',
+    category: 'application',
+    kind: 'app',
+    sourcePath: 'examples/application/status-line.ts',
+    load: () => import('../../examples/application/status-line.js'),
+  },
+  {
+    id: 'apps/hello',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/hello.ts',
+    load: () => import('../../examples/apps/hello.js'),
+  },
+  {
+    id: 'apps/editor',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/editor.ts',
+    load: () => import('../../examples/apps/editor.js'),
+  },
+  {
+    id: 'apps/amiga-clock',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/amiga-clock.ts',
+    load: () => import('../../examples/apps/amiga-clock.js'),
+  },
+  {
+    id: 'apps/matrix',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/matrix.ts',
+    load: () => import('../../examples/apps/matrix.js'),
+  },
+  {
+    id: 'apps/effects',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/effects.ts',
+    load: () => import('../../examples/apps/effects.js'),
+  },
+  {
+    id: 'apps/calculator',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/calculator.ts',
+    load: () => import('../../examples/apps/calculator.js'),
+  },
+  {
+    id: 'apps/life',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/life.ts',
+    load: () => import('../../examples/apps/life.js'),
+  },
+  {
+    id: 'apps/desktop',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/desktop.ts',
+    load: () => import('../../examples/apps/desktop.js'),
+  },
+] as const satisfies readonly ExampleEntry[];

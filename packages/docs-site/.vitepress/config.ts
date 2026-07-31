@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, type HeadConfig } from 'vitepress';
+import { defineConfig, type DefaultTheme, type HeadConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
+import { parseComponentCatalog, projectComponentNavigation } from '../src/components/component-catalog.mjs';
+import { parseGuideCatalog, projectGuideNavigation } from '../src/guides/guide-catalog.mjs';
 
 const BASE = process.env.DOCS_BASE ?? '/jsvision/';
 
@@ -27,9 +29,45 @@ const DEFAULT_DESCRIPTION = 'A TypeScript SDK for building classic terminal (TUI
 // regardless. The shipped build always runs `docs:api` first (root `docs:build`), so CI
 // and production carry the real tree; until then the /api/ route shows only the preface.
 const typedocSidebarPath = fileURLToPath(new URL('../api/typedoc-sidebar.json', import.meta.url));
-const typedocSidebar: unknown[] = existsSync(typedocSidebarPath)
-  ? JSON.parse(readFileSync(typedocSidebarPath, 'utf8'))
-  : [];
+
+/** Validate one generated TypeDoc sidebar row before it enters the VitePress configuration. */
+function isSidebarItem(value: unknown): value is DefaultTheme.SidebarItem {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const text = Reflect.get(value, 'text');
+  const link = Reflect.get(value, 'link');
+  const items = Reflect.get(value, 'items');
+  return (
+    typeof text === 'string' &&
+    (link === undefined || typeof link === 'string') &&
+    (items === undefined || (Array.isArray(items) && items.every(isSidebarItem)))
+  );
+}
+
+/** Read the generated TypeDoc sidebar, failing early when its shape drifts. */
+function readTypedocSidebar(path: string): DefaultTheme.SidebarItem[] {
+  if (!existsSync(path)) return [];
+  const candidate: unknown = JSON.parse(readFileSync(path, 'utf8'));
+  if (!Array.isArray(candidate) || !candidate.every(isSidebarItem)) {
+    throw new TypeError(`${path}: expected a VitePress sidebar array`);
+  }
+  return candidate;
+}
+
+const typedocSidebar = readTypedocSidebar(typedocSidebarPath);
+
+const componentCatalogPath = fileURLToPath(new URL('../components.json', import.meta.url));
+const componentNavigation = projectComponentNavigation(
+  parseComponentCatalog(readFileSync(componentCatalogPath, 'utf8'), componentCatalogPath).entries,
+);
+const guideCatalogPath = fileURLToPath(new URL('../guides.json', import.meta.url));
+const guideNavigation = projectGuideNavigation(
+  parseGuideCatalog(readFileSync(guideCatalogPath, 'utf8'), guideCatalogPath).entries,
+);
+
+/** Remove catalog-only IDs before handing a navigation row to VitePress. */
+function sidebarItem({ text, link }: { readonly text: string; readonly link: string }): { text: string; link: string } {
+  return { text, link };
+}
 
 const GITHUB_URL = 'https://github.com/blendsdk/jsvision';
 const NPM_URL = 'https://www.npmjs.com/package/@jsvision/core';
@@ -131,124 +169,28 @@ export default withMermaid(
       // One sidebar per section. Every link targets an existing page (no dead
       // links); the trees fill out as later milestones add content.
       sidebar: {
-        '/guide/': [
+        '/guide/': guideNavigation.map((group) => ({
+          text: group.text,
+          items: group.items.map(sidebarItem),
+        })),
+        '/components/data-grid/': [
           {
-            text: 'Getting started',
-            items: [
-              { text: 'Introduction', link: '/guide/' },
-              { text: 'Install & packages', link: '/guide/install-and-packages' },
-              { text: 'Codex plugin', link: '/guide/codex-plugin' },
-            ],
+            text: 'Data Grid',
+            items: componentNavigation.dataGrid.map(sidebarItem),
           },
+        ],
+        '/components/code-editor/': [
           {
-            text: 'Core concepts',
-            items: [
-              { text: 'Layout', link: '/guide/layout' },
-              { text: 'Reactive state', link: '/guide/reactive-state' },
-              { text: 'Views & focus', link: '/guide/views-and-focus' },
-              { text: 'Events, commands & keymaps', link: '/guide/events-commands-and-keymaps' },
-              { text: 'Keyboard & clipboard', link: '/guide/keyboard-and-clipboard' },
-            ],
-          },
-          {
-            text: 'Building applications',
-            items: [
-              { text: 'The application shell', link: '/guide/application-shell' },
-              { text: 'Internationalization', link: '/guide/i18n' },
-              { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
-              { text: 'Forms', link: '/guide/forms' },
-              { text: 'Data grid', link: '/guide/data-grid' },
-              { text: 'Code editor', link: '/guide/code-editor' },
-              { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
-            ],
-          },
-          {
-            text: 'Going further',
-            items: [
-              { text: 'Theming & colour depth', link: '/guide/theming-and-colour-depth' },
-              { text: 'Running in the browser', link: '/guide/running-in-the-browser' },
-              { text: 'Screens & routing', link: '/guide/screens-and-routing' },
-              { text: 'Writing your own widget', link: '/guide/writing-your-own-widget' },
-              { text: 'Testing headlessly', link: '/guide/testing-headlessly' },
-            ],
-          },
-          {
-            text: 'Operating a real app',
-            items: [
-              { text: 'Debugging', link: '/guide/debugging' },
-              { text: 'Crash safety & terminal restore', link: '/guide/crash-safety' },
-              { text: 'Displaying untrusted text safely', link: '/guide/untrusted-text' },
-              { text: 'In production', link: '/guide/in-production' },
-            ],
+            text: 'Code Editor',
+            items: componentNavigation.codeEditor.map(sidebarItem),
           },
         ],
         '/components/': [
           { text: 'Components', items: [{ text: 'Overview', link: '/components/' }] },
-          {
-            text: 'Controls',
-            items: [
-              { text: 'Button', link: '/components/controls/button' },
-              { text: 'Input', link: '/components/controls/input' },
-              { text: 'Text', link: '/components/controls/text' },
-              { text: 'Label', link: '/components/controls/label' },
-              { text: 'Check group', link: '/components/controls/check-group' },
-              { text: 'Radio group', link: '/components/controls/radio-group' },
-              { text: 'Slider', link: '/components/controls/slider' },
-              { text: 'Switch', link: '/components/controls/switch' },
-              { text: 'Form dialog', link: '/components/controls/form-dialog' },
-            ],
-          },
-          {
-            text: 'Containers',
-            items: [
-              { text: 'List box', link: '/components/containers/list-box' },
-              { text: 'Scroller', link: '/components/containers/scroller' },
-              { text: 'Scroll bar', link: '/components/containers/scroll-bar' },
-              { text: 'Tree', link: '/components/containers/tree' },
-              { text: 'Tabs', link: '/components/containers/tabs' },
-              { text: 'Dialog', link: '/components/containers/dialog' },
-            ],
-          },
-          { text: 'Table', items: [{ text: 'Data grid', link: '/components/table/data-grid' }] },
-          {
-            text: 'Feedback',
-            items: [
-              { text: 'Progress bar', link: '/components/feedback/progress-bar' },
-              { text: 'Spinner', link: '/components/feedback/spinner' },
-            ],
-          },
-          {
-            text: 'Date',
-            items: [
-              { text: 'Calendar', link: '/components/date/calendar' },
-              { text: 'Date picker', link: '/components/date/date-picker' },
-            ],
-          },
-          {
-            text: 'Color',
-            items: [
-              { text: 'Color swatch', link: '/components/color/color-swatch' },
-              { text: 'Color picker', link: '/components/color/color-picker' },
-            ],
-          },
-          { text: 'Surface', items: [{ text: 'Surface view', link: '/components/surface/surface-view' }] },
-          {
-            text: 'Editor',
-            items: [
-              { text: 'Editor', link: '/components/editor/editor' },
-              { text: 'Memo', link: '/components/editor/memo' },
-              { text: 'Edit window', link: '/components/editor/edit-window' },
-            ],
-          },
-          { text: 'Terminal', items: [{ text: 'Terminal', link: '/components/terminal/terminal' }] },
-          {
-            text: 'Dropdown',
-            items: [
-              { text: 'Combo box', link: '/components/dropdown/combo-box' },
-              { text: 'History', link: '/components/dropdown/history' },
-            ],
-          },
-          { text: 'Files', items: [{ text: 'File dialog', link: '/components/files/file-dialog' }] },
+          ...componentNavigation.components.map((group) => ({
+            text: group.text,
+            items: group.items.map(sidebarItem),
+          })),
           {
             text: 'Theming',
             items: [

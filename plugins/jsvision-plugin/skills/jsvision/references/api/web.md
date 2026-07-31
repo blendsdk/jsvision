@@ -37,6 +37,7 @@ interface BrowserHost {
   start(): void;   // Enable input modes and start pumping terminal bytes into the decoder.
   render(buffer: ScreenBuffer): void;   // Diff `buffer` against the previous frame and write the ANSI delta to the terminal.
   setCaret(cell: CaretCell | null): void;   // Position (or hide, when `null`) the hardware caret — wire to the loop's `onCaret`.
+  dispose(): void;   // Stop terminal input and pending decoder timers owned by this host.
 }
 ```
 
@@ -133,7 +134,7 @@ The handle returned by mountApp.
 interface MountedApp {
   term: TerminalLike;   // The terminal the app was mounted onto.
   host: BrowserHost;   // The browser host driving the terminal.
-  dispose(): void;   // Tear down the resize listener and the terminal.
+  dispose(): void;   // Release host input, the app loop, browser bridges, resize handling, and the optional terminal.
 }
 ```
 

@@ -10,6 +10,9 @@ import ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { Application, View } from '@jsvision/ui';
+import { parseComponentTarget } from '../src/api/component-target.mjs';
+import { parseComponentCatalog } from '../src/components/component-catalog.mjs';
+import { parseGuideCatalog } from '../src/guides/guide-catalog.mjs';
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(PACKAGE_ROOT, '..', '..');
@@ -20,6 +23,8 @@ const REFERENCE_PATH = join(PACKAGE_ROOT, 'reference', 'i18n.md');
 const ENTRY_POINT_REFERENCE_PATH = join(PACKAGE_ROOT, 'reference', 'i18n-entry-points.md');
 const CONFIG_PATH = join(PACKAGE_ROOT, '.vitepress', 'config.ts');
 const API_PACKAGES_PATH = join(PACKAGE_ROOT, 'src', 'api', 'packages.mjs');
+const COMPONENT_CATALOG_PATH = join(PACKAGE_ROOT, 'components.json');
+const GUIDE_CATALOG_PATH = join(PACKAGE_ROOT, 'guides.json');
 
 function readRequired(path: string): string {
   expect(existsSync(path), path).toBe(true);
@@ -131,7 +136,8 @@ describe('generated internationalization API navigation', () => {
     const reference = readRequired(REFERENCE_PATH);
     const config = readRequired(CONFIG_PATH);
     expect(reference).toMatch(/\/api\/i18n\//u);
-    expect(config).toMatch(/\/guide\/i18n/u);
+    const guideCatalog = parseGuideCatalog(readRequired(GUIDE_CATALOG_PATH), GUIDE_CATALOG_PATH);
+    expect(guideCatalog.entries.find((entry) => entry.id === 'i18n')?.page).toBe('/guide/i18n');
     expect(config).toMatch(/\/reference\/i18n/u);
     for (const packageName of ['ui', 'forms', 'files', 'datagrid', 'code-editor']) {
       expect(reference).toContain(`@jsvision/${packageName}/locales/`);
@@ -141,6 +147,14 @@ describe('generated internationalization API navigation', () => {
     expect(codeEditorExample).toContain('codeEditorNl');
     expect(codeEditorExample).toMatch(/catalogs:\s*\[\s*codeEditorNl,\s*overrides\s*\]/u);
     expect(readRequired(join(REPO_ROOT, 'packages', 'code-editor', 'README.md'))).toContain('CodeEditor');
-    expect(readRequired(join(REPO_ROOT, 'packages', 'docs-site', 'guide', 'code-editor.md'))).toContain('i18n');
+    const catalog = parseComponentCatalog(readRequired(COMPONENT_CATALOG_PATH));
+    const languageTopic = catalog.entries.find(
+      (entry) => entry.kind === 'topic' && entry.id === 'code-editor/languages-and-syntax',
+    );
+    expect(languageTopic).toBeDefined();
+    if (languageTopic === undefined || languageTopic.kind !== 'topic') return;
+    const target = parseComponentTarget(languageTopic.page);
+    const markdownPath = target.buildKey.replace(/\.html$/u, '.md');
+    expect(readRequired(join(PACKAGE_ROOT, markdownPath))).toContain('i18n');
   });
 });

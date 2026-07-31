@@ -21,10 +21,9 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { at, Group, createRoot } from '@jsvision/ui';
+import { at, fixed, Group, createRoot } from '@jsvision/ui';
 import { View } from '@jsvision/ui';
 import { demoShell } from '../src/demo-shell.js';
-import listBox from '../examples/containers/list-box.js';
 
 test('ST-9: at() writes absolute placement onto a bare view and returns it', () => {
   const v = new Group();
@@ -81,15 +80,18 @@ test('ST-12: the demo shell places a flex-rooted example without dropping its di
   createRoot((dispose) => {
     let root!: View;
     const app = demoShell({
-      // The registry's `build` may return an Application (for an 'app' example) or a View; this one is
-      // a component example, so anything else is a broken fixture rather than a case to handle.
-      build: (ctx) => {
-        const built = listBox.build(ctx);
-        if (!(built instanceof View)) throw new Error('the listBox example no longer builds a View');
-        root = built;
-        return built;
+      // A controlled component fixture keeps this layout-builder oracle independent from whichever
+      // documentation examples happen to use component or application chrome.
+      build: () => {
+        const fixture = new Group();
+        fixture.setLayout({ direction: 'col' });
+        fixture.add(fixed(new Group(), 4));
+        fixture.add(fixed(new Group(), 1));
+        fixture.add(fixed(new Group(), 1));
+        root = fixture;
+        return fixture;
       },
-      title: listBox.title,
+      title: 'Flex placement fixture',
       kind: 'component',
       caps,
       viewport,
@@ -100,9 +102,6 @@ test('ST-12: the demo shell places a flex-rooted example without dropping its di
     // would drop `direction`, and the column would re-solve as a row.
     expect(root.layout.direction).toBe('col');
     expect(root.layout.position).toBe('absolute');
-
-    // The example states its own box, rather than inheriting the shell's fallback size.
-    expect(root.bounds.height).toBe(12);
 
     // Asserted before destructuring so a structural change to the example fails with a readable
     // message instead of a bare TypeError on `children`.

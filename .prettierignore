@@ -7,6 +7,7 @@ coverage
 # VitePress generated output + cache (docs-site)
 **/.vitepress/dist
 **/.vitepress/cache
+**/.vitepress/.temp
 
 # Generated TypeDoc API reference (docs-site) — regenerated every build, gitignored.
 # The hand-written api/index.md preface stays formatted; only the generated trees +

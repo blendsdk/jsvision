@@ -478,7 +478,7 @@ describe('ST-42: public package, documentation, catalog, and release integration
   test('documents the public editor and standalone scenario catalog', () => {
     const readme = repositoryFile('packages/code-editor/README.md');
     const changelog = repositoryFile('packages/code-editor/CHANGELOG.md');
-    const docs = repositoryFile('packages/docs-site/guide/code-editor.md');
+    const docs = repositoryFile('packages/docs-site/components/code-editor/index.md');
 
     expect(readme).toMatch(/CodeEditorWindow/u);
     expect(readme).toMatch(/LSP|language server/u);

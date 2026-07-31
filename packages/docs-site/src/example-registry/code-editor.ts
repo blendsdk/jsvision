@@ -1,0 +1,156 @@
+import type { ExampleEntry } from './types.js';
+
+/**
+ * Focused Code Editor laboratories in specialist-hub teaching order.
+ *
+ * Every entry is an app because it owns the Classic desktop and responsive Template1Dialog.
+ */
+export const CODE_EDITOR_EXAMPLES = [
+  {
+    id: 'code-editor/quick-start',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/quick-start.ts',
+    load: () => import('../../examples/code-editor/quick-start.js'),
+  },
+  {
+    id: 'code-editor/document-controller',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/document-controller.ts',
+    load: () => import('../../examples/code-editor/document-controller.js'),
+  },
+  {
+    id: 'code-editor/external-changes',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/external-changes.ts',
+    load: () => import('../../examples/code-editor/external-changes.js'),
+  },
+  {
+    id: 'code-editor/editing-navigation',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/editing-navigation.ts',
+    load: () => import('../../examples/code-editor/editing-navigation.js'),
+  },
+  {
+    id: 'code-editor/readonly-clipboard',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/readonly-clipboard.ts',
+    load: () => import('../../examples/code-editor/readonly-clipboard.js'),
+  },
+  {
+    id: 'code-editor/language-gallery',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/language-gallery.ts',
+    load: () => import('../../examples/code-editor/language-gallery.js'),
+  },
+  {
+    id: 'code-editor/syntax-fallback',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/syntax-fallback.ts',
+    load: () => import('../../examples/code-editor/syntax-fallback.js'),
+  },
+  {
+    id: 'code-editor/invisibles-line-endings',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/invisibles-line-endings.ts',
+    load: () => import('../../examples/code-editor/invisibles-line-endings.js'),
+  },
+  {
+    id: 'code-editor/language-folding',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/language-folding.ts',
+    load: () => import('../../examples/code-editor/language-folding.js'),
+  },
+  {
+    id: 'code-editor/structural-folding',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/structural-folding.ts',
+    load: () => import('../../examples/code-editor/structural-folding.js'),
+  },
+  {
+    id: 'code-editor/search',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/search.ts',
+    load: () => import('../../examples/code-editor/search.js'),
+  },
+  {
+    id: 'code-editor/replace',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/replace.ts',
+    load: () => import('../../examples/code-editor/replace.js'),
+  },
+  {
+    id: 'code-editor/lsp-completion',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/lsp-completion.ts',
+    load: () => import('../../examples/code-editor/lsp-completion.js'),
+  },
+  {
+    id: 'code-editor/lsp-diagnostics',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/lsp-diagnostics.ts',
+    load: () => import('../../examples/code-editor/lsp-diagnostics.js'),
+  },
+  {
+    id: 'code-editor/lsp-navigation',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/lsp-navigation.ts',
+    load: () => import('../../examples/code-editor/lsp-navigation.js'),
+  },
+  {
+    id: 'code-editor/viewport-mouse',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/viewport-mouse.ts',
+    load: () => import('../../examples/code-editor/viewport-mouse.js'),
+  },
+  {
+    id: 'code-editor/large-document-tiers',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/large-document-tiers.ts',
+    load: () => import('../../examples/code-editor/large-document-tiers.js'),
+  },
+  {
+    id: 'code-editor/themes',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/themes.ts',
+    load: () => import('../../examples/code-editor/themes.js'),
+  },
+  {
+    id: 'code-editor/theme-fallback',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/theme-fallback.ts',
+    load: () => import('../../examples/code-editor/theme-fallback.js'),
+  },
+  {
+    id: 'code-editor/safe-terminal-text',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/safe-terminal-text.ts',
+    load: () => import('../../examples/code-editor/safe-terminal-text.js'),
+  },
+  {
+    id: 'code-editor/host-recovery',
+    category: 'code-editor',
+    kind: 'app',
+    sourcePath: 'examples/code-editor/host-recovery.ts',
+    load: () => import('../../examples/code-editor/host-recovery.js'),
+  },
+] as const satisfies readonly ExampleEntry[];
