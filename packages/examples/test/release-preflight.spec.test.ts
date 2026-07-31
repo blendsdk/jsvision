@@ -33,6 +33,9 @@ describe('release preflight', () => {
     expect(command).toBe(
       'yarn lockstep:version --no-git-commit && node scripts/sync-package-versions.mjs && yarn plugin:version && yarn plugin:update && yarn plugin:check',
     );
+
+    const versionSync = readRepositoryFile('scripts/sync-package-versions.mjs');
+    expect(versionSync).toContain("documentationFile: 'packages/docs-site/guide/install-and-packages.md'");
   });
 
   test('uses the shared preparation command in the publishing workflow', () => {
