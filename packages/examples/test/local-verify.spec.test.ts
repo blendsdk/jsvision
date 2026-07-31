@@ -15,7 +15,9 @@ describe('local verification', () => {
       scripts?: Record<string, unknown>;
     };
 
-    expect(packageJson.scripts?.['verify:local']).toBe('node scripts/verify-local.mjs');
+    expect(packageJson.scripts?.['verify:local']).toBe(
+      'yarn check:commit-attribution && node scripts/verify-local.mjs',
+    );
     expect(packageJson.scripts?.verify).toContain('turbo run test');
   });
 

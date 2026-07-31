@@ -20,7 +20,7 @@ describe('release preflight', () => {
     const command = packageJson.scripts?.verify;
 
     expect(command).toBe(
-      'yarn lint && yarn check:i18n-literals && yarn i18n:locales:check && turbo run typecheck build check:docs && turbo run test && yarn perf:check && yarn plugin:check',
+      'yarn check:commit-attribution && yarn lint && yarn check:i18n-literals && yarn i18n:locales:check && turbo run typecheck build check:docs && turbo run test && yarn perf:check && yarn plugin:check',
     );
   });
 
