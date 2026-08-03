@@ -1,3 +1,5 @@
+import { KanbanError } from './error.js';
+
 /** One package resource limit across safe, standard, and absolute classes. */
 export interface KanbanLimitRow {
   /** Conservative default and maximum accepted by the safe class. */
@@ -52,7 +54,7 @@ export interface KanbanLimitOptions {
 }
 
 /** A safe typed error raised before invalid resource limits can be used. */
-export class KanbanInvalidLimitError extends Error {
+export class KanbanInvalidLimitError extends KanbanError {
   /** Stable machine-readable failure code. */
   readonly code = 'invalid-limit' as const;
 

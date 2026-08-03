@@ -1,3 +1,5 @@
+import { KanbanError } from './error.js';
+
 /** A stable application-owned card identity. Numbers and strings remain distinct keys. */
 export type CardKey = string | number;
 
@@ -35,7 +37,7 @@ declare const placementTokenBrand: unique symbol;
 export type PlacementToken = string & { readonly [placementTokenBrand]: true };
 
 /** A safe typed error raised before an invalid structural identity is published. */
-export class KanbanInvalidIdentityError extends Error {
+export class KanbanInvalidIdentityError extends KanbanError {
   /** Stable machine-readable failure code. */
   readonly code = 'invalid-identity' as const;
 
