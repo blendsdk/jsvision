@@ -153,9 +153,61 @@ command, or dialog requests all use this one function boundary. `board.request(r
 forwards the request when a dispatcher is configured; it never mutates source objects or treats an
 accepted result as committed data.
 
+Phase A fixes the following foundational shape. Later package-owned request variants join the
+`KanbanRequest` union without changing the extension envelope:
+
+```ts
+export interface KanbanExtensionRequest<
+  TType extends KanbanExtensionId = KanbanExtensionId,
+  TPayload extends KanbanSemanticValue = KanbanSemanticValue,
+> {
+  readonly kind: 'extension';
+  readonly extensionId: TType;
+  readonly operationId: KanbanOperationId;
+  readonly expected: KanbanRequestExpectedRevisions;
+  readonly payload: TPayload;
+  readonly signal: AbortSignal;
+}
+
+export type KanbanRequest = KanbanExtensionRequest;
+
+export type KanbanRequestResult =
+  | KanbanRequestAccepted
+  | KanbanRequestRejected
+  | KanbanRequestCancelled
+  | KanbanRequestSuperseded;
+
+export type KanbanRequestDispatcher = (
+  request: KanbanRequest,
+  context: KanbanRequestContext,
+) => KanbanRequestResult | Promise<KanbanRequestResult>;
+```
+
+`KanbanRequestExpectedRevisions` has optional equality-only board, source, and query revisions plus a
+bounded list of typed card/column/swimlane entity revisions. The object itself is required so callers
+make the captured-revision boundary explicit even when a raw extension has no applicable revision.
+Payload is also required; `null` is the sole no-payload representation. The package validates and
+snapshots both values before application code runs, while passing the live signal by identity.
+
+Every result repeats the operation ID. Rejections have a bounded safe code and optional sanitized
+label; cancelled and superseded outcomes remain distinct. An accepted result may carry a bounded
+`KanbanPublicationExpectation` containing only operation identity, typed card/column/swimlane subjects,
+and baseline/expected revisions. The package dispatch helper accepts a synchronous result or native
+`Promise`, always returns a `Promise<KanbanRequestResult>`, rejects a mismatched operation ID, and
+normalizes application throws/rejections to a sanitized rejection. It does not execute arbitrary
+thenables.
+
+`KanbanCapabilities` contains an immutable optional map from validated extension IDs to
+`allowed`, `disabled`, or `hidden` UX descriptions. A missing entry means allowed for discoverability;
+it never means authorized. Raw request dispatch does not consult the map. `KanbanRequestContext`
+provides the captured capability description to application code for diagnostics only.
+
 The board records only bounded request identity/revision metadata needed to reconcile the next source
 publication. Matching authoritative publication clears the pending metadata; contradictory publication
 also clears it and renders the application value. No Phase A optimistic card/column visual is applied.
+The pure reconciliation helper receives pending publication metadata plus a typed authoritative
+`matching` or `contradictory` notice. It never receives application records, preserves numeric and
+string card keys as distinct map identities, and emits only safe operation/subject/revision metadata.
 Capabilities are a reactive UX description only: a raw request remains constructible and reaches the
 dispatcher even when a capability is denied, so the application remains the authorization boundary.
 

@@ -1,9 +1,10 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 24 items resolved
-> **Last Updated**: 2026-08-03 21:38 CEST
-> **Mode**: Auto-design active from PAR-20 onward
-> **Root Invocation ID**: `AD-KANBAN-PHASE-A-20260803T213242Z`
+> **Status**: ✅ GATE PASSED — all 25 items resolved
+> **Last Updated**: 2026-08-04 00:09 CEST
+> **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
+> **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
+> `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
 > **Policy Version**: 1
 > **CodeOps Artifact Schema**: 1
 
@@ -43,6 +44,7 @@
 | PAR-22 | Technical | One-board query session and cursor ownership mechanism | Generation-owned address map / reference-counted pool / separate controller store | Delegated: private generation-owned address map with explicit retention owners | ✅ Resolved |
 | PAR-23 | Technical | Descriptor projection caching mechanism | Bounded viewport-local semantic cache / recompute every frame / global LRU | Delegated: bounded visible/overscan semantic cache with owned reactive scopes | ✅ Resolved |
 | PAR-24 | Integration | Official locale registration conflicts with provisional review evidence | Approve digest-bound Phase A catalogs now / introduce a provisional registry exemption | Delegated: review and approve the bounded Phase A vocabulary now; later catalog changes renew review | ✅ Resolved |
+| PAR-25 | Technical (runtime) | Exact Phase A request, result, capability, dispatcher-context, and publication-metadata shapes were not fixed deeply enough to author an immutable public oracle | Closed package-owned extension envelope / declaration-merging registry / free generic request interface | Delegated: a package-owned `extension` envelope with required semantic payload, captured revisions and signal; four-result union; sync-or-native-Promise dispatcher with context; per-extension UX capability map; separate publication metadata | ✅ Resolved |
 
 ## Resolution notes
 
@@ -185,6 +187,50 @@ the current release invariant across generator, checker, tests, and docs. **Conf
 invocation. **Reopen if:** the repository deliberately introduces a first-class provisional-package
 registry with non-release semantics.
 
+### PAR-25 — Phase A raw request contract
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** This selects an exact initial
+TypeScript interface inside the already approved raw request, application-authority, capability, and
+publication-reconciliation behavior. It adds no request feature, command, mutation, or authorization
+policy and changes no acceptance criterion. **Objective:** Give specification tests one durable,
+runtime-validatable request boundary without freezing later standard mutation variants prematurely.
+
+**Decision:** Phase A exports `KanbanExtensionRequest<TType, TPayload>` as the sole current member of
+`KanbanRequest`. It has package-owned `kind: 'extension'`, a validated namespaced `extensionId`, unique
+`operationId`, required bounded semantic `payload` (`null` represents no payload), a required structured
+`expected` revision snapshot, and a live `AbortSignal`. `KanbanRequestResult` is an operation-correlated
+`accepted | rejected | cancelled | superseded` union. `KanbanRequestDispatcher` receives the request
+plus a read-only `KanbanRequestContext` and may return a result synchronously or through a native
+`Promise`; the package-facing dispatch helper always returns a `Promise`, validates and snapshots before
+calling application code, rejects mismatched result operation IDs, and normalizes throws/rejections to
+a sanitized rejection. `KanbanCapabilities` is an immutable per-extension UX description using
+`allowed | disabled | hidden`; an absent entry means allowed for discoverability, and raw dispatch never
+consults the map. Accepted results may carry separate bounded `KanbanPublicationExpectation` metadata.
+Pure reconciliation consumes only pending metadata and an authoritative matching/contradictory notice,
+preserves `CardKey` identity without stringification, clears the operation in either case, and never
+receives or mutates application records.
+
+**Evidence:** The requirements already require operation correlation, captured board/source/query/entity
+revisions, typed payload, `AbortSignal`, dispatcher context, four terminal outcomes, and capability as
+diagnostic UX rather than authorization. The package specification requires a package-owned
+discriminator and a documented extension strategy. Repository scanning found no existing dispatcher
+contract that would justify a different house shape. **Rejected alternatives:** Declaration merging
+makes the runtime union ambient and dependency-order-sensitive, weakening deterministic validation. A
+free generic request type has no package-owned top-level discriminant for later standard variants.
+Making payload optional creates two encodings of no payload. Promise-only dispatchers make synchronous
+application tests needlessly awkward; accepting arbitrary thenables broadens the hostile callback
+surface. **Strongest counterargument:** A declaration-merging registry gives application extensions
+more global compile-time ergonomics. The generic extension envelope retains local strong typing without
+ambient mutation, and a later typed builder can improve inference compatibly. **Confidence:** High
+(0.92). **Hardening:** Independent blind challenger converged on the extension envelope, required
+payload, per-extension capability map, and normalized async package boundary; reconciliation added the
+already-required signal, context, captured revision structure, and cancelled/superseded outcomes that
+the challenge packet held fixed. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** a later standard request cannot join the
+package-owned discriminated union compatibly, native-Promise normalization prevents a supported
+dispatcher integration, or publication matching cannot be expressed without retaining application
+records.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -193,5 +239,5 @@ registry with non-release semantics.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-24 have complete delegated records after independent challenge.
+- [x] PAR-20 through PAR-25 have complete delegated records after independent challenge.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

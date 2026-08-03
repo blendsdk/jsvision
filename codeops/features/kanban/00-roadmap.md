@@ -3,7 +3,7 @@
 > **Feature-Set**: JSVision Kanban
 > **Status**: In Progress
 > **Created**: 2026-08-03
-> **Last Updated**: 2026-08-03
+> **Last Updated**: 2026-08-04
 > **Progress**: 0 / 15 (0%)
 > **CodeOps Artifact Schema**: 1
 
@@ -15,9 +15,9 @@
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Depends-on / Blocker |
 |----|-------|----|------|-------|--------|--------------|----------------------|
-| RD-01 | Package and public architecture | [RD-01](requirements/RD-01-package-public-architecture.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Plan Preflighted | 🔬 | 2026-08-03 | — |
-| RD-02 | Data sources and query model | [RD-02](requirements/RD-02-data-sources-query-model.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Plan Preflighted | 🔬 | 2026-08-03 | depends on RD-01 |
-| RD-03 | Responsive layout and viewport | [RD-03](requirements/RD-03-responsive-layout-viewport.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Plan Preflighted | 🔬 | 2026-08-03 | depends on RD-01, RD-02 |
+| RD-01 | Package and public architecture | [RD-01](requirements/RD-01-package-public-architecture.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Executing | 🔄 | 2026-08-04 | — |
+| RD-02 | Data sources and query model | [RD-02](requirements/RD-02-data-sources-query-model.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Executing | 🔄 | 2026-08-04 | depends on RD-01 |
+| RD-03 | Responsive layout and viewport | [RD-03](requirements/RD-03-responsive-layout-viewport.md) | [Phase A](plans/phase-a-foundation/00-index.md) | Executing | 🔄 | 2026-08-04 | depends on RD-01, RD-02 |
 | RD-04 | Cards and presentation | [RD-04](requirements/RD-04-cards-presentation.md) | [Phase A slice](plans/phase-a-foundation/00-index.md) | RD Preflighted | 🔎 | 2026-08-03 | only AC 1–2 planned; depends on RD-01, RD-03 |
 | RD-05 | Columns, swimlanes, and workflow policy | [RD-05](requirements/RD-05-columns-swimlanes-workflow.md) | [Phase A slice](plans/phase-a-foundation/00-index.md) | RD Preflighted | 🔎 | 2026-08-03 | only AC 1/18 planned; depends on RD-02–RD-04 |
 | RD-06 | Focus, navigation, and selection | [RD-06](requirements/RD-06-focus-navigation-selection.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-03, RD-05 |
