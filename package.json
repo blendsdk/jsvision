@@ -48,6 +48,9 @@
     "docs:api": "yarn build && yarn workspace @jsvision/docs-site docs:api",
     "docs:build": "yarn docs:api && yarn workspace @jsvision/docs-site vp:build",
     "docs:check": "node packages/docs-site/scripts/check-docs-build.mjs",
+    "techdocs:dev": "yarn workspace @jsvision/docs-site exec vitepress dev ../../docs",
+    "techdocs:build": "yarn workspace @jsvision/docs-site exec vitepress build ../../docs",
+    "techdocs:preview": "yarn workspace @jsvision/docs-site exec vitepress preview ../../docs",
     "prepare": "husky"
   },
   "commitlint": {
