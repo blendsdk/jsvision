@@ -182,6 +182,9 @@ function walkRecord(value: object, depth: number, active: WeakSet<object>): Sema
  *
  * The caller object is never retained and accessors are rejected without invocation.
  */
+export function snapshotKanbanSemanticValue<T extends KanbanSemanticValue>(value: T): T;
+/** Validates untyped boundary input and returns its detached semantic representation. */
+export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue;
 export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue {
   return walkSemantic(value, 0, new WeakSet()).value;
 }

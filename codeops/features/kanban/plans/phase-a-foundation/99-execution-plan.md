@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 00:56 CEST
-> **Progress**: 10/64 tasks (16%)
+> **Last Updated**: 2026-08-04 01:04 CEST
+> **Progress**: 11/64 tasks (17%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -53,7 +53,7 @@ first `[ ]`. Preserve unrelated worktree changes and record the actual phase bas
 - [x] 1.2.3 Add main/testing barrels and module directories while preserving production/testing graph isolation — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-04 00:45)
 - [x] 1.2.4 Implement documented identity validators/factories, revision equality, and the full immutable limits manifest/class selection — `packages/kanban/src/contract/{identity,limits,revision}.ts` ✅ (completed: 2026-08-04 00:49)
 - [x] 1.2.5 Implement typed error hierarchy, bounded observation buffer/safe redaction, and bounded sorted deep-frozen semantic JSON/query snapshots with derived fingerprints — `packages/kanban/src/contract/{error,observation,semantic-query}.ts` ✅ (completed: 2026-08-04 00:56)
-- [ ] 1.2.6 Implement public namespaced request/result/dispatcher/capability contracts and publication-only reconciliation metadata; accepted/contradictory results never mutate application records — `packages/kanban/src/contract/{request,capability,authority}.ts`
+- [x] 1.2.6 Implement public namespaced request/result/dispatcher/capability contracts and publication-only reconciliation metadata; accepted/contradictory results never mutate application records — `packages/kanban/src/contract/{request,capability,authority}.ts` ✅ (completed: 2026-08-04 01:04)
 - [ ] 1.3.1 Add implementation/property tests for boundary arithmetic, snapshot detachment/key order, hostile prototypes/accessors, observation eviction/redaction, dispatcher failure, and idempotent reconciliation; make every Phase 1-owned contract/package/packed-consumer spec green while leaving mounted component oracles to Phase 4; run Kanban typecheck/build/docs checks, `yarn verify:local`, and the phase reviewer/auditor loop — `packages/kanban/test/{contracts,authority}.impl.test.ts`
 
 **Phase 1 deliverable:** A type-safe publishable shell and independently testable public authority/

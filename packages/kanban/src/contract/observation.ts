@@ -1,6 +1,5 @@
-import { sanitize } from '@jsvision/core';
-
 import type { CardKey, KanbanColumnId, KanbanSwimlaneId } from './identity.js';
+import { sanitizeContractText } from './text-safety.js';
 
 /** Runtime scope in which an isolated application or package failure occurred. */
 export type KanbanObservationScope = 'board' | 'query' | 'source' | 'cell' | 'card' | 'renderer' | 'request';
@@ -62,7 +61,7 @@ const SAFE_SCOPES = new Set<KanbanObservationScope>([
 /** Sanitizes and bounds a display label without reading a caught error. */
 function safeMessage(message: string | undefined): string | undefined {
   if (message === undefined) return undefined;
-  const cleaned = sanitize(message)
+  const cleaned = sanitizeContractText(message)
     .replace(/[\t\n]+/gu, ' ')
     .trim();
   if (cleaned.length === 0) return undefined;
