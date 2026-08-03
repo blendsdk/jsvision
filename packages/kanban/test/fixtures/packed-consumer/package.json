@@ -1,0 +1,12 @@
+{
+  "name": "@jsvision-fixtures/kanban-packed-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@jsvision/kanban": "*"
+  }
+}
