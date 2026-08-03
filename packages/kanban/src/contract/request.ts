@@ -39,7 +39,7 @@ export interface KanbanRequestExpectedRevisions {
 /** Generic namespaced application-extension request. */
 export interface KanbanExtensionRequest<
   TType extends KanbanExtensionId = KanbanExtensionId,
-  TPayload = KanbanSemanticValue,
+  TPayload extends KanbanSemanticValue = KanbanSemanticValue,
 > {
   readonly kind: 'extension';
   readonly extensionId: TType;
@@ -49,13 +49,8 @@ export interface KanbanExtensionRequest<
   readonly signal: AbortSignal;
 }
 
-/**
- * Current package-owned request union, designed to accept later standard variants.
- *
- * The union erases only the consumer payload type so named application interfaces remain assignable;
- * the dispatcher boundary still validates every payload as bounded semantic data before invocation.
- */
-export type KanbanRequest = KanbanExtensionRequest<KanbanExtensionId, unknown>;
+/** Current package-owned request union, designed to accept later standard variants. */
+export type KanbanRequest = KanbanExtensionRequest;
 
 /** Publication metadata returned with an accepted request result. */
 export interface KanbanRequestAccepted {
@@ -92,22 +87,11 @@ export interface KanbanRequestSuperseded {
 export type KanbanRequestResult =
   KanbanRequestAccepted | KanbanRequestRejected | KanbanRequestCancelled | KanbanRequestSuperseded;
 
-/**
- * Structurally inferred dispatcher outcome accepted for runtime validation.
- *
- * This shape lets ordinary callbacks return object literals without `as const`; the package still
- * validates the discriminator, correlation ID, and variant fields before publishing a typed result.
- */
-export interface KanbanDispatcherOutcome {
-  readonly kind: string;
-  readonly operationId: KanbanOperationId;
-}
-
 /** Application-owned dispatcher; capability descriptions never authorize this call. */
 export type KanbanRequestDispatcher = (
   request: KanbanRequest,
   context: KanbanRequestContext,
-) => KanbanRequestResult | KanbanDispatcherOutcome | Promise<KanbanRequestResult | KanbanDispatcherOutcome>;
+) => KanbanRequestResult | Promise<KanbanRequestResult>;
 
 /** Card publication expected after an accepted application request. */
 export interface KanbanCardPublicationSubject {

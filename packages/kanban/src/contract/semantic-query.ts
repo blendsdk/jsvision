@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import { KanbanInvalidSemanticValueError } from './error.js';
 import { KANBAN_LIMITS } from './limits.js';
 
@@ -11,6 +9,11 @@ export type KanbanSemanticValue =
 interface SemanticSnapshot {
   readonly value: KanbanSemanticValue;
   readonly canonical: string;
+}
+
+/** Shared remaining canonical-byte budget for one complete semantic traversal. */
+interface SemanticBudget {
+  remainingBytes: number;
 }
 
 /** Unsafe object member names rejected before copying into ordinary records. */
@@ -32,11 +35,11 @@ function quote(value: string): string {
   return encoded;
 }
 
-/** Rejects a canonical fragment as soon as it exceeds the active encoded-byte budget. */
-function enforceEncodedLimit(canonical: string): void {
-  if (encodedBytes(canonical) > KANBAN_LIMITS.semanticEncodedBytes.safe) {
-    throw new KanbanInvalidSemanticValueError();
-  }
+/** Consumes canonical bytes before the corresponding snapshot fragment is retained. */
+function consumeCanonical(budget: SemanticBudget, fragment: string): void {
+  const bytes = encodedBytes(fragment);
+  if (bytes > budget.remainingBytes) throw new KanbanInvalidSemanticValueError();
+  budget.remainingBytes -= bytes;
 }
 
 /** Reads descriptors and prototype while normalizing hostile proxy failures to a typed error. */
@@ -66,23 +69,39 @@ function isSemanticArray(value: object): value is readonly unknown[] {
 }
 
 /** Validates and copies one semantic node while deriving its canonical fragment. */
-function walkSemantic(value: unknown, depth: number, active: WeakSet<object>): SemanticSnapshot {
+function walkSemantic(
+  value: unknown,
+  depth: number,
+  active: WeakSet<object>,
+  budget: SemanticBudget,
+): SemanticSnapshot {
   if (depth > KANBAN_LIMITS.semanticDepth.safe) throw new KanbanInvalidSemanticValueError();
 
-  if (value === null) return { value: null, canonical: 'null' };
-  if (typeof value === 'boolean') return { value, canonical: value ? 'true' : 'false' };
+  if (value === null) {
+    consumeCanonical(budget, 'null');
+    return { value: null, canonical: 'null' };
+  }
+  if (typeof value === 'boolean') {
+    const canonical = value ? 'true' : 'false';
+    consumeCanonical(budget, canonical);
+    return { value, canonical };
+  }
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) throw new KanbanInvalidSemanticValueError();
     const normalized = Object.is(value, -0) ? 0 : value;
     const canonical = String(normalized);
+    consumeCanonical(budget, canonical);
     return { value: normalized, canonical };
   }
   if (typeof value === 'string') {
-    if (encodedBytes(value) > KANBAN_LIMITS.semanticStringBytes.safe) {
+    if (
+      value.length > KANBAN_LIMITS.semanticStringBytes.safe ||
+      encodedBytes(value) > KANBAN_LIMITS.semanticStringBytes.safe
+    ) {
       throw new KanbanInvalidSemanticValueError();
     }
     const canonical = quote(value);
-    enforceEncodedLimit(canonical);
+    consumeCanonical(budget, canonical);
     return { value, canonical };
   }
   if (typeof value !== 'object') throw new KanbanInvalidSemanticValueError();
@@ -90,15 +109,20 @@ function walkSemantic(value: unknown, depth: number, active: WeakSet<object>): S
 
   active.add(value);
   try {
-    if (isSemanticArray(value)) return walkArray(value, depth, active);
-    return walkRecord(value, depth, active);
+    if (isSemanticArray(value)) return walkArray(value, depth, active, budget);
+    return walkRecord(value, depth, active, budget);
   } finally {
     active.delete(value);
   }
 }
 
 /** Validates a dense array with no custom members, then copies and freezes it. */
-function walkArray(value: readonly unknown[], depth: number, active: WeakSet<object>): SemanticSnapshot {
+function walkArray(
+  value: readonly unknown[],
+  depth: number,
+  active: WeakSet<object>,
+  budget: SemanticBudget,
+): SemanticSnapshot {
   const inspected = inspectObject(value);
   if (inspected.prototype !== Array.prototype) throw new KanbanInvalidSemanticValueError();
   const lengthDescriptor = inspected.descriptors.length;
@@ -112,13 +136,17 @@ function walkArray(value: readonly unknown[], depth: number, active: WeakSet<obj
     throw new KanbanInvalidSemanticValueError();
   }
   const length = lengthDescriptor.value;
+  if (inspected.keys.length !== length + 1) throw new KanbanInvalidSemanticValueError();
 
   for (const key of inspected.keys) {
     if (typeof key !== 'string') throw new KanbanInvalidSemanticValueError();
     if (key !== 'length' && !ARRAY_INDEX.test(key)) throw new KanbanInvalidSemanticValueError();
+    if (key !== 'length' && Number(key) >= length) throw new KanbanInvalidSemanticValueError();
   }
 
-  const snapshots: SemanticSnapshot[] = [];
+  consumeCanonical(budget, '[');
+  const snapshotValues: KanbanSemanticValue[] = [];
+  const canonicalParts = ['['];
   for (let index = 0; index < length; index += 1) {
     const descriptor = inspected.descriptors[String(index)];
     if (
@@ -129,19 +157,25 @@ function walkArray(value: readonly unknown[], depth: number, active: WeakSet<obj
     ) {
       throw new KanbanInvalidSemanticValueError();
     }
-    snapshots.push(walkSemantic(descriptor.value, depth + 1, active));
+    if (index > 0) {
+      consumeCanonical(budget, ',');
+      canonicalParts.push(',');
+    }
+    const child = walkSemantic(descriptor.value, depth + 1, active, budget);
+    snapshotValues.push(child.value);
+    canonicalParts.push(child.canonical);
   }
 
-  const canonical = `[${snapshots.map(({ canonical: item }) => item).join(',')}]`;
-  enforceEncodedLimit(canonical);
+  consumeCanonical(budget, ']');
+  canonicalParts.push(']');
   return {
-    value: Object.freeze(snapshots.map(({ value: item }) => item)),
-    canonical,
+    value: Object.freeze(snapshotValues),
+    canonical: canonicalParts.join(''),
   };
 }
 
 /** Validates a plain data record, sorts its keys, then copies and freezes it. */
-function walkRecord(value: object, depth: number, active: WeakSet<object>): SemanticSnapshot {
+function walkRecord(value: object, depth: number, active: WeakSet<object>, budget: SemanticBudget): SemanticSnapshot {
   const inspected = inspectObject(value);
   if (inspected.prototype !== Object.prototype && inspected.prototype !== null) {
     throw new KanbanInvalidSemanticValueError();
@@ -151,9 +185,10 @@ function walkRecord(value: object, depth: number, active: WeakSet<object>): Sema
   const keys = inspected.keys.filter((key): key is string => typeof key === 'string').sort();
   if (keys.length > KANBAN_LIMITS.semanticObjectKeys.safe) throw new KanbanInvalidSemanticValueError();
 
+  consumeCanonical(budget, '{');
   const snapshot: Record<string, KanbanSemanticValue> = {};
-  const canonicalEntries: string[] = [];
-  for (const key of keys) {
+  const canonicalParts = ['{'];
+  for (const [index, key] of keys.entries()) {
     const descriptor = inspected.descriptors[key];
     if (
       UNSAFE_KEYS.has(key) ||
@@ -164,17 +199,35 @@ function walkRecord(value: object, depth: number, active: WeakSet<object>): Sema
     ) {
       throw new KanbanInvalidSemanticValueError();
     }
-    if (encodedBytes(key) > KANBAN_LIMITS.semanticStringBytes.safe) {
+    if (
+      key.length > KANBAN_LIMITS.semanticStringBytes.safe ||
+      encodedBytes(key) > KANBAN_LIMITS.semanticStringBytes.safe
+    ) {
       throw new KanbanInvalidSemanticValueError();
     }
-    const child = walkSemantic(descriptor.value, depth + 1, active);
+    if (index > 0) {
+      consumeCanonical(budget, ',');
+      canonicalParts.push(',');
+    }
+    const canonicalKey = quote(key);
+    consumeCanonical(budget, canonicalKey);
+    consumeCanonical(budget, ':');
+    canonicalParts.push(canonicalKey, ':');
+    const child = walkSemantic(descriptor.value, depth + 1, active, budget);
     snapshot[key] = child.value;
-    canonicalEntries.push(`${quote(key)}:${child.canonical}`);
+    canonicalParts.push(child.canonical);
   }
 
-  const canonical = `{${canonicalEntries.join(',')}}`;
-  enforceEncodedLimit(canonical);
-  return { value: Object.freeze(snapshot), canonical };
+  consumeCanonical(budget, '}');
+  canonicalParts.push('}');
+  return { value: Object.freeze(snapshot), canonical: canonicalParts.join('') };
+}
+
+/** Runs one semantic traversal with a global encoded-byte budget. */
+function createSemanticSnapshot(value: unknown): SemanticSnapshot {
+  return walkSemantic(value, 0, new WeakSet(), {
+    remainingBytes: KANBAN_LIMITS.semanticEncodedBytes.safe,
+  });
 }
 
 /**
@@ -186,15 +239,20 @@ export function snapshotKanbanSemanticValue<T extends KanbanSemanticValue>(value
 /** Validates untyped boundary input and returns its detached semantic representation. */
 export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue;
 export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue {
-  return walkSemantic(value, 0, new WeakSet()).value;
+  return createSemanticSnapshot(value).value;
 }
 
 /**
- * Derives a stable SHA-256 fingerprint from the same canonical semantic snapshot rules.
+ * Derives a stable browser-safe 64-bit fingerprint from the canonical semantic snapshot.
  *
  * Fingerprints accelerate cache lookup but do not replace semantic equality checks.
  */
 export function fingerprintKanbanSemanticValue(value: unknown): string {
-  const { canonical } = walkSemantic(value, 0, new WeakSet());
-  return createHash('sha256').update(canonical, 'utf8').digest('hex');
+  const bytes = ENCODER.encode(createSemanticSnapshot(value).canonical);
+  let hash = 14_695_981_039_346_656_037n;
+  for (const byte of bytes) {
+    hash ^= BigInt(byte);
+    hash = BigInt.asUintN(64, hash * 1_099_511_628_211n);
+  }
+  return hash.toString(16).padStart(16, '0');
 }

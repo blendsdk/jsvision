@@ -1,7 +1,7 @@
 # Kanban API design
 
-> **Last Updated**: 2026-08-03
-> **Status**: Accepted design; signatures remain subject to specification-first implementation
+> **Last Updated**: 2026-08-04
+> **Status**: Foundation contracts implemented; board, source, adapter, and dialog surfaces remain planned
 
 ## API style
 
@@ -12,16 +12,16 @@ separate `/model` or `/dialogs` public subpaths.
 
 ## Public topology
 
-| Surface                           | Purpose                                             | Authority                                         |
-| --------------------------------- | --------------------------------------------------- | ------------------------------------------------- |
-| `KanbanBoard<TCard>`              | DSL-composed board component                        | Component session state                           |
-| `KanbanDataSource<TCard>`         | Open a coherent query session                       | Application/data adapter                          |
-| Query session and cell cursor     | Bounded lazy acquisition and edge/count knowledge   | Data adapter                                      |
-| Card adapter/descriptors          | Map arbitrary records to safe visual content        | Application/package adapter                       |
-| `KanbanRequest<TCard>` dispatcher | Carry every requested mutation atomically           | Application                                       |
-| Commands and keymap               | Keyboard/menu/programmatic actions                  | Component, gated by capabilities                  |
-| Card/configuration dialogs        | Collect validated request inputs                    | Package UI; application decides whether to invoke |
-| Saved-view codec                  | Validate and migrate durable semantic configuration | Package codec; application storage                |
+| Surface                       | Purpose                                             | Authority                                         |
+| ----------------------------- | --------------------------------------------------- | ------------------------------------------------- |
+| `KanbanBoard<TCard>`          | DSL-composed board component                        | Component session state                           |
+| `KanbanDataSource<TCard>`     | Open a coherent query session                       | Application/data adapter                          |
+| Query session and cell cursor | Bounded lazy acquisition and edge/count knowledge   | Data adapter                                      |
+| Card adapter/descriptors      | Map arbitrary records to safe visual content        | Application/package adapter                       |
+| `KanbanRequest` dispatcher    | Carry every requested mutation atomically           | Application                                       |
+| Commands and keymap           | Keyboard/menu/programmatic actions                  | Component, gated by capabilities                  |
+| Card/configuration dialogs    | Collect validated request inputs                    | Package UI; application decides whether to invoke |
+| Saved-view codec              | Validate and migrate durable semantic configuration | Package codec; application storage                |
 
 ## Request protocol
 
@@ -35,9 +35,9 @@ sequenceDiagram
     U->>K: Invoke action
     K->>K: Validate capability and normalize input
     K->>A: Dispatch discriminated request
-    A-->>K: Pending acknowledgement
     A->>A: Authorize and apply atomically
-    alt committed
+    alt accepted
+        A-->>K: Accepted result + publication expectation
         A->>S: Publish new revision
         S-->>K: Updated query/session data
         K-->>U: Reconciled committed state
@@ -50,6 +50,12 @@ sequenceDiagram
 Create, edit, move, reorder, configure, bulk, and undo/redo intents all use this dispatcher. A move
 uses destination column/swimlane identity plus an opaque placement token. The component never writes
 rank fields or guesses persistence semantics.
+
+The implemented foundation currently exposes a namespaced extension request envelope, captured
+board/source/query/entity revisions, four operation-correlated result variants, bounded publication
+expectations, and pure reconciliation. Requests, contexts, results, and publication notices are
+copied through descriptor-only exact-shape validation before application data is retained or used.
+Capability descriptions control presentation only and are never treated as authorization.
 
 ## Query and pagination conventions
 

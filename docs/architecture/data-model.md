@@ -1,7 +1,7 @@
 # Kanban data model
 
-> **Last Updated**: 2026-08-03
-> **Status**: Accepted design; implementation pending
+> **Last Updated**: 2026-08-04
+> **Status**: Identity, revision, semantic-value, request, publication, and observation foundations implemented
 
 ## Domain model
 

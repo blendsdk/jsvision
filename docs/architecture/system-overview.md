@@ -1,13 +1,14 @@
 # System overview
 
-> **Last Updated**: 2026-08-03
+> **Last Updated**: 2026-08-04
 
 ## Architecture style
 
 JSVision is a modular TypeScript SDK monorepo. Public packages form a layered library rather than a
 runtime service: applications instantiate components locally, retain authority over their data and
-effects, and select terminal or browser hosts. The planned Kanban package follows the existing Data
-Grid and Code Editor precedent by remaining a specialist package under `packages/`.
+effects, and select terminal or browser hosts. The Kanban foundation now exists as the specialist
+`@jsvision/kanban` package under `packages/`, following the Data Grid and Code Editor precedent. Its
+component, source, adapter, and dialog layers remain staged work.
 
 ## Planned Kanban component architecture
 

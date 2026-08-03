@@ -7,6 +7,7 @@ import type {
   KanbanFieldId,
   KanbanOperationId,
   KanbanRequest,
+  KanbanRequestDispatcher,
   KanbanRevision,
   KanbanSwimlaneId,
   KanbanViewId,
@@ -38,16 +39,25 @@ export interface ConsumerKanbanIdentities {
 }
 
 /** A namespaced consumer payload accepted by the generic extension envelope. */
-export interface ConsumerReviewPayload {
+export type ConsumerReviewPayload = {
   readonly cardKey: CardKey;
   readonly approved: boolean;
-}
+};
 
 /** Verifies that consumers can preserve a literal extension name and payload type. */
 export type ConsumerReviewRequest = KanbanExtensionRequest<'example.review', ConsumerReviewPayload>;
 
 /** Verifies that the typed extension envelope remains assignable to the public request union. */
 export type ConsumerRequestCompatibility = ConsumerReviewRequest extends KanbanRequest ? true : never;
+
+// @ts-expect-error Functions are outside the immutable semantic payload domain.
+export type ConsumerFunctionPayloadMustRemainInvalid = KanbanExtensionRequest<'example.invalid', () => void>;
+
+export const consumerCustomResultMustRemainInvalid: KanbanRequestDispatcher = () => ({
+  // @ts-expect-error Dispatchers may return only the four package-owned result variants.
+  kind: 'custom',
+  operationId: 'review-1',
+});
 
 /** Extracts member names that would reintroduce ambiguous bare-lane terminology. */
 type BareLaneMember<T> = Extract<keyof T, 'lane' | 'laneId' | 'lanes'>;

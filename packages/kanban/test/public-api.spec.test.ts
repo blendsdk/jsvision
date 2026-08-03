@@ -53,7 +53,7 @@ describe('Kanban public authority contracts', () => {
     const request = createReviewRequest(card.id, new AbortController().signal);
     const capabilities: KanbanCapabilities = {};
     const context: KanbanRequestContext = { capabilities };
-    const dispatcher: KanbanRequestDispatcher = vi.fn((receivedRequest) => ({
+    const dispatcher: KanbanRequestDispatcher = vi.fn((receivedRequest): KanbanRequestResult => ({
       kind: 'accepted',
       operationId: receivedRequest.operationId,
     }));

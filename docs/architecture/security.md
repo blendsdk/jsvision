@@ -1,7 +1,7 @@
 # Kanban security architecture
 
-> **Last Updated**: 2026-08-03
-> **Status**: Accepted design; implementation pending
+> **Last Updated**: 2026-08-04
+> **Status**: Foundation boundaries implemented; component, adapter, and async-session controls remain planned
 
 ## Trust boundary
 
@@ -12,15 +12,15 @@ application must authorize every dispatched request again.
 
 ## Threat model
 
-| Asset or boundary           | Threat                                                | Required mitigation                                               | Status  |
-| --------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- | ------- |
-| Terminal output             | Control-character injection or misleading text        | Sanitize untrusted display text and render safe visible fallbacks | Planned |
-| Public adapters             | Getters, hostile prototypes, or malformed descriptors | Descriptor-safe validation, allowlisted shapes, and strict bounds | Planned |
-| Requests                    | Unauthorized or stale mutation                        | Host authorization plus expected-revision checks                  | Planned |
-| Placement/saved-view tokens | Oversized or malicious opaque input                   | Byte, depth, array, key, and string limits before use             | Planned |
-| Diagnostics                 | Leakage of card content or personal data              | Content-free bounded observations by default                      | Planned |
-| Async lifecycle             | Stale completion mutates disposed or newer state      | Cancellation, generation checks, and idempotent disposal          | Planned |
-| Extension callbacks         | Exception or unbounded work destabilizes board        | Failure isolation, concurrency limits, and degraded states        | Planned |
+| Asset or boundary           | Threat                                                | Required mitigation                                               | Status                             |
+| --------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------- |
+| Terminal output             | Control-character injection or misleading text        | Sanitize untrusted display text and render safe visible fallbacks | Planned                            |
+| Public adapters             | Getters, hostile prototypes, or malformed descriptors | Descriptor-safe validation, allowlisted shapes, and strict bounds | Planned                            |
+| Requests                    | Unauthorized or stale mutation                        | Host authorization plus expected-revision checks                  | Foundation implemented             |
+| Placement/saved-view tokens | Oversized or malicious opaque input                   | Byte, depth, array, key, and string limits before use             | Token/value foundation implemented |
+| Diagnostics                 | Leakage of card content or personal data              | Content-free bounded observations by default                      | Foundation implemented             |
+| Async lifecycle             | Stale completion mutates disposed or newer state      | Cancellation, generation checks, and idempotent disposal          | Planned                            |
+| Extension callbacks         | Exception or unbounded work destabilizes board        | Failure isolation, concurrency limits, and degraded states        | Planned                            |
 
 ## Input and output rules
 
@@ -33,6 +33,12 @@ application must authorize every dispatched request again.
   avoid re-entrancy corruption.
 - Keep error details useful for developers without embedding card titles, descriptions, checklist
   text, or custom field values.
+
+Foundation snapshots reject accessors, custom prototypes, unsafe meta-properties, sparse arrays,
+arbitrary thenables, Promise subclasses, Promise proxies, duplicate subjects, and values beyond the
+published absolute ceilings. Native Promise settlement uses the intrinsic operation without reading
+an application-owned `then` property. Semantic fingerprints are browser-safe cache hints and never
+replace equality checks.
 
 ## Data protection
 

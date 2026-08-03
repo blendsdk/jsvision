@@ -1,5 +1,8 @@
 import { createKanbanExtensionId } from './identity.js';
 import type { KanbanExtensionId } from './identity.js';
+import { snapshotKanbanDataProperties, validateKanbanDataKeys } from './data-snapshot.js';
+import { KanbanInvalidSemanticValueError } from './error.js';
+import { KANBAN_LIMITS } from './limits.js';
 import { sanitizeContractText } from './text-safety.js';
 
 /** Presentation state for one application extension action. */
@@ -33,6 +36,12 @@ const REASON_CODE = /^[a-z][a-z0-9-]*$/u;
 const MAX_REASON_CODE_CHARACTERS = 128;
 /** Maximum sanitized capability label characters. */
 const MAX_LABEL_CHARACTERS = 512;
+/** Exact top-level capability members. */
+const CAPABILITY_KEYS = new Set(['extensions']);
+/** Exact members accepted for one extension description. */
+const DESCRIPTION_KEYS = new Set(['state', 'reasonCode', 'label']);
+/** Bounded number of entries accepted in any generic application-owned capability record. */
+const MAX_EXTENSIONS = KANBAN_LIMITS.semanticObjectKeys.safe;
 
 /** Copies one bounded reason code or returns no value when it is unsafe. */
 export function snapshotKanbanReasonCode(value: unknown): string | undefined {
@@ -44,32 +53,34 @@ export function snapshotKanbanReasonCode(value: unknown): string | undefined {
 /** Copies one sanitized bounded UX label. */
 export function snapshotKanbanLabel(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
-  const cleaned = sanitizeContractText(value)
+  const cleaned = sanitizeContractText(value, MAX_LABEL_CHARACTERS)
     .replace(/[\t\n]+/gu, ' ')
     .trim();
   if (cleaned.length === 0) return undefined;
-  return Array.from(cleaned).slice(0, MAX_LABEL_CHARACTERS).join('');
+  return cleaned;
 }
 
 /** Creates a detached deeply frozen capability snapshot without changing authorization semantics. */
-export function snapshotKanbanCapabilities(capabilities: KanbanCapabilities): KanbanCapabilities {
-  const source = capabilities.extensions;
+export function snapshotKanbanCapabilities(capabilities: unknown): KanbanCapabilities {
+  const properties = snapshotKanbanDataProperties(capabilities);
+  validateKanbanDataKeys(properties, CAPABILITY_KEYS);
+  const source = properties.extensions;
   if (source === undefined) return Object.freeze({});
 
+  const sourceProperties = snapshotKanbanDataProperties(source, MAX_EXTENSIONS);
   const extensions: Record<string, KanbanCapabilityDescription> = {};
-  for (const extensionId of Object.keys(source).sort()) {
+  for (const extensionId of Object.keys(sourceProperties).sort()) {
     createKanbanExtensionId(extensionId);
-    const description = source[extensionId];
-    if (
-      description === undefined ||
-      (description.state !== 'allowed' && description.state !== 'disabled' && description.state !== 'hidden')
-    ) {
-      continue;
+    const description = snapshotKanbanDataProperties(sourceProperties[extensionId]);
+    validateKanbanDataKeys(description, DESCRIPTION_KEYS);
+    const state = description.state;
+    if (state !== 'allowed' && state !== 'disabled' && state !== 'hidden') {
+      throw new KanbanInvalidSemanticValueError();
     }
     const reasonCode = snapshotKanbanReasonCode(description.reasonCode);
     const label = snapshotKanbanLabel(description.label);
     extensions[extensionId] = Object.freeze({
-      state: description.state,
+      state,
       ...(reasonCode === undefined ? {} : { reasonCode }),
       ...(label === undefined ? {} : { label }),
     });

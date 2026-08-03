@@ -1,4 +1,7 @@
 import type { CardKey, KanbanColumnId, KanbanSwimlaneId } from './identity.js';
+import { KANBAN_LIMITS, KanbanInvalidLimitError } from './limits.js';
+import { snapshotKanbanDataProperties, validateKanbanDataKeys } from './data-snapshot.js';
+import type { KanbanDataProperties } from './data-snapshot.js';
 import { sanitizeContractText } from './text-safety.js';
 
 /** Runtime scope in which an isolated application or package failure occurred. */
@@ -47,45 +50,51 @@ const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/u;
 const MAX_ID_BYTES = 256;
 /** Shared encoder for bounded diagnostic identities. */
 const OBSERVATION_ENCODER = new TextEncoder();
-/** Allowlisted runtime scopes, captured independently from caller objects. */
-const SAFE_SCOPES = new Set<KanbanObservationScope>([
-  'board',
-  'query',
-  'source',
-  'cell',
-  'card',
-  'renderer',
-  'request',
-]);
+/** Exact members accepted at the diagnostic boundary. */
+const OBSERVATION_KEYS = new Set(['code', 'scope', 'cardKey', 'columnId', 'swimlaneId', 'counts', 'error', 'message']);
+
+/** Narrows an untrusted value to one allowlisted observation scope. */
+function isObservationScope(value: unknown): value is KanbanObservationScope {
+  return (
+    value === 'board' ||
+    value === 'query' ||
+    value === 'source' ||
+    value === 'cell' ||
+    value === 'card' ||
+    value === 'renderer' ||
+    value === 'request'
+  );
+}
 
 /** Sanitizes and bounds a display label without reading a caught error. */
-function safeMessage(message: string | undefined): string | undefined {
-  if (message === undefined) return undefined;
-  const cleaned = sanitizeContractText(message)
+function safeMessage(message: unknown): string | undefined {
+  if (typeof message !== 'string') return undefined;
+  const cleaned = sanitizeContractText(message, MAX_MESSAGE_CHARACTERS)
     .replace(/[\t\n]+/gu, ' ')
     .trim();
   if (cleaned.length === 0) return undefined;
-  return Array.from(cleaned).slice(0, MAX_MESSAGE_CHARACTERS).join('');
+  return cleaned;
 }
 
 /** Returns a safe bounded reason code, degrading invalid values to a package-owned fallback. */
-function safeCode(code: string): string {
+function safeCode(code: unknown): string {
   return typeof code === 'string' && code.length <= MAX_CODE_CHARACTERS && SAFE_CODE.test(code)
     ? code
     : 'invalid-observation';
 }
 
 /** Retains one safe card identity while preserving the number/string distinction. */
-function safeCardKey(key: CardKey | undefined): CardKey | undefined {
+function safeCardKey(key: unknown): CardKey | undefined {
   if (typeof key === 'number') return Number.isFinite(key) ? key : undefined;
   return safeIdentity(key);
 }
 
 /** Retains a bounded control-free structural identity or omits it. */
-function safeIdentity(value: string | undefined): string | undefined {
+function safeIdentity(value: unknown): string | undefined {
   if (
-    value === undefined ||
+    typeof value !== 'string' ||
     value.length === 0 ||
+    value.length > MAX_ID_BYTES ||
     CONTROL_CHARACTERS.test(value) ||
     OBSERVATION_ENCODER.encode(value).byteLength > MAX_ID_BYTES
   ) {
@@ -95,27 +104,18 @@ function safeIdentity(value: string | undefined): string | undefined {
 }
 
 /** Copies finite numeric counters without invoking accessors or retaining caller objects. */
-function safeCounts(counts: KanbanObservationCounts | undefined): KanbanObservationCounts | undefined {
+function safeCounts(counts: unknown): KanbanObservationCounts | undefined {
   if (counts === undefined) return undefined;
   try {
-    if (typeof counts !== 'object' || counts === null || Array.isArray(counts)) return undefined;
-    const descriptors = Object.getOwnPropertyDescriptors(counts);
-    const entries = Object.keys(descriptors).sort();
-    if (entries.length > MAX_COUNT_ENTRIES) return undefined;
+    const properties = snapshotKanbanDataProperties(counts, MAX_COUNT_ENTRIES);
+    const entries = Object.keys(properties).sort();
     const result: Record<string, number> = {};
     for (const key of entries) {
-      const descriptor = descriptors[key];
-      if (
-        descriptor === undefined ||
-        !SAFE_CODE.test(key) ||
-        descriptor.get !== undefined ||
-        descriptor.set !== undefined ||
-        typeof descriptor.value !== 'number' ||
-        !Number.isFinite(descriptor.value)
-      ) {
+      const value = properties[key];
+      if (!SAFE_CODE.test(key) || typeof value !== 'number' || !Number.isFinite(value)) {
         return undefined;
       }
-      result[key] = descriptor.value;
+      result[key] = value;
     }
     return Object.freeze(result);
   } catch {
@@ -125,14 +125,21 @@ function safeCounts(counts: KanbanObservationCounts | undefined): KanbanObservat
 
 /** Creates one detached, frozen, redacted observation. */
 export function createKanbanObservation(input: KanbanObservationInput): KanbanObservation {
-  const message = safeMessage(input.message);
-  const counts = safeCounts(input.counts);
-  const cardKey = safeCardKey(input.cardKey);
-  const columnId = safeIdentity(input.columnId);
-  const swimlaneId = safeIdentity(input.swimlaneId);
+  let properties: KanbanDataProperties;
+  try {
+    properties = snapshotKanbanDataProperties(input);
+    validateKanbanDataKeys(properties, OBSERVATION_KEYS);
+  } catch {
+    properties = Object.freeze({});
+  }
+  const message = safeMessage(properties.message);
+  const counts = safeCounts(properties.counts);
+  const cardKey = safeCardKey(properties.cardKey);
+  const columnId = safeIdentity(properties.columnId);
+  const swimlaneId = safeIdentity(properties.swimlaneId);
   return Object.freeze({
-    code: safeCode(input.code),
-    scope: SAFE_SCOPES.has(input.scope) ? input.scope : 'board',
+    code: safeCode(properties.code),
+    scope: isObservationScope(properties.scope) ? properties.scope : 'board',
     ...(cardKey === undefined ? {} : { cardKey }),
     ...(columnId === undefined ? {} : { columnId }),
     ...(swimlaneId === undefined ? {} : { swimlaneId }),
@@ -148,8 +155,8 @@ export class KanbanObservationBuffer {
 
   /** Creates a buffer whose capacity must be a finite non-negative safe integer. */
   constructor(capacity: number) {
-    if (!Number.isSafeInteger(capacity) || capacity < 0) {
-      throw new RangeError('Kanban observation capacity must be a non-negative safe integer.');
+    if (!Number.isSafeInteger(capacity) || capacity < 0 || capacity > KANBAN_LIMITS.retainedObservations.absolute) {
+      throw new KanbanInvalidLimitError();
     }
     this.#capacity = capacity;
   }

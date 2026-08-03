@@ -73,6 +73,7 @@ function validateIdentity(kind: KanbanIdentityKind, value: string): string {
   if (
     typeof value !== 'string' ||
     value.length === 0 ||
+    value.length > MAX_ID_BYTES ||
     CONTROL_CHARACTERS.test(value) ||
     utf8Bytes(value) > MAX_ID_BYTES ||
     (kind === 'extension' && (!EXTENSION_ID.test(value) || value.startsWith(RESERVED_EXTENSION_PREFIX)))
@@ -129,6 +130,7 @@ export function createPlacementToken(value: string): PlacementToken {
   if (
     typeof value !== 'string' ||
     value.length === 0 ||
+    value.length > MAX_TOKEN_BYTES ||
     CONTROL_CHARACTERS.test(value) ||
     utf8Bytes(value) > MAX_TOKEN_BYTES
   ) {
