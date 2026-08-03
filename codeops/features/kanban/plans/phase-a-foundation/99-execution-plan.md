@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 00:45 CEST
-> **Progress**: 8/64 tasks (13%)
+> **Last Updated**: 2026-08-04 00:49 CEST
+> **Progress**: 9/64 tasks (14%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -51,7 +51,7 @@ first `[ ]`. Preserve unrelated worktree changes and record the actual phase bas
 - [x] 1.2.1 Create publishable package metadata, exact export map/scripts/dependencies, license, and initial changelog — `packages/kanban/package.json`, `packages/kanban/LICENSE`, `packages/kanban/CHANGELOG.md` ✅ (completed: 2026-08-04 00:40)
 - [x] 1.2.2 Add NodeNext build/typecheck and unit/E2E Vitest project configuration consistent with specialist packages — `packages/kanban/tsconfig.json`, `packages/kanban/tsconfig.typecheck.json`, `packages/kanban/vitest.config.ts` ✅ (completed: 2026-08-04 00:43)
 - [x] 1.2.3 Add main/testing barrels and module directories while preserving production/testing graph isolation — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-04 00:45)
-- [ ] 1.2.4 Implement documented identity validators/factories, revision equality, and the full immutable limits manifest/class selection — `packages/kanban/src/contract/{identity,limits,revision}.ts`
+- [x] 1.2.4 Implement documented identity validators/factories, revision equality, and the full immutable limits manifest/class selection — `packages/kanban/src/contract/{identity,limits,revision}.ts` ✅ (completed: 2026-08-04 00:49)
 - [ ] 1.2.5 Implement typed error hierarchy, bounded observation buffer/safe redaction, and bounded sorted deep-frozen semantic JSON/query snapshots with derived fingerprints — `packages/kanban/src/contract/{error,observation,semantic-query}.ts`
 - [ ] 1.2.6 Implement public namespaced request/result/dispatcher/capability contracts and publication-only reconciliation metadata; accepted/contradictory results never mutate application records — `packages/kanban/src/contract/{request,capability,authority}.ts`
 - [ ] 1.3.1 Add implementation/property tests for boundary arithmetic, snapshot detachment/key order, hostile prototypes/accessors, observation eviction/redaction, dispatcher failure, and idempotent reconciliation; make every Phase 1-owned contract/package/packed-consumer spec green while leaving mounted component oracles to Phase 4; run Kanban typecheck/build/docs checks, `yarn verify:local`, and the phase reviewer/auditor loop — `packages/kanban/test/{contracts,authority}.impl.test.ts`
