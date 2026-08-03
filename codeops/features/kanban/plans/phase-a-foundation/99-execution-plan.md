@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 00:35 CEST
-> **Progress**: 4/64 tasks (6%)
+> **Last Updated**: 2026-08-04 00:38 CEST
+> **Progress**: 5/64 tasks (8%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -44,7 +44,10 @@ first `[ ]`. Preserve unrelated worktree changes and record the actual phase bas
 - [x] 1.1.2 `[spec-author]` Add immutable contract/security specifications for ST-R01-08/15, ST-A-CONTRACT-SECURITY-01, and PAR-19/20: IDs, limits, semantic JSON, sanitized errors/observations, and N/A host/server boundaries — `packages/kanban/test/contracts.spec.test.ts`, `packages/kanban/test/security-boundary.spec.test.ts` ✅ (completed: 2026-08-04 00:24)
 - [x] 1.1.3 `[spec-author]` Add immutable package-boundary specifications for ST-R01-09/11 and ST-A-PACKAGE-METADATA-01: production/testing separation, private-path rejection, import separation, dependency metadata, and scripts — `packages/kanban/test/package-boundary.spec.test.ts` ✅ (completed: 2026-08-04 00:28)
 - [x] 1.1.4 `[spec-author]` Add the immutable ST-A-PACKAGE-CONSUMER-01 contract-only packed-consumer oracle and minimal isolated fixture before package metadata exists; it imports one main-entry contract symbol but no testing helper, mounted Board/Viewport, or locale symbol — `packages/kanban/test/package-consumer-contract.spec.test.ts`, `packages/kanban/test/fixtures/packed-consumer/{package,tsconfig}.json`, `packages/kanban/test/fixtures/packed-consumer/index.ts` ✅ (completed: 2026-08-04 00:35)
-- [ ] 1.1.5 Run Phase 1 specifications directly from the root test runner and record expected red failures caused only by the absent package/public symbols and tarball
+- [x] 1.1.5 Run Phase 1 specifications directly from the root test runner and record expected red failures caused only by the absent package/public symbols and tarball ✅ (completed: 2026-08-04 00:38)
+  - Red evidence: root Vitest exited 1 with 5/5 files red: three suites could not import the absent
+    `src/index.js`; six package-boundary assertions found only the absent `package.json`/`src` tree;
+    and the isolated consumer could not pack the absent package. No implemented behavior failed.
 - [ ] 1.2.1 Create publishable package metadata, exact export map/scripts/dependencies, license, and initial changelog — `packages/kanban/package.json`, `packages/kanban/LICENSE`, `packages/kanban/CHANGELOG.md`
 - [ ] 1.2.2 Add NodeNext build/typecheck and unit/E2E Vitest project configuration consistent with specialist packages — `packages/kanban/tsconfig.json`, `packages/kanban/tsconfig.typecheck.json`, `packages/kanban/vitest.config.ts`
 - [ ] 1.2.3 Add main/testing barrels and module directories while preserving production/testing graph isolation — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts`
