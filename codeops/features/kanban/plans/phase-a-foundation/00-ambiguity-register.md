@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 25 items resolved
-> **Last Updated**: 2026-08-04 00:09 CEST
+> **Status**: ✅ GATE PASSED — all 26 items resolved
+> **Last Updated**: 2026-08-04 00:22 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -45,6 +45,7 @@
 | PAR-23 | Technical | Descriptor projection caching mechanism | Bounded viewport-local semantic cache / recompute every frame / global LRU | Delegated: bounded visible/overscan semantic cache with owned reactive scopes | ✅ Resolved |
 | PAR-24 | Integration | Official locale registration conflicts with provisional review evidence | Approve digest-bound Phase A catalogs now / introduce a provisional registry exemption | Delegated: review and approve the bounded Phase A vocabulary now; later catalog changes renew review | ✅ Resolved |
 | PAR-25 | Technical (runtime) | Exact Phase A request, result, capability, dispatcher-context, and publication-metadata shapes were not fixed deeply enough to author an immutable public oracle | Closed package-owned extension envelope / declaration-merging registry / free generic request interface | Delegated: a package-owned `extension` envelope with required semantic payload, captured revisions and signal; four-result union; sync-or-native-Promise dispatcher with context; per-extension UX capability map; separate publication metadata | ✅ Resolved |
+| PAR-26 | Technical (runtime) | The requirement mandated namespaced extension IDs but did not fix their grammar or reserved package namespace | Reuse lowercase dotted JSVision message-key grammar / introduce slash-separated IDs | Delegated: reuse lowercase dotted segments and reserve the complete `jsvision.` prefix for package-owned IDs | ✅ Resolved |
 
 ## Resolution notes
 
@@ -231,6 +232,29 @@ package-owned discriminated union compatibly, native-Promise normalization preve
 dispatcher integration, or publication matching cannot be expressed without retaining application
 records.
 
+### PAR-26 — extension namespace grammar
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** This selects the validation grammar
+for the already approved namespaced extension identity and package reservation. It does not add an
+extension point or change its authority semantics. **Objective:** Make collision rejection predictable
+and reuse a grammar JSVision consumers already encounter. **Decision:** Application extension IDs use
+two or more lowercase dotted segments. Each segment starts with `a-z` and continues with `a-z`, digits,
+or `-`; for example, `example.review`. The complete `jsvision.` prefix is reserved for package-owned
+identities and the public application factory rejects it.
+
+**Evidence:** `packages/i18n/src/grammar.ts` already publishes and tests the exact
+`^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$` grammar for namespaced public message keys. The approved raw
+request example and first specification oracle use `example.review`. Slash-separated IDs occur in some
+older Data Grid application fixtures but have no shared public validator and would introduce a second
+namespace grammar. **Rejected alternative:** Slash-separated IDs can visually separate owner and name,
+but adopting them here would diverge from the repository's explicit reusable namespaced grammar without
+a compatibility need. **Strongest counterargument:** Existing Data Grid consumers may expect slash IDs.
+This is a new package with no compatibility surface, and one documented SDK-wide validated grammar is
+more predictable. **Confidence:** High (0.94). **Hardening:** Rechecked against the shared i18n grammar
+and existing consumer fixtures; the reusable validated grammar remained the strongest option. **Policy:**
+v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** JSVision publishes a cross-package
+identifier standard that replaces the dotted grammar or requires slash compatibility.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -239,5 +263,6 @@ records.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-25 have complete delegated records after independent challenge.
+- [x] PAR-20 through PAR-26 have complete delegated records; consequential request shape received
+  independent challenge and the namespace grammar was grounded in the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

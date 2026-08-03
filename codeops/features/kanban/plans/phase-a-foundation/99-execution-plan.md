@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 00:16 CEST
-> **Progress**: 1/64 tasks (2%)
+> **Last Updated**: 2026-08-04 00:24 CEST
+> **Progress**: 2/64 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -41,7 +41,7 @@ first `[ ]`. Preserve unrelated worktree changes and record the actual phase bas
 > **Reference**: 03-01; RD01-AC05, AC07–09, AC11–13, AC15; PAR-09, PAR-12, PAR-14, PAR-17–PAR-20
 
 - [x] 1.1.1 `[spec-author]` Add immutable public contract/type specifications for ST-R01-05/07 and ST-R01-12/13: authority seam, identity distinction, terminology, and raw request/capability behavior without constructing mounted components — `packages/kanban/test/public-api.spec.test.ts`, `packages/kanban/test/fixtures/consumer-types.ts` ✅ (completed: 2026-08-04 00:16)
-- [ ] 1.1.2 `[spec-author]` Add immutable contract/security specifications for ST-R01-08/15, ST-A-CONTRACT-SECURITY-01, and PAR-19/20: IDs, limits, semantic JSON, sanitized errors/observations, and N/A host/server boundaries — `packages/kanban/test/contracts.spec.test.ts`, `packages/kanban/test/security-boundary.spec.test.ts`
+- [x] 1.1.2 `[spec-author]` Add immutable contract/security specifications for ST-R01-08/15, ST-A-CONTRACT-SECURITY-01, and PAR-19/20: IDs, limits, semantic JSON, sanitized errors/observations, and N/A host/server boundaries — `packages/kanban/test/contracts.spec.test.ts`, `packages/kanban/test/security-boundary.spec.test.ts` ✅ (completed: 2026-08-04 00:24)
 - [ ] 1.1.3 `[spec-author]` Add immutable package-boundary specifications for ST-R01-09/11 and ST-A-PACKAGE-METADATA-01: production/testing separation, private-path rejection, import separation, dependency metadata, and scripts — `packages/kanban/test/package-boundary.spec.test.ts`
 - [ ] 1.1.4 `[spec-author]` Add the immutable ST-A-PACKAGE-CONSUMER-01 contract-only packed-consumer oracle and minimal isolated fixture before package metadata exists; it imports one main-entry contract symbol but no testing helper, mounted Board/Viewport, or locale symbol — `packages/kanban/test/package-consumer-contract.spec.test.ts`, `packages/kanban/test/fixtures/packed-consumer/{package,tsconfig}.json`, `packages/kanban/test/fixtures/packed-consumer/index.ts`
 - [ ] 1.1.5 Run Phase 1 specifications directly from the root test runner and record expected red failures caused only by the absent package/public symbols and tarball

@@ -65,6 +65,11 @@ kind. The placement token is created only by a validating factory and is never d
 serialized. Revisions support equality only. Card maps preserve JavaScript key identity, so `1` and
 `'1'` are distinct.
 
+Application extension IDs use the same lowercase dotted namespace grammar as JSVision's validated
+public message keys: two or more segments, each starting with `a-z` and continuing with lowercase
+letters, digits, or `-`. The complete `jsvision.` prefix is reserved for package-owned identities and
+is rejected by the public application-extension factory.
+
 All IDs reject empty values, C0/C1/DEL/control and escape content, invalid namespace form where a
 namespace is required, and more than 256 UTF-8 bytes. Tokens reject more than 2 KiB. Duplicate IDs are
 validated within their semantic namespace before publication. Errors identify only safe kind/code and
