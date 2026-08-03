@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 01:32 CEST
-> **Progress**: 12/64 tasks (19%)
+> **Last Updated**: 2026-08-04 01:54 CEST
+> **Progress**: 13/64 tasks (20%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -61,12 +61,14 @@ validation contracts. No mounted board behavior is claimed.
 
 ## Phase 2: Query sessions, sparse cursors, and eager/windowed sources
 
+> **Phase baseline tree**: f66f28f2f88c067222f90659d26930a1ecdddffd
+>
 > **Expected modification set**: Source/session/cursor contracts and validation; generation coordinator;
 > eager source; deterministic testing sources; focused source tests
 >
 > **Reference**: 03-02, 03-03; all RD-02 criteria; RD01-AC07; PAR-10–PAR-11, PAR-14, PAR-19–PAR-22
 
-- [ ] 2.1.1 `[spec-author]` Add immutable query/session specifications for ST-R02-05, ST-R02-08/09, ST-R02-14, and ST-R02-16/17: query changes, states/count quality, bounded identity location, cancellation, stale suppression, atomicity, and safe observations — `packages/kanban/test/query-session.spec.test.ts`
+- [x] 2.1.1 `[spec-author]` Add immutable query/session specifications for ST-R02-05, ST-R02-08/09, ST-R02-14, and ST-R02-16/17: query changes, states/count quality, bounded identity location, cancellation, stale suppression, atomicity, and safe observations — `packages/kanban/test/query-session.spec.test.ts` ✅ (completed: 2026-08-04 01:54)
 - [ ] 2.1.2 `[spec-author]` Add immutable cursor specifications for ST-R02-04/06, ST-R02-10–12/15, and ST-A-SOURCE-LIFECYCLE-01: ranges, unloaded/scoped-error states, placement, disposal, and identity changes — `packages/kanban/test/cursor.spec.test.ts`
 - [ ] 2.1.3 `[spec-author]` Add immutable eager/windowed scale specifications for ST-R02-01 and ST-A-SOURCE-SCALE-01: exact 5,000-card semantics and pure-source 100,000-logical-card visible/overscan-only reads — `packages/kanban/test/eager-source.spec.test.ts`, `packages/kanban/test/windowed-source.spec.test.ts`
 - [ ] 2.1.4 Run all Phase 2 specifications and record the expected red failures before source production modules exist

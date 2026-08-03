@@ -33,6 +33,79 @@ Semantic equality compares value kinds, array order, numeric value (`-0` normali
 entries independent of caller insertion order. An internal canonical fingerprint may accelerate
 equality/cache lookup, but serialized bytes are never the public query representation.
 
+The public query representation is exact and immutable:
+
+```ts
+export interface KanbanFilter {
+  readonly fieldId: KanbanFieldId;
+  readonly operatorId: KanbanExtensionId;
+  readonly value: KanbanSemanticValue;
+}
+
+export interface KanbanSort {
+  readonly fieldId: KanbanFieldId;
+  readonly direction: 'ascending' | 'descending';
+}
+
+export interface KanbanQuery {
+  readonly search?: string;
+  readonly filters?: readonly KanbanFilter[];
+  readonly groupBy?: KanbanFieldId;
+  readonly sort?: readonly KanbanSort[];
+  readonly visibleColumnIds?: readonly KanbanColumnId[];
+  readonly visibleSwimlaneIds?: readonly KanbanSwimlaneId[];
+  readonly viewRevision?: KanbanRevision;
+}
+```
+
+`snapshotKanbanQuery` validates identifiers, uniqueness, bounds, exact data-property shapes, and
+semantic filter values; it returns a detached deeply frozen query. Omitted arrays normalize to frozen
+empty arrays so downstream equality and iteration have one representation. Search is bounded semantic
+input, not pre-rendered terminal text.
+
+## Exact source values
+
+Source state uses `{ kind: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' }` or
+`{ kind: 'error'; code: string; label?: string }`. Error codes use the package reason-code grammar and
+labels are sanitized and bounded before publication.
+
+Every count is one of:
+
+```ts
+export type KanbanCount =
+  | { readonly quality: 'unknown' }
+  | {
+      readonly quality: 'exact' | 'estimated' | 'truncated';
+      readonly value: number;
+    };
+
+export interface KanbanBoardCounts {
+  readonly total: KanbanCount;
+  readonly matching: KanbanCount;
+  readonly loaded: KanbanCount;
+  readonly visible: KanbanCount;
+  readonly selected: KanbanCount;
+  readonly wip: KanbanCount;
+}
+```
+
+Known values are finite non-negative safe integers. `unknown` has no `value`, which makes accidentally
+presenting unknown as zero structurally impossible. Column and swimlane metadata use exact
+`{ columnId, label, revision }` and `{ swimlaneId, label, revision }` records. A cell address is exact
+`{ columnId, swimlaneId? }`; canonical address keys preserve boundaries rather than concatenating raw
+IDs.
+
+`KanbanHeaderBatch` contains a revision plus exact column and swimlane header arrays. Each header has
+its semantic ID, sanitized label, optional WIP count, and a bounded semantic summary map.
+`KanbanIdentityChangeBatch` contains a revision and a bounded array of exact `deleted-card`,
+`deleted-column`, or `deleted-swimlane` records carrying only the corresponding identity.
+
+`KanbanSessionPublication` is the atomic detached snapshot of `revision`, `state`, `columns`,
+`swimlanes`, `counts`, `headers`, and `identityChanges`. Validation accepts the complete publication or
+rejects it without replacing the prior valid snapshot. Duplicate identities, unknown address columns,
+malformed counts, accessors, unsafe prototypes, symbols, and out-of-bound collections reject the whole
+publication.
+
 ## Source and session contract
 
 ```ts
@@ -73,12 +146,13 @@ board reconciles its projection of optional focused/selected identity inputs aga
 unloaded key remains retained, while an authoritative deletion is pruned. Phase A exposes no command
 that changes focus or selection; RD-06 later owns those interaction semantics.
 
-`locateCard` is an optional bounded identity locator used by imperative reveal. Its discriminated result
-is `found`, `unloaded`, `unknown`, or `unsupported`; a found/unloaded result carries a validated cell
-address, an optional projection index/placement anchor, and the originating session revision. It never
-returns a card body. Implementations honor cancellation, and the board suppresses a result after its
-generation/session revision changes. Eager sessions resolve from their key index; a windowed source may
-perform one bounded application lookup or return `unsupported`. Absence never permits a scan.
+`locateCard` is an optional bounded identity locator used by imperative reveal. Its exact discriminated
+result is `found`, `unloaded`, `unknown`, or `unsupported`; every member carries `sessionRevision`.
+`found` and `unloaded` also carry a validated `address` and may carry a non-negative safe `index` and
+semantic `placement`. It never returns a card body. Implementations honor cancellation, and the board
+suppresses a result after its generation/session revision changes. Eager sessions resolve from their
+key index; a windowed source may perform one bounded application lookup or return `unsupported`.
+Absence never permits a scan.
 
 ## Sparse cursor contract
 

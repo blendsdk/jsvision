@@ -105,6 +105,20 @@ revision factory; production must not use timestamps as uniqueness proof.
 - board/viewport inspection helpers returning identities, geometry, state codes, and counts, never
   private cache objects.
 
+The testing entry also exports
+`createKanbanQueryLifecycleHarness({ source, initialQuery, observationCapacity?, inspectedAddresses? })`.
+The returned black-box harness exposes only `replaceQuery(query)`, `snapshot()`,
+`locateCard(key, { signal? })`, `observations()`, and idempotent `dispose()`. Its detached snapshot
+contains the active query, session revision, state, counts, columns, swimlanes, and bounded inspected
+card keys/addresses. Replacing a query invalidates the old generation before abort/disposal; no old
+continuation may change this snapshot or its observations.
+
+The harness may use the package's private generation coordinator but never exposes its identity,
+generation number, address map, retention owners, scheduler, cursor instances, or mutable internals.
+Specifications can supply ordinary public `KanbanDataSource` fakes. Deterministic eager/windowed
+fixture controllers and their deferred publication/locator/instrumentation operations remain part of
+the helper implementation task; they do not widen the lifecycle harness.
+
 Fixtures must be useful to package consumers testing their adapters; they are not production imports.
 
 ## Validation/property coverage

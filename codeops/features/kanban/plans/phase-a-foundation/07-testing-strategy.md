@@ -23,7 +23,7 @@ distribution evidence.
 | `test/public-api.spec.test.ts` | Specification/type | Pure contracts, identity, terminology, request/capability seam |
 | `test/package-boundary.spec.test.ts` | Specification | Export map, production/testing separation, distribution/security boundaries |
 | `test/contracts.spec.test.ts` | Specification | IDs, limits, semantic JSON, errors, observations |
-| `test/query-session.spec.test.ts` | Specification | Session generation, state/counts, cancellation, stale suppression |
+| `test/query-session.spec.test.ts` | Specification | Exact source values plus testing-harness session generation, state/counts, cancellation, stale suppression, atomic publication, redaction, and bounded location |
 | `test/cursor.spec.test.ts` | Specification | Sparse cursors, ranges, placement, disposal, identity changes |
 | `test/eager-source.spec.test.ts` | Specification | 5,000-card eager semantics, ordering, validation, exact counts |
 | `test/windowed-source.spec.test.ts` | Specification | 100,000 logical cards, range bounds, partial/error isolation |

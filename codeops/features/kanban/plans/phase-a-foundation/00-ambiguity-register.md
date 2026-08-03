@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 26 items resolved
-> **Last Updated**: 2026-08-04 00:22 CEST
+> **Status**: ✅ GATE PASSED — all 27 items resolved
+> **Last Updated**: 2026-08-04 01:46 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -46,6 +46,7 @@
 | PAR-24 | Integration | Official locale registration conflicts with provisional review evidence | Approve digest-bound Phase A catalogs now / introduce a provisional registry exemption | Delegated: review and approve the bounded Phase A vocabulary now; later catalog changes renew review | ✅ Resolved |
 | PAR-25 | Technical (runtime) | Exact Phase A request, result, capability, dispatcher-context, and publication-metadata shapes were not fixed deeply enough to author an immutable public oracle | Closed package-owned extension envelope / declaration-merging registry / free generic request interface | Delegated: a package-owned `extension` envelope with required semantic payload, captured revisions and signal; four-result union; sync-or-native-Promise dispatcher with context; per-extension UX capability map; separate publication metadata | ✅ Resolved |
 | PAR-26 | Technical (runtime) | The requirement mandated namespaced extension IDs but did not fix their grammar or reserved package namespace | Reuse lowercase dotted JSVision message-key grammar / introduce slash-separated IDs | Delegated: reuse lowercase dotted segments and reserve the complete `jsvision.` prefix for package-owned IDs | ✅ Resolved |
+| PAR-27 | Technical (runtime) | Query-session criteria fixed lifecycle behavior but not the exact public value shapes or a black-box seam that can test the private generation coordinator | Testing-only lifecycle harness plus exact value unions / expose the coordinator / defer lifecycle proof to Phase 4 | Delegated: exact public query/state/count/structure/publication/location values plus a narrow testing-only lifecycle harness; coordinator internals remain private | ✅ Resolved |
 
 ## Resolution notes
 
@@ -255,6 +256,35 @@ and existing consumer fixtures; the reusable validated grammar remained the stro
 v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** JSVision publishes a cross-package
 identifier standard that replaces the dotted grammar or requires slash compatibility.
 
+### PAR-27 — query lifecycle oracle seam
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** This fixes exact representations and
+a testing-only observation seam for already approved query-session behavior. It adds no production
+capability and keeps the generation coordinator private. **Objective:** Let immutable specifications
+prove query replacement, stale suppression, atomic publication validation, redaction, count honesty,
+and bounded location without importing private implementation types.
+
+**Decision:** The main entry fixes exact immutable query/filter/sort, source-state, count,
+column/swimlane metadata, cell-address, session-publication, and revision-bound card-location shapes.
+The testing entry exposes `createKanbanQueryLifecycleHarness`, whose surface is limited to replacing
+the semantic query, reading a detached active-publication snapshot and safe observations, locating a
+card through the active session, and disposal. It may drive the private coordinator but never exposes
+generation maps, retention owners, schedulers, cursors, or coordinator identity. Specifications use
+ordinary public source/session fakes; deterministic fixture controllers remain owned by task 2.2.6.
+
+**Evidence:** The public specification already requires synchronous session ownership, generation
+invalidation before abort, last-valid publication retention, revision-bound bounded location, and a
+testing subpath. Without a black-box lifecycle seam, the oracle must either invent component APIs or
+import the forbidden coordinator. **Rejected alternatives:** Exporting the coordinator turns a private
+lifecycle mechanism into an SDK compatibility surface. Deferring lifecycle proof to Phase 4 breaks
+Phase 2 ownership and allows stale-source defects to survive the source gate. **Strongest
+counterargument:** The harness adds a supported testing API, but that subpath is already an approved
+consumer-facing fixture surface and the narrow operations describe observable behavior only.
+**Confidence:** High (0.93). **Hardening:** Independent challenge converged on exact public value unions
+and the testing-only harness and explicitly rejected coordinator exposure. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** consumers require direct lifecycle control in
+production or the harness cannot test the criteria without exposing private state.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -263,6 +293,7 @@ identifier standard that replaces the dotted grammar or requires slash compatibi
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-26 have complete delegated records; consequential request shape received
-  independent challenge and the namespace grammar was grounded in the existing shared validator.
+- [x] PAR-20 through PAR-27 have complete delegated records; consequential request and query-lifecycle
+  shapes received independent challenge and the namespace grammar was grounded in the existing shared
+  validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.
