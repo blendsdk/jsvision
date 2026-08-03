@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 00:38 CEST
-> **Progress**: 5/64 tasks (8%)
+> **Last Updated**: 2026-08-04 00:40 CEST
+> **Progress**: 6/64 tasks (9%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -48,7 +48,7 @@ first `[ ]`. Preserve unrelated worktree changes and record the actual phase bas
   - Red evidence: root Vitest exited 1 with 5/5 files red: three suites could not import the absent
     `src/index.js`; six package-boundary assertions found only the absent `package.json`/`src` tree;
     and the isolated consumer could not pack the absent package. No implemented behavior failed.
-- [ ] 1.2.1 Create publishable package metadata, exact export map/scripts/dependencies, license, and initial changelog — `packages/kanban/package.json`, `packages/kanban/LICENSE`, `packages/kanban/CHANGELOG.md`
+- [x] 1.2.1 Create publishable package metadata, exact export map/scripts/dependencies, license, and initial changelog — `packages/kanban/package.json`, `packages/kanban/LICENSE`, `packages/kanban/CHANGELOG.md` ✅ (completed: 2026-08-04 00:40)
 - [ ] 1.2.2 Add NodeNext build/typecheck and unit/E2E Vitest project configuration consistent with specialist packages — `packages/kanban/tsconfig.json`, `packages/kanban/tsconfig.typecheck.json`, `packages/kanban/vitest.config.ts`
 - [ ] 1.2.3 Add main/testing barrels and module directories while preserving production/testing graph isolation — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts`
 - [ ] 1.2.4 Implement documented identity validators/factories, revision equality, and the full immutable limits manifest/class selection — `packages/kanban/src/contract/{identity,limits,revision}.ts`

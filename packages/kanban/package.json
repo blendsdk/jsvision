@@ -1,0 +1,106 @@
+{
+  "name": "@jsvision/kanban",
+  "version": "1.5.2",
+  "description": "A responsive, data-source-driven Kanban board for terminal applications built with JSVision.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "kanban",
+    "task-board",
+    "workflow",
+    "widgets",
+    "text-mode",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
+  "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/kanban"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    },
+    "./locales/en": {
+      "types": "./dist/locales/en.d.ts",
+      "import": "./dist/locales/en.js"
+    },
+    "./locales/nl": {
+      "types": "./dist/locales/nl.d.ts",
+      "import": "./dist/locales/nl.js"
+    },
+    "./locales/de": {
+      "types": "./dist/locales/de.d.ts",
+      "import": "./dist/locales/de.js"
+    },
+    "./locales/fr": {
+      "types": "./dist/locales/fr.d.ts",
+      "import": "./dist/locales/fr.js"
+    },
+    "./locales/es": {
+      "types": "./dist/locales/es.d.ts",
+      "import": "./dist/locales/es.js"
+    },
+    "./locales/it": {
+      "types": "./dist/locales/it.d.ts",
+      "import": "./dist/locales/it.js"
+    },
+    "./locales/pt-PT": {
+      "types": "./dist/locales/pt-PT.d.ts",
+      "import": "./dist/locales/pt-PT.js"
+    },
+    "./locales/pl": {
+      "types": "./dist/locales/pl.d.ts",
+      "import": "./dist/locales/pl.js"
+    },
+    "./locales/ro": {
+      "types": "./dist/locales/ro.d.ts",
+      "import": "./dist/locales/ro.js"
+    },
+    "./locales/sv": {
+      "types": "./dist/locales/sv.d.ts",
+      "import": "./dist/locales/sv.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "dependencies": {
+    "@jsvision/core": "1.5.2",
+    "@jsvision/i18n": "1.5.2",
+    "@jsvision/ui": "1.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^4.1.10"
+  }
+}
