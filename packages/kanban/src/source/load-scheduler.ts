@@ -99,12 +99,17 @@ export class KanbanLoadScheduler {
           if (settled || started) return;
           started = true;
           this.#active.add(job);
-          Promise.resolve()
-            .then(() => run(controller.signal))
-            .then(
-              (value) => finish(() => resolve(value)),
-              (error: unknown) => finish(() => reject(error)),
-            );
+          let operation: Promise<T> | T;
+          try {
+            operation = run(controller.signal);
+          } catch (error) {
+            finish(() => reject(error));
+            return;
+          }
+          Promise.resolve(operation).then(
+            (value) => finish(() => resolve(value)),
+            (error: unknown) => finish(() => reject(error)),
+          );
         },
         abort: () => {
           controller.abort();

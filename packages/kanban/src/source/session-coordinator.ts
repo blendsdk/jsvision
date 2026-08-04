@@ -190,14 +190,12 @@ export class KanbanSessionCoordinator<TCard> {
     const locate = this.#session.locateCard;
     if (locate === undefined) return Object.freeze({ kind: 'unsupported', sessionRevision: capturedRevision });
 
-    const controller = new AbortController();
-    this.#locatorControllers.add(controller);
     const callerSignal = options?.signal;
-    const abort = (): void => controller.abort();
-    if (callerSignal?.aborted === true) controller.abort();
-    else callerSignal?.addEventListener('abort', abort, { once: true });
+    const controller = callerSignal === undefined ? new AbortController() : undefined;
+    if (controller !== undefined) this.#locatorControllers.add(controller);
+    const signal = callerSignal ?? controller?.signal;
     try {
-      const result = await locate.call(this.#session, key, { signal: controller.signal });
+      const result = await locate.call(this.#session, key, signal === undefined ? undefined : { signal });
       if (!this.isCurrent(capturedGeneration)) return this.#staleLocation();
       const snapshot = snapshotKanbanCardLocation(result);
       if (!kanbanRevisionsEqual(snapshot.sessionRevision, capturedRevision)) {
@@ -208,8 +206,7 @@ export class KanbanSessionCoordinator<TCard> {
       if (this.isCurrent(capturedGeneration)) this.#emit('source-locate-failed');
       return this.#staleLocation();
     } finally {
-      callerSignal?.removeEventListener('abort', abort);
-      this.#locatorControllers.delete(controller);
+      if (controller !== undefined) this.#locatorControllers.delete(controller);
     }
   }
 

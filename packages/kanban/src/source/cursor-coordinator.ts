@@ -188,6 +188,9 @@ export class KanbanCursorCoordinator<TCard> {
   /** Invalidates pending work, aborts acquisition, and disposes the application cursor once. */
   dispose(): void {
     if (this.#disposed) return;
+    // Start a pending bounded acquisition so the application observes the owned aborted signal;
+    // this does not wait for or publish its eventual result.
+    this.#flush();
     this.#disposed = true;
     this.#generation += 1;
     const pending = this.#pending.splice(0);
@@ -238,7 +241,10 @@ export class KanbanCursorCoordinator<TCard> {
       );
       void acquisition.result.then(
         () => {
-          if (generation !== this.#generation) return;
+          if (generation !== this.#generation) {
+            for (const waiter of affected) this.#settleWaiter(waiter, new KanbanDisposedResourceError());
+            return;
+          }
           this.#completed.add(acquisition.range);
           for (const waiter of affected) {
             const next = (remaining.get(waiter) ?? 1) - 1;
@@ -247,7 +253,10 @@ export class KanbanCursorCoordinator<TCard> {
           }
         },
         () => {
-          if (generation !== this.#generation) return;
+          if (generation !== this.#generation) {
+            for (const waiter of affected) this.#settleWaiter(waiter, new KanbanDisposedResourceError());
+            return;
+          }
           this.#emit('cursor-range-failed');
           for (const waiter of affected) this.#settleWaiter(waiter, new KanbanInvalidSourcePublicationError());
         },
