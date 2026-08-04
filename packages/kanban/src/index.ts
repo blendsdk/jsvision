@@ -25,6 +25,8 @@ export * from './card/theme-resolver.js';
 export * from './i18n/catalog.js';
 export * from './layout/hit-map.js';
 export * from './layout/metrics.js';
+export * from './layout/scroll-model.js';
+export * from './layout/vertical-projector.js';
 export * from './layout/width-solver.js';
 export * from './source/address.js';
 export * from './source/counts.js';
