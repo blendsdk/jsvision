@@ -4,6 +4,7 @@ import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import type { CardKey, KanbanExtensionId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import { KANBAN_OPEN_CARD_EDITOR_ACTION_ID } from './checklist-renderer.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
 import { measureKanbanCardText } from './text-layout.js';
 import { KANBAN_THEME_ROLES } from './theme.js';
@@ -291,6 +292,7 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
 
   for (const row of descriptor.rows) {
     requireDescriptor(SECTION_KINDS.has(row.section));
+    requireDescriptor(row.spans.length > 0);
     requireDescriptor(row.spans.length <= KANBAN_LIMITS.cardFields.safe);
     let previousEnd = 0;
     for (const span of row.spans) {
@@ -304,6 +306,9 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
   }
 
   const sectionIds = new Set<string>();
+  let expectedStartRow = 0;
+  let titleSections = 0;
+  let statusSections = 0;
   for (const section of descriptor.sections) {
     requireDescriptor(isLocalId(section.id) && !sectionIds.has(section.id));
     sectionIds.add(section.id);
@@ -312,7 +317,20 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
     requireDescriptor(Number.isSafeInteger(section.rowCount) && section.rowCount > 0);
     requireDescriptor(section.startRow + section.rowCount <= descriptor.measuredHeight);
     requireDescriptor(Number.isSafeInteger(section.priority) && section.priority >= 0);
+    requireDescriptor(section.startRow === expectedStartRow);
+    for (let rowIndex = section.startRow; rowIndex < section.startRow + section.rowCount; rowIndex += 1) {
+      requireDescriptor(descriptor.rows[rowIndex]?.section === section.kind);
+    }
+    expectedStartRow += section.rowCount;
+    if (section.kind === 'title') titleSections += 1;
+    if (section.kind === 'status') statusSections += 1;
   }
+  requireDescriptor(expectedStartRow === descriptor.measuredHeight);
+  requireDescriptor(titleSections === 1);
+  requireDescriptor(statusSections === 1 || (descriptor.degradation.level === 'fallback' && statusSections === 0));
+  const titleSection = descriptor.sections.find((section) => section.kind === 'title');
+  requireDescriptor(titleSection !== undefined && descriptor.marker.row >= titleSection.startRow);
+  requireDescriptor(descriptor.marker.row < titleSection.startRow + titleSection.rowCount);
 
   const actionIds = new Set<string>();
   for (const action of descriptor.actions) {
@@ -342,6 +360,25 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
     }
   }
 
+  if (actionIds.has(KANBAN_OPEN_CARD_EDITOR_ACTION_ID)) {
+    const checklistSections = descriptor.sections.filter(
+      (section) => section.kind === 'checklist-progress' || section.kind === 'checklist-preview',
+    );
+    requireDescriptor(checklistSections.length > 0);
+    const firstChecklistRow = checklistSections[0]?.startRow;
+    const lastChecklistSection = checklistSections[checklistSections.length - 1];
+    requireDescriptor(firstChecklistRow !== undefined && lastChecklistSection !== undefined);
+    const checklistEndRow = lastChecklistSection.startRow + lastChecklistSection.rowCount;
+    const editorRegions = descriptor.regions.filter(
+      (region) => region.kind === 'action' && region.actionId === KANBAN_OPEN_CARD_EDITOR_ACTION_ID,
+    );
+    requireDescriptor(editorRegions.length === 1);
+    const editorRegion = editorRegions[0];
+    requireDescriptor(editorRegion !== undefined);
+    requireDescriptor(editorRegion.y === firstChecklistRow);
+    requireDescriptor(editorRegion.y + editorRegion.height === checklistEndRow);
+  }
+
   requireDescriptor(
     descriptor.degradation.level === 'none' ||
       descriptor.degradation.level === 'reduced' ||
@@ -353,4 +390,20 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
     new Set(descriptor.degradation.omittedSections).size === descriptor.degradation.omittedSections.length,
   );
   requireDescriptor(descriptor.degradation.omittedSections.every((kind) => SECTION_KINDS.has(kind)));
+  requireDescriptor(!descriptor.degradation.omittedSections.includes('title'));
+  requireDescriptor(
+    !descriptor.degradation.omittedSections.includes('status') || descriptor.degradation.level === 'fallback',
+  );
+  if (descriptor.degradation.level === 'none') {
+    requireDescriptor(descriptor.degradation.omittedSections.length === 0);
+  }
+  if (descriptor.degradation.level === 'reduced' || descriptor.degradation.level === 'minimum') {
+    requireDescriptor(descriptor.degradation.omittedSections.length > 0);
+  }
+  if (descriptor.degradation.level !== 'fallback') {
+    if (context.focused) requireDescriptor(descriptor.marker.cues.includes('focused'));
+    if (context.selected) requireDescriptor(descriptor.marker.cues.includes('selected'));
+    if (context.readOnly) requireDescriptor(descriptor.marker.cues.includes('read-only'));
+    if (context.operation !== 'idle') requireDescriptor(descriptor.marker.cues.includes(context.operation));
+  }
 }
