@@ -11,7 +11,16 @@ import { describe, expect, test } from 'vitest';
 
 const REPOSITORY_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const GUIDE = readFileSync(join(REPOSITORY_ROOT, 'packages', 'docs-site', 'guide', 'install-and-packages.md'), 'utf8');
-const PUBLIC_PACKAGE_DIRECTORIES = ['core', 'ui', 'i18n', 'forms', 'files', 'datagrid', 'code-editor'] as const;
+const PUBLIC_PACKAGE_DIRECTORIES = [
+  'core',
+  'ui',
+  'i18n',
+  'forms',
+  'files',
+  'datagrid',
+  'code-editor',
+  'kanban',
+] as const;
 
 interface PackageManifest {
   readonly name: string;
@@ -106,6 +115,7 @@ describe('Install & packages implementation hardening', () => {
       Files: ['@jsvision/ui', '@jsvision/files'],
       'Data Grid': ['@jsvision/ui', '@jsvision/datagrid'],
       'Code Editor': ['@jsvision/ui', '@jsvision/code-editor'],
+      Kanban: ['@jsvision/ui', '@jsvision/kanban'],
     });
     for (const packages of matrix.values()) {
       expect(new Set(packages).size).toBe(packages.length);

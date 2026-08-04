@@ -16,10 +16,11 @@ import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
-import { KanbanViewport, setKanbanViewportHostChromeRows } from './kanban-viewport.js';
+import { KanbanViewport } from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
+import { setViewportHostChromeRows } from './viewport-host-chrome.js';
 
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends KanbanViewportOptions<TCard> {
@@ -147,7 +148,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#bindings = new KanbanBoardBindings(bindingOptions);
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
     this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#bindings.identity()));
-    setKanbanViewportHostChromeRows(this.viewport, 1);
+    setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
     this.setLayout({ direction: 'col' });
     this.add(grow(this.viewport));

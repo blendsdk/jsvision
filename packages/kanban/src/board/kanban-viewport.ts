@@ -37,25 +37,10 @@ import {
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import { KanbanViewportSource } from './viewport-source.js';
 import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
+import { readViewportHostChromeRows } from './viewport-host-chrome.js';
 
 /** Hard viewport-local descriptor ceiling independent of logical source length. */
 const KANBAN_VIEWPORT_DESCRIPTOR_LIMIT = 256;
-
-/** Package-internal host chrome rows included only in localized minimum-host guidance. */
-const KANBAN_VIEWPORT_HOST_CHROME_ROWS = new WeakMap<View, number>();
-
-/**
- * Records package-owned host chrome without expanding the public viewport construction contract.
- *
- * @internal
- * @example
- * ```ts
- * setKanbanViewportHostChromeRows(viewport, 1);
- * ```
- */
-export function setKanbanViewportHostChromeRows(viewport: View, rows: number): void {
-  KANBAN_VIEWPORT_HOST_CHROME_ROWS.set(viewport, rows);
-}
 
 /** Application-owned identity hints projected by a read-only board. */
 export interface KanbanIdentityInput {
@@ -238,7 +223,7 @@ export class KanbanViewport<TCard> extends View {
         theme,
         i18n,
         capabilities: ctx.caps,
-        minimumRequiredHeight: 4 + (KANBAN_VIEWPORT_HOST_CHROME_ROWS.get(this) ?? 0),
+        minimumRequiredHeight: 4 + readViewportHostChromeRows(this),
         cache: this.#descriptorCache,
         identity,
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),

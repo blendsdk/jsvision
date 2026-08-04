@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 07:37 CEST
-> **Progress**: 50/64 tasks (78%)
+> **Last Updated**: 2026-08-04 10:42 CEST
+> **Progress**: 64/64 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -212,7 +212,8 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
   - Green evidence: package selection, application authority, single-coordinator lifecycle, responsive viewport hosting, and the honest read-only boundary are discoverable from the canonical router, architecture, catalog, and API index. The validated impact registry routes Kanban and its locale source to exactly those canonical references; changed-file verification passes. The remaining three immutable plugin-oracle failures are the expected unsnapshotted impact, generated-copy/ API-page drift, and locale-recipe synchronization owned by Task 5.2.8.
 - [x] 5.2.8 Run `yarn plugin:update`; inspect/include `tools/jsvision-skill/references/api/kanban.md`, the source-impact snapshot, synchronized recipes, and `plugins/jsvision-plugin/skills/jsvision/`; make `packages/examples/test/api-reference.spec.test.ts` and `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` green ✅ (completed: 2026-08-04 10:19 CEST)
   - Green evidence: the deterministic generator registers the ninth stable package and produces a 229-export Kanban lookup page with Board/Viewport signatures. The localized recipe imports the matching sixth framework catalog, impact snapshots are current, and the assembled plugin is byte-identical. Canonical API coverage/determinism passes 8/8, plugin/i18n parity passes 4/4, and `yarn plugin:check` is green.
-- [ ] 5.3.1 Run the full agreed local gate: Kanban build/typecheck/unit/E2E/deps/JSDoc and packed consumer; affected docs/i18n/inventory tests and docs build; `yarn verify:local`; `yarn plugin:check`; final focused rerun; resolve reviewer/auditor critical/major findings; synchronize plan/traceability/roadmaps without claiming RD-04/RD-05 or RD-13–15 complete
+- [x] 5.3.1 Run the full agreed local gate: Kanban build/typecheck/unit/E2E/deps/JSDoc and packed consumer; affected docs/i18n/inventory tests and docs build; `yarn verify:local`; `yarn plugin:check`; final focused rerun; resolve reviewer/auditor critical/major findings; synchronize plan/traceability/roadmaps without claiming RD-04/RD-05 or RD-13–15 complete ✅ (completed: 2026-08-04 10:42 CEST)
+  - Green evidence: package build/typecheck/dependency/JSDoc checks pass; 30 unit files / 249 tests and 9 real-host E2E tests pass; authentic packed main/testing/ten-locale consumers pass 3/3. Official locale generation, 51 literal classifications, 54 digest reviews, and 14 focused i18n tests pass. Docs typecheck, 14 install/API assertions, 8 canonical API assertions, the 299-second production build/sitemap, 4 plugin/i18n assertions, `yarn plugin:check`, and `yarn verify:local` pass. Review remediation moved the internal host-chrome seam out of the public barrel and its new boundary regression passes; final reviewer re-review reports no critical or major finding. Trace and feature-roadmap closure preserves the explicit later-phase requirements.
 
 **Phase 5 deliverable:** A locally verified, discoverable, publishable Phase A package with current
 official locale evidence and plugin/API parity, while teaching labs/kitchen sink/showcase remain Phase F.
@@ -237,7 +238,7 @@ Phase 5 distribution and documentation closure
 2. All 51 Phase A criteria in `07-testing-strategy.md` pass without weakening immutable specifications.
 3. Every phase has no unresolved critical or major reviewer/auditor finding.
 4. The local gate in PAR-18 passes, including plugin and digest-bound translation review integrity.
-5. The roadmap advances RD-01–RD-03 to plan-created/preflight-ready ownership while RD-04/RD-05 remain
-   incomplete with only their named Phase A slice linked.
+5. The roadmap records RD-01–RD-03 as Done while RD-04/RD-05 remain incomplete with only their named
+   Phase A slice linked.
 6. No unrelated pre-existing worktree change is overwritten, staged, committed, or cleaned up by this
    plan.

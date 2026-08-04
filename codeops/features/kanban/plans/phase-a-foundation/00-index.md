@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation implementation plan
 
 > **Feature**: `@jsvision/kanban` Phase A Foundation
-> **Status**: Planning Complete
+> **Status**: Phase A Complete
 > **Created**: 2026-08-03
 > **CodeOps Artifact Schema**: 1
 >
