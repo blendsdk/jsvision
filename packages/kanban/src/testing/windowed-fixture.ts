@@ -1,4 +1,5 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
+import { createKanbanCardKey } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
@@ -212,14 +213,16 @@ class WindowedFixtureState<TCard> {
         throw new KanbanInvalidSourcePublicationError();
       }
       const keys = new Set<CardKey>();
+      const cardKeys: CardKey[] = [];
       for (const card of cards) {
-        const key = this.options.keyOf(card);
-        if ((typeof key !== 'string' && typeof key !== 'number') || keys.has(key)) {
+        const key = createKanbanCardKey(this.options.keyOf(card));
+        if (keys.has(key)) {
           throw new KanbanInvalidSourcePublicationError();
         }
         keys.add(key);
+        cardKeys.push(key);
       }
-      request.cursor.publish(request.start, cards);
+      request.cursor.publish(request.start, cards, cardKeys);
       this.metrics.materializedCards += cards.length;
       this.event({
         kind: 'resolve-range',
@@ -243,8 +246,15 @@ class WindowedFixtureState<TCard> {
     if (request === undefined) throw new KanbanInvalidSourcePublicationError();
     this.pending.delete(requestId);
     request.removeAbort();
-    request.cursor.fail(code);
-    this.event({ kind: 'reject-range', requestId, code, sessionId: request.sessionId, cursorId: request.cursorId });
+    const safeCode = /^[a-z][a-z0-9-]*$/u.test(code) && code.length <= 128 ? code : 'range-failed';
+    request.cursor.fail(safeCode);
+    this.event({
+      kind: 'reject-range',
+      requestId,
+      code: safeCode,
+      sessionId: request.sessionId,
+      cursorId: request.cursorId,
+    });
     request.deferred.reject(new KanbanInvalidSourcePublicationError());
   }
 }
@@ -255,16 +265,28 @@ class WindowedCursor<TCard> implements KanbanCellCursor<TCard> {
   readonly #sessionId: number;
   readonly #cursorId: number;
   readonly #address: KanbanCellAddress;
+  readonly #onDispose: () => void;
   readonly #cards = new Map<number, TCard>();
+  readonly #keys = new Map<number, CardKey>();
+  readonly #residentKeys: Map<CardKey, string>;
   #revision = 0;
   #errorCode: string | undefined;
   #disposed = false;
 
-  constructor(state: WindowedFixtureState<TCard>, sessionId: number, cursorId: number, address: KanbanCellAddress) {
+  constructor(
+    state: WindowedFixtureState<TCard>,
+    sessionId: number,
+    cursorId: number,
+    address: KanbanCellAddress,
+    residentKeys: Map<CardKey, string>,
+    onDispose: () => void,
+  ) {
     this.#state = state;
     this.#sessionId = sessionId;
     this.#cursorId = cursorId;
     this.#address = address;
+    this.#residentKeys = residentKeys;
+    this.#onDispose = onDispose;
   }
 
   state(): KanbanCellState {
@@ -272,12 +294,17 @@ class WindowedCursor<TCard> implements KanbanCellCursor<TCard> {
     if (this.#errorCode !== undefined) {
       return Object.freeze({ kind: 'error', code: this.#errorCode, retry: 'available' });
     }
-    return Object.freeze({ kind: this.#cards.size === 0 ? 'partial' : 'ready' });
+    return Object.freeze({ kind: 'partial' });
   }
 
   counts(): KanbanCellCounts {
     this.#active();
     return Object.freeze({ total: unknown(), matching: unknown(), loaded: exact(this.#cards.size) });
+  }
+
+  /** Returns the number of distinct resident slots for session-level honest counts. */
+  loadedCount(): number {
+    return this.#cards.size;
   }
 
   length(): KanbanKnownLength {
@@ -345,15 +372,15 @@ class WindowedCursor<TCard> implements KanbanCellCursor<TCard> {
   placementAt(slot: number): KanbanPlacement {
     this.#active();
     const cursorRevision = this.revision();
-    const before = this.#cards.get(slot - 1);
-    const after = this.#cards.get(slot);
+    const before = this.#keys.get(slot - 1);
+    const after = this.#keys.get(slot);
     if (before !== undefined || after !== undefined) {
-      const neighbor = before ?? after;
-      if (neighbor === undefined) throw new KanbanInvalidSourcePublicationError();
+      const neighborCardKey = before ?? after;
+      if (neighborCardKey === undefined) throw new KanbanInvalidSourcePublicationError();
       return Object.freeze({
         kind: 'window-edge',
         edge: before === undefined ? 'before' : 'after',
-        neighborCardKey: this.#state.options.keyOf(neighbor),
+        neighborCardKey,
         cursorRevision,
       });
     }
@@ -376,17 +403,42 @@ class WindowedCursor<TCard> implements KanbanCellCursor<TCard> {
       this.#state.metrics.abortedRequests += 1;
       request.deferred.reject(new KanbanDisposedResourceError());
     }
+    for (const [index, key] of this.#keys) {
+      if (this.#residentKeys.get(key) === this.#slotIdentity(index)) this.#residentKeys.delete(key);
+    }
+    this.#keys.clear();
     this.#cards.clear();
+    this.#onDispose();
     this.#state.metrics.disposedCursors += 1;
     this.#state.event({ kind: 'dispose-cursor', sessionId: this.#sessionId, cursorId: this.#cursorId });
   }
 
-  publish(start: number, cards: readonly TCard[]): void {
+  publish(start: number, cards: readonly TCard[], keys: readonly CardKey[]): void {
     if (this.#disposed) {
       this.#state.metrics.suppressedLateSettlements += 1;
       return;
     }
-    for (const [offset, card] of cards.entries()) this.#cards.set(start + offset, card);
+    if (cards.length !== keys.length) throw new KanbanInvalidSourcePublicationError();
+    const replacedSlots = new Set(cards.map((_card, offset) => this.#slotIdentity(start + offset)));
+    const incomingKeys = new Set<CardKey>();
+    for (const key of keys) {
+      const owner = this.#residentKeys.get(key);
+      if (owner !== undefined && !replacedSlots.has(owner)) throw new KanbanInvalidSourcePublicationError();
+      if (incomingKeys.has(key)) throw new KanbanInvalidSourcePublicationError();
+      incomingKeys.add(key);
+    }
+    for (const [offset, card] of cards.entries()) {
+      const index = start + offset;
+      const previousKey = this.#keys.get(index);
+      if (previousKey !== undefined && this.#residentKeys.get(previousKey) === this.#slotIdentity(index)) {
+        this.#residentKeys.delete(previousKey);
+      }
+      const key = keys[offset];
+      if (key === undefined) throw new KanbanInvalidSourcePublicationError();
+      this.#cards.set(index, card);
+      this.#keys.set(index, key);
+      this.#residentKeys.set(key, this.#slotIdentity(index));
+    }
     this.#errorCode = undefined;
     this.#revision += 1;
   }
@@ -403,6 +455,11 @@ class WindowedCursor<TCard> implements KanbanCellCursor<TCard> {
   #active(): void {
     if (this.#disposed || this.#state.disposed) throw new KanbanDisposedResourceError();
   }
+
+  /** Returns a collision-safe session-local identity for one resident logical slot. */
+  #slotIdentity(index: number): string {
+    return `${String(this.#cursorId)}:${String(index)}`;
+  }
 }
 
 /** One independently disposable query session with on-demand cursor creation. */
@@ -410,6 +467,7 @@ class WindowedSession<TCard> implements KanbanQuerySession<TCard> {
   readonly #state: WindowedFixtureState<TCard>;
   readonly #sessionId: number;
   readonly #cursors = new Map<string, WindowedCursor<TCard>>();
+  readonly #residentKeys = new Map<CardKey, string>();
   #disposed = false;
 
   constructor(state: WindowedFixtureState<TCard>, sessionId: number) {
@@ -436,7 +494,7 @@ class WindowedSession<TCard> implements KanbanQuerySession<TCard> {
       Object.freeze({
         total: exact(this.#state.options.logicalCardCount),
         matching: exact(this.#state.options.logicalCardCount),
-        loaded: exact(this.#state.metrics.materializedCards),
+        loaded: exact([...this.#cursors.values()].reduce((total, cursor) => total + cursor.loadedCount(), 0)),
         visible: unknown(),
         selected: unknown(),
         wip: unknown(),
@@ -480,7 +538,9 @@ class WindowedSession<TCard> implements KanbanQuerySession<TCard> {
     const existing = this.#cursors.get(key);
     if (existing !== undefined) return existing;
     const cursorId = this.#state.nextCursorId++;
-    const cursor = new WindowedCursor(this.#state, this.#sessionId, cursorId, snapshot);
+    const cursor = new WindowedCursor(this.#state, this.#sessionId, cursorId, snapshot, this.#residentKeys, () => {
+      if (this.#cursors.get(key) === cursor) this.#cursors.delete(key);
+    });
     this.#cursors.set(key, cursor);
     this.#state.metrics.createdCursors += 1;
     this.#state.event({ kind: 'create-cursor', sessionId: this.#sessionId, cursorId, address: snapshot });

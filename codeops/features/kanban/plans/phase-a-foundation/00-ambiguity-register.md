@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 30 items resolved
-> **Last Updated**: 2026-08-04 03:12 CEST
+> **Status**: ✅ GATE PASSED — all 31 items resolved
+> **Last Updated**: 2026-08-04 03:42 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -50,6 +50,7 @@
 | PAR-28 | Technical (runtime) | Cursor criteria fixed behavior but not exact cell/count/length/placement/identity values, stale-placement validation, or a black-box seam for the private range coordinator | Exact unions plus pure validators and testing-only cursor harness / expose coordinator / move cursor lifecycle to Phase 4 | Delegated: exact immutable cursor unions, pure placement/identity validators, and a narrow testing-only cursor harness; selection reconciliation remains Phase 4 | ✅ Resolved |
 | PAR-29 | Technical (runtime) | The approved 100,000-card windowed fixture lacked an exact constructor, settlement controller, and bounded metrics needed for an immutable scale oracle | Lazy testing fixture with explicit range settlement and metrics / self-reported opaque benchmark / mount Board early | Delegated: lazy testing-only windowed source/controller with request-proportional frozen metrics and safe bounded events; no board or coordinator exposure | ✅ Resolved |
 | PAR-30 | Technical (runtime) | Eager filter, sort, and summary adapter names were approved without exact callback/result shapes or honest summary publication values | Explicit operator registry plus package numeric aggregations / opaque predicates and arbitrary reducers / defer summary execution | Delegated: finite operator registries, tri-state sort comparison, and package-owned numeric aggregations with explicit authoritative/loaded-only scope and count-like quality | ✅ Resolved |
+| PAR-31 | Quality hardening | Independent Phase 2 review exposed contradictions and untested lifecycle/source edge cases after the green oracle | Preserve the green implementation / harden the durable source contract and revise the conflicting signal oracle | Delegated: mandatory hardening with composed locator cancellation, bounded active-range sharing, atomic snapshots, explicit eager search/revision, authoritative identity facts, honest unknown projection counts, exact headers, safe card keys, and session-local windowed fixture state | ✅ Resolved |
 
 ## Resolution notes
 
@@ -379,6 +380,40 @@ aggregation, and typed summary quality and rejected silent summary deferral. **P
 `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** non-numeric summaries, custom reducers, or
 remote authoritative aggregation becomes a package-owned source responsibility.
 
+### PAR-31 — Phase 2 independent-review hardening
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** The user approved all major quality
+recommendations and authorized the execution quality loop to resolve them without expanding the Phase
+A product boundary. **Objective:** Close contradictions and missing adversarial cases in the already
+approved source/session/cursor/testing contracts before the phase checkpoint.
+
+**Decision:** Every locator receives a coordinator-owned signal that mirrors caller cancellation and
+can also be aborted on query replacement; this corrects the earlier exact-signal-identity oracle, which
+could not satisfy generation-owned cancellation. Session snapshots use opening/closing revision reads.
+Locator cancellation races application settlement so a source that ignores abort cannot retain the
+public continuation. Range disposal never starts undelegated work; active coordination subtracts active and completed coverage, shares overlapping acquisition, and splits
+every delegated span at the configured bound. Eager sources require an explicit search predicate for
+non-empty search and an optional application revision getter for in-place field changes, retain authoritative keys separately from the
+matching index, allocate revisions across the complete source rather than per session, expose viewport-visible counts as unknown, and keep all counts unknown after an invalid
+first publication. Optional swimlane metadata does not force grouping. Structural headers are unique
+and complete, and string card keys use the same UTF-8/control-safe identity boundary as other IDs.
+Testing harnesses expose only bounded configured resident-key inspections; deterministic windowed
+sessions report distinct active resident slots, never cumulative fixture metrics, keep unknown-length
+cursors partial, retain validated session-unique keys beside cards, sanitize rejection events, and permit cursor reacquisition after disposal.
+
+**Evidence:** Independent reviewer and auditor reports found no critical issues but identified these as
+major contract violations not exercised by the initial 30-test Phase 2 focus. **Rejected alternatives:**
+Keeping an exact caller signal makes coordinator cancellation impossible. Treating matching entries as
+authoritative identity loses filtered records. Reporting matching as visible invents viewport knowledge.
+Leaving testing helpers approximate defeats their purpose as supported deterministic oracles.
+**Strongest counterargument:** Composing the locator signal changes observable object identity, but
+cancellation semantics are the durable contract and no safe implementation can abort a caller-owned
+signal. **Confidence:** High (0.96). **Hardening:** Two independent phase roles reproduced or grounded
+the findings against source, requirements, and tests. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** sources gain a standard platform-independent
+signal-composition primitive that preserves identity, or visible-count ownership moves out of the
+viewport.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -387,7 +422,7 @@ remote authoritative aggregation becomes a package-owned source responsibility.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-30 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-31 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

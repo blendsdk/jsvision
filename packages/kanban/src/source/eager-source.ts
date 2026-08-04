@@ -35,13 +35,15 @@ interface EagerDerivation<TCard> {
 }
 
 /** Maximum members accepted when reading the factory's exact options envelope. */
-const EAGER_OPTION_MEMBERS = 12;
+const EAGER_OPTION_MEMBERS = 14;
 /** Exact option keys accepted by the eager factory boundary. */
 const EAGER_OPTION_KEYS = new Set([
   'columns',
   'swimlanes',
   'keyOf',
   'columnOf',
+  'search',
+  'revision',
   'compare',
   'groupingFields',
   'filterFields',
@@ -61,6 +63,14 @@ function exact(value: number): KanbanCount {
 /** Creates an explicit unknown count. */
 function unknown(): KanbanCount {
   return Object.freeze({ quality: 'unknown' });
+}
+
+/** Validates an optional equality-only application revision without retaining hostile values. */
+function snapshotApplicationRevision(value: KanbanRevision | undefined): KanbanRevision | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'number' && Number.isFinite(value)) return Object.is(value, -0) ? 0 : value;
+  if (typeof value === 'string' && value.length > 0 && value.length <= 2_048) return value;
+  throw new KanbanInvalidSourcePublicationError();
 }
 
 /** Narrows one descriptor from a statically typed array to its matching data value. */
@@ -109,8 +119,8 @@ function deriveIdentityChanges<TCard>(
 ): readonly KanbanIdentityChange[] {
   if (previous === undefined) return Object.freeze([]);
   const changes: KanbanIdentityChange[] = [];
-  for (const key of previous.entries.keys()) {
-    if (!next.entries.has(key)) changes.push(Object.freeze({ kind: 'deleted-card', cardKey: key }));
+  for (const key of previous.authoritativeKeys) {
+    if (!next.authoritativeKeys.has(key)) changes.push(Object.freeze({ kind: 'deleted-card', cardKey: key }));
   }
   const nextColumns = new Set(next.columns.map((column) => column.columnId));
   for (const column of previous.columns) {
@@ -236,22 +246,29 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
   readonly #query: KanbanQuery;
   readonly #cards: () => readonly TCard[];
   readonly #options: EagerKanbanSourceOptions<TCard>;
+  readonly #nextRevision: () => KanbanRevision;
   readonly #limits: ReturnType<typeof validateKanbanLimitOptions>;
   readonly #cursors = new Set<EagerKanbanCursor<TCard>>();
-  #revision = 0;
   #last: EagerDerivation<TCard> | undefined;
   #attemptedCards: readonly TCard[] | undefined;
   #attemptedColumns: readonly import('./types.js').KanbanColumnMeta[] | undefined;
   #attemptedSwimlanes: readonly import('./types.js').KanbanSwimlaneMeta[] | undefined;
+  #attemptedApplicationRevision: KanbanRevision | undefined;
   #failed = false;
   #hasValidPublication = false;
   #disposed = false;
 
   /** Stores source callbacks without deriving until the first reactive getter read. */
-  constructor(cards: () => readonly TCard[], query: KanbanQuery, options: EagerKanbanSourceOptions<TCard>) {
+  constructor(
+    cards: () => readonly TCard[],
+    query: KanbanQuery,
+    options: EagerKanbanSourceOptions<TCard>,
+    nextRevision: () => KanbanRevision,
+  ) {
     this.#cards = cards;
     this.#query = query;
     this.#options = options;
+    this.#nextRevision = nextRevision;
     this.#limits = validateKanbanLimitOptions(options.limits);
   }
 
@@ -282,11 +299,21 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
   /** Returns exact eager total, matching, and loaded counts with explicit unknown projection counts. */
   counts(): KanbanBoardCounts {
     const index = this.#read().index;
+    if (!this.#hasValidPublication) {
+      return Object.freeze({
+        total: unknown(),
+        matching: unknown(),
+        loaded: unknown(),
+        visible: unknown(),
+        selected: unknown(),
+        wip: unknown(),
+      });
+    }
     return Object.freeze({
       total: exact(index.total),
       matching: exact(index.matching),
       loaded: exact(index.matching),
-      visible: exact(index.matching),
+      visible: unknown(),
       selected: unknown(),
       wip: unknown(),
     });
@@ -371,23 +398,26 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       const cardsInput = this.#cards();
       const columnsInput = this.#options.columns();
       const swimlanesInput = this.#options.swimlanes?.() ?? EMPTY_SWIMLANES;
+      const applicationRevision = snapshotApplicationRevision(this.#options.revision?.());
       if (
         this.#last !== undefined &&
         cardsInput === this.#attemptedCards &&
         columnsInput === this.#attemptedColumns &&
-        swimlanesInput === this.#attemptedSwimlanes
+        swimlanesInput === this.#attemptedSwimlanes &&
+        Object.is(applicationRevision, this.#attemptedApplicationRevision)
       ) {
         return this.#last;
       }
       this.#attemptedCards = cardsInput;
       this.#attemptedColumns = columnsInput;
       this.#attemptedSwimlanes = swimlanesInput;
+      this.#attemptedApplicationRevision = applicationRevision;
       const cards = snapshotTypedArray(cardsInput, this.#limits.selectedKeys);
       const columns = snapshotTypedArray(columnsInput, this.#limits.columns);
       const swimlanes = snapshotTypedArray(swimlanesInput, this.#limits.swimlanes);
       const index = buildEagerKanbanIndex(cards, columns, swimlanes, {
         query: this.#query,
-        revision: (this.#revision += 1),
+        revision: this.#nextRevision(),
         sourceOptions: this.#options,
         limits: this.#limits,
       });
@@ -401,13 +431,14 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       this.#failed = true;
       if (this.#last !== undefined) return this.#last;
       const index: EagerKanbanIndex<TCard> = Object.freeze({
-        revision: (this.#revision += 1),
+        revision: this.#nextRevision(),
         columns: Object.freeze([]),
         swimlanes: Object.freeze([]),
         cells: new Map(),
         cellKeys: new Map(),
         cellTotals: new Map(),
         entries: new Map(),
+        authoritativeKeys: new Set<CardKey>(),
         total: 0,
         matching: 0,
         summaries: new Map(),
@@ -458,11 +489,18 @@ export function createEagerKanbanDataSource<TCard>(
   if (
     typeof options.columns !== 'function' ||
     typeof options.keyOf !== 'function' ||
-    typeof options.columnOf !== 'function'
+    typeof options.columnOf !== 'function' ||
+    (options.revision !== undefined && typeof options.revision !== 'function')
   ) {
     throw new KanbanInvalidSourcePublicationError();
   }
   const limits = validateKanbanLimitOptions(options.limits);
+  let revision = 0;
+  const nextRevision = (): KanbanRevision => {
+    revision += 1;
+    if (!Number.isSafeInteger(revision)) throw new KanbanInvalidSourcePublicationError();
+    return revision;
+  };
   return Object.freeze({
     openQuery(query: KanbanQuery, openOptions?: { readonly signal?: AbortSignal }): KanbanQuerySession<TCard> {
       if (openOptions?.signal?.aborted === true) {
@@ -475,7 +513,7 @@ export function createEagerKanbanDataSource<TCard>(
       } catch {
         throw new KanbanInvalidQueryError();
       }
-      return new EagerKanbanSession(cards, snapshot, options);
+      return new EagerKanbanSession(cards, snapshot, options, nextRevision);
     },
   });
 }

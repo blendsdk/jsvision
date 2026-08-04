@@ -151,8 +151,11 @@ that changes focus or selection; RD-06 later owns those interaction semantics.
 `locateCard` is an optional bounded identity locator used by imperative reveal. Its exact discriminated
 result is `found`, `unloaded`, `unknown`, or `unsupported`; every member carries `sessionRevision`.
 `found` and `unloaded` also carry a validated `address` and may carry a non-negative safe `index` and
-semantic `placement`. It never returns a card body. Implementations honor cancellation, and the board
-suppresses a result after its generation/session revision changes. Eager sessions resolve from their
+semantic `placement`. It never returns a card body. Implementations honor cancellation through a
+coordinator-owned signal that mirrors caller abort and also aborts on generation replacement;
+consumers must not depend on `AbortSignal` object identity. The board suppresses a result after its
+generation/session revision changes. Coordinator cancellation races application settlement, so an
+adapter that ignores abort cannot leave the public lookup pending. Eager sessions resolve from their
 key index; a windowed source may perform one bounded application lookup or return `unsupported`.
 Absence never permits a scan.
 
@@ -222,6 +225,12 @@ Ranges are half-open. Validate finite non-negative integers, `start <= end`, con
 arithmetic before source application code runs. `cardAt` returning `undefined` for an in-range unloaded
 slot never decrements counts or fabricates an empty card. `retry` is explicit and bounded; there is no
 automatic unbounded loop. `dispose` is idempotent and suppresses all later publications.
+
+Same-turn and already-active overlaps share acquisition. Completed and active coverage is subtracted
+before delegation, and any coalesced union is split back into source calls no larger than the configured
+span. A waiter resolves only after every acquisition covering its requested interval settles.
+Disposal rejects a still-queued waiter without starting new application work; already-delegated work
+observes its owned aborted signal.
 
 Placement is a discriminated union for authoritative `start`/`end`, `between` nullable stable neighbor
 keys, `window-edge` with known neighbor and optional revision-scoped token, or `unavailable` with a safe

@@ -1,11 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { KanbanDisposedResourceError, KanbanInvalidRangeError } from '../src/index.js';
+import {
+  KanbanDisposedResourceError,
+  KanbanInvalidRangeError,
+  KanbanInvalidSourcePublicationError,
+  createEagerKanbanDataSource,
+  snapshotKanbanSessionPublication,
+} from '../src/index.js';
 import type { KanbanBoardCounts, KanbanCellCursor, KanbanDataSource, KanbanQuerySession } from '../src/index.js';
 import { KanbanLoadScheduler } from '../src/source/load-scheduler.js';
 import { KanbanRangeSet, snapshotKanbanRange } from '../src/source/range-set.js';
 import { KanbanSessionCoordinator } from '../src/source/session-coordinator.js';
-import { createKanbanDeferred } from '../src/testing.js';
+import {
+  createKanbanCursorLifecycleHarness,
+  createKanbanDeferred,
+  createKanbanQueryLifecycleHarness,
+  createWindowedKanbanFixture,
+} from '../src/testing.js';
 
 /** Complete zero counts for ordinary lifecycle fakes. */
 const ZERO_COUNTS: KanbanBoardCounts = {
@@ -98,6 +109,128 @@ describe('bounded load scheduling', () => {
   });
 });
 
+describe('cursor acquisition hardening', () => {
+  it('does not start undelegated application work during disposal', async () => {
+    const ensureRange = vi.fn(() => Promise.resolve());
+    const cursor: KanbanCellCursor<never> = {
+      state: () => ({ kind: 'partial' }),
+      counts: () => ({
+        total: { quality: 'unknown' },
+        matching: { quality: 'unknown' },
+        loaded: { quality: 'unknown' },
+      }),
+      length: () => ({ kind: 'unknown' }),
+      cardAt: () => undefined,
+      ensureRange,
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'not-loaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose: () => undefined,
+    };
+    const harness = createKanbanCursorLifecycleHarness({ cursor, address: { columnId: 'ready' }, keyOf: () => 1 });
+    const pending = harness.ensureRange(0, 10);
+    harness.dispose();
+    await expect(pending).rejects.toBeInstanceOf(KanbanDisposedResourceError);
+    expect(ensureRange).not.toHaveBeenCalled();
+  });
+
+  it('splits adjacent coalesced requests at the configured source-call bound', async () => {
+    const calls: { readonly start: number; readonly end: number }[] = [];
+    const cursor: KanbanCellCursor<never> = {
+      state: () => ({ kind: 'partial' }),
+      counts: () => ({
+        total: { quality: 'unknown' },
+        matching: { quality: 'unknown' },
+        loaded: { quality: 'exact', value: 0 },
+      }),
+      length: () => ({ kind: 'unknown' }),
+      cardAt: () => undefined,
+      ensureRange: (start, end) => {
+        calls.push({ start, end });
+        return Promise.resolve();
+      },
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'not-loaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose: () => undefined,
+    };
+    const harness = createKanbanCursorLifecycleHarness({
+      cursor,
+      address: { columnId: 'ready' },
+      keyOf: () => 1,
+      limits: { values: { ensureRangeCards: 256 } },
+    });
+
+    await Promise.all([harness.ensureRange(0, 256), harness.ensureRange(256, 512)]);
+
+    expect(calls).toEqual([
+      { start: 0, end: 256 },
+      { start: 256, end: 512 },
+    ]);
+  });
+
+  it('subtracts active acquisitions before delegating a later overlap', async () => {
+    const calls: { readonly start: number; readonly end: number }[] = [];
+    const controls: ReturnType<typeof createKanbanDeferred<void>>[] = [];
+    const cursor: KanbanCellCursor<never> = {
+      state: () => ({ kind: 'partial' }),
+      counts: () => ({
+        total: { quality: 'unknown' },
+        matching: { quality: 'unknown' },
+        loaded: { quality: 'exact', value: 0 },
+      }),
+      length: () => ({ kind: 'unknown' }),
+      cardAt: () => undefined,
+      ensureRange: (start, end) => {
+        calls.push({ start, end });
+        const control = createKanbanDeferred<void>();
+        controls.push(control);
+        return control.promise;
+      },
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'not-loaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose: () => undefined,
+    };
+    const harness = createKanbanCursorLifecycleHarness({ cursor, address: { columnId: 'ready' }, keyOf: () => 1 });
+    const first = harness.ensureRange(0, 20);
+    await Promise.resolve();
+    const second = harness.ensureRange(10, 30);
+    await Promise.resolve();
+
+    expect(calls).toEqual([
+      { start: 0, end: 20 },
+      { start: 20, end: 30 },
+    ]);
+    for (const control of controls) control.resolve();
+    await Promise.all([first, second]);
+  });
+
+  it('disposes the application cursor even when final inspection throws', () => {
+    const dispose = vi.fn();
+    const cursor: KanbanCellCursor<never> = {
+      state: () => {
+        throw new Error('hostile getter');
+      },
+      counts: () => ({
+        total: { quality: 'unknown' },
+        matching: { quality: 'unknown' },
+        loaded: { quality: 'unknown' },
+      }),
+      length: () => ({ kind: 'unknown' }),
+      cardAt: () => undefined,
+      ensureRange: () => Promise.resolve(),
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'not-loaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose,
+    };
+    const harness = createKanbanCursorLifecycleHarness({ cursor, address: { columnId: 'ready' }, keyOf: () => 1 });
+    expect(() => harness.dispose()).toThrow('hostile getter');
+    expect(dispose).toHaveBeenCalledOnce();
+  });
+});
+
 describe('session cursor retention and cleanup', () => {
   it('shares one cursor across explicit owners and disposes scopes before cursor and session', () => {
     const order: string[] = [];
@@ -178,5 +311,223 @@ describe('session cursor retention and cleanup', () => {
     expect(coordinator.isCurrent(generation)).toBe(false);
     expect(signals[0]?.aborted).toBe(true);
     expect(disposed).toEqual([1]);
+  });
+
+  it('rejects a torn session snapshot whose revision changes during its getters', () => {
+    let revision = 1;
+    const session: KanbanQuerySession<never> = {
+      state: () => {
+        revision = 2;
+        return { kind: 'ready' };
+      },
+      revision: () => revision,
+      columns: () => [],
+      swimlanes: () => [],
+      counts: () => ZERO_COUNTS,
+      headers: () => ({ revision: 1, columns: [], swimlanes: [] }),
+      identityChanges: () => ({ revision: 1, changes: [] }),
+      cell: () => {
+        throw new Error('not retained');
+      },
+      dispose: () => undefined,
+    };
+    const coordinator = new KanbanSessionCoordinator({ source: { openQuery: () => session }, initialQuery: {} });
+    expect(() => coordinator.snapshot()).toThrow(KanbanInvalidSourcePublicationError);
+  });
+
+  it('aborts a coordinator-owned locator signal on replacement even with caller cancellation', async () => {
+    const deferred = createKanbanDeferred<Awaited<ReturnType<NonNullable<KanbanQuerySession<never>['locateCard']>>>>();
+    const signals: AbortSignal[] = [];
+    let disposed = false;
+    let opened = 0;
+    const source: KanbanDataSource<never> = {
+      openQuery: () => {
+        opened += 1;
+        const revision = opened;
+        return {
+          state: () => ({ kind: 'empty' }),
+          revision: () => {
+            if (disposed && revision === 1) throw new Error('disposed session revision read');
+            return revision;
+          },
+          columns: () => [],
+          swimlanes: () => [],
+          counts: () => ZERO_COUNTS,
+          headers: () => ({ revision, columns: [], swimlanes: [] }),
+          identityChanges: () => ({ revision, changes: [] }),
+          cell: () => {
+            throw new Error('not retained');
+          },
+          locateCard: (_key, options) => {
+            if (options?.signal !== undefined) signals.push(options.signal);
+            return deferred.promise;
+          },
+          dispose: () => {
+            if (revision === 1) disposed = true;
+          },
+        };
+      },
+    };
+    const coordinator = new KanbanSessionCoordinator({ source, initialQuery: {} });
+    const caller = new AbortController();
+    const result = coordinator.locateCard(1, { signal: caller.signal });
+    coordinator.replaceQuery({ viewRevision: 2 });
+    expect(signals[0]?.aborted).toBe(true);
+    deferred.resolve({ kind: 'unknown', sessionRevision: 1 });
+    await expect(result).resolves.toEqual({ kind: 'unknown', sessionRevision: 1 });
+  });
+
+  it('settles locator cancellation when an application ignores its aborted signal', async () => {
+    let opened = 0;
+    const source: KanbanDataSource<never> = {
+      openQuery: () => {
+        const revision = ++opened;
+        return {
+          state: () => ({ kind: 'empty' }),
+          revision: () => revision,
+          columns: () => [],
+          swimlanes: () => [],
+          counts: () => ZERO_COUNTS,
+          headers: () => ({ revision, columns: [], swimlanes: [] }),
+          identityChanges: () => ({ revision, changes: [] }),
+          cell: () => {
+            throw new Error('not retained');
+          },
+          locateCard: () => new Promise(() => undefined),
+          dispose: () => undefined,
+        };
+      },
+    };
+    const coordinator = new KanbanSessionCoordinator({ source, initialQuery: {} });
+    const pending = coordinator.locateCard(1);
+    coordinator.replaceQuery({ viewRevision: 2 });
+    await expect(pending).resolves.toEqual({ kind: 'unknown', sessionRevision: 1 });
+  });
+
+  it.each(['', 'unsafe\u001brevision', '界'.repeat(1_025), Number.NaN])(
+    'rejects an invalid session revision before generating locator outcome %#',
+    async (revision) => {
+      const source: KanbanDataSource<never> = {
+        openQuery: () => ({
+          state: () => ({ kind: 'empty' }),
+          revision: () => revision,
+          columns: () => [],
+          swimlanes: () => [],
+          counts: () => ZERO_COUNTS,
+          headers: () => ({ revision, columns: [], swimlanes: [] }),
+          identityChanges: () => ({ revision, changes: [] }),
+          cell: () => {
+            throw new Error('not retained');
+          },
+          dispose: () => undefined,
+        }),
+      };
+      const coordinator = new KanbanSessionCoordinator({ source, initialQuery: {} });
+      await expect(coordinator.locateCard(1)).rejects.toBeInstanceOf(KanbanInvalidSourcePublicationError);
+    },
+  );
+});
+
+describe('publication and testing-fixture integrity', () => {
+  it('requires headers to be a unique complete identity projection', () => {
+    const base = {
+      revision: 1,
+      state: { kind: 'empty' as const },
+      columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      swimlanes: [],
+      counts: ZERO_COUNTS,
+      identityChanges: { revision: 1, changes: [] },
+    };
+    expect(() =>
+      snapshotKanbanSessionPublication({ ...base, headers: { revision: 1, columns: [], swimlanes: [] } }),
+    ).toThrow(KanbanInvalidSourcePublicationError);
+    expect(() =>
+      snapshotKanbanSessionPublication({
+        ...base,
+        headers: {
+          revision: 1,
+          columns: [
+            { columnId: 'ready', label: 'Ready' },
+            { columnId: 'ready', label: 'Again' },
+          ],
+          swimlanes: [],
+        },
+      }),
+    ).toThrow(KanbanInvalidSourcePublicationError);
+  });
+
+  it('keeps windowed state partial, session counts distinct, diagnostics safe, and cursors reacquirable', async () => {
+    const fixture = createWindowedKanbanFixture({
+      logicalCardCount: 10,
+      columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      materialize: ({ start, end }) => Array.from({ length: end - start }, (_, offset) => ({ id: start + offset })),
+      keyOf: (card) => card.id,
+    });
+    const session = fixture.source.openQuery({});
+    const first = session.cell({ columnId: 'ready' });
+    const load = first.ensureRange(0, 2);
+    fixture.controller.resolveRange(fixture.controller.pendingRanges()[0]!.requestId);
+    await load;
+    expect(first.state()).toEqual({ kind: 'partial' });
+    expect(session.counts().loaded).toEqual({ quality: 'exact', value: 2 });
+
+    const duplicate = first.ensureRange(0, 2);
+    fixture.controller.resolveRange(fixture.controller.pendingRanges()[0]!.requestId);
+    await duplicate;
+    expect(session.counts().loaded).toEqual({ quality: 'exact', value: 2 });
+
+    const rejected = first.ensureRange(4, 5);
+    fixture.controller.rejectRange(fixture.controller.pendingRanges()[0]!.requestId, {
+      code: 'secret\u001bpayload',
+    });
+    await expect(rejected).rejects.toBeInstanceOf(KanbanInvalidSourcePublicationError);
+    expect(first.state()).toMatchObject({ kind: 'error', code: 'range-failed' });
+    expect(JSON.stringify(fixture.metrics().retainedEvents)).not.toContain('secret');
+
+    first.dispose();
+    const second = session.cell({ columnId: 'ready' });
+    expect(second).not.toBe(first);
+    expect(fixture.metrics().createdCursors).toBe(2);
+    expect(session.counts().loaded).toEqual({ quality: 'exact', value: 0 });
+  });
+
+  it('rejects duplicate identities across windowed ranges and retains validated placement keys', async () => {
+    const materialized = [{ id: 'stable' }, { id: 'stable' }];
+    const fixture = createWindowedKanbanFixture({
+      logicalCardCount: 2,
+      columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      materialize: ({ start, end }) => materialized.slice(start, end),
+      keyOf: (card) => card.id,
+    });
+    const cursor = fixture.source.openQuery({}).cell({ columnId: 'ready' });
+    const first = cursor.ensureRange(0, 1);
+    fixture.controller.resolveRange(fixture.controller.pendingRanges()[0]!.requestId);
+    await first;
+    materialized[0]!.id = 'unsafe\u001bchanged';
+    expect(cursor.placementAt(1)).toMatchObject({ neighborCardKey: 'stable' });
+
+    const duplicate = cursor.ensureRange(1, 2);
+    fixture.controller.resolveRange(fixture.controller.pendingRanges()[0]!.requestId);
+    await expect(duplicate).rejects.toBeInstanceOf(KanbanInvalidSourcePublicationError);
+    expect(cursor.counts().loaded).toEqual({ quality: 'exact', value: 1 });
+  });
+
+  it('returns bounded resident card identities for explicitly inspected query cells', () => {
+    const cards = [{ id: 'card-1', columnId: 'ready' }];
+    const columns = [{ columnId: 'ready', label: 'Ready', revision: 1 }] as const;
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => columns,
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const harness = createKanbanQueryLifecycleHarness({
+      source,
+      initialQuery: {},
+      inspectedAddresses: [{ columnId: 'ready' }],
+      keyOf: (card) => card.id,
+    });
+    expect(harness.snapshot().inspectedCells).toEqual([
+      { address: { columnId: 'ready' }, cards: [{ index: 0, cardKey: 'card-1' }] },
+    ]);
   });
 });

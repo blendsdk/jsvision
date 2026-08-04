@@ -84,13 +84,18 @@ interface SessionOptions {
 
 /** Creates an ordinary public session fake without exposing coordinator internals. */
 function createSession(options: SessionOptions): KanbanQuerySession<WorkItem> {
+  const columns = options.columns ?? [READY_COLUMN, DONE_COLUMN];
   return {
     state: () => options.state,
     revision: () => options.revision,
-    columns: () => options.columns ?? [READY_COLUMN, DONE_COLUMN],
+    columns: () => columns,
     swimlanes: () => [],
     counts: () => options.counts,
-    headers: () => ({ revision: options.revision, columns: [], swimlanes: [] }),
+    headers: () => ({
+      revision: options.revision,
+      columns: columns.map((column) => ({ columnId: column.columnId, label: column.label })),
+      swimlanes: [],
+    }),
     identityChanges: () => ({ revision: options.revision, changes: [] }),
     cell: () => {
       throw new Error('this query-session oracle must not create or scan a cell cursor');
@@ -301,7 +306,7 @@ describe('Kanban bounded identity location', () => {
       sessionRevision: 'window-revision',
     });
     expect(locateCalls).toHaveBeenCalledOnce();
-    expect(locateCalls).toHaveBeenCalledWith(caller.signal);
+    expect(locateCalls).toHaveBeenCalledWith(expect.any(AbortSignal));
     expect(result).not.toHaveProperty('card');
 
     const signals: AbortSignal[] = [];

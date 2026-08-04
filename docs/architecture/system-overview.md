@@ -8,9 +8,10 @@ JSVision is a modular TypeScript SDK monorepo. Public packages form a layered li
 runtime service: applications instantiate components locally, retain authority over their data and
 effects, and select terminal or browser hosts. The Kanban foundation now exists as the specialist
 `@jsvision/kanban` package under `packages/`, following the Data Grid and Code Editor precedent. Its
-component, source, adapter, and dialog layers remain staged work.
+source/session layer is implemented; component, presentation-adapter, and dialog layers remain staged
+work.
 
-## Planned Kanban component architecture
+## Kanban component architecture
 
 ```mermaid
 graph TB
@@ -61,6 +62,16 @@ graph TB
 - **Inputs**: Search, filter, sort, grouping, and saved-view projection.
 - **Outputs**: Bounded card windows, count knowledge, logical-edge knowledge, and errors per cell.
 - **Boundary**: One failed cell does not invalidate unrelated loaded cells.
+
+The implemented source boundary uses one immutable semantic query per session, honest count-quality
+unions, revision-scoped placements, and collision-safe column/swimlane addresses. A generation-owned
+coordinator retains cursors only for explicit visible, overscan, or prefetch owners. Query replacement
+invalidates the old generation before aborting outstanding work, so late completions cannot publish
+into the new session.
+
+Small boards use the reactive eager adapter without changing this contract. Large or remote adapters
+can expose sparse windowed cursors; the deterministic testing adapter demonstrates 100,000 logical
+cards while materializing only requested visible and overscan ranges.
 
 ### Application request dispatcher
 

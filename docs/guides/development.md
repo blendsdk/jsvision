@@ -1,6 +1,6 @@
 # Development workflow
 
-> **Last Updated**: 2026-08-03
+> **Last Updated**: 2026-08-04
 
 ## Branch and package conventions
 
@@ -8,9 +8,9 @@
 feature branches using Conventional Commits. Public SDK packages live under `packages/`, use ESM
 TypeScript, target Node.js 22+, and expose only supported package entry points.
 
-The planned Kanban implementation belongs in `packages/kanban/`. It follows the package structure,
-export-map, locale, testing, and documentation precedents of Data Grid and Code Editor while retaining
-its own public contracts.
+The Kanban implementation lives in `packages/kanban/`. Its package shell, authority contracts, and
+revisioned eager/windowed source layer are implemented. Later presentation, locale, dialog, and docs
+work follows the Data Grid and Code Editor precedents while retaining Kanban's own public contracts.
 
 ## Specification-first sequence
 

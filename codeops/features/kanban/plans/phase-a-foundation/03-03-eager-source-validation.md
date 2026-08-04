@@ -2,7 +2,7 @@
 
 > **Document**: 03-03-eager-source-validation.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-30
+> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-31
 > **CodeOps Artifact Schema**: 1
 
 ## Eager helper API
@@ -12,6 +12,8 @@ export interface EagerKanbanSourceOptions<TCard> {
   readonly columns: () => readonly KanbanColumnMeta[];
   readonly keyOf: (card: TCard) => CardKey;
   readonly columnOf: (card: TCard) => KanbanColumnId;
+  readonly search?: (card: TCard, term: string) => boolean;
+  readonly revision?: () => KanbanRevision;
   readonly compare?: (left: TCard, right: TCard) => number;
   readonly groupingFields?: readonly KanbanGroupingField<TCard>[];
   readonly filterFields?: readonly KanbanFilterField<TCard>[];
@@ -54,12 +56,14 @@ export interface KanbanSummaryAdapter<TCard> {
 }
 ```
 
-Both cards and columns are reactive getters. `keyOf` and `columnOf` are required. If `compare` is
-absent, the adapter preserves source order; if present, it applies a stable sort with source index as
-the final tie-break. Cards retain their original object identity. Adapters are pure synchronous
+Both cards and columns are reactive getters. The optional application `revision` getter invalidates a
+stable outer card array after in-place fields used by adapters or renderers change. `keyOf` and
+`columnOf` are required. If `compare` is absent, the adapter preserves source order; if present, it
+applies a stable sort with source index as the final tie-break. Cards retain their original object identity. Adapters are pure synchronous
 callbacks; exceptions become a scoped invalid publication/observation rather than a partial index.
 Filter fields explicitly register unique supported operator IDs, so unknown fields/operators reject
-before a session opens. Filters are ANDed in query order. Query sorts apply lexicographically; each
+before a session opens. A non-empty search query requires the explicit synchronous `search` predicate;
+there is no implicit property traversal or stringification. Filters are ANDed in query order. Query sorts apply lexicographically; each
 sort callback returns exactly `-1 | 0 | 1`, followed by the optional source comparator and source
 index. Summary callbacks return only finite numeric contributions or `undefined`; package-owned
 aggregation publishes typed exact numeric summaries with declared authority scope, or typed unknown
@@ -72,7 +76,8 @@ Each reactive recomputation builds a candidate snapshot off to the side:
 1. validate and snapshot ordered column metadata;
 2. scan resident cards once, validating key, column, optional swimlane, and queried field adapters;
 3. reject duplicate keys and unknown structural IDs;
-4. create keyed card metadata and per-address ordered card-reference arrays;
+4. create an authoritative key set plus matching keyed card metadata and per-address ordered
+   card-reference arrays;
 5. evaluate validated local filters and sort directives;
 6. calculate exact total/matching/loaded counts and declared summaries; and
 7. publish the complete candidate and new revision atomically.
@@ -108,12 +113,13 @@ For an eager cursor:
   `between`; and
 - WIP and application summaries are reported only when their adapters declare authoritative scope.
 
-Filtering never changes authoritative total or WIP. It changes matching, loaded, and eventually visible
-counts. Unknown values remain typed unknown; they are never coerced to zero.
+Filtering never changes authoritative total or WIP. It changes matching and loaded counts. The eager
+source has no viewport knowledge, so board-wide visible remains typed unknown until viewport projection.
+All counts remain unknown after an invalid first publication; unknown values are never coerced to zero.
 
 ## Revision rules
 
-The eager source owns a scalar revision and changes it when any published structure, card identity/
+The eager source owns one scalar revision across all sessions and changes it when any published structure, card identity/
 placement/order, queried field value, count, state, or placement semantic changes. A cell cursor also
 changes revision when its visible cards or placement semantics change. The source must publish a
 presentation revision when in-place card values used by the renderer change; descriptor caching relies
@@ -134,11 +140,12 @@ revision factory; production must not use timestamps as uniqueness proof.
   private cache objects.
 
 The testing entry also exports
-`createKanbanQueryLifecycleHarness({ source, initialQuery, observationCapacity?, inspectedAddresses? })`.
+`createKanbanQueryLifecycleHarness({ source, initialQuery, observationCapacity?, inspectedAddresses?, keyOf? })`.
 The returned black-box harness exposes only `replaceQuery(query)`, `snapshot()`,
 `locateCard(key, { signal? })`, `observations()`, and idempotent `dispose()`. Its detached snapshot
-contains the active query, session revision, state, counts, columns, swimlanes, and bounded inspected
-card keys/addresses. Replacing a query invalidates the old generation before abort/disposal; no old
+contains the active query, session revision, state, counts, columns, swimlanes, and bounded resident
+card keys for explicitly inspected addresses. `keyOf` is required only when inspected addresses are
+configured. Replacing a query invalidates the old generation before abort/disposal; no old
 continuation may change this snapshot or its observations.
 
 The harness may use the package's private generation coordinator but never exposes its identity,

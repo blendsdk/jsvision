@@ -149,9 +149,12 @@ export function createKanbanCursorLifecycleHarness<TCard>(
     observations: () => observations.values(),
     dispose(): void {
       if (disposed) return;
-      lastInspection = inspect();
       disposed = true;
-      coordinator.dispose();
+      try {
+        lastInspection = inspect();
+      } finally {
+        coordinator.dispose();
+      }
     },
   });
 }

@@ -1,11 +1,13 @@
 # Getting started
 
-> **Last Updated**: 2026-08-03
+> **Last Updated**: 2026-08-04
 
 ## Current status
 
-The Kanban package is fully specified but not implemented. Do not add `@jsvision/kanban` to consumer
-code yet. The requirement set, roadmap, and ADRs are inputs to preflight and implementation planning.
+The Kanban package foundation and read-source layer are implemented on the feature branch. They are
+available for package development and contract testing, but the mounted board, card presentation,
+dialogs, official locale registration, and consumer documentation are not complete yet. Do not treat
+the package as release-ready until those phases close.
 
 ## Prerequisites
 
@@ -48,21 +50,22 @@ docs/
 
 ## Verification commands
 
-| Task                         | Command                                                      |
-| ---------------------------- | ------------------------------------------------------------ |
-| Changed-file gate            | `yarn verify:local`                                          |
-| Kanban package typecheck     | `yarn workspace @jsvision/kanban typecheck` once implemented |
-| Kanban package tests         | `yarn workspace @jsvision/kanban test` once implemented      |
-| Plugin synchronization check | `yarn plugin:check`                                          |
-| Product docs build           | `yarn docs:build`                                            |
-| Architecture docs build      | `yarn techdocs:build`                                        |
+| Task                         | Command                                     |
+| ---------------------------- | ------------------------------------------- |
+| Changed-file gate            | `yarn verify:local`                         |
+| Kanban package typecheck     | `yarn workspace @jsvision/kanban typecheck` |
+| Kanban package tests         | `yarn workspace @jsvision/kanban test`      |
+| Plugin synchronization check | `yarn plugin:check`                         |
+| Product docs build           | `yarn docs:build`                           |
+| Architecture docs build      | `yarn techdocs:build`                       |
 
 CI owns the authoritative full `yarn verify` gate. Local development adds only the smallest relevant
 package or docs checks to `yarn verify:local`.
 
 ## Next steps
 
-1. Preflight the Kanban requirements.
-2. Create a specification-first implementation plan for the foundation RDs.
-3. Read the [system overview](/architecture/system-overview) and [decision log](/decisions/) before
-   choosing public types or source boundaries.
+1. Read the [system overview](/architecture/system-overview) and [API design](/architecture/api-design)
+   before extending public source contracts.
+2. Add immutable specification coverage before implementing the next presentation or component layer.
+3. Run the package gates above and preserve the application-authority boundaries in the
+   [decision log](/decisions/).

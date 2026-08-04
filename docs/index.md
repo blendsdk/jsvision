@@ -7,7 +7,7 @@ techdocs: true
 > **Project**: JSVision
 > **Type**: TypeScript library and SDK monorepo
 > **Tech Stack**: Node.js 22+, ESM TypeScript, Yarn workspaces, Turborepo, VitePress
-> **Last Updated**: 2026-08-03
+> **Last Updated**: 2026-08-04
 
 ## System purpose
 
@@ -15,16 +15,16 @@ JSVision is an SDK for building reactive terminal user interfaces with classic d
 semantics. Public packages separate terminal rendering, UI controls, forms, localization, specialist
 components, web hosting, and examples so applications can depend only on the surfaces they use.
 
-The planned `@jsvision/kanban` package adds a reusable, application-owned Kanban component. It is a
-design target rather than an implemented package at this date. Its approved architecture is recorded
-here so plans and implementation can preserve responsive layout, bounded data access, modern pointer
-interaction, localization, theming, and host authority.
+The `@jsvision/kanban` foundation provides application-owned contracts plus revisioned eager and
+windowed data sources. Card presentation, responsive board interaction, dialogs, localization, and
+showcase documentation remain staged work. The architecture recorded here preserves bounded data
+access, modern pointer interaction, theming, localization, and host authority as those layers arrive.
 
 ## Architecture at a glance
 
 ```mermaid
 graph TB
-    App[Application state and policy] --> Kanban[Planned @jsvision/kanban]
+    App[Application state and policy] --> Kanban[@jsvision/kanban foundation]
     Kanban --> UI[@jsvision/ui]
     Kanban --> Forms[@jsvision/forms]
     Kanban --> I18n[@jsvision/i18n]
@@ -38,7 +38,7 @@ graph TB
 | Component            | Status             | Purpose                                                        | Documentation                                    |
 | -------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------------------------ |
 | JSVision core and UI | Implemented        | Rendering, reactivity, layout, windows, input, and controls    | [System overview](/architecture/system-overview) |
-| `@jsvision/kanban`   | Planned            | Responsive, virtualized Kanban board and package-owned dialogs | [Kanban API design](/architecture/api-design)    |
+| `@jsvision/kanban`   | Foundation built   | Contracts plus eager and sparse windowed read sources          | [Kanban API design](/architecture/api-design)    |
 | Application adapter  | Consumer-owned     | Records, persistence, authorization, mutation, and saved views | [Integrations](/reference/integrations)          |
 | Docs and examples    | Planned for Kanban | Teaching page, live labs, kitchen sink, and flagship showcase  | [Development workflow](/guides/development)      |
 

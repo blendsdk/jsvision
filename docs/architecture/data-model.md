@@ -1,7 +1,7 @@
 # Kanban data model
 
 > **Last Updated**: 2026-08-04
-> **Status**: Identity, revision, semantic-value, request, publication, and observation foundations implemented
+> **Status**: Contracts plus revisioned eager and sparse windowed read models implemented
 
 ## Domain model
 
@@ -51,6 +51,19 @@ erDiagram
    placement where relevant.
 5. The application authorizes and applies the operation, then publishes committed source state or a
    rejection. The component reconciles from that authoritative result.
+
+## Implemented source invariants
+
+- Source publications are validated as complete snapshots. Duplicate card keys, unknown columns, or
+  invalid metadata retain the last complete eager index and emit only a bounded, payload-free
+  observation.
+- Card keys preserve JavaScript primitive identity, so numeric `1` and string `"1"` remain distinct.
+- Sort directives are lexicographic and stable; ties retain source order.
+- Counts explicitly distinguish exact, estimated, truncated, lower-bound, and unknown knowledge.
+- A source reports viewport-visible count as unknown; only viewport projection can make it exact.
+- Cursor ranges are normalized, coalesced, bounded, cancellable, and tied to a session generation.
+- Application card objects are projected by reference; the source does not clone, mutate, or persist
+  them.
 
 ## Compatibility and migration
 

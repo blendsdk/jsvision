@@ -5,6 +5,7 @@ import {
 } from '../contract/data-snapshot.js';
 import { KanbanInvalidQueryError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import {
+  createKanbanCardKey,
   createKanbanColumnId,
   createKanbanExtensionId,
   createKanbanFieldId,
@@ -12,7 +13,7 @@ import {
 } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
-import { kanbanRevisionsEqual } from '../contract/revision.js';
+import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
@@ -81,22 +82,21 @@ function invalidPublication(): never {
 
 /** Validates one equality-only revision without ordering or string coercion. */
 function snapshotRevision(value: unknown): KanbanRevision {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) return invalidPublication();
-    return Object.is(value, -0) ? 0 : value;
+  try {
+    return snapshotKanbanRevision(value);
+  } catch {
+    return invalidPublication();
   }
-  if (typeof value !== 'string' || value.length === 0 || value.length > 2_048) return invalidPublication();
-  return value;
 }
 
 /** Validates one card identity while preserving number/string distinction. */
 function snapshotCardKey(value: unknown): CardKey {
-  if (typeof value === 'number') {
-    if (!Number.isSafeInteger(value)) return invalidPublication();
-    return Object.is(value, -0) ? 0 : value;
+  if (typeof value !== 'number' && typeof value !== 'string') return invalidPublication();
+  try {
+    return createKanbanCardKey(value);
+  } catch {
+    return invalidPublication();
   }
-  if (typeof value !== 'string' || value.length === 0 || value.length > 256) return invalidPublication();
-  return value;
 }
 
 /** Returns a bounded sanitized display label. */
@@ -459,8 +459,18 @@ export function snapshotKanbanSessionPublication(value: unknown): KanbanSessionP
     }
     const columnIds = new Set(columns.map((entry) => entry.columnId));
     const swimlaneIds = new Set(swimlanes.map((entry) => entry.swimlaneId));
-    if (headers.columns.some((entry) => !columnIds.has(entry.columnId))) return invalidPublication();
-    if (headers.swimlanes.some((entry) => !swimlaneIds.has(entry.swimlaneId))) return invalidPublication();
+    const headerColumnIds = new Set(headers.columns.map((entry) => entry.columnId));
+    const headerSwimlaneIds = new Set(headers.swimlanes.map((entry) => entry.swimlaneId));
+    if (
+      headerColumnIds.size !== headers.columns.length ||
+      headerSwimlaneIds.size !== headers.swimlanes.length ||
+      headerColumnIds.size !== columnIds.size ||
+      headerSwimlaneIds.size !== swimlaneIds.size ||
+      [...headerColumnIds].some((id) => !columnIds.has(id)) ||
+      [...headerSwimlaneIds].some((id) => !swimlaneIds.has(id))
+    ) {
+      return invalidPublication();
+    }
     return Object.freeze({
       revision,
       state: snapshotKanbanSourceState(properties.state),

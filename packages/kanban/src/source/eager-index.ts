@@ -1,5 +1,5 @@
 import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
-import { createKanbanExtensionId, createKanbanFieldId } from '../contract/identity.js';
+import { createKanbanCardKey, createKanbanExtensionId, createKanbanFieldId } from '../contract/identity.js';
 import type {
   CardKey,
   KanbanColumnId,
@@ -79,6 +79,10 @@ export interface EagerKanbanSourceOptions<TCard> {
   readonly keyOf: (card: TCard) => CardKey;
   /** Workflow-column identity adapter. */
   readonly columnOf: (card: TCard) => KanbanColumnId;
+  /** Optional bounded plain-text search predicate required by non-empty search queries. */
+  readonly search?: (card: TCard, term: string) => boolean;
+  /** Optional reactive application revision for in-place card-field changes. */
+  readonly revision?: () => KanbanRevision;
   /** Optional stable source-order comparator used when no query sort is active. */
   readonly compare?: (left: TCard, right: TCard) => number;
   /** Optional semantic grouping adapters. */
@@ -123,6 +127,8 @@ export interface EagerKanbanIndex<TCard> {
   readonly cellTotals: ReadonlyMap<string, number>;
   /** Matching card locations indexed by stable card identity. */
   readonly entries: ReadonlyMap<CardKey, EagerKanbanCardEntry<TCard>>;
+  /** Every authoritative stable card identity, including records excluded by the active query. */
+  readonly authoritativeKeys: ReadonlySet<CardKey>;
   /** Authoritative number of resident application records before filtering. */
   readonly total: number;
   /** Number of resident records matching the active query. */
@@ -207,6 +213,12 @@ export function validateEagerKanbanQuerySupport<TCard>(
       throw new KanbanInvalidSourcePublicationError();
     }
   }
+  if (options.search !== undefined && typeof options.search !== 'function') {
+    throw new KanbanInvalidSourcePublicationError();
+  }
+  if (query.search !== undefined && query.search.length > 0 && options.search === undefined) {
+    throw new KanbanInvalidSourcePublicationError();
+  }
   if (query.groupBy !== undefined && !grouping.has(query.groupBy)) {
     throw new KanbanInvalidSourcePublicationError();
   }
@@ -223,14 +235,11 @@ export function validateEagerKanbanQuerySupport<TCard>(
 
 /** Validates one card identity without stringifying number keys. */
 function validateCardKey(value: CardKey): CardKey {
-  if (typeof value === 'number') {
-    if (!Number.isSafeInteger(value)) throw new KanbanInvalidSourcePublicationError();
-    return Object.is(value, -0) ? 0 : value;
-  }
-  if (typeof value !== 'string' || value.length === 0 || value.length > 256) {
+  try {
+    return createKanbanCardKey(value);
+  } catch {
     throw new KanbanInvalidSourcePublicationError();
   }
-  return value;
 }
 
 /** Validates comparator output before it can destabilize publication order. */
@@ -262,14 +271,13 @@ function compareCards<TCard>(
 function initializeAddresses(
   columns: readonly KanbanColumnMeta[],
   swimlanes: readonly KanbanSwimlaneMeta[],
+  grouped: boolean,
 ): ReadonlyMap<string, KanbanCellAddress> {
   const addresses = new Map<string, KanbanCellAddress>();
   for (const column of columns) {
-    if (swimlanes.length === 0) {
-      const address = Object.freeze({ columnId: column.columnId });
-      addresses.set(canonicalizeKanbanCellAddress(address), address);
-      continue;
-    }
+    const ungroupedAddress = Object.freeze({ columnId: column.columnId });
+    addresses.set(canonicalizeKanbanCellAddress(ungroupedAddress), ungroupedAddress);
+    if (!grouped) continue;
     for (const swimlane of swimlanes) {
       const address = Object.freeze({ columnId: column.columnId, swimlaneId: swimlane.swimlaneId });
       addresses.set(canonicalizeKanbanCellAddress(address), address);
@@ -355,7 +363,7 @@ export function buildEagerKanbanIndex<TCard>(
   }
 
   type IndexedCard = { readonly card: TCard; readonly key: CardKey; readonly sourceIndex: number };
-  const addresses = initializeAddresses(columns, swimlanes);
+  const addresses = initializeAddresses(columns, swimlanes, grouping !== undefined);
   const cells = new Map<string, IndexedCard[]>();
   const authoritativeCells = new Map<string, TCard[]>();
   const authoritativeColumns = new Map<KanbanColumnId, TCard[]>();
@@ -392,7 +400,15 @@ export function buildEagerKanbanIndex<TCard>(
     authoritativeCell.push(card);
     authoritativeColumns.get(columnId)?.push(card);
     if (swimlaneId !== undefined) authoritativeSwimlanes.get(swimlaneId)?.push(card);
-    const matches = (options.query.filters ?? []).every((filter) => {
+    let matchesSearch = true;
+    if (options.query.search !== undefined && options.query.search.length > 0) {
+      const search = options.sourceOptions.search;
+      if (search === undefined) throw new KanbanInvalidSourcePublicationError();
+      const result = search(card, options.query.search);
+      if (typeof result !== 'boolean') throw new KanbanInvalidSourcePublicationError();
+      matchesSearch = result;
+    }
+    const matchesFilters = (options.query.filters ?? []).every((filter) => {
       const field = filterFields.get(filter.fieldId);
       const operator = field?.operators.find((candidate) => candidate.operatorId === filter.operatorId);
       if (operator === undefined) throw new KanbanInvalidSourcePublicationError();
@@ -400,7 +416,7 @@ export function buildEagerKanbanIndex<TCard>(
       if (typeof result !== 'boolean') throw new KanbanInvalidSourcePublicationError();
       return result;
     });
-    if (!matches) continue;
+    if (!matchesSearch || !matchesFilters) continue;
     matching += 1;
     loadedColumns.get(columnId)?.push(card);
     if (swimlaneId !== undefined) loadedSwimlanes.get(swimlaneId)?.push(card);
@@ -466,6 +482,7 @@ export function buildEagerKanbanIndex<TCard>(
     cellKeys: publishedCellKeys,
     cellTotals,
     entries,
+    authoritativeKeys: new Set(seenKeys),
     total: cards.length,
     matching,
     summaries,

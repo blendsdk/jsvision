@@ -3,6 +3,7 @@ import {
   KanbanInvalidRangeError,
   KanbanInvalidSourcePublicationError,
 } from '../contract/error.js';
+import { createKanbanCardKey } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions } from '../contract/limits.js';
@@ -27,6 +28,12 @@ interface RangeWaiter {
   readonly reject: (error: unknown) => void;
   readonly removeAbortListener: () => void;
   settled: boolean;
+}
+
+/** One bounded source acquisition shared by every overlapping waiter. */
+interface ActiveAcquisition {
+  readonly range: KanbanRange;
+  readonly result: Promise<void>;
 }
 
 /** Construction options for the private cursor lifecycle coordinator. */
@@ -57,6 +64,7 @@ export class KanbanCursorCoordinator<TCard> {
   readonly #maximumSpan: number;
   readonly #scheduler: KanbanLoadScheduler;
   readonly #completed = new KanbanRangeSet();
+  readonly #activeAcquisitions = new Set<ActiveAcquisition>();
   #pending: RangeWaiter[] = [];
   #flushQueued = false;
   #generation = 0;
@@ -120,9 +128,7 @@ export class KanbanCursorCoordinator<TCard> {
     const card = this.cardAt(index);
     if (card === undefined) return undefined;
     try {
-      const key = this.#keyOf(card);
-      if (typeof key === 'number' && Number.isSafeInteger(key)) return Object.is(key, -0) ? 0 : key;
-      if (typeof key === 'string' && key.length > 0 && key.length <= 256) return key;
+      return createKanbanCardKey(this.#keyOf(card));
     } catch {
       // The public source-publication error below deliberately discards callback details.
     }
@@ -188,15 +194,13 @@ export class KanbanCursorCoordinator<TCard> {
   /** Invalidates pending work, aborts acquisition, and disposes the application cursor once. */
   dispose(): void {
     if (this.#disposed) return;
-    // Start a pending bounded acquisition so the application observes the owned aborted signal;
-    // this does not wait for or publish its eventual result.
-    this.#flush();
     this.#disposed = true;
     this.#generation += 1;
     const pending = this.#pending.splice(0);
     for (const waiter of pending) this.#settleWaiter(waiter, new KanbanDisposedResourceError());
     this.#scheduler.dispose();
     this.#completed.clear();
+    this.#activeAcquisitions.clear();
     this.#cursor.dispose();
   }
 
@@ -215,50 +219,54 @@ export class KanbanCursorCoordinator<TCard> {
     if (this.#disposed) return;
     const waiters = this.#pending.splice(0).filter((waiter) => !waiter.settled);
     if (waiters.length === 0) return;
+    const covered = new KanbanRangeSet();
+    covered.addAll(this.#completed.values());
+    covered.addAll([...this.#activeAcquisitions].map((acquisition) => acquisition.range));
     const requested = new KanbanRangeSet();
-    requested.addAll(waiters.flatMap((waiter) => this.#completed.subtract(waiter.range)));
+    requested.addAll(waiters.flatMap((waiter) => covered.subtract(waiter.range)));
     const generation = this.#generation;
-    const acquisitions = requested.values().map((range) => ({
-      range,
-      result: this.#scheduler.schedule((signal) => this.#cursor.ensureRange(range.start, range.end, { signal })),
-    }));
-    if (acquisitions.length === 0) {
-      for (const waiter of waiters) this.#settleWaiter(waiter);
-      return;
+    for (const requestedRange of requested.values()) {
+      for (let start = requestedRange.start; start < requestedRange.end; start += this.#maximumSpan) {
+        const range = Object.freeze({ start, end: Math.min(start + this.#maximumSpan, requestedRange.end) });
+        const acquisition: ActiveAcquisition = {
+          range,
+          result: this.#scheduler.schedule((signal) => this.#cursor.ensureRange(range.start, range.end, { signal })),
+        };
+        this.#activeAcquisitions.add(acquisition);
+        void acquisition.result.then(
+          () => {
+            this.#activeAcquisitions.delete(acquisition);
+            if (generation === this.#generation) this.#completed.add(acquisition.range);
+          },
+          () => {
+            this.#activeAcquisitions.delete(acquisition);
+            if (generation === this.#generation) this.#emit('cursor-range-failed');
+          },
+        );
+      }
     }
-    const remaining = new Map<RangeWaiter, number>();
     for (const waiter of waiters) {
-      remaining.set(
-        waiter,
-        acquisitions.filter(
-          (acquisition) => waiter.range.start < acquisition.range.end && waiter.range.end > acquisition.range.start,
-        ).length,
+      const acquisitions = [...this.#activeAcquisitions].filter(
+        (acquisition) => waiter.range.start < acquisition.range.end && waiter.range.end > acquisition.range.start,
       );
-    }
-    for (const acquisition of acquisitions) {
-      const affected = waiters.filter(
-        (waiter) => waiter.range.start < acquisition.range.end && waiter.range.end > acquisition.range.start,
-      );
-      void acquisition.result.then(
+      if (acquisitions.length === 0) {
+        this.#settleWaiter(waiter);
+        continue;
+      }
+      void Promise.all(acquisitions.map((acquisition) => acquisition.result)).then(
         () => {
           if (generation !== this.#generation) {
-            for (const waiter of affected) this.#settleWaiter(waiter, new KanbanDisposedResourceError());
+            this.#settleWaiter(waiter, new KanbanDisposedResourceError());
             return;
           }
-          this.#completed.add(acquisition.range);
-          for (const waiter of affected) {
-            const next = (remaining.get(waiter) ?? 1) - 1;
-            remaining.set(waiter, next);
-            if (next === 0) this.#settleWaiter(waiter);
-          }
+          this.#settleWaiter(waiter);
         },
         () => {
           if (generation !== this.#generation) {
-            for (const waiter of affected) this.#settleWaiter(waiter, new KanbanDisposedResourceError());
+            this.#settleWaiter(waiter, new KanbanDisposedResourceError());
             return;
           }
-          this.#emit('cursor-range-failed');
-          for (const waiter of affected) this.#settleWaiter(waiter, new KanbanInvalidSourcePublicationError());
+          this.#settleWaiter(waiter, new KanbanInvalidSourcePublicationError());
         },
       );
     }

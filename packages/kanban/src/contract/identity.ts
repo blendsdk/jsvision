@@ -25,7 +25,8 @@ export type KanbanExtensionId = string;
 export type KanbanOperationId = string;
 
 /** Structural identity categories accepted by the shared uniqueness validator. */
-export type KanbanIdentityKind = 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation';
+export type KanbanIdentityKind =
+  'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation';
 
 declare const placementTokenBrand: unique symbol;
 
@@ -81,6 +82,23 @@ function validateIdentity(kind: KanbanIdentityKind, value: string): string {
     throw new KanbanInvalidIdentityError(kind);
   }
   return value;
+}
+
+/**
+ * Creates a validated application-owned card key while preserving number/string distinction.
+ *
+ * @example
+ * ```ts
+ * const numeric = createKanbanCardKey(42);
+ * const textual = createKanbanCardKey('work-item-42');
+ * ```
+ */
+export function createKanbanCardKey(value: CardKey): CardKey {
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) throw new KanbanInvalidIdentityError('card');
+    return Object.is(value, -0) ? 0 : value;
+  }
+  return validateIdentity('card', value);
 }
 
 /** Creates a validated workflow-column identity. */

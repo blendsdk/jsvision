@@ -1,8 +1,8 @@
 import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
 import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
-import { createPlacementToken } from '../contract/identity.js';
+import { createKanbanCardKey, createPlacementToken } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
-import { kanbanRevisionsEqual } from '../contract/revision.js';
+import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import type { KanbanPlacement, KanbanPrefetchRange } from './types.js';
@@ -32,22 +32,21 @@ function invalidPublication(): never {
 
 /** Returns a validated equality-only revision without coercion. */
 function snapshotRevision(value: unknown): KanbanRevision {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) return invalidPublication();
-    return Object.is(value, -0) ? 0 : value;
+  try {
+    return snapshotKanbanRevision(value);
+  } catch {
+    return invalidPublication();
   }
-  if (typeof value !== 'string' || value.length === 0 || value.length > 2_048) return invalidPublication();
-  return value;
 }
 
 /** Returns a safe stable card key while preserving string/number distinction. */
 function snapshotCardKey(value: unknown): CardKey {
-  if (typeof value === 'number') {
-    if (!Number.isSafeInteger(value)) return invalidPublication();
-    return Object.is(value, -0) ? 0 : value;
+  if (typeof value !== 'number' && typeof value !== 'string') return invalidPublication();
+  try {
+    return createKanbanCardKey(value);
+  } catch {
+    return invalidPublication();
   }
-  if (typeof value !== 'string' || value.length === 0 || value.length > 256) return invalidPublication();
-  return value;
 }
 
 /** Validates one bounded half-open prefetch hint. */

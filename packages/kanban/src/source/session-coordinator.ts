@@ -3,7 +3,8 @@ import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS, KanbanInvalidLimitError } from '../contract/limits.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
-import { kanbanRevisionsEqual } from '../contract/revision.js';
+import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
+import type { KanbanRevision } from '../contract/revision.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from './address.js';
 import type {
   KanbanCardLocation,
@@ -94,8 +95,9 @@ export class KanbanSessionCoordinator<TCard> {
   snapshot(): KanbanSessionPublication {
     this.#assertActive();
     try {
+      const openingRevision = this.#session.revision();
       const candidate = snapshotKanbanSessionPublication({
-        revision: this.#session.revision(),
+        revision: openingRevision,
         state: this.#session.state(),
         columns: this.#session.columns(),
         swimlanes: this.#session.swimlanes(),
@@ -103,6 +105,9 @@ export class KanbanSessionCoordinator<TCard> {
         headers: this.#session.headers(),
         identityChanges: this.#session.identityChanges(),
       });
+      if (!kanbanRevisionsEqual(this.#session.revision(), openingRevision)) {
+        throw new KanbanInvalidSourcePublicationError();
+      }
       this.#lastPublication = candidate;
       return candidate;
     } catch (error) {
@@ -186,17 +191,27 @@ export class KanbanSessionCoordinator<TCard> {
   async locateCard(key: CardKey, options?: { readonly signal?: AbortSignal }): Promise<KanbanCardLocation> {
     this.#assertActive();
     const capturedGeneration = this.#generation;
-    const capturedRevision = this.#session.revision();
+    const capturedRevision = snapshotKanbanRevision(this.#session.revision());
     const locate = this.#session.locateCard;
     if (locate === undefined) return Object.freeze({ kind: 'unsupported', sessionRevision: capturedRevision });
 
     const callerSignal = options?.signal;
-    const controller = callerSignal === undefined ? new AbortController() : undefined;
-    if (controller !== undefined) this.#locatorControllers.add(controller);
-    const signal = callerSignal ?? controller?.signal;
+    const controller = new AbortController();
+    const abortFromCaller = (): void => controller.abort();
+    if (callerSignal?.aborted === true) controller.abort();
+    else callerSignal?.addEventListener('abort', abortFromCaller, { once: true });
+    this.#locatorControllers.add(controller);
+    let settleAbort: (() => void) | undefined;
     try {
-      const result = await locate.call(this.#session, key, signal === undefined ? undefined : { signal });
-      if (!this.isCurrent(capturedGeneration)) return this.#staleLocation();
+      const applicationResult = Promise.resolve(locate.call(this.#session, key, { signal: controller.signal }));
+      const aborted = new Promise<undefined>((resolve) => {
+        settleAbort = (): void => resolve(undefined);
+        controller.signal.addEventListener('abort', settleAbort, { once: true });
+        if (controller.signal.aborted) resolve(undefined);
+      });
+      const result = await Promise.race([applicationResult, aborted]);
+      if (result === undefined) return this.#staleLocation(capturedRevision);
+      if (!this.isCurrent(capturedGeneration)) return this.#staleLocation(capturedRevision);
       const snapshot = snapshotKanbanCardLocation(result);
       if (!kanbanRevisionsEqual(snapshot.sessionRevision, capturedRevision)) {
         throw new KanbanInvalidSourcePublicationError();
@@ -204,9 +219,11 @@ export class KanbanSessionCoordinator<TCard> {
       return snapshot;
     } catch {
       if (this.isCurrent(capturedGeneration)) this.#emit('source-locate-failed');
-      return this.#staleLocation();
+      return this.#staleLocation(capturedRevision);
     } finally {
-      if (controller !== undefined) this.#locatorControllers.delete(controller);
+      callerSignal?.removeEventListener('abort', abortFromCaller);
+      if (settleAbort !== undefined) controller.signal.removeEventListener('abort', settleAbort);
+      this.#locatorControllers.delete(controller);
     }
   }
 
@@ -218,8 +235,8 @@ export class KanbanSessionCoordinator<TCard> {
   }
 
   /** Returns a safe unknown result bound to the currently observable session revision. */
-  #staleLocation(): KanbanCardLocation {
-    return Object.freeze({ kind: 'unknown', sessionRevision: this.#session.revision() });
+  #staleLocation(capturedRevision: KanbanRevision): KanbanCardLocation {
+    return Object.freeze({ kind: 'unknown', sessionRevision: capturedRevision });
   }
 
   /** Invalidates first, then aborts work, scopes, cursors, and finally the session. */

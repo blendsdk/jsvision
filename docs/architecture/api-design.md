@@ -1,7 +1,7 @@
 # Kanban API design
 
 > **Last Updated**: 2026-08-04
-> **Status**: Foundation contracts implemented; board, source, adapter, and dialog surfaces remain planned
+> **Status**: Contracts and source/session APIs implemented; board, presentation adapter, and dialogs planned
 
 ## API style
 
@@ -64,6 +64,18 @@ Capability descriptions control presentation only and are never treated as autho
 - Cursors distinguish exact, lower-bound, unknown, loading, and failed count/edge states.
 - Range requests are cancellable, deduplicated, concurrency-bounded, and safe when completed stale.
 - Eager sources adapt to the same contract so small and large boards share one component path.
+
+The main entry now exports the source/session/cursor contracts, validation helpers, eager source, count
+snapshots, cell addresses, placements, and state unions. Deterministic eager/windowed fixtures,
+deferred controls, revision controls, and black-box contract harnesses live only under
+`@jsvision/kanban/testing`; production modules never import that testing graph.
+
+Eager query adapters register an explicit search predicate, filter operators, and exact three-way
+sort comparators. An optional reactive application revision invalidates a stable outer card array when
+in-place fields used by those adapters change.
+Summary adapters declare `authoritative` or `loaded-only` scope and use the package-owned `sum`,
+`min`, `max`, or `average` aggregation vocabulary. Empty numeric summaries remain unknown rather than
+being silently reported as zero.
 
 ## Error conventions
 

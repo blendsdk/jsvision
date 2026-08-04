@@ -237,6 +237,7 @@ describe('Kanban cursor cleanup and identity facts', () => {
     });
     const harness = createHarness(cursor);
     const pending = harness.ensureRange(0, 10);
+    await Promise.resolve();
 
     harness.dispose();
     harness.dispose();
