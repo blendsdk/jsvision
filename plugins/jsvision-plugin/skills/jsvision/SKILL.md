@@ -1,6 +1,6 @@
 ---
 name: jsvision
-description: Build, extend, debug, test, localize, and review professional JSVision terminal applications using @jsvision/core, @jsvision/i18n, @jsvision/ui, @jsvision/forms, @jsvision/datagrid, @jsvision/files, and @jsvision/web. Use for new JSVision apps, Turbo Vision-style TUIs, application shells, responsive layouts, reactive state, internationalization and locale catalogs, plurals, forms, editable enterprise grids, file tools, browser terminals, custom widgets, themes, accessibility, performance, security, headless rendering, and production-readiness work.
+description: Build, extend, debug, test, localize, and review professional JSVision terminal applications using @jsvision/core, @jsvision/i18n, @jsvision/ui, @jsvision/forms, @jsvision/datagrid, @jsvision/kanban, @jsvision/files, and @jsvision/web. Use for new JSVision apps, Turbo Vision-style TUIs, application shells, responsive layouts, reactive state, internationalization and locale catalogs, plurals, forms, editable enterprise grids, responsive task boards, file tools, browser terminals, custom widgets, themes, accessibility, performance, security, headless rendering, and production-readiness work.
 ---
 
 # Build professional JSVision applications
@@ -24,6 +24,9 @@ Treat JSVision as a retained terminal application framework, not printed output.
   validation, and one service injected into the application.
 - Use `@jsvision/forms` for headless form state, Zod validation, bindings, and form dialogs.
 - Use `@jsvision/datagrid` for editable, typed, windowed enterprise grids. Use UI `DataGrid` for read-oriented tables.
+- Use `@jsvision/kanban` for application-owned, responsive task-board projection over eager or
+  sparse revisioned sources. Its current stable foundation is read-only; drag/drop and package-owned
+  editing/configuration dialogs are later-phase surfaces.
 - Use `@jsvision/files` for filesystem abstractions, dialogs, navigation, and editing.
 - Use `@jsvision/web` for browser hosting, virtual filesystems, clipboard, and key reclaim only when
   working inside this repository; it is not part of the current public npm release.
@@ -67,6 +70,7 @@ Read [architecture.md](references/architecture.md) before designing a multi-scre
 | Widget selection                        | [component-catalog.md](references/component-catalog.md)   |
 | Forms                                   | [forms.md](references/forms.md)                           |
 | Enterprise grids                        | [datagrid.md](references/datagrid.md)                     |
+| Responsive Kanban boards                | [api/kanban.md](references/api/kanban.md)                 |
 | Themes, palettes, contrast, and shadows | [theming.md](references/theming.md)                       |
 | Runtime theme designer and live preview | [theme-designer.md](references/recipes/theme-designer.md) |
 | Custom widgets                          | [widget-authoring.md](references/widget-authoring.md)     |

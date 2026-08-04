@@ -1,0 +1,2541 @@
+<!-- GENERATED FILE — do not edit by hand. Regenerate with `yarn plugin:update`. Source: @jsvision/* JSDoc. -->
+
+# API — @jsvision/kanban — responsive terminal task boards
+
+Board and viewport composition, generic sources, cards, themes, localization, and application authority.
+
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/kanban`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+
+## CardKey
+
+A stable application-owned card identity.
+
+```ts
+type CardKey = string | number
+```
+
+## ClampKanbanScrollOptions
+
+Inputs for clamping a two-axis scroll position to live extents.
+
+```ts
+interface ClampKanbanScrollOptions {
+  offsets: KanbanViewportPoint;   // Requested offsets in terminal cells.
+  extents: KanbanViewportPoint;   // Greatest live offsets in terminal cells.
+}
+```
+
+## EagerKanbanSourceOptions
+
+Public options shared by every query session opened from one eager source.
+
+```ts
+interface EagerKanbanSourceOptions<TCard> {
+  columns: () => readonly KanbanColumnMeta[];   // Reactive ordered workflow-column metadata getter.
+  swimlanes?: () => readonly KanbanSwimlaneMeta[];   // Optional reactive ordered swimlane metadata getter.
+  keyOf: (card: TCard) => CardKey;   // Stable application-owned card identity adapter.
+  columnOf: (card: TCard) => KanbanColumnId;   // Workflow-column identity adapter.
+  search?: (card: TCard, term: string) => boolean;   // Optional bounded plain-text search predicate required by non-empty search queries.
+  revision?: () => KanbanRevision;   // Optional reactive application revision for in-place card-field changes.
+  compare?: (left: TCard, right: TCard) => number;   // Optional stable source-order comparator used when no query sort is active.
+  groupingFields?: readonly KanbanGroupingField<TCard>[];   // Optional semantic grouping adapters.
+  filterFields?: readonly KanbanFilterField<TCard>[];   // Optional semantic filter adapters.
+  sortFields?: readonly KanbanSortField<TCard>[];   // Optional semantic sort adapters.
+  summaries?: readonly KanbanSummaryAdapter<TCard>[];   // Optional numeric header-summary adapters.
+  limits?: import('../contract/limits.js').KanbanLimitOptions;   // Optional lower per-instance resource limits.
+  observe?: (observation: KanbanObservation) => void;   // Optional sink for already-redacted eager-source observations.
+}
+```
+
+## KANBAN_ACCELERATOR_MANIFEST
+
+Accelerator topology owned by the Phase A Kanban vocabulary.
+
+```ts
+const KANBAN_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
+## KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH
+
+Default maximum width of one Kanban column surface, excluding its separator.
+
+```ts
+const KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH: 32
+```
+
+## KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH
+
+Default minimum width of one Kanban column surface, excluding its separator.
+
+```ts
+const KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH: 18
+```
+
+## KANBAN_DEFAULT_COLUMN_PREFERRED_WIDTH
+
+Default preferred width of one Kanban column surface, excluding its separator.
+
+```ts
+const KANBAN_DEFAULT_COLUMN_PREFERRED_WIDTH: 24
+```
+
+## KANBAN_ENGLISH_CATALOG
+
+Complete immutable English fallback catalog for `@jsvision/kanban`.
+
+```ts
+const KANBAN_ENGLISH_CATALOG: Catalog
+```
+
+## KANBAN_ENGLISH_MESSAGES
+
+Canonical English messages used by the package catalog and safe application defaults.
+
+```ts
+const KANBAN_ENGLISH_MESSAGES: Readonly<{ 'kanban.board.label': string; 'kanban.board.no-columns': string; 'kanban.state.loading': string; 'kanban.state.refreshing': string; 'kanban.state.partial': string; 'kanban.state.empty': string; 'kanban.state.error': string; 'kanban.action.retry': string; 'kanban.layout.minimum-size': string; 'kanban.count.unknown': string; 'kanban.count.truncated': string; 'kanban.focused-column.previous': string; 'kanban.focused-column.next': string; 'kanban.focused-column.position': string; 'kanban.card.invalid-title': string; 'kanban.card.unknown-status': string; 'kanban.reason.source-unavailable': string; 'kanban.reason.renderer-unavailable': string; }>
+```
+
+## KANBAN_LIMITS
+
+Complete deeply immutable Kanban resource-limit manifest.
+
+```ts
+const KANBAN_LIMITS: KanbanLimitManifest
+```
+
+## KANBAN_PLACEHOLDER_MANIFEST
+
+Exact placeholders accepted by parameterized Kanban messages.
+
+```ts
+const KANBAN_PLACEHOLDER_MANIFEST: PlaceholderManifest
+```
+
+## KANBAN_THEME_ROLES
+
+Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
+
+```ts
+const KANBAN_THEME_ROLES: readonly ["board.surface", "column.surface", "column.header", "column.header.focused", "column.separator", "swimlane.surface", "swimlane.header", "swimlane.header.focused", "swimlane.separator", "card.normal", "card.focused", "card.selected", "card.focused-selected", "card.read-only", "card.grabbed", "card.source-placeholder", "card.ghost", "drop-target.valid", "drop-target.warning", "drop-target.invalid", "operation.pending", "operation.rejected", "wip.warning", "wip.error", "dod.indicator", "state.loading", "state.refreshing", "state.partial", "state.empty", "state.error", "state.retry", "content.title", "content.status", "content.metadata", "content.label", "content.summary", "checklist.complete", "checklist.incomplete", "checklist.progress"]
+```
+
+## KanbanActionTarget
+
+Future-proof actionable hit entry; Phase A viewport snapshots always expose an empty list.
+
+```ts
+interface KanbanActionTarget {
+  kind: 'retry';   // Stable allowlisted target kind.
+  address?: KanbanCellAddress;   // Source cell that owns the action.
+}
+```
+
+## KanbanBoard
+
+Responsive DSL-composed Kanban shell that owns exactly one public viewport.
+
+```ts
+new KanbanBoard<TCard>(options: KanbanBoardOptions<TCard>)   // extends Group
+// methods & signals:
+viewport: KanbanViewport<TCard>
+runPendingMounts(): void
+inspection(): KanbanBoardInspection
+request(request: KanbanRequest): Promise<KanbanRequestResult>
+reconcilePublication(notice: KanbanPublicationNotice): void
+scrollTo(target: KanbanScrollTarget): void
+scrollBy(delta: KanbanScrollTarget): void
+revealCard(key: CardKey, alignment?: KanbanRevealAlignment, options?: { readonly signal?: AbortSignal }): Promise<KanbanRevealResult>
+dispose(): void
+```
+
+## KanbanBoardCounts
+
+Board-wide counts published atomically by one query session.
+
+```ts
+interface KanbanBoardCounts {
+  total: KanbanCount;   // Authoritative cards before local query projection.
+  matching: KanbanCount;   // Cards matching the active semantic query.
+  loaded: KanbanCount;   // Matching cards currently resident in memory.
+  visible: KanbanCount;   // Cards currently projected into the viewport.
+  selected: KanbanCount;   // Application-selected cards when that count is known.
+  wip: KanbanCount;   // Authoritative work-in-progress count when supplied by the application.
+}
+```
+
+## KanbanBoardInspection
+
+Detached board-level composition, identity, and viewport evidence.
+
+```ts
+interface KanbanBoardInspection {
+  label: string;   // Localized accessible board label.
+  state: KanbanBoardState;   // Current localized board/source state.
+  navigator: KanbanBoardNavigatorInspection;   // Conditional focused-column navigator evidence.
+  viewportRect: Readonly<Rect>;   // Current parent-relative viewport rectangle.
+  layoutReflows: number;   // Semantic one-reflow invalidation count for responsive/reactive binding changes.
+  identity: KanbanIdentityInput;   // Detached reconciled application identity hints.
+  pendingOperations: readonly KanbanPublicationExpectation[];   // Accepted operations awaiting authoritative source publication.
+  clearedPublication?: KanbanPublicationNotice;   // Most recent publication notice that cleared pending metadata.
+}
+```
+
+## KanbanBoardNavigatorInspection
+
+Conditional focused-column navigator evidence.
+
+```ts
+interface KanbanBoardNavigatorInspection {
+  visible: boolean;   // Whether the one-row navigator currently consumes layout space.
+  columnId?: string;   // Active source column in focused mode.
+  position?: number;   // One-based source-order position.
+  total?: number;   // Complete visible-column count.
+}
+```
+
+## KanbanBoardOptions
+
+Construction options for the responsive board shell and application authority seam.
+
+```ts
+interface KanbanBoardOptions<TCard> {
+  dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
+}
+```
+
+## KanbanBoardState
+
+Localized board-wide state shown by the board shell.
+
+```ts
+type KanbanBoardState = | { readonly kind: 'no-columns'; readonly label: string }
+  | { readonly kind: 'minimum-size'; readonly label: string }
+  | { readonly kind: KanbanSourceState['kind']; readonly label: string }
+```
+
+## KanbanCapabilities
+
+Reactive capability snapshot supplied by the host application.
+
+```ts
+interface KanbanCapabilities {
+  extensions?: Readonly<Partial<Record<KanbanExtensionId, KanbanCapabilityDescription>>>;   // Per-extension UX descriptions; an absent entry is presented as allowed.
+}
+```
+
+## KanbanCapabilityDescription
+
+Immutable UX description for one application-owned extension.
+
+```ts
+interface KanbanCapabilityDescription {
+  state: KanbanCapabilityState;   // Whether a component may present the action as available, disabled, or hidden.
+  reasonCode?: string;   // Optional stable application reason code for diagnostics or localization.
+  label?: string;   // Optional sanitized display label.
+}
+```
+
+## KanbanCapabilityState
+
+Presentation state for one application extension action.
+
+```ts
+type KanbanCapabilityState = 'allowed' | 'disabled' | 'hidden'
+```
+
+## KanbanCardAction
+
+Declarative card command advertised by a custom renderer.
+
+```ts
+interface KanbanCardAction {
+  actionId: KanbanExtensionId;   // Application-namespaced action identity.
+  label: string;   // Sanitized localized label.
+  enabled: boolean;   // Whether input may currently invoke the action.
+}
+```
+
+## KanbanCardAdapter
+
+Pure presentation getters that adapt an application-owned record to mandatory card semantics.
+
+```ts
+interface KanbanCardAdapter<TCard> {
+  keyOf(card: TCard): CardKey;   // Returns the stable application-owned identity without string coercion.
+  titleOf(card: TCard): string;   // Returns the mandatory card title.
+  statusOf(card: TCard): string;   // Returns the mandatory application-formatted status.
+  presentationRevisionOf?(card: TCard): KanbanRevision | undefined;   // Optionally returns an equality-only revision for presentation-affecting values.
+}
+```
+
+## KanbanCardCue
+
+Non-color card state represented by a marker or equivalent visual cue.
+
+```ts
+type KanbanCardCue = 'focused' | 'selected' | 'read-only' | 'grabbed' | 'pending' | 'rejected'
+```
+
+## KanbanCardDegradation
+
+Inspectable record of content omitted to fit available geometry.
+
+```ts
+interface KanbanCardDegradation {
+  level: 'none' | 'reduced' | 'minimum' | 'fallback';   // Overall amount of presentation reduction.
+  omittedSections: readonly KanbanCardSectionKind[];   // Semantic sections intentionally left out of this projection.
+}
+```
+
+## KanbanCardDensity
+
+Supported vertical spacing policies for a rendered card.
+
+```ts
+type KanbanCardDensity = 'compact' | 'comfortable' | 'spacious'
+```
+
+## KanbanCardDescriptor
+
+Immutable, renderer-neutral description of one terminal card.
+
+```ts
+interface KanbanCardDescriptor {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  presentationRevision?: KanbanRevision;   // Equality-only revision used to create this descriptor.
+  width: number;   // Exact width in terminal cells.
+  measuredHeight: number;   // Number of rows occupied by this descriptor.
+  surfaceRole: KanbanThemeRole;   // Semantic role for the card interior.
+  borderRole: KanbanThemeRole;   // Semantic role for the stable card boundary.
+  marker: KanbanCardMarker;   // Non-color state marker.
+  rows: readonly KanbanCardRow[];   // Styled terminal rows.
+  sections: readonly KanbanCardSection[];   // Semantic section geometry.
+  actions: readonly KanbanCardAction[];   // Declarative card actions.
+  regions: readonly KanbanCardRegion[];   // Mouse hit-test regions.
+  degradation: KanbanCardDegradation;   // Content omitted because of available geometry.
+}
+```
+
+## KanbanCardFallbackLabels
+
+Localized bounded labels used when a renderer cannot produce a safe descriptor.
+
+```ts
+interface KanbanCardFallbackLabels {
+  invalidCardTitle: string;   // Title displayed instead of invalid or unavailable application content.
+  unknownStatus: string;   // Status displayed instead of invalid or unavailable application content.
+}
+```
+
+## KanbanCardFormattingContext
+
+Bounded application formatting functions available to a card renderer.
+
+```ts
+interface KanbanCardFormattingContext {
+  locale: string;   // Canonical application-selected locale used by the supplied formatters.
+  formatNumber: (value: number | bigint) => string;   // Formats one finite number or bigint without changing its value.
+  formatDate: (value: unknown) => string | undefined;   // Formats one opaque application date value, or declines it with `undefined`.
+}
+```
+
+## KanbanCardLocation
+
+Revision-bound result of one optional, bounded card-identity lookup.
+
+```ts
+type KanbanCardLocation = | {
+      readonly kind: 'found' | 'unloaded';
+      readonly address: KanbanCellAddress;
+      readonly index?: number;
+      readonly placement?: KanbanPlacement;
+      readonly sessionRevision: KanbanRevision;
+    }
+  | { readonly kind: 'unknown' | 'unsupported'; readonly sessionRevision: KanbanRevision }
+```
+
+## KanbanCardMarker
+
+One-cell state marker retained when color is unavailable.
+
+```ts
+interface KanbanCardMarker {
+  row: number;   // Zero-based descriptor row.
+  column: number;   // Zero-based terminal-cell column.
+  glyph: string;   // Sanitized glyph occupying exactly one terminal cell.
+  role: KanbanThemeRole;   // Semantic theme role used to draw the marker.
+  cues: readonly KanbanCardCue[];   // State distinctions redundantly conveyed by the marker.
+}
+```
+
+## KanbanCardOperationState
+
+Interaction or persistence state that can affect one card's presentation.
+
+```ts
+type KanbanCardOperationState = 'idle' | 'grabbed' | 'pending' | 'rejected'
+```
+
+## KanbanCardPublicationSubject
+
+Card publication expected after an accepted application request.
+
+```ts
+interface KanbanCardPublicationSubject {
+  kind: 'card';
+  cardKey: CardKey;
+  baselineRevision: KanbanRevision;
+  expectedRevision: KanbanRevision;
+}
+```
+
+## KanbanCardRegion
+
+Bounded hit-test rectangle within a card descriptor.
+
+```ts
+interface KanbanCardRegion {
+  regionId: string;   // Descriptor-local stable region identity.
+  kind: 'section' | 'action';   // Semantic purpose of the rectangle.
+  x: number;   // Zero-based terminal-cell column.
+  y: number;   // Zero-based descriptor row.
+  width: number;   // Positive width in terminal cells.
+  height: number;   // Positive height in rows.
+  actionId?: KanbanExtensionId;   // Action invoked by an action region.
+}
+```
+
+## KanbanCardRenderContext
+
+Bounded immutable values supplied to one pure card-render operation.
+
+```ts
+interface KanbanCardRenderContext {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  presentationRevision?: KanbanRevision;   // Equality-only revision for presentation-affecting card data.
+  width: number;   // Exact card width in terminal cells.
+  rowBudget: number;   // Maximum rows the renderer may return.
+  density: KanbanCardDensity;   // Requested card spacing density.
+  focused: boolean;   // Whether the card owns keyboard focus.
+  selected: boolean;   // Whether the card belongs to the active selection.
+  readOnly: boolean;   // Whether mutation commands are disabled for this card.
+  operation: KanbanCardOperationState;   // Current drag or persistence operation state.
+  theme: Readonly<KanbanTheme>;   // Fully resolved semantic theme.
+  capabilities: Readonly<KanbanCardTerminalCapabilities>;   // Terminal features used for deterministic rendering.
+  formatting: Readonly<KanbanCardFormattingContext>;   // Application-owned locale formatters.
+}
+```
+
+## KanbanCardRenderer
+
+Pure application-supplied projection from a card to bounded terminal rows.
+
+```ts
+interface KanbanCardRenderer<TCard> {
+  render(card: TCard, context: KanbanCardRenderContext): KanbanCardDescriptor;   // Produces one descriptor without mutating the card or render context.
+}
+```
+
+## KanbanCardRow
+
+One terminal row belonging to a semantic card section.
+
+```ts
+interface KanbanCardRow {
+  section: KanbanCardSectionKind;   // Semantic section represented by this row.
+  spans: readonly KanbanCardSpan[];   // Ordered non-overlapping styled spans.
+}
+```
+
+## KanbanCardSection
+
+Geometry and priority metadata for one semantic section.
+
+```ts
+interface KanbanCardSection {
+  id: string;   // Descriptor-local stable section identity.
+  kind: KanbanCardSectionKind;   // Semantic content category.
+  startRow: number;   // First zero-based row occupied by the section.
+  rowCount: number;   // Number of consecutive rows occupied by the section.
+  priority: number;   // Lower values are retained first as space becomes constrained.
+}
+```
+
+## KanbanCardSectionKind
+
+Semantic content category used for degradation and layout decisions.
+
+```ts
+type KanbanCardSectionKind = | 'title'
+  | 'status'
+  | 'metadata'
+  | 'labels'
+  | 'summary'
+  | 'checklist-progress'
+  | 'checklist-preview'
+  | 'feedback'
+  | 'custom'
+```
+
+## KanbanCardSpan
+
+One sanitized styled run positioned within a descriptor row.
+
+```ts
+interface KanbanCardSpan {
+  column: number;   // Zero-based terminal-cell column.
+  text: string;   // Sanitized single-line display text.
+  role: KanbanThemeRole;   // Semantic theme role used to draw the text.
+}
+```
+
+## KanbanCardTerminalCapabilities
+
+Terminal features that affect text measurement and presentation fallback.
+
+```ts
+interface KanbanCardTerminalCapabilities {
+  colorDepth: ColorDepth;   // Effective terminal color depth.
+  widthMode: WidthMode;   // Width algorithm used for Unicode code points.
+  boxDrawing: boolean;   // Whether box-drawing glyphs are safe to use.
+  ambiguousWide: boolean;   // Whether ambiguous-width code points occupy two cells.
+}
+```
+
+## KanbanCellAddress
+
+Collision-safe semantic address of one column/swimlane cell.
+
+```ts
+interface KanbanCellAddress {
+  columnId: KanbanColumnId;   // Workflow column containing the cell.
+  swimlaneId?: KanbanSwimlaneId;   // Optional horizontal grouping containing the cell.
+}
+```
+
+## KanbanCellCounts
+
+Counts scoped to one column/swimlane cell cursor.
+
+```ts
+interface KanbanCellCounts {
+  total: KanbanCount;   // Authoritative cards assigned to the cell before local filtering.
+  matching: KanbanCount;   // Cards in the cell that match the active query.
+  loaded: KanbanCount;   // Matching cards from the cell that are currently resident.
+}
+```
+
+## KanbanCellCursor
+
+Sparse, independently disposable card reader for one semantic cell.
+
+```ts
+interface KanbanCellCursor<TCard> {
+  state(): KanbanCellState;   // Returns the reactive cell lifecycle state.
+  counts(): KanbanCellCounts;   // Returns honest reactive counts for this cell.
+  length(): KanbanKnownLength;   // Returns exact, lower-bound, or unknown logical length knowledge.
+  cardAt(index: number): TCard | undefined;   // Returns a resident application card or `undefined` for an unloaded slot.
+  ensureRange(start: number, end: number, options?: { readonly signal?: AbortSignal }): Promise<void>;   // Acquires one bounded half-open logical range.
+  revision(): KanbanRevision;   // Returns the equality-only revision governing reads and placements.
+  placementAt(slot: number): KanbanPlacement;   // Returns a revision-bound semantic insertion placement for one logical slot.
+  retry(): Promise<void> | void;   // Retries the cursor's scoped error, when available.
+  dispose(): void;   // Releases source work and retained application card references idempotently.
+}
+```
+
+## KanbanCellState
+
+Reactive lifecycle state published by one sparse cell cursor.
+
+```ts
+type KanbanCellState = | { readonly kind: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' }
+  | {
+      readonly kind: 'error';
+      readonly code: string;
+      readonly label?: string;
+      readonly retry: 'available' | 'unavailable';
+    }
+```
+
+## KanbanChecklistId
+
+A validated checklist-group identity.
+
+```ts
+type KanbanChecklistId = string
+```
+
+## KanbanColumnHeader
+
+Detached column header publication.
+
+```ts
+interface KanbanColumnHeader {
+  columnId: KanbanColumnId;   // Column represented by this header.
+  label: string;   // Sanitized human-readable label.
+}
+```
+
+## KanbanColumnId
+
+A validated workflow-column identity.
+
+```ts
+type KanbanColumnId = string
+```
+
+## KanbanColumnMeta
+
+Display metadata for one workflow column.
+
+```ts
+interface KanbanColumnMeta {
+  columnId: KanbanColumnId;   // Stable semantic column identity.
+  label: string;   // Human-readable label rendered after terminal sanitization.
+  revision: KanbanRevision;   // Equality-only presentation revision for this metadata.
+}
+```
+
+## KanbanColumnPublicationSubject
+
+Workflow-column publication expected after an accepted application request.
+
+```ts
+interface KanbanColumnPublicationSubject {
+  kind: 'column';
+  columnId: KanbanColumnId;
+  baselineRevision: KanbanRevision;
+  expectedRevision: KanbanRevision;
+}
+```
+
+## KanbanColumnWidthInput
+
+Width constraints supplied for one source-ordered workflow column.
+
+```ts
+interface KanbanColumnWidthInput {
+  columnId: string;   // Stable application-owned column identity.
+  minimumWidth?: number;   // Smallest configured surface width; defaults to 18 cells.
+  preferredWidth?: number;   // Preferred surface width; defaults to 24 cells.
+  maximumWidth?: number;   // Largest configured surface width; defaults to 32 cells.
+  chromeMinimumWidth?: number;   // Minimum cells required for mandatory non-color chrome.
+  rendererMinimumHint?: number;   // Optional untrusted renderer measurement hint. Invalid hints are ignored.
+}
+```
+
+## KanbanColumnWidthSolution
+
+Immutable result of one pure responsive width solve.
+
+```ts
+interface KanbanColumnWidthSolution {
+  mode: 'multi-column' | 'focused-column';   // Responsive presentation selected for the available cells.
+  availableWidth: number;   // Validated width offered by the parent.
+  contentWidth: number;   // Total column and separator width; it may exceed availability to represent horizontal overflow.
+  separatorWidth: number;   // Cells reserved between adjacent columns.
+  columns: readonly KanbanSolvedColumnWidth[];   // Source-ordered solved columns, or the single active column in focused mode.
+  interactiveColumnIds: readonly string[];   // Columns that may participate in Phase A inspection and later interaction.
+  navigator?: KanbanFocusedColumnNavigator;   // Compact navigation state present only in focused-column mode.
+}
+```
+
+## KanbanCount
+
+A count whose authority and completeness are explicit.
+
+```ts
+type KanbanCount = | { readonly quality: 'unknown' }
+  | {
+      readonly quality: 'exact' | 'estimated' | 'truncated';
+      readonly value: number;
+    }
+```
+
+## KanbanDamageRegion
+
+Bounded changed rectangle returned by viewport damage calculation.
+
+```ts
+interface KanbanDamageRegion {
+  kind: 'descriptor' | 'sticky' | 'state' | 'scroll-exposed' | 'whole-viewport';   // Stable source of the damage request.
+}
+```
+
+## KanbanDataSource
+
+Application-owned source that opens synchronous, independently disposable query sessions.
+
+```ts
+interface KanbanDataSource<TCard> {
+  openQuery(query: KanbanQuery, options?: { readonly signal?: AbortSignal }): KanbanQuerySession<TCard>;   // Opens one session and immediately transfers cancellation/disposal ownership to the caller.
+}
+```
+
+## KanbanDisposedResourceError
+
+Raised when a caller uses a source, cursor, or viewport after disposal.
+
+```ts
+new KanbanDisposedResourceError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanError
+
+Base class for sanitized programmer and configuration errors raised by Kanban.
+
+```ts
+new KanbanError()   // extends Error
+// methods & signals:
+code: KanbanErrorCode
+```
+
+## KanbanErrorCode
+
+Stable machine-readable codes for package-owned contract failures.
+
+```ts
+type KanbanErrorCode = | 'invalid-identity'
+  | 'invalid-limit'
+  | 'invalid-semantic-value'
+  | 'invalid-query'
+  | 'invalid-range'
+  | 'invalid-source-publication'
+  | 'invalid-descriptor'
+  | 'invalid-geometry'
+  | 'disposed-resource'
+```
+
+## KanbanExpectedCardRevision
+
+Captured card revision required by an application request.
+
+```ts
+interface KanbanExpectedCardRevision {
+  kind: 'card';
+  cardKey: CardKey;
+  revision: KanbanRevision;
+}
+```
+
+## KanbanExpectedColumnRevision
+
+Captured workflow-column revision required by an application request.
+
+```ts
+interface KanbanExpectedColumnRevision {
+  kind: 'column';
+  columnId: KanbanColumnId;
+  revision: KanbanRevision;
+}
+```
+
+## KanbanExpectedEntityRevision
+
+One typed entity revision captured before a request reaches application code.
+
+```ts
+type KanbanExpectedEntityRevision = KanbanExpectedCardRevision | KanbanExpectedColumnRevision | KanbanExpectedSwimlaneRevision
+```
+
+## KanbanExpectedSwimlaneRevision
+
+Captured swimlane revision required by an application request.
+
+```ts
+interface KanbanExpectedSwimlaneRevision {
+  kind: 'swimlane';
+  swimlaneId: KanbanSwimlaneId;
+  revision: KanbanRevision;
+}
+```
+
+## KanbanExtensionId
+
+A validated lowercase dotted identity for an application extension.
+
+```ts
+type KanbanExtensionId = string
+```
+
+## KanbanExtensionRequest
+
+Generic namespaced application-extension request.
+
+```ts
+interface KanbanExtensionRequest<TType extends KanbanExtensionId = KanbanExtensionId, TPayload extends KanbanSemanticValue = KanbanSemanticValue> {
+  kind: 'extension';
+  extensionId: TType;
+  operationId: KanbanOperationId;
+  expected: KanbanRequestExpectedRevisions;
+  payload: TPayload;
+  signal: AbortSignal;
+}
+```
+
+## KanbanExtentQuality
+
+Confidence attached to one published scroll extent.
+
+```ts
+type KanbanExtentQuality = 'exact' | 'lower-bound' | 'unknown'
+```
+
+## KanbanFieldId
+
+A validated application field identity.
+
+```ts
+type KanbanFieldId = string
+```
+
+## KanbanFilter
+
+One semantic filter supplied to a data source.
+
+```ts
+interface KanbanFilter {
+  fieldId: KanbanFieldId;   // Application field evaluated by a registered source adapter.
+  operatorId: KanbanExtensionId;   // Application-namespaced operator interpreted by that adapter.
+  value: KanbanSemanticValue;   // Detached semantic operand, never an executable expression.
+}
+```
+
+## KanbanFilterField
+
+Application filter field with a finite allowlist of supported operators.
+
+```ts
+interface KanbanFilterField<TCard> {
+  fieldId: KanbanFieldId;   // Semantic field selected by a query filter.
+  operators: readonly KanbanFilterOperator<TCard>[];   // Finite operator registry validated before a session opens.
+}
+```
+
+## KanbanFilterOperator
+
+One explicitly registered filter operation for an application field.
+
+```ts
+interface KanbanFilterOperator<TCard> {
+  operatorId: KanbanExtensionId;   // Application-namespaced operator selected by a query filter.
+  matches: (card: TCard, value: KanbanSemanticValue) => boolean;   // Evaluates one card against a detached semantic operand.
+}
+```
+
+## KanbanFocusedColumnNavigator
+
+One-row navigation metadata shown only in focused-column mode.
+
+```ts
+interface KanbanFocusedColumnNavigator {
+  rowCount: 1;   // Fixed compact navigator height.
+  columnId: string;   // Active source column.
+  position: number;   // One-based position in the complete visible-column sequence.
+  total: number;   // Complete number of visible columns.
+  previousEnabled: boolean;   // Whether a previous source-ordered column exists.
+  nextEnabled: boolean;   // Whether a next source-ordered column exists.
+}
+```
+
+## KanbanGroupingField
+
+Application grouping adapter used by the eager source.
+
+```ts
+interface KanbanGroupingField<TCard> {
+  id: KanbanFieldId;   // Semantic field selected by `query.groupBy`.
+  swimlaneOf: (card: TCard) => KanbanSwimlaneId | undefined;   // Returns an optional semantic swimlane identity for one card.
+}
+```
+
+## KanbanHeaderBatch
+
+Atomic header metadata for one session revision.
+
+```ts
+interface KanbanHeaderBatch {
+  revision: KanbanRevision;   // Session revision from which the header values were derived.
+  columns: readonly KanbanColumnHeader[];   // Ordered column headers.
+  swimlanes: readonly KanbanSwimlaneHeader[];   // Ordered swimlane headers.
+}
+```
+
+## KanbanHeaderSummary
+
+Header metadata shared by columns and swimlanes.
+
+```ts
+interface KanbanHeaderSummary {
+  wip?: KanbanCount;   // Optional authoritative work-in-progress count.
+  summaries?: Readonly<Record<KanbanFieldId, KanbanNumericSummary>>;   // Bounded honest numeric summaries keyed by application field identity.
+}
+```
+
+## KanbanIdentityChange
+
+Authoritative deletion of one semantic identity.
+
+```ts
+type KanbanIdentityChange = | { readonly kind: 'deleted-card'; readonly cardKey: CardKey }
+  | { readonly kind: 'deleted-column'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'deleted-swimlane'; readonly swimlaneId: KanbanSwimlaneId }
+```
+
+## KanbanIdentityChangeBatch
+
+Bounded authoritative deletion facts for one session revision.
+
+```ts
+interface KanbanIdentityChangeBatch {
+  revision: KanbanRevision;   // Session revision from which the deletion facts were derived.
+  changes: readonly KanbanIdentityChange[];   // Exact deletion records; transient unload is deliberately absent.
+}
+```
+
+## KanbanIdentityInput
+
+Application-owned identity hints projected by a read-only board.
+
+```ts
+interface KanbanIdentityInput {
+  focusedCardKey?: CardKey;   // Card that should retain the primary non-color focus cue when resident.
+  focusedColumnId?: string;   // Workflow column preferred when responsive geometry can show only one column.
+  selectedCardKeys?: readonly CardKey[];   // Application-owned selected identities retained through ordinary source unload.
+}
+```
+
+## KanbanIdentityKind
+
+Structural identity categories accepted by the shared uniqueness validator.
+
+```ts
+type KanbanIdentityKind = 'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation'
+```
+
+## KanbanInspectedCard
+
+Detached visible-card evidence suitable for tests and modeless inspectors.
+
+```ts
+interface KanbanInspectedCard {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  columnId: string;   // Containing workflow column identity.
+  title: string;   // Sanitized visible title projection.
+  marker: { readonly cues: readonly string[] };   // Non-color marker projected with the visible descriptor.
+}
+```
+
+## KanbanInspectedCell
+
+Detached inspection state for one retained source cell.
+
+```ts
+interface KanbanInspectedCell {
+  address: KanbanCellAddress;   // Canonical source coordinate.
+  state: KanbanCellState;   // Safe source state with no application record payload.
+}
+```
+
+## KanbanInspectedColumn
+
+Detached visible-column evidence with the complete sanitized semantic label.
+
+```ts
+interface KanbanInspectedColumn {
+  columnId: string;   // Stable workflow-column identity.
+  label: string;   // Complete bounded sanitized label before visual ellipsis.
+}
+```
+
+## KanbanInvalidDescriptorError
+
+Raised when a custom card descriptor violates its bounded render contract.
+
+```ts
+new KanbanInvalidDescriptorError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidGeometryError
+
+Raised when component geometry is unsafe or internally inconsistent.
+
+```ts
+new KanbanInvalidGeometryError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidIdentityError
+
+A safe typed error raised before an invalid structural identity is published.
+
+```ts
+new KanbanInvalidIdentityError(kind: KanbanIdentityKind | 'placement-token')   // extends KanbanError
+// methods & signals:
+code
+kind: KanbanIdentityKind | 'placement-token'
+```
+
+## KanbanInvalidLimitError
+
+A safe typed error raised before invalid resource limits can be used.
+
+```ts
+new KanbanInvalidLimitError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidQueryError
+
+Raised when a query does not satisfy the published query contract.
+
+```ts
+new KanbanInvalidQueryError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidRangeError
+
+Raised before an invalid half-open source range reaches application code.
+
+```ts
+new KanbanInvalidRangeError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidSemanticValueError
+
+Raised when a semantic value cannot be safely snapshotted.
+
+```ts
+new KanbanInvalidSemanticValueError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidSourcePublicationError
+
+Raised when a source publication violates its structural contract.
+
+```ts
+new KanbanInvalidSourcePublicationError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanKnownLength
+
+Logical length knowledge exposed without fabricating completeness.
+
+```ts
+type KanbanKnownLength = | { readonly kind: 'exact'; readonly value: number }
+  | { readonly kind: 'at-least'; readonly value: number }
+  | { readonly kind: 'unknown' }
+```
+
+## KanbanLayoutRegion
+
+Semantic rectangle emitted by pure layout projection for inspection or future interaction.
+
+```ts
+interface KanbanLayoutRegion {
+  kind: 'workflow-header' | 'swimlane-header' | 'insertion-gutter' | 'card' | 'card-gap' | 'state' | 'minimum-size';   // Region meaning; Phase A keeps every emitted region non-actionable.
+  actionable: boolean;   // Whether current input may target this region.
+  cardKey?: CardKey;   // Stable card identity for card rectangles.
+}
+```
+
+## KanbanLimitClass
+
+Resource class selected by a component instance.
+
+```ts
+type KanbanLimitClass = 'safe' | 'standard' | 'advanced'
+```
+
+## KanbanLimitManifest
+
+Complete durable resource-limit surface shared by all Kanban phases.
+
+```ts
+interface KanbanLimitManifest {
+  idBytes: KanbanLimitRow;
+  tokenBytes: KanbanLimitRow;
+  semanticEncodedBytes: KanbanLimitRow;
+  semanticDepth: KanbanLimitRow;
+  semanticArrayEntries: KanbanLimitRow;
+  semanticObjectKeys: KanbanLimitRow;
+  semanticStringBytes: KanbanLimitRow;
+  columns: KanbanLimitRow;
+  swimlanes: KanbanLimitRow;
+  retainedCursors: KanbanLimitRow;
+  ensureRangeCards: KanbanLimitRow;
+  cardFields: KanbanLimitRow;
+  summarySections: KanbanLimitRow;
+  checklistGroups: KanbanLimitRow;
+  checklistItemsPerGroup: KanbanLimitRow;
+  cardRowsCompact: KanbanLimitRow;
+  cardRowsComfortable: KanbanLimitRow;
+  cardRowsSpacious: KanbanLimitRow;
+  descriptorRows: KanbanLimitRow;
+  selectedKeys: KanbanLimitRow;
+  concurrentCellLoads: KanbanLimitRow;
+  concurrentValidators: KanbanLimitRow;
+  pendingOperations: KanbanLimitRow;
+  retainedOperationIds: KanbanLimitRow;
+  retainedObservations: KanbanLimitRow;
+  verticalOverscan: KanbanLimitRow;
+  horizontalOverscan: KanbanLimitRow;
+}
+```
+
+## KanbanLimitOptions
+
+Caller-selected class and optional values that may lower, but never exceed, its ceiling.
+
+```ts
+interface KanbanLimitOptions {
+  class?: KanbanLimitClass;
+  values?: Partial<KanbanResolvedLimits>;
+}
+```
+
+## KanbanLimitRow
+
+One package resource limit across safe, standard, and absolute classes.
+
+```ts
+interface KanbanLimitRow {
+  safe: number;   // Conservative default and maximum accepted by the safe class.
+  standard: number;   // Larger default and maximum accepted by the standard class.
+  absolute: number;   // Hard package ceiling, used as the advanced-class maximum.
+}
+```
+
+## KanbanMessageMap
+
+Exact Phase A message inventory required from every Kanban locale.
+
+```ts
+interface KanbanMessageMap {
+  'kanban.board.label': Message;   // Accessible board label.
+  'kanban.board.no-columns': Message;   // Empty board state used when no workflow columns exist.
+  'kanban.state.loading': Message;   // Initial source-loading state.
+  'kanban.state.refreshing': Message;   // Background source-refresh state.
+  'kanban.state.partial': Message;   // Partial-data state.
+  'kanban.state.empty': Message;   // Empty-card state.
+  'kanban.state.error': Message;   // Board source-error state.
+  'kanban.action.retry': Message;   // Retry action label.
+  'kanban.layout.minimum-size': Message;   // Minimum terminal geometry message using `width` and `height`.
+  'kanban.count.unknown': Message;   // Label for an unavailable count.
+  'kanban.count.truncated': Message;   // Lower-bound count using `count`.
+  'kanban.focused-column.previous': Message;   // Previous-column navigation label.
+  'kanban.focused-column.next': Message;   // Next-column navigation label.
+  'kanban.focused-column.position': Message;   // Focused-column position using `current` and `total`.
+  'kanban.card.invalid-title': Message;   // Safe replacement for an invalid mandatory card title.
+  'kanban.card.unknown-status': Message;   // Safe replacement for an invalid mandatory card status.
+  'kanban.reason.source-unavailable': Message;   // Payload-free source failure reason.
+  'kanban.reason.renderer-unavailable': Message;   // Payload-free card renderer failure reason.
+}
+```
+
+## KanbanMinimumGeometry
+
+Atomic impossible-geometry projection with no partial targets.
+
+```ts
+interface KanbanMinimumGeometry {
+  kind: 'minimum-size';   // Stable degraded-state discriminator.
+  bounds: Readonly<Rect>;   // Parent-assigned rectangle.
+  required: { readonly width: number; readonly height: number };   // Required usable dimensions.
+  message: KanbanMinimumMessage;   // Bounded visible feedback.
+  inspectionRegions: readonly KanbanLayoutRegion[];   // No partial header/card regions are exposed.
+  actionTargets: readonly KanbanActionTarget[];   // No partial actions are exposed.
+}
+```
+
+## KanbanMinimumMessage
+
+One clipped minimum-size message rectangle.
+
+```ts
+interface KanbanMinimumMessage {
+  text: string;   // Sanitized cell-safe visible text.
+  width: number;   // Visible message width in terminal cells.
+  height: number;   // Visible message height in terminal rows.
+}
+```
+
+## KanbanNonColorCue
+
+One non-color distinction retained when terminal color is unavailable or insufficient.
+
+```ts
+type KanbanNonColorCue = | { readonly kind: 'marker'; readonly glyph: string }
+  | { readonly kind: 'border'; readonly style: 'single' | 'double' | 'heavy' | 'dashed' }
+  | { readonly kind: 'attribute'; readonly attrs: AttrMask }
+  | { readonly kind: 'text'; readonly prefix: string }
+```
+
+## KanbanNumericSummary
+
+Honest numeric summary that never presents unavailable authority as zero.
+
+```ts
+type KanbanNumericSummary = | { readonly scope: KanbanSummaryScope; readonly quality: 'unknown' }
+  | {
+      readonly scope: KanbanSummaryScope;
+      readonly quality: 'exact' | 'estimated' | 'truncated';
+      readonly value: number;
+    }
+```
+
+## KanbanObservation
+
+Safe diagnostic metadata that never contains application records, queries, tokens, or raw errors.
+
+```ts
+interface KanbanObservation {
+  code: string;   // Stable sanitized reason code.
+  scope: KanbanObservationScope;   // Small semantic scope used to route diagnostics.
+  cardKey?: CardKey;   // Optional application card identity, preserving string and number distinction.
+  columnId?: KanbanColumnId;   // Optional validated workflow-column identity.
+  swimlaneId?: KanbanSwimlaneId;   // Optional validated swimlane identity.
+  counts?: KanbanObservationCounts;   // Optional bounded payload-free counters.
+  message?: string;   // Optional sanitized display label.
+}
+```
+
+## KanbanObservationBuffer
+
+Fixed-capacity FIFO buffer for already-redacted runtime observations.
+
+```ts
+new KanbanObservationBuffer(capacity: number)
+// methods & signals:
+push(observation: KanbanObservation): void
+values(): readonly KanbanObservation[]
+clear(): void
+```
+
+## KanbanObservationCounts
+
+Bounded numeric counters that provide payload-free diagnostic context.
+
+```ts
+type KanbanObservationCounts = Readonly<Record<string, number>>
+```
+
+## KanbanObservationInput
+
+Input accepted when converting a caught callback failure to safe diagnostic metadata.
+
+```ts
+interface KanbanObservationInput {
+  error?: unknown;   // Raw callback failure, deliberately ignored after failure classification.
+  message?: string;   // Optional already-safe label; raw exception messages must never be supplied here.
+}
+```
+
+## KanbanObservationScope
+
+Runtime scope in which an isolated application or package failure occurred.
+
+```ts
+type KanbanObservationScope = 'board' | 'query' | 'source' | 'cell' | 'card' | 'renderer' | 'request'
+```
+
+## KanbanOperationId
+
+A validated identity that correlates one application request and result.
+
+```ts
+type KanbanOperationId = string
+```
+
+## KanbanOverscanOptions
+
+Finite projection retained around the visible terminal cells.
+
+```ts
+interface KanbanOverscanOptions {
+  vertical?: number;   // Extra viewport-height card window retained below and, when available, above the visible range.
+  horizontal?: number;   // Extra source-ordered columns retained on each horizontal side.
+}
+```
+
+## KanbanPlacement
+
+Revision-bound semantic insertion placement returned by a cursor.
+
+```ts
+type KanbanPlacement = | { readonly kind: 'start'; readonly cursorRevision: KanbanRevision }
+  | { readonly kind: 'end'; readonly cursorRevision: KanbanRevision }
+  | {
+      readonly kind: 'between';
+      readonly beforeCardKey: CardKey | null;
+      readonly afterCardKey: CardKey | null;
+      readonly cursorRevision: KanbanRevision;
+    }
+  | {
+      readonly kind: 'window-edge';
+      readonly edge: 'before' | 'after';
+      readonly neighborCardKey: CardKey;
+      readonly token?: PlacementToken;
+      readonly cursorRevision: KanbanRevision;
+    }
+  | {
+      readonly kind: 'unavailable';
+      readonly code: string;
+      readonly label?: string;
+      readonly prefetch?: KanbanPrefetchRange;
+      readonly cursorRevision: KanbanRevision;
+    }
+```
+
+## KanbanPrefetchRange
+
+Half-open source range used as an optional placement prefetch hint.
+
+```ts
+interface KanbanPrefetchRange {
+  start: number;   // First included logical card index.
+  end: number;   // First excluded logical card index.
+}
+```
+
+## KanbanPublicationExpectation
+
+Bounded publication metadata retained after an accepted request.
+
+```ts
+interface KanbanPublicationExpectation {
+  operationId: KanbanOperationId;
+  subjects: readonly KanbanPublicationSubject[];
+}
+```
+
+## KanbanPublicationNotice
+
+Authoritative source publication classification used to clear pending metadata.
+
+```ts
+interface KanbanPublicationNotice {
+  kind: 'matching' | 'contradictory';
+  operationId: KanbanOperationId;
+  subjects: readonly KanbanPublicationSubject[];
+}
+```
+
+## KanbanPublicationReconciliation
+
+Pure reconciliation result that contains no application records.
+
+```ts
+interface KanbanPublicationReconciliation {
+  pending: readonly KanbanPublicationExpectation[];
+  cleared?: KanbanPublicationNotice;
+}
+```
+
+## KanbanPublicationSubject
+
+One structural subject represented only by safe identity and revision metadata.
+
+```ts
+type KanbanPublicationSubject = KanbanCardPublicationSubject | KanbanColumnPublicationSubject | KanbanSwimlanePublicationSubject
+```
+
+## KanbanQuery
+
+Immutable semantic read projection opened by a Kanban data source.
+
+```ts
+interface KanbanQuery {
+  search?: string;   // Optional bounded plain-text search term.
+  filters?: readonly KanbanFilter[];   // Ordered local filter directives.
+  groupBy?: KanbanFieldId;   // Optional field used to derive semantic swimlanes.
+  sort?: readonly KanbanSort[];   // Ordered stable sort directives.
+  visibleColumnIds?: readonly KanbanColumnId[];   // Optional allowlist of visible workflow columns.
+  visibleSwimlaneIds?: readonly KanbanSwimlaneId[];   // Optional allowlist of visible semantic swimlanes.
+  viewRevision?: KanbanRevision;   // Equality-only application revision of the saved or active view.
+}
+```
+
+## KanbanQuerySession
+
+Independently disposable read session for one semantic query.
+
+```ts
+interface KanbanQuerySession<TCard> {
+  state(): KanbanSourceState;   // Returns the reactive board-wide source state.
+  revision(): KanbanRevision;   // Returns the equality-only active session revision.
+  columns(): readonly KanbanColumnMeta[];   // Returns ordered reactive column metadata.
+  swimlanes(): readonly KanbanSwimlaneMeta[];   // Returns ordered reactive swimlane metadata.
+  counts(): KanbanBoardCounts;   // Returns honest reactive board-wide counts.
+  headers(): KanbanHeaderBatch;   // Returns atomic reactive header metadata.
+  identityChanges(): KanbanIdentityChangeBatch;   // Returns authoritative reactive deletion facts.
+  cell(address: KanbanCellAddress): KanbanCellCursor<TCard>;   // Opens a sparse cursor only for the explicitly requested semantic cell.
+  locateCard?(key: CardKey, options?: { readonly signal?: AbortSignal }): Promise<KanbanCardLocation> | KanbanCardLocation;   // Performs one bounded optional identity lookup without scanning cursor contents.
+  dispose(): void;   // Releases session work and child resources idempotently.
+}
+```
+
+## KanbanRequest
+
+Current package-owned request union, designed to accept later standard variants.
+
+```ts
+type KanbanRequest = KanbanExtensionRequest
+```
+
+## KanbanRequestAccepted
+
+Publication metadata returned with an accepted request result.
+
+```ts
+interface KanbanRequestAccepted {
+  kind: 'accepted';
+  operationId: KanbanOperationId;
+  publication?: KanbanPublicationExpectation;
+}
+```
+
+## KanbanRequestCancelled
+
+Explicit cancellation outcome, distinct from rejection and supersession.
+
+```ts
+interface KanbanRequestCancelled {
+  kind: 'cancelled';
+  operationId: KanbanOperationId;
+  code?: string;
+  label?: string;
+}
+```
+
+## KanbanRequestContext
+
+Context captured and passed to the application dispatcher.
+
+```ts
+interface KanbanRequestContext {
+  capabilities: KanbanCapabilities;   // UX capability descriptions for diagnostics only, never authorization.
+}
+```
+
+## KanbanRequestDispatcher
+
+Application-owned dispatcher; capability descriptions never authorize this call.
+
+```ts
+type KanbanRequestDispatcher = (
+  request: KanbanRequest,
+  context: KanbanRequestContext,
+) => KanbanRequestResult | Promise<KanbanRequestResult>
+```
+
+## KanbanRequestExpectedRevisions
+
+Equality-only revisions captured with an application request.
+
+```ts
+interface KanbanRequestExpectedRevisions {
+  board?: KanbanRevision;
+  source?: KanbanRevision;
+  query?: KanbanRevision;
+  entities?: readonly KanbanExpectedEntityRevision[];
+}
+```
+
+## KanbanRequestRejected
+
+Sanitized application rejection.
+
+```ts
+interface KanbanRequestRejected {
+  kind: 'rejected';
+  operationId: KanbanOperationId;
+  code: string;
+  label?: string;
+}
+```
+
+## KanbanRequestResult
+
+Terminal operation-correlated result returned by the application dispatcher.
+
+```ts
+type KanbanRequestResult = KanbanRequestAccepted | KanbanRequestRejected | KanbanRequestCancelled | KanbanRequestSuperseded
+```
+
+## KanbanRequestSuperseded
+
+Outcome indicating that a newer application operation replaced this request.
+
+```ts
+interface KanbanRequestSuperseded {
+  kind: 'superseded';
+  operationId: KanbanOperationId;
+  code?: string;
+  label?: string;
+}
+```
+
+## KanbanResolvedLimits
+
+Every validated concrete limit keyed by the public manifest.
+
+```ts
+type KanbanResolvedLimits = Readonly<Record<keyof KanbanLimitManifest, number>>
+```
+
+## KanbanResolvedThemeRole
+
+Effective style and non-color evidence for one requested semantic role.
+
+```ts
+interface KanbanResolvedThemeRole {
+  role: KanbanThemeRole;   // Allowlisted role ultimately selected for drawing.
+  style: ThemeRole;   // Detached terminal style selected by the fallback chain.
+  cues: readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];   // Non-empty redundant semantic cues.
+  fallback: 'none' | 'mapped-core' | 'family' | 'emergency';   // Fallback stage that produced the effective style.
+  contrastRatio?: number;   // Effective-depth contrast ratio; omitted for monochrome, no-color, or unresolvable defaults.
+}
+```
+
+## KanbanRevealAlignment
+
+Placement preference for an imperative card reveal.
+
+```ts
+type KanbanRevealAlignment = 'nearest' | 'start' | 'center' | 'end'
+```
+
+## KanbanRevealResult
+
+Public result of a bounded identity reveal.
+
+```ts
+interface KanbanRevealResult {
+  location: KanbanCardLocation;   // Locator outcome; unsupported and unknown remain explicit.
+  scrolled: boolean;   // Whether the viewport offsets changed.
+}
+```
+
+## KanbanRevision
+
+Equality-only revision value published by an application or data source.
+
+```ts
+type KanbanRevision = string | number
+```
+
+## KanbanSafeRenderOptions
+
+Options for isolated renderer execution and redacted diagnostics.
+
+```ts
+interface KanbanSafeRenderOptions {
+  labels: KanbanCardFallbackLabels;   // Localized fallback labels supplied by the board locale resolver.
+  observe?: (observation: KanbanObservation) => void;   // Optional sink for already-redacted package observations.
+}
+```
+
+## KanbanScrollAnchor
+
+Stable semantic anchor used to restore a containing column and relative card row.
+
+```ts
+interface KanbanScrollAnchor {
+  columnId: string;   // Containing workflow column identity.
+  cardKey?: CardKey;   // Stable card identity when a visible card can be anchored.
+  relativeRow: number;   // Preferred card row relative to the scrolling viewport.
+  columnOffset: number;   // Horizontal offset retained inside the containing column.
+}
+```
+
+## KanbanScrollTarget
+
+Partial two-axis terminal-cell target accepted by imperative scrolling.
+
+```ts
+interface KanbanScrollTarget {
+  x?: number;   // Optional horizontal cell offset.
+  y?: number;   // Optional vertical cell offset.
+}
+```
+
+## KanbanSemanticValue
+
+Recursive immutable value domain used by queries and application extension payloads.
+
+```ts
+type KanbanSemanticValue = null | boolean | number | string | readonly KanbanSemanticValue[] | { readonly [key: string]: KanbanSemanticValue }
+```
+
+## KanbanSessionPublication
+
+Complete atomic source metadata publication used by deterministic sources and validators.
+
+```ts
+interface KanbanSessionPublication {
+  revision: KanbanRevision;   // Equality-only revision of every value in this snapshot.
+  state: KanbanSourceState;   // Board-wide lifecycle state.
+  columns: readonly KanbanColumnMeta[];   // Ordered workflow-column metadata.
+  swimlanes: readonly KanbanSwimlaneMeta[];   // Ordered optional swimlane metadata.
+  counts: KanbanBoardCounts;   // Honest board-wide count qualities.
+  headers: KanbanHeaderBatch;   // Header metadata from the same revision.
+  identityChanges: KanbanIdentityChangeBatch;   // Authoritative identity facts from the same revision.
+}
+```
+
+## KanbanSolvedColumnWidth
+
+Final width assigned to one source-ordered column.
+
+```ts
+interface KanbanSolvedColumnWidth {
+  columnId: string;   // Stable column identity.
+  width: number;   // Assigned surface width, excluding the separator.
+  minimumWidth: number;   // Validated effective minimum used by the solver.
+  preferredWidth: number;   // Validated preferred width used by the solver.
+  maximumWidth: number;   // Validated maximum width used by the solver.
+}
+```
+
+## KanbanSort
+
+One stable ordering directive in a semantic query.
+
+```ts
+interface KanbanSort {
+  fieldId: KanbanFieldId;   // Application field evaluated by a registered sort adapter.
+  direction: 'ascending' | 'descending';   // Requested order for values of the field.
+}
+```
+
+## KanbanSortField
+
+Application stable-order adapter used by the eager source.
+
+```ts
+interface KanbanSortField<TCard> {
+  fieldId: KanbanFieldId;   // Semantic field selected by a sort directive.
+  compare: (left: TCard, right: TCard) => -1 | 0 | 1;   // Compares two cards in ascending semantic order.
+}
+```
+
+## KanbanSourceState
+
+Reactive lifecycle state published by a query session.
+
+```ts
+type KanbanSourceState = | { readonly kind: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' }
+  | { readonly kind: 'error'; readonly code: string; readonly label?: string }
+```
+
+## KanbanSummaryAdapter
+
+Application numeric summary adapter used by eager headers.
+
+```ts
+interface KanbanSummaryAdapter<TCard> {
+  summaryId: KanbanFieldId;   // Semantic summary field written into the header summary map.
+  scope: KanbanSummaryScope;   // Whether the result describes authoritative or merely resident records.
+  aggregation: KanbanSummaryAggregation;   // Package-owned aggregation applied deterministically to supplied values.
+  valueOf: (card: TCard) => number | undefined;   // Returns one finite contribution or omits this card from the aggregate.
+}
+```
+
+## KanbanSummaryAggregation
+
+Deterministic package-owned numeric aggregation for an eager summary.
+
+```ts
+type KanbanSummaryAggregation = 'sum' | 'minimum' | 'maximum' | 'average'
+```
+
+## KanbanSummaryScope
+
+Authority scope declared by one application numeric summary.
+
+```ts
+type KanbanSummaryScope = 'authoritative' | 'loaded-only'
+```
+
+## KanbanSwimlaneHeader
+
+Detached swimlane header publication.
+
+```ts
+interface KanbanSwimlaneHeader {
+  swimlaneId: KanbanSwimlaneId;   // Swimlane represented by this header.
+  label: string;   // Sanitized human-readable label.
+}
+```
+
+## KanbanSwimlaneId
+
+A validated swimlane identity.
+
+```ts
+type KanbanSwimlaneId = string
+```
+
+## KanbanSwimlaneMeta
+
+Display metadata for one optional horizontal swimlane.
+
+```ts
+interface KanbanSwimlaneMeta {
+  swimlaneId: KanbanSwimlaneId;   // Stable semantic swimlane identity.
+  label: string;   // Human-readable label rendered after terminal sanitization.
+  revision: KanbanRevision;   // Equality-only presentation revision for this metadata.
+}
+```
+
+## KanbanSwimlanePublicationSubject
+
+Swimlane publication expected after an accepted application request.
+
+```ts
+interface KanbanSwimlanePublicationSubject {
+  kind: 'swimlane';
+  swimlaneId: KanbanSwimlaneId;
+  baselineRevision: KanbanRevision;
+  expectedRevision: KanbanRevision;
+}
+```
+
+## KanbanTheme
+
+Versioned complete package-local semantic palette consumed by card descriptors.
+
+```ts
+interface KanbanTheme {
+  contractVersion: 1;   // Exact contract version understood by this package release.
+  roles: Readonly<Record<KanbanThemeRole, KanbanThemeToken>>;   // Complete token map for every allowlisted semantic role.
+}
+```
+
+## KanbanThemeCapabilities
+
+Minimal capability projection required by semantic theme-role resolution.
+
+```ts
+type KanbanThemeCapabilities = Pick<CapabilityProfile, 'colorDepth'> & {
+  /** Treat color as unavailable while preserving attributes and non-color cues. */
+  readonly noColor?: boolean;
+}
+```
+
+## KanbanThemeOverrides
+
+Caller overrides applied above mapped Core roles during safe theme resolution.
+
+```ts
+type KanbanThemeOverrides = Readonly<Partial<Record<KanbanThemeRole, Readonly<Partial<ThemeRole>>>>>
+```
+
+## KanbanThemeResolutionReport
+
+Bounded evidence describing rejected input and deterministic accessibility repairs.
+
+```ts
+interface KanbanThemeResolutionReport {
+  rejected: readonly string[];   // Bounded semantic paths rejected while reading caller data.
+  adjustments: readonly {
+    /** Allowlisted semantic path, or `*` for a palette-wide capability adaptation. */
+    readonly path: string;
+    /** Stable reason the requested presentation was not used unchanged. */
+    readonly reason: 'minimum-contrast' | 'capability-fallback' | 'unknown-role';
+  }[];   // Palette-level readability adjustments applied while creating this immutable theme.
+}
+```
+
+## KanbanThemeRole
+
+One allowlisted package-local semantic role.
+
+```ts
+type KanbanThemeRole = (typeof KANBAN_THEME_ROLES)[number]
+```
+
+## KanbanThemeToken
+
+Complete immutable style and fallback chain for one semantic role.
+
+```ts
+interface KanbanThemeToken {
+  style: ThemeRole;   // Explicitly resolved Kanban style.
+  mappedFallback: ThemeRole;   // Role-specific style derived directly from the application Core theme.
+  terminalFallback: ThemeRole;   // Family-level terminal-safe fallback used after the mapped role.
+  cues: readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];   // Non-empty redundant cues that preserve meaning without color.
+}
+```
+
+## KanbanVerticalCardAnchor
+
+Stable card position used to preserve vertical identity through recomputation.
+
+```ts
+interface KanbanVerticalCardAnchor {
+  cardKey: CardKey;   // Stable card identity.
+  logicalRow: number;   // Logical top row in the unscrolled card stack.
+  height: number;   // Descriptor height in terminal rows.
+}
+```
+
+## KanbanVerticalCardInput
+
+Bounded card extent consumed by the pure vertical projector.
+
+```ts
+interface KanbanVerticalCardInput {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  height: number;   // Validated descriptor height in terminal rows.
+}
+```
+
+## KanbanVerticalGeometry
+
+Immutable result of one bounded vertical projection.
+
+```ts
+interface KanbanVerticalGeometry {
+  regions: readonly KanbanLayoutRegion[];   // Clipped semantic regions visible in the assigned rectangle.
+  actionTargets: readonly KanbanActionTarget[];   // Actionable targets; deliberately empty in Phase A.
+  contentHeight: number;   // Complete unscrolled height including sticky chrome and resting gaps.
+  scrollExtent: number;   // Greatest valid vertical card-content offset.
+  scrollOffset: number;   // Clamped offset used for this projection.
+  retainedStart: number;   // First retained source-card index.
+  retainedEnd: number;   // Exclusive retained source-card index.
+  anchors: readonly KanbanVerticalCardAnchor[];   // Source-ordered stable anchors independent of clipping.
+}
+```
+
+## KanbanViewId
+
+A validated saved-view identity.
+
+```ts
+type KanbanViewId = string
+```
+
+## KanbanViewport
+
+Exact-cell read-only Kanban projection that owns one query/session/cursor coordinator.
+
+```ts
+new KanbanViewport<TCard>(options: KanbanViewportOptions<TCard>)   // extends View
+// methods & signals:
+runPendingMounts(): void
+metrics(): KanbanViewportMetrics
+metricsSignal(): Signal<number>
+sourceState(): KanbanSourceState | undefined
+identityChanges(): KanbanIdentityChangeBatch | undefined
+focusedNavigator(): KanbanFocusedColumnNavigator | undefined
+scrollTo(target: KanbanScrollTarget): void
+scrollBy(delta: KanbanScrollTarget): void
+revealCard(key: CardKey, alignment?: KanbanRevealAlignment, options?: { readonly signal?: AbortSignal }): Promise<KanbanRevealResult>
+inspection(): KanbanViewportInspection
+dispose(): void
+```
+
+## KanbanViewportExtentQuality
+
+Independent confidence for horizontal and vertical viewport extents.
+
+```ts
+interface KanbanViewportExtentQuality {
+  x: KanbanExtentQuality;   // Column structure makes horizontal extent exact.
+  y: KanbanExtentQuality;   // Cursor length quality represented by the vertical extent.
+}
+```
+
+## KanbanViewportInspection
+
+Detached non-actionable viewport evidence for tests and modeless diagnostics.
+
+```ts
+interface KanbanViewportInspection {
+  cells: readonly KanbanInspectedCell[];   // Retained source cells and their safe lifecycle states.
+  visibleColumns: readonly KanbanInspectedColumn[];   // Complete sanitized source columns intersecting the viewport.
+  visibleCards: readonly KanbanInspectedCard[];   // Resident cards projected in the viewport.
+  regions: readonly KanbanLayoutRegion[];   // Clipped semantic geometry that is explicitly non-actionable in Phase A.
+  damage: readonly KanbanDamageRegion[];   // Bounded changed rectangles from the latest completed projection.
+  actionTargets: readonly KanbanActionTarget[];   // Phase A exposes no card, insertion, drop, or card-action pointer targets.
+}
+```
+
+## KanbanViewportMetrics
+
+Read-only exact-cell projection metrics exposed by a mounted viewport.
+
+```ts
+interface KanbanViewportMetrics {
+  assignedRect: Readonly<Rect>;   // Parent-relative rectangle currently assigned by layout.
+  mode: KanbanViewportMode;   // Active responsive presentation mode.
+  offsets: KanbanViewportPoint;   // Clamped horizontal and vertical scroll offsets.
+  extents: KanbanViewportPoint;   // Greatest currently valid horizontal and vertical offsets.
+  extentQuality: KanbanViewportExtentQuality;   // Whether each numeric extent is final, a proven lower bound, or currently unknown.
+  visibleColumnIds: readonly string[];   // Source-ordered columns intersecting the retained projection.
+  visibleCardRanges: readonly KanbanVisibleCardRange[];   // Visible and overscan logical ranges keyed by cell address.
+  stickyRows: number;   // Sticky rows removed from the scrolling card rectangle.
+  overscan: KanbanViewportPoint;   // Effective finite overscan retained around the visible projection.
+  generation: number;   // Private lifecycle generation projected as an opaque monotone number for diagnostics.
+  sourceRevision?: KanbanRevision;   // Equality-only source revision represented by this snapshot.
+}
+```
+
+## KanbanViewportMode
+
+Responsive viewport presentation mode.
+
+```ts
+type KanbanViewportMode = 'multi-column' | 'focused-column' | 'minimum-size'
+```
+
+## KanbanViewportOptions
+
+Construction options shared by standalone viewports and the board shell.
+
+```ts
+interface KanbanViewportOptions<TCard> {
+  source: KanbanDataSource<TCard>;   // Application-owned sparse or eager source.
+  query: () => KanbanQuery;   // Reactive semantic query getter.
+  card: KanbanCardAdapter<TCard>;   // Generic application-record adapter.
+  i18n?: () => I18n;   // Optional reactive localization service getter.
+  density?: () => KanbanCardDensity;   // Optional reactive card-density getter.
+  theme?: () => KanbanTheme;   // Optional reactive semantic theme getter.
+  limits?: KanbanLimitOptions;   // Optional lower resource limits.
+  overscan?: KanbanOverscanOptions;   // Optional finite visible-projection expansion.
+  observe?: (observation: KanbanObservation) => void;   // Optional already-redacted observation sink.
+  capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
+  identity?: () => KanbanIdentityInput;   // Optional reactive application-owned identity hints.
+  collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
+}
+```
+
+## KanbanViewportPoint
+
+Immutable horizontal and vertical cell coordinates or extents.
+
+```ts
+interface KanbanViewportPoint {
+  x: number;   // Horizontal terminal-cell value.
+  y: number;   // Vertical terminal-cell value.
+}
+```
+
+## KanbanVisibleCardRange
+
+Visible half-open logical card range for one retained source cell.
+
+```ts
+interface KanbanVisibleCardRange {
+  address: KanbanCellAddress;   // Canonical column/swimlane address.
+  start: number;   // First retained logical card index.
+  end: number;   // Exclusive retained logical card index.
+}
+```
+
+## PlacementToken
+
+An opaque source-issued placement token.
+
+```ts
+type PlacementToken = string & { readonly [placementTokenBrand]: true }
+```
+
+## ProjectKanbanMinimumGeometryOptions
+
+Inputs for safe impossible-geometry feedback projection.
+
+```ts
+interface ProjectKanbanMinimumGeometryOptions {
+  bounds: Readonly<Rect>;   // Parent-assigned rectangle.
+  requiredWidth: number;   // Smallest usable board width.
+  requiredHeight: number;   // Smallest usable board height.
+  message: string;   // Localized untrusted feedback text.
+}
+```
+
+## ProjectKanbanVerticalGeometryOptions
+
+Inputs for one pure vertical card-stack projection.
+
+```ts
+interface ProjectKanbanVerticalGeometryOptions {
+  bounds: Readonly<Rect>;   // Exact rectangle assigned to the retained column.
+  stickyHeaderHeight: number;   // Sticky workflow-header rows at the top of the rectangle.
+  swimlaneHeaderHeight?: number;   // Optional swimlane-header rows below the workflow header.
+  scrollOffset: number;   // Requested vertical card-content offset.
+  contentOrigin?: number;   // Logical row occupied by the first retained card in a sparse source window.
+  density: KanbanCardDensity;   // Resting card-spacing policy.
+  cards: readonly KanbanVerticalCardInput[];   // Source-ordered retained cards.
+  verticalOverscan: number;   // Finite extra card rows retained around the visible range.
+  projectInsertionGutters?: boolean;   // Whether to expose non-actionable future insertion geometry for inspection.
+}
+```
+
+## ResolvedKanbanTheme
+
+Complete safe theme together with inspectable resolution evidence.
+
+```ts
+interface ResolvedKanbanTheme {
+  theme: KanbanTheme;   // Deeply immutable complete Kanban theme.
+  report: KanbanThemeResolutionReport;   // Deeply immutable bounded resolution report.
+}
+```
+
+## SolveKanbanColumnWidthsOptions
+
+Inputs for the pure deterministic column-width solver.
+
+```ts
+interface SolveKanbanColumnWidthsOptions {
+  availableWidth: number;   // Parent-assigned width in terminal cells.
+  columns: readonly KanbanColumnWidthInput[];   // Source-ordered visible columns.
+  focusedColumnId?: string;   // Preferred active column when narrow geometry permits only one.
+  separatorWidth?: number;   // Cells between adjacent column surfaces; defaults to one.
+}
+```
+
+## StandardCard
+
+Optional convenience model for common Kanban card data.
+
+```ts
+interface StandardCard<TDate = unknown, TCustom = unknown> {
+  key: CardKey;   // Stable application-owned card identity.
+  columnId: KanbanColumnId;   // Workflow column that currently contains the card.
+  swimlaneId?: KanbanSwimlaneId;   // Optional horizontal grouping identity.
+  rank?: string | number;   // Optional application ordering value; the package does not rewrite it.
+  presentationRevision?: KanbanRevision;   // Optional equality-only revision for presentation-affecting values.
+  title: string;   // Required primary card label.
+  status: string;   // Required application-formatted workflow status.
+  description?: string;   // Optional long description reserved for editor and later presentation phases.
+  type?: string;   // Optional application-formatted work-item type.
+  priority?: string;   // Optional application-formatted priority.
+  assignees?: readonly StandardCardAssignee[];   // Optional ordered assignee summaries.
+  labels?: readonly StandardCardLabel[];   // Optional ordered card labels.
+  startDate?: TDate;   // Optional opaque start-date value interpreted only by an injected formatter.
+  dueDate?: TDate;   // Optional opaque due-date value interpreted only by an injected formatter.
+  estimate?: string;   // Optional application-formatted estimate.
+  value?: string;   // Optional application-formatted business value.
+  checklists?: readonly StandardCardChecklist[];   // Optional ordered checklist groups reserved for configurable later rendering.
+  summaries?: readonly StandardCardSummary[];   // Optional ordered compact summary values.
+  custom?: TCustom;   // Optional application-specific data retained without interpretation.
+}
+```
+
+## StandardCardAssignee
+
+One compact application-owned assignee label carried by the convenience card model.
+
+```ts
+interface StandardCardAssignee {
+  id: string;   // Stable application identity for the assignee.
+  label: string;   // Application-formatted display label.
+}
+```
+
+## StandardCardChecklist
+
+One ordered checklist group carried by a standard card.
+
+```ts
+interface StandardCardChecklist {
+  checklistId: KanbanChecklistId;   // Stable checklist-group identity.
+  title?: string;   // Optional application-formatted group heading.
+  items: readonly StandardCardChecklistItem[];   // Ordered application-owned items in this group.
+}
+```
+
+## StandardCardChecklistItem
+
+One read-only checklist item available to later standard-card presentation modes.
+
+```ts
+interface StandardCardChecklistItem {
+  itemId: string;   // Stable application identity within its checklist group.
+  text: string;   // Application-owned checklist text.
+  completed: boolean;   // Whether the application currently considers the item complete.
+}
+```
+
+## StandardCardLabel
+
+One compact application-owned label carried by the convenience card model.
+
+```ts
+interface StandardCardLabel {
+  id: string;   // Stable application identity for the label.
+  label: string;   // Application-formatted display label.
+}
+```
+
+## StandardCardSummary
+
+One compact application-formatted summary value carried by a standard card.
+
+```ts
+interface StandardCardSummary {
+  fieldId: KanbanFieldId;   // Stable identity of the application field being summarized.
+  label: string;   // Application-formatted summary label.
+  value: string;   // Application-formatted summary value.
+}
+```
+
+## assertKanbanPlacementCurrent
+
+Rejects any placement derived from a different cursor revision.
+
+```ts
+assertKanbanPlacementCurrent(placement: KanbanPlacement, currentRevision: KanbanRevision): KanbanPlacement
+```
+
+## canonicalizeKanbanCellAddress
+
+Creates a collision-safe key for one validated semantic cell address.
+
+```ts
+canonicalizeKanbanCellAddress(value: KanbanCellAddress): string
+```
+
+## clampKanbanScroll
+
+Clamps requested offsets to current live extents without retaining caller objects.
+
+```ts
+clampKanbanScroll(options: ClampKanbanScrollOptions): KanbanViewportPoint
+```
+
+## createEagerKanbanDataSource
+
+Creates a reactive eager Kanban source that preserves original application card references.
+
+```ts
+createEagerKanbanDataSource<TCard>(cards: () => readonly TCard[], options: EagerKanbanSourceOptions<TCard>): KanbanDataSource<TCard>
+```
+
+## createEnglishKanbanI18n
+
+Creates an isolated English service containing only the Kanban fallback catalog.
+
+```ts
+createEnglishKanbanI18n(): I18n
+```
+
+## createFallbackKanbanCardDescriptor
+
+Creates a pure localized descriptor that fits the supplied render budget.
+
+```ts
+createFallbackKanbanCardDescriptor(context: KanbanCardRenderContext, labels: KanbanCardFallbackLabels): KanbanCardDescriptor
+```
+
+## createKanbanCardKey
+
+Creates a validated application-owned card key while preserving number/string distinction.
+
+```ts
+createKanbanCardKey(value: CardKey): CardKey
+```
+
+## createKanbanChecklistId
+
+Creates a validated checklist-group identity.
+
+```ts
+createKanbanChecklistId(value: string): KanbanChecklistId
+```
+
+## createKanbanColumnId
+
+Creates a validated workflow-column identity.
+
+```ts
+createKanbanColumnId(value: string): KanbanColumnId
+```
+
+## createKanbanExtensionId
+
+Creates a validated application-extension identity.
+
+```ts
+createKanbanExtensionId(value: string): KanbanExtensionId
+```
+
+## createKanbanFieldId
+
+Creates a validated application field identity.
+
+```ts
+createKanbanFieldId(value: string): KanbanFieldId
+```
+
+## createKanbanObservation
+
+Creates one detached, frozen, redacted observation.
+
+```ts
+createKanbanObservation(input: KanbanObservationInput): KanbanObservation
+```
+
+## createKanbanOperationId
+
+Creates a validated request operation identity.
+
+```ts
+createKanbanOperationId(value: string): KanbanOperationId
+```
+
+## createKanbanScrollAnchor
+
+Creates one detached immutable semantic scroll anchor.
+
+```ts
+createKanbanScrollAnchor(anchor: KanbanScrollAnchor): KanbanScrollAnchor
+```
+
+## createKanbanSwimlaneId
+
+Creates a validated swimlane identity.
+
+```ts
+createKanbanSwimlaneId(value: string): KanbanSwimlaneId
+```
+
+## createKanbanTheme
+
+Creates the complete immutable Kanban semantic palette for a Core theme.
+
+```ts
+createKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOverrides): KanbanTheme
+```
+
+## createKanbanViewId
+
+Creates a validated saved-view identity.
+
+```ts
+createKanbanViewId(value: string): KanbanViewId
+```
+
+## createPlacementToken
+
+Creates a validated opaque placement token without interpreting its contents.
+
+```ts
+createPlacementToken(value: string): PlacementToken
+```
+
+## createStandardKanbanCardAdapter
+
+Creates the direct adapter for the optional StandardCard convenience model.
+
+```ts
+createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(): KanbanCardAdapter<
+  StandardCard<TDate, TCustom>
+>
+```
+
+## dispatchKanbanRequest
+
+Validates and dispatches one raw request without consulting UX capabilities or mutating records.
+
+```ts
+dispatchKanbanRequest(request: KanbanRequest, dispatcher: KanbanRequestDispatcher, context: KanbanRequestContext): Promise<KanbanRequestResult>
+```
+
+## fingerprintKanbanSemanticValue
+
+Derives a stable browser-safe 64-bit fingerprint from the canonical semantic snapshot.
+
+```ts
+fingerprintKanbanSemanticValue(value: unknown): string
+```
+
+## isKanbanSourceReasonCode
+
+Returns true only for an allowlisted source reason code.
+
+```ts
+isKanbanSourceReasonCode(value: unknown): value is string
+```
+
+## kanbanRevisionsEqual
+
+Compares revisions without ordering, coercion, or stringification.
+
+```ts
+kanbanRevisionsEqual(left: KanbanRevision, right: KanbanRevision): boolean
+```
+
+## projectKanbanMinimumGeometry
+
+Produces one atomic bounded minimum-size state with no partial inspection or action targets.
+
+```ts
+projectKanbanMinimumGeometry(options: ProjectKanbanMinimumGeometryOptions): KanbanMinimumGeometry
+```
+
+## projectKanbanVerticalGeometry
+
+Projects sticky headers and a bounded source-ordered card stack into exact terminal cells.
+
+```ts
+projectKanbanVerticalGeometry(options: ProjectKanbanVerticalGeometryOptions): KanbanVerticalGeometry
+```
+
+## reconcileKanbanPublication
+
+Clears publication metadata after either matching or contradictory authoritative data arrives.
+
+```ts
+reconcileKanbanPublication(pending: readonly KanbanPublicationExpectation[], notice: KanbanPublicationNotice): KanbanPublicationReconciliation
+```
+
+## renderKanbanCardSafely
+
+Executes one renderer behind the package's sole catch, validation, observation, and fallback boundary.
+
+```ts
+renderKanbanCardSafely<TCard>(card: TCard, renderer: KanbanCardRenderer<TCard>, context: KanbanCardRenderContext, options: KanbanSafeRenderOptions): KanbanCardDescriptor
+```
+
+## renderStandardKanbanCard
+
+Renders mandatory title and status values from an application-owned card through a typed adapter.
+
+```ts
+renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>, context: KanbanCardRenderContext): KanbanCardDescriptor
+```
+
+## resolveKanbanTheme
+
+Resolves a complete immutable Kanban palette and bounded rejection evidence.
+
+```ts
+resolveKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOverrides): ResolvedKanbanTheme
+```
+
+## resolveKanbanThemeRole
+
+Resolves one dynamic semantic role through the explicit, mapped, family, and emergency chain.
+
+```ts
+resolveKanbanThemeRole(theme: KanbanTheme, requestedRole: unknown, fallbackRole: KanbanThemeRole, capabilities: KanbanThemeCapabilities): KanbanResolvedThemeRole
+```
+
+## snapshotKanbanBoardCounts
+
+Validates and freezes a complete board-count publication atomically.
+
+```ts
+snapshotKanbanBoardCounts(value: unknown): KanbanBoardCounts
+```
+
+## snapshotKanbanCapabilities
+
+Creates a detached deeply frozen capability snapshot without changing authorization semantics.
+
+```ts
+snapshotKanbanCapabilities(capabilities: unknown): KanbanCapabilities
+```
+
+## snapshotKanbanCardLocation
+
+Validates and freezes one bounded, revision-bound card-location result.
+
+```ts
+snapshotKanbanCardLocation(value: unknown): KanbanCardLocation
+```
+
+## snapshotKanbanCellAddress
+
+Validates, detaches, and freezes one column/swimlane cell address.
+
+```ts
+snapshotKanbanCellAddress(value: unknown): KanbanCellAddress
+```
+
+## snapshotKanbanCellCounts
+
+Validates and freezes a complete cell-count publication atomically.
+
+```ts
+snapshotKanbanCellCounts(value: unknown): KanbanCellCounts
+```
+
+## snapshotKanbanCellState
+
+Validates, detaches, and freezes one sparse-cursor lifecycle state.
+
+```ts
+snapshotKanbanCellState(value: unknown): KanbanCellState
+```
+
+## snapshotKanbanColumnMeta
+
+Validates one ordered column metadata record.
+
+```ts
+snapshotKanbanColumnMeta(value: unknown): KanbanColumnMeta
+```
+
+## snapshotKanbanCount
+
+Validates, detaches, and freezes one count without converting unknown authority to zero.
+
+```ts
+snapshotKanbanCount(value: unknown): KanbanCount
+```
+
+## snapshotKanbanHeaderBatch
+
+Validates, detaches, and freezes one complete header batch.
+
+```ts
+snapshotKanbanHeaderBatch(value: unknown): KanbanHeaderBatch
+```
+
+## snapshotKanbanIdentityChangeBatch
+
+Validates and freezes one bounded authoritative identity-change batch atomically.
+
+```ts
+snapshotKanbanIdentityChangeBatch(value: unknown): KanbanIdentityChangeBatch
+```
+
+## snapshotKanbanKnownLength
+
+Validates and freezes explicit exact, lower-bound, or unknown cursor length knowledge.
+
+```ts
+snapshotKanbanKnownLength(value: unknown): KanbanKnownLength
+```
+
+## snapshotKanbanLabel
+
+Copies one sanitized bounded UX label.
+
+```ts
+snapshotKanbanLabel(value: unknown): string | undefined
+```
+
+## snapshotKanbanNumericSummary
+
+Validates one numeric summary with explicit authority and quality.
+
+```ts
+snapshotKanbanNumericSummary(value: unknown): KanbanNumericSummary
+```
+
+## snapshotKanbanPlacement
+
+Validates, detaches, and freezes one revision-bound semantic placement.
+
+```ts
+snapshotKanbanPlacement(value: unknown): KanbanPlacement
+```
+
+## snapshotKanbanQuery
+
+Validates and deeply snapshots one immutable semantic query before a source sees it.
+
+```ts
+snapshotKanbanQuery(value: unknown): KanbanQuery
+```
+
+## snapshotKanbanReasonCode
+
+Copies one bounded reason code or returns no value when it is unsafe.
+
+```ts
+snapshotKanbanReasonCode(value: unknown): string | undefined
+```
+
+## snapshotKanbanRevision
+
+Validates one equality-only revision without coercion or disclosure of rejected content.
+
+```ts
+snapshotKanbanRevision(value: unknown): KanbanRevision
+```
+
+## snapshotKanbanSemanticValue
+
+Validates, detaches, sorts, normalizes, and deeply freezes one semantic value.
+
+```ts
+snapshotKanbanSemanticValue<T extends KanbanSemanticValue>(value: T): T
+```
+
+## snapshotKanbanSessionPublication
+
+Validates, detaches, and freezes one atomic session metadata publication.
+
+```ts
+snapshotKanbanSessionPublication(value: unknown): KanbanSessionPublication
+```
+
+## snapshotKanbanSourceState
+
+Validates, detaches, and freezes one query-session lifecycle state.
+
+```ts
+snapshotKanbanSourceState(value: unknown): KanbanSourceState
+```
+
+## snapshotKanbanSwimlaneMeta
+
+Validates one ordered swimlane metadata record.
+
+```ts
+snapshotKanbanSwimlaneMeta(value: unknown): KanbanSwimlaneMeta
+```
+
+## solveKanbanColumnWidths
+
+Solves bounded workflow-column widths using deterministic monotone progressive water filling.
+
+```ts
+solveKanbanColumnWidths(options: SolveKanbanColumnWidthsOptions): KanbanColumnWidthSolution
+```
+
+## validateKanbanCardDescriptor
+
+Validates an untrusted renderer descriptor against its exact render context.
+
+```ts
+validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, context: KanbanCardRenderContext): void
+```
+
+## validateKanbanLimitOptions
+
+Resolves and freezes a class-bounded limit selection before any caller allocation occurs.
+
+```ts
+validateKanbanLimitOptions(options: KanbanLimitOptions = {}): KanbanResolvedLimits
+```
+
+## validateKanbanUniqueIds
+
+Validates a complete identity collection before optionally publishing it.
+
+```ts
+validateKanbanUniqueIds(kind: KanbanIdentityKind, values: readonly string[], publish?: (validated: readonly string[]) => void): readonly string[]
+```

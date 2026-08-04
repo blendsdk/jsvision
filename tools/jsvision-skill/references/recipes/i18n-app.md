@@ -9,6 +9,7 @@ import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
 import { filesNl } from '@jsvision/files/locales/nl';
 import { formsNl } from '@jsvision/forms/locales/nl';
 import { createI18n, defineCatalog, plural } from '@jsvision/i18n';
+import { kanbanNl } from '@jsvision/kanban/locales/nl';
 import { createApplication } from '@jsvision/ui';
 import { uiNl } from '@jsvision/ui/locales/nl';
 
@@ -26,7 +27,7 @@ const appCatalog = defineCatalog({
 
 const i18n = createI18n({
   locale: 'nl',
-  catalogs: [uiNl, formsNl, filesNl, datagridNl, codeEditorNl, appCatalog],
+  catalogs: [uiNl, formsNl, filesNl, datagridNl, codeEditorNl, kanbanNl, appCatalog],
 });
 
 const app = createApplication({ i18n });

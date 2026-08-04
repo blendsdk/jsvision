@@ -51,6 +51,7 @@ describe('internationalization plugin impact', () => {
         'packages/files/src',
         'packages/datagrid/src',
         'packages/code-editor/src',
+        'packages/kanban/src',
       ]),
     );
     expect(area?.references).toEqual(
@@ -58,10 +59,39 @@ describe('internationalization plugin impact', () => {
         'references/i18n.md',
         'references/recipes/i18n-app.md',
         'references/api/i18n.md',
+        'references/api/kanban.md',
         'references/app-lifecycle.md',
       ]),
     );
     expect(checkPluginImpact().filter((finding) => finding.name === area?.name)).toEqual([]);
+  });
+
+  test('maps the Kanban package and architecture surface to its canonical discovery references', () => {
+    const registry = readImpactRegistry() as {
+      readonly areas: readonly {
+        readonly name: string;
+        readonly paths: readonly string[];
+        readonly references: readonly string[];
+      }[];
+    };
+    const area = registry.areas.find((candidate) => candidate.name === 'kanban');
+    expect(area).toBeDefined();
+    expect(area?.paths).toEqual(
+      expect.arrayContaining([
+        'packages/kanban/src',
+        'packages/kanban/package.json',
+        'packages/kanban/README.md',
+        'packages/docs-site/api/kanban',
+        'docs/architecture/kanban.md',
+      ]),
+    );
+    expect(area?.references).toEqual(
+      expect.arrayContaining([
+        'references/architecture.md',
+        'references/component-catalog.md',
+        'references/api/kanban.md',
+      ]),
+    );
   });
 
   test('keeps the generated plugin copy byte-identical to the canonical skill', () => {
@@ -76,15 +106,17 @@ test('localized app recipe imports one requested locale explicitly and typecheck
     .filter(ts.isImportDeclaration)
     .map((statement) => (ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : ''))
     .filter((specifier) => specifier.includes('/locales/'));
-  expect(localeImports).toHaveLength(5);
+  expect(localeImports).toHaveLength(6);
   expect(
     localeImports
-      .map((specifier) => /^@jsvision\/(ui|forms|files|datagrid|code-editor)\/locales\/(.+)$/u.exec(specifier)?.[1])
+      .map(
+        (specifier) => /^@jsvision\/(ui|forms|files|datagrid|code-editor|kanban)\/locales\/(.+)$/u.exec(specifier)?.[1],
+      )
       .sort(),
-  ).toEqual(['code-editor', 'datagrid', 'files', 'forms', 'ui']);
+  ).toEqual(['code-editor', 'datagrid', 'files', 'forms', 'kanban', 'ui']);
   const localeTags = new Set(
     localeImports.map(
-      (specifier) => /^@jsvision\/(?:ui|forms|files|datagrid|code-editor)\/locales\/(.+)$/u.exec(specifier)?.[1],
+      (specifier) => /^@jsvision\/(?:ui|forms|files|datagrid|code-editor|kanban)\/locales\/(.+)$/u.exec(specifier)?.[1],
     ),
   );
   expect(localeTags.size).toBe(1);
