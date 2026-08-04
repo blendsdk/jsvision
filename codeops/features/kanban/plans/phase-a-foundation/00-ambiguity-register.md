@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 33 items resolved
-> **Last Updated**: 2026-08-04 04:26 CEST
+> **Status**: ✅ GATE PASSED — all 34 items resolved
+> **Last Updated**: 2026-08-04 04:44 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -53,6 +53,7 @@
 | PAR-31 | Quality hardening | Independent Phase 2 review exposed contradictions and untested lifecycle/source edge cases after the green oracle | Preserve the green implementation / harden the durable source contract and revise the conflicting signal oracle | Delegated: mandatory hardening with composed locator cancellation, bounded active-range sharing, atomic snapshots, explicit eager search/revision, authoritative identity facts, honest unknown projection counts, exact headers, safe card keys, and session-local windowed fixture state | ✅ Resolved |
 | PAR-32 | Public API | Card behavior was specified but the callable adapter/renderer/context/descriptor/fallback surface was not exact enough for immutable tests | Durable semantic descriptor seam / temporary Phase A render result / defer the oracle | Delegated: durable generic adapter + render context + semantic descriptor, pure standard/validation/fallback helpers, and one safe catch/observe wrapper | ✅ Resolved |
 | PAR-33 | Public API | Theme families and catalog vocabulary were not exact enough for immutable role/parity/fallback tests | Closed semantic tokens retaining fallback/cue data / flat role-to-style map / defer exactness | Delegated: closed 39-role token palette with inspectable safe resolution, exact 18-key Phase A catalog, and inert explicit locale constants/subpaths | ✅ Resolved |
+| PAR-34 | Public API (runtime) | The standard model made `presentationRevision` optional while the optional adapter getter could return only a present revision | Permit `undefined` from the getter / omit the getter / invent a sentinel | Delegated: the optional getter returns `KanbanRevision \| undefined`; absence remains distinct from every application revision | ✅ Resolved |
 
 ## Resolution notes
 
@@ -506,6 +507,28 @@ entry instead of additionally re-exporting `kanbanEn`. **Policy:** v1, root
 token protocol, Phase E cannot satisfy contrast with the retained chain, or generator policy changes the
 one-constant locale wrapper boundary.
 
+### PAR-34 — optional presentation revision getter
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** The equality-only revision seam and
+optional standard-card revision were already approved; this corrects their incompatible TypeScript return
+shape without changing presentation behavior. **Objective:** Preserve an application's genuine absence of
+a presentation revision without inventing data or changing adapter identity per record. **Decision:**
+`KanbanCardAdapter.presentationRevisionOf?` returns `KanbanRevision | undefined`. Method absence means the
+adapter never supplies a presentation revision; a present method may report no revision for an individual
+record. Both states produce the same omitted render-context field, and no sentinel or ordering semantics
+are introduced.
+
+**Evidence:** `StandardCard.presentationRevision` is optional and the standard adapter is a single stable
+object for every card. **Rejected alternatives:** Omitting the method conditionally would require a
+different adapter shape per record and cannot express mixed-revision collections. A sentinel collides with
+the application-owned `string | number` revision space and invents ordering/identity. **Strongest
+counterargument:** Two ways to express absence are slightly broader, but adapter-level absence and
+record-level absence are semantically distinct and both are needed by generic sources. **Confidence:**
+High (0.98). **Hardening:** The type contradiction leaves this as the only compatibility-preserving option;
+no independent challenge was required for the local reversible correction. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** presentation revisions become mandatory for all
+cards or the package replaces the getter with a discriminated revision result.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -514,7 +537,7 @@ one-constant locale wrapper boundary.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-33 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-34 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

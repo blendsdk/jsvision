@@ -2,7 +2,7 @@
 
 > **Document**: 03-04-cards-descriptors-theme-i18n.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24, PAR-32–PAR-33
+> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24, PAR-32–PAR-34
 > **CodeOps Artifact Schema**: 1
 
 ## Generic adapter and standard model
@@ -31,7 +31,7 @@ export interface KanbanCardAdapter<TCard> {
   keyOf(card: TCard): CardKey;
   titleOf(card: TCard): string;
   statusOf(card: TCard): string;
-  presentationRevisionOf?(card: TCard): KanbanRevision;
+  presentationRevisionOf?(card: TCard): KanbanRevision | undefined;
 }
 
 export interface StandardCard<TDate = unknown, TCustom = unknown> {

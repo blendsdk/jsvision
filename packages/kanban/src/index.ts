@@ -13,6 +13,8 @@ export * from './contract/observation.js';
 export * from './contract/request.js';
 export * from './contract/revision.js';
 export * from './contract/semantic-query.js';
+export * from './card/adapter.js';
+export * from './card/standard-card.js';
 export * from './source/address.js';
 export * from './source/counts.js';
 export { createEagerKanbanDataSource } from './source/eager-source.js';

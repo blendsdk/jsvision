@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 04:41 CEST
-> **Progress**: 27/64 tasks (42%)
+> **Last Updated**: 2026-08-04 04:46 CEST
+> **Progress**: 28/64 tasks (44%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -98,7 +98,7 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 - [x] 3.1.3 Run Phase 3 specifications and record expected red failures before card/theme/catalog implementations ✅ (completed: 2026-08-04 04:41)
   - Red evidence: all 4 Phase 3 files and 37 tests fail only for the approved absent card adapter,
     renderer/descriptor, semantic theme, English catalog, and authored locale assembly symbols.
-- [ ] 3.2.1 Implement documented generic adapter and complete `StandardCard` convenience/checklist/summary data types without imposing them on generic records — `packages/kanban/src/card/{adapter,standard-card}.ts`
+- [x] 3.2.1 Implement documented generic adapter and complete `StandardCard` convenience/checklist/summary data types without imposing them on generic records — `packages/kanban/src/card/{adapter,standard-card}.ts` ✅ (completed: 2026-08-04 04:46)
 - [ ] 3.2.2 Implement the bounded formatter context and adapter-boundary value validation without a runtime schema or Forms dependency — `packages/kanban/src/card/formatting.ts`, `packages/kanban/src/card/adapter.ts`
 - [ ] 3.2.3 Implement bounded descriptor/renderer contracts and validation plus the Phase A standard/fallback renderer with sanitized cell-correct title/status/non-color focus — `packages/kanban/src/card/{descriptor,renderer,standard-renderer}.ts`
 - [ ] 3.2.4 Implement exhaustive package-local theme roles, immutable theme creation/mapping, safe Phase A fallbacks, revision projection, and basic color-depth/monochrome handling — `packages/kanban/src/card/{theme,theme-resolver}.ts`
