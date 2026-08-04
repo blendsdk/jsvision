@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 06:24 CEST
-> **Progress**: 40/64 tasks (63%)
+> **Last Updated**: 2026-08-04 06:31 CEST
+> **Progress**: 41/64 tasks (64%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -131,7 +131,7 @@ card renderer required by the Phase A slice.
     already green; the four real-host E2E cases are red. Every failure is caused only by the absent
     approved pure-layout functions/types and `KanbanViewport`/`KanbanBoard` constructors/inspection
     declarations; the isolated NodeNext consumer fails for the same absent public surface.
-- [ ] 4.2.1 Implement pure validated monotone tiered width solver, focused-column navigator model, and immutable viewport metrics/hit-damage types — `packages/kanban/src/layout/{width-solver,metrics,hit-map}.ts`
+- [x] 4.2.1 Implement pure validated monotone tiered width solver, focused-column navigator model, and immutable viewport metrics/hit-damage types — `packages/kanban/src/layout/{width-solver,metrics,hit-map}.ts` ✅ (completed: 2026-08-04 06:31)
 - [ ] 4.2.2 Implement vertical card/header/gap projection plus scroll extents and stable card/column anchors — `packages/kanban/src/layout/{vertical-projector,scroll-model}.ts`
 - [ ] 4.2.3 Implement bounded viewport-local descriptor cache with complete semantic key, owned reactive scopes, targeted invalidation, visible/overscan eviction, and disposal-before-cursor ordering — `packages/kanban/src/board/descriptor-cache.ts`
 - [ ] 4.2.4 Implement the standalone viewport's single-coordinator lifecycle and bounded session/cursor acquisition, including locator cancellation and stale-generation suppression — `packages/kanban/src/board/{kanban-viewport,viewport-source}.ts`
