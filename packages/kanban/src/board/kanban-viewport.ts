@@ -1,13 +1,14 @@
 import { classicTheme } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
 import { View } from '@jsvision/ui';
-import type { DrawContext } from '@jsvision/ui';
+import type { DispatchEvent, DrawContext } from '@jsvision/ui';
 
 import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
+import { KanbanDisposedResourceError } from '../contract/error.js';
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
@@ -21,9 +22,17 @@ import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metri
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanDataSource, KanbanQuery } from '../source/types.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
+import { createKanbanViewportMetrics } from './viewport-metrics.js';
 import { projectKanbanViewport } from './viewport-projector.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import { drawKanbanViewport } from './viewport-render.js';
+import {
+  resolveKanbanScrollBy,
+  resolveKanbanScrollTo,
+  snapshotKanbanRevealAlignment,
+  snapshotKanbanRevealKey,
+} from './viewport-scroll.js';
+import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import type { KanbanCellState } from '../source/states.js';
 import { KanbanViewportSource } from './viewport-source.js';
 import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
@@ -111,6 +120,9 @@ export class KanbanViewport<TCard> extends View {
   readonly #descriptorCache = new KanbanDescriptorCache(KANBAN_VIEWPORT_DESCRIPTOR_LIMIT);
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
+  #requestedOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
+  #locatedVerticalExtent = 0;
+  #revealController: AbortController | undefined;
   #disposed = false;
 
   /** Stores configuration without opening application resources before mount. */
@@ -171,11 +183,99 @@ export class KanbanViewport<TCard> extends View {
     });
     this.#projection = projection;
     drawKanbanViewport(ctx, projection, theme);
+    this.#updateMetrics(snapshot, projection);
+  }
+
+  /** Maps independent terminal wheel directions to bounded three-cell scrolling. */
+  override onEvent(event: DispatchEvent): void {
+    if (event.event.type !== 'wheel') return;
+    const direction = event.event.dir;
+    this.scrollBy(
+      direction === 'up' ? { y: -3 } : direction === 'down' ? { y: 3 } : direction === 'left' ? { x: -3 } : { x: 3 },
+    );
+    event.handled = true;
   }
 
   /** Returns an immutable exact-cell metric snapshot from the latest projection. */
   metrics(): KanbanViewportMetrics {
     return this.#metrics;
+  }
+
+  /** Scrolls to an absolute partial terminal-cell target and clamps both axes to live extents. */
+  scrollTo(target: KanbanScrollTarget): void {
+    this.#requestedOffsets = resolveKanbanScrollTo(this.#requestedOffsets, this.#metrics.extents, target);
+    this.#metrics = Object.freeze({ ...this.#metrics, offsets: this.#requestedOffsets });
+    this.invalidate();
+  }
+
+  /** Scrolls by a signed partial terminal-cell delta and clamps both axes to live extents. */
+  scrollBy(delta: KanbanScrollTarget): void {
+    this.#requestedOffsets = resolveKanbanScrollBy(this.#requestedOffsets, this.#metrics.extents, delta);
+    this.#metrics = Object.freeze({ ...this.#metrics, offsets: this.#requestedOffsets });
+    this.invalidate();
+  }
+
+  /** Reveals one card through the optional bounded source locator without scanning cursor contents. */
+  async revealCard(
+    key: CardKey,
+    alignment?: KanbanRevealAlignment,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<KanbanRevealResult> {
+    const source = this.#source;
+    if (source === undefined || this.#disposed) throw new KanbanDisposedResourceError();
+    const cardKey = snapshotKanbanRevealKey(key);
+    const resolvedAlignment = snapshotKanbanRevealAlignment(alignment);
+    this.#revealController?.abort();
+    const controller = new AbortController();
+    this.#revealController = controller;
+    const abort = (): void => controller.abort();
+    if (options?.signal?.aborted === true) controller.abort();
+    else options?.signal?.addEventListener('abort', abort, { once: true });
+    try {
+      const before = this.#requestedOffsets;
+      const location = await source.locateCard(cardKey, controller.signal);
+      if ((location.kind === 'found' || location.kind === 'unloaded') && location.index !== undefined) {
+        const stride = (this.#options.density?.() ?? 'comfortable') === 'compact' ? 2 : 3;
+        const top = Math.min(Number.MAX_SAFE_INTEGER, location.index * stride);
+        const viewportHeight = Math.max(1, this.bounds.height - this.#metrics.stickyRows);
+        const alignedY =
+          resolvedAlignment === 'start'
+            ? top
+            : resolvedAlignment === 'center'
+              ? Math.max(0, top - Math.floor(viewportHeight / 2))
+              : resolvedAlignment === 'end'
+                ? Math.max(0, top - viewportHeight + stride)
+                : top < before.y
+                  ? top
+                  : top + stride > before.y + viewportHeight
+                    ? Math.max(0, top - viewportHeight + stride)
+                    : before.y;
+        this.#locatedVerticalExtent = Math.max(this.#locatedVerticalExtent, alignedY);
+        this.#metrics = Object.freeze({
+          ...this.#metrics,
+          extents: Object.freeze({
+            x: this.#metrics.extents.x,
+            y: Math.max(this.#metrics.extents.y, this.#locatedVerticalExtent),
+          }),
+        });
+        let columnX = 0;
+        const widths = this.#snapshot?.widths;
+        if (widths !== undefined && widths.mode === 'multi-column') {
+          for (const column of widths.columns) {
+            if (column.columnId === location.address.columnId) break;
+            columnX += column.width + widths.separatorWidth;
+          }
+        }
+        this.scrollTo({ x: columnX, y: alignedY });
+      }
+      return Object.freeze({
+        location,
+        scrolled: before.x !== this.#requestedOffsets.x || before.y !== this.#requestedOffsets.y,
+      });
+    } finally {
+      options?.signal?.removeEventListener('abort', abort);
+      if (this.#revealController === controller) this.#revealController = undefined;
+    }
   }
 
   /** Returns detached source-state evidence without application records or actionable targets. */
@@ -230,6 +330,8 @@ export class KanbanViewport<TCard> extends View {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#revealController?.abort();
+    this.#revealController = undefined;
     this.#descriptorCache.dispose();
     this.#source?.dispose();
     this.#source = undefined;
@@ -242,31 +344,31 @@ export class KanbanViewport<TCard> extends View {
     return this.#source?.refresh({
       width: this.bounds.width,
       height: this.bounds.height,
-      horizontalOffset: this.#metrics.offsets.x,
+      horizontalOffset: this.#requestedOffsets.x,
+      verticalOffset: this.#requestedOffsets.y,
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
       ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
     });
   }
 
   /** Publishes a detached metric snapshot without leaking coordinator or cursor references. */
-  #updateMetrics(snapshot: KanbanViewportSourceSnapshot<TCard> | undefined): void {
+  #updateMetrics(
+    snapshot: KanbanViewportSourceSnapshot<TCard> | undefined,
+    projection?: KanbanViewportProjection,
+  ): void {
     if (snapshot === undefined) return;
-    const offsets: KanbanViewportPoint = Object.freeze({ x: this.#metrics.offsets.x, y: this.#metrics.offsets.y });
-    const extents: KanbanViewportPoint = Object.freeze({
-      x: Math.max(0, snapshot.widths.contentWidth - this.bounds.width),
-      y: 0,
+    this.#metrics = createKanbanViewportMetrics({
+      bounds: this.bounds,
+      source: snapshot,
+      ...(projection === undefined ? {} : { projection }),
+      offsets: this.#requestedOffsets,
+      density: this.#options.density?.() ?? 'comfortable',
+      overscan: {
+        x: this.#options.overscan?.horizontal ?? 1,
+        y: this.#options.overscan?.vertical ?? 1,
+      },
+      minimumVerticalExtent: this.#locatedVerticalExtent,
     });
-    this.#metrics = Object.freeze({
-      assignedRect: Object.freeze({ ...this.bounds }),
-      mode: snapshot.mode,
-      offsets,
-      extents,
-      visibleColumnIds: Object.freeze(snapshot.visibleColumns.map((column) => column.columnId)),
-      visibleCardRanges: Object.freeze(snapshot.cells.map((cell) => cell.range)),
-      stickyRows: snapshot.visibleColumns.length === 0 ? 0 : 1,
-      overscan: Object.freeze({ x: this.#options.overscan?.horizontal ?? 1, y: this.#options.overscan?.vertical ?? 1 }),
-      generation: snapshot.generation,
-      sourceRevision: snapshot.publication.revision,
-    });
+    this.#requestedOffsets = this.#metrics.offsets;
   }
 }

@@ -37,6 +37,8 @@ export interface KanbanViewportSourceRequest {
   readonly height: number;
   /** Current horizontal content offset. */
   readonly horizontalOffset: number;
+  /** Current vertical card-content offset. */
+  readonly verticalOffset: number;
   /** Preferred source column when responsive geometry enters focused mode. */
   readonly focusedColumnId?: string;
   /** Workflow columns excluded before any sparse cursor is opened. */
@@ -238,6 +240,7 @@ export class KanbanViewportSource<TCard> {
     const width = cellCount(request.width);
     const height = cellCount(request.height);
     const horizontalOffset = cellCount(request.horizontalOffset);
+    const verticalOffset = cellCount(request.verticalOffset);
     const publication = this.#session.snapshot();
     const columns = filteredColumns(publication, this.#query, request.collapsedColumnIds, this.#limits);
     const widths = solveKanbanColumnWidths({
@@ -262,13 +265,21 @@ export class KanbanViewportSource<TCard> {
 
     const visibleRows = Math.max(1, height - 1);
     const cardsPerViewport = Math.max(1, Math.ceil(visibleRows / 3));
-    const requestedCards = Math.min(this.#limits.ensureRangeCards, cardsPerViewport * (1 + this.#verticalOverscan));
+    const firstVisibleCard = Math.floor(verticalOffset / 3);
+    const overscanCards = cardsPerViewport * this.#verticalOverscan;
+    const rangeStart = Math.max(0, firstVisibleCard - overscanCards);
+    const requestedCards = Math.min(this.#limits.ensureRangeCards, cardsPerViewport + overscanCards * 2);
     const generation = this.#session.generation();
     const cells: KanbanViewportSourceCell<TCard>[] = [];
     for (const address of retainedAddresses) {
       const retained = this.#cells.get(canonicalizeKanbanCellAddress(address));
       if (retained === undefined) continue;
-      const range = Object.freeze({ address, start: 0, end: requestedCards });
+      const knownLength = retained.cursor.length();
+      const rangeEnd =
+        knownLength.kind === 'exact'
+          ? Math.min(knownLength.value, rangeStart + requestedCards)
+          : rangeStart + requestedCards;
+      const range = Object.freeze({ address, start: Math.min(rangeStart, rangeEnd), end: rangeEnd });
       const state = retained.cursor.state();
       if (state.kind !== 'error' && retained.cursor.needsRange(range.start, range.end)) {
         void retained.cursor.ensureRange(range.start, range.end).then(
