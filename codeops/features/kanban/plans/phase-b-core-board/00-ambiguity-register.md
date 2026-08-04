@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 30 items resolved
-> **Last Updated**: 2026-08-04 12:56 CEST
+> **Status**: ✅ GATE PASSED — all 31 items resolved
+> **Last Updated**: 2026-08-04 13:17 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -41,6 +41,7 @@
 | PAR-B28 | Extension bounds | What does a custom swimlane chrome budget bound? | Rows only / complete geometry-style-region budget | **Delegated: bound header rows, rail width, semantic roles, text bytes, regions/actions, and one descriptor invocation per visible swimlane revision.** | ✅ Resolved |
 | PAR-B29 | Compatibility | How does the existing `identity` getter relate to the new single-owner controller? | Keep as competing live control / migrate to controller seed-and-observation compatibility | **Delegated and preflight-refined: preserve it only as a deprecated default-controller construction seed; source identity publication remains deletion authority, and identity plus custom factory rejects.** | ✅ Resolved |
 | PAR-B30 | Public API | Which exact public seam proves that per-card section selection can reorder/omit configured IDs without enlarging view maxima? | Pure bounded selection resolver / renderer-only implicit intersection / numeric per-card overrides | **Runtime delegated after independent challenge: add one pure `resolveKanbanCardPresentationSelection` contract over frozen configured ID universes and the resolved presentation budget; it intersects known IDs, caps field/summary cardinality, and never creates numeric overrides.** | ✅ Resolved |
+| PAR-B31 | Public API | What exact adapter, snapshot, composition, style, and cache-testing contracts let the rich-card oracle precede implementation without exposing private machinery? | Final-shaped public snapshot/composition plus testing-only cache harness / infer names in tests / expose production cache internals | **Runtime delegated after independent challenge: define discriminated public field/summary/checklist/style contracts, one detached snapshot boundary, one high-level composer, and a counter-only `@jsvision/kanban/testing` cache harness; retain `presentationRevisionOf` as the sole card revision authority.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -206,6 +207,30 @@ snapshot support.
 - **Confidence:** High.
 - **Reopen triggers:** A later approved card adapter replaces configured section IDs with a different
   durable identity model, or selection gains authority to change numeric presentation budgets.
+
+### PAR-B31 — exact rich-card snapshot and cache-test surface (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact type shapes and pure function signatures needed to author already-approved
+  rich-card behavior before production; no new product capability or later-phase integration is added.
+- **Decision:** Extend the Phase A adapter through a discriminated presentation adapter; publish
+  bounded field, summary, checklist, visual-state, and semantic-style data contracts; snapshot them
+  once into detached display-safe values; and compose the snapshot through one public high-level
+  standard-card function. `presentationRevisionOf` remains the only card revision callback. Summary
+  and field formatters receive their unchanged value once. Dates remain opaque until the injected
+  formatter. Cache implementation stays private; `@jsvision/kanban/testing` exposes only the final key,
+  descriptor operations, frozen counters, and disposal evidence.
+- **Cache equality:** Add presentation-policy revision, selection fingerprint, and optional validated
+  style revision to the existing descriptor key. Reactive dependency tracking rebuilds unrevisioned
+  reads but does not replace deterministic equality inputs.
+- **Rejected:** Public cache maps/owners, candidate-section internals, raw unknown values in snapshots,
+  duplicate `revisionOf`, child-summary collections, date coercion, and renderer-only implicit tests.
+- **Hardening:** An independent challenger produced the minimal packet; a targeted second pass added
+  the promised summary formatter, explicit status role, sole-revision compatibility rule, and missing
+  cache equality members.
+- **Confidence:** Medium-high.
+- **Reopen triggers:** Checklist item identities become globally rather than group scoped, or the UI
+  scheduler proves that deterministic tests require an explicit testing-only flush operation.
 
 ## Systematic discovery scan
 

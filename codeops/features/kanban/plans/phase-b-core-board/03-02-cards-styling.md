@@ -20,8 +20,13 @@ getters become section-local fallback/omission with one payload-free observation
 identity/title/status uses the existing bounded card fallback (PAR-B16).
 
 The viewport accepts an optional `KanbanCardRenderer<TCard>` and renderer revision. The standard
-renderer is only the default; custom output always passes `validateKanbanCardDescriptor`. Renderer and
-presentation revisions participate in the descriptor cache key (PAR-B15/PAR-B20).
+renderer is only the default; custom output always passes `validateKanbanCardDescriptor`. The internal
+`KanbanDescriptorCacheKey` retains its Phase A members and adds
+`presentationPolicyRevision: KanbanRevision`,
+`presentationSelectionFingerprint: string`, and optional `styleRevision: KanbanRevision`. Renderer,
+card-presentation, policy, selection, and style revisions participate in deterministic cache equality;
+reactive dependency tracking remains complementary rather than replacing those inputs
+(PAR-B15/PAR-B20/PAR-B31).
 
 ## Standard section composition
 
@@ -75,9 +80,10 @@ changes. No card-local draft exists in Phase B.
 
 ## Reactive styles and cue precedence
 
-`styleOf` selects allowlisted semantic roles for title, text, surface, border/marker, and optional glyph
-family. It cannot return raw colors or escape sequences. Its revision and every visible reactive read
-participate in card-local invalidation (PAR-B15/PAR-B17).
+`styleOf` selects allowlisted semantic roles for title, status, optional text, surface, border/marker,
+and optional glyph family. `textRole` is the fallback for optional field, label, summary, and checklist
+text while built-in section roles remain defaults. It cannot return raw colors or escape sequences. Its
+revision and every visible reactive read participate in card-local invalidation (PAR-B15/PAR-B17).
 
 Each retained descriptor-cache entry owns one bounded reactive computation that observes adapter,
 selection, style, renderer, and formatting dependencies. A dependency change rebuilds and validates
@@ -89,6 +95,73 @@ never follows logical card count. If visible plus overscan demand exceeds the re
 ordered projection emits an honest partial/limit state for omitted demand, removes stale hit regions,
 and never throws or leaves a blank actionable card. Explicit presentation/renderer/card revisions remain
 cache equality inputs but are not a substitute for dependency tracking.
+
+Production cache maps, reactive owners, and canonical keys remain private. The testing-only package
+subpath exposes the real cache through the complete semantic key, narrow invalidation selector, and a
+counter-only harness:
+
+```ts
+export interface KanbanDescriptorCacheKey {
+  readonly generation: number;
+  readonly address: KanbanCellAddress;
+  readonly cursorRevision: KanbanRevision;
+  readonly cardKey: CardKey;
+  readonly rendererRevision: KanbanRevision;
+  readonly presentationRevision?: KanbanRevision;
+  readonly presentationPolicyRevision: KanbanRevision;
+  readonly presentationSelectionFingerprint: string;
+  readonly styleRevision?: KanbanRevision;
+  readonly width: number;
+  readonly rowBudget: number;
+  readonly density: KanbanCardDensity;
+  readonly themeRevision: KanbanRevision;
+  readonly capabilityRevision: KanbanRevision;
+  readonly interactionRevision: KanbanRevision;
+}
+
+export interface KanbanDescriptorInvalidation {
+  readonly generation?: number;
+  readonly address?: KanbanCellAddress;
+  readonly cardKey?: CardKey;
+  readonly rendererRevision?: KanbanRevision;
+  readonly presentationPolicyRevision?: KanbanRevision;
+  readonly presentationSelectionFingerprint?: string;
+  readonly styleRevision?: KanbanRevision;
+  readonly themeRevision?: KanbanRevision;
+  readonly capabilityRevision?: KanbanRevision;
+  readonly interactionRevision?: KanbanRevision;
+}
+
+export interface KanbanDescriptorCacheTestSnapshot {
+  readonly retained: number;
+  readonly created: number;
+  readonly rebuilt: number;
+  readonly disposed: number;
+  readonly invalidations: number;
+  readonly activeComputations: number;
+}
+
+export interface KanbanDescriptorCacheTestHarness {
+  readonly getOrCreate: (
+    key: KanbanDescriptorCacheKey,
+    factory: () => KanbanCardDescriptor,
+  ) => KanbanCardDescriptor;
+  readonly retain: (keys: readonly KanbanDescriptorCacheKey[]) => void;
+  readonly invalidate: (selector?: KanbanDescriptorInvalidation) => number;
+  readonly snapshot: () => KanbanDescriptorCacheTestSnapshot;
+  readonly dispose: () => void;
+}
+
+export function createKanbanDescriptorCacheTestHarness(options: {
+  readonly maximumEntries: number;
+  readonly onDescriptorInvalidated?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
+}): KanbanDescriptorCacheTestHarness;
+```
+
+Inspection snapshots and callback keys are detached/frozen and contain no record payload. The harness
+must prove one-card rebuild, unchanged neighbor descriptor identity, exact invalidation, and computation
+disposal on retain, eviction, and harness disposal. It exposes no flush operation unless the actual UI
+scheduler later proves synchronous observation impossible (PAR-B31).
 
 The non-color precedence is deterministic:
 

@@ -100,24 +100,192 @@ maximum and remain subject to descriptor validation (PAR-B09/PAR-B16/PAR-B30).
 ## Card presentation adapters
 
 The generic adapter remains identity/title/status-first. Phase B adds optional pure getters rather
-than requiring record conversion:
+than requiring record conversion. `presentationRevisionOf` inherited from `KanbanCardAdapter` remains
+the sole card-presentation revision callback; no competing `revisionOf` alias is introduced
+(PAR-B20/PAR-B31).
 
 ```ts
-export interface KanbanCardPresentationAdapter<TCard> {
+export type KanbanCardFieldKind = 'text' | 'number' | 'date' | 'labels';
+
+export interface KanbanCardFieldBase {
+  readonly fieldId: KanbanFieldId;
+  readonly label: string;
+  readonly priority: number;
+  readonly role?: KanbanThemeRole;
+}
+
+export type KanbanCardField<TCard> =
+  | (KanbanCardFieldBase & {
+      readonly kind: 'text';
+      readonly valueOf: (card: TCard) => string | undefined;
+      readonly format?: (value: string, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'number';
+      readonly valueOf: (card: TCard) => number | bigint | undefined;
+      readonly format?: (
+        value: number | bigint,
+        context: KanbanCardFormattingContext,
+      ) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'date';
+      readonly valueOf: (card: TCard) => unknown;
+      readonly format?: (value: unknown, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'labels';
+      readonly valueOf: (card: TCard) => readonly string[] | undefined;
+      readonly format?: (
+        value: readonly string[],
+        context: KanbanCardFormattingContext,
+      ) => readonly string[] | undefined;
+    });
+
+export interface KanbanCardSummaryValue {
+  readonly text?: string;
+  readonly count?: number;
+}
+
+export type KanbanCardSummaryInput = string | number | bigint | KanbanCardSummaryValue;
+
+export interface KanbanCardSummary<TCard> {
+  readonly summaryId: KanbanFieldId;
+  readonly label: string;
+  readonly priority: number;
+  readonly role?: KanbanThemeRole;
+  readonly valueOf: (card: TCard) => KanbanCardSummaryInput | undefined;
+  readonly format?: (
+    value: KanbanCardSummaryInput,
+    context: KanbanCardFormattingContext,
+  ) => KanbanCardSummaryValue | undefined;
+}
+
+export type KanbanChecklistItemId = string;
+
+export interface KanbanChecklistItem {
+  readonly itemId: KanbanChecklistItemId;
+  readonly text: string;
+  readonly completed: boolean;
+}
+
+export interface KanbanChecklistGroup {
+  readonly checklistId: KanbanChecklistId;
+  readonly title?: string;
+  readonly items: readonly KanbanChecklistItem[];
+}
+
+export interface KanbanCardVisualState {
+  readonly focused: boolean;
+  readonly selected: boolean;
+  readonly rangeAnchor: boolean;
+  readonly readOnly: boolean;
+  readonly invalid: boolean;
+  readonly operation: KanbanCardOperationState;
+}
+
+export interface KanbanCardStyleSelection {
+  readonly revision?: KanbanRevision;
+  readonly surfaceRole?: KanbanThemeRole;
+  readonly borderRole?: KanbanThemeRole;
+  readonly markerRole?: KanbanThemeRole;
+  readonly titleRole?: KanbanThemeRole;
+  readonly statusRole?: KanbanThemeRole;
+  readonly textRole?: KanbanThemeRole;
+  readonly glyphFamily?: 'automatic' | 'unicode' | 'ascii';
+}
+
+export interface KanbanCardPresentationAdapter<TCard> extends KanbanCardAdapter<TCard> {
   readonly fields?: readonly KanbanCardField<TCard>[];
   readonly summaries?: readonly KanbanCardSummary<TCard>[];
   readonly checklistOf?: (card: TCard) => readonly KanbanChecklistGroup[];
-  readonly selectionOf?: (card: TCard) => KanbanCardPresentationSelection;
+  readonly selectionOf?: (card: TCard) => KanbanCardPresentationSelection | undefined;
   readonly styleOf?: (card: TCard, state: KanbanCardVisualState) => KanbanCardStyleSelection;
-  readonly revisionOf?: (card: TCard) => KanbanRevision;
 }
 ```
 
-Field and summary descriptors have bounded stable IDs, labels, priorities, semantic roles, pure value
-getters, and optional injected formatters. Standard fields cover type, priority, assignees, labels,
-start/due dates, estimate/value text, and counts without imposing property names. A failed getter or
-formatter affects only its field/section, produces one redacted observation, and does not expose the
-value or record (PAR-B16/PAR-B17).
+Field and summary descriptors have bounded stable IDs, labels, non-negative safe-integer priorities,
+allowlisted semantic roles, pure value getters, and optional injected formatters. Summary values require
+at least text or a non-negative safe-integer count and cannot carry child collections. Without a summary
+formatter, strings become text, number/bigint values use `formatNumber`, and structured summary values
+are snapshotted directly. Standard fields cover type, priority, assignees, labels, start/due dates,
+estimate/value text, and counts without imposing property names. Checklist item IDs are bounded and
+control-free with uniqueness scoped to one group; group IDs are unique across one card.
+
+A failed optional getter or formatter affects only its field/family, produces one redacted observation,
+and does not expose the value or record. Invalid/duplicate IDs reject the affected optional family
+before invoking its value callbacks. Observer failures are contained (PAR-B16/PAR-B17).
+
+## Presentation snapshot and composition
+
+```ts
+export interface KanbanCardPresentationSnapshotContext {
+  readonly maximum: KanbanCardPresentationMaximum;
+  readonly visualState: KanbanCardVisualState;
+  readonly formatting: KanbanCardFormattingContext;
+  readonly observe?: (observation: KanbanObservation) => void;
+}
+
+export interface KanbanCardFieldSnapshot {
+  readonly fieldId: KanbanFieldId;
+  readonly kind: KanbanCardFieldKind;
+  readonly label: string;
+  readonly priority: number;
+  readonly role?: KanbanThemeRole;
+  readonly values: readonly string[];
+}
+
+export interface KanbanCardSummarySnapshot {
+  readonly summaryId: KanbanFieldId;
+  readonly label: string;
+  readonly priority: number;
+  readonly role?: KanbanThemeRole;
+  readonly text?: string;
+  readonly count?: number;
+}
+
+export interface KanbanCardPresentationSnapshot {
+  readonly cardKey: CardKey;
+  readonly presentationRevision?: KanbanRevision;
+  readonly title: string;
+  readonly status: string;
+  readonly fields: readonly KanbanCardFieldSnapshot[];
+  readonly summaries: readonly KanbanCardSummarySnapshot[];
+  readonly checklists: readonly KanbanChecklistGroup[];
+  readonly selection: ResolvedKanbanCardPresentationSelection;
+  readonly visualState: KanbanCardVisualState;
+  readonly style: KanbanCardStyleSelection;
+}
+
+export function snapshotKanbanCardPresentation<TCard>(
+  card: TCard,
+  adapter: KanbanCardPresentationAdapter<TCard>,
+  context: KanbanCardPresentationSnapshotContext,
+): KanbanCardPresentationSnapshot;
+
+export interface KanbanStandardCardCompositionContext {
+  readonly width: number;
+  readonly rowBudget: number;
+  readonly theme: Readonly<KanbanTheme>;
+  readonly capabilities: Readonly<KanbanCardTerminalCapabilities>;
+}
+
+export function composeStandardKanbanCard(
+  snapshot: KanbanCardPresentationSnapshot,
+  context: KanbanStandardCardCompositionContext,
+): KanbanCardDescriptor;
+```
+
+Snapshotting invokes each getter/formatter at most once, detaches and deeply freezes every retained
+value, and sanitizes/bounds display text before measurement. Number fields default to `formatNumber`.
+Date fields pass the exact unchanged opaque value once to their field formatter or `formatDate`; the
+snapshot retains only safe formatted text. Style failures yield the frozen neutral selection. Mandatory
+key/title/status failure propagates to the existing safe-render fallback boundary.
+
+The composer exposes no candidate-section internals. It returns a deeply frozen descriptor that passes
+the public descriptor validator. `renderStandardKanbanCard` remains the backwards-compatible
+convenience wrapper over snapshot then compose, deriving default maximum/state from its Phase A render
+context when callers use the original adapter surface.
 
 `StandardCard` adds the optional requirement-owned fields and checklist/summary values, and
 `createStandardKanbanCardAdapter` returns the complete standard adapter. No runtime Zod/Forms schema is
