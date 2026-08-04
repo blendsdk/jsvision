@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 18:09 CEST
-> **Progress**: 40/106 tasks (38%)
+> **Last Updated**: 2026-08-04 18:15 CEST
+> **Progress**: 41/106 tasks (39%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -163,7 +163,7 @@ implementation → green → implementation tests/hardening → verification.
 
 **Reference**: 03-04; PAR-B05/PAR-B07/PAR-B10/PAR-B26
 
-- [ ] 3.2.1 Implement bounded sparse prefix-height runs, exact anchors, estimates, and saturated conversions — `packages/kanban/src/layout/sparse-height-index.ts`
+- [x] 3.2.1 Implement bounded sparse prefix-height runs, exact anchors, estimates, and saturated conversions — `packages/kanban/src/layout/sparse-height-index.ts` ✅ (completed: 2026-08-04 18:15 CEST)
 - [ ] 3.2.2 Implement measurement correction, revision invalidation, stable-anchor preservation, and bounded eviction — `packages/kanban/src/layout/sparse-height-index.ts`, `packages/kanban/src/board/descriptor-cache.ts`
 - [ ] 3.2.3 Build immutable canonical 2-D scene nodes from normalized structure, stable interaction snapshots, and resident cells capped by `retainedDescriptors`, with deterministic partial-state clipping — `packages/kanban/src/board/scene-model.ts`, `packages/kanban/src/board/scene-builder.ts`
 - [ ] 3.2.4 Generalize viewport-source retention to visible/overscan semantic cells, consume bounded compatible row-layout hints, and degrade distant no-hint projection honestly — `packages/kanban/src/board/viewport-source.ts`

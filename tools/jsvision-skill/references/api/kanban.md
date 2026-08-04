@@ -2533,6 +2533,89 @@ type KanbanSourceState = | { readonly kind: 'loading' | 'ready' | 'refreshing' |
   | { readonly kind: 'error'; readonly code: string; readonly label?: string }
 ```
 
+## KanbanSparseHeightIndex
+
+Bounded sparse prefix-height index for one retained semantic cell.
+
+```ts
+new KanbanSparseHeightIndex(options: KanbanSparseHeightIndexOptions)
+// methods & signals:
+rowAt(logicalIndex: number): KanbanSparseHeightPosition
+indexAt(row: number): KanbanSparseHeightLookup
+snapshot(): KanbanSparseHeightSnapshot
+dispose(): void
+```
+
+## KanbanSparseHeightIndexOptions
+
+Construction values for one retained semantic cell's sparse height index.
+
+```ts
+interface KanbanSparseHeightIndexOptions {
+  logicalLength: number;   // Logical cards reported by the owning cursor without requiring materialization.
+  estimatedHeight: number;   // Estimated occupied rows for each card whose exact height is not retained.
+  maximumAnchors: number;   // Maximum exact card anchors retained by this index.
+  maximumRuns: number;   // Maximum contiguous measured run summaries retained by this index.
+  sourceRevision: KanbanRevision;   // Source revision that owns the measurements.
+  cursorRevision: KanbanRevision;   // Cursor revision that owns the logical indexes.
+  presentationRevision: KanbanRevision;   // Presentation revision that owns the measured heights.
+}
+```
+
+## KanbanSparseHeightLookup
+
+Result of converting a terminal row back to one logical card position.
+
+```ts
+interface KanbanSparseHeightLookup {
+  logicalIndex: number;   // Nearest zero-based logical card position at or before the requested row.
+  row: number;   // Saturated terminal row at which that logical position starts.
+  quality: 'exact' | 'estimated';   // Whether every preceding occupied height was measured.
+}
+```
+
+## KanbanSparseHeightMeasurement
+
+One exact resident height supplied after descriptor measurement.
+
+```ts
+interface KanbanSparseHeightMeasurement {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  logicalIndex: number;   // Zero-based logical position in the owning cursor.
+  height: number;   // Exact occupied rows for this card under the active presentation revision.
+}
+```
+
+## KanbanSparseHeightPosition
+
+Estimated or exact conversion between logical positions and terminal rows.
+
+```ts
+interface KanbanSparseHeightPosition {
+  value: number;   // Saturated non-negative terminal row.
+  quality: 'exact' | 'estimated';   // Whether the conversion crossed any estimated card span.
+}
+```
+
+## KanbanSparseHeightSnapshot
+
+Counter-only immutable evidence for scale tests and support diagnostics.
+
+```ts
+interface KanbanSparseHeightSnapshot {
+  logicalLength: number;   // Logical cards represented without a logical-length-sized allocation.
+  estimatedHeight: number;   // Current estimate used for unmeasured spans.
+  retainedAnchors: number;   // Number of exact resident anchors.
+  retainedRuns: number;   // Number of contiguous measured run summaries.
+  allocatedEntries: number;   // Total bounded records held by the sparse index.
+  revisions: {
+    readonly source: KanbanRevision;
+    readonly cursor: KanbanRevision;
+    readonly presentation: KanbanRevision;
+  };   // Revisions that determine measurement compatibility.
+}
+```
+
 ## KanbanStandardCardCompositionContext
 
 Geometry/theme inputs used to compose one detached rich card snapshot.
@@ -3774,6 +3857,14 @@ Creates one detached immutable semantic scroll anchor.
 
 ```ts
 createKanbanScrollAnchor(anchor: KanbanScrollAnchor): KanbanScrollAnchor
+```
+
+## createKanbanSparseHeightIndex
+
+Creates one bounded sparse height index for a retained semantic cell.
+
+```ts
+createKanbanSparseHeightIndex(options: KanbanSparseHeightIndexOptions): KanbanSparseHeightIndex
 ```
 
 ## createKanbanSwimlaneId
