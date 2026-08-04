@@ -2,7 +2,7 @@
 
 > **Document**: 03-03-eager-source-validation.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-29
+> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-30
 > **CodeOps Artifact Schema**: 1
 
 ## Eager helper API
@@ -30,12 +30,40 @@ export interface KanbanGroupingField<TCard> {
   readonly id: KanbanFieldId;
   readonly swimlaneOf: (card: TCard) => KanbanSwimlaneId | undefined;
 }
+
+export interface KanbanFilterOperator<TCard> {
+  readonly operatorId: KanbanExtensionId;
+  readonly matches: (card: TCard, value: KanbanSemanticValue) => boolean;
+}
+
+export interface KanbanFilterField<TCard> {
+  readonly fieldId: KanbanFieldId;
+  readonly operators: readonly KanbanFilterOperator<TCard>[];
+}
+
+export interface KanbanSortField<TCard> {
+  readonly fieldId: KanbanFieldId;
+  readonly compare: (left: TCard, right: TCard) => -1 | 0 | 1;
+}
+
+export interface KanbanSummaryAdapter<TCard> {
+  readonly summaryId: KanbanFieldId;
+  readonly scope: 'authoritative' | 'loaded-only';
+  readonly aggregation: 'sum' | 'minimum' | 'maximum' | 'average';
+  readonly valueOf: (card: TCard) => number | undefined;
+}
 ```
 
 Both cards and columns are reactive getters. `keyOf` and `columnOf` are required. If `compare` is
 absent, the adapter preserves source order; if present, it applies a stable sort with source index as
 the final tie-break. Cards retain their original object identity. Adapters are pure synchronous
 callbacks; exceptions become a scoped invalid publication/observation rather than a partial index.
+Filter fields explicitly register unique supported operator IDs, so unknown fields/operators reject
+before a session opens. Filters are ANDed in query order. Query sorts apply lexicographically; each
+sort callback returns exactly `-1 | 0 | 1`, followed by the optional source comparator and source
+index. Summary callbacks return only finite numeric contributions or `undefined`; package-owned
+aggregation publishes typed exact numeric summaries with declared authority scope, or typed unknown
+when no card contributes.
 
 ## Derivation transaction
 

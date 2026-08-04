@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 29 items resolved
-> **Last Updated**: 2026-08-04 02:11 CEST
+> **Status**: ✅ GATE PASSED — all 30 items resolved
+> **Last Updated**: 2026-08-04 03:12 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -49,6 +49,7 @@
 | PAR-27 | Technical (runtime) | Query-session criteria fixed lifecycle behavior but not the exact public value shapes or a black-box seam that can test the private generation coordinator | Testing-only lifecycle harness plus exact value unions / expose the coordinator / defer lifecycle proof to Phase 4 | Delegated: exact public query/state/count/structure/publication/location values plus a narrow testing-only lifecycle harness; coordinator internals remain private | ✅ Resolved |
 | PAR-28 | Technical (runtime) | Cursor criteria fixed behavior but not exact cell/count/length/placement/identity values, stale-placement validation, or a black-box seam for the private range coordinator | Exact unions plus pure validators and testing-only cursor harness / expose coordinator / move cursor lifecycle to Phase 4 | Delegated: exact immutable cursor unions, pure placement/identity validators, and a narrow testing-only cursor harness; selection reconciliation remains Phase 4 | ✅ Resolved |
 | PAR-29 | Technical (runtime) | The approved 100,000-card windowed fixture lacked an exact constructor, settlement controller, and bounded metrics needed for an immutable scale oracle | Lazy testing fixture with explicit range settlement and metrics / self-reported opaque benchmark / mount Board early | Delegated: lazy testing-only windowed source/controller with request-proportional frozen metrics and safe bounded events; no board or coordinator exposure | ✅ Resolved |
+| PAR-30 | Technical (runtime) | Eager filter, sort, and summary adapter names were approved without exact callback/result shapes or honest summary publication values | Explicit operator registry plus package numeric aggregations / opaque predicates and arbitrary reducers / defer summary execution | Delegated: finite operator registries, tri-state sort comparison, and package-owned numeric aggregations with explicit authoritative/loaded-only scope and count-like quality | ✅ Resolved |
 
 ## Resolution notes
 
@@ -348,6 +349,36 @@ creation, explicit request IDs, controller settlement, bounded frozen metrics, a
 **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** the 100,000 target or
 visible/overscan semantics change, or a production windowed adapter becomes package-owned.
 
+### PAR-30 — eager query adapters and honest numeric summaries
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** Filtering, stable sorting, numeric
+summaries, authority qualifiers, and their eager option names were already approved. This fixes exact
+public callback and value shapes without adding a query language or changing scope. **Objective:**
+Reject unsupported operators before session creation, keep sorting deterministic, and ensure a header
+never presents a loaded-only or unavailable summary as an authoritative zero.
+
+**Decision:** A filter field owns a finite unique registry of namespaced operator predicates; queries
+AND filters in declared order and reject unknown field/operator pairs before `openQuery`. A sort field
+returns exactly `-1`, `0`, or `1`; directives apply lexicographically, then the optional source
+comparator, then source index. A summary adapter declares a field ID, `authoritative` or `loaded-only`
+scope, one of `sum`, `minimum`, `maximum`, or `average`, and a finite numeric `valueOf` callback.
+Package code performs aggregation and publishes an exact typed numeric summary; an empty contributing
+set publishes `unknown`, never zero. Runtime callback throws or invalid values reject the complete
+candidate, emit one sanitized observation, and retain the last valid publication.
+
+**Evidence:** A direct opaque predicate cannot validate supported operators before opening a session,
+and an arbitrary reducer makes work, scope, and empty-result semantics unknowable. Package-owned
+aggregation makes the scan bounded by resident cards and configured summary count while preserving
+the application's domain-value adapter. **Rejected alternatives:** Generic built-in comparison would
+invent cross-domain semantics. Arbitrary reducers allow repeated scans and ambiguous authority.
+Deferring summaries contradicts the confirmed derivation and RD-02 slice. **Strongest counterargument:**
+Custom reducers offer more flexibility, but they can be added later through a separately bounded
+contract without weakening this deterministic foundation. **Confidence:** High (0.92).
+**Hardening:** Independent challenge selected explicit operators, tri-state comparison, numeric
+aggregation, and typed summary quality and rejected silent summary deferral. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** non-numeric summaries, custom reducers, or
+remote authoritative aggregation becomes a package-owned source responsibility.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -356,7 +387,7 @@ visible/overscan semantics change, or a production windowed adapter becomes pack
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-29 have complete delegated records; consequential request, lifecycle, and
-  scale-fixture shapes received independent challenge and the namespace grammar was grounded in the
-  existing shared validator.
+- [x] PAR-20 through PAR-30 have complete delegated records; consequential request, lifecycle, scale,
+  and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
+  the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

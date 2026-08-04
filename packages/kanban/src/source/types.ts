@@ -75,12 +75,27 @@ export interface KanbanCellAddress {
   readonly swimlaneId?: KanbanSwimlaneId;
 }
 
+/** Authority scope declared by one application numeric summary. */
+export type KanbanSummaryScope = 'authoritative' | 'loaded-only';
+
+/** Deterministic package-owned numeric aggregation for an eager summary. */
+export type KanbanSummaryAggregation = 'sum' | 'minimum' | 'maximum' | 'average';
+
+/** Honest numeric summary that never presents unavailable authority as zero. */
+export type KanbanNumericSummary =
+  | { readonly scope: KanbanSummaryScope; readonly quality: 'unknown' }
+  | {
+      readonly scope: KanbanSummaryScope;
+      readonly quality: 'exact' | 'estimated' | 'truncated';
+      readonly value: number;
+    };
+
 /** Header metadata shared by columns and swimlanes. */
 export interface KanbanHeaderSummary {
   /** Optional authoritative work-in-progress count. */
   readonly wip?: KanbanCount;
-  /** Bounded semantic summaries keyed by application field identity. */
-  readonly summaries?: Readonly<Record<string, KanbanSemanticValue>>;
+  /** Bounded honest numeric summaries keyed by application field identity. */
+  readonly summaries?: Readonly<Record<KanbanFieldId, KanbanNumericSummary>>;
 }
 
 /** Detached column header publication. */

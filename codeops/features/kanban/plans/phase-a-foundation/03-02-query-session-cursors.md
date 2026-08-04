@@ -96,7 +96,9 @@ presenting unknown as zero structurally impossible. Column and swimlane metadata
 IDs.
 
 `KanbanHeaderBatch` contains a revision plus exact column and swimlane header arrays. Each header has
-its semantic ID, sanitized label, optional WIP count, and a bounded semantic summary map.
+its semantic ID, sanitized label, optional WIP count, and a bounded numeric summary map. Every summary
+has explicit `authoritative | loaded-only` scope and count-like `unknown | exact | estimated |
+truncated` quality; an unknown summary has no numeric value.
 `KanbanIdentityChangeBatch` contains a revision and a bounded array of exact `deleted-card`,
 `deleted-column`, or `deleted-swimlane` records carrying only the corresponding identity.
 

@@ -15,7 +15,6 @@ import { KANBAN_LIMITS } from '../contract/limits.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
-import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import { snapshotKanbanCellAddress } from './address.js';
 import { snapshotKanbanBoardCounts, snapshotKanbanCount } from './counts.js';
@@ -29,6 +28,7 @@ import type {
   KanbanHeaderBatch,
   KanbanIdentityChange,
   KanbanIdentityChangeBatch,
+  KanbanNumericSummary,
   KanbanQuery,
   KanbanSessionPublication,
   KanbanSort,
@@ -66,6 +66,8 @@ const IDENTITY_CHANGE_KEYS = new Set(['kind', 'cardKey', 'columnId', 'swimlaneId
 const LOCATION_KEYS = new Set(['kind', 'address', 'index', 'placement', 'sessionRevision']);
 /** Exact accepted members of one atomic session publication. */
 const PUBLICATION_KEYS = new Set(['revision', 'state', 'columns', 'swimlanes', 'counts', 'headers', 'identityChanges']);
+/** Exact accepted members of one honest numeric summary. */
+const NUMERIC_SUMMARY_KEYS = new Set(['scope', 'quality', 'value']);
 
 /** Raises the bounded public error for an invalid query. */
 function invalidQuery(): never {
@@ -277,12 +279,41 @@ export function snapshotKanbanSwimlaneMeta(value: unknown): KanbanSwimlaneMeta {
   }
 }
 
-/** Snapshots a bounded plain semantic summary map. */
-function snapshotSummaries(value: unknown): Readonly<Record<string, KanbanSemanticValue>> {
-  const semantic = snapshotKanbanSemanticValue(value);
-  if (typeof semantic !== 'object' || semantic === null || Array.isArray(semantic)) return invalidPublication();
-  const result: Record<string, KanbanSemanticValue> = {};
-  for (const [key, entry] of Object.entries(semantic)) result[createKanbanFieldId(key)] = entry;
+/** Validates one numeric summary with explicit authority and quality. */
+export function snapshotKanbanNumericSummary(value: unknown): KanbanNumericSummary {
+  try {
+    const properties = snapshotKanbanDataProperties(value, NUMERIC_SUMMARY_KEYS.size);
+    validateKanbanDataKeys(properties, NUMERIC_SUMMARY_KEYS);
+    const scope = properties.scope;
+    if (scope !== 'authoritative' && scope !== 'loaded-only') return invalidPublication();
+    if (properties.quality === 'unknown') {
+      if (Object.keys(properties).length !== 2) return invalidPublication();
+      return Object.freeze({ scope, quality: 'unknown' });
+    }
+    if (properties.quality !== 'exact' && properties.quality !== 'estimated' && properties.quality !== 'truncated') {
+      return invalidPublication();
+    }
+    if (
+      Object.keys(properties).length !== 3 ||
+      typeof properties.value !== 'number' ||
+      !Number.isFinite(properties.value)
+    ) {
+      return invalidPublication();
+    }
+    return Object.freeze({ scope, quality: properties.quality, value: properties.value });
+  } catch (error) {
+    if (error instanceof KanbanInvalidSourcePublicationError) throw error;
+    return invalidPublication();
+  }
+}
+
+/** Snapshots a bounded plain numeric summary map. */
+function snapshotSummaries(value: unknown): Readonly<Record<string, KanbanNumericSummary>> {
+  const properties = snapshotKanbanDataProperties(value, KANBAN_LIMITS.summarySections.safe);
+  const result: Record<string, KanbanNumericSummary> = {};
+  for (const [key, entry] of Object.entries(properties)) {
+    result[createKanbanFieldId(key)] = snapshotKanbanNumericSummary(entry);
+  }
   return Object.freeze(result);
 }
 
