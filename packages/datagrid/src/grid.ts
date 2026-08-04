@@ -112,6 +112,11 @@ export interface EditableDataGridOptions<T> {
    * with either per-cell persistence hook refuses rollback without this row-level transaction seam so
    * the UI cannot diverge from host persistence.
    *
+   * The default English message band reports `Reverting row…` while the callback is pending, `Could not
+   * revert row changes` after a veto or failure, and `Row changes cannot be reverted` when persisted
+   * edits have no row-level transaction seam. A trapped row's validation hint ends with `Esc reverts row
+   * changes`. Supply an `i18n` service to translate these messages.
+   *
    * @example
    * ```ts
    * import { signal } from '@jsvision/ui';
