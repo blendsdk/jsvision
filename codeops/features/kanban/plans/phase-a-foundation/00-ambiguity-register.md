@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 34 items resolved
-> **Last Updated**: 2026-08-04 04:44 CEST
+> **Status**: ✅ GATE PASSED — all 35 items resolved
+> **Last Updated**: 2026-08-04 04:51 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -54,6 +54,7 @@
 | PAR-32 | Public API | Card behavior was specified but the callable adapter/renderer/context/descriptor/fallback surface was not exact enough for immutable tests | Durable semantic descriptor seam / temporary Phase A render result / defer the oracle | Delegated: durable generic adapter + render context + semantic descriptor, pure standard/validation/fallback helpers, and one safe catch/observe wrapper | ✅ Resolved |
 | PAR-33 | Public API | Theme families and catalog vocabulary were not exact enough for immutable role/parity/fallback tests | Closed semantic tokens retaining fallback/cue data / flat role-to-style map / defer exactness | Delegated: closed 39-role token palette with inspectable safe resolution, exact 18-key Phase A catalog, and inert explicit locale constants/subpaths | ✅ Resolved |
 | PAR-34 | Public API (runtime) | The standard model made `presentationRevision` optional while the optional adapter getter could return only a present revision | Permit `undefined` from the getter / omit the getter / invent a sentinel | Delegated: the optional getter returns `KanbanRevision \| undefined`; absence remains distinct from every application revision | ✅ Resolved |
+| PAR-35 | Sequencing (runtime) | Descriptor contracts depend on theme-role/theme-token types assigned to the following task | Publish inert theme declarations with descriptors / reorder trace tasks / leave build broken | Delegated: Task 3.2.3 publishes only the closed theme declarations; Task 3.2.4 retains all theme creation, mapping, validation, contrast, and resolution behavior | ✅ Resolved |
 
 ## Resolution notes
 
@@ -529,6 +530,28 @@ no independent challenge was required for the local reversible correction. **Pol
 `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** presentation revisions become mandatory for all
 cards or the package replaces the getter with a discriminated revision result.
 
+### PAR-35 — descriptor/theme declaration sequencing
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** Descriptor and theme contracts are
+both already approved in the same Phase 3 modification boundary. This changes only implementation
+sequencing needed to compile each verified task; it adds no public symbol or behavior. **Objective:** Keep
+every task independently buildable while preserving descriptor ownership of semantic theme references.
+**Decision:** Task 3.2.3 also creates `card/theme.ts` containing only the exact closed role tuple and inert
+theme/token/resolution data declarations required by descriptor types. Task 3.2.4 implements theme
+creation, mapped/family fallbacks, hostile-input validation, contrast, and capability-aware resolution in
+`theme-resolver.ts`. The public surface remains exactly PAR-33.
+
+**Evidence:** `KanbanCardSpan`, marker, surface/border roles, and `KanbanCardRenderContext.theme` cannot be
+typed without `KanbanThemeRole` and `KanbanTheme`; TypeScript production build is a per-task gate.
+**Rejected alternatives:** Leaving Task 3.2.3 uncompilable violates the verification/commit gate. Reordering
+trace tasks creates broader lifecycle churn and obscures the already-approved dependency order. Defining
+duplicate placeholder types in `descriptor.ts` creates two owners and later migration risk. **Strongest
+counterargument:** Theme declarations land one task earlier than their named implementation task, but they
+are passive dependencies and no theme behavior is claimed until Task 3.2.4. **Confidence:** High (0.99).
+**Hardening:** The compiler dependency leaves one clean foundation-first split; no independent challenge
+was required. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** the descriptor
+contract stops carrying theme roles/theme or build verification becomes phase-atomic instead of per task.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -537,7 +560,7 @@ cards or the package replaces the getter with a discriminated revision result.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-34 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-35 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.
