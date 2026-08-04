@@ -1,3 +1,4 @@
+import { classicTheme } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
 import { View } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';
@@ -5,6 +6,7 @@ import type { DrawContext } from '@jsvision/ui';
 import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanTheme } from '../card/theme.js';
+import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanLimitOptions } from '../contract/limits.js';
@@ -16,10 +18,18 @@ import type {
   KanbanInspectedColumn,
 } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
+import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanDataSource, KanbanQuery } from '../source/types.js';
+import { KanbanDescriptorCache } from './descriptor-cache.js';
+import { projectKanbanViewport } from './viewport-projector.js';
+import type { KanbanViewportProjection } from './viewport-projector.js';
+import { drawKanbanViewport } from './viewport-render.js';
 import type { KanbanCellState } from '../source/states.js';
 import { KanbanViewportSource } from './viewport-source.js';
 import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
+
+/** Hard viewport-local descriptor ceiling independent of logical source length. */
+const KANBAN_VIEWPORT_DESCRIPTOR_LIMIT = 256;
 
 /** Application-owned identity hints projected by a read-only board. */
 export interface KanbanIdentityInput {
@@ -96,7 +106,11 @@ export class KanbanViewport<TCard> extends View {
   readonly #options: KanbanViewportOptions<TCard>;
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
+  #projection: KanbanViewportProjection | undefined;
   #metrics: KanbanViewportMetrics = emptyMetrics();
+  readonly #descriptorCache = new KanbanDescriptorCache(KANBAN_VIEWPORT_DESCRIPTOR_LIMIT);
+  readonly #defaultI18n = createEnglishKanbanI18n();
+  readonly #defaultTheme = createKanbanTheme(classicTheme);
   #disposed = false;
 
   /** Stores configuration without opening application resources before mount. */
@@ -133,11 +147,30 @@ export class KanbanViewport<TCard> extends View {
   }
 
   /** Refreshes bounded source acquisition; visual descriptor drawing is added by the render task. */
-  override draw(_ctx: DrawContext): void {
+  override draw(ctx: DrawContext): void {
     if (this.#source === undefined || this.#disposed) return;
     const snapshot = this.#refresh(this.#options.collapsedColumnIds?.(), this.#options.identity?.().focusedColumnId);
     this.#snapshot = snapshot;
     this.#updateMetrics(snapshot);
+    if (snapshot === undefined) return;
+    const theme = this.#options.theme?.() ?? this.#defaultTheme;
+    const projection = projectKanbanViewport({
+      source: snapshot,
+      width: this.bounds.width,
+      height: this.bounds.height,
+      horizontalOffset: this.#metrics.offsets.x,
+      verticalOffset: this.#metrics.offsets.y,
+      card: this.#options.card,
+      density: this.#options.density?.() ?? 'comfortable',
+      theme,
+      i18n: this.#options.i18n?.() ?? this.#defaultI18n,
+      capabilities: ctx.caps,
+      cache: this.#descriptorCache,
+      ...(this.#options.identity === undefined ? {} : { identity: this.#options.identity() }),
+      ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
+    });
+    this.#projection = projection;
+    drawKanbanViewport(ctx, projection, theme);
   }
 
   /** Returns an immutable exact-cell metric snapshot from the latest projection. */
@@ -171,10 +204,25 @@ export class KanbanViewport<TCard> extends View {
         }),
       ),
       visibleColumns: Object.freeze(
-        snapshot.visibleColumns.map((column) => Object.freeze({ columnId: column.columnId, label: column.label })),
+        (this.#projection?.columns ?? snapshot.visibleColumns).map((column) =>
+          Object.freeze({ columnId: column.columnId, label: column.label }),
+        ),
       ),
-      visibleCards: Object.freeze([]),
-      actionTargets: Object.freeze([]),
+      visibleCards: Object.freeze(
+        (this.#projection?.cards ?? []).map((card) => {
+          const title = card.descriptor.rows
+            .filter((row) => row.section === 'title')
+            .flatMap((row) => row.spans.map((span) => span.text))
+            .join(' ');
+          return Object.freeze({
+            cardKey: card.descriptor.cardKey,
+            columnId: card.columnId,
+            title,
+            marker: Object.freeze({ cues: card.descriptor.marker.cues }),
+          });
+        }),
+      ),
+      actionTargets: this.#projection?.actionTargets ?? Object.freeze([]),
     });
   }
 
@@ -182,9 +230,11 @@ export class KanbanViewport<TCard> extends View {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#descriptorCache.dispose();
     this.#source?.dispose();
     this.#source = undefined;
     this.#snapshot = undefined;
+    this.#projection = undefined;
   }
 
   /** Performs one bounded refresh using current assigned geometry. */

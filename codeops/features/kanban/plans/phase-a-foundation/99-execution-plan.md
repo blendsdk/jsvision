@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 06:58 CEST
-> **Progress**: 44/64 tasks (69%)
+> **Last Updated**: 2026-08-04 07:06 CEST
+> **Progress**: 45/64 tasks (70%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -135,7 +135,7 @@ card renderer required by the Phase A slice.
 - [x] 4.2.2 Implement vertical card/header/gap projection plus scroll extents and stable card/column anchors — `packages/kanban/src/layout/{vertical-projector,scroll-model}.ts` ✅ (completed: 2026-08-04 06:38)
 - [x] 4.2.3 Implement bounded viewport-local descriptor cache with complete semantic key, owned reactive scopes, targeted invalidation, visible/overscan eviction, and disposal-before-cursor ordering — `packages/kanban/src/board/descriptor-cache.ts` ✅ (completed: 2026-08-04 06:43)
 - [x] 4.2.4 Implement the standalone viewport's single-coordinator lifecycle and bounded session/cursor acquisition, including locator cancellation and stale-generation suppression — `packages/kanban/src/board/{kanban-viewport,viewport-source}.ts` ✅ (completed: 2026-08-04 06:58 CEST)
-- [ ] 4.2.5 Implement clipped descriptor projection, sticky workflow headers, and loading/partial/empty/error state drawing — `packages/kanban/src/board/{viewport-projector,viewport-render}.ts`
+- [x] 4.2.5 Implement clipped descriptor projection, sticky workflow headers, and loading/partial/empty/error state drawing — `packages/kanban/src/board/{viewport-projector,viewport-render}.ts` ✅ (completed: 2026-08-04 07:06 CEST)
 - [ ] 4.2.6 Implement two-axis wheel/imperative scrolling, revision-bound `revealCard`, immutable metrics, and stable resize anchors — `packages/kanban/src/board/{viewport-scroll,viewport-metrics}.ts`
 - [ ] 4.2.7 Implement bounded damage maps, a non-actionable inspection-geometry snapshot, and the Phase A pointer map with no card/action/insertion targets — `packages/kanban/src/board/{viewport-damage,viewport-inspection}.ts`
 - [ ] 4.2.8 Implement the responsive `KanbanBoard<TCard>` DSL shell and reactive query/density/theme/i18n/capability/identity bindings with one-reflow invalidation — `packages/kanban/src/board/{kanban-board,board-bindings}.ts`
