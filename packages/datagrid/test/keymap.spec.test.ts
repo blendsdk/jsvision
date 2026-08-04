@@ -7,7 +7,7 @@
  * dev warning, never thrown — so grid construction cannot blow up on a typo'd keymap. Resolution reuses
  * the core chord grammar (`ctrl+alt+shift+key`) and never throws on an unmapped chord.
  *
- * Expectations derive from the requirements/spec docs, never from the implementation. The `.js` import
+ * Expectations derive from the public behavior contract, never from the implementation. The `.js` import
  * specifier is required by NodeNext ESM.
  */
 import { test, expect, vi } from 'vitest';
@@ -19,7 +19,7 @@ function key(k: string, mods: Partial<Pick<KeymapKeyEvent, 'ctrl' | 'alt' | 'shi
   return { key: k, ctrl: mods.ctrl ?? false, alt: mods.alt ?? false, shift: mods.shift ?? false };
 }
 
-// ST-1 — every documented DEFAULT_KEYMAP chord resolves to its documented GridAction.
+// Every documented DEFAULT_KEYMAP chord resolves to its documented GridAction.
 test('ST-1: each default chord resolves to its documented action', () => {
   const cases: readonly (readonly [KeymapKeyEvent, GridAction])[] = [
     [key('left'), 'moveLeft'],
@@ -45,27 +45,27 @@ test('ST-1: each default chord resolves to its documented action', () => {
   }
 });
 
-// ST-2 — a caller remap adds its chord AND the original default binding survives.
+// A caller remap adds its chord AND the original default binding survives.
 test('ST-2: a caller remap merges over the default, original still works', () => {
   const merged = mergeKeymap({ 'ctrl+e': 'beginEdit' });
   expect(resolveGridAction(key('e', { ctrl: true }), merged)).toBe('beginEdit');
   expect(resolveGridAction(key('f2'), merged)).toBe('beginEdit'); // original survives
 });
 
-// ST-3 — a caller entry on the same chord wins the conflict.
+// A caller entry on the same chord wins the conflict.
 test('ST-3: caller wins on a chord conflict', () => {
   const merged = mergeKeymap({ f2: 'valueHelp' });
   expect(resolveGridAction(key('f2'), merged)).toBe('valueHelp');
 });
 
-// ST-4 — an unmapped-but-valid chord resolves to undefined without throwing.
+// An unmapped-but-valid chord resolves to undefined without throwing.
 test('ST-4: an unmapped chord resolves to undefined, no throw', () => {
   const merged = mergeKeymap();
   expect(() => resolveGridAction(key('j', { ctrl: true }), merged)).not.toThrow();
   expect(resolveGridAction(key('j', { ctrl: true }), merged)).toBeUndefined();
 });
 
-// ST-5 — an unknown ACTION is skipped with a dev warning; no throw; the chord resolves to undefined.
+// An unknown ACTION is skipped with a dev warning; no throw; the chord resolves to undefined.
 test('ST-5: an unknown action is skipped + warned, never thrown', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   let merged: GridKeymap | undefined;
@@ -77,7 +77,7 @@ test('ST-5: an unknown action is skipped + warned, never thrown', () => {
   warn.mockRestore();
 });
 
-// ST-5b — a malformed CHORD is skipped + warned, never thrown (createKeymap would throw); defaults intact.
+// A malformed CHORD is skipped + warned, never thrown (createKeymap would throw); defaults intact.
 test('ST-5b: a malformed chord is skipped + warned, never thrown', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   let merged: GridKeymap | undefined;
@@ -89,7 +89,7 @@ test('ST-5b: a malformed chord is skipped + warned, never thrown', () => {
   warn.mockRestore();
 });
 
-// ST-6 — the shared default table is frozen and a caller merge never mutates it.
+// The shared default table is frozen and a caller merge never mutates it.
 test('ST-6: DEFAULT_KEYMAP is frozen and immune to a caller merge', () => {
   expect(Object.isFrozen(DEFAULT_KEYMAP)).toBe(true);
   expect(() => {
@@ -97,4 +97,14 @@ test('ST-6: DEFAULT_KEYMAP is frozen and immune to a caller merge', () => {
   }).toThrow();
   mergeKeymap({ left: 'moveRight' });
   expect(DEFAULT_KEYMAP.left).toBe('moveLeft'); // the caller merge left the shared default untouched
+});
+
+test('should resolve default, replaced, and alternate row-revert chords without disturbing other defaults', () => {
+  expect(resolveGridAction(key('escape'), DEFAULT_KEYMAP)).toBe('revertRow');
+
+  const replaced = mergeKeymap({ escape: 'beginEdit', 'ctrl+r': 'revertRow' });
+  expect(resolveGridAction(key('escape'), replaced)).toBe('beginEdit');
+  expect(resolveGridAction(key('r', { ctrl: true }), replaced)).toBe('revertRow');
+  expect(resolveGridAction(key('f2'), replaced)).toBe('beginEdit');
+  expect(resolveGridAction(key('down'), replaced)).toBe('moveDown');
 });

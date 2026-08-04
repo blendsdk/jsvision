@@ -65,7 +65,7 @@ interface Person {
   name: string;
 }
 
-// ST-11 — a control-byte value committed through the editor is stored raw in memory but never reaches
+// A control-byte value committed through the editor is stored raw in memory but never reaches
 // the frame as a raw ESC/BEL (it passes the engine's sanitize boundary), and the ONLY record mutation
 // is through the onCommit/set path (a spy confirms no out-of-band persistence).
 test('should sanitize a control-byte edit at the frame and mutate only via onCommit', async () => {
@@ -125,7 +125,7 @@ interface Qty {
   qty: number;
 }
 
-// RD-12 security — a `validate` message laced with control bytes is surfaced in the message band but
+// A `validate` message laced with control bytes is surfaced in the message band but
 // sanitized at the draw boundary: no raw ESC/BEL reaches the frame (client validation is UX only, and
 // its message is never trusted as terminal output).
 test('a validate message with control bytes renders sanitized in the message band', async () => {
@@ -172,7 +172,7 @@ test('a validate message with control bytes renders sanitized in the message ban
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
 });
 
-// RD-12 security — client gating never persists behind the source's back: a `beforeSave` veto reverts
+// Client gating never persists behind the source's back: a `beforeSave` veto reverts
 // and never reaches `onCommit`, and an invalid (`validate`-failed) value never applies or reaches
 // `onCommit`. `onCommit`/the source stay the sole persistence path.
 test('a beforeSave veto and a validate-failed value never persist (onCommit is the only sink)', async () => {
@@ -228,7 +228,7 @@ interface Cust {
   customerId: string;
 }
 
-// ST-11(a) — a lookup provider's label carrying control bytes is sanitized at the frame: opening the
+// A lookup provider's label carrying control bytes is sanitized at the frame: opening the
 // dropdown (wired popupHost) and rendering the row never puts a raw ESC/BEL in the buffer or the frame.
 test('ST-11: a lookup label with control bytes renders sanitized at the frame', async () => {
   const LW = 20;
@@ -280,7 +280,7 @@ interface Q {
   qty: string;
 }
 
-// ST-11(b) — an integer editor's keystroke filter rejects a non-conforming character before commit, so
+// An integer editor's keystroke filter rejects a non-conforming character before commit, so
 // the committed value is filter-conformant (the commit-time valid() gate is a later concern).
 test('ST-11: an integer keystroke filter rejects a letter before commit', async () => {
   const rows = signal<Q[]>([{ id: 1, qty: '5' }]);
@@ -318,6 +318,134 @@ test('ST-11: an integer keystroke filter rejects a letter before commit', async 
   expect(/^[0-9-]*$/.test(committed)).toBe(true); // filter-conformant
 });
 
+interface RevertSecurityRow {
+  id: number;
+  start: number;
+  end: number;
+  secret: string;
+}
+
+interface RevertSecurityChange {
+  readonly rowKey: string | number;
+  readonly row: RevertSecurityRow;
+  readonly cells: readonly {
+    readonly columnId: string;
+    readonly value: unknown;
+    readonly previous: unknown;
+  }[];
+}
+
+type RevertSecurityDecision = (change: RevertSecurityChange) => boolean | Promise<boolean>;
+
+function mountRevertSecurity(options: { onRevertRow?: RevertSecurityDecision } = {}) {
+  const rows = signal<RevertSecurityRow[]>([
+    { id: 1, start: 1, end: 9, secret: 'SECRET-ROW-731' },
+    { id: 2, start: 2, end: 30, secret: 'ordinary' },
+  ]);
+  const start = column<RevertSecurityRow, number>({
+    id: 'start',
+    title: 'Start',
+    value: (row) => row.start,
+    parse: (text) => (text.trim() !== '' && Number.isFinite(Number(text)) ? Number(text) : PARSE_FAILED),
+    set: (row, value) => {
+      row.start = value;
+    },
+    width: 10,
+  });
+  const end = column<RevertSecurityRow, number>({
+    id: 'end',
+    title: 'End',
+    value: (row) => row.end,
+    width: 10,
+  });
+  const config: ConstructorParameters<typeof EditableDataGrid<RevertSecurityRow>>[0] & {
+    onRevertRow?: RevertSecurityDecision;
+  } = {
+    columns: [start, end],
+    source: fromRows(rows, { rowKey: (row) => row.id }),
+    validateRow: (row) =>
+      row.end > row.start ? { ok: true } : { ok: false, message: 'Unsafe caller\x1b[31m\x07', field: 'end' },
+    i18n: createI18n({ locale: 'en' }),
+    ...options,
+  };
+  const grid = new EditableDataGrid<RevertSecurityRow>(config);
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 72, height: 7 } });
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 72, height: 7 }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  return { grid, loop, rows };
+}
+
+async function trapRevertSecurity(context: ReturnType<typeof mountRevertSecurity>): Promise<void> {
+  context.loop.dispatch(key('f2'));
+  const editor = context.loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('10');
+  await context.grid.nextCell();
+  context.loop.focusView(context.grid.rows);
+  context.loop.dispatch(key('down'));
+  await tick();
+}
+
+function revertSecurityFrame(context: ReturnType<typeof mountRevertSecurity>): string {
+  context.loop.renderRoot.flush();
+  return context.loop.renderRoot
+    .buffer()
+    .rows()
+    .map((row) => row.map((cell) => cell.char).join(''))
+    .join('\n');
+}
+
+test('should sanitize trapped caller text and append the English Escape recovery hint', async () => {
+  const context = mountRevertSecurity();
+  await trapRevertSecurity(context);
+  const frame = revertSecurityFrame(context);
+
+  expect(frame).toContain('Unsafe caller');
+  expect(frame).toContain(' · Esc reverts row changes');
+  for (const row of context.loop.renderRoot.buffer().rows()) {
+    for (const cell of row) {
+      expect(cell.char).not.toBe('\x1b');
+      expect(cell.char).not.toBe('\x07');
+    }
+  }
+});
+
+test.each([
+  [
+    'throw',
+    () => {
+      throw new Error('HOST-SECRET-991 SECRET-ROW-731 stack-marker');
+    },
+  ],
+  ['reject', () => Promise.reject(new Error('HOST-SECRET-991 SECRET-ROW-731 stack-marker'))],
+] as const)('should contain a callback %s without logging row or host secrets', async (_kind, decision) => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  let output = '';
+  let context: ReturnType<typeof mountRevertSecurity> | undefined;
+  try {
+    context = mountRevertSecurity({ onRevertRow: decision });
+    await trapRevertSecurity(context);
+    context.loop.dispatch(key('escape'));
+    await tick();
+    output = [...warn.mock.calls, ...error.mock.calls, ...log.mock.calls].flat().map(String).join('\n');
+  } finally {
+    warn.mockRestore();
+    error.mockRestore();
+    log.mockRestore();
+  }
+
+  expect(output).not.toContain('SECRET-ROW-731');
+  expect(output).not.toContain('HOST-SECRET-991');
+  expect(output).not.toContain('stack-marker');
+  expect(output).not.toContain('columnId');
+  expect(context?.grid.activeMessage()).toBe('Could not revert row changes');
+  expect(context ? revertSecurityFrame(context) : '').toContain('Could not revert row changes');
+});
+
 interface Ctl {
   id: number;
   v: number;
@@ -336,7 +464,7 @@ function expectNoControlBytes(loop: ReturnType<typeof createEventLoop>): void {
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
 }
 
-// ST-17 — a column `format` that emits ESC/BEL is sanitized at the frame: the control bytes flow
+// A column `format` that emits ESC/BEL is sanitized at the frame: the control bytes flow
 // through the accessor/alignCell paint path but never reach a buffer cell or the serialized output.
 test('ST-17: a format result with control bytes renders sanitized at the frame', () => {
   const rows = signal<Ctl[]>([{ id: 1, v: 1 }]);
@@ -359,7 +487,7 @@ test('ST-17: a format result with control bytes renders sanitized at the frame',
   expectNoControlBytes(loop);
 });
 
-// ST-18 — a custom `render` hook that writes ESC/BEL is sanitized at the frame: the cell-local ctx
+// A custom `render` hook that writes ESC/BEL is sanitized at the frame: the cell-local ctx
 // still funnels through the engine's buffer-write sanitize boundary, so no raw control byte lands.
 test('ST-18: a render hook writing control bytes renders sanitized at the frame', () => {
   const rows = signal<Ctl[]>([{ id: 1, v: 1 }]);
@@ -387,7 +515,7 @@ interface Sale {
   qty: number;
 }
 
-// ST-21 — an unknown sort `columnId` is ignored by the sort API (no state change) and is never
+// An unknown sort `columnId` is ignored by the sort API (no state change) and is never
 // forwarded to a push-down source's `setSort` query. Structured `SortKey[]` only — never raw SQL.
 test('ST-21: an unknown sort columnId is a no-op and never reaches a push-down setSort', () => {
   const setSort = vi.fn<(keys: SortKey[]) => void>();
@@ -423,7 +551,7 @@ interface Rec {
   v: number;
 }
 
-// ST-21 (mutation) — the grid persists ONLY through the source's `insert`/`remove` seam, so a read-only
+// The grid persists ONLY through the source's `insert`/`remove` seam, so a read-only
 // source (one exposing neither) can never be mutated by the CRUD API: `insertRow`/`deleteRows`/
 // `duplicateRow` are safe no-ops that throw nothing. `deleteRows` still prunes the in-grid selection —
 // that is grid-local state, not a mutation of the source's backing store.
@@ -475,7 +603,7 @@ function buildFilterPushGrid() {
   return { grid, setFilter };
 }
 
-// ST-15 — an unknown filter `columnId` is ignored by the filter API (no state change) and is never
+// An unknown filter `columnId` is ignored by the filter API (no state change) and is never
 // forwarded to a push-down source's `setFilter` query.
 test('ST-15: an unknown filter columnId is a no-op and never reaches a push-down setFilter', () => {
   const { grid, setFilter } = buildFilterPushGrid();
@@ -488,7 +616,7 @@ test('ST-15: an unknown filter columnId is a no-op and never reaches a push-down
   }
 });
 
-// ST-27 — the filter model pushed down is a structured map of literal operands: no string is
+// The filter model pushed down is a structured map of literal operands: no string is
 // concatenated into a query by the grid (the source owns any query building).
 test('ST-27: the push-down filter model is a structured map of literal operands, never a query string', () => {
   const { grid, setFilter } = buildFilterPushGrid();
@@ -498,7 +626,7 @@ test('ST-27: the push-down filter model is a structured map of literal operands,
   expect(model?.get('qty')).toEqual({ kind: 'number', op: 'between', a: 100, b: 500 }); // structured literals
 });
 
-// ST-26 — an unknown columnId in ANY column-layout call is ignored and never enters layout state.
+// An unknown columnId in ANY column-layout call is ignored and never enters layout state.
 test('ST-26: an unknown columnId in every column-layout call is a no-op, never entering state', () => {
   interface Row {
     a: string;
@@ -521,9 +649,8 @@ test('ST-26: an unknown columnId in every column-layout call is a no-op, never e
   expect(grid.frozen()).toEqual({ left: [], right: [] }); // no freeze introduced
 });
 
-// ST-27 (columns-layout) — layout is presentational: a header/cell text carrying control bytes stays
-// sanitized at the frame after a reorder + hide (the RD-04 sanitize boundary is untouched by any layout
-// change). Named distinctly from the RD-06 push-down ST-27 above (this file spans several plans).
+// Layout is presentational: header/cell text carrying control bytes stays sanitized at the frame after
+// a reorder and hide. Column layout never bypasses the existing terminal-output sanitization boundary.
 test('ST-27: header/cell text with control bytes stays sanitized after a reorder + hide', () => {
   interface Row {
     id: number;
@@ -569,7 +696,7 @@ interface Member {
   dept: string;
 }
 
-// ST-21 (sanitize) — the RD-08 row/selection mutations are presentational to the render sanitize
+// Row and selection mutations are presentational to the render sanitization
 // boundary: header + cell text laced with control bytes stays sanitized at the frame AFTER an insert
 // (a new malicious row), a duplicate (clone of a malicious row), a header select-all, and a reorder.
 // None of the mutation/selection paths open a new route for a raw ESC/BEL to reach the buffer.
@@ -596,7 +723,7 @@ test('ST-21: header/cell text stays sanitized after insert / duplicate / select-
   loop.mount(root);
   loop.renderRoot.flush();
 
-  // Exercise every RD-08 mutation/selection path with control-byte-laden data.
+  // Exercise every mutation and selection path with control-byte-laden data.
   grid.insertRow({ id: 2, name: 'C\x1b[32mD\x07', dept: 'Ops' }); // a new malicious row
   grid.duplicateRow(1); // clone the malicious row 1 with a fresh key
   grid.selectAllDisplayed(); // the header select-all path
@@ -615,7 +742,7 @@ test('ST-21: header/cell text stays sanitized after insert / duplicate / select-
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
 });
 
-// ---- ST-20 — windowed security oracle ----
+// ---- Windowed security oracle ----
 
 interface WRow {
   id: number;
@@ -800,7 +927,7 @@ test('JSON is not over-escaped: a formula value stays raw and round-trips', () =
 });
 
 // ───────────────────────────────────────────────────────────────────────────────────────────────
-// ST-26 — the personalization dialog's security posture.
+// The personalization dialog's security posture.
 // ───────────────────────────────────────────────────────────────────────────────────────────────
 
 interface Pers {
@@ -846,7 +973,7 @@ function makePersHost() {
 
 // No new core theme roles — the dialog reuses the existing Dialog roles, adding none to core.
 test('ST-26: the personalization dialog adds no new core theme roles', () => {
-  expect(Object.keys(defaultTheme).length).toBe(74); // unchanged by RD-16
+  expect(Object.keys(defaultTheme).length).toBe(74); // personalization adds no theme roles
 });
 
 // The variant name is sanitized (control bytes stripped), hard-capped at 64, and a blank name is rejected.
