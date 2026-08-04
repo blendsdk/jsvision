@@ -1,4 +1,4 @@
-import { createKanbanTranslationCatalog } from '../translation.js';
+import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
 
 /** Official reviewed French Kanban catalog. */
 export const kanbanFr = createKanbanTranslationCatalog('fr', {
@@ -20,4 +20,9 @@ export const kanbanFr = createKanbanTranslationCatalog('fr', {
   'kanban.card.unknown-status': 'Statut inconnu',
   'kanban.reason.source-unavailable': 'Source indisponible',
   'kanban.reason.renderer-unavailable': 'Carte indisponible',
+});
+
+/** Official reviewed French Phase B Kanban overlay. */
+export const kanbanPhaseBFr = createKanbanPhaseBTranslationCatalog('fr', {
+  'kanban.action.open-card-editor': 'Ouvrir l’éditeur de carte',
 });

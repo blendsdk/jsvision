@@ -1,4 +1,4 @@
-import { createKanbanTranslationCatalog } from '../translation.js';
+import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
 
 /** Official reviewed Romanian Kanban catalog. */
 export const kanbanRo = createKanbanTranslationCatalog('ro', {
@@ -20,4 +20,9 @@ export const kanbanRo = createKanbanTranslationCatalog('ro', {
   'kanban.card.unknown-status': 'Stare necunoscută',
   'kanban.reason.source-unavailable': 'Sursă indisponibilă',
   'kanban.reason.renderer-unavailable': 'Card indisponibil',
+});
+
+/** Official reviewed Romanian Phase B Kanban overlay. */
+export const kanbanPhaseBRo = createKanbanPhaseBTranslationCatalog('ro', {
+  'kanban.action.open-card-editor': 'Deschide editorul de carduri',
 });

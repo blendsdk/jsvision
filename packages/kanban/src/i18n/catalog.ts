@@ -84,6 +84,17 @@ export const KANBAN_ENGLISH_MESSAGES = Object.freeze({
   'kanban.reason.renderer-unavailable': 'Card unavailable',
 } satisfies KanbanMessageMap);
 
+/** Exact first-use Phase B message inventory required from every Kanban translation overlay. */
+export interface KanbanPhaseBMessageMap {
+  /** Read-only card action that asks the application to open its card editor. */
+  readonly 'kanban.action.open-card-editor': Message;
+}
+
+/** Canonical English messages introduced by the Phase B board surface. */
+export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
+  'kanban.action.open-card-editor': 'Open card editor',
+} satisfies KanbanPhaseBMessageMap);
+
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */
 export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(
   {
@@ -93,6 +104,28 @@ export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(
   },
   {
     placeholderManifest: KANBAN_PLACEHOLDER_MANIFEST,
+    acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
+  },
+);
+
+/**
+ * Immutable English overlay for labels first consumed by the richer board surface.
+ *
+ * Keeping the overlay separate preserves the exact original catalog contract for existing consumers.
+ *
+ * @example
+ * ```ts
+ * KANBAN_PHASE_B_ENGLISH_CATALOG.messages['kanban.action.open-card-editor'];
+ * ```
+ */
+export const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog = defineCatalog(
+  {
+    schema: 1,
+    locale: 'en',
+    messages: KANBAN_PHASE_B_ENGLISH_MESSAGES,
+  },
+  {
+    placeholderManifest: Object.freeze({}),
     acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
   },
 );
@@ -109,5 +142,5 @@ export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(
  * ```
  */
 export function createEnglishKanbanI18n(): I18n {
-  return createI18n({ locale: 'en', catalogs: [KANBAN_ENGLISH_CATALOG] });
+  return createI18n({ locale: 'en', catalogs: [KANBAN_ENGLISH_CATALOG, KANBAN_PHASE_B_ENGLISH_CATALOG] });
 }

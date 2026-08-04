@@ -103,12 +103,52 @@ Complete deeply immutable Kanban resource-limit manifest.
 const KANBAN_LIMITS: KanbanLimitManifest
 ```
 
+## KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT
+
+Frozen payload-free focused detail used when no eligible card or header is available.
+
+```ts
+const KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT: KanbanFocusedDetailSnapshot
+```
+
+## KANBAN_NEUTRAL_FOCUS_TARGET
+
+Frozen board-state focus used before a usable scene selects a more specific target.
+
+```ts
+const KANBAN_NEUTRAL_FOCUS_TARGET: KanbanFocusTarget
+```
+
+## KANBAN_NEUTRAL_INTERACTION_SNAPSHOT
+
+Frozen interaction snapshot used before an interaction controller publishes state.
+
+```ts
+const KANBAN_NEUTRAL_INTERACTION_SNAPSHOT: KanbanInteractionSnapshot
+```
+
 ## KANBAN_OPEN_CARD_EDITOR_ACTION_ID
 
 Stable package action emitted by read-only checklist regions to request the card editor.
 
 ```ts
 const KANBAN_OPEN_CARD_EDITOR_ACTION_ID: KanbanExtensionId
+```
+
+## KANBAN_PHASE_B_ENGLISH_CATALOG
+
+Immutable English overlay for labels first consumed by the richer board surface.
+
+```ts
+const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
+```
+
+## KANBAN_PHASE_B_ENGLISH_MESSAGES
+
+Canonical English messages introduced by the Phase B board surface.
+
+```ts
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; }>
 ```
 
 ## KANBAN_PLACEHOLDER_MANIFEST
@@ -1151,6 +1191,17 @@ interface KanbanFilterOperator<TCard> {
 }
 ```
 
+## KanbanFocusTarget
+
+A semantic board target that may own keyboard focus.
+
+```ts
+type KanbanFocusTarget = | { readonly kind: 'board-state' }
+  | { readonly kind: 'column-header'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'swimlane-header'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'card'; readonly cardKey: CardKey; readonly address: KanbanCellAddress }
+```
+
 ## KanbanFocusedColumnNavigator
 
 One-row navigation metadata shown only in focused-column mode.
@@ -1163,6 +1214,59 @@ interface KanbanFocusedColumnNavigator {
   total: number;   // Complete number of visible columns.
   previousEnabled: boolean;   // Whether a previous source-ordered column exists.
   nextEnabled: boolean;   // Whether a next source-ordered column exists.
+}
+```
+
+## KanbanFocusedDetailField
+
+One complete safe field value available for focused-card inspection.
+
+```ts
+interface KanbanFocusedDetailField {
+  fieldId: KanbanFieldId;   // Stable configured field identity.
+  label: string;   // Sanitized localized field label.
+  values: readonly string[];   // Complete bounded safe display values, independent of visible card clipping.
+}
+```
+
+## KanbanFocusedDetailKeyHint
+
+Keyboard hint for one semantic action available on the focused target.
+
+```ts
+interface KanbanFocusedDetailKeyHint {
+  actionId: KanbanExtensionId;   // Application or package action advertised by the target.
+  label: string;   // Sanitized localized action label.
+  key: string;   // Sanitized host-normalized key description.
+}
+```
+
+## KanbanFocusedDetailSelection
+
+Honest scope summary for the current ordered selection.
+
+```ts
+interface KanbanFocusedDetailSelection {
+  loadedCount: number;   // Number of resident card keys in the ordered selection.
+  scope: 'loaded' | 'server';   // Whether a separate application server-wide selection is active.
+}
+```
+
+## KanbanFocusedDetailSnapshot
+
+Detached, bounded values used by focused help, status chrome, and inspection.
+
+```ts
+interface KanbanFocusedDetailSnapshot {
+  target: KanbanFocusTarget;   // Target described by the remaining fields.
+  title?: string;   // Optional complete sanitized title for a focused card.
+  status?: string;   // Optional complete sanitized status for a focused card.
+  fields: readonly KanbanFocusedDetailField[];   // Complete bounded safe field values selected for inspection.
+  checklists: readonly KanbanChecklistGroup[];   // Complete bounded read-only checklist values selected for inspection.
+  definitionOfDone?: string;   // Optional complete sanitized definition-of-done text.
+  actions: readonly KanbanCardAction[];   // Semantic actions currently advertised by the focused target.
+  keyHints: readonly KanbanFocusedDetailKeyHint[];   // Current host-normalized key hints for the advertised actions.
+  selection: KanbanFocusedDetailSelection;   // Honest summary of the current ordered selection.
 }
 ```
 
@@ -1273,6 +1377,49 @@ Detached visible-column evidence with the complete sanitized semantic label.
 interface KanbanInspectedColumn {
   columnId: string;   // Stable workflow-column identity.
   label: string;   // Complete bounded sanitized label before visual ellipsis.
+}
+```
+
+## KanbanInteractionFeedback
+
+Localized, bounded feedback that may be shown without exposing card values.
+
+```ts
+interface KanbanInteractionFeedback {
+  code: KanbanInteractionFeedbackCode;   // Machine-readable reason used by applications and tests.
+  label: string;   // Sanitized localized text suitable for board chrome.
+  count?: number;   // Optional non-negative count associated with selection feedback.
+  retry?: 'available' | 'unavailable';   // Whether the same semantic request may be attempted again.
+}
+```
+
+## KanbanInteractionFeedbackCode
+
+Stable, payload-free interaction feedback categories.
+
+```ts
+type KanbanInteractionFeedbackCode = | 'navigation-pending'
+  | 'navigation-unavailable'
+  | 'navigation-error'
+  | 'selection-limit-exceeded'
+  | 'selection-pruned'
+  | 'interaction-unavailable'
+```
+
+## KanbanInteractionSnapshot
+
+Complete immutable interaction state consumed by scene construction.
+
+```ts
+interface KanbanInteractionSnapshot {
+  revision: number;   // Monotonic semantic-state revision owned by the interaction controller.
+  focused: KanbanFocusTarget;   // Current semantic focus target.
+  selectedCardKeys: readonly CardKey[];   // Ordered selected keys with number and string identities kept distinct.
+  rangeAnchor?: KanbanRangeAnchor;   // Optional range-selection anchor.
+  preferredCenterRow?: number;   // Preferred visual center row retained during horizontal navigation.
+  pendingNavigation?: KanbanPendingNavigation;   // Optional asynchronous navigation operation.
+  feedback?: KanbanInteractionFeedback;   // Optional safe localized status feedback.
+  serverSelection?: KanbanServerSelectionReference;   // Optional application-owned server-wide selection reference.
 }
 ```
 
@@ -1609,6 +1756,27 @@ interface KanbanOverscanOptions {
 }
 ```
 
+## KanbanPendingNavigation
+
+Navigation work that is waiting for a bounded reveal or data acquisition.
+
+```ts
+interface KanbanPendingNavigation {
+  kind: 'reveal' | 'acquire';   // Operation being completed without moving the current focus prematurely.
+  target: KanbanFocusTarget;   // Requested destination retained across asynchronous settlement.
+}
+```
+
+## KanbanPhaseBMessageMap
+
+Exact first-use Phase B message inventory required from every Kanban translation overlay.
+
+```ts
+interface KanbanPhaseBMessageMap {
+  'kanban.action.open-card-editor': Message;   // Read-only card action that asks the application to open its card editor.
+}
+```
+
 ## KanbanPlacement
 
 Revision-bound semantic insertion placement returned by a cursor.
@@ -1759,6 +1927,17 @@ interface KanbanQuerySession<TCard> {
   cell(address: KanbanCellAddress): KanbanCellCursor<TCard>;   // Opens a sparse cursor only for the explicitly requested semantic cell.
   locateCard?(key: CardKey, options?: { readonly signal?: AbortSignal }): Promise<KanbanCardLocation> | KanbanCardLocation;   // Performs one bounded optional identity lookup without scanning cursor contents.
   dispose(): void;   // Releases session work and child resources idempotently.
+}
+```
+
+## KanbanRangeAnchor
+
+Explicit anchor used for range selection inside one semantic cell.
+
+```ts
+interface KanbanRangeAnchor {
+  cardKey: CardKey;   // Stable card identity at which range extension began.
+  address: KanbanCellAddress;   // Cell containing the anchor when it was established.
 }
 ```
 
@@ -1953,6 +2132,18 @@ Recursive immutable value domain used by queries and application extension paylo
 
 ```ts
 type KanbanSemanticValue = null | boolean | number | string | readonly KanbanSemanticValue[] | { readonly [key: string]: KanbanSemanticValue }
+```
+
+## KanbanServerSelectionReference
+
+Opaque application reference for a server-wide selection not expanded into resident card keys.
+
+```ts
+interface KanbanServerSelectionReference {
+  token: string;   // Bounded opaque token interpreted only by the owning application.
+  revision?: KanbanRevision;   // Optional equality-only revision of the represented server selection.
+  label?: string;   // Optional sanitized localized description of the selection scope.
+}
 ```
 
 ## KanbanSessionPublication

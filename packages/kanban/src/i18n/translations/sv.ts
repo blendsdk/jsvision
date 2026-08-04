@@ -1,4 +1,4 @@
-import { createKanbanTranslationCatalog } from '../translation.js';
+import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
 
 /** Official reviewed Swedish Kanban catalog. */
 export const kanbanSv = createKanbanTranslationCatalog('sv', {
@@ -20,4 +20,9 @@ export const kanbanSv = createKanbanTranslationCatalog('sv', {
   'kanban.card.unknown-status': 'Okänd status',
   'kanban.reason.source-unavailable': 'Källa inte tillgänglig',
   'kanban.reason.renderer-unavailable': 'Kort inte tillgängligt',
+});
+
+/** Official reviewed Swedish Phase B Kanban overlay. */
+export const kanbanPhaseBSv = createKanbanPhaseBTranslationCatalog('sv', {
+  'kanban.action.open-card-editor': 'Öppna kortredigeraren',
 });

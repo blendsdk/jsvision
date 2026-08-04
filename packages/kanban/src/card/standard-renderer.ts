@@ -1,4 +1,5 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
+import { KANBAN_PHASE_B_ENGLISH_MESSAGES } from '../i18n/catalog.js';
 import type { KanbanCardAdapter } from './adapter.js';
 import { readKanbanCardAdapter } from './adapter.js';
 import { KANBAN_OPEN_CARD_EDITOR_ACTION_ID, updateKanbanChecklistHeader } from './checklist-renderer.js';
@@ -209,7 +210,9 @@ export function composeStandardKanbanCard(
         : end,
     checklistStart ?? 0,
   );
-  const openEditorLabel = normalizeKanbanCardText(context.openEditorLabel ?? 'Open card editor') || 'Open card editor';
+  const fallbackOpenEditorLabel = KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.action.open-card-editor'];
+  const openEditorLabel =
+    normalizeKanbanCardText(context.openEditorLabel ?? fallbackOpenEditorLabel) || fallbackOpenEditorLabel;
   const hasChecklistRegion = checklistStart !== undefined && checklistEnd > checklistStart;
   return Object.freeze({
     cardKey: snapshot.cardKey,

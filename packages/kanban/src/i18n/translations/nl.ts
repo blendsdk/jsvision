@@ -1,4 +1,4 @@
-import { createKanbanTranslationCatalog } from '../translation.js';
+import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
 
 /** Official reviewed Dutch Kanban catalog. */
 export const kanbanNl = createKanbanTranslationCatalog('nl', {
@@ -20,4 +20,9 @@ export const kanbanNl = createKanbanTranslationCatalog('nl', {
   'kanban.card.unknown-status': 'Onbekende status',
   'kanban.reason.source-unavailable': 'Bron niet beschikbaar',
   'kanban.reason.renderer-unavailable': 'Kaart niet beschikbaar',
+});
+
+/** Official reviewed Dutch Phase B Kanban overlay. */
+export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
+  'kanban.action.open-card-editor': 'Kaarteditor openen',
 });

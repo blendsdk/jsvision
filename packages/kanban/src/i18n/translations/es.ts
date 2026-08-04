@@ -1,4 +1,4 @@
-import { createKanbanTranslationCatalog } from '../translation.js';
+import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
 
 /** Official reviewed Spanish Kanban catalog. */
 export const kanbanEs = createKanbanTranslationCatalog('es', {
@@ -20,4 +20,9 @@ export const kanbanEs = createKanbanTranslationCatalog('es', {
   'kanban.card.unknown-status': 'Estado desconocido',
   'kanban.reason.source-unavailable': 'Fuente no disponible',
   'kanban.reason.renderer-unavailable': 'Tarjeta no disponible',
+});
+
+/** Official reviewed Spanish Phase B Kanban overlay. */
+export const kanbanPhaseBEs = createKanbanPhaseBTranslationCatalog('es', {
+  'kanban.action.open-card-editor': 'Abrir editor de tarjetas',
 });
