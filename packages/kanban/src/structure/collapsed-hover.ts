@@ -86,13 +86,33 @@ export class KanbanCollapsedHoverController {
     this.#generation += 1;
     const generation = this.#generation;
     this.#state = Object.freeze({ kind: 'waiting', swimlaneId });
-    this.#timer = this.#scheduler.schedule(() => {
-      if (generation !== this.#generation || this.#state.kind !== 'waiting' || this.#state.swimlaneId !== swimlaneId) {
-        return;
+    let timer: unknown;
+    try {
+      timer = this.#scheduler.schedule(() => {
+        if (
+          generation !== this.#generation ||
+          this.#state.kind !== 'waiting' ||
+          this.#state.swimlaneId !== swimlaneId
+        ) {
+          return;
+        }
+        this.#timer = undefined;
+        this.#state = Object.freeze({ kind: 'expanded', swimlaneId, temporary: true });
+      }, KANBAN_TIMING_DEFAULTS.collapsedSwimlaneHoverMs);
+    } catch {
+      this.#generation += 1;
+      this.#state = IDLE;
+      return false;
+    }
+    if (generation !== this.#generation || this.#state.kind !== 'waiting') {
+      try {
+        this.#scheduler.cancel(timer);
+      } catch {
+        // A synchronously completed callback already invalidated this handle.
       }
-      this.#timer = undefined;
-      this.#state = Object.freeze({ kind: 'expanded', swimlaneId, temporary: true });
-    }, KANBAN_TIMING_DEFAULTS.collapsedSwimlaneHoverMs);
+    } else {
+      this.#timer = timer;
+    }
     return true;
   }
 

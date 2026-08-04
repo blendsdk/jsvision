@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   KanbanInvalidPresentationError,
+  KanbanInvalidSourcePublicationError,
+  createEagerKanbanDataSource,
   resolveKanbanGrouping,
   resolveKanbanStructure,
   validateKanbanLimitOptions,
@@ -224,6 +226,28 @@ describe('query-owned grouping projection', () => {
     expect(JSON.stringify(observations)).not.toMatch(/resolver-secret|observer-secret|\u001b/u);
   });
 
+  it('routes a malformed derived group identity through the redacted fallback path', () => {
+    const observations: KanbanObservation[] = [];
+    const result = resolveKanbanGrouping({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: [{ id: 1, columnId: 'ready', team: 'alpha' }] as const,
+      policy: groupingPolicy({
+        resolverFallback: { swimlaneId: 'unavailable', label: 'Unavailable', revision: 1 },
+      }),
+      registry: [
+        {
+          fieldId: 'team',
+          groups: SWIMLANES,
+          resolve: () => '\u001b[31m',
+        },
+      ],
+      observe: (observation) => observations.push(observation),
+    });
+
+    expect(result.memberships).toEqual([{ cardKey: 1, address: { swimlaneId: 'unavailable' } }]);
+    expect(observations).toEqual([{ code: 'group-resolver-failed', scope: 'renderer' }]);
+  });
+
   it('rejects a policy for a field other than the sole query grouping field', () => {
     expect(() =>
       resolveKanbanGrouping({
@@ -274,5 +298,78 @@ describe('sparse eager grouping index', () => {
     });
     expect(index.cells.size).toBe(cards.length);
     expect(index.cells.size).toBeLessThan(columns.length * swimlanes.length);
+  });
+
+  it('maps missing and valid-unmapped values into the declared unassigned swimlane', () => {
+    const swimlanes: readonly KanbanSwimlaneMeta[] = [
+      ...SWIMLANES,
+      { swimlaneId: 'unassigned', label: 'Unassigned', revision: 1 },
+      { swimlaneId: 'unavailable', label: 'Unavailable', revision: 1 },
+    ];
+    const cards: readonly WorkItem[] = [
+      { id: 1, columnId: 'ready' },
+      { id: 2, columnId: 'ready', team: 'not-declared' },
+    ];
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => COLUMNS,
+      swimlanes: () => swimlanes,
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+      groupingFields: [
+        {
+          id: 'team',
+          swimlaneOf: (card) => card.team,
+          unassignedSwimlaneId: 'unassigned',
+          resolverFallbackSwimlaneId: 'unavailable',
+        },
+      ],
+    });
+    const session = source.openQuery({ groupBy: 'team' });
+    const unassigned = session.cell({ columnId: 'ready', swimlaneId: 'unassigned' });
+
+    expect([unassigned.cardAt(0)?.id, unassigned.cardAt(1)?.id]).toEqual([1, 2]);
+    expect(() => session.cell({ columnId: 'ready' })).toThrow(KanbanInvalidSourcePublicationError);
+  });
+
+  it('contains throwing and malformed eager resolvers in the declared fallback swimlane', () => {
+    const observations: KanbanObservation[] = [];
+    const swimlanes: readonly KanbanSwimlaneMeta[] = [
+      ...SWIMLANES,
+      { swimlaneId: 'unassigned', label: 'Unassigned', revision: 1 },
+      { swimlaneId: 'unavailable', label: 'Unavailable', revision: 1 },
+    ];
+    const cards: readonly WorkItem[] = [
+      { id: 1, columnId: 'ready', team: 'throw' },
+      { id: 2, columnId: 'ready', team: 'malformed' },
+      { id: 3, columnId: 'ready', team: 'beta' },
+    ];
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => COLUMNS,
+      swimlanes: () => swimlanes,
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+      groupingFields: [
+        {
+          id: 'team',
+          swimlaneOf: (card) => {
+            if (card.team === 'throw') throw new Error('eager-resolver-secret');
+            return card.team === 'malformed' ? '\u001b[31m' : card.team;
+          },
+          unassignedSwimlaneId: 'unassigned',
+          resolverFallbackSwimlaneId: 'unavailable',
+        },
+      ],
+      observe: (observation) => observations.push(observation),
+    });
+    const session = source.openQuery({ groupBy: 'team' });
+    const fallback = session.cell({ columnId: 'ready', swimlaneId: 'unavailable' });
+
+    expect([fallback.cardAt(0)?.id, fallback.cardAt(1)?.id]).toEqual([1, 2]);
+    expect(session.cell({ columnId: 'ready', swimlaneId: 'beta' }).cardAt(0)?.id).toBe(3);
+    expect(observations).toEqual([
+      { code: 'group-resolver-failed', scope: 'source' },
+      { code: 'group-resolver-failed', scope: 'source' },
+    ]);
+    expect(JSON.stringify(observations)).not.toMatch(/eager-resolver-secret|\u001b/u);
   });
 });

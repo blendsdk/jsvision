@@ -417,6 +417,38 @@ snapshot support.
 - **Reopen triggers:** A future phase introduces another package-owned visible workflow code or moves
   group-label ownership into the package.
 
+### PAR-B39 — Phase 2 quality-loop grouping and cache remediation (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact technical correction of independently confirmed Phase 2 Major defects; the
+  changes preserve the approved grouping, responsive presentation, bounded-resource, and callback
+  isolation contracts without expanding product scope.
+- **Decision:** Extend eager grouping adapters with optional semantic `unassignedSwimlaneId` and
+  `resolverFallbackSwimlaneId`. When grouping is active, missing and valid-unmapped values use the
+  configured unassigned group, while thrown or malformed resolver output uses the configured fallback
+  and emits a redacted observation; absence of a required configured target fails publication safely.
+  Validate pure grouping resolver IDs before membership classification. Key custom presentation cache
+  entries by every normalized output-affecting input and evict FIFO at the central
+  `retainedDescriptors.safe` ceiling. Treat a throwing hover scheduler as a rejected begin operation,
+  restore idle, and suppress the host exception.
+- **Evidence:** Independent Phase 2 correctness and risk review reproduced missing eager membership,
+  malformed-ID misclassification, stale geometry reuse, unbounded cache growth, and a stuck waiting
+  lease with raw scheduler-error propagation.
+- **Rejected alternatives:** Mapping resolver failures to unassigned erases the approved distinction
+  between missing data and failed code. Clearing the entire custom cache on each call defeats valid
+  same-input reuse. Propagating scheduler exceptions violates the payload-free component boundary.
+- **Strongest counterargument:** Optional eager fallback IDs permit a source adapter that is valid until
+  its callback first fails. Failing that publication is safer and backward-compatible; applications
+  requiring local recovery configure the explicit declared fallback swimlane.
+- **Confidence:** High.
+- **Hardening:** Two independent reviewers reproduced the cache defect; the risk auditor independently
+  reproduced scheduler leakage, and the correctness reviewer traced both grouping failures through
+  source acquisition. Each fix receives focused regression coverage and one independent re-review.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** Grouping policy becomes directly available to the eager source, cache ownership
+  moves to the scene layer, or scheduler failures gain a public diagnostic state.
+
 ## Systematic discovery scan
 
 | Category | Result |

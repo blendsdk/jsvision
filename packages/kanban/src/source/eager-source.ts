@@ -387,7 +387,10 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
     const swimlaneExists =
       snapshot.swimlaneId === undefined ||
       derivation.index.swimlanes.some((swimlane) => swimlane.swimlaneId === snapshot.swimlaneId);
-    if (!columnExists || !swimlaneExists || (!derivation.index.grouped && snapshot.swimlaneId !== undefined)) {
+    const groupingMatches = derivation.index.grouped
+      ? snapshot.swimlaneId !== undefined
+      : snapshot.swimlaneId === undefined;
+    if (!columnExists || !swimlaneExists || !groupingMatches) {
       throw new KanbanInvalidSourcePublicationError();
     }
     const cursor = new EagerKanbanCursor(

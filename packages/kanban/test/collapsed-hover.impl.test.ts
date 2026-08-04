@@ -131,6 +131,28 @@ describe('collapsed swimlane hover timing', () => {
     expect(hover.snapshot()).toEqual({ kind: 'idle' });
   });
 
+  it('contains a throwing schedule hook, restores idle, and permits a later lease', () => {
+    const clock = new FakeHoverClock();
+    let shouldThrow = true;
+    const scheduler: KanbanCollapsedHoverScheduler = {
+      schedule(callback, delayMs) {
+        if (shouldThrow) {
+          shouldThrow = false;
+          throw new Error('schedule-secret');
+        }
+        return clock.schedule(callback, delayMs);
+      },
+      cancel: (handle) => clock.cancel(handle),
+    };
+    const hover = createKanbanCollapsedHoverController({ scheduler });
+
+    expect(hover.begin(target('alpha'))).toBe(false);
+    expect(hover.snapshot()).toEqual({ kind: 'idle' });
+    expect(hover.begin(target('beta'))).toBe(true);
+    clock.advance(KANBAN_TIMING_DEFAULTS.collapsedSwimlaneHoverMs);
+    expect(hover.snapshot()).toEqual({ kind: 'expanded', swimlaneId: 'beta', temporary: true });
+  });
+
   it('cancels pending work and rejects state-changing operations after disposal', () => {
     const clock = new FakeHoverClock();
     const hover = createKanbanCollapsedHoverController({ scheduler: clock });

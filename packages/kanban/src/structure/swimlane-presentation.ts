@@ -5,7 +5,7 @@ import {
 } from '../contract/data-snapshot.js';
 import { KanbanDisposedResourceError, KanbanInvalidDescriptorError } from '../contract/error.js';
 import { createKanbanColumnId, createKanbanExtensionId, createKanbanSwimlaneId } from '../contract/identity.js';
-import { KANBAN_STRUCTURE_PRESENTATION_LIMITS } from '../contract/limits.js';
+import { KANBAN_LIMITS, KANBAN_STRUCTURE_PRESENTATION_LIMITS } from '../contract/limits.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
@@ -320,15 +320,39 @@ function customDescriptor(value: unknown, availableWidth: number): KanbanSwimlan
 function cacheKey(
   presentation: KanbanCustomSwimlanePresentation,
   swimlane: KanbanSwimlanePresentationSemantic,
+  availableWidth: number,
+  sourceColumns: readonly KanbanSwimlanePresentationColumnInput[],
+  railWidth: number,
 ): string {
   return JSON.stringify([
     'kanban-swimlane-presentation',
-    swimlane.swimlaneId,
-    typeof swimlane.revision,
-    swimlane.revision,
     typeof presentation.revision,
     presentation.revision,
+    swimlane.swimlaneId,
+    swimlane.label,
+    typeof swimlane.revision,
+    swimlane.revision,
+    swimlane.count?.quality,
+    swimlane.count?.quality === 'unknown' || swimlane.count === undefined ? undefined : swimlane.count.value,
+    swimlane.summary?.count,
+    swimlane.summary?.label,
+    availableWidth,
+    railWidth,
+    sourceColumns.map((column) => [column.columnId, column.minimumWidth]),
   ]);
+}
+
+/** Retains one entry under the central per-board descriptor ceiling using deterministic FIFO eviction. */
+function retainCustomResult(
+  cache: Map<string, ResolvedKanbanSwimlanePresentation>,
+  key: string,
+  result: ResolvedKanbanSwimlanePresentation,
+): void {
+  if (cache.size >= KANBAN_LIMITS.retainedDescriptors.safe) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+  cache.set(key, result);
 }
 
 /** Emits one payload-free custom fallback observation without trusting the sink. */
@@ -399,7 +423,7 @@ export function createKanbanSwimlanePresentationResolver(
           columns: allocateColumns(sourceColumns, availableWidth, resolvedRailWidth),
         });
       }
-      const key = cacheKey(input.presentation, semanticValue);
+      const key = cacheKey(input.presentation, semanticValue, availableWidth, sourceColumns, railWidth);
       const cached = customCache.get(key);
       if (cached !== undefined) return cached;
       let result: ResolvedKanbanSwimlanePresentation;
@@ -431,7 +455,7 @@ export function createKanbanSwimlanePresentationResolver(
         observeFallback(options.observe);
         result = customFallback(semanticValue, sourceColumns, availableWidth);
       }
-      customCache.set(key, result);
+      retainCustomResult(customCache, key, result);
       return result;
     },
     dispose(): void {

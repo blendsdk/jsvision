@@ -296,7 +296,12 @@ function registryEntry<TCard>(value: unknown): KanbanGroupingRegistryEntry<TCard
       resolve: (card: TCard): string | undefined => {
         const result: unknown = Reflect.apply(resolveCallback, undefined, [card]);
         if (result !== undefined && typeof result !== 'string') return invalidGrouping();
-        return result;
+        if (result === undefined) return undefined;
+        try {
+          return createKanbanSwimlaneId(result);
+        } catch {
+          return invalidGrouping();
+        }
       },
       ...(styleCallback === undefined
         ? {}

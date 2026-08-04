@@ -1489,6 +1489,8 @@ Application grouping adapter used by the eager source.
 interface KanbanGroupingField<TCard> {
   id: KanbanFieldId;   // Semantic field selected by `query.groupBy`.
   swimlaneOf: (card: TCard) => KanbanSwimlaneId | undefined;   // Returns an optional semantic swimlane identity for one card.
+  unassignedSwimlaneId?: KanbanSwimlaneId;   // Declared semantic target for missing or valid-unmapped values.
+  resolverFallbackSwimlaneId?: KanbanSwimlaneId;   // Declared semantic target for thrown or malformed resolver results.
 }
 ```
 

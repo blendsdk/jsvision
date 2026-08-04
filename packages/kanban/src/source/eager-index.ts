@@ -1,5 +1,10 @@
 import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
-import { createKanbanCardKey, createKanbanExtensionId, createKanbanFieldId } from '../contract/identity.js';
+import {
+  createKanbanCardKey,
+  createKanbanExtensionId,
+  createKanbanFieldId,
+  createKanbanSwimlaneId,
+} from '../contract/identity.js';
 import type {
   CardKey,
   KanbanColumnId,
@@ -9,6 +14,7 @@ import type {
 } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanResolvedLimits } from '../contract/limits.js';
+import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
@@ -31,6 +37,10 @@ export interface KanbanGroupingField<TCard> {
   readonly id: KanbanFieldId;
   /** Returns an optional semantic swimlane identity for one card. */
   readonly swimlaneOf: (card: TCard) => KanbanSwimlaneId | undefined;
+  /** Declared semantic target for missing or valid-unmapped values. */
+  readonly unassignedSwimlaneId?: KanbanSwimlaneId;
+  /** Declared semantic target for thrown or malformed resolver results. */
+  readonly resolverFallbackSwimlaneId?: KanbanSwimlaneId;
 }
 
 /** One explicitly registered filter operation for an application field. */
@@ -256,6 +266,57 @@ function validateCardKey(value: CardKey): CardKey {
   }
 }
 
+/** Emits one payload-free grouping failure without trusting the application observation sink. */
+function observeGroupingFailure(observe: EagerKanbanSourceOptions<unknown>['observe']): void {
+  if (observe === undefined) return;
+  try {
+    observe(createKanbanObservation({ code: 'group-resolver-failed', scope: 'source' }));
+  } catch {
+    // Diagnostics cannot change membership normalization or expose a caught resolver error.
+  }
+}
+
+/** Resolves one grouped card into exactly one declared semantic swimlane. */
+function resolveGroupedSwimlane<TCard>(
+  card: TCard,
+  grouping: KanbanGroupingField<TCard>,
+  swimlaneIds: ReadonlySet<KanbanSwimlaneId>,
+  observe: EagerKanbanSourceOptions<TCard>['observe'],
+): KanbanSwimlaneId {
+  const configured = (value: KanbanSwimlaneId | undefined): KanbanSwimlaneId | undefined => {
+    if (value === undefined) return undefined;
+    const id = createKanbanSwimlaneId(value);
+    if (!swimlaneIds.has(id)) throw new KanbanInvalidSourcePublicationError();
+    return id;
+  };
+  const unassigned = configured(grouping.unassignedSwimlaneId);
+  const fallback = configured(grouping.resolverFallbackSwimlaneId);
+  let candidate: unknown;
+  try {
+    candidate = Reflect.apply(grouping.swimlaneOf, undefined, [card]);
+  } catch {
+    if (fallback === undefined) throw new KanbanInvalidSourcePublicationError();
+    observeGroupingFailure(observe);
+    return fallback;
+  }
+  if (candidate === undefined) {
+    if (unassigned === undefined) throw new KanbanInvalidSourcePublicationError();
+    return unassigned;
+  }
+  let swimlaneId: KanbanSwimlaneId;
+  try {
+    if (typeof candidate !== 'string') throw new KanbanInvalidSourcePublicationError();
+    swimlaneId = createKanbanSwimlaneId(candidate);
+  } catch {
+    if (fallback === undefined) throw new KanbanInvalidSourcePublicationError();
+    observeGroupingFailure(observe);
+    return fallback;
+  }
+  if (swimlaneIds.has(swimlaneId)) return swimlaneId;
+  if (unassigned === undefined) throw new KanbanInvalidSourcePublicationError();
+  return unassigned;
+}
+
 /** Validates comparator output before it can destabilize publication order. */
 function compareCards<TCard>(
   left: { readonly card: TCard; readonly sourceIndex: number },
@@ -382,8 +443,10 @@ export function buildEagerKanbanIndex<TCard>(
     seenKeys.add(key);
     const columnId = options.sourceOptions.columnOf(card);
     if (!columnIds.has(columnId)) throw new KanbanInvalidSourcePublicationError();
-    const swimlaneId = grouping?.swimlaneOf(card);
-    if (swimlaneId !== undefined && !swimlaneIds.has(swimlaneId)) throw new KanbanInvalidSourcePublicationError();
+    const swimlaneId =
+      grouping === undefined
+        ? undefined
+        : resolveGroupedSwimlane(card, grouping, swimlaneIds, options.sourceOptions.observe);
     const address: KanbanCellAddress = Object.freeze(
       swimlaneId === undefined ? { columnId } : { columnId, swimlaneId },
     );
