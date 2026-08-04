@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:34 CEST
-> **Progress**: 36/106 tasks (34%)
+> **Last Updated**: 2026-08-04 17:37 CEST
+> **Progress**: 37/106 tasks (35%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -134,7 +134,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 2.3.1 Add grouping/index/name/visibility/collapse property and failure tests — `packages/kanban/test/workflow-model.impl.test.ts` ✅ (completed: 2026-08-04 17:30 CEST)
 - [x] 2.3.2 Add WIP/DoD/transition boundary and application-authority implementation tests — `packages/kanban/test/workflow-policy.impl.test.ts` ✅ (completed: 2026-08-04 17:34 CEST)
-- [ ] 2.3.3 Add fake-clock hover lease, stale generation, cancellation, and disposal tests — `packages/kanban/test/collapsed-hover.impl.test.ts`
+- [x] 2.3.3 Add fake-clock hover lease, stale generation, cancellation, and disposal tests — `packages/kanban/test/collapsed-hover.impl.test.ts` ✅ (completed: 2026-08-04 17:37 CEST)
 - [ ] 2.3.4 Run Phase 2 build/typecheck/unit/dependency/JSDoc and `yarn verify:local`; resolve quality-loop critical/major findings
 
 **Verify**: `yarn workspace @jsvision/kanban build && yarn workspace @jsvision/kanban typecheck && yarn workspace @jsvision/kanban test && yarn workspace @jsvision/kanban check:deps && yarn workspace @jsvision/kanban check:docs && yarn verify:local`
