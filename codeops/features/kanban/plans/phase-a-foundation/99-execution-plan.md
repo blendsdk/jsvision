@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 05:12 CEST
-> **Progress**: 33/64 tasks (52%)
+> **Last Updated**: 2026-08-04 05:15 CEST
+> **Progress**: 34/64 tasks (53%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -104,7 +104,7 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 - [x] 3.2.4 Implement exhaustive package-local theme roles, immutable theme creation/mapping, safe Phase A fallbacks, revision projection, and basic color-depth/monochrome handling — `packages/kanban/src/card/{theme,theme-resolver}.ts` ✅ (completed: 2026-08-04 05:06)
 - [x] 3.2.5 Implement the typed Phase A catalog schema, English fallback vocabulary, and composition helpers in generator-compatible authored source — `packages/kanban/src/i18n/catalog.ts` ✅ (completed: 2026-08-04 05:09)
 - [x] 3.2.6 Implement Dutch, German, and French typed Phase A catalogs — `packages/kanban/src/i18n/translations/{nl,de,fr}.ts` ✅ (completed: 2026-08-04 05:12)
-- [ ] 3.2.7 Implement Spanish, Italian, and Portuguese typed Phase A catalogs — `packages/kanban/src/i18n/translations/{es,it,pt-PT}.ts`
+- [x] 3.2.7 Implement Spanish, Italian, and Portuguese typed Phase A catalogs — `packages/kanban/src/i18n/translations/{es,it,pt-PT}.ts` ✅ (completed: 2026-08-04 05:15)
 - [ ] 3.2.8 Implement Polish, Romanian, and Swedish catalogs and assemble all ten side-effect-free values for generated wrappers — `packages/kanban/src/i18n/translations/{pl,ro,sv}.ts`, `packages/kanban/src/i18n/locales.ts`
 - [ ] 3.3.1 Add implementation/property tests for descriptor geometry, display-cell clipping/wide glyphs, hostile fields, throwing adapters/renderers, role validation, catalog parity, and fallback determinism; make Phase 3 specs green; run Kanban build/typecheck/unit/JSDoc checks, `yarn verify:local`, `yarn plugin:check`, and phase reviewer/auditor loop — `packages/kanban/test/{descriptor,theme,i18n}.impl.test.ts`
 
