@@ -111,6 +111,16 @@ export interface EagerKanbanCardEntry<TCard> {
   readonly index: number;
 }
 
+/** Allocation evidence proving eager indexing scales with occupied semantic cells. */
+export interface EagerKanbanAllocationCounts {
+  /** Canonical address records retained for occupied cells. */
+  readonly addresses: number;
+  /** Matching-card buckets retained for occupied cells. */
+  readonly matchingCellBuckets: number;
+  /** Authoritative-card buckets retained for occupied cells. */
+  readonly authoritativeCellBuckets: number;
+}
+
 /** Complete immutable eager derivation for one source/query revision. */
 export interface EagerKanbanIndex<TCard> {
   /** Equality-only revision of this complete derivation. */
@@ -119,6 +129,8 @@ export interface EagerKanbanIndex<TCard> {
   readonly columns: readonly KanbanColumnMeta[];
   /** Ordered detached semantic swimlanes. */
   readonly swimlanes: readonly KanbanSwimlaneMeta[];
+  /** Whether this derivation uses one registered grouping field. */
+  readonly grouped: boolean;
   /** Matching original card references indexed by canonical cell address. */
   readonly cells: ReadonlyMap<string, readonly TCard[]>;
   /** Matching stable card keys in the same per-cell order. */
@@ -139,6 +151,8 @@ export interface EagerKanbanIndex<TCard> {
   readonly columnSummaries: ReadonlyMap<KanbanColumnId, Readonly<Record<string, KanbanNumericSummary>>>;
   /** Honest numeric summaries projected to ordered swimlane headers. */
   readonly swimlaneSummaries: ReadonlyMap<KanbanSwimlaneId, Readonly<Record<string, KanbanNumericSummary>>>;
+  /** Bounded internal allocation evidence exposed for scale regression tests. */
+  readonly allocationCounts: EagerKanbanAllocationCounts;
 }
 
 /** Internal options required to build one eager derivation. */
@@ -267,25 +281,6 @@ function compareCards<TCard>(
   return left.sourceIndex - right.sourceIndex;
 }
 
-/** Creates a detached empty cell array for every declared structural address. */
-function initializeAddresses(
-  columns: readonly KanbanColumnMeta[],
-  swimlanes: readonly KanbanSwimlaneMeta[],
-  grouped: boolean,
-): ReadonlyMap<string, KanbanCellAddress> {
-  const addresses = new Map<string, KanbanCellAddress>();
-  for (const column of columns) {
-    const ungroupedAddress = Object.freeze({ columnId: column.columnId });
-    addresses.set(canonicalizeKanbanCellAddress(ungroupedAddress), ungroupedAddress);
-    if (!grouped) continue;
-    for (const swimlane of swimlanes) {
-      const address = Object.freeze({ columnId: column.columnId, swimlaneId: swimlane.swimlaneId });
-      addresses.set(canonicalizeKanbanCellAddress(address), address);
-    }
-  }
-  return addresses;
-}
-
 /** Aggregates finite optional numeric contributions without delegating an arbitrary reducer. */
 function aggregateSummary<TCard>(cards: readonly TCard[], adapter: KanbanSummaryAdapter<TCard>): KanbanNumericSummary {
   let sum = 0;
@@ -363,17 +358,13 @@ export function buildEagerKanbanIndex<TCard>(
   }
 
   type IndexedCard = { readonly card: TCard; readonly key: CardKey; readonly sourceIndex: number };
-  const addresses = initializeAddresses(columns, swimlanes, grouping !== undefined);
+  const addresses = new Map<string, KanbanCellAddress>();
   const cells = new Map<string, IndexedCard[]>();
   const authoritativeCells = new Map<string, TCard[]>();
   const authoritativeColumns = new Map<KanbanColumnId, TCard[]>();
   const loadedColumns = new Map<KanbanColumnId, TCard[]>();
   const authoritativeSwimlanes = new Map<KanbanSwimlaneId, TCard[]>();
   const loadedSwimlanes = new Map<KanbanSwimlaneId, TCard[]>();
-  for (const key of addresses.keys()) {
-    cells.set(key, []);
-    authoritativeCells.set(key, []);
-  }
   for (const column of columns) {
     authoritativeColumns.set(column.columnId, []);
     loadedColumns.set(column.columnId, []);
@@ -393,10 +384,17 @@ export function buildEagerKanbanIndex<TCard>(
     if (!columnIds.has(columnId)) throw new KanbanInvalidSourcePublicationError();
     const swimlaneId = grouping?.swimlaneOf(card);
     if (swimlaneId !== undefined && !swimlaneIds.has(swimlaneId)) throw new KanbanInvalidSourcePublicationError();
-    const address = swimlaneId === undefined ? { columnId } : { columnId, swimlaneId };
+    const address: KanbanCellAddress = Object.freeze(
+      swimlaneId === undefined ? { columnId } : { columnId, swimlaneId },
+    );
     const addressKey = canonicalizeKanbanCellAddress(address);
-    const authoritativeCell = authoritativeCells.get(addressKey);
-    if (authoritativeCell === undefined) throw new KanbanInvalidSourcePublicationError();
+    let authoritativeCell = authoritativeCells.get(addressKey);
+    if (authoritativeCell === undefined) {
+      authoritativeCell = [];
+      authoritativeCells.set(addressKey, authoritativeCell);
+      cells.set(addressKey, []);
+      addresses.set(addressKey, address);
+    }
     authoritativeCell.push(card);
     authoritativeColumns.get(columnId)?.push(card);
     if (swimlaneId !== undefined) authoritativeSwimlanes.get(swimlaneId)?.push(card);
@@ -430,7 +428,9 @@ export function buildEagerKanbanIndex<TCard>(
   const entries = new Map<CardKey, EagerKanbanCardEntry<TCard>>();
   const summaries = new Map<string, Readonly<Record<string, KanbanNumericSummary>>>();
   const cellTotals = new Map<string, number>();
-  for (const [addressKey, indexedCards] of cells) {
+  for (const [addressKey, authoritative] of authoritativeCells) {
+    const indexedCards = cells.get(addressKey);
+    if (indexedCards === undefined) throw new KanbanInvalidSourcePublicationError();
     indexedCards.sort((left, right) =>
       compareCards(left, right, options.query, sortFields, options.sourceOptions.compare),
     );
@@ -445,8 +445,6 @@ export function buildEagerKanbanIndex<TCard>(
         Object.freeze({ card: entry.card, key: entry.key, address: Object.freeze(address), index }),
       );
     }
-    const authoritative = authoritativeCells.get(addressKey);
-    if (authoritative === undefined) throw new KanbanInvalidSourcePublicationError();
     cellTotals.set(addressKey, authoritative.length);
     summaries.set(addressKey, aggregateSummaries(authoritative, published, summaryAdapters));
   }
@@ -478,6 +476,7 @@ export function buildEagerKanbanIndex<TCard>(
     revision: options.revision,
     columns,
     swimlanes,
+    grouped: grouping !== undefined,
     cells: publishedCells,
     cellKeys: publishedCellKeys,
     cellTotals,
@@ -488,6 +487,11 @@ export function buildEagerKanbanIndex<TCard>(
     summaries,
     columnSummaries,
     swimlaneSummaries,
+    allocationCounts: Object.freeze({
+      addresses: addresses.size,
+      matchingCellBuckets: cells.size,
+      authoritativeCellBuckets: authoritativeCells.size,
+    }),
   });
 }
 

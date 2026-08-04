@@ -383,7 +383,11 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
   cell(address: KanbanCellAddress): KanbanCellCursor<TCard> {
     const snapshot = snapshotKanbanCellAddress(address);
     const derivation = this.#read();
-    if (!derivation.index.cells.has(canonicalizeKanbanCellAddress(snapshot))) {
+    const columnExists = derivation.index.columns.some((column) => column.columnId === snapshot.columnId);
+    const swimlaneExists =
+      snapshot.swimlaneId === undefined ||
+      derivation.index.swimlanes.some((swimlane) => swimlane.swimlaneId === snapshot.swimlaneId);
+    if (!columnExists || !swimlaneExists || (!derivation.index.grouped && snapshot.swimlaneId !== undefined)) {
       throw new KanbanInvalidSourcePublicationError();
     }
     const cursor = new EagerKanbanCursor(
@@ -475,6 +479,7 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
         revision: this.#nextRevision(),
         columns: Object.freeze([]),
         swimlanes: Object.freeze([]),
+        grouped: false,
         cells: new Map(),
         cellKeys: new Map(),
         cellTotals: new Map(),
@@ -485,6 +490,11 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
         summaries: new Map(),
         columnSummaries: new Map(),
         swimlaneSummaries: new Map(),
+        allocationCounts: Object.freeze({
+          addresses: 0,
+          matchingCellBuckets: 0,
+          authoritativeCellBuckets: 0,
+        }),
       });
       this.#last = Object.freeze({ index, identityChanges: Object.freeze([]) });
       return this.#last;
