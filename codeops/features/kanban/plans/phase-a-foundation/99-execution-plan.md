@@ -175,7 +175,11 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     assertions for the absent Kanban package/category/page and its 229 uncovered exports. The
     source-impact/plugin oracle reports four expected failures for absent i18n routing, absent
     dedicated Kanban routing, generated-copy drift, and the not-yet-updated localized recipe.
-- [ ] 5.1.4 Run Phase 5 distribution/docs/i18n/plugin specifications and record expected red failures before registry/documentation changes
+- [x] 5.1.4 Run Phase 5 distribution/docs/i18n/plugin specifications and record expected red failures before registry/documentation changes ✅ (completed: 2026-08-04 09:32 CEST)
+  - Red evidence: the combined six-file Phase 5 oracle executes 28 assertions with 14 expected red
+    and 14 green. Failures are limited to the absent docs/API/package registrations, twenty absent
+    generated locale artifacts, absent sixth locale registry/reviews/recipe entry, absent canonical
+    Kanban API/source-impact routing, and expected generated-copy drift.
 - [ ] 5.2.1 Complete package README/changelog/public examples and rerun the already-green Phase 1 contract-only packed-consumer oracle against the complete Phase A package; run dependency, native-dependency, main/testing tarball runtime/type, and JSDoc checks — `packages/kanban/{README,CHANGELOG}.md`, `packages/kanban/test/package-consumer-contract.spec.test.ts`, `packages/kanban/test/fixtures/packed-consumer/{package,tsconfig}.json`, `packages/kanban/test/fixtures/packed-consumer/index.ts`
 - [ ] 5.2.2 Add Kanban to the official locale registry and add disclosed current digest-bound review evidence for all nine non-English Phase A catalogs — `tools/i18n-locale-exports.json`, `tools/i18n-translation-reviews.json`
 - [ ] 5.2.3 Run locale generation/check plus literal and translation-review checks; inspect generator-owned `packages/kanban/src/locales/*.ts` wrappers, make the complete ST-R01-02 tarball runtime/type/export-map oracle green, and preserve the atomic official-catalog invariant — `packages/kanban/test/package-consumer.spec.test.ts`
