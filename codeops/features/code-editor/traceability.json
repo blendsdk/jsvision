@@ -2490,7 +2490,7 @@
         "summary:The user approved Code Editor internationalization before the broad translated-layout sweep and delegated technical design authority."
       ],
       "id": "PLAN-I18N",
-      "revision": "sha256:c3310e88522feab7a40c17407b7bf3158ddabf89506f10fba5913af71cbd2495",
+      "revision": "sha256:78043151d27de52649083e24b6100e60884a5d2ef0205535a22322ba8c8d800a",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2536,7 +2536,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:3ab63f15fc83d7f73632f3f20277da2099909cdb97eb0b0c3d8f0ad09719ae45",
+          "revision": "sha256:e37e7894e534f233d6330aaf83306e71b3efd6d750a610861eb054be6986db55",
           "upstream": "code-editor/I18N-TASK-PHASE-3",
           "validatedAt": "2026-07-26T11:21:00Z"
         }
@@ -2600,7 +2600,7 @@
     {
       "edges": [],
       "id": "AMB-I18N",
-      "revision": "sha256:24f34bf2cae20a8e6a1ca1eff799923e8cd159a3166d98189b4f52ae3cd4bf41",
+      "revision": "sha256:ae8e00318bbc38e0fabefefab2d1a98276ae4b4156b08fd3624b6e1d6f751369",
       "risk": "high",
       "semanticSources": [
         {
@@ -2673,7 +2673,7 @@
         "summary:Independent reviewer and auditor closed all critical/major findings; all 45 catalogs received disclosed AI-assisted review on 2026-07-28, while the #185 geometry harness remains a follow-up gate."
       ],
       "id": "I18N-TASK-PHASE-3",
-      "revision": "sha256:3ab63f15fc83d7f73632f3f20277da2099909cdb97eb0b0c3d8f0ad09719ae45",
+      "revision": "sha256:e37e7894e534f233d6330aaf83306e71b3efd6d750a610861eb054be6986db55",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2692,5 +2692,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-26T11:21:00Z"
+  "updated": "2026-08-04T11:45:46Z"
 }

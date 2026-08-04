@@ -12,7 +12,7 @@
         "clipboard-native/RD-02",
         "clipboard-native/RD-03"
       ],
-      "revision": "sha256:9684fc3ca2718aca86dc1d064d7e248ba7735e25e12d523063e51447ae3864ff",
+      "revision": "sha256:996ec7e5643e6d027534f8046d135dc2457850d76df9c0d624e00fb729c3785e",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -258,7 +258,7 @@
         "summary:Approved issue #191 requirement with resolved acceptance and dependency semantics"
       ],
       "id": "RD-02",
-      "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+      "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -276,14 +276,14 @@
         {
           "gate": "requirements",
           "relation": "accepted-by",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/CRIT-02",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
         {
           "gate": "plan",
           "relation": "accepted-by",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/CRIT-02",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
@@ -304,14 +304,14 @@
         {
           "gate": "plan",
           "relation": "specified-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/SPEC-04",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
         {
           "gate": "execution",
           "relation": "accepted-by",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/CRIT-02",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
@@ -325,7 +325,7 @@
         {
           "gate": "execution",
           "relation": "specified-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/SPEC-04",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         }
@@ -394,7 +394,7 @@
         "summary:Approved issue #191 requirement with resolved acceptance and dependency semantics"
       ],
       "id": "RD-03",
-      "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+      "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -412,14 +412,14 @@
         {
           "gate": "requirements",
           "relation": "accepted-by",
-          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
           "upstream": "clipboard-native/CRIT-03",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
         {
           "gate": "plan",
           "relation": "accepted-by",
-          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
           "upstream": "clipboard-native/CRIT-03",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
@@ -440,14 +440,14 @@
         {
           "gate": "requirements",
           "relation": "depends-on",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/RD-02",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
         {
           "gate": "plan",
           "relation": "depends-on",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/RD-02",
           "validatedAt": "2026-07-28T13:55:00Z"
         },
@@ -461,7 +461,7 @@
         {
           "gate": "execution",
           "relation": "accepted-by",
-          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
           "upstream": "clipboard-native/CRIT-03",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
@@ -475,7 +475,7 @@
         {
           "gate": "execution",
           "relation": "depends-on",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/RD-02",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
@@ -528,7 +528,7 @@
         }
       ],
       "id": "CRIT-02",
-      "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+      "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -552,7 +552,7 @@
         }
       ],
       "id": "CRIT-03",
-      "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+      "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -571,7 +571,7 @@
     {
       "edges": [],
       "id": "AR-01",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -591,7 +591,7 @@
     {
       "edges": [],
       "id": "AR-02",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -611,7 +611,7 @@
     {
       "edges": [],
       "id": "AR-03",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -631,7 +631,7 @@
     {
       "edges": [],
       "id": "AR-04",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -651,7 +651,7 @@
     {
       "edges": [],
       "id": "AR-05",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -671,7 +671,7 @@
     {
       "edges": [],
       "id": "AR-06",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -691,7 +691,7 @@
     {
       "edges": [],
       "id": "AR-07",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -711,7 +711,7 @@
     {
       "edges": [],
       "id": "AR-08",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -731,7 +731,7 @@
     {
       "edges": [],
       "id": "AR-09",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -751,7 +751,7 @@
     {
       "edges": [],
       "id": "AR-10",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -771,7 +771,7 @@
     {
       "edges": [],
       "id": "AR-11",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -791,7 +791,7 @@
     {
       "edges": [],
       "id": "AR-12",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -811,7 +811,7 @@
     {
       "edges": [],
       "id": "AR-13",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -831,7 +831,7 @@
     {
       "edges": [],
       "id": "AR-14",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -851,7 +851,7 @@
     {
       "edges": [],
       "id": "AR-15",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -871,7 +871,7 @@
     {
       "edges": [],
       "id": "AR-16",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -891,7 +891,7 @@
     {
       "edges": [],
       "id": "AR-17",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -911,7 +911,7 @@
     {
       "edges": [],
       "id": "AR-18",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "medium",
       "semanticSources": [
         {
@@ -931,7 +931,7 @@
     {
       "edges": [],
       "id": "AR-19",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -951,7 +951,7 @@
     {
       "edges": [],
       "id": "AR-20",
-      "revision": "sha256:24303ff80af882c83130d582f07fade007a27187a045ec896aab1946960433d9",
+      "revision": "sha256:58b094c76db7ac4f1bd4f30b60dc75d5e2d6e5966c8e2cc6080f2f881d4b1fcc",
       "risk": "high",
       "semanticSources": [
         {
@@ -979,7 +979,7 @@
         "clipboard-native/RD-02",
         "clipboard-native/RD-03"
       ],
-      "revision": "sha256:b4f9142aeb55aeca018670c565af7bb6b0a46245489eaa08f08c30e721575c70",
+      "revision": "sha256:b1b7f112702377417abe2dc09f6e2a13d8b026755d957bc5ee037f34833a74aa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1055,7 +1055,7 @@
     {
       "edges": [],
       "id": "SPEC-04",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1540,7 +1540,7 @@
         "verificationEvidence:npm registry metadata and official clipboardy documentation confirm 5.3.2, Node >=20, MIT, async text APIs, platform helpers, and headless limits"
       ],
       "id": "TASK-3-1-1",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1563,7 +1563,7 @@
         "verificationEvidence:Six requirements-derived cases cover raw strings, empty text, headless isolation, failure propagation, ordering, lifecycle, and payload-free fallback"
       ],
       "id": "TASK-3-1-2",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1586,7 +1586,7 @@
         "verificationEvidence:Focused run failed exactly because tvedit-demo/native-clipboard.js and its factory do not exist; 1 failed file, 0 tests collected"
       ],
       "id": "TASK-3-1-3",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1610,7 +1610,7 @@
         "verificationEvidence:Examples typecheck, six immutable adapter specifications, and headless tvedit E2E pass; yarn why and manifest scan prove examples-only ownership"
       ],
       "id": "TASK-3-2-1",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1634,7 +1634,7 @@
         "verificationEvidence:11 adapter tests, headless E2E, examples typecheck, zero-vulnerability audit, plugin integrity, and full yarn verify pass; unavailable manual environments recorded"
       ],
       "id": "TASK-3-3-1",
-      "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+      "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1793,7 +1793,7 @@
     {
       "edges": [],
       "id": "PAR-01",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -1813,7 +1813,7 @@
     {
       "edges": [],
       "id": "PAR-02",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -1833,7 +1833,7 @@
     {
       "edges": [],
       "id": "PAR-03",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -1853,7 +1853,7 @@
     {
       "edges": [],
       "id": "PAR-04",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1873,7 +1873,7 @@
     {
       "edges": [],
       "id": "PAR-05",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1893,7 +1893,7 @@
     {
       "edges": [],
       "id": "PAR-06",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1913,7 +1913,7 @@
     {
       "edges": [],
       "id": "PAR-07",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1933,7 +1933,7 @@
     {
       "edges": [],
       "id": "PAR-08",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1953,7 +1953,7 @@
     {
       "edges": [],
       "id": "PAR-09",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -1973,7 +1973,7 @@
     {
       "edges": [],
       "id": "PAR-10",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -1993,7 +1993,7 @@
     {
       "edges": [],
       "id": "PAR-11",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -2013,7 +2013,7 @@
     {
       "edges": [],
       "id": "PAR-12",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -2033,7 +2033,7 @@
     {
       "edges": [],
       "id": "PAR-13",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -2053,7 +2053,7 @@
     {
       "edges": [],
       "id": "PAR-14",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "medium",
       "semanticSources": [
         {
@@ -2073,7 +2073,7 @@
     {
       "edges": [],
       "id": "PAR-15",
-      "revision": "sha256:c4b9134dc57378a329b6ff196b553c63b3619ff6fa51383519b28a0e4afcc4cb",
+      "revision": "sha256:dcd6c15ea561f889e25099603d8dd2fd25931d37d1789d213a1187f124712292",
       "risk": "high",
       "semanticSources": [
         {
@@ -2273,7 +2273,7 @@
         "entryEvidence:develop baseline 440485496; issue #191 and merged PR #190 reviewed; modification set recorded in 00-index.md"
       ],
       "id": "PLAN-NATIVE",
-      "revision": "sha256:b4f9142aeb55aeca018670c565af7bb6b0a46245489eaa08f08c30e721575c70",
+      "revision": "sha256:b1b7f112702377417abe2dc09f6e2a13d8b026755d957bc5ee037f34833a74aa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2298,14 +2298,14 @@
         {
           "gate": "execution",
           "relation": "depends-on",
-          "revision": "sha256:2c0af89e5f3fa61ca56a3beda01c2e46166bc51c710cd2a89db882724acd8904",
+          "revision": "sha256:3c6fb4307dad4b973d17b37a7cef167164e3ff3eeb2fcf98cb7940dd522902a1",
           "upstream": "clipboard-native/RD-02",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
         {
           "gate": "execution",
           "relation": "depends-on",
-          "revision": "sha256:0edd41836cd1e332af21f6354f01c4da408c115b682cb99838101d9fb34851ee",
+          "revision": "sha256:77d2a3bfa9242017ab5f5339c4ae9736dd0a7420a1c55924a954859002273a57",
           "upstream": "clipboard-native/RD-03",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
@@ -2417,35 +2417,35 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/TASK-3-1-1",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/TASK-3-1-2",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/TASK-3-1-3",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/TASK-3-2-1",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:2cee8095bfca0a29cf3378cd684fdb1d23b50ba531d46d56b229fd8cb3f2a9b8",
+          "revision": "sha256:8035c6f9add97195f3afb4e3a2396521aab284b33b17f0b5ae9aee7a5a3c8433",
           "upstream": "clipboard-native/TASK-3-3-1",
           "validatedAt": "2026-07-28T15:30:52.324Z"
         },
@@ -2495,5 +2495,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-28T15:32:35.294Z"
+  "updated": "2026-08-04T11:45:46Z"
 }
