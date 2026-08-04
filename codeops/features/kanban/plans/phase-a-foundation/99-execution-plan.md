@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 02:53 CEST
-> **Progress**: 19/64 tasks (30%)
+> **Last Updated**: 2026-08-04 03:03 CEST
+> **Progress**: 20/64 tasks (31%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -75,7 +75,7 @@ validation contracts. No mounted board behavior is claimed.
 - [x] 2.2.1 Implement documented source/query-session/cursor interfaces, the optional revision-bound locator contract, source/cell state, and honest count-quality unions — `packages/kanban/src/source/{types,states,counts}.ts` ✅ (completed: 2026-08-04 02:32)
 - [x] 2.2.2 Implement collision-safe cell addresses, identity-change and placement unions/token checks, and source-publication boundary validation — `packages/kanban/src/source/{address,placement,validation}.ts` ✅ (completed: 2026-08-04 02:42)
 - [x] 2.2.3 Implement the private generation-owned session coordinator, explicit visible/overscan/prefetch retention owners, bounded load scheduler, and generation-before-abort disposal order — `packages/kanban/src/source/{session-coordinator,load-scheduler}.ts` ✅ (completed: 2026-08-04 02:53)
-- [ ] 2.2.4 Implement cursor range normalization/coalescing, revision-scoped placement validation, stale continuation suppression, scoped retry/error handling, and idempotent cleanup — `packages/kanban/src/source/{cursor-coordinator,range-set}.ts`
+- [x] 2.2.4 Implement cursor range normalization/coalescing, revision-scoped placement validation, stale continuation suppression, scoped retry/error handling, and idempotent cleanup — `packages/kanban/src/source/{cursor-coordinator,range-set}.ts` ✅ (completed: 2026-08-04 03:03)
 - [ ] 2.2.5 Implement the reactive eager source transaction with validation, stable ordering, exact counts, per-cell indexes, placement, and last-valid publication retention — `packages/kanban/src/source/{eager-source,eager-index}.ts`
 - [ ] 2.2.6 Implement documented deterministic eager/windowed/revision/deferred/instrumentation helpers in the testing entry without production imports reaching them — `packages/kanban/src/testing/{eager-fixture,windowed-fixture,instrumentation}.ts`
 - [ ] 2.3.1 Add implementation/property tests for stable sorting, duplicate/unknown IDs, range arithmetic, scheduler concurrency, cursor retention transitions, disposal ordering, late results, exact/unknown counts, and payload redaction — `packages/kanban/test/{source-lifecycle,eager-index}.impl.test.ts`
