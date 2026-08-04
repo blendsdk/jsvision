@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 05:50 CEST
-> **Progress**: 36/64 tasks (56%)
+> **Last Updated**: 2026-08-04 06:03 CEST
+> **Progress**: 37/64 tasks (58%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -115,13 +115,15 @@ card renderer required by the Phase A slice.
 
 ## Phase 4: Responsive viewport and board integration
 
+> **Phase baseline tree**: d6893e1fe2a1bdd10c2acc3725579362be0dbe29
+>
 > **Expected modification set**: Pure layout/projection modules; descriptor cache; identity projection;
 > viewport/board components; real headless E2E and implementation tests
 >
 > **Reference**: 03-05; all RD-03 criteria; RD01-AC01, AC03–04, AC06; RD02 integration; RD05-AC01/18;
 > PAR-12–PAR-14, PAR-21–PAR-23
 
-- [ ] 4.1.1 `[spec-author]` Add immutable ST-R03-01/02, ST-R03-05–07, ST-R03-11/12, and ST-A-LAYOUT-01 width/vertical-layout specifications — `packages/kanban/test/layout.spec.test.ts`
+- [x] 4.1.1 `[spec-author]` Add immutable ST-R03-01/02, ST-R03-05–07, ST-R03-11/12, and ST-A-LAYOUT-01 width/vertical-layout specifications — `packages/kanban/test/layout.spec.test.ts` ✅ (completed: 2026-08-04 06:03)
 - [ ] 4.1.2 `[spec-author]` Add immutable ST-R01-01/03/04/06, ST-R02-02/03/07/13, ST-R03-08/10/14/15, ST-A-COLUMN-01/02, and ST-A-VIEWPORT-LIFECYCLE-01 viewport/board specifications; ST-R01-01 uses an isolated NodeNext fixture and invokes consumer `tsc` before Board implementation — `packages/kanban/test/{viewport,board}.spec.test.ts`, `packages/kanban/test/fixtures/consumer-board-types/{package,tsconfig}.json`, `packages/kanban/test/fixtures/consumer-board-types/index.ts`
 - [ ] 4.1.3 `[spec-author]` Add real headless ST-R03-03/04/09/13 E2E specifications for hosting, resize/maximize/restore, reactive i18n replacement, long locale/wide glyphs, monochrome, reorder/removal, and clipping — `packages/kanban/test/e2e/board-hosting.e2e.test.ts`
 - [ ] 4.1.4 Run Phase 4 specifications/E2E and record expected red failures before layout/UI production changes
