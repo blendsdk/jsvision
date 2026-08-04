@@ -29,6 +29,7 @@ export * from './layout/scroll-model.js';
 export * from './layout/vertical-projector.js';
 export * from './layout/width-solver.js';
 export * from './board/kanban-viewport.js';
+export type { KanbanViewportInspection } from './board/viewport-inspection.js';
 export type { KanbanOverscanOptions } from './board/viewport-source.js';
 export type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './board/viewport-scroll.js';
 export * from './source/address.js';

@@ -12,16 +12,14 @@ import { KanbanDisposedResourceError } from '../contract/error.js';
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
-import type {
-  KanbanActionTarget,
-  KanbanInspectedCard,
-  KanbanInspectedCell,
-  KanbanInspectedColumn,
-} from '../layout/hit-map.js';
+import type { KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanDataSource, KanbanQuery } from '../source/types.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
+import { calculateKanbanViewportDamage } from './viewport-damage.js';
+import { createKanbanViewportInspection } from './viewport-inspection.js';
+import type { KanbanViewportInspection } from './viewport-inspection.js';
 import { createKanbanViewportMetrics } from './viewport-metrics.js';
 import { projectKanbanViewport } from './viewport-projector.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
@@ -33,7 +31,6 @@ import {
   snapshotKanbanRevealKey,
 } from './viewport-scroll.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
-import type { KanbanCellState } from '../source/states.js';
 import { KanbanViewportSource } from './viewport-source.js';
 import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
 
@@ -78,18 +75,6 @@ export interface KanbanViewportOptions<TCard> {
   readonly collapsedColumnIds?: () => readonly string[];
 }
 
-/** Detached read-only viewport evidence for tests and modeless diagnostics. */
-export interface KanbanViewportInspection {
-  /** Retained source cells and their safe lifecycle states. */
-  readonly cells: readonly KanbanInspectedCell[];
-  /** Complete sanitized source columns intersecting the viewport. */
-  readonly visibleColumns: readonly KanbanInspectedColumn[];
-  /** Resident cards projected in the viewport. */
-  readonly visibleCards: readonly KanbanInspectedCard[];
-  /** Phase A exposes no actionable pointer targets. */
-  readonly actionTargets: readonly KanbanActionTarget[];
-}
-
 /** Creates an immutable empty metric snapshot before the first mounted projection. */
 function emptyMetrics(): KanbanViewportMetrics {
   return Object.freeze({
@@ -116,6 +101,8 @@ export class KanbanViewport<TCard> extends View {
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
   #projection: KanbanViewportProjection | undefined;
+  #projectionOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
+  #damage: readonly KanbanDamageRegion[] = Object.freeze([]);
   #metrics: KanbanViewportMetrics = emptyMetrics();
   readonly #descriptorCache = new KanbanDescriptorCache(KANBAN_VIEWPORT_DESCRIPTOR_LIMIT);
   readonly #defaultI18n = createEnglishKanbanI18n();
@@ -181,7 +168,15 @@ export class KanbanViewport<TCard> extends View {
       ...(this.#options.identity === undefined ? {} : { identity: this.#options.identity() }),
       ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
     });
+    this.#damage = calculateKanbanViewportDamage({
+      ...(this.#projection === undefined ? {} : { previous: this.#projection }),
+      current: projection,
+      bounds: { x: 0, y: 0, width: this.bounds.width, height: this.bounds.height },
+      previousOffsets: this.#projectionOffsets,
+      currentOffsets: this.#metrics.offsets,
+    });
     this.#projection = projection;
+    this.#projectionOffsets = this.#metrics.offsets;
     drawKanbanViewport(ctx, projection, theme);
     this.#updateMetrics(snapshot, projection);
   }
@@ -280,50 +275,7 @@ export class KanbanViewport<TCard> extends View {
 
   /** Returns detached source-state evidence without application records or actionable targets. */
   inspection(): KanbanViewportInspection {
-    const snapshot = this.#snapshot;
-    if (snapshot === undefined) {
-      return Object.freeze({
-        cells: Object.freeze([]),
-        visibleColumns: Object.freeze([]),
-        visibleCards: Object.freeze([]),
-        actionTargets: Object.freeze([]),
-      });
-    }
-    return Object.freeze({
-      cells: Object.freeze(
-        snapshot.cells.map((cell) => {
-          const sourceState = cell.cursor.state();
-          const loaded = cell.cursor.counts().loaded;
-          const state: KanbanCellState =
-            sourceState.kind === 'partial' &&
-            (cell.cursor.hasRange(cell.range.start, cell.range.end) ||
-              (loaded.quality === 'exact' && loaded.value >= cell.range.end - cell.range.start))
-              ? Object.freeze({ kind: 'ready' })
-              : sourceState;
-          return Object.freeze({ address: cell.address, state });
-        }),
-      ),
-      visibleColumns: Object.freeze(
-        (this.#projection?.columns ?? snapshot.visibleColumns).map((column) =>
-          Object.freeze({ columnId: column.columnId, label: column.label }),
-        ),
-      ),
-      visibleCards: Object.freeze(
-        (this.#projection?.cards ?? []).map((card) => {
-          const title = card.descriptor.rows
-            .filter((row) => row.section === 'title')
-            .flatMap((row) => row.spans.map((span) => span.text))
-            .join(' ');
-          return Object.freeze({
-            cardKey: card.descriptor.cardKey,
-            columnId: card.columnId,
-            title,
-            marker: Object.freeze({ cues: card.descriptor.marker.cues }),
-          });
-        }),
-      ),
-      actionTargets: this.#projection?.actionTargets ?? Object.freeze([]),
-    });
+    return createKanbanViewportInspection(this.#snapshot, this.#projection, this.#damage);
   }
 
   /** Releases the complete standalone source lifecycle idempotently. */
@@ -337,6 +289,7 @@ export class KanbanViewport<TCard> extends View {
     this.#source = undefined;
     this.#snapshot = undefined;
     this.#projection = undefined;
+    this.#damage = Object.freeze([]);
   }
 
   /** Performs one bounded refresh using current assigned geometry. */
