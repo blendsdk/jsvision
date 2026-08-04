@@ -4,7 +4,7 @@
 // is validated once by the uncached `plugin:check` step at the end of the repository-wide verify
 // command, where TypeScript API extraction is not constrained by a per-test timeout.
 
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
@@ -16,8 +16,13 @@ import {
   checkGotchas,
   checkLinksInDir,
   checkManifestData,
+  checkTreesEqual,
   countGotchas,
 } from '../../../scripts/check-plugin.mjs';
+import { checkPluginImpact, readImpactRegistry } from '../../../scripts/plugin-impact.mjs';
+
+const CANONICAL_SKILL = fileURLToPath(new URL('../../../tools/jsvision-skill/', import.meta.url));
+const DISTRIBUTED_SKILL = fileURLToPath(new URL('../../../plugins/jsvision-plugin/skills/jsvision/', import.meta.url));
 
 // ST-13 — a reference file linking to a missing target fails, naming the file + dead target.
 test('ST-13: a dead link is reported with the file and the missing target', () => {
@@ -117,4 +122,29 @@ test('ST-19: archetype validation catches malformed archetype directories', () =
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// ST-28 — every canonical reference routed from Data Grid source changes must be reviewed and the
+// distributed plugin must remain a byte-for-byte assembly of that canonical content.
+test('ST-28: Data Grid source impact and distributed plugin references are synchronized', () => {
+  const registry = readImpactRegistry() as {
+    readonly areas: readonly {
+      readonly name: string;
+      readonly paths: readonly string[];
+      readonly references: readonly string[];
+    }[];
+  };
+  const areas = registry.areas.filter((area) => area.paths.includes('packages/datagrid/src'));
+  expect(areas.map((area) => area.name)).toEqual(expect.arrayContaining(['datagrid', 'internationalization']));
+
+  const areaNames = new Set(areas.map((area) => area.name));
+  expect(checkPluginImpact().filter((finding) => areaNames.has(finding.name))).toEqual([]);
+
+  const references = new Set(areas.flatMap((area) => area.references));
+  for (const reference of references) {
+    expect(readFileSync(join(DISTRIBUTED_SKILL, reference), 'utf8')).toBe(
+      readFileSync(join(CANONICAL_SKILL, reference), 'utf8'),
+    );
+  }
+  expect(checkTreesEqual(CANONICAL_SKILL, DISTRIBUTED_SKILL)).toEqual([]);
 });

@@ -6,6 +6,7 @@
 // generation (no drift), generation is deterministic, and the pages carry real signatures.
 // Immutable oracle: if a generated page disagrees, the generator is wrong — never this test.
 
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
@@ -27,6 +28,7 @@ const DATAGRID = entry('../../datagrid/src/index.ts');
 const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
+const COMMITTED_DATAGRID_API = entry('../../../tools/jsvision-skill/references/api/datagrid.md');
 
 // Generate once (each generation runs the TypeScript compiler over six barrels) and reuse.
 const generated = generateApiDocs();
@@ -94,4 +96,28 @@ test('ST-A7: API ordering is code-point deterministic and drift identifies the f
   expect(firstLineDifference('same\nold\nlast\n', 'same\nnew\nlast\n')).toBe(
     'line 2: committed "old"; generated "new"',
   );
+});
+
+// ST-27B — the committed API page is the immutable public contract for atomic row-session revert.
+test('ST-27B: committed Data Grid API pins atomic row-revert vocabulary and timing', () => {
+  const page = readFileSync(COMMITTED_DATAGRID_API, 'utf8');
+
+  expect(page).toContain('onRevertRow?: OnRevertRow<T>');
+  expect(page).toContain("| 'revertRow'");
+  expect(page).toContain('type OnRevertRow<T> = (change: RowRevert<T>) => boolean | Promise<boolean>');
+  expect(page).toContain('interface RowRevert<T>');
+  expect(page).toContain('row: T;   // Original row object with every restored baseline already applied.');
+  expect(page).toContain(
+    'cells: readonly RowRevertCell[];   // Immutable changed-cell descriptors in first-commit order.',
+  );
+  expect(page).toContain('interface RowRevertCell');
+  expect(page).toContain(
+    'value: unknown;   // Restored session baseline, already applied to the row when the callback runs.',
+  );
+  expect(page).toContain('previous: unknown;   // Committed value immediately before this revert attempt.');
+  expect(page).toContain('Reverting row…');
+  expect(page).toContain('Could not revert row changes');
+  expect(page).toContain('Row changes cannot be reverted');
+  expect(page).toContain('Esc reverts row changes');
+  expect(page).not.toMatch(/general(?:-purpose)? undo|undo stack|undo\/redo|multi-level (?:undo|history)/iu);
 });

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 16:41
-> **Progress**: 24/31 tasks (77%)
+> **Last Updated**: 2026-08-04 16:58
+> **Progress**: 25/31 tasks (81%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -170,12 +170,19 @@ layout, accessibility cues, and manual 80×24 evidence.
 
 **Lenses**: compatibility evolution
 
+> **Phase baseline tree**: `71696751380d0329513ac155538f49f82f630788`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md`,
+> every impacted canonical reference under `tools/jsvision-skill/`, generated API and synchronized
+> plugin artifacts owned by `yarn plugin:update`, existing API/plugin specification gates, this
+> execution plan, and the feature traceability graph.
+
 ### Step 3.1: Specification Tests
 
 **Reference**: [07 ST-27B–ST-28](07-testing-strategy.md#security-localization-documentation-and-distribution) ·
 [03-03](03-03-documentation-and-distribution.md) · AR-11, AR-12, AR-13, AR-14
 
-- [ ] 3.1.1 [spec-author] Extend generated API, source-impact, and plugin specification coverage for ST-27B–ST-28 — existing API/plugin specification gates
+- [x] 3.1.1 [spec-author] Extend generated API, source-impact, and plugin specification coverage for ST-27B–ST-28 — existing API/plugin specification gates ✅ (completed: 2026-08-04 16:58)
 - [ ] 3.1.2 Run ST-27B–ST-28 and record the expected stale distribution failures before implementation (red phase) — generated API and plugin checks
 
 ### Step 3.2: Implementation
