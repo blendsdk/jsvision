@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 15:45
-> **Progress**: 17/31 tasks (55%)
+> **Last Updated**: 2026-08-04 15:46
+> **Progress**: 18/31 tasks (58%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -122,7 +122,10 @@ failure and stale-settlement hardening; focused package gates green.
 [03-03](03-03-documentation-and-distribution.md)
 
 - [x] 2.1.1 [spec-author] Extend showcase, docs-contract, and Template1 layout specification coverage for ST-24–ST-26 — `packages/examples/test/datagrid-showcase.walkthrough.spec.test.ts`, `packages/docs-site/test/contracts/data-grid/interaction.ts`, `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts` ✅ (completed: 2026-08-04 15:45)
-- [ ] 2.1.2 Run ST-24–ST-26 and record the expected stale-surface failures before implementation (red phase) — `packages/examples`, `packages/docs-site`
+- [x] 2.1.2 Run ST-24–ST-26 and record the expected stale-surface failures before implementation (red phase) — `packages/examples`, `packages/docs-site` ✅ (completed: 2026-08-04 15:46)
+
+> **Red evidence**: the focused showcase and docs runs produced exactly five expected stale-surface
+> failures while 72 compatibility tests passed. The changed-file formatting and lint gate also passed.
 
 ### Step 2.2: Implementation
 
