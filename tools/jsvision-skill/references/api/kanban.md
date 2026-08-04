@@ -103,6 +103,14 @@ Complete deeply immutable Kanban resource-limit manifest.
 const KANBAN_LIMITS: KanbanLimitManifest
 ```
 
+## KANBAN_OPEN_CARD_EDITOR_ACTION_ID
+
+Stable package action emitted by read-only checklist regions to request the card editor.
+
+```ts
+const KANBAN_OPEN_CARD_EDITOR_ACTION_ID: KanbanExtensionId
+```
+
 ## KANBAN_PLACEHOLDER_MANIFEST
 
 Exact placeholders accepted by parameterized Kanban messages.
@@ -2018,6 +2026,7 @@ interface KanbanStandardCardCompositionContext {
   rowBudget: number;   // Maximum descriptor rows for this projection.
   theme: Readonly<KanbanTheme>;   // Fully resolved semantic theme.
   capabilities: Readonly<KanbanCardTerminalCapabilities>;   // Terminal features used for deterministic text geometry.
+  openEditorLabel?: string;   // Optional localized label for the read-only checklist editor action.
 }
 ```
 

@@ -1,4 +1,6 @@
 import type { KanbanCardRow, KanbanCardSectionKind } from './descriptor.js';
+import { createKanbanChecklistSectionCandidates } from './checklist-renderer.js';
+import type { KanbanChecklistCandidateMetadata } from './checklist-renderer.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
 import { clipKanbanCardText } from './text-layout.js';
 import type { KanbanThemeRole } from './theme.js';
@@ -15,6 +17,8 @@ export interface KanbanStandardSectionCandidate {
   readonly rows: readonly KanbanCardRow[];
   /** Whether geometry may omit this section. */
   readonly optional: boolean;
+  /** Optional checklist metadata used for staged preview degradation. */
+  readonly checklist?: KanbanChecklistCandidateMetadata;
 }
 
 /** Inputs needed to turn a safe card snapshot into candidate terminal rows. */
@@ -104,6 +108,14 @@ export function createStandardKanbanSectionCandidates(
       }),
     );
   }
+
+  candidates.push(
+    ...createKanbanChecklistSectionCandidates(snapshot, {
+      width: context.width,
+      widthMode: context.widthMode,
+      ...(textRole === undefined ? {} : { textRole }),
+    }),
+  );
 
   return Object.freeze(candidates);
 }

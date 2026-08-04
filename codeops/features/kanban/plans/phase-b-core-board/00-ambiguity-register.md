@@ -359,6 +359,33 @@ snapshot support.
 - **Reopen triggers:** Standard field labels become package-owned typed locale keys, or presentation
   adapters gain a bounded per-card summary-descriptor callback.
 
+### PAR-B36 — standard checklist editor action identity and label (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact identity and localized label injection for the already-approved read-only
+  checklist editor action; it does not add an editor, inline mutation, or new application authority.
+- **Decision:** Publish the package-owned stable action identity `kanban.card.open-editor`. Checklist
+  progress/preview regions reference that single identity and never expose an item-toggle action. Add an
+  optional `openEditorLabel` to the composition context; mounted localized callers supply it, while
+  direct pure composition retains a bounded English fallback for compatibility with the already-authored
+  immutable specification.
+- **Evidence:** Descriptor action regions require a validated dotted extension identity and a non-empty
+  safe label, but the approved composition context previously carried neither an i18n service nor action
+  vocabulary. The action is a semantic bridge to later RD-10 dialogs, not an application mutation.
+- **Rejected alternatives:** Per-item actions contradict the read-only card requirement. An anonymous
+  region cannot pass descriptor validation or dispatch a durable intent. A mandatory new label breaks
+  immutable direct-composer callers. Hard-coding English as the only path violates i18n.
+- **Strongest counterargument:** The `kanban` dotted namespace is represented by the existing extension-ID
+  type rather than a separate package-action type. The constant keeps one canonical value; a future
+  descriptor action-kind split can preserve that value while strengthening the type.
+- **Confidence:** High.
+- **Hardening:** Grounded against descriptor validation, the immutable composer call shape, the package
+  locale boundary, and the explicit no-inline-edit requirement; no compatible label authority existed.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** Descriptor actions gain a distinct package-owned identity type or composition
+  receives a required typed i18n projection.
+
 ## Systematic discovery scan
 
 | Category | Result |

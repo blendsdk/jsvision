@@ -1,6 +1,8 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import type { KanbanCardAdapter } from './adapter.js';
 import { readKanbanCardAdapter } from './adapter.js';
+import { KANBAN_OPEN_CARD_EDITOR_ACTION_ID, updateKanbanChecklistHeader } from './checklist-renderer.js';
+import type { KanbanChecklistSectionCandidate } from './checklist-renderer.js';
 import type {
   KanbanCardCue,
   KanbanCardDescriptor,
@@ -10,6 +12,7 @@ import type {
 } from './descriptor.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
 import { createStandardKanbanSectionCandidates } from './standard-sections.js';
+import type { KanbanStandardSectionCandidate } from './standard-sections.js';
 import { clipKanbanCardText, measureKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
 import type { KanbanTheme } from './theme.js';
 
@@ -23,6 +26,8 @@ export interface KanbanStandardCardCompositionContext {
   readonly theme: Readonly<KanbanTheme>;
   /** Terminal features used for deterministic text geometry. */
   readonly capabilities: Readonly<KanbanCardTerminalCapabilities>;
+  /** Optional localized label for the read-only checklist editor action. */
+  readonly openEditorLabel?: string;
 }
 
 /** Returns a stable surface role for the detached rich-card visual state. */
@@ -48,6 +53,29 @@ function snapshotCues(snapshot: KanbanCardPresentationSnapshot): readonly Kanban
 /** Records one section kind once while preserving first-omission order. */
 function recordOmission(omitted: KanbanCardSectionKind[], kind: KanbanCardSectionKind): void {
   if (!omitted.includes(kind)) omitted.push(kind);
+}
+
+/** Finds the last retained candidate matching one degradation predicate. */
+function findLastCandidateIndex(
+  candidates: readonly KanbanStandardSectionCandidate[],
+  predicate: (candidate: KanbanStandardSectionCandidate) => boolean,
+): number {
+  for (let index = candidates.length - 1; index >= 0; index -= 1) {
+    if (predicate(candidates[index]!)) return index;
+  }
+  return -1;
+}
+
+/** Narrows one generic section candidate to the checklist renderer's structural candidate. */
+function isChecklistCandidate(
+  candidate: KanbanStandardSectionCandidate | undefined,
+): candidate is KanbanChecklistSectionCandidate {
+  return (
+    candidate !== undefined &&
+    (candidate.kind === 'checklist-progress' || candidate.kind === 'checklist-preview') &&
+    candidate.checklist !== undefined &&
+    candidate.optional
+  );
 }
 
 /**
@@ -85,7 +113,7 @@ export function composeStandardKanbanCard(
     width: context.width,
     widthMode: context.capabilities.widthMode,
   });
-  const retained = [...candidates];
+  const retained: KanbanStandardSectionCandidate[] = [...candidates];
   const omitted: KanbanCardSectionKind[] = [];
   let height = retained.reduce((total, candidate) => total + candidate.rows.length, 0);
   const removeCandidate = (index: number): void => {
@@ -111,6 +139,41 @@ export function composeStandardKanbanCard(
   }
 
   for (const kind of snapshot.selection.budget.degradationOrder) {
+    if (kind === 'checklist-preview') {
+      while (height > context.rowBudget) {
+        const itemIndex = findLastCandidateIndex(retained, (candidate) => candidate.checklist?.kind === 'item');
+        if (itemIndex >= 0) {
+          removeCandidate(itemIndex);
+          const headerIndex = retained.findIndex((candidate) => candidate.checklist?.kind === 'header');
+          const header = retained[headerIndex];
+          if (isChecklistCandidate(header) && header.checklist.kind === 'header') {
+            retained[headerIndex] = updateKanbanChecklistHeader(header, header.checklist.omitted + 1, false, {
+              width: context.width,
+              widthMode: context.capabilities.widthMode,
+              ...(snapshot.style.textRole === undefined ? {} : { textRole: snapshot.style.textRole }),
+            });
+          }
+          continue;
+        }
+        const titleIndex = findLastCandidateIndex(retained, (candidate) => candidate.checklist?.kind === 'title');
+        if (titleIndex >= 0) {
+          removeCandidate(titleIndex);
+          continue;
+        }
+        const headerIndex = retained.findIndex(
+          (candidate) => candidate.kind === 'checklist-preview' && candidate.checklist?.kind === 'header',
+        );
+        const header = retained[headerIndex];
+        if (!isChecklistCandidate(header)) break;
+        retained[headerIndex] = updateKanbanChecklistHeader(header, 0, true, {
+          width: context.width,
+          widthMode: context.capabilities.widthMode,
+          ...(snapshot.style.textRole === undefined ? {} : { textRole: snapshot.style.textRole }),
+        });
+        recordOmission(omitted, 'checklist-preview');
+        break;
+      }
+    }
     while (height > context.rowBudget) {
       let removalIndex = -1;
       let removalPriority = -1;
@@ -163,6 +226,18 @@ export function composeStandardKanbanCard(
       : snapshot.visualState.readOnly
         ? '#'
         : '|';
+  const checklistStart = sections.find(
+    (section) => section.kind === 'checklist-progress' || section.kind === 'checklist-preview',
+  )?.startRow;
+  const checklistEnd = sections.reduce(
+    (end, section) =>
+      section.kind === 'checklist-progress' || section.kind === 'checklist-preview'
+        ? Math.max(end, section.startRow + section.rowCount)
+        : end,
+    checklistStart ?? 0,
+  );
+  const openEditorLabel = normalizeKanbanCardText(context.openEditorLabel ?? 'Open card editor') || 'Open card editor';
+  const hasChecklistRegion = checklistStart !== undefined && checklistEnd > checklistStart;
   return Object.freeze({
     cardKey: snapshot.cardKey,
     ...(snapshot.presentationRevision === undefined ? {} : { presentationRevision: snapshot.presentationRevision }),
@@ -179,8 +254,24 @@ export function composeStandardKanbanCard(
     }),
     rows,
     sections,
-    actions: Object.freeze([]),
-    regions: Object.freeze([]),
+    actions: hasChecklistRegion
+      ? Object.freeze([
+          Object.freeze({ actionId: KANBAN_OPEN_CARD_EDITOR_ACTION_ID, label: openEditorLabel, enabled: true }),
+        ])
+      : Object.freeze([]),
+    regions: hasChecklistRegion
+      ? Object.freeze([
+          Object.freeze({
+            regionId: 'checklist:open-editor',
+            kind: 'action' as const,
+            x: 1,
+            y: checklistStart,
+            width: context.width - 1,
+            height: checklistEnd - checklistStart,
+            actionId: KANBAN_OPEN_CARD_EDITOR_ACTION_ID,
+          }),
+        ])
+      : Object.freeze([]),
     degradation: Object.freeze({
       level: omitted.length === 0 ? 'none' : rows.length === 2 ? 'minimum' : 'reduced',
       omittedSections: Object.freeze(omitted),
