@@ -62,6 +62,7 @@
         "packages/files/src",
         "packages/datagrid/src",
         "packages/code-editor/src",
+        "packages/kanban/src",
         "packages/examples/package.json",
         "packages/examples/i18n-demo"
       ],
@@ -77,6 +78,7 @@
         "references/api/files.md",
         "references/api/datagrid.md",
         "references/api/code-editor.md",
+        "references/api/kanban.md",
         "references/api/i18n.md",
         "references/app-lifecycle.md"
       ]
@@ -129,6 +131,21 @@
       "references": [
         "references/component-catalog.md",
         "references/api/code-editor.md"
+      ]
+    },
+    {
+      "name": "kanban",
+      "paths": [
+        "packages/kanban/src",
+        "packages/kanban/package.json",
+        "packages/kanban/README.md",
+        "packages/docs-site/api/kanban",
+        "docs/architecture/kanban.md"
+      ],
+      "references": [
+        "references/architecture.md",
+        "references/component-catalog.md",
+        "references/api/kanban.md"
       ]
     },
     {

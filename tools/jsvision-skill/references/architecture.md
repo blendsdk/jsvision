@@ -14,6 +14,25 @@ Model idle/loading/success/error explicitly. Prevent stale completions with canc
 
 Design normal, minimum, and narrow sizes. Collapse panes, shorten labels, switch tabs, or state the size requirement. Do not assume mouse input, Unicode width, true color, or specific capabilities.
 
+## Kanban boundary
+
+Use `@jsvision/kanban` when work records must remain application-owned while the SDK supplies a
+responsive, bounded terminal board. Provide a `KanbanDataSource<TCard>` and card adapter; retain
+persistence, authorization, workflow policy, and mutation in the application. The optional
+`StandardCard` model is a convenience rather than a required record schema.
+
+One mounted board owns one viewport and one read coordinator. A revisioned query session exposes
+sparse cursors for visible and overscan column/swimlane cells. Replace or dispose the board through
+its lifecycle so generation invalidation and cancellation can prevent stale range completion. Do not
+treat a loaded window as a logical edge or materialize a large logical board merely to simplify the
+view.
+
+The board uses JSVision's layout DSL around one exact-cell viewport leaf and can be hosted directly
+on a surface or inside an application-owned window. Phase A provides read-only projection,
+scrolling, themes, localization, source/session contracts, and request/reconciliation contracts.
+Drag/drop, selection commands, rich checklist rendering, card editors, and lane-configuration UI are
+not yet production surfaces. See the exact current API in [api/kanban.md](api/kanban.md).
+
 ## Clipboard boundary
 
 Treat the application event loop's raw plain-text value as the canonical clipboard. Copy and cut
