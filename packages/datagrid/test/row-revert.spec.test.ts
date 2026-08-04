@@ -87,11 +87,11 @@ async function editNext(ctx: ReturnType<typeof mount>, value: string): Promise<v
   ctx.loop.focusView(ctx.grid.rows);
 }
 
-async function trapStart(ctx: ReturnType<typeof mount>, value = '10'): Promise<void> {
+async function trapStart(ctx: ReturnType<typeof mount>, value = '10', expectedKey: string | number = 1): Promise<void> {
   await editNext(ctx, value);
   ctx.loop.dispatch(key('down'));
   await tick();
-  expect(ctx.grid.focusedKey()).toBe(1);
+  expect(ctx.grid.focusedKey()).toBe(expectedKey);
   expect(ctx.grid.activeMessage()).not.toBeNull();
 }
 
@@ -344,6 +344,7 @@ test('should publish a detail-row rollback through its owning reactive collectio
   const orders = signal<Order[]>([{ id: 1 }, { id: 2 }]);
   const lines = signal<Row[]>([
     { id: 11, start: 1, end: 9 },
+    { id: 12, start: 2, end: 30 },
     { id: 21, start: 2, end: 30 },
   ]);
   const master = new EditableDataGrid<Order>({
@@ -371,7 +372,7 @@ test('should publish a detail-row rollback through its owning reactive collectio
   loop.mount(root);
   loop.focusView(relation.detail.rows);
   const detail = { grid: relation.detail, loop, outside: new Input({ value: signal('') }), rows: lines };
-  await trapStart(detail);
+  await trapStart(detail, '10', 11);
   await escape(detail);
   loop.renderRoot.flush();
   expect(lines()[0]).toMatchObject({ start: 1, end: 9 });

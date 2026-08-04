@@ -53,9 +53,9 @@ import { buildMessageBand, createRowGate } from './validation.js';
 import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
-import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
-import { createRowRevertController, createRowRevertTransactionController } from './row-revert.js';
-import type { RowRevertController, RowRevertTransactionController } from './row-revert.js';
+import { createEnglishDatagridI18n } from './i18n/catalog.js';
+import { createGridRowRevert } from './grid-row-revert.js';
+import type { GridRowRevert } from './grid-row-revert.js';
 
 /**
  * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
@@ -436,11 +436,7 @@ export class EditableDataGrid<T> extends Group {
   private readonly errors = createErrorRegistry();
   // Bounded accepted-commit journal for the current exact key-and-object row visit. It is disabled when
   // no row validator exists, so an ordinary editable grid retains no unused recovery history.
-  private readonly rowRevert: RowRevertController<T>;
-  // The transaction coordinator owns optimistic batch writes and pending presentation separately from
-  // the bounded session journal, allowing late host decisions to settle captured data without attaching
-  // state to a replacement row or disposed grid.
-  private readonly rowRevertTransaction: RowRevertTransactionController<T>;
+  private readonly rowRevert: GridRowRevert<T>;
   // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
   // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
   private readonly rowGate: RowGate;
@@ -520,28 +516,19 @@ export class EditableDataGrid<T> extends Group {
     });
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
-    this.rowRevert = createRowRevertController(opts.validateRow !== undefined);
-    this.rowRevertTransaction = createRowRevertTransactionController({
-      sessions: this.rowRevert,
+    this.rowRevert = createGridRowRevert({
+      enabled: opts.validateRow !== undefined,
+      source: this.source,
+      display: () => this.display(),
+      i18n: this.i18n,
       onRevertRow: opts.onRevertRow,
       internalAllowed: opts.beforeSave === undefined && opts.onCommit === undefined,
-      sourceRow: (rowKey) => this.sourceRow(rowKey),
-      displayedRow: (rowKey) => this.displayedRow(rowKey),
       focusedRow: () => this.focusedRow(),
       focusedKey: () => this.focusedKey(),
       bodyFocused: () => this.isBodyFocused(),
-      addDirty: (key) => this.dirty.add(key),
-      deleteDirty: (key) => this.dirty.delete(key),
-      clearError: (key) => this.errors.clear(key),
-      activeMessage: () => this.errors.active(),
-      note: (message) => this.errors.note(message),
+      dirty: this.dirty,
+      errors: this.errors,
       bumpVersion: () => this.version.set(this.version() + 1),
-      cellKey,
-      messages: {
-        pending: this.datagridText('datagrid.revert.pending'),
-        failed: this.datagridText('datagrid.revert.failed'),
-        unavailable: this.datagridText('datagrid.revert.unavailable'),
-      },
     });
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
@@ -666,7 +653,7 @@ export class EditableDataGrid<T> extends Group {
       opts.columns.some((c) => c.validate !== undefined);
     const messageBand = validationConfigured
       ? buildMessageBand(
-          () => this.errors.active(),
+          () => this.rowRevert.displayMessage(this.errors.active()),
           () => 'error',
         )
       : undefined;
@@ -689,11 +676,7 @@ export class EditableDataGrid<T> extends Group {
       currentColumn: () => this.focusedCol(),
       focusColumn: (index) => this.focusedCol.set(index),
       note: (message) => this.errors.note(message),
-      trappedMessage: (message) =>
-        this.i18n.t('datagrid.validation.row-trapped', {
-          defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.validation.row-trapped'],
-          params: { message },
-        }),
+      trappedMessage: (message) => this.rowRevert.trapMessage(message),
     });
 
     // Lifecycle: the controller drives the body-region swap (loading/error) from the caller `status`; the
@@ -772,12 +755,12 @@ export class EditableDataGrid<T> extends Group {
       canRevertRow: () => {
         const row = this.focusedRow();
         const rowKey = row === undefined ? undefined : this.source.rowKey(row);
-        return row !== undefined && rowKey !== undefined && this.rowRevert.isTrapped(rowKey, row);
+        return row !== undefined && rowKey !== undefined && this.rowRevert.canStart(rowKey, row);
       },
-      rowRevertPending: () => this.rowRevertTransaction.isPending(),
+      rowRevertPending: () => this.rowRevert.isPending(),
       onRevertRow: () => {
         const row = this.focusedRow();
-        if (row !== undefined) this.rowRevertTransaction.start(this.source.rowKey(row), row);
+        if (row !== undefined) this.rowRevert.start(this.source.rowKey(row), row);
       },
       messageBand,
       lifecycle: opts.status !== undefined,
@@ -831,12 +814,10 @@ export class EditableDataGrid<T> extends Group {
         },
         ({ row, rowKey }) => {
           if (this.reanchoringDisplay) return;
-          this.rowRevertTransaction.reconcile(rowKey, row);
-          this.rowRevert.reconcileFocus(rowKey, row);
+          this.rowRevert.reconcile(rowKey, row);
         },
       );
       this.onCleanup(() => {
-        this.rowRevertTransaction.dispose();
         this.rowRevert.dispose();
       });
       this.bind(
@@ -1758,8 +1739,7 @@ export class EditableDataGrid<T> extends Group {
   private reconcileRowRevertFocus(): void {
     const row = this.focusedRow();
     const rowKey = row === undefined ? undefined : this.source.rowKey(row);
-    this.rowRevertTransaction.reconcile(rowKey, row);
-    this.rowRevert.reconcileFocus(rowKey, row);
+    this.rowRevert.reconcile(rowKey, row);
   }
 
   /**
@@ -1786,26 +1766,6 @@ export class EditableDataGrid<T> extends Group {
    */
   selectedKeys(): ReadonlySet<Key> {
     return this.selection.read();
-  }
-
-  /** Resolve one package-owned message with its canonical English fallback. */
-  private datagridText(key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string {
-    return this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
-  }
-
-  /** Find a key in the source directly, bypassing the derived display cache for settlement checks. */
-  private sourceRow(rowKey: Key): T | undefined {
-    const length = this.source.length();
-    for (let index = 0; index < length; index += 1) {
-      const row = this.source.rowAt(index);
-      if (row !== undefined && this.source.rowKey(row) === rowKey) return row;
-    }
-    return undefined;
-  }
-
-  /** Find a key in the current derived display without assuming that its row index stayed stable. */
-  private displayedRow(rowKey: Key): T | undefined {
-    return this.display().find((row) => this.source.rowKey(row) === rowKey);
   }
 
   /**
@@ -1918,7 +1878,7 @@ export class EditableDataGrid<T> extends Group {
    * on a block the cursor stays and the grid keeps focus (`'moved'`).
    */
   private async advanceCell(forward: boolean): Promise<'moved' | 'exit'> {
-    if (this.rowRevertTransaction.isPending()) return 'moved';
+    if (this.rowRevert.isPending()) return 'moved';
     if (this._center.isEditing()) {
       const committed = await this._center.commitEdit();
       if (!committed) return 'moved'; // vetoed → editor stays open, cursor does not advance
@@ -1998,7 +1958,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   insertRow(row: T, at?: number): void {
-    if (this.rowRevertTransaction.isPending()) return;
+    if (this.rowRevert.isPending()) return;
     this.mutations.insertRow(row, at);
   }
 
@@ -2022,9 +1982,8 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   deleteRows(keys: readonly Key[]): void {
-    if (this.rowRevertTransaction.isPending()) return;
+    if (this.rowRevert.isPending()) return;
     const invalidated = new Set(keys);
-    this.rowRevertTransaction.invalidate(invalidated);
     this.rowRevert.invalidate(invalidated);
     this.mutations.deleteRows(keys);
   }
@@ -2058,7 +2017,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   duplicateRow(key: Key): void {
-    if (this.rowRevertTransaction.isPending()) return;
+    if (this.rowRevert.isPending()) return;
     this.mutations.duplicateRow(key);
   }
 }
