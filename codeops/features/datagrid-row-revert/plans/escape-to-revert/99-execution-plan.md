@@ -172,10 +172,12 @@ layout, accessibility cues, and manual 80×24 evidence.
 
 > **Phase baseline tree**: `71696751380d0329513ac155538f49f82f630788`
 > **Scope mode**: `strict`
-> **Expected modification set**: `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md`,
-> every impacted canonical reference under `tools/jsvision-skill/`, generated API and synchronized
-> plugin artifacts owned by `yarn plugin:update`, existing API/plugin specification gates, this
-> execution plan, and the feature traceability graph.
+> **Expected modification set**: `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md`, the
+> public recovery JSDoc in `packages/datagrid/src/grid.ts`, every impacted canonical reference under
+> `tools/jsvision-skill/`, generated API and synchronized plugin artifacts owned by
+> `yarn plugin:update`, existing API/plugin specification gates, the NodeNext declaration for the
+> imported `scripts/plugin-impact.mjs` test seam, this plan's quality evidence, this execution plan,
+> and the feature traceability graph.
 
 ### Step 3.1: Specification Tests
 
@@ -224,6 +226,13 @@ layout, accessibility cues, and manual 80×24 evidence.
 
 **Deliverables**: public/package/generated docs; canonical skill; drift-free plugin; final local
 distribution evidence.
+
+> **Phase 3 quality gate (2026-08-04):** Independent correctness and security/distribution findings
+> were corrected without waiver. Package docs now teach explicit callback acceptance and the exact
+> retained baseline; retry guidance matches live identity and compensation rules; and ST-28 pins the
+> canonical skill's recovery, persistence, lifecycle, privacy, and shared-i18n semantics in addition
+> to source-impact and byte/tree integrity. Both reviewers returned clean closure on the permitted
+> one-time fix re-review. Evidence: [10-phase-3-quality-review.md](10-phase-3-quality-review.md).
 
 **Verify**: `yarn plugin:check && yarn verify:local`
 

@@ -87,12 +87,15 @@ Removed:
 - **Validation & lifecycle** — typed column `validate`, per-row `validateRow` cross-field gate,
   per-cell `beforeSave` veto, a reactive error message band, and caller-driven `status`
   (loading/empty/error + retry).
-- **Trapped-row recovery** — body-level Escape restores the earliest accepted values from the
-  current trapped row session through the remappable `revertRow` action. The optional atomic
+- **Trapped-row recovery** — body-level Escape restores each changed column's value from before its
+  first accepted commit in the current trapped row session through the remappable `revertRow`
+  action. The optional atomic
   `onRevertRow` persistence callback receives the already-restored row plus immutable
-  `RowRevertCell` descriptors; false/throw/reject compensates and preserves a retryable trap.
-  Editor Escape still cancels only the open editor. Grids with `beforeSave` or `onCommit` but no
-  row-level callback report recovery as unavailable instead of applying a local-only rollback.
+  `RowRevertCell` descriptors; false/throw/reject compensates and preserves a retryable trap only
+  while the same row/session remains live and compensation completes. Stale settlement compensates
+  its captured row without reattaching retry state. Editor Escape still cancels only the open
+  editor. Grids with `beforeSave` or `onCommit` but no row-level callback report recovery as
+  unavailable instead of applying a local-only rollback.
 - **Export & variants** — `exportView('csv'|'tsv'|'html'|'json')` with RFC-4180 + CRLF, CSV/TSV
   formula-injection escaping, and `saveVariant`/`applyVariant` layout round-trip + runtime `setFrozen`.
 - **Callback isolation** — a throwing on-screen `format` degrades its one cell to the raw value, and a

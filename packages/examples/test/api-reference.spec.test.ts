@@ -29,6 +29,7 @@ const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
 const COMMITTED_DATAGRID_API = entry('../../../tools/jsvision-skill/references/api/datagrid.md');
+const DATAGRID_README = entry('../../datagrid/README.md');
 
 // Generate once (each generation runs the TypeScript compiler over six barrels) and reuse.
 const generated = generateApiDocs();
@@ -101,6 +102,7 @@ test('ST-A7: API ordering is code-point deterministic and drift identifies the f
 // ST-27B — the committed API page is the immutable public contract for atomic row-session revert.
 test('ST-27B: committed Data Grid API pins atomic row-revert vocabulary and timing', () => {
   const page = readFileSync(COMMITTED_DATAGRID_API, 'utf8');
+  const readme = readFileSync(DATAGRID_README, 'utf8');
 
   expect(page).toContain('onRevertRow?: OnRevertRow<T>');
   expect(page).toContain("| 'revertRow'");
@@ -119,5 +121,8 @@ test('ST-27B: committed Data Grid API pins atomic row-revert vocabulary and timi
   expect(page).toContain('Could not revert row changes');
   expect(page).toContain('Row changes cannot be reverted');
   expect(page).toContain('Esc reverts row changes');
+  expect(page).toContain('only while the same row and session remain live and compensation completes');
+  expect(page).toContain('cannot reattach retry state');
+  expect(readme).toMatch(/await persistRestoredRow\(rowKey, row, cells\);\s+return true;/u);
   expect(page).not.toMatch(/general(?:-purpose)? undo|undo stack|undo\/redo|multi-level (?:undo|history)/iu);
 });

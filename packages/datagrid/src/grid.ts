@@ -106,7 +106,9 @@ export interface EditableDataGridOptions<T> {
    *
    * The callback receives the original row after all session baselines are applied and one immutable
    * changed-cell list in first-commit order. Return `false`, throw, or reject to compensate the row to
-   * its committed pre-revert values and keep the session available for retry.
+   * its committed pre-revert values. The session remains available for retry only while the same row
+   * and session remain live and compensation completes. Stale settlement still compensates its
+   * captured row but cannot reattach retry state.
    *
    * When this callback is absent, a grid with no `beforeSave` or `onCommit` may revert locally. A grid
    * with either per-cell persistence hook refuses rollback without this row-level transaction seam so

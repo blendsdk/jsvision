@@ -33,8 +33,9 @@ If accepted cell commits reach host persistence through `beforeSave` or `onCommi
 atomic `onRevertRow` callback. It receives the original row after all retained baselines are applied
 and a frozen changed-cell list in first-commit order. Each cell uses commit-aligned vocabulary:
 `value` is the restored baseline and `previous` is the committed value immediately before the
-attempt. Return `false`, throw, or reject to compensate to those committed values and preserve the
-trap for retry.
+attempt. Return `false`, throw, or reject to compensate to those committed values. The trap remains
+available for retry only while the same row and session remain live and compensation completes;
+stale settlement compensates its captured row but cannot reattach retry state.
 
 Without `onRevertRow`, the grid may restore locally only when neither per-cell persistence/policy
 hook is configured. Otherwise it reports that row changes cannot be reverted and keeps the session

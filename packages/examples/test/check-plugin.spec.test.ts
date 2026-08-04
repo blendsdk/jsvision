@@ -134,6 +134,19 @@ test('ST-28: Data Grid source impact and distributed plugin references are synch
   const areaNames = new Set(areas.map((area) => area.name));
   expect(checkPluginImpact().filter((finding) => areaNames.has(finding.name))).toEqual([]);
 
+  const datagridReference = readFileSync(join(CANONICAL_SKILL, 'references/datagrid.md'), 'utf8');
+  expect(datagridReference).toContain('An open cell editor consumes Escape');
+  expect(datagridReference).toContain('atomic `onRevertRow` callback');
+  expect(datagridReference).toContain('row changes cannot be reverted');
+  expect(datagridReference).toContain('Keep row keys and row object identity stable during a session');
+  expect(datagridReference).toContain('cannot reattach retry state');
+  expect(datagridReference).toContain('Never echo callback exceptions or row values in status text');
+
+  const i18nReference = readFileSync(join(CANONICAL_SKILL, 'references/i18n.md'), 'utf8');
+  expect(i18nReference).toContain('Pass that same service');
+  expect(i18nReference).toContain('`EditableDataGrid`');
+  expect(i18nReference).toContain('pending-revert, failed-revert, and unavailable-revert feedback');
+
   const references = new Set(areas.flatMap((area) => area.references));
   for (const reference of references) {
     expect(readFileSync(join(DISTRIBUTED_SKILL, reference), 'utf8')).toBe(
