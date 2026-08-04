@@ -1,7 +1,7 @@
 # Kanban integrations
 
-> **Last Updated**: 2026-08-03
-> **Status**: Accepted design; implementation pending
+> **Last Updated**: 2026-08-04
+> **Status**: Foundation integrations implemented; mounted board, dialogs, and saved views pending
 
 ## Integration map
 
@@ -22,6 +22,10 @@ The adapter maps application records into stable IDs and bounded display descrip
 the package's optional standard card fields, but the application record remains opaque to Kanban.
 Formatting functions must be deterministic for a published revision and must return sanitized,
 display-cell-measurable values.
+
+The package snapshots and validates descriptor output before rendering. Invalid custom output is
+replaced by the standard safe fallback, so applications can localize or log a failure category
+without exposing the rejected record fields.
 
 ## Data source and query session
 

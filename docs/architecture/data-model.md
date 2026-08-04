@@ -1,7 +1,7 @@
 # Kanban data model
 
 > **Last Updated**: 2026-08-04
-> **Status**: Contracts plus revisioned eager and sparse windowed read models implemented
+> **Status**: Contracts, revisioned eager and sparse windowed reads, and card projections implemented
 
 ## Domain model
 
@@ -64,6 +64,18 @@ erDiagram
 - Cursor ranges are normalized, coalesced, bounded, cancellable, and tied to a session generation.
 - Application card objects are projected by reference; the source does not clone, mutate, or persist
   them.
+
+## Implemented presentation invariants
+
+- A card descriptor is an immutable snapshot containing exact-cell rows, semantic sections, bounded
+  actions and hit regions, explicit degradation, and at least one non-color state marker.
+- Adapter values and descriptor collections are captured once. Later caller mutation, custom array
+  iteration, accessors, or changing array length cannot alter the validated snapshot.
+- Text is bounded by UTF-8 bytes and terminal cells after control and bidirectional-control rejection.
+- Application action IDs use a bounded namespaced grammar and cannot enter the package-reserved
+  `jsvision.*` namespace.
+- Theme tokens use an exhaustive package-local role inventory. Unknown roles cannot become renderable
+  descriptor values.
 
 ## Compatibility and migration
 

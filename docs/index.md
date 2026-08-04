@@ -15,10 +15,11 @@ JSVision is an SDK for building reactive terminal user interfaces with classic d
 semantics. Public packages separate terminal rendering, UI controls, forms, localization, specialist
 components, web hosting, and examples so applications can depend only on the surfaces they use.
 
-The `@jsvision/kanban` foundation provides application-owned contracts plus revisioned eager and
-windowed data sources. Card presentation, responsive board interaction, dialogs, localization, and
-showcase documentation remain staged work. The architecture recorded here preserves bounded data
-access, modern pointer interaction, theming, localization, and host authority as those layers arrive.
+The `@jsvision/kanban` foundation provides application-owned contracts, revisioned eager and
+windowed data sources, and a bounded card-presentation boundary. Responsive board interaction,
+dialogs, published locale subpaths, and showcase documentation remain staged work. The architecture
+recorded here preserves bounded data access, modern pointer interaction, theming, localization, and
+host authority as those layers arrive.
 
 ## Architecture at a glance
 
@@ -38,7 +39,7 @@ graph TB
 | Component            | Status             | Purpose                                                        | Documentation                                    |
 | -------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------------------------ |
 | JSVision core and UI | Implemented        | Rendering, reactivity, layout, windows, input, and controls    | [System overview](/architecture/system-overview) |
-| `@jsvision/kanban`   | Foundation built   | Contracts plus eager and sparse windowed read sources          | [Kanban API design](/architecture/api-design)    |
+| `@jsvision/kanban`   | Foundation built   | Contracts, data sources, and bounded card presentation         | [Kanban API design](/architecture/api-design)    |
 | Application adapter  | Consumer-owned     | Records, persistence, authorization, mutation, and saved views | [Integrations](/reference/integrations)          |
 | Docs and examples    | Planned for Kanban | Teaching page, live labs, kitchen sink, and flagship showcase  | [Development workflow](/guides/development)      |
 

@@ -8,8 +8,8 @@ JSVision is a modular TypeScript SDK monorepo. Public packages form a layered li
 runtime service: applications instantiate components locally, retain authority over their data and
 effects, and select terminal or browser hosts. The Kanban foundation now exists as the specialist
 `@jsvision/kanban` package under `packages/`, following the Data Grid and Code Editor precedent. Its
-source/session layer is implemented; component, presentation-adapter, and dialog layers remain staged
-work.
+contract, source/session, presentation-adapter, descriptor, theme, and English fallback catalog
+layers are implemented; mounted component and dialog layers remain staged work.
 
 ## Kanban component architecture
 
@@ -19,6 +19,9 @@ graph TB
     Source[KanbanDataSource]
     Session[Revisioned query session]
     Cursor[Sparse cell cursors]
+    Adapter[Card adapter]
+    Descriptor[Bounded card descriptor]
+    Theme[Semantic theme resolver]
     Board[KanbanBoard DSL group]
     Viewport[KanbanViewport measured leaf]
     Dialogs[Card and board dialogs]
@@ -28,6 +31,9 @@ graph TB
     Host --> Source
     Source --> Session
     Session --> Cursor
+    Host --> Adapter
+    Adapter --> Descriptor
+    Theme --> Descriptor
     Cursor --> Board
     Board --> Viewport
     Board --> Dialogs
@@ -72,6 +78,18 @@ into the new session.
 Small boards use the reactive eager adapter without changing this contract. Large or remote adapters
 can expose sparse windowed cursors; the deterministic testing adapter demonstrates 100,000 logical
 cards while materializing only requested visible and overscan ranges.
+
+### Card presentation boundary
+
+- **Purpose**: Project arbitrary application records into bounded, immutable terminal content.
+- **Inputs**: A generic card adapter, exact-cell render context, semantic theme, and locale formatters.
+- **Outputs**: Validated rows, sections, actions, hit regions, degradation evidence, and non-color cues.
+- **Boundary**: Accessors, hostile prototypes, control text, invalid geometry, and throwing renderers
+  are isolated before any descriptor reaches the future viewport.
+
+The standard renderer deliberately covers only title, status, and interaction-state cues in this
+foundation slice. Rich summaries and checklist previews remain represented in the public descriptor
+vocabulary but are not rendered until their later implementation phase.
 
 ### Application request dispatcher
 

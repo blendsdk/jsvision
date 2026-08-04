@@ -1,7 +1,7 @@
 # Kanban API design
 
 > **Last Updated**: 2026-08-04
-> **Status**: Contracts and source/session APIs implemented; board, presentation adapter, and dialogs planned
+> **Status**: Contracts, source/session, card presentation, theme, and English catalog APIs implemented; board and dialogs planned
 
 ## API style
 
@@ -76,6 +76,22 @@ in-place fields used by those adapters change.
 Summary adapters declare `authoritative` or `loaded-only` scope and use the package-owned `sum`,
 `min`, `max`, or `average` aggregation vocabulary. Empty numeric summaries remain unknown rather than
 being silently reported as zero.
+
+## Card presentation conventions
+
+- `KanbanCardAdapter<TCard>` reads stable identity and optional standard fields from an opaque
+  application record without taking ownership of it.
+- `KanbanCardRenderer<TCard>` returns a renderer-neutral descriptor constrained by an exact width and
+  row budget.
+- Descriptor validation snapshots caller data once, rejects accessors and non-plain shapes, enforces
+  collection and UTF-8 limits, and verifies terminal-cell geometry before publication.
+- Renderer failures degrade to a sanitized, deterministic title/status fallback instead of escaping
+  application payloads through diagnostics.
+- Semantic Kanban theme roles resolve through mapped Core roles, family fallbacks, and emergency
+  styles while retaining non-color cues.
+- The main entry exports the typed message inventory and isolated English fallback service. Authored
+  non-English values remain internal until their generated locale wrappers and registry reviews close
+  atomically.
 
 ## Error conventions
 
