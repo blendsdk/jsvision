@@ -164,7 +164,12 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     and the isolated teaching consumer cannot resolve it. The examples API oracle reports one
     expected failure with 6 passing assertions because all 229 Kanban barrel exports are absent
     from generated API coverage.
-- [ ] 5.1.2 `[spec-author]` Add the immutable complete ST-R01-02/10 tarball oracle for main/testing plus all ten locale runtime/type entry points and extend official locale registration/digest-review specifications before wrapper/registry changes — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
+- [x] 5.1.2 `[spec-author]` Add the immutable complete ST-R01-02/10 tarball oracle for main/testing plus all ten locale runtime/type entry points and extend official locale registration/digest-review specifications before wrapper/registry changes — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` ✅ (completed: 2026-08-04 09:23 CEST)
+  - Red evidence: the authentic offline tarball oracle reports exactly the twenty missing locale
+    runtime/declaration artifacts while its private-subpath rejection is already green. The i18n
+    registry oracle reports two expected failures for the absent sixth package and nine review
+    records. The canonical localized-recipe oracle reports the expected missing sixth import and
+    generated-copy drift; its source-impact assertion remains green.
 - [ ] 5.1.3 `[spec-author]` Extend immutable canonical API/source-impact/generated-parity specifications before plugin changes — `packages/examples/test/api-reference.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
 - [ ] 5.1.4 Run Phase 5 distribution/docs/i18n/plugin specifications and record expected red failures before registry/documentation changes
 - [ ] 5.2.1 Complete package README/changelog/public examples and rerun the already-green Phase 1 contract-only packed-consumer oracle against the complete Phase A package; run dependency, native-dependency, main/testing tarball runtime/type, and JSDoc checks — `packages/kanban/{README,CHANGELOG}.md`, `packages/kanban/test/package-consumer-contract.spec.test.ts`, `packages/kanban/test/fixtures/packed-consumer/{package,tsconfig}.json`, `packages/kanban/test/fixtures/packed-consumer/index.ts`

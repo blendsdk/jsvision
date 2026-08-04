@@ -76,15 +76,17 @@ test('localized app recipe imports one requested locale explicitly and typecheck
     .filter(ts.isImportDeclaration)
     .map((statement) => (ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : ''))
     .filter((specifier) => specifier.includes('/locales/'));
-  expect(localeImports).toHaveLength(5);
+  expect(localeImports).toHaveLength(6);
   expect(
     localeImports
-      .map((specifier) => /^@jsvision\/(ui|forms|files|datagrid|code-editor)\/locales\/(.+)$/u.exec(specifier)?.[1])
+      .map(
+        (specifier) => /^@jsvision\/(ui|forms|files|datagrid|code-editor|kanban)\/locales\/(.+)$/u.exec(specifier)?.[1],
+      )
       .sort(),
-  ).toEqual(['code-editor', 'datagrid', 'files', 'forms', 'ui']);
+  ).toEqual(['code-editor', 'datagrid', 'files', 'forms', 'kanban', 'ui']);
   const localeTags = new Set(
     localeImports.map(
-      (specifier) => /^@jsvision\/(?:ui|forms|files|datagrid|code-editor)\/locales\/(.+)$/u.exec(specifier)?.[1],
+      (specifier) => /^@jsvision\/(?:ui|forms|files|datagrid|code-editor|kanban)\/locales\/(.+)$/u.exec(specifier)?.[1],
     ),
   );
   expect(localeTags.size).toBe(1);

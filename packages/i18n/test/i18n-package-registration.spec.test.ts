@@ -5,13 +5,14 @@ import { describe, expect, test } from 'vitest';
 const repoRoot = join(import.meta.dirname, '..', '..', '..');
 
 describe('configuration-driven i18n package registration', () => {
-  test('registers exactly five safe package definitions including Code Editor', () => {
+  test('registers exactly six safe package definitions including Kanban', () => {
     const config = JSON.parse(readFileSync(join(repoRoot, 'tools/i18n-locale-exports.json'), 'utf8')) as {
       readonly packages: readonly { readonly name: string; readonly symbolPrefix: string }[];
       readonly locales: readonly string[];
     };
     expect(config.packages).toContainEqual({ name: 'code-editor', symbolPrefix: 'codeEditor' });
-    expect(config.packages).toHaveLength(5);
+    expect(config.packages).toContainEqual({ name: 'kanban', symbolPrefix: 'kanban' });
+    expect(config.packages).toHaveLength(6);
     expect(config.locales).toHaveLength(10);
   });
 
@@ -31,15 +32,23 @@ describe('configuration-driven i18n package registration', () => {
       readonly reviews: readonly {
         readonly package: string;
         readonly locale: string;
+        readonly digest: string;
+        readonly reviewer: string;
         readonly reviewMethod: string;
+        readonly reviewedAt: string;
+        readonly status: string;
       }[];
     };
     expect(literals).toContain('i18n-locale-exports.json');
     expect(literals).toMatch(/config\.packages\.map\(\(\{\s*name\s*\}\)\s*=>\s*`packages\/\$\{name\}\/src`\)/u);
     expect(literals).not.toMatch(/SOURCE_ROOTS\s*=\s*\[/u);
     expect(reviews.schema).toBe(2);
-    expect(reviews.reviews).toHaveLength(45);
+    expect(reviews.reviews).toHaveLength(54);
     expect(reviews.reviews.every((review) => review.reviewMethod === 'ai-assisted')).toBe(true);
-    expect(new Set(reviews.reviews.map((review) => `${review.package}/${review.locale}`)).size).toBe(45);
+    expect(new Set(reviews.reviews.map((review) => `${review.package}/${review.locale}`)).size).toBe(54);
+    expect(reviews.reviews.every((review) => /^[a-f0-9]{64}$/u.test(review.digest))).toBe(true);
+    expect(reviews.reviews.every((review) => review.reviewer.trim().length > 0)).toBe(true);
+    expect(reviews.reviews.every((review) => /^\d{4}-\d{2}-\d{2}$/u.test(review.reviewedAt))).toBe(true);
+    expect(reviews.reviews.every((review) => review.status === 'approved')).toBe(true);
   });
 });
