@@ -33,6 +33,7 @@ import { safeRender } from './cell-draw.js';
 import type { RenderCell } from './cell-draw.js';
 import { resolveGridAction, mergeKeymap } from './keymap.js';
 import type { GridAction, GridKeymap } from './keymap.js';
+import type { AcceptedCellCommit } from './row-revert.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
@@ -76,7 +77,14 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band + message); omit to disable surfacing. */
   errors?: ErrorRegistry;
-  /** Mark a row as edited (a cell committed) — fed to the container's row-leave gate. */
+  /** Report a complete accepted commit to the container's row-session journal. */
+  onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
+  /**
+   * Touched-only compatibility notification for direct body consumers.
+   *
+   * New integrations should use {@link EditableGridRowsConfig.onAcceptedCommit}; this callback cannot
+   * retain the values and setter required for complete row recovery.
+   */
   markRowTouched?: (rowKey: string | number) => void;
   /**
    * The row-leave gate: consulted before a **row-changing** move (keyboard row-nav, the `Enter`-advance,
@@ -250,6 +258,8 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band), or `undefined` when surfacing is off. */
   protected readonly errors?: ErrorRegistry;
+  /** Report an accepted commit with the row, values, column, and captured setter. */
+  private readonly onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
   /** Mark a row edited (a cell committed) — threaded into the edit controller's host. */
   private readonly markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate for the body-owned leave paths (row-nav, Enter-advance, cross-row click). */
@@ -314,6 +324,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
     this.errors = cfg.errors;
+    this.onAcceptedCommit = cfg.onAcceptedCommit;
     this.markRowTouched = cfg.markRowTouched;
     this.rowLeaveGate = cfg.rowLeaveGate;
     this.emptyText = cfg.emptyText;
@@ -345,6 +356,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       bumpVersion: this.bumpVersion,
       dirty: this.dirty,
       errors: this.errors,
+      onAcceptedCommit: this.onAcceptedCommit,
       markRowTouched: this.markRowTouched,
       currentCell: () => this.currentCell(),
       cellRect: () => this.cellRect(),
