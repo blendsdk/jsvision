@@ -1,0 +1,203 @@
+# Ambiguity Register: Kanban Phase B Core Board
+
+> **Status**: ✅ GATE PASSED — all 29 items resolved
+> **Last Updated**: 2026-08-04 11:44 CEST
+> **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
+> **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
+> **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
+> **Mode**: auto-design
+> **Root Invocation ID**: `AD-MAKE-PLAN-PHASE-B-20260804T092600Z`
+> **Policy Version**: 1
+
+| # | Category | Ambiguity / Gap | Options Presented | Decision / Authority | Status |
+|---|---|---|---|---|---|
+| PAR-B01 | Scope | Does Phase B pull later editor, drag, mutation, command, or saved-view systems forward merely because an RD criterion names their integration? | Pull dependencies forward / implement durable Phase B hooks and keep integration criteria open | **User confirmed durable hooks with honest later-phase integration ownership.** | ✅ Resolved |
+| PAR-B02 | Scope | What exact requirements form the Phase B planning group? | Remaining RD-04–06 behavior / a smaller visual slice / all interaction work | **User confirmed remaining independently executable RD-04, RD-05, and RD-06 behavior.** | ✅ Resolved |
+| PAR-B03 | Scope | Which later behavior is excluded? | Strict phase boundary / opportunistic adjacent implementation | **Strict boundary: RD-07+ implementations remain outside Phase B.** | ✅ Resolved |
+| PAR-B04 | Data & state | Who owns authoritative card, workflow, policy, and mutation data? | Board / application / dual authority | **Imported requirement AR-3/AR-42: application authority remains unchanged.** | ✅ Resolved |
+| PAR-B05 | Architecture | Does richer presentation replace the Phase A board/viewport split? | Retain one bounded viewport / mounted card-cell view graph | **Delegated: retain `KanbanBoard` as the DSL shell and one exact-cell `KanbanViewport`; add pure bounded models/controllers.** | ✅ Resolved |
+| PAR-B06 | Data & state | Who owns ephemeral focus, selection, range anchor, and preferred visual row? | Board-owned / application-controlled / hybrid | **Delegated after challenge and preflight: one board facade owns serialization/intents over exactly one default or mount-factory controller; the board owns/disposes the result.** | ✅ Resolved |
+| PAR-B07 | Architecture | How are columns×swimlanes projected across hybrid, separator, band, and rail variants? | One normalized 2-D semantic model / separate variant pipelines | **Delegated: one canonical semantic scene feeds bounded presentation geometry strategies.** | ✅ Resolved |
+| PAR-B08 | Integration | How does Enter/double-click/context activation remain durable before dialogs and commands exist? | Temporary callback / durable semantic action bridge / defer all activation | **Delegated after challenge: a final-shaped semantic interaction intent and optional handler are public now; later dialogs/commands adapt to the same core.** | ✅ Resolved |
+| PAR-B09 | UX & presentation | How are preset densities and bounded custom presentation represented? | Literal presets plus policy object / arbitrary renderer budgets / fixed presets only | **Delegated: retain three preset names and normalize preset-or-custom input into one immutable bounded presentation budget.** | ✅ Resolved |
+| PAR-B10 | Architecture | Do swimlane presentation variants share geometry and differ only through bounded chrome descriptors? | Shared model and geometry / variant-specific layout engines | **Delegated: shared semantic scene and invariants, with thin variant-specific geometry strategies; no duplicate acquisition/state pipeline.** | ✅ Resolved |
+| PAR-B11 | Feature boundary | What does checklist editing mean in Phase B? | Inline mutation / open semantic editor action / package dialog now | **User-confirmed boundary: checklist rows are read-only; Phase B emits the durable editor action, RD-10 supplies dialogs.** | ✅ Resolved |
+| PAR-B12 | Workflow | How are WIP, DoD, and transition checks implemented before mutation dispatch? | Pure synchronous policy evaluators / component mutation / defer policy | **Delegated: pure snapshot evaluators return allowed/warning/blocked/unavailable; no mutation or authorization.** | ✅ Resolved |
+| PAR-B13 | Navigation | How does navigation into a known unloaded range behave? | Bounded cancellable acquisition / immediate fallback / unbounded search | **Delegated: one generation-scoped bounded acquisition retains focus, exposes pending feedback, and ignores late completion after cancellation.** | ✅ Resolved |
+| PAR-B14 | Selection | What collection preserves key type, order, and immutable request snapshots? | Ordered immutable key sequence plus membership index / mutable Set / array indices | **Delegated and preflight-refined: a board-owned ordered identity model returns frozen snapshots, keeps numeric/string keys distinct, rejects select-all overflow atomically, and keeps opaque server-selection state separate.** | ✅ Resolved |
+| PAR-B15 | Reactivity | How are card-local style/content changes prevented from rebuilding unrelated descriptors? | Complete semantic cache key plus targeted invalidation / full viewport cache clear | **Delegated and preflight-refined: each retained descriptor owns one bounded reactive computation; revisions remain cache inputs and structural changes use bounded region damage.** | ✅ Resolved |
+| PAR-B16 | Failure behavior | How do throwing or invalid field, style, grouping, summary, and descriptor callbacks degrade? | Local sanitized fallback / board failure / silent omission | **Imported AR-21/22/38: isolate locally, emit one payload-free observation, preserve neighboring interaction, and enforce bounds.** | ✅ Resolved |
+| PAR-B17 | Security | May Phase B callbacks receive host handles, mutate records, or emit raw terminal control data? | Trusted bounded projection context / implicit host access | **Imported AR-22/42: no host handles or mutation authority; validate and sanitize all returned content and roles.** | ✅ Resolved |
+| PAR-B18 | Pointer | Which mouse behavior becomes active before drag-and-drop? | Card/header click, double-click, context targeting only / include drag threshold and insertion targets | **User-confirmed and preflight-refined: bounded down/up pending-press state completes click selection; capture, drag threshold, ghost, insertion targets, and autoscroll remain RD-07.** | ✅ Resolved |
+| PAR-B19 | Responsive layout | Where may exact cell geometry remain? | One measured viewport leaf / raw rectangles throughout | **Imported requirement AR-41: DSL for board chrome and content relationships; exact clipped geometry only inside the viewport leaf.** | ✅ Resolved |
+| PAR-B20 | Public API | Are temporary Phase B-only public exports acceptable? | Durable additive contracts only / temporary exports | **Delegated: no disposable public API; every new export must remain meaningful when later phases integrate.** | ✅ Resolved |
+| PAR-B21 | Dependencies | Does Phase B add Forms, Zod, storage, network, or native dependencies? | Add editor dependencies early / remain on current Core-I18n-UI graph | **User-confirmed boundary and AR-42: no new runtime dependency; RD-10 introduces Forms/Zod.** | ✅ Resolved |
+| PAR-B22 | i18n/theme | How much package vocabulary and semantic styling ships now? | All Phase B-owned visible states / defer text and roles | **Delegated: add every Phase B-owned visible label/cue/role in all ten catalogs and renew digest-bound reviews; RD-13 retains final matrix ownership.** | ✅ Resolved |
+| PAR-B23 | Documentation | Which docs/examples ship in Phase B? | README/JSDoc/architecture only / teaching labs and showcase now | **User-confirmed strict boundary: package and technical docs update now; component course, live labs, kitchen sink, and showcase remain Phase F.** | ✅ Resolved |
+| PAR-B24 | Verification | What local gate applies to every implementation phase and final closure? | Package-local behavior gates plus `verify:local` and plugin parity / full root verify each task | **Delegated from project guidance and preflight-refined: focused Kanban gates plus `verify:local`; every mapped task updates/checks plugin output before its auto-commit; CI owns full `yarn verify`. Runtime: execution snapshots are generated exactly when the public transition API cannot target the specification nodes that the execution gate requires.** | ✅ Resolved |
+| PAR-B25 | Lifecycle status | May the roadmap mark RD-04–06 Done when later integration criteria remain open? | Honest partial status / whole-RD completion | **User confirmed honest boundary: only criteria fully implemented and verified advance; RD rows remain incomplete until every owning integration criterion is proven.** | ✅ Resolved |
+| PAR-B26 | Geometry | How can variable-height descriptors scroll, reveal, and navigate without a logical-card-sized index? | Sparse prefix-height runs / fixed density stride / one height per logical card | **Delegated after challenge: bounded sparse per-cell height/anchor runs with estimates for unloaded spans and stable-key correction.** | ✅ Resolved |
+| PAR-B27 | State | Are hidden and collapsed structural entities represented by the same source projection? | Distinct normalized states / remove both before acquisition | **Delegated: hidden omits the entity; collapsed preserves header/count/actions while suppressing its card region and ordinary card cursor retention.** | ✅ Resolved |
+| PAR-B28 | Extension bounds | What does a custom swimlane chrome budget bound? | Rows only / complete geometry-style-region budget | **Delegated: bound header rows, rail width, semantic roles, text bytes, regions/actions, and one descriptor invocation per visible swimlane revision.** | ✅ Resolved |
+| PAR-B29 | Compatibility | How does the existing `identity` getter relate to the new single-owner controller? | Keep as competing live control / migrate to controller seed-and-observation compatibility | **Delegated and preflight-refined: preserve it only as a deprecated default-controller construction seed; source identity publication remains deletion authority, and identity plus custom factory rejects.** | ✅ Resolved |
+
+## Resolution notes
+
+### PAR-B01–PAR-B03 — confirmed planning boundary
+
+The user explicitly confirmed the recommended Phase B boundary after the completed Phase A plan was
+found to be the repository's only executable Kanban plan. Phase B builds the core board rather than a
+temporary visual demonstration. It may add durable seams needed by later phases, but it does not claim
+that an editor dialog, drag interaction, mutation lifecycle, saved view, or command system exists.
+
+### PAR-B12 — pure workflow evaluation
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal policy-evaluation mechanism within approved WIP/DoD/transition behavior;
+  application authorization and product policy remain unchanged.
+- **Objective:** Provide immediate honest UI eligibility without mutating application data or coupling
+  Phase B to the later async dispatcher lifecycle.
+- **Decision:** Snapshot validated counts, revisions, structural identities, and application resolver
+  results into pure discriminated `allowed`, `warning`, `blocked`, or `unavailable` evaluations.
+- **Evidence:** `KanbanBoardAuthority` already separates capability metadata from application dispatch,
+  and source counts preserve exact/lower-bound/unknown quality.
+- **Rejected alternatives:** Component mutation violates application authority; deferral prevents RD-05
+  states from being meaningfully rendered.
+- **Strongest counterargument:** A later dispatcher may repeat some validation.
+- **Confidence:** High — synchronous preview and async authorization intentionally serve different
+  trust boundaries.
+- **Hardening:** Forced review retained the duplicate validation because it prevents stale UI advice
+  from becoming authorization.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-MAKE-PLAN-PHASE-B-20260804T092600Z`.
+- **Reopen triggers:** RD-08 replaces synchronous preview with an authoritative synchronous dispatcher
+  result or the source cannot expose honest count quality.
+
+### PAR-B13–PAR-B15 — bounded interaction state
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Navigation acquisition, collection choice, and invalidation algorithms within the
+  confirmed focus/selection/reactivity behavior.
+- **Objective:** Preserve stable identity and responsive rendering without scanning logical data or
+  allowing stale asynchronous work to move focus.
+- **Decision:** Use generation-scoped cancellation for navigation acquisition; an ordered immutable
+  selection model with type-preserving membership; and complete per-card presentation/cache revisions
+  with bounded targeted damage.
+- **Evidence:** Phase A already owns generation-cancelled cursors, stable card identities, bounded
+  descriptor caching, and viewport damage projection.
+- **Rejected alternatives:** Immediate fallback contradicts pending navigation requirements; mutable
+  sets leak state; full cache clearing repaints unrelated cards.
+- **Strongest counterargument:** Maintaining multiple revision inputs increases cache-key complexity.
+- **Confidence:** High — the existing Phase A seams were explicitly built for these extensions.
+- **Hardening:** The 10×-scale reframe strengthened the requirement for ordered snapshots and targeted
+  invalidation instead of simpler global recomputation.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-MAKE-PLAN-PHASE-B-20260804T092600Z`.
+- **Reopen triggers:** Source acquisition cannot be correlated to query generation, or measurement shows
+  targeted dependency tracking costs more than bounded projection replacement.
+
+### PAR-B05–PAR-B10 — core board architecture
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Component decomposition, state-controller mechanics, normalized projection,
+  presentation-policy representation, and additive interaction integration within confirmed Phase B
+  behavior. Application authority and later-phase scope are unchanged.
+- **Objective:** Deliver a responsive interactive core board without abandoning bounded windowing,
+  duplicating variant pipelines, or publishing an API that later phases must replace.
+- **Decision:** Retain one DSL-composed board around one exact-cell viewport. Build one canonical 2-D
+  semantic scene, pure controllers, and thin bounded geometry strategies. One stable board facade owns
+  serialization and intents over exactly one state controller; the board supplies the default and
+  advanced applications may inject a mount-time factory whose result the board owns. Normalize the
+  three named density presets or a custom policy into an
+  immutable budget. Route activation through a durable semantic intent plus optional public handler;
+  later dialogs, commands, menus, and events consume the same intent rather than replacing it.
+- **Evidence:** The current board owns one viewport and already detaches identity into a board signal;
+  source contracts already describe column/swimlane cells; descriptor actions already carry stable
+  bounded identities; RD-05 requires presentation variants to preserve identical semantic content.
+- **Rejected alternatives:** Mounted card/cell graphs violate bounded topology. Separate variant
+  pipelines risk semantic drift. Loose controlled-plus-internal writes create double ownership.
+  Temporary callbacks become compatibility debt. Deferring activation would leave approved Phase B
+  pointer/keyboard behavior unusable to consumers.
+- **Strongest counterargument:** A complete injectable controller and public semantic intent add more
+  SDK surface than internal-only state and testing hooks.
+- **Confidence:** High overall; medium-high for the public interaction intent naming, which remains
+  additive and is protected by packed-consumer tests.
+- **Hardening:** The independent challenger converged on the viewport, normalized scene, and normalized
+  budgets; it replaced the initial loose hybrid-state direction with a single-owner injected
+  controller/facade split and exposed the consumer-observability conflict. The final decision retains a
+  public final-shaped scoped intent because the user explicitly approved durable Phase B integration
+  hooks. **Challenger: diverged only on public-now versus internal-only intent.**
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-MAKE-PLAN-PHASE-B-20260804T092600Z`.
+- **Reopen triggers:** Descriptor rendering cannot express an approved card section, the normalized
+  scene cannot support rail degradation without semantic divergence, or RD-12 proves the intent cannot
+  be adapted without a compatibility break.
+
+### PAR-B26–PAR-B29 — challenge-discovered geometry and compatibility
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Sparse geometry data structure, structural-state normalization, extension validation
+  budgets, and backward-compatible state-controller migration within approved behavior.
+- **Objective:** Make variable-height cards, swimlane rows, collapse semantics, and existing identity
+  construction correct at 100,000 logical cards without unbounded allocation.
+- **Decision:** Maintain sparse prefix-height runs for retained measurements plus bounded estimates for
+  unloaded spans; correct stable anchors when measurements arrive. Hidden entities are absent, while
+  collapsed entities keep semantic chrome/counts but suppress card regions and ordinary cursor
+  retention. Custom swimlane chrome validates all geometry, style, text, region, action, and invocation
+  dimensions. The existing `identity` getter remains only a compatibility seed, source publication owns
+  deletion, and one board facade/controller chain owns all live interaction transitions.
+- **Evidence:** Phase A currently assumes fixed two/three-row strides in acquisition, content origin,
+  reveal, and anchoring even though validated descriptors may reach 32 rows. Its collapsed-column input
+  removes card acquisition but the richer source metadata can preserve header identity/counts.
+- **Rejected alternatives:** Fixed stride is already inconsistent with the public descriptor contract;
+  one height per logical card violates the scale bound; merging hide/collapse contradicts visible
+  header behavior; retaining two live identity owners creates stale overwrite races.
+- **Strongest counterargument:** Sparse height correction is substantially more complex than delaying
+  variable-height cards until all source positions are loaded.
+- **Confidence:** High — fixed strides cannot satisfy the approved variable-height and windowed
+  behaviors simultaneously.
+- **Hardening:** The independent challenger found the fixed-stride defect and collapse mismatch during
+  adversarial code inspection; both were absent from the initial candidate set and materially changed
+  the plan architecture. **Challenger: converged on the recorded corrections.**
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-MAKE-PLAN-PHASE-B-20260804T092600Z`.
+- **Reopen triggers:** A source supplies exact cumulative offsets safely, or measured correction cannot
+  preserve the visible anchor within bounded work.
+
+### PAR-B16–PAR-B24 — inherited safety and integration boundary
+
+These rows import the approved Kanban requirement decisions and the repository's current project
+guidance. They do not change product behavior, authority, dependency policy, documentation staging, or
+the CI/local verification split. Phase B adds only its own vocabulary and technical documentation.
+
+**PAR-B24 runtime resolution (2026-08-04):** The execution readiness gate required `execution`
+snapshots on the six Phase B specification nodes, but the public transition engine rejects those nodes
+because that gate accepts only a plan target. Under the active `--auto-design` authority, the only viable
+in-scope correction is to generate the exact missing validation entries from current semantic revisions,
+without changing any node status, then rerun the plan-target execution gate. Rejected: bypassing the
+gate or editing unrelated invalid feature graphs. Confidence is high because the refusal and required
+snapshot set are deterministic; reopen if the transition engine gains specification-target execution
+snapshot support.
+
+## Systematic discovery scan
+
+| Category | Result |
+|---|---|
+| Feature gaps | Phase boundary and later integration hooks are explicit in PAR-B01–03, PAR-B08, PAR-B11, and PAR-B18. |
+| Behavioral gaps | Workflow, async navigation, selection, activation, cancellation, and degradation are covered by PAR-B08 and PAR-B12–18. |
+| Scope ambiguities | Strict RD-04–06 independent behavior and later-phase exclusions are fixed by PAR-B01–03 and PAR-B25. |
+| Technical unknowns | Viewport, interaction ownership, swimlane projection, action bridge, custom presentation, sparse heights, collapse, and extension budgets are resolved in PAR-B05–10 and PAR-B26–29. |
+| Edge cases | Unknown counts, unloaded ranges, stale completion, invalid callbacks, key-type collisions, and bounded geometry are resolved. |
+| Integration points | Source, dispatcher, future dialogs/commands/drag, i18n/theme, plugin, and docs boundaries are explicit. |
+| Data & state | Application authority, ephemeral state, stable identities, revisioning, and ordered selection are covered. |
+| Security & compliance | Local SDK threat boundaries, sanitization, bounded callbacks, and payload-free diagnostics are inherited and retained. |
+| Non-functional gaps | Scale, bounded work, responsive geometry, lifecycle cancellation, and verification gates are fixed. |
+| UX & presentation | Densities, swimlane variants, card degradation, cues, and pointer boundary are covered; technical representation remains under challenge. |
+| Stakeholder conflicts | Application authority and package-owned UX remain separated; no new permission or persistence claim is introduced. |
+| Naming & terminology | Public `column`, `swimlane`, `card`, and `cell` terminology remains canonical; plan slug is `phase-b-core-board`. |
+
+## Gate result
+
+All imported, user-confirmed, and delegated decisions are resolved with no silent deferrals. The
+systematic twelve-category scan and independent complex-decision challenge are complete. The Phase B
+plan documents may now be authored; any newly discovered semantic choice must reopen this register.
