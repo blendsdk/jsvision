@@ -86,7 +86,7 @@ export function createKanbanChecklistSectionCandidates(
   const total = items.length;
   const previewLimit = mode === 'preview' ? snapshot.selection.budget.checklistPreviewItems : 0;
   const visibleItems = items.slice(0, previewLimit);
-  const omitted = total - visibleItems.length;
+  const omitted = mode === 'preview' ? total - visibleItems.length : 0;
   const kind: 'checklist-progress' | 'checklist-preview' =
     mode === 'preview' ? 'checklist-preview' : 'checklist-progress';
   const candidates: KanbanChecklistSectionCandidate[] = [

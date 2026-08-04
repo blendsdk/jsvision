@@ -65,3 +65,60 @@ export function clipKanbanCardText(
   const text = `${prefix}${marker}`;
   return Object.freeze({ text, cells: measureKanbanCardText(text, widthMode), clipped: true });
 }
+
+/** Wraps safe text into bounded terminal-cell rows and ellipsizes evidence beyond the final row. */
+export function wrapKanbanCardText(
+  value: string,
+  maximumCells: number,
+  maximumRows: number,
+  widthMode: WidthMode,
+): readonly string[] {
+  if (
+    !Number.isSafeInteger(maximumCells) ||
+    maximumCells < 1 ||
+    !Number.isSafeInteger(maximumRows) ||
+    maximumRows < 0
+  ) {
+    throw new KanbanInvalidDescriptorError();
+  }
+  if (maximumRows === 0 || value.length === 0) return Object.freeze([]);
+  const rows: string[] = [];
+  let current = '';
+  let currentCells = 0;
+  let consumedCharacters = 0;
+  const characters = Array.from(value);
+  for (let index = 0; index < characters.length; index += 1) {
+    const character = characters[index]!;
+    const width = charWidth(character.codePointAt(0) ?? 0, widthMode);
+    if (width === 0) {
+      if (current.length > 0) current += character;
+      consumedCharacters = index + 1;
+      continue;
+    }
+    if (currentCells + width <= maximumCells) {
+      current += character;
+      currentCells += width;
+      consumedCharacters = index + 1;
+      continue;
+    }
+    rows.push(current);
+    if (rows.length === maximumRows) {
+      const last = rows.length - 1;
+      rows[last] = clipKanbanCardText(`${rows[last]}${characters.slice(index).join('')}`, maximumCells, widthMode).text;
+      return Object.freeze(rows);
+    }
+    current = character;
+    currentCells = width;
+    consumedCharacters = index + 1;
+  }
+  if (current.length > 0) rows.push(current);
+  if (consumedCharacters < characters.length && rows.length > 0) {
+    const last = rows.length - 1;
+    rows[last] = clipKanbanCardText(
+      `${rows[last]}${characters.slice(consumedCharacters).join('')}`,
+      maximumCells,
+      widthMode,
+    ).text;
+  }
+  return Object.freeze(rows.slice(0, maximumRows));
+}

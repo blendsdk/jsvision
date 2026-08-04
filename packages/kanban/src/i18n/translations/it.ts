@@ -25,4 +25,7 @@ export const kanbanIt = createKanbanTranslationCatalog('it', {
 /** Official reviewed Italian Phase B Kanban overlay. */
 export const kanbanPhaseBIt = createKanbanPhaseBTranslationCatalog('it', {
   'kanban.action.open-card-editor': 'Apri editor scheda',
+  'kanban.card.feedback.pending': 'In attesa',
+  'kanban.card.feedback.invalid': 'Non valida',
+  'kanban.card.feedback.rejected': 'Rifiutata',
 });

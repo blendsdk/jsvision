@@ -81,6 +81,9 @@ interface CacheEntry {
   lastUsed: number;
 }
 
+/** Optional owning validator for descriptor details that depend on the active render context. */
+type KanbanCachedDescriptorValidator = (descriptor: KanbanCardDescriptor) => void;
+
 /** Optional internal lifecycle observation used by bounded testing instrumentation. */
 export interface KanbanDescriptorCacheObserver {
   /** Called after a new owned computation publishes its initial descriptor. */
@@ -220,6 +223,7 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
 /** Creates and scopes one descriptor, disposing partial reactive work when creation fails. */
 function createScopedDescriptor(
   factory: () => KanbanCardDescriptor,
+  validate: KanbanCachedDescriptorValidator,
   onRebuilt: () => void,
 ): {
   readonly readDescriptor: () => KanbanCardDescriptor;
@@ -230,13 +234,16 @@ function createScopedDescriptor(
       let descriptor: KanbanCardDescriptor | undefined;
       let initialized = false;
       effect(() => {
-        const next = factory();
-        if (typeof next !== 'object' || next === null || !Object.isFrozen(next)) {
-          throw new KanbanInvalidDescriptorError();
+        try {
+          const next = factory();
+          validate(next);
+          descriptor = next;
+          if (initialized) onRebuilt();
+          initialized = true;
+        } catch {
+          if (!initialized) throw new KanbanInvalidDescriptorError();
+          // A retained valid descriptor remains usable when a later reactive rebuild is rejected.
         }
-        descriptor = next;
-        if (initialized) onRebuilt();
-        initialized = true;
       });
       if (descriptor === undefined) throw new KanbanInvalidDescriptorError();
       return Object.freeze({
@@ -251,6 +258,28 @@ function createScopedDescriptor(
       throw error;
     }
   });
+}
+
+/** Validates cache-key invariants before an immutable descriptor can be retained or republished. */
+function validateCachedDescriptor(descriptor: KanbanCardDescriptor, key: SnapshotKey): void {
+  if (
+    typeof descriptor !== 'object' ||
+    descriptor === null ||
+    !Object.isFrozen(descriptor) ||
+    descriptor.cardKey !== key.cardKey ||
+    descriptor.width !== key.width ||
+    !Number.isSafeInteger(descriptor.measuredHeight) ||
+    descriptor.measuredHeight < 1 ||
+    descriptor.measuredHeight > key.rowBudget ||
+    descriptor.rows.length !== descriptor.measuredHeight ||
+    !Object.isFrozen(descriptor.rows) ||
+    !Object.isFrozen(descriptor.sections) ||
+    !Object.isFrozen(descriptor.actions) ||
+    !Object.isFrozen(descriptor.regions) ||
+    !Object.isFrozen(descriptor.degradation)
+  ) {
+    throw new KanbanInvalidDescriptorError();
+  }
 }
 
 /** Returns whether a key matches a validated targeted-invalidation selector. */
@@ -305,7 +334,11 @@ export class KanbanDescriptorCache {
   }
 
   /** Returns an existing descriptor or creates one under a dedicated owned reactive scope. */
-  getOrCreate(key: KanbanDescriptorCacheKey, factory: () => KanbanCardDescriptor): KanbanCardDescriptor {
+  getOrCreate(
+    key: KanbanDescriptorCacheKey,
+    factory: () => KanbanCardDescriptor,
+    validator?: KanbanCachedDescriptorValidator,
+  ): KanbanCardDescriptor {
     if (this.#disposed || typeof factory !== 'function') throw new KanbanInvalidDescriptorError();
     const snapshot = snapshotKey(key);
     const current = this.#entries.get(snapshot.canonical);
@@ -313,10 +346,17 @@ export class KanbanDescriptorCache {
       current.lastUsed = this.#tick();
       return current.readDescriptor();
     }
-    const created = createScopedDescriptor(factory, () => {
-      this.#notify('onRebuilt', snapshot);
-      this.#notify('onReactiveInvalidated', snapshot);
-    });
+    const created = createScopedDescriptor(
+      factory,
+      (descriptor) => {
+        validateCachedDescriptor(descriptor, snapshot);
+        validator?.(descriptor);
+      },
+      () => {
+        this.#notify('onRebuilt', snapshot);
+        this.#notify('onReactiveInvalidated', snapshot);
+      },
+    );
     const entry: CacheEntry = {
       key: snapshot,
       readDescriptor: created.readDescriptor,

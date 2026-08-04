@@ -88,11 +88,20 @@ export const KANBAN_ENGLISH_MESSAGES = Object.freeze({
 export interface KanbanPhaseBMessageMap {
   /** Read-only card action that asks the application to open its card editor. */
   readonly 'kanban.action.open-card-editor': Message;
+  /** Compact feedback shown while a card operation is pending. */
+  readonly 'kanban.card.feedback.pending': Message;
+  /** Compact feedback shown when card validation is invalid. */
+  readonly 'kanban.card.feedback.invalid': Message;
+  /** Compact feedback shown when a card operation is rejected. */
+  readonly 'kanban.card.feedback.rejected': Message;
 }
 
 /** Canonical English messages introduced by the Phase B board surface. */
 export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.action.open-card-editor': 'Open card editor',
+  'kanban.card.feedback.pending': 'Pending',
+  'kanban.card.feedback.invalid': 'Invalid',
+  'kanban.card.feedback.rejected': 'Rejected',
 } satisfies KanbanPhaseBMessageMap);
 
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */

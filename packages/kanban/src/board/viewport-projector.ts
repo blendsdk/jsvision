@@ -3,6 +3,7 @@ import type { I18n } from '@jsvision/i18n';
 
 import { readKanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardAdapter } from '../card/adapter.js';
+import { validateKanbanCardDescriptor } from '../card/descriptor.js';
 import type { KanbanCardDensity, KanbanCardDescriptor, KanbanCardRenderContext } from '../card/descriptor.js';
 import type { KanbanCardFormattingContext } from '../card/formatting.js';
 import { renderKanbanCardSafely } from '../card/renderer.js';
@@ -233,19 +234,22 @@ function projectCellCards<TCard>(
       capabilityRevision: capabilityRevision(options.capabilities),
       interactionRevision: JSON.stringify([focused, selected, false, 'idle']),
     });
-    const descriptor = options.cache.getOrCreate(key, () =>
-      renderKanbanCardSafely(
-        card,
-        { render: (record, renderContext) => renderStandardKanbanCard(record, options.card, renderContext) },
-        context,
-        {
-          labels: {
-            invalidCardTitle: options.i18n.t('kanban.card.invalid-title'),
-            unknownStatus: options.i18n.t('kanban.card.unknown-status'),
+    const descriptor = options.cache.getOrCreate(
+      key,
+      () =>
+        renderKanbanCardSafely(
+          card,
+          { render: (record, renderContext) => renderStandardKanbanCard(record, options.card, renderContext) },
+          context,
+          {
+            labels: {
+              invalidCardTitle: options.i18n.t('kanban.card.invalid-title'),
+              unknownStatus: options.i18n.t('kanban.card.unknown-status'),
+            },
+            observe: options.observe,
           },
-          observe: options.observe,
-        },
-      ),
+        ),
+      (candidate) => validateKanbanCardDescriptor(candidate, context),
     );
     retainedKeys.push(key);
     projected.push(Object.freeze({ index, descriptor }));

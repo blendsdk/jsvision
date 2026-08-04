@@ -1,7 +1,6 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import { createKanbanFieldId } from '../contract/identity.js';
 import type { CardKey, KanbanFieldId } from '../contract/identity.js';
-import { KANBAN_LIMITS } from '../contract/limits.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
@@ -41,6 +40,8 @@ export interface KanbanCardPresentationSnapshotContext {
   readonly formatting: KanbanCardFormattingContext;
   /** Optional payload-free observation sink. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Optional already-acquired checklist values used by convenience renderers to avoid a second getter call. */
+  readonly checklistValues?: unknown;
 }
 
 /** Detached safe display values for one selected metadata field. */
@@ -215,6 +216,7 @@ function fieldValues<TCard>(
   definition: FieldDefinition<TCard>,
   card: TCard,
   formatting: KanbanCardFormattingContext,
+  maximumValues: number,
 ): readonly string[] | undefined {
   const input = definition.valueOf(card);
   if (input === undefined) return undefined;
@@ -227,13 +229,13 @@ function fieldValues<TCard>(
   } else if (definition.kind === 'date') {
     output = formatKanbanCardDate(input, formatting, definition.format);
   } else {
-    const labels = snapshotPresentationArray(input, KANBAN_LIMITS.cardFields.safe);
+    const labels = snapshotPresentationArray(input, maximumValues);
     if (labels.some((label) => typeof label !== 'string')) throw new KanbanInvalidDescriptorError();
     output = definition.format === undefined ? labels : definition.format(Object.freeze([...labels]), formatting);
   }
   if (definition.kind === 'labels') {
     if (output === undefined) return undefined;
-    const labels = snapshotPresentationArray(output, KANBAN_LIMITS.cardFields.safe);
+    const labels = snapshotPresentationArray(output, maximumValues);
     const cleaned = labels.map((label) => snapshotPresentationText(label, true) ?? '');
     return Object.freeze(cleaned);
   }
@@ -311,27 +313,26 @@ export function snapshotKanbanCardPresentation<TCard>(
     Object.freeze<KanbanCardSummaryDefinition<TCard>[]>([]),
     () => observeFailure('card-summaries-invalid'),
   );
-  const rawSelection = callbackOrFallback(
+  const selection = callbackOrFallback(
     () => {
       const callback = optionalAdapterMember(adapter, 'selectionOf');
-      if (callback === undefined) return undefined;
+      if (callback === undefined) return defaultSelection;
       if (typeof callback !== 'function') throw new KanbanInvalidDescriptorError();
-      return Reflect.apply(callback, undefined, [card]);
+      const requested: unknown = Reflect.apply(callback, undefined, [card]);
+      return requested === undefined
+        ? defaultSelection
+        : resolveKanbanCardPresentationSelection(requested, context.maximum);
     },
-    undefined,
+    defaultSelection,
     () => observeFailure('card-selection-failed'),
   );
-  const selection =
-    rawSelection === undefined
-      ? defaultSelection
-      : resolveKanbanCardPresentationSelection(rawSelection, context.maximum);
 
   const selectedFields: KanbanCardFieldSnapshot[] = [];
   for (const fieldId of selection.fieldIds) {
     const definition = definitions.find((candidate) => candidate.fieldId === fieldId);
     if (definition === undefined) continue;
     try {
-      const values = fieldValues(definition, card, formatting);
+      const values = fieldValues(definition, card, formatting, limits.cardFields);
       if (values === undefined || values.length === 0) continue;
       selectedFields.push(
         Object.freeze({
@@ -374,6 +375,13 @@ export function snapshotKanbanCardPresentation<TCard>(
 
   const groups = callbackOrFallback(
     () => {
+      if (context.checklistValues !== undefined) {
+        return snapshotKanbanChecklistGroups(
+          context.checklistValues,
+          limits.checklistGroups,
+          limits.checklistItemsPerGroup,
+        );
+      }
       const callback = optionalAdapterMember(adapter, 'checklistOf');
       if (callback === undefined) return Object.freeze<KanbanChecklistGroup[]>([]);
       if (typeof callback !== 'function') throw new KanbanInvalidDescriptorError();

@@ -25,4 +25,7 @@ export const kanbanPl = createKanbanTranslationCatalog('pl', {
 /** Official reviewed Polish Phase B Kanban overlay. */
 export const kanbanPhaseBPl = createKanbanPhaseBTranslationCatalog('pl', {
   'kanban.action.open-card-editor': 'Otwórz edytor karty',
+  'kanban.card.feedback.pending': 'Oczekuje',
+  'kanban.card.feedback.invalid': 'Nieprawidłowa',
+  'kanban.card.feedback.rejected': 'Odrzucona',
 });

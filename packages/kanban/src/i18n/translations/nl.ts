@@ -25,4 +25,7 @@ export const kanbanNl = createKanbanTranslationCatalog('nl', {
 /** Official reviewed Dutch Phase B Kanban overlay. */
 export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
   'kanban.action.open-card-editor': 'Kaarteditor openen',
+  'kanban.card.feedback.pending': 'In behandeling',
+  'kanban.card.feedback.invalid': 'Ongeldig',
+  'kanban.card.feedback.rejected': 'Afgewezen',
 });

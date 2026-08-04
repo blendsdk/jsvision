@@ -25,4 +25,7 @@ export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
 /** Official reviewed European Portuguese Phase B Kanban overlay. */
 export const kanbanPhaseBPtPT = createKanbanPhaseBTranslationCatalog('pt-PT', {
   'kanban.action.open-card-editor': 'Abrir editor de cartões',
+  'kanban.card.feedback.pending': 'Pendente',
+  'kanban.card.feedback.invalid': 'Inválido',
+  'kanban.card.feedback.rejected': 'Rejeitado',
 });

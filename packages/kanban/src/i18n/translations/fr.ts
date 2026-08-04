@@ -25,4 +25,7 @@ export const kanbanFr = createKanbanTranslationCatalog('fr', {
 /** Official reviewed French Phase B Kanban overlay. */
 export const kanbanPhaseBFr = createKanbanPhaseBTranslationCatalog('fr', {
   'kanban.action.open-card-editor': 'Ouvrir l’éditeur de carte',
+  'kanban.card.feedback.pending': 'En attente',
+  'kanban.card.feedback.invalid': 'Non valide',
+  'kanban.card.feedback.rejected': 'Rejetée',
 });

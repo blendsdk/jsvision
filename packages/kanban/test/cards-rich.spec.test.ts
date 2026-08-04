@@ -87,7 +87,9 @@ function ticket(replacement: Partial<Ticket> = {}): Ticket {
   };
 }
 
-function adapter(dateFormat = vi.fn(() => 'Jan 2')): KanbanCardPresentationAdapter<Ticket> {
+function adapter(
+  dateFormat: (value: unknown, context: KanbanCardFormattingContext) => string | undefined = vi.fn(() => 'Jan 2'),
+): KanbanCardPresentationAdapter<Ticket> {
   return {
     keyOf: (card) => card.ticketNumber,
     titleOf: (card) => card.caption,

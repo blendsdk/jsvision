@@ -44,8 +44,8 @@ export interface KanbanCustomPresentation {
   readonly checklistMode: KanbanChecklistMode;
   /** Maximum checklist items displayed across selected groups. */
   readonly checklistPreviewItems: number;
-  /** Optional low-to-high removal order for non-mandatory sections. */
-  readonly degradationOrder?: readonly KanbanCardSectionKind[];
+  /** Optional string candidates validated into a closed low-to-high optional-section removal order. */
+  readonly degradationOrder?: readonly string[];
 }
 
 /** Preset name or complete custom presentation policy accepted by the public resolver. */
@@ -427,7 +427,7 @@ function intersectIds(requested: readonly string[], available: readonly string[]
  * ```
  */
 export function resolveKanbanCardPresentationSelection(
-  selection: KanbanCardPresentationSelection | undefined,
+  selection: unknown,
   maximum: KanbanCardPresentationMaximum,
 ): ResolvedKanbanCardPresentationSelection {
   const maximumProperties = dataProperties(maximum, MAXIMUM_KEYS.size);

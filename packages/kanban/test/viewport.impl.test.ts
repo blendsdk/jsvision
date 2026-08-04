@@ -50,8 +50,15 @@ function descriptor(cardKey: number): KanbanCardDescriptor {
     surfaceRole: 'card.normal',
     borderRole: 'card.normal',
     marker: Object.freeze({ row: 0, column: 0, glyph: ' ', role: 'content.status', cues: Object.freeze([]) }),
-    rows: Object.freeze([]),
-    sections: Object.freeze([]),
+    rows: Object.freeze([
+      Object.freeze({
+        section: 'title' as const,
+        spans: Object.freeze([Object.freeze({ column: 0, text: 'Card', role: 'content.title' as const })]),
+      }),
+    ]),
+    sections: Object.freeze([
+      Object.freeze({ id: 'title', kind: 'title' as const, startRow: 0, rowCount: 1, priority: 0 }),
+    ]),
     actions: Object.freeze([]),
     regions: Object.freeze([]),
     degradation: Object.freeze({ level: 'none', omittedSections: Object.freeze([]) }),

@@ -1,21 +1,25 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
+import { createKanbanChecklistId, createKanbanFieldId } from '../contract/identity.js';
+import { validateKanbanLimitOptions } from '../contract/limits.js';
 import { KANBAN_PHASE_B_ENGLISH_MESSAGES } from '../i18n/catalog.js';
-import type { KanbanCardAdapter } from './adapter.js';
-import { readKanbanCardAdapter } from './adapter.js';
+import type { KanbanCardPresentationAdapter } from './adapter.js';
+import { snapshotKanbanChecklistGroups } from './checklist.js';
+import type { KanbanChecklistGroup } from './checklist.js';
 import { KANBAN_OPEN_CARD_EDITOR_ACTION_ID, updateKanbanChecklistHeader } from './checklist-renderer.js';
 import type { KanbanChecklistSectionCandidate } from './checklist-renderer.js';
 import type {
-  KanbanCardCue,
   KanbanCardDescriptor,
   KanbanCardRenderContext,
   KanbanCardSectionKind,
   KanbanCardTerminalCapabilities,
 } from './descriptor.js';
+import { snapshotKanbanCardPresentation } from './presentation-snapshot.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
+import { resolveKanbanPresentation } from './presentation-policy.js';
 import { resolveKanbanCardStyle } from './style-resolver.js';
 import { createStandardKanbanSectionCandidates } from './standard-sections.js';
 import type { KanbanStandardSectionCandidate } from './standard-sections.js';
-import { clipKanbanCardText, measureKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
+import { measureKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
 import type { KanbanTheme } from './theme.js';
 
 /** Geometry/theme inputs used to compose one detached rich card snapshot. */
@@ -30,6 +34,8 @@ export interface KanbanStandardCardCompositionContext {
   readonly capabilities: Readonly<KanbanCardTerminalCapabilities>;
   /** Optional localized label for the read-only checklist editor action. */
   readonly openEditorLabel?: string;
+  /** Optional localized compact labels for pending, invalid, and rejected card state. */
+  readonly feedbackLabels?: Partial<Readonly<Record<'pending' | 'invalid' | 'rejected', string>>>;
 }
 
 /** Records one section kind once while preserving first-omission order. */
@@ -94,6 +100,21 @@ export function composeStandardKanbanCard(
   const candidates = createStandardKanbanSectionCandidates(snapshot, {
     width: context.width,
     widthMode: context.capabilities.widthMode,
+    compactFeedback: context.rowBudget === 2,
+    feedbackLabels: Object.freeze({
+      pending:
+        normalizeKanbanCardText(
+          context.feedbackLabels?.pending ?? KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.pending'],
+        ) || KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.pending'],
+      invalid:
+        normalizeKanbanCardText(
+          context.feedbackLabels?.invalid ?? KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.invalid'],
+        ) || KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.invalid'],
+      rejected:
+        normalizeKanbanCardText(
+          context.feedbackLabels?.rejected ?? KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.rejected'],
+        ) || KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.card.feedback.rejected'],
+    }),
   });
   const retained: KanbanStandardSectionCandidate[] = [...candidates];
   const omitted: KanbanCardSectionKind[] = [];
@@ -183,6 +204,7 @@ export function composeStandardKanbanCard(
     if (removalIndex < 0) break;
     removeCandidate(removalIndex);
   }
+  if (height > context.rowBudget) throw new KanbanInvalidDescriptorError();
 
   const rows = Object.freeze(retained.flatMap((candidate) => candidate.rows));
   let startRow = 0;
@@ -255,29 +277,59 @@ export function composeStandardKanbanCard(
   });
 }
 
-/** Selects the stable semantic surface role for the current interaction state. */
-function cardSurfaceRole(context: KanbanCardRenderContext): KanbanCardDescriptor['surfaceRole'] {
-  if (context.readOnly) return 'card.read-only';
-  if (context.focused && context.selected) return 'card.focused-selected';
-  if (context.focused) return 'card.focused';
-  if (context.selected) return 'card.selected';
-  return 'card.normal';
+/** Reads configured field or summary identities without invoking application accessors. */
+function configuredAdapterIds<TCard>(
+  adapter: KanbanCardPresentationAdapter<TCard>,
+  member: 'fields' | 'summaries',
+  identityMember: 'fieldId' | 'summaryId',
+  maximum: number,
+): readonly string[] {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(adapter, member);
+    if (descriptor?.get !== undefined || descriptor?.set !== undefined) return Object.freeze([]);
+    const values: unknown = descriptor?.value;
+    if (values === undefined) return Object.freeze([]);
+    if (!Array.isArray(values) || values.length > maximum) return Object.freeze([]);
+    const identities: string[] = [];
+    for (let index = 0; index < values.length; index += 1) {
+      if (!Object.prototype.hasOwnProperty.call(values, index)) return Object.freeze([]);
+      const value: unknown = values[index];
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) return Object.freeze([]);
+      const identity = Object.getOwnPropertyDescriptor(value, identityMember);
+      if (identity?.get !== undefined || identity?.set !== undefined || typeof identity?.value !== 'string') {
+        return Object.freeze([]);
+      }
+      identities.push(identity.value);
+    }
+    return Object.freeze(identities);
+  } catch {
+    return Object.freeze([]);
+  }
 }
 
-/** Builds the explicit non-color cue inventory for the current interaction state. */
-function cardCues(context: KanbanCardRenderContext): readonly KanbanCardCue[] {
-  const cues: KanbanCardCue[] = [];
-  if (context.focused) cues.push('focused');
-  if (context.selected) cues.push('selected');
-  if (context.readOnly) cues.push('read-only');
-  if (context.operation !== 'idle') cues.push(context.operation);
-  return cues;
+/** Acquires and validates checklist values once for the convenience wrapper. */
+function readChecklistValues<TCard>(
+  card: TCard,
+  adapter: KanbanCardPresentationAdapter<TCard>,
+  maximumGroups: number,
+  maximumItems: number,
+): readonly KanbanChecklistGroup[] {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(adapter, 'checklistOf');
+    if (descriptor?.get !== undefined || descriptor?.set !== undefined) return Object.freeze([]);
+    const callback: unknown = descriptor?.value;
+    if (callback === undefined) return Object.freeze([]);
+    if (typeof callback !== 'function') return Object.freeze([]);
+    return snapshotKanbanChecklistGroups(Reflect.apply(callback, undefined, [card]), maximumGroups, maximumItems);
+  } catch {
+    return Object.freeze([]);
+  }
 }
 
 /**
- * Renders mandatory title and status values from an application-owned card through a typed adapter.
+ * Snapshots and composes an application-owned card through the standard rich-card pipeline.
  *
- * The Phase A renderer emits no card actions, regions, or optional content sections. Inter-card
+ * Original mandatory-only adapters remain compatible because every rich member is optional. Card
  * spacing belongs to board layout and therefore does not increase the descriptor height.
  *
  * @example
@@ -287,58 +339,44 @@ function cardCues(context: KanbanCardRenderContext): readonly KanbanCardCue[] {
  */
 export function renderStandardKanbanCard<TCard>(
   card: TCard,
-  adapter: KanbanCardAdapter<TCard>,
+  adapter: KanbanCardPresentationAdapter<TCard>,
   context: KanbanCardRenderContext,
 ): KanbanCardDescriptor {
   if (!Number.isSafeInteger(context.width) || context.width < 2 || context.rowBudget < 2) {
     throw new KanbanInvalidDescriptorError();
   }
-  const snapshot = readKanbanCardAdapter(card, adapter);
+  const limits = validateKanbanLimitOptions({ class: 'standard' });
+  const budget = resolveKanbanPresentation(context.density, limits);
+  const fields = configuredAdapterIds(adapter, 'fields', 'fieldId', limits.cardFields);
+  const summaries = configuredAdapterIds(adapter, 'summaries', 'summaryId', limits.summarySections);
+  const checklistValues = readChecklistValues(card, adapter, limits.checklistGroups, limits.checklistItemsPerGroup);
+  const maximum = {
+    budget,
+    limits,
+    availableFieldIds: fields.map(createKanbanFieldId),
+    availableSummaryIds: summaries.map(createKanbanFieldId),
+    availableChecklistIds: checklistValues.map(({ checklistId }) => createKanbanChecklistId(checklistId)),
+  };
+  const snapshot = snapshotKanbanCardPresentation(card, adapter, {
+    maximum,
+    visualState: {
+      focused: context.focused,
+      selected: context.selected,
+      rangeAnchor: false,
+      readOnly: context.readOnly,
+      invalid: context.operation === 'rejected',
+      operation: context.operation,
+    },
+    formatting: context.formatting,
+    checklistValues,
+  });
   if (snapshot.cardKey !== context.cardKey || snapshot.presentationRevision !== context.presentationRevision) {
     throw new KanbanInvalidDescriptorError();
   }
-  const title = normalizeKanbanCardText(snapshot.title);
-  const status = normalizeKanbanCardText(snapshot.status);
-  if (
-    title.length === 0 ||
-    status.length === 0 ||
-    measureKanbanCardText(title, context.capabilities.widthMode) === 0 ||
-    measureKanbanCardText(status, context.capabilities.widthMode) === 0
-  ) {
-    throw new KanbanInvalidDescriptorError();
-  }
-  const maximumTextCells = context.width - 1;
-  const clippedTitle = clipKanbanCardText(title, maximumTextCells, context.capabilities.widthMode).text;
-  const clippedStatus = clipKanbanCardText(status, maximumTextCells, context.capabilities.widthMode).text;
-  if (
-    clippedTitle.length === 0 ||
-    clippedStatus.length === 0 ||
-    measureKanbanCardText(clippedTitle, context.capabilities.widthMode) === 0 ||
-    measureKanbanCardText(clippedStatus, context.capabilities.widthMode) === 0
-  ) {
-    throw new KanbanInvalidDescriptorError();
-  }
-  const surfaceRole = cardSurfaceRole(context);
-  const cues = cardCues(context);
-  const markerGlyph = context.focused ? '>' : context.selected ? '*' : context.readOnly ? '#' : '|';
-  return {
-    cardKey: snapshot.cardKey,
-    ...(snapshot.presentationRevision === undefined ? {} : { presentationRevision: snapshot.presentationRevision }),
+  return composeStandardKanbanCard(snapshot, {
     width: context.width,
-    measuredHeight: 2,
-    surfaceRole,
-    borderRole: surfaceRole,
-    marker: { row: 0, column: 0, glyph: markerGlyph, role: surfaceRole, cues },
-    rows: [
-      { section: 'title', spans: [{ column: 1, text: clippedTitle, role: 'content.title' }] },
-      { section: 'status', spans: [{ column: 1, text: clippedStatus, role: 'content.status' }] },
-    ],
-    sections: [
-      { id: 'title', kind: 'title', startRow: 0, rowCount: 1, priority: 0 },
-      { id: 'status', kind: 'status', startRow: 1, rowCount: 1, priority: 1 },
-    ],
-    actions: [],
-    regions: [],
-    degradation: { level: 'none', omittedSections: [] },
-  };
+    rowBudget: Math.min(context.rowBudget, budget.cardRows),
+    theme: context.theme,
+    capabilities: context.capabilities,
+  });
 }

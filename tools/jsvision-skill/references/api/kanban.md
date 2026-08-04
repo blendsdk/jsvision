@@ -148,7 +148,7 @@ const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
 Canonical English messages introduced by the Phase B board surface.
 
 ```ts
-const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; }>
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; }>
 ```
 
 ## KANBAN_PLACEHOLDER_MANIFEST
@@ -596,6 +596,7 @@ interface KanbanCardPresentationSnapshotContext {
   visualState: KanbanCardVisualState;   // Current card-local interaction state.
   formatting: KanbanCardFormattingContext;   // Application-owned locale formatting callbacks.
   observe?: (observation: KanbanObservation) => void;   // Optional payload-free observation sink.
+  checklistValues?: unknown;   // Optional already-acquired checklist values used by convenience renderers to avoid a second getter call.
 }
 ```
 
@@ -1013,7 +1014,7 @@ interface KanbanCustomPresentation {
   summarySections: number;   // Maximum selected summary sections.
   checklistMode: KanbanChecklistMode;   // Checklist detail available to the standard renderer.
   checklistPreviewItems: number;   // Maximum checklist items displayed across selected groups.
-  degradationOrder?: readonly KanbanCardSectionKind[];   // Optional low-to-high removal order for non-mandatory sections.
+  degradationOrder?: readonly string[];   // Optional string candidates validated into a closed low-to-high optional-section removal order.
 }
 ```
 
@@ -1774,6 +1775,9 @@ Exact first-use Phase B message inventory required from every Kanban translation
 ```ts
 interface KanbanPhaseBMessageMap {
   'kanban.action.open-card-editor': Message;   // Read-only card action that asks the application to open its card editor.
+  'kanban.card.feedback.pending': Message;   // Compact feedback shown while a card operation is pending.
+  'kanban.card.feedback.invalid': Message;   // Compact feedback shown when card validation is invalid.
+  'kanban.card.feedback.rejected': Message;   // Compact feedback shown when a card operation is rejected.
 }
 ```
 
@@ -2218,6 +2222,7 @@ interface KanbanStandardCardCompositionContext {
   theme: Readonly<KanbanTheme>;   // Fully resolved semantic theme.
   capabilities: Readonly<KanbanCardTerminalCapabilities>;   // Terminal features used for deterministic text geometry.
   openEditorLabel?: string;   // Optional localized label for the read-only checklist editor action.
+  feedbackLabels?: Partial<Readonly<Record<'pending' | 'invalid' | 'rejected', string>>>;   // Optional localized compact labels for pending, invalid, and rejected card state.
 }
 ```
 
@@ -3043,10 +3048,10 @@ renderKanbanCardSafely<TCard>(card: TCard, renderer: KanbanCardRenderer<TCard>, 
 
 ## renderStandardKanbanCard
 
-Renders mandatory title and status values from an application-owned card through a typed adapter.
+Snapshots and composes an application-owned card through the standard rich-card pipeline.
 
 ```ts
-renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>, context: KanbanCardRenderContext): KanbanCardDescriptor
+renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardPresentationAdapter<TCard>, context: KanbanCardRenderContext): KanbanCardDescriptor
 ```
 
 ## resolveKanbanCardPresentationSelection
@@ -3054,7 +3059,7 @@ renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>, 
 Resolves one card's optional section order without changing numeric view maxima.
 
 ```ts
-resolveKanbanCardPresentationSelection(selection: KanbanCardPresentationSelection | undefined, maximum: KanbanCardPresentationMaximum): ResolvedKanbanCardPresentationSelection
+resolveKanbanCardPresentationSelection(selection: unknown, maximum: KanbanCardPresentationMaximum): ResolvedKanbanCardPresentationSelection
 ```
 
 ## resolveKanbanPresentation
