@@ -2,7 +2,7 @@
 
 > **Document**: 03-02-query-session-cursors.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-09–PAR-10, PAR-14, PAR-19–PAR-20, PAR-22
+> **Decision sources**: PAR-09–PAR-10, PAR-14, PAR-19–PAR-20, PAR-22, PAR-27–PAR-28
 > **CodeOps Artifact Schema**: 1
 
 ## Semantic query values
@@ -169,6 +169,52 @@ export interface KanbanCellCursor<TCard> {
   dispose(): void;
 }
 ```
+
+The cursor's public values are exact:
+
+```ts
+export type KanbanCellState =
+  | { readonly kind: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' }
+  | {
+      readonly kind: 'error';
+      readonly code: string;
+      readonly label?: string;
+      readonly retry: 'available' | 'unavailable';
+    };
+
+export interface KanbanCellCounts {
+  readonly total: KanbanCount;
+  readonly matching: KanbanCount;
+  readonly loaded: KanbanCount;
+}
+
+export type KanbanKnownLength =
+  | { readonly kind: 'exact'; readonly value: number }
+  | { readonly kind: 'at-least'; readonly value: number }
+  | { readonly kind: 'unknown' };
+```
+
+Known count and length values are non-negative safe integers. Pure snapshot validators accept unknown
+boundary input, enforce exact data-property shapes and active limits, sanitize error labels, and return
+detached frozen values.
+
+Every placement carries the cursor revision from which it was derived. `start` and `end` declare
+authoritative logical edges. `between` carries `beforeCardKey` and `afterCardKey`, requires at least one
+non-null neighbor, and rejects identical non-null neighbors. `window-edge` carries `edge: 'before' |
+'after'`, a known `neighborCardKey`, and an optional opaque `token`. `unavailable` carries a safe `code`,
+optional sanitized `label`, and an optional bounded half-open `prefetch` range.
+
+`snapshotKanbanPlacement` validates that union without decoding tokens.
+`assertKanbanPlacementCurrent(placement, currentRevision)` uses equality only and returns the placement
+when its cursor revision is current; any stale start/end/anchor/window token/unavailable result raises a
+typed sanitized source-publication error before future dispatch. An exact cursor length alone permits
+logical `end`; an `at-least` or `unknown` final loaded slot remains `window-edge`, even with a token.
+
+Identity changes are exact `deleted-card`, `deleted-column`, or `deleted-swimlane` records carrying
+only their semantic identity. `KanbanIdentityChangeBatch` carries a revision and bounded changes.
+`snapshotKanbanIdentityChangeBatch` rejects duplicate semantic identities and invalid/over-bound
+records atomically. Unloading a page is never encoded as a deletion. Selection and focus reconciliation
+remain owned by the Phase 4 board projection.
 
 Ranges are half-open. Validate finite non-negative integers, `start <= end`, configured span, and safe
 arithmetic before source application code runs. `cardAt` returning `undefined` for an in-range unloaded

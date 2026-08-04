@@ -2,7 +2,7 @@
 
 > **Document**: 03-03-eager-source-validation.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20
+> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-28
 > **CodeOps Artifact Schema**: 1
 
 ## Eager helper API
@@ -118,6 +118,20 @@ generation number, address map, retention owners, scheduler, cursor instances, o
 Specifications can supply ordinary public `KanbanDataSource` fakes. Deterministic eager/windowed
 fixture controllers and their deferred publication/locator/instrumentation operations remain part of
 the helper implementation task; they do not widen the lifecycle harness.
+
+`createKanbanCursorLifecycleHarness({ cursor, address, keyOf, limits?, observe? })` is the matching
+black-box seam for one cursor. It exposes only bounded `ensureRange(start, end, { signal? })`,
+`snapshot({ indices?, slots? })`, `retry()`, `observations()`, and idempotent `dispose()`. Range calls
+exercise the private normalization/coalescing coordinator; invalid ranges reject before the supplied
+cursor sees a callback.
+
+`KanbanCursorInspection` contains detached state/count/length/revision values, requested card keys or
+explicit unloaded markers, requested placement kinds/anchors with opaque token values redacted, and
+safe call/disposal counters. It never exposes card bodies, cursor/coordinator identity, range maps,
+queues, retention owners, scheduler state, or mutable internals. A controlled cursor fixture may supply
+deferred range resolution/rejection/publication and safe instrumentation. Disposing invalidates the
+harness before aborting work, delegates cursor disposal exactly once, and suppresses every late result
+from subsequent snapshots and observations.
 
 Fixtures must be useful to package consumers testing their adapters; they are not production imports.
 

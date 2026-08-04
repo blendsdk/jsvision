@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 27 items resolved
-> **Last Updated**: 2026-08-04 01:46 CEST
+> **Status**: ✅ GATE PASSED — all 28 items resolved
+> **Last Updated**: 2026-08-04 02:00 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -47,6 +47,7 @@
 | PAR-25 | Technical (runtime) | Exact Phase A request, result, capability, dispatcher-context, and publication-metadata shapes were not fixed deeply enough to author an immutable public oracle | Closed package-owned extension envelope / declaration-merging registry / free generic request interface | Delegated: a package-owned `extension` envelope with required semantic payload, captured revisions and signal; four-result union; sync-or-native-Promise dispatcher with context; per-extension UX capability map; separate publication metadata | ✅ Resolved |
 | PAR-26 | Technical (runtime) | The requirement mandated namespaced extension IDs but did not fix their grammar or reserved package namespace | Reuse lowercase dotted JSVision message-key grammar / introduce slash-separated IDs | Delegated: reuse lowercase dotted segments and reserve the complete `jsvision.` prefix for package-owned IDs | ✅ Resolved |
 | PAR-27 | Technical (runtime) | Query-session criteria fixed lifecycle behavior but not the exact public value shapes or a black-box seam that can test the private generation coordinator | Testing-only lifecycle harness plus exact value unions / expose the coordinator / defer lifecycle proof to Phase 4 | Delegated: exact public query/state/count/structure/publication/location values plus a narrow testing-only lifecycle harness; coordinator internals remain private | ✅ Resolved |
+| PAR-28 | Technical (runtime) | Cursor criteria fixed behavior but not exact cell/count/length/placement/identity values, stale-placement validation, or a black-box seam for the private range coordinator | Exact unions plus pure validators and testing-only cursor harness / expose coordinator / move cursor lifecycle to Phase 4 | Delegated: exact immutable cursor unions, pure placement/identity validators, and a narrow testing-only cursor harness; selection reconciliation remains Phase 4 | ✅ Resolved |
 
 ## Resolution notes
 
@@ -285,6 +286,37 @@ and the testing-only harness and explicitly rejected coordinator exposure. **Pol
 `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** consumers require direct lifecycle control in
 production or the harness cannot test the criteria without exposing private state.
 
+### PAR-28 — cursor lifecycle oracle seam
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** This fixes exact representations,
+pure validators, and a testing-only observation seam for already approved cursor behavior. It adds no
+source feature and keeps range scheduling/coalescing private. **Objective:** Let immutable
+specifications prove range validation/coalescing, unloaded reads, placement completeness, stale-token
+rejection, error isolation, identity-change validation, and exactly-once disposal without importing
+private coordinator state.
+
+**Decision:** The main entry fixes exact immutable cell-state, cell-count, known-length, placement, and
+identity-deletion unions. Pure snapshot validators reject malformed or over-bound values atomically;
+`assertKanbanPlacementCurrent` compares the placement's cursor revision by equality and rejects stale
+anchors or opaque tokens before future dispatch. The testing entry exposes a cursor lifecycle harness
+limited to bounded `ensureRange`, safe inspection snapshots, retry, observations, and idempotent
+disposal. Inspection returns requested card keys/unloaded markers and redacted placements but never
+card bodies, token values, range maps, queues, coordinator identity, or mutable cursor objects.
+Selection/focus reconciliation remains assigned to the Phase 4 board oracle; Phase 2 publishes only
+bounded authoritative deletion facts.
+
+**Evidence:** Cursor method names and lifecycle behavior were approved, but the prior prose did not
+fix permanent union fields or a black-box route through the private range coordinator. **Rejected
+alternatives:** Exporting the coordinator creates a compatibility surface for scheduling internals.
+Moving cursor lifecycle to Phase 4 breaks Phase 2's source gate. Pulling selection reconciliation into
+this task contradicts its existing Phase 4 ownership. **Strongest counterargument:** Multiple pure
+validators add public surface, but they make the source and future dispatch boundaries independently
+testable without mutable controllers. **Confidence:** High (0.94). **Hardening:** Independent challenge
+converged on exact unions, equality-only revision validation, and the testing-only harness and corrected
+selection ownership. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:**
+placement anchor semantics change, selection ownership moves into the source layer, or consumers need
+public coordinator control.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -293,7 +325,7 @@ production or the harness cannot test the criteria without exposing private stat
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-27 have complete delegated records; consequential request and query-lifecycle
-  shapes received independent challenge and the namespace grammar was grounded in the existing shared
-  validator.
+- [x] PAR-20 through PAR-28 have complete delegated records; consequential request, query-lifecycle,
+  and cursor-lifecycle shapes received independent challenge and the namespace grammar was grounded in
+  the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

@@ -24,7 +24,7 @@ distribution evidence.
 | `test/package-boundary.spec.test.ts` | Specification | Export map, production/testing separation, distribution/security boundaries |
 | `test/contracts.spec.test.ts` | Specification | IDs, limits, semantic JSON, errors, observations |
 | `test/query-session.spec.test.ts` | Specification | Exact source values plus testing-harness session generation, state/counts, cancellation, stale suppression, atomic publication, redaction, and bounded location |
-| `test/cursor.spec.test.ts` | Specification | Sparse cursors, ranges, placement, disposal, identity changes |
+| `test/cursor.spec.test.ts` | Specification | Exact cursor values plus testing-harness range coalescing/validation, unloaded reads, placement completeness, stale-token rejection, scoped error, identity deletion, and disposal suppression |
 | `test/eager-source.spec.test.ts` | Specification | 5,000-card eager semantics, ordering, validation, exact counts |
 | `test/windowed-source.spec.test.ts` | Specification | 100,000 logical cards, range bounds, partial/error isolation |
 | `test/cards.spec.test.ts` | Specification | Generic adapter and standard Phase A renderer |
