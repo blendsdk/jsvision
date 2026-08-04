@@ -103,14 +103,14 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 2: Workflow columns, swimlanes, and policy
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 2 task
+> **Phase baseline tree**: `c0a52a406`
 > **Lenses**: application authority, sparse/windowed data, workflow policy, failure isolation
 
 ### Step 2.1: Specification tests
 
 **Reference**: 03-03; ST-B-STRUCT-01..21; SPEC-B-HOVER-HOOK; PAR-B12/PAR-B27/PAR-B28
 
-- [ ] 2.1.1 `[spec-author]` Write the Phase 2-owned model/evaluator workflow/visibility/collapse/WIP/transition/state assertion slices — `packages/kanban/test/structure-workflow.spec.test.ts`
+- [x] 2.1.1 `[spec-author]` Write the Phase 2-owned model/evaluator workflow/visibility/collapse/WIP/transition/state assertion slices — `packages/kanban/test/structure-workflow.spec.test.ts`
 - [ ] 2.1.2 `[spec-author]` Add the Phase 2-owned explicit/derived/unassigned grouping and presentation-contract assertion slices to the same suite — `packages/kanban/test/structure-workflow.spec.test.ts`
 - [ ] 2.1.3 Run the Phase 2 specification suite and record expected red behavior
 
