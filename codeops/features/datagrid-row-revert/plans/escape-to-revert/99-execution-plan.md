@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 16:58
-> **Progress**: 25/31 tasks (81%)
+> **Last Updated**: 2026-08-04 17:01
+> **Progress**: 26/31 tasks (84%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -183,7 +183,12 @@ layout, accessibility cues, and manual 80×24 evidence.
 [03-03](03-03-documentation-and-distribution.md) · AR-11, AR-12, AR-13, AR-14
 
 - [x] 3.1.1 [spec-author] Extend generated API, source-impact, and plugin specification coverage for ST-27B–ST-28 — existing API/plugin specification gates ✅ (completed: 2026-08-04 16:58)
-- [ ] 3.1.2 Run ST-27B–ST-28 and record the expected stale distribution failures before implementation (red phase) — generated API and plugin checks
+- [x] 3.1.2 Run ST-27B–ST-28 and record the expected stale distribution failures before implementation (red phase) — generated API and plugin checks ✅ (completed: 2026-08-04 17:01)
+
+> **Red evidence**: the focused API/plugin run passed 12 compatibility checks and failed exactly
+> three planned distribution assertions: the existing generated API drift guard, the new committed
+> row-revert API contract, and the source-impact snapshot for the `internationalization` and
+> `datagrid` areas. No runtime, package, or unrelated plugin failure appeared.
 
 ### Step 3.2: Implementation
 
