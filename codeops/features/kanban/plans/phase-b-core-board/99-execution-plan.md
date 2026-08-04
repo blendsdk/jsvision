@@ -120,7 +120,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 2.2.1 Add validated column/swimlane visibility, collapse, WIP, DoD, capability, style, presentation, and hover-timing limit contracts — `packages/kanban/src/source/types.ts`, `packages/kanban/src/structure/policy.ts`, `packages/kanban/src/contract/limits.ts`
 - [x] 2.2.2 Implement normalized structure snapshots with distinct hidden/collapsed semantics and stable ID reconciliation — `packages/kanban/src/structure/model.ts`, `packages/kanban/src/structure/policy.ts`
-- [ ] 2.2.3 Implement pure WIP evaluation for exact/unknown counts, including immutable informational violation evidence, and advisory/blocking modes — `packages/kanban/src/workflow/wip.ts`
+- [x] 2.2.3 Implement pure WIP evaluation for exact/unknown counts, including immutable informational violation evidence, and advisory/blocking modes — `packages/kanban/src/workflow/wip.ts`
 - [ ] 2.2.4 Implement pure DoD/transition evaluation and sanitized resolver failure outcomes — `packages/kanban/src/workflow/transition.ts`, `packages/kanban/src/workflow/definition-of-done.ts`
 - [ ] 2.2.5 Add query-owned explicit/derived grouping registry, normalized names/disambiguators, unassigned semantics, and mismatched-policy rejection — `packages/kanban/src/structure/grouping.ts`
 - [ ] 2.2.6 Refactor eager indexing to store occupied semantic cells only, synthesize absent empty cells lazily, and expose allocation counters for regression tests — `packages/kanban/src/source/eager-index.ts`, `packages/kanban/src/source/eager-source.ts`
