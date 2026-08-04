@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 05:00 CEST
-> **Progress**: 30/64 tasks (47%)
+> **Last Updated**: 2026-08-04 05:06 CEST
+> **Progress**: 31/64 tasks (48%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -101,7 +101,7 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 - [x] 3.2.1 Implement documented generic adapter and complete `StandardCard` convenience/checklist/summary data types without imposing them on generic records — `packages/kanban/src/card/{adapter,standard-card}.ts` ✅ (completed: 2026-08-04 04:46)
 - [x] 3.2.2 Implement the bounded formatter context and adapter-boundary value validation without a runtime schema or Forms dependency — `packages/kanban/src/card/formatting.ts`, `packages/kanban/src/card/adapter.ts` ✅ (completed: 2026-08-04 04:50)
 - [x] 3.2.3 Implement inert theme-token declarations required by descriptors; implement bounded descriptor/renderer contracts and validation plus the Phase A standard/fallback renderer with sanitized cell-correct title/status/non-color focus — `packages/kanban/src/card/{theme,descriptor,renderer,standard-renderer}.ts` ✅ (completed: 2026-08-04 05:00)
-- [ ] 3.2.4 Implement exhaustive package-local theme roles, immutable theme creation/mapping, safe Phase A fallbacks, revision projection, and basic color-depth/monochrome handling — `packages/kanban/src/card/{theme,theme-resolver}.ts`
+- [x] 3.2.4 Implement exhaustive package-local theme roles, immutable theme creation/mapping, safe Phase A fallbacks, revision projection, and basic color-depth/monochrome handling — `packages/kanban/src/card/{theme,theme-resolver}.ts` ✅ (completed: 2026-08-04 05:06)
 - [ ] 3.2.5 Implement the typed Phase A catalog schema, English fallback vocabulary, and composition helpers in generator-compatible authored source — `packages/kanban/src/i18n/catalog.ts`
 - [ ] 3.2.6 Implement Dutch, German, and French typed Phase A catalogs — `packages/kanban/src/i18n/translations/{nl,de,fr}.ts`
 - [ ] 3.2.7 Implement Spanish, Italian, and Portuguese typed Phase A catalogs — `packages/kanban/src/i18n/translations/{es,it,pt-PT}.ts`

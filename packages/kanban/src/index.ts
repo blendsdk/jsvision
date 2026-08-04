@@ -21,6 +21,7 @@ export * from './card/renderer.js';
 export * from './card/standard-card.js';
 export { renderStandardKanbanCard } from './card/standard-renderer.js';
 export * from './card/theme.js';
+export * from './card/theme-resolver.js';
 export * from './source/address.js';
 export * from './source/counts.js';
 export { createEagerKanbanDataSource } from './source/eager-source.js';
