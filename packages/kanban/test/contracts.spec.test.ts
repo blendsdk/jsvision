@@ -44,6 +44,7 @@ const EXPECTED_LIMITS: KanbanLimitManifest = {
   swimlanes: { safe: 128, standard: 512, absolute: 2_048 },
   retainedCursors: { safe: 64, standard: 256, absolute: 1_024 },
   ensureRangeCards: { safe: 256, standard: 2_048, absolute: 8_192 },
+  retainedDescriptors: { safe: 256, standard: 2_048, absolute: 8_192 },
   cardFields: { safe: 64, standard: 128, absolute: 256 },
   summarySections: { safe: 16, standard: 32, absolute: 64 },
   checklistGroups: { safe: 32, standard: 64, absolute: 128 },
@@ -131,6 +132,27 @@ describe('Kanban identity and limits contracts', () => {
 
     expect(useLimits).toThrow(KanbanInvalidLimitError);
     expect(onAccepted).not.toHaveBeenCalled();
+  });
+
+  it('should validate retained descriptor capacity at standard and absolute boundaries', () => {
+    expect(
+      validateKanbanLimitOptions({
+        class: 'standard',
+        values: { retainedDescriptors: KANBAN_LIMITS.retainedDescriptors.standard },
+      }).retainedDescriptors,
+    ).toBe(2_048);
+    expect(
+      validateKanbanLimitOptions({
+        class: 'advanced',
+        values: { retainedDescriptors: KANBAN_LIMITS.retainedDescriptors.absolute },
+      }).retainedDescriptors,
+    ).toBe(8_192);
+    expect(() => validateKanbanLimitOptions({ class: 'standard', values: { retainedDescriptors: 2_049 } })).toThrow(
+      KanbanInvalidLimitError,
+    );
+    expect(() => validateKanbanLimitOptions({ class: 'advanced', values: { retainedDescriptors: 8_193 } })).toThrow(
+      KanbanInvalidLimitError,
+    );
   });
 });
 

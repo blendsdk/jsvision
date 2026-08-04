@@ -23,6 +23,8 @@ export interface KanbanLimitManifest {
   readonly swimlanes: KanbanLimitRow;
   readonly retainedCursors: KanbanLimitRow;
   readonly ensureRangeCards: KanbanLimitRow;
+  /** Maximum immutable descriptors and reactive computations retained by one viewport. */
+  readonly retainedDescriptors: KanbanLimitRow;
   readonly cardFields: KanbanLimitRow;
   readonly summarySections: KanbanLimitRow;
   readonly checklistGroups: KanbanLimitRow;
@@ -83,6 +85,7 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   swimlanes: limit(128, 512, 2_048),
   retainedCursors: limit(64, 256, 1_024),
   ensureRangeCards: limit(256, 2_048, 8_192),
+  retainedDescriptors: limit(256, 2_048, 8_192),
   cardFields: limit(64, 128, 256),
   summarySections: limit(16, 32, 64),
   checklistGroups: limit(32, 64, 128),

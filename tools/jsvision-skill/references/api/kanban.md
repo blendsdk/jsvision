@@ -1078,6 +1078,7 @@ interface KanbanLimitManifest {
   swimlanes: KanbanLimitRow;
   retainedCursors: KanbanLimitRow;
   ensureRangeCards: KanbanLimitRow;
+  retainedDescriptors: KanbanLimitRow;   // Maximum immutable descriptors and reactive computations retained by one viewport.
   cardFields: KanbanLimitRow;
   summarySections: KanbanLimitRow;
   checklistGroups: KanbanLimitRow;
