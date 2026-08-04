@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 13:31 CEST
-> **Progress**: 2/106 tasks (2%)
+> **Last Updated**: 2026-08-04 13:34 CEST
+> **Progress**: 3/106 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -61,7 +61,16 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 1.1.1 `[spec-author]` Write immutable presentation-policy public contract specifications — `packages/kanban/test/presentation-policy.spec.test.ts` ✅ (completed: 2026-08-04 13:05 CEST)
 - [x] 1.1.2 `[spec-author]` Write the Phase 1-owned pure/cache rich-card/checklist/summary/style and hostile-input assertion slices before production — `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/cards-security.spec.test.ts` ✅ (completed: 2026-08-04 13:31 CEST)
-- [ ] 1.1.3 Run the Phase 1 specification suites and record expected red behavior, separately justifying any already-green Phase A substrate assertion
+- [x] 1.1.3 Run the Phase 1 specification suites and record expected red behavior, separately justifying any already-green Phase A substrate assertion ✅ (completed: 2026-08-04 13:34 CEST)
+
+> **Phase 1 red evidence (2026-08-04 13:33 CEST):** The combined presentation-policy, rich-card,
+> and card-security specification command produced the required red state: 3 files and 22 assertions
+> failed at the named, not-yet-exported `resolveKanbanPresentation` and
+> `createKanbanDescriptorCacheTestHarness` seams. The separate Phase A card, descriptor, and theme
+> substrate command passed 3 files and 33 assertions. Those green assertions intentionally prove the
+> retained generic title/status adapter, bounded safe-render fallback, descriptor validation, and theme
+> foundation; they do not claim the new presentation policy, rich snapshot/composition, or reactive
+> cache behavior exists.
 
 ### Step 1.2: Implementation and green phase
 

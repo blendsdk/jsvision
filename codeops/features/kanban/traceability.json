@@ -4594,7 +4594,7 @@
         "summary:The Phase B plan passed the Zero-Ambiguity Gate, mechanical quality checks, and deterministic traceability projection."
       ],
       "id": "PLAN-PHASE-B",
-      "revision": "sha256:4d3aa97fe5d8ace5e8a42fbd7627bf825642b67ebdc88d21b3f4b3843ba454b8",
+      "revision": "sha256:26332d873d9f1ff85a4ecd13232f203af9e88a3caa18a6840098a91876f0ff19",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -4669,744 +4669,744 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-13",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -9774,128 +9774,128 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-3-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -10126,121 +10126,121 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-5-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -10471,107 +10471,107 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-6-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -10806,128 +10806,128 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-4-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -11186,142 +11186,142 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-12",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-13",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-1-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -11556,128 +11556,128 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-1-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-10",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-11",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-5",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-6",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-7",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-8",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-2-9",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-1",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-2",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-3",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+          "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
           "upstream": "kanban/TASK-B-2-3-4",
-          "validatedAt": "2026-08-04T11:31:00Z"
+          "validatedAt": "2026-08-04T11:34:00Z"
         },
         {
           "gate": "plan",
@@ -13241,7 +13241,7 @@
         "verificationEvidence:Independent presentation-policy contract oracle authored; focused run confirmed the planned resolver is absent with 10 expected failures, and yarn verify:local plus git diff checks passed."
       ],
       "id": "TASK-B-1-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13264,7 +13264,7 @@
         "verificationEvidence:Independent rich-card and hostile-input oracles authored; focused run confirmed 12 expected missing-export failures, and yarn verify:local plus diff checks passed."
       ],
       "id": "TASK-B-1-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13283,10 +13283,11 @@
     {
       "edges": [],
       "evidence": [
-        "summary:Pending Phase B execution task 1.1.3."
+        "summary:Combined Phase 1 specification suites confirmed the intended red boundary while Phase A substrate suites remained green.",
+        "verificationEvidence:Combined Phase 1 specification run confirmed 22 expected missing-seam failures; separate Phase A card, descriptor, and theme suites passed 33 assertions; local verification passed."
       ],
       "id": "TASK-B-1-1-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13297,7 +13298,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run the Phase 1 specification suites and record expected red behavior, separately justifying any already-green Phase A substrate assertion",
       "type": "task",
       "validations": []
@@ -13308,7 +13309,7 @@
         "summary:Pending Phase B execution task 1.2.1."
       ],
       "id": "TASK-B-1-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13330,7 +13331,7 @@
         "summary:Pending Phase B execution task 1.2.10."
       ],
       "id": "TASK-B-1-2-10",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13352,7 +13353,7 @@
         "summary:Pending Phase B execution task 1.2.11."
       ],
       "id": "TASK-B-1-2-11",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13374,7 +13375,7 @@
         "summary:Pending Phase B execution task 1.2.12."
       ],
       "id": "TASK-B-1-2-12",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13396,7 +13397,7 @@
         "summary:Pending Phase B execution task 1.2.13."
       ],
       "id": "TASK-B-1-2-13",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13418,7 +13419,7 @@
         "summary:Pending Phase B execution task 1.2.2."
       ],
       "id": "TASK-B-1-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13440,7 +13441,7 @@
         "summary:Pending Phase B execution task 1.2.3."
       ],
       "id": "TASK-B-1-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13462,7 +13463,7 @@
         "summary:Pending Phase B execution task 1.2.4."
       ],
       "id": "TASK-B-1-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13484,7 +13485,7 @@
         "summary:Pending Phase B execution task 1.2.5."
       ],
       "id": "TASK-B-1-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13506,7 +13507,7 @@
         "summary:Pending Phase B execution task 1.2.6."
       ],
       "id": "TASK-B-1-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13528,7 +13529,7 @@
         "summary:Pending Phase B execution task 1.2.7."
       ],
       "id": "TASK-B-1-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13550,7 +13551,7 @@
         "summary:Pending Phase B execution task 1.2.8."
       ],
       "id": "TASK-B-1-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13572,7 +13573,7 @@
         "summary:Pending Phase B execution task 1.2.9."
       ],
       "id": "TASK-B-1-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13594,7 +13595,7 @@
         "summary:Pending Phase B execution task 1.3.1."
       ],
       "id": "TASK-B-1-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13616,7 +13617,7 @@
         "summary:Pending Phase B execution task 1.3.2."
       ],
       "id": "TASK-B-1-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13638,7 +13639,7 @@
         "summary:Pending Phase B execution task 1.3.3."
       ],
       "id": "TASK-B-1-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13660,7 +13661,7 @@
         "summary:Pending Phase B execution task 1.3.4."
       ],
       "id": "TASK-B-1-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13682,7 +13683,7 @@
         "summary:Pending Phase B execution task 2.1.1."
       ],
       "id": "TASK-B-2-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13704,7 +13705,7 @@
         "summary:Pending Phase B execution task 2.1.2."
       ],
       "id": "TASK-B-2-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13726,7 +13727,7 @@
         "summary:Pending Phase B execution task 2.1.3."
       ],
       "id": "TASK-B-2-1-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13748,7 +13749,7 @@
         "summary:Pending Phase B execution task 2.2.1."
       ],
       "id": "TASK-B-2-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13770,7 +13771,7 @@
         "summary:Pending Phase B execution task 2.2.10."
       ],
       "id": "TASK-B-2-2-10",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13792,7 +13793,7 @@
         "summary:Pending Phase B execution task 2.2.11."
       ],
       "id": "TASK-B-2-2-11",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13814,7 +13815,7 @@
         "summary:Pending Phase B execution task 2.2.2."
       ],
       "id": "TASK-B-2-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13836,7 +13837,7 @@
         "summary:Pending Phase B execution task 2.2.3."
       ],
       "id": "TASK-B-2-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13858,7 +13859,7 @@
         "summary:Pending Phase B execution task 2.2.4."
       ],
       "id": "TASK-B-2-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13880,7 +13881,7 @@
         "summary:Pending Phase B execution task 2.2.5."
       ],
       "id": "TASK-B-2-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13902,7 +13903,7 @@
         "summary:Pending Phase B execution task 2.2.6."
       ],
       "id": "TASK-B-2-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13924,7 +13925,7 @@
         "summary:Pending Phase B execution task 2.2.7."
       ],
       "id": "TASK-B-2-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13946,7 +13947,7 @@
         "summary:Pending Phase B execution task 2.2.8."
       ],
       "id": "TASK-B-2-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13968,7 +13969,7 @@
         "summary:Pending Phase B execution task 2.2.9."
       ],
       "id": "TASK-B-2-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -13990,7 +13991,7 @@
         "summary:Pending Phase B execution task 2.3.1."
       ],
       "id": "TASK-B-2-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14012,7 +14013,7 @@
         "summary:Pending Phase B execution task 2.3.2."
       ],
       "id": "TASK-B-2-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14034,7 +14035,7 @@
         "summary:Pending Phase B execution task 2.3.3."
       ],
       "id": "TASK-B-2-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14056,7 +14057,7 @@
         "summary:Pending Phase B execution task 2.3.4."
       ],
       "id": "TASK-B-2-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14078,7 +14079,7 @@
         "summary:Pending Phase B execution task 3.1.1."
       ],
       "id": "TASK-B-3-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14100,7 +14101,7 @@
         "summary:Pending Phase B execution task 3.1.2."
       ],
       "id": "TASK-B-3-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14122,7 +14123,7 @@
         "summary:Pending Phase B execution task 3.2.1."
       ],
       "id": "TASK-B-3-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14144,7 +14145,7 @@
         "summary:Pending Phase B execution task 3.2.10."
       ],
       "id": "TASK-B-3-2-10",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14166,7 +14167,7 @@
         "summary:Pending Phase B execution task 3.2.11."
       ],
       "id": "TASK-B-3-2-11",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14188,7 +14189,7 @@
         "summary:Pending Phase B execution task 3.2.12."
       ],
       "id": "TASK-B-3-2-12",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14210,7 +14211,7 @@
         "summary:Pending Phase B execution task 3.2.2."
       ],
       "id": "TASK-B-3-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14232,7 +14233,7 @@
         "summary:Pending Phase B execution task 3.2.3."
       ],
       "id": "TASK-B-3-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14254,7 +14255,7 @@
         "summary:Pending Phase B execution task 3.2.4."
       ],
       "id": "TASK-B-3-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14276,7 +14277,7 @@
         "summary:Pending Phase B execution task 3.2.5."
       ],
       "id": "TASK-B-3-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14298,7 +14299,7 @@
         "summary:Pending Phase B execution task 3.2.6."
       ],
       "id": "TASK-B-3-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14320,7 +14321,7 @@
         "summary:Pending Phase B execution task 3.2.7."
       ],
       "id": "TASK-B-3-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14342,7 +14343,7 @@
         "summary:Pending Phase B execution task 3.2.8."
       ],
       "id": "TASK-B-3-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14364,7 +14365,7 @@
         "summary:Pending Phase B execution task 3.2.9."
       ],
       "id": "TASK-B-3-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14386,7 +14387,7 @@
         "summary:Pending Phase B execution task 3.3.1."
       ],
       "id": "TASK-B-3-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14408,7 +14409,7 @@
         "summary:Pending Phase B execution task 3.3.2."
       ],
       "id": "TASK-B-3-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14430,7 +14431,7 @@
         "summary:Pending Phase B execution task 3.3.3."
       ],
       "id": "TASK-B-3-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14452,7 +14453,7 @@
         "summary:Pending Phase B execution task 3.3.4."
       ],
       "id": "TASK-B-3-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14474,7 +14475,7 @@
         "summary:Pending Phase B execution task 4.1.1."
       ],
       "id": "TASK-B-4-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14496,7 +14497,7 @@
         "summary:Pending Phase B execution task 4.1.2."
       ],
       "id": "TASK-B-4-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14518,7 +14519,7 @@
         "summary:Pending Phase B execution task 4.2.1."
       ],
       "id": "TASK-B-4-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14540,7 +14541,7 @@
         "summary:Pending Phase B execution task 4.2.10."
       ],
       "id": "TASK-B-4-2-10",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14562,7 +14563,7 @@
         "summary:Pending Phase B execution task 4.2.11."
       ],
       "id": "TASK-B-4-2-11",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14584,7 +14585,7 @@
         "summary:Pending Phase B execution task 4.2.12."
       ],
       "id": "TASK-B-4-2-12",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14606,7 +14607,7 @@
         "summary:Pending Phase B execution task 4.2.2."
       ],
       "id": "TASK-B-4-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14628,7 +14629,7 @@
         "summary:Pending Phase B execution task 4.2.3."
       ],
       "id": "TASK-B-4-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14650,7 +14651,7 @@
         "summary:Pending Phase B execution task 4.2.4."
       ],
       "id": "TASK-B-4-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14672,7 +14673,7 @@
         "summary:Pending Phase B execution task 4.2.5."
       ],
       "id": "TASK-B-4-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14694,7 +14695,7 @@
         "summary:Pending Phase B execution task 4.2.6."
       ],
       "id": "TASK-B-4-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14716,7 +14717,7 @@
         "summary:Pending Phase B execution task 4.2.7."
       ],
       "id": "TASK-B-4-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14738,7 +14739,7 @@
         "summary:Pending Phase B execution task 4.2.8."
       ],
       "id": "TASK-B-4-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14760,7 +14761,7 @@
         "summary:Pending Phase B execution task 4.2.9."
       ],
       "id": "TASK-B-4-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14782,7 +14783,7 @@
         "summary:Pending Phase B execution task 4.3.1."
       ],
       "id": "TASK-B-4-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14804,7 +14805,7 @@
         "summary:Pending Phase B execution task 4.3.2."
       ],
       "id": "TASK-B-4-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14826,7 +14827,7 @@
         "summary:Pending Phase B execution task 4.3.3."
       ],
       "id": "TASK-B-4-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14848,7 +14849,7 @@
         "summary:Pending Phase B execution task 4.3.4."
       ],
       "id": "TASK-B-4-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14870,7 +14871,7 @@
         "summary:Pending Phase B execution task 5.1.1."
       ],
       "id": "TASK-B-5-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14892,7 +14893,7 @@
         "summary:Pending Phase B execution task 5.1.2."
       ],
       "id": "TASK-B-5-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14914,7 +14915,7 @@
         "summary:Pending Phase B execution task 5.1.3."
       ],
       "id": "TASK-B-5-1-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14936,7 +14937,7 @@
         "summary:Pending Phase B execution task 5.2.1."
       ],
       "id": "TASK-B-5-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14958,7 +14959,7 @@
         "summary:Pending Phase B execution task 5.2.10."
       ],
       "id": "TASK-B-5-2-10",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -14980,7 +14981,7 @@
         "summary:Pending Phase B execution task 5.2.2."
       ],
       "id": "TASK-B-5-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15002,7 +15003,7 @@
         "summary:Pending Phase B execution task 5.2.3."
       ],
       "id": "TASK-B-5-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15024,7 +15025,7 @@
         "summary:Pending Phase B execution task 5.2.4."
       ],
       "id": "TASK-B-5-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15046,7 +15047,7 @@
         "summary:Pending Phase B execution task 5.2.5."
       ],
       "id": "TASK-B-5-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15068,7 +15069,7 @@
         "summary:Pending Phase B execution task 5.2.6."
       ],
       "id": "TASK-B-5-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15090,7 +15091,7 @@
         "summary:Pending Phase B execution task 5.2.7."
       ],
       "id": "TASK-B-5-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15112,7 +15113,7 @@
         "summary:Pending Phase B execution task 5.2.8."
       ],
       "id": "TASK-B-5-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15134,7 +15135,7 @@
         "summary:Pending Phase B execution task 5.2.9."
       ],
       "id": "TASK-B-5-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15156,7 +15157,7 @@
         "summary:Pending Phase B execution task 5.3.1."
       ],
       "id": "TASK-B-5-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15178,7 +15179,7 @@
         "summary:Pending Phase B execution task 5.3.2."
       ],
       "id": "TASK-B-5-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15200,7 +15201,7 @@
         "summary:Pending Phase B execution task 5.3.3."
       ],
       "id": "TASK-B-5-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15222,7 +15223,7 @@
         "summary:Pending Phase B execution task 5.3.4."
       ],
       "id": "TASK-B-5-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15244,7 +15245,7 @@
         "summary:Pending Phase B execution task 6.1.1."
       ],
       "id": "TASK-B-6-1-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15266,7 +15267,7 @@
         "summary:Pending Phase B execution task 6.1.2."
       ],
       "id": "TASK-B-6-1-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15288,7 +15289,7 @@
         "summary:Pending Phase B execution task 6.2.1."
       ],
       "id": "TASK-B-6-2-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15310,7 +15311,7 @@
         "summary:Pending Phase B execution task 6.2.2."
       ],
       "id": "TASK-B-6-2-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15332,7 +15333,7 @@
         "summary:Pending Phase B execution task 6.2.3."
       ],
       "id": "TASK-B-6-2-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15354,7 +15355,7 @@
         "summary:Pending Phase B execution task 6.2.4."
       ],
       "id": "TASK-B-6-2-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15376,7 +15377,7 @@
         "summary:Pending Phase B execution task 6.2.5."
       ],
       "id": "TASK-B-6-2-5",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15398,7 +15399,7 @@
         "summary:Pending Phase B execution task 6.2.6."
       ],
       "id": "TASK-B-6-2-6",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15420,7 +15421,7 @@
         "summary:Pending Phase B execution task 6.2.7."
       ],
       "id": "TASK-B-6-2-7",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15442,7 +15443,7 @@
         "summary:Pending Phase B execution task 6.2.8."
       ],
       "id": "TASK-B-6-2-8",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15464,7 +15465,7 @@
         "summary:Pending Phase B execution task 6.2.9."
       ],
       "id": "TASK-B-6-2-9",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15486,7 +15487,7 @@
         "summary:Pending Phase B execution task 6.3.1."
       ],
       "id": "TASK-B-6-3-1",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15508,7 +15509,7 @@
         "summary:Pending Phase B execution task 6.3.2."
       ],
       "id": "TASK-B-6-3-2",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15530,7 +15531,7 @@
         "summary:Pending Phase B execution task 6.3.3."
       ],
       "id": "TASK-B-6-3-3",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15552,7 +15553,7 @@
         "summary:Pending Phase B execution task 6.3.4."
       ],
       "id": "TASK-B-6-3-4",
-      "revision": "sha256:65da9e28d06b49d208167faf6d636aa68e533a6bf0d023e37585cfd25096f029",
+      "revision": "sha256:551d1dee9bb506f934437d62f04b3533bda6f5c7bcc3f02efcee660fc365c82f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -15826,6 +15827,7 @@
     {
       "edges": [],
       "evidence": [
+        "redEvidence:The three Phase 1 presentation specification files produced 22 expected failures at the two named not-yet-exported production/testing seams; 33 Phase A substrate assertions passed separately.",
         "summary:Specification tests are planned before production implementation for presentation contracts and rich cards."
       ],
       "id": "TEST-B-PRESENTATION",
@@ -15840,7 +15842,7 @@
           }
         }
       ],
-      "status": "planned",
+      "status": "red-confirmed",
       "title": "Phase B presentation contracts and rich cards specification tests",
       "type": "test",
       "validations": []
@@ -15869,5 +15871,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-08-04T11:31:00Z"
+  "updated": "2026-08-04T11:34:00Z"
 }
