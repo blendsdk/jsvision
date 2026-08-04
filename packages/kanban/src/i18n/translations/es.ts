@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Official Spanish Kanban catalog. */
+/** Authored Spanish Kanban catalog awaiting registry and review closure. */
 export const kanbanEs = createKanbanTranslationCatalog('es', {
   'kanban.board.label': 'Tablero Kanban',
   'kanban.board.no-columns': 'Sin columnas',

@@ -9,6 +9,6 @@ import { kanbanPtPT } from './translations/pt-PT.js';
 import { kanbanRo } from './translations/ro.js';
 import { kanbanSv } from './translations/sv.js';
 
-/** Official English Kanban catalog. */
+/** Authored English Kanban fallback catalog. */
 export const kanbanEn = KANBAN_ENGLISH_CATALOG;
 export { kanbanDe, kanbanEs, kanbanFr, kanbanIt, kanbanNl, kanbanPl, kanbanPtPT, kanbanRo, kanbanSv };

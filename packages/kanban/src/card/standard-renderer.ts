@@ -6,11 +6,22 @@ import type { KanbanCardAdapter } from './adapter.js';
 import { readKanbanCardAdapter } from './adapter.js';
 import type { KanbanCardCue, KanbanCardDescriptor, KanbanCardRenderContext } from './descriptor.js';
 
+/** Bidirectional formatting controls that can visually reorder otherwise safe terminal text. */
+const BIDI_CONTROL_CHARACTERS = /[\u202a-\u202e\u2066-\u2069]/gu;
+
 /** Converts untrusted application text to one safe display line. */
 function normalizeCardText(value: string): string {
   return sanitize(value)
+    .replace(BIDI_CONTROL_CHARACTERS, '')
     .replace(/[\t\n]+/gu, ' ')
     .trim();
+}
+
+/** Measures one normalized line using the active terminal width policy. */
+function cardTextWidth(value: string, widthMode: WidthMode): number {
+  let width = 0;
+  for (const character of value) width += charWidth(character.codePointAt(0) ?? 0, widthMode);
+  return width;
 }
 
 /** Clips text to terminal cells and appends an ellipsis without splitting a wide glyph. */
@@ -81,11 +92,25 @@ export function renderStandardKanbanCard<TCard>(
   }
   const title = normalizeCardText(snapshot.title);
   const status = normalizeCardText(snapshot.status);
-  if (title.length === 0 || status.length === 0) throw new KanbanInvalidDescriptorError();
+  if (
+    title.length === 0 ||
+    status.length === 0 ||
+    cardTextWidth(title, context.capabilities.widthMode) === 0 ||
+    cardTextWidth(status, context.capabilities.widthMode) === 0
+  ) {
+    throw new KanbanInvalidDescriptorError();
+  }
   const maximumTextCells = context.width - 1;
   const clippedTitle = clipCardText(title, maximumTextCells, context.capabilities.widthMode);
   const clippedStatus = clipCardText(status, maximumTextCells, context.capabilities.widthMode);
-  if (clippedTitle.length === 0 || clippedStatus.length === 0) throw new KanbanInvalidDescriptorError();
+  if (
+    clippedTitle.length === 0 ||
+    clippedStatus.length === 0 ||
+    cardTextWidth(clippedTitle, context.capabilities.widthMode) === 0 ||
+    cardTextWidth(clippedStatus, context.capabilities.widthMode) === 0
+  ) {
+    throw new KanbanInvalidDescriptorError();
+  }
   const surfaceRole = cardSurfaceRole(context);
   const cues = cardCues(context);
   const markerGlyph = context.focused ? '>' : context.selected ? '*' : context.readOnly ? '#' : '|';

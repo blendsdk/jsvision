@@ -2,6 +2,7 @@ import { charWidth, sanitize } from '@jsvision/core';
 import type { WidthMode } from '@jsvision/core';
 
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
+import { KANBAN_LIMITS } from '../contract/limits.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type {
@@ -32,12 +33,40 @@ export interface KanbanSafeRenderOptions {
   readonly observe?: (observation: KanbanObservation) => void;
 }
 
-/** Sanitizes a fallback label and substitutes package-owned English when it becomes empty. */
-function safeFallbackLabel(value: string, fallback: string): string {
-  const cleaned = sanitize(value)
+/** Bidirectional formatting controls removed from localized fallback labels. */
+const BIDI_CONTROL_CHARACTERS = /[\u202a-\u202e\u2066-\u2069]/gu;
+
+/** Sanitizes a bounded fallback label and substitutes package-owned English when it becomes empty. */
+function safeFallbackLabel(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback;
+  const encoder = new TextEncoder();
+  let bounded = '';
+  let encodedBytes = 0;
+  for (const character of value.slice(0, KANBAN_LIMITS.semanticStringBytes.safe)) {
+    const characterBytes = encoder.encode(character).byteLength;
+    if (encodedBytes + characterBytes > KANBAN_LIMITS.semanticStringBytes.safe) break;
+    bounded += character;
+    encodedBytes += characterBytes;
+  }
+  const cleaned = sanitize(bounded)
+    .replace(BIDI_CONTROL_CHARACTERS, '')
     .replace(/[\t\n]+/gu, ' ')
     .trim();
   return cleaned.length > 0 ? cleaned : fallback;
+}
+
+/** Reads one fallback label without invoking caller accessors. */
+function readFallbackLabel(
+  labels: KanbanCardFallbackLabels,
+  key: keyof KanbanCardFallbackLabels,
+  fallback: string,
+): string {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(labels, key);
+    return descriptor !== undefined && 'value' in descriptor ? safeFallbackLabel(descriptor.value, fallback) : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 /** Clips fallback text by terminal cells without splitting a Unicode code point. */
@@ -50,42 +79,100 @@ function clipFallbackText(value: string, maximumCells: number, widthMode: WidthM
     result += character;
     used += width;
   }
-  return result.length > 0 ? result : '?';
+  return result.length > 0 && used > 0 ? result : '?';
+}
+
+/** Copies a caller-owned array by numeric index without invoking its replaceable iterator or methods. */
+function copyBoundedArray<TInput, TOutput>(
+  source: readonly TInput[],
+  maximum: number,
+  copy: (value: TInput) => TOutput,
+): readonly TOutput[] {
+  if (!Array.isArray(source)) throw new KanbanInvalidDescriptorError();
+  const length = source.length;
+  if (length > maximum) throw new KanbanInvalidDescriptorError();
+  const result: TOutput[] = [];
+  for (let index = 0; index < length; index += 1) result.push(copy(source[index]!));
+  return Object.freeze(result);
 }
 
 /** Creates a detached, deeply frozen copy of a renderer descriptor. */
 function snapshotDescriptor(descriptor: KanbanCardDescriptor): KanbanCardDescriptor {
+  const sourceMarker = descriptor.marker;
+  const sourceCues = sourceMarker.cues;
+  const cues = copyBoundedArray(sourceCues, 6, (cue) => cue);
   const marker: KanbanCardMarker = Object.freeze({
-    ...descriptor.marker,
-    cues: Object.freeze([...descriptor.marker.cues]),
+    row: sourceMarker.row,
+    column: sourceMarker.column,
+    glyph: sourceMarker.glyph,
+    role: sourceMarker.role,
+    cues,
   });
-  const rows: readonly KanbanCardRow[] = Object.freeze(
-    descriptor.rows.map((row) =>
+  const sourceRows = descriptor.rows;
+  const rows: readonly KanbanCardRow[] = copyBoundedArray(sourceRows, KANBAN_LIMITS.descriptorRows.absolute, (row) => {
+    const sourceSpans = row.spans;
+    return Object.freeze({
+      section: row.section,
+      spans: copyBoundedArray(sourceSpans, KANBAN_LIMITS.cardFields.safe, (span) =>
+        Object.freeze({ column: span.column, text: span.text, role: span.role }),
+      ),
+    });
+  });
+  const sourceSections = descriptor.sections;
+  const sections: readonly KanbanCardSection[] = copyBoundedArray(
+    sourceSections,
+    KANBAN_LIMITS.descriptorRows.absolute,
+    (section) =>
       Object.freeze({
-        ...row,
-        spans: Object.freeze(row.spans.map((span) => Object.freeze({ ...span }))),
+        id: section.id,
+        kind: section.kind,
+        startRow: section.startRow,
+        rowCount: section.rowCount,
+        priority: section.priority,
       }),
-    ),
   );
-  const sections: readonly KanbanCardSection[] = Object.freeze(
-    descriptor.sections.map((section) => Object.freeze({ ...section })),
+  const sourceActions = descriptor.actions;
+  const actions: readonly KanbanCardAction[] = copyBoundedArray(
+    sourceActions,
+    KANBAN_LIMITS.cardFields.safe,
+    (action) => Object.freeze({ actionId: action.actionId, label: action.label, enabled: action.enabled }),
   );
-  const actions: readonly KanbanCardAction[] = Object.freeze(
-    descriptor.actions.map((action) => Object.freeze({ ...action })),
+  const sourceRegions = descriptor.regions;
+  const regions: readonly KanbanCardRegion[] = copyBoundedArray(
+    sourceRegions,
+    KANBAN_LIMITS.cardFields.safe,
+    (region) => {
+      const actionId = region.actionId;
+      return Object.freeze({
+        regionId: region.regionId,
+        kind: region.kind,
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height,
+        ...(actionId === undefined ? {} : { actionId }),
+      });
+    },
   );
-  const regions: readonly KanbanCardRegion[] = Object.freeze(
-    descriptor.regions.map((region) => Object.freeze({ ...region })),
-  );
+  const sourceDegradation = descriptor.degradation;
+  const sourceOmittedSections = sourceDegradation.omittedSections;
+  const omittedSections = copyBoundedArray(sourceOmittedSections, 9, (section) => section);
+  const presentationRevision = descriptor.presentationRevision;
   return Object.freeze({
-    ...descriptor,
+    cardKey: descriptor.cardKey,
+    ...(presentationRevision === undefined ? {} : { presentationRevision }),
+    width: descriptor.width,
+    measuredHeight: descriptor.measuredHeight,
+    surfaceRole: descriptor.surfaceRole,
+    borderRole: descriptor.borderRole,
     marker,
     rows,
     sections,
     actions,
     regions,
     degradation: Object.freeze({
-      ...descriptor.degradation,
-      omittedSections: Object.freeze([...descriptor.degradation.omittedSections]),
+      level: sourceDegradation.level,
+      omittedSections,
     }),
   });
 }
@@ -103,12 +190,12 @@ export function createFallbackKanbanCardDescriptor(
   if (!Number.isSafeInteger(context.width) || context.width < 2) throw new KanbanInvalidDescriptorError();
   if (!Number.isSafeInteger(context.rowBudget) || context.rowBudget < 1) throw new KanbanInvalidDescriptorError();
   const title = clipFallbackText(
-    safeFallbackLabel(labels.invalidCardTitle, 'Invalid card'),
+    readFallbackLabel(labels, 'invalidCardTitle', 'Invalid card'),
     context.width - 1,
     context.capabilities.widthMode,
   );
   const status = clipFallbackText(
-    safeFallbackLabel(labels.unknownStatus, 'Unknown status'),
+    readFallbackLabel(labels, 'unknownStatus', 'Unknown status'),
     context.width - 1,
     context.capabilities.widthMode,
   );
@@ -155,9 +242,9 @@ export function renderKanbanCardSafely<TCard>(
   options: KanbanSafeRenderOptions,
 ): KanbanCardDescriptor {
   try {
-    const descriptor = renderer.render(card, context);
+    const descriptor = snapshotDescriptor(renderer.render(card, context));
     validateKanbanCardDescriptor(descriptor, context);
-    return snapshotDescriptor(descriptor);
+    return descriptor;
   } catch {
     try {
       options.observe?.(

@@ -18,6 +18,13 @@ const COMMAND_TIMEOUT_MS = 60_000;
 const MAX_COMMAND_OUTPUT_BYTES = 1_048_576;
 /** Publishable root documentation and metadata accepted beside compiled output. */
 const ALLOWED_ROOT_FILES = new Set(['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE']);
+/** Workspace runtime dependencies npm would install beside the packed Kanban package. */
+const KANBAN_WORKSPACE_DEPENDENCIES = Object.freeze(['core', 'i18n', 'ui']);
+/** Node declaration packages required by Core's published host-facing types. */
+const CONSUMER_TYPE_DEPENDENCIES = Object.freeze([
+  { source: ['@types', 'node'], destination: ['@types', 'node'] },
+  { source: ['undici-types'], destination: ['undici-types'] },
+]);
 
 /** One defensively narrowed result from `npm pack --json`. */
 interface PackResult {
@@ -72,16 +79,36 @@ function run(command: string, args: readonly string[], cwd: string): string {
   });
 }
 
-/** Packs the real package without lifecycle scripts and returns its validated tarball metadata. */
-function packInto(destination: string): PackResult {
+/** Packs one real workspace package without lifecycle scripts and returns validated tarball metadata. */
+function packInto(destination: string, packageRoot = PACKAGE_ROOT): PackResult {
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const output = run(npm, ['pack', '--json', '--ignore-scripts', '--pack-destination', destination], PACKAGE_ROOT);
+  const output = run(npm, ['pack', '--json', '--ignore-scripts', '--pack-destination', destination], packageRoot);
   const result = parsePackResult(output);
   const tarball = join(destination, result.filename);
   if (!existsSync(tarball) || realpathSync(dirname(tarball)) !== realpathSync(destination)) {
     throw new Error('npm pack tarball escaped its bounded destination');
   }
   return result;
+}
+
+/** Extracts one packed workspace dependency as npm would for an offline isolated consumer. */
+function installPackedDependency(work: string, consumer: string, packageName: string): void {
+  const packageRoot = realpathSync(join(REPOSITORY_ROOT, 'node_modules', '@jsvision', packageName));
+  installPackedPackage(work, consumer, packageRoot, ['@jsvision', packageName]);
+}
+
+/** Packs and extracts one already-installed dependency into the isolated consumer tree. */
+function installPackedPackage(
+  work: string,
+  consumer: string,
+  packageRoot: string,
+  destination: readonly string[],
+): void {
+  const pack = packInto(work, packageRoot);
+  const installedPackage = join(consumer, 'node_modules', ...destination);
+  mkdirSync(installedPackage, { recursive: true });
+  const tar = process.platform === 'win32' ? 'tar.exe' : 'tar';
+  run(tar, ['-xzf', join(work, pack.filename), '-C', installedPackage, '--strip-components=1'], work);
 }
 
 /** Copies the authored consumer fixture without introducing workspace aliases or generated paths. */
@@ -125,6 +152,14 @@ describe('packed Kanban main-entry contract', () => {
         const tar = process.platform === 'win32' ? 'tar.exe' : 'tar';
         run(tar, ['-xzf', join(work, pack.filename), '-C', installedPackage, '--strip-components=1'], work);
         expect(relative(consumer, installedPackage).split(sep)).toEqual(['node_modules', '@jsvision', 'kanban']);
+
+        for (const packageName of KANBAN_WORKSPACE_DEPENDENCIES) {
+          installPackedDependency(work, consumer, packageName);
+        }
+        for (const dependency of CONSUMER_TYPE_DEPENDENCIES) {
+          const source = realpathSync(join(REPOSITORY_ROOT, 'node_modules', ...dependency.source));
+          installPackedPackage(work, consumer, source, dependency.destination);
+        }
 
         run(typescriptCompiler(), ['-p', 'tsconfig.json'], consumer);
         const output = run(process.execPath, ['index.ts'], consumer);

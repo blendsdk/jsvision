@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Official German Kanban catalog. */
+/** Authored German Kanban catalog awaiting registry and review closure. */
 export const kanbanDe = createKanbanTranslationCatalog('de', {
   'kanban.board.label': 'Kanban-Board',
   'kanban.board.no-columns': 'Keine Spalten',

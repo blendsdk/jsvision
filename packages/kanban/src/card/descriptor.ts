@@ -3,6 +3,7 @@ import type { ColorDepth, WidthMode } from '@jsvision/core';
 
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import type { CardKey, KanbanExtensionId } from '../contract/identity.js';
+import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
 import { KANBAN_THEME_ROLES } from './theme.js';
@@ -199,7 +200,11 @@ const SECTION_KINDS = new Set<string>([
 ]);
 const CUES = new Set<string>(['focused', 'selected', 'read-only', 'grabbed', 'pending', 'rejected']);
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/u;
+const BIDI_CONTROL_CHARACTERS = /[\u202a-\u202e\u2066-\u2069]/u;
+const EXTENSION_ID = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/u;
+const RESERVED_EXTENSION_PREFIX = 'jsvision.';
 const MAX_DESCRIPTOR_ROWS = 32;
+const DESCRIPTOR_TEXT_ENCODER = new TextEncoder();
 
 /** Throws the package's payload-free validation error when a condition is false. */
 function requireDescriptor(condition: boolean): asserts condition {
@@ -213,7 +218,34 @@ function isCoordinate(value: number): boolean {
 
 /** Returns whether text is non-empty, single-line, and free of terminal controls. */
 function isSafeText(value: string): boolean {
-  return value.length > 0 && !CONTROL_CHARACTERS.test(value);
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= KANBAN_LIMITS.semanticStringBytes.safe &&
+    !CONTROL_CHARACTERS.test(value) &&
+    !BIDI_CONTROL_CHARACTERS.test(value) &&
+    DESCRIPTOR_TEXT_ENCODER.encode(value).byteLength <= KANBAN_LIMITS.semanticStringBytes.safe
+  );
+}
+
+/** Returns whether a renderer action uses the bounded application extension grammar. */
+function isExtensionId(value: string): boolean {
+  return (
+    typeof value === 'string' &&
+    value.length <= KANBAN_LIMITS.idBytes.safe &&
+    DESCRIPTOR_TEXT_ENCODER.encode(value).byteLength <= KANBAN_LIMITS.idBytes.safe &&
+    EXTENSION_ID.test(value) &&
+    !value.startsWith(RESERVED_EXTENSION_PREFIX)
+  );
+}
+
+/** Returns whether a descriptor-local identity is bounded and terminal-safe. */
+function isLocalId(value: string): boolean {
+  return (
+    isSafeText(value) &&
+    value.length <= KANBAN_LIMITS.idBytes.safe &&
+    DESCRIPTOR_TEXT_ENCODER.encode(value).byteLength <= KANBAN_LIMITS.idBytes.safe
+  );
 }
 
 /** Measures sanitized text using the render context's terminal-width policy. */
@@ -249,6 +281,9 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
   requireDescriptor(descriptor.measuredHeight <= context.rowBudget);
   requireDescriptor(descriptor.measuredHeight <= MAX_DESCRIPTOR_ROWS);
   requireDescriptor(descriptor.rows.length === descriptor.measuredHeight);
+  requireDescriptor(descriptor.sections.length <= MAX_DESCRIPTOR_ROWS);
+  requireDescriptor(descriptor.actions.length <= KANBAN_LIMITS.cardFields.safe);
+  requireDescriptor(descriptor.regions.length <= KANBAN_LIMITS.cardFields.safe);
   requireDescriptor(THEME_ROLES.has(descriptor.surfaceRole) && THEME_ROLES.has(descriptor.borderRole));
 
   requireDescriptor(isCoordinate(descriptor.marker.row) && descriptor.marker.row < descriptor.measuredHeight);
@@ -257,14 +292,18 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
   requireDescriptor(Array.from(descriptor.marker.glyph).length === 1);
   requireDescriptor(textWidth(descriptor.marker.glyph, context.capabilities.widthMode) === 1);
   requireDescriptor(THEME_ROLES.has(descriptor.marker.role));
+  requireDescriptor(descriptor.marker.cues.length <= CUES.size);
+  requireDescriptor(new Set(descriptor.marker.cues).size === descriptor.marker.cues.length);
   requireDescriptor(descriptor.marker.cues.every((cue) => CUES.has(cue)));
 
   for (const row of descriptor.rows) {
     requireDescriptor(SECTION_KINDS.has(row.section));
+    requireDescriptor(row.spans.length <= KANBAN_LIMITS.cardFields.safe);
     let previousEnd = 0;
     for (const span of row.spans) {
       requireDescriptor(isCoordinate(span.column) && span.column >= previousEnd && span.column < descriptor.width);
       requireDescriptor(isSafeText(span.text));
+      requireDescriptor(textWidth(span.text, context.capabilities.widthMode) > 0);
       requireDescriptor(THEME_ROLES.has(span.role));
       previousEnd = span.column + textWidth(span.text, context.capabilities.widthMode);
       requireDescriptor(previousEnd <= descriptor.width);
@@ -273,7 +312,7 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
 
   const sectionIds = new Set<string>();
   for (const section of descriptor.sections) {
-    requireDescriptor(isSafeText(section.id) && !sectionIds.has(section.id));
+    requireDescriptor(isLocalId(section.id) && !sectionIds.has(section.id));
     sectionIds.add(section.id);
     requireDescriptor(SECTION_KINDS.has(section.kind));
     requireDescriptor(isCoordinate(section.startRow));
@@ -284,16 +323,17 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
 
   const actionIds = new Set<string>();
   for (const action of descriptor.actions) {
-    requireDescriptor(isSafeText(action.actionId) && !actionIds.has(action.actionId));
+    requireDescriptor(isExtensionId(action.actionId) && !actionIds.has(action.actionId));
     actionIds.add(action.actionId);
     requireDescriptor(isSafeText(action.label));
+    requireDescriptor(typeof action.enabled === 'boolean');
   }
 
   const regionIds = new Set<string>();
   for (let index = 0; index < descriptor.regions.length; index += 1) {
     const region = descriptor.regions[index];
     requireDescriptor(region !== undefined);
-    requireDescriptor(isSafeText(region.regionId) && !regionIds.has(region.regionId));
+    requireDescriptor(isLocalId(region.regionId) && !regionIds.has(region.regionId));
     regionIds.add(region.regionId);
     requireDescriptor(isCoordinate(region.x) && isCoordinate(region.y));
     requireDescriptor(Number.isSafeInteger(region.width) && region.width > 0);
@@ -302,6 +342,7 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
     requireDescriptor(region.y + region.height <= descriptor.measuredHeight);
     requireDescriptor(region.kind === 'section' || region.kind === 'action');
     requireDescriptor(region.kind !== 'action' || (region.actionId !== undefined && actionIds.has(region.actionId)));
+    requireDescriptor(region.kind !== 'section' || region.actionId === undefined);
     for (let otherIndex = 0; otherIndex < index; otherIndex += 1) {
       const other = descriptor.regions[otherIndex];
       requireDescriptor(other !== undefined && !regionsOverlap(region, other));
@@ -313,6 +354,10 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
       descriptor.degradation.level === 'reduced' ||
       descriptor.degradation.level === 'minimum' ||
       descriptor.degradation.level === 'fallback',
+  );
+  requireDescriptor(descriptor.degradation.omittedSections.length <= SECTION_KINDS.size);
+  requireDescriptor(
+    new Set(descriptor.degradation.omittedSections).size === descriptor.degradation.omittedSections.length,
   );
   requireDescriptor(descriptor.degradation.omittedSections.every((kind) => SECTION_KINDS.has(kind)));
 }

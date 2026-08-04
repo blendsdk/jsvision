@@ -76,6 +76,7 @@ const CORE_ROLE_BY_KANBAN: Readonly<Record<KanbanThemeRole, CoreThemeRoleName>> 
 const TERMINAL_ROLE_BY_KANBAN: Readonly<Record<KanbanThemeRole, CoreThemeRoleName>> = Object.freeze(
   Object.fromEntries(
     KANBAN_THEME_ROLES.map((role) => {
+      if (role === 'card.focused-selected') return [role, 'listSelected'];
       if (role.includes('warning')) return [role, 'warningText'];
       if (role.includes('error') || role.includes('invalid') || role.includes('rejected')) {
         return [role, 'dangerText'];
@@ -154,7 +155,8 @@ function readCoreRole(theme: Theme, role: CoreThemeRoleName): ThemeRole | undefi
 
 /** Creates a bounded safe report path without preserving hostile terminal controls. */
 function safeReportPath(value: string): string {
-  const cleaned = sanitize(value)
+  const cleaned = sanitize(value.slice(0, 128))
+    .replace(/[\u202a-\u202e\u2066-\u2069]/gu, '')
     .replace(/[\t\n]+/gu, ' ')
     .trim()
     .slice(0, 128);
@@ -163,16 +165,42 @@ function safeReportPath(value: string): string {
 
 /** Creates one role-specific redundant non-color cue. */
 function cueFor(role: KanbanThemeRole): readonly [KanbanNonColorCue, ...KanbanNonColorCue[]] {
-  let cue: KanbanNonColorCue;
-  if (role.includes('focused')) cue = { kind: 'marker', glyph: '>' };
-  else if (role.includes('selected')) cue = { kind: 'marker', glyph: '*' };
-  else if (role.includes('warning')) cue = { kind: 'text', prefix: '!' };
-  else if (role.includes('error') || role.includes('invalid') || role.includes('rejected')) {
-    cue = { kind: 'text', prefix: 'x' };
-  } else if (role.includes('pending') || role.includes('refreshing')) cue = { kind: 'text', prefix: '~' };
-  else if (role.includes('separator')) cue = { kind: 'border', style: 'single' };
-  else cue = { kind: 'attribute', attrs: Attr.bold };
-  return Object.freeze([Object.freeze(cue)]);
+  const cues: readonly KanbanNonColorCue[] =
+    role === 'card.focused-selected'
+      ? [
+          { kind: 'marker', glyph: '>' },
+          { kind: 'attribute', attrs: Attr.underline },
+        ]
+      : role.includes('focused')
+        ? [{ kind: 'marker', glyph: '>' }]
+        : role.includes('selected')
+          ? [{ kind: 'marker', glyph: '*' }]
+          : role === 'card.read-only'
+            ? [{ kind: 'text', prefix: '[RO]' }]
+            : role === 'card.grabbed'
+              ? [{ kind: 'marker', glyph: '@' }]
+              : role === 'card.source-placeholder'
+                ? [{ kind: 'border', style: 'dashed' }]
+                : role === 'card.ghost'
+                  ? [{ kind: 'attribute', attrs: Attr.dim }]
+                  : role === 'drop-target.valid'
+                    ? [{ kind: 'text', prefix: '+' }]
+                    : role.includes('warning')
+                      ? [{ kind: 'text', prefix: '!' }]
+                      : role.includes('error') || role.includes('invalid') || role.includes('rejected')
+                        ? [{ kind: 'text', prefix: 'x' }]
+                        : role.includes('pending') || role.includes('refreshing')
+                          ? [{ kind: 'text', prefix: '~' }]
+                          : role.includes('separator')
+                            ? [{ kind: 'border', style: 'single' }]
+                            : role === 'checklist.complete'
+                              ? [{ kind: 'text', prefix: '[x]' }]
+                              : role === 'checklist.incomplete'
+                                ? [{ kind: 'text', prefix: '[ ]' }]
+                                : role === 'checklist.progress'
+                                  ? [{ kind: 'text', prefix: '%' }]
+                                  : [{ kind: 'attribute', attrs: Attr.bold }];
+  return Object.freeze(cues.map((cue) => Object.freeze(cue))) as readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];
 }
 
 /** Reads one all-or-nothing explicit role override without invoking nested accessors. */
@@ -335,9 +363,9 @@ export function resolveKanbanThemeRole(
   if (capabilities.noColor === true || capabilities.colorDepth === 'mono') {
     return Object.freeze({
       role,
-      style: freezeStyle(token.style),
+      style: freezeStyle(token.mappedFallback),
       cues,
-      fallback: requestedKnown ? 'none' : 'family',
+      fallback: 'mapped-core',
     });
   }
 

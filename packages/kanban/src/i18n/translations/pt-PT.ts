@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Official European Portuguese Kanban catalog. */
+/** Authored European Portuguese Kanban catalog awaiting registry and review closure. */
 export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
   'kanban.board.label': 'Quadro Kanban',
   'kanban.board.no-columns': 'Sem colunas',

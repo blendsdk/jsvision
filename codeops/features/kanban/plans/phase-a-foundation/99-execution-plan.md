@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 05:18 CEST
-> **Progress**: 35/64 tasks (55%)
+> **Last Updated**: 2026-08-04 05:50 CEST
+> **Progress**: 36/64 tasks (56%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -86,6 +86,8 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 
 ## Phase 3: Cards, descriptors, themes, and locale modules
 
+> **Phase baseline tree**: 8283fb238251e97b6f01549ec9f158197ca98618
+>
 > **Expected modification set**: Card/descriptor/renderer/theme/catalog modules and focused tests; ten
 > locale modules exist but official registry/review changes remain atomic in Phase 5
 >
@@ -106,7 +108,7 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 - [x] 3.2.6 Implement Dutch, German, and French typed Phase A catalogs — `packages/kanban/src/i18n/translations/{nl,de,fr}.ts` ✅ (completed: 2026-08-04 05:12)
 - [x] 3.2.7 Implement Spanish, Italian, and Portuguese typed Phase A catalogs — `packages/kanban/src/i18n/translations/{es,it,pt-PT}.ts` ✅ (completed: 2026-08-04 05:15)
 - [x] 3.2.8 Implement Polish, Romanian, and Swedish catalogs and assemble all ten side-effect-free values for generated wrappers — `packages/kanban/src/i18n/translations/{pl,ro,sv}.ts`, `packages/kanban/src/i18n/locales.ts` ✅ (completed: 2026-08-04 05:18)
-- [ ] 3.3.1 Add implementation/property tests for descriptor geometry, display-cell clipping/wide glyphs, hostile fields, throwing adapters/renderers, role validation, catalog parity, and fallback determinism; make Phase 3 specs green; run Kanban build/typecheck/unit/JSDoc checks, `yarn verify:local`, `yarn plugin:check`, and phase reviewer/auditor loop — `packages/kanban/test/{descriptor,theme,i18n}.impl.test.ts`
+- [x] 3.3.1 Add implementation/property tests for descriptor geometry, display-cell clipping/wide glyphs, hostile fields, throwing adapters/renderers, role validation, catalog parity, and fallback determinism; correct the dependency-aware packed-consumer fixture exposed by Phase 3 public types; make Phase 3 specs green; run Kanban build/typecheck/unit/JSDoc checks, `yarn verify:local`, `yarn plugin:check`, and phase reviewer/auditor loop — `packages/kanban/test/{descriptor,theme,i18n}.impl.test.ts`, `packages/kanban/test/{package-consumer-contract.spec.test.ts,fixtures/packed-consumer/tsconfig.json}` ✅ (completed: 2026-08-04 05:50)
 
 **Phase 3 deliverable:** Durable presentation/theme/i18n contracts and the deliberately small basic
 card renderer required by the Phase A slice.

@@ -80,7 +80,7 @@ export type KanbanThemeOverrides = Readonly<Partial<Record<KanbanThemeRole, Read
 export interface KanbanThemeResolutionReport {
   /** Bounded semantic paths rejected while reading caller data. */
   readonly rejected: readonly string[];
-  /** Capability or readability adjustments applied to otherwise valid input. */
+  /** Palette-level readability adjustments applied while creating this immutable theme. */
   readonly adjustments: readonly {
     /** Allowlisted semantic path, or `*` for a palette-wide capability adaptation. */
     readonly path: string;

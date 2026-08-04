@@ -351,6 +351,11 @@ apply, and fall back safely instead of throwing. A dynamic status style resolver
 the required allowlisted `fallbackRole`. Theme revision belongs to the reactive board projection and is
 not caller-controlled palette data.
 
+`KanbanThemeResolutionReport.adjustments` records only palette-level repairs made while the immutable
+theme is created; it is empty when no such repair occurs in Phase A. Later capability-specific role
+selection reports its own effective fallback stage and optional contrast ratio through
+`KanbanResolvedThemeRole`, so it does not mutate or retroactively annotate the creation report.
+
 Phase A actively consumes board, column/header/separator, card normal/focused, title, status,
 loading/refreshing/partial/empty/error/retry roles. Remaining roles are stable, documented mappings ready
 for later behavior; they are not evidence that those states are implemented.

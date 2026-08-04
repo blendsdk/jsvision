@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Official Swedish Kanban catalog. */
+/** Authored Swedish Kanban catalog awaiting registry and review closure. */
 export const kanbanSv = createKanbanTranslationCatalog('sv', {
   'kanban.board.label': 'Kanbantavla',
   'kanban.board.no-columns': 'Inga kolumner',

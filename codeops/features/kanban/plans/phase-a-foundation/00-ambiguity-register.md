@@ -552,6 +552,43 @@ are passive dependencies and no theme behavior is claimed until Task 3.2.4. **Co
 was required. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** the descriptor
 contract stops carrying theme roles/theme or build verification becomes phase-atomic instead of per task.
 
+### PAR-36 — Phase 3 quality-loop hardening and packed-consumer dependencies
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** The independent Phase 3 reviewer and
+auditor found implementation defects inside the approved card/theme safety boundary and one test-fixture
+installation gap caused by the newly approved public Core/i18n types. Resolving them adds no board state or
+interaction. **Objective:** Close every major phase-review finding without weakening an immutable product
+assertion or expanding the package API.
+
+**Decision:** The guarded renderer snapshots each descriptor exactly once, validates that detached frozen
+snapshot, and returns the same object. Descriptor validation rejects bidi controls, zero-cell spans,
+non-boolean action state, duplicate/unbounded omissions, malformed extension IDs, and bounded collection
+overflow. Standard and fallback rendering remove bidi controls, reject visually empty mandatory text, and
+bound localized failure labels before sanitization. Monochrome/no-color resolution returns the mapped Core
+style plus role-specific non-color cues; focused-selected tries `listFocused` and then `listSelected`.
+Major operation/card states receive distinguishable ASCII-safe cue signatures.
+
+The packed-consumer oracle continues to extract and execute the real Kanban tarball and keeps
+`skipLibCheck: false`. Its installer now also extracts the package's declared JSVision dependencies and the
+Node declaration packages required by Core's public host types, matching an offline `npm install` instead
+of testing an impossible dependency-free extraction. No product assertion or expected result changes.
+Phase 3 records baseline tree `8283fb238251e97b6f01549ec9f158197ca98618`.
+
+`KanbanThemeResolutionReport.adjustments` is reserved for palette-level repairs performed during theme
+creation and is empty when none occur in Phase A. Capability-specific role fallback happens later and is
+reported directly by `KanbanResolvedThemeRole.fallback` and `contrastRatio`; duplicating that evidence into
+an already-created palette report would be stale. **Evidence:** Independent reviewer and auditor identified
+the same descriptor boolean/bounds, focused-selected chain, fallback-label bound, and packed-consumer
+failures; the auditor independently reproduced the time-of-check/time-of-copy injection. **Rejected
+alternatives:** Validating before copying leaves a stateful-accessor race. Preserving explicit override
+colors in monochrome loses mapped Core attributes. Weakening declaration checks or omitting dependencies
+from the consumer fixture hides a packaging defect. Adding a mutable theme revision/report channel would
+contradict board-owned projection state. **Confidence:** High (0.97). **Hardening:** Two independent quality
+roles converged; every major finding receives focused regression coverage and the full package gate must be
+rerun. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** theme creation begins
+performing palette-level capability repairs, Core removes its Node declaration requirement, or descriptors
+adopt a package-owned class that structurally forbids accessors before the safe wrapper.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -560,7 +597,7 @@ contract stops carrying theme roles/theme or build verification becomes phase-at
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-35 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-36 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.
