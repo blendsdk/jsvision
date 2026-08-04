@@ -2493,6 +2493,18 @@ interface KanbanSceneCardDescriptor {
 }
 ```
 
+## KanbanSceneCardGeometry
+
+One projected card descriptor rectangle.
+
+```ts
+interface KanbanSceneCardGeometry {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  address: KanbanCellAddress;   // Owning semantic cell address.
+  logicalIndex: number;   // Source cursor position.
+}
+```
+
 ## KanbanSceneCell
 
 One occupied or explicitly retained semantic source cell.
@@ -2504,6 +2516,72 @@ interface KanbanSceneCell {
   state: KanbanCellState;   // Current source lifecycle state.
   cards: readonly KanbanSceneCard[];   // Source-ordered resident cards retained within the descriptor ceiling.
 }
+```
+
+## KanbanSceneCellGeometry
+
+One projected sparse source cell.
+
+```ts
+interface KanbanSceneCellGeometry {
+  address: KanbanCellAddress;   // Stable semantic cell address.
+}
+```
+
+## KanbanSceneGeometry
+
+Complete immutable exact-cell projection of a canonical semantic scene.
+
+```ts
+interface KanbanSceneGeometry {
+  revision: KanbanRevision;   // Equality-only scene revision represented by this projection.
+  requestedVariant: KanbanSceneGeometryVariant;   // Requested presentation before responsive strategy resolution.
+  resolvedVariant: KanbanSceneGeometryVariant;   // Effective built-in presentation.
+  visibleColumnIds: readonly string[];   // Source-ordered workflow columns retained by the projection.
+  offsets: { readonly x: number; readonly y: number };   // Clamped offsets used for projection.
+  extents: { readonly x: number; readonly y: number };   // Greatest currently valid offsets.
+  contentOrigin: { readonly x: number; readonly y: number };   // First cell below the sticky workflow-header row.
+  anchor?: KanbanSceneGeometryAnchor;   // Preserved stable anchor when one was supplied.
+  workflowHeaders: readonly KanbanSceneWorkflowHeaderGeometry[];   // Sticky workflow-column header rectangles.
+  swimlaneChrome: readonly KanbanSceneSwimlaneChromeGeometry[];   // Source-ordered visible swimlane chrome rectangles.
+  cells: readonly KanbanSceneCellGeometry[];   // Sparse occupied cell rectangles.
+  cards: readonly KanbanSceneCardGeometry[];   // Source-ordered card rectangles.
+  regions: readonly KanbanSceneGeometryRegion[];   // Positive-area semantic regions used by later drawing, hit, and damage projection.
+  changedRegions: readonly Readonly<Rect>[];   // Regions changed relative to an optional future projection baseline.
+}
+```
+
+## KanbanSceneGeometryAnchor
+
+Stable resize anchor retained independently from terminal rectangles.
+
+```ts
+interface KanbanSceneGeometryAnchor {
+  cardKey: CardKey;   // Application-owned card identity.
+  preferredRow: number;   // Preferred viewport row for the anchored card.
+}
+```
+
+## KanbanSceneGeometryRegion
+
+One clipped positive-area region available to drawing, damage, and inspection.
+
+```ts
+interface KanbanSceneGeometryRegion {
+  kind: KanbanSceneRegionKind;   // Stable semantic purpose of this rectangle.
+  columnId?: string;   // Workflow column owning the region when applicable.
+  swimlaneId?: string;   // Swimlane owning the region when applicable.
+  cardKey?: CardKey;   // Card owning the region when applicable.
+  actionable: false;   // Resting geometry is non-actionable until hit projection closes its semantic scope.
+}
+```
+
+## KanbanSceneGeometryVariant
+
+Built-in scene layouts supported by the geometry projector.
+
+```ts
+type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail'
 ```
 
 ## KanbanSceneLimitState
@@ -2519,6 +2597,14 @@ interface KanbanSceneLimitState {
 }
 ```
 
+## KanbanSceneRegionKind
+
+Semantic region kinds emitted by built-in scene geometry.
+
+```ts
+type KanbanSceneRegionKind = 'workflow-header' | 'swimlane-header' | 'swimlane-band' | 'swimlane-separator' | 'cell' | 'card' | 'state'
+```
+
 ## KanbanSceneSwimlane
 
 Semantic swimlane header retained before any terminal geometry is assigned.
@@ -2529,6 +2615,19 @@ interface KanbanSceneSwimlane {
   label: string;   // Sanitized display label.
   revision: KanbanRevision;   // Equality-only presentation revision.
   count?: KanbanSemanticValue;   // Optional detached count or summary evidence.
+}
+```
+
+## KanbanSceneSwimlaneChromeGeometry
+
+One visible swimlane chrome rectangle.
+
+```ts
+interface KanbanSceneSwimlaneChromeGeometry {
+  swimlaneId: string;   // Stable semantic swimlane identity.
+  label: string;   // Sanitized source label.
+  sticky: boolean;   // Whether this active row is pinned beneath the workflow headers.
+  variant: 'hybrid' | 'separator' | 'band';   // Effective built-in visual treatment.
 }
 ```
 
@@ -2584,6 +2683,18 @@ type KanbanSceneWindowResult = | {
       readonly code: 'distant-layout-unknown' | 'retention-limit' | 'cell-open-failed';
       readonly retryable: boolean;
     }
+```
+
+## KanbanSceneWorkflowHeaderGeometry
+
+One sticky workflow-column header rectangle.
+
+```ts
+interface KanbanSceneWorkflowHeaderGeometry {
+  columnId: string;   // Stable workflow-column identity.
+  label: string;   // Sanitized source label.
+  sticky: true;   // Workflow headers always remain vertically sticky.
+}
 ```
 
 ## KanbanScrollAnchor
@@ -3607,6 +3718,22 @@ interface ProjectKanbanMinimumGeometryOptions {
 }
 ```
 
+## ProjectKanbanSceneGeometryOptions
+
+Options for projecting one canonical scene into exact terminal cells.
+
+```ts
+interface ProjectKanbanSceneGeometryOptions {
+  bounds: Readonly<Rect>;   // Parent-assigned viewport rectangle.
+  variant: KanbanSceneGeometryVariant;   // Requested built-in presentation.
+  offsets: { readonly x: number; readonly y: number };   // Independent requested horizontal and vertical content offsets.
+  activeSwimlaneId?: string;   // Active swimlane whose visible chrome may pin beneath workflow headers.
+  minimumColumnWidth: number;   // Effective minimum width of each visible card column.
+  focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.
+  anchor?: KanbanSceneGeometryAnchor;   // Optional stable anchor preserved through responsive recomputation.
+}
+```
+
 ## ProjectKanbanVerticalGeometryOptions
 
 Inputs for one pure vertical card-stack projection.
@@ -4206,6 +4333,14 @@ Produces one atomic bounded minimum-size state with no partial inspection or act
 
 ```ts
 projectKanbanMinimumGeometry(options: ProjectKanbanMinimumGeometryOptions): KanbanMinimumGeometry
+```
+
+## projectKanbanSceneGeometry
+
+Projects hybrid, separator, and band swimlane strategies from one canonical semantic scene.
+
+```ts
+projectKanbanSceneGeometry(scene: KanbanScene, options: ProjectKanbanSceneGeometryOptions): KanbanSceneGeometry
 ```
 
 ## projectKanbanVerticalGeometry

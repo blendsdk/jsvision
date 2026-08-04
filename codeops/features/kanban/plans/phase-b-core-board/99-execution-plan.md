@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 18:30 CEST
-> **Progress**: 44/106 tasks (42%)
+> **Last Updated**: 2026-08-04 18:38 CEST
+> **Progress**: 45/106 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -167,7 +167,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 3.2.2 Implement measurement correction, revision invalidation, stable-anchor preservation, and bounded eviction — `packages/kanban/src/layout/sparse-height-index.ts`, `packages/kanban/src/board/descriptor-cache.ts` ✅ (completed: 2026-08-04 18:19 CEST)
 - [x] 3.2.3 Build immutable canonical 2-D scene nodes from normalized structure, stable interaction snapshots, and resident cells capped by `retainedDescriptors`, with deterministic partial-state clipping — `packages/kanban/src/board/scene-model.ts`, `packages/kanban/src/board/scene-builder.ts` ✅ (completed: 2026-08-04 18:24 CEST)
 - [x] 3.2.4 Generalize viewport-source retention to visible/overscan semantic cells, consume bounded compatible row-layout hints, and degrade distant no-hint projection honestly — `packages/kanban/src/board/viewport-source.ts` ✅ (completed: 2026-08-04 18:30 CEST)
-- [ ] 3.2.5 Implement hybrid/separator/band geometry strategies over the canonical scene — `packages/kanban/src/layout/swimlane-geometry.ts`
+- [x] 3.2.5 Implement hybrid/separator/band geometry strategies over the canonical scene — `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-04 18:38 CEST)
 - [ ] 3.2.6 Implement rail geometry, sticky label behavior, and deterministic hybrid degradation — `packages/kanban/src/layout/swimlane-rail.ts`, `packages/kanban/src/layout/swimlane-geometry.ts`
 - [ ] 3.2.7 Implement custom swimlane chrome geometry within validated budgets — `packages/kanban/src/layout/swimlane-custom.ts`
 - [ ] 3.2.8 Replace fixed-stride card stacking/origin/extent assumptions with sparse height projections — `packages/kanban/src/layout/vertical-projector.ts`, `packages/kanban/src/board/viewport-metrics.ts`
