@@ -27,7 +27,6 @@ host authority as those layers arrive.
 graph TB
     App[Application state and policy] --> Kanban[@jsvision/kanban foundation]
     Kanban --> UI[@jsvision/ui]
-    Kanban --> Forms[@jsvision/forms]
     Kanban --> I18n[@jsvision/i18n]
     UI --> Core[@jsvision/core]
     Docs[Docs site and live labs] --> Kanban
@@ -39,7 +38,7 @@ graph TB
 | Component            | Status             | Purpose                                                        | Documentation                                    |
 | -------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------------------------ |
 | JSVision core and UI | Implemented        | Rendering, reactivity, layout, windows, input, and controls    | [System overview](/architecture/system-overview) |
-| `@jsvision/kanban`   | Foundation built   | Contracts, data sources, and bounded card presentation         | [Kanban API design](/architecture/api-design)    |
+| `@jsvision/kanban`   | Phase A complete   | Read sources, presentation, responsive board, and viewport     | [Kanban architecture](/architecture/kanban)      |
 | Application adapter  | Consumer-owned     | Records, persistence, authorization, mutation, and saved views | [Integrations](/reference/integrations)          |
 | Docs and examples    | Planned for Kanban | Teaching page, live labs, kitchen sink, and flagship showcase  | [Development workflow](/guides/development)      |
 

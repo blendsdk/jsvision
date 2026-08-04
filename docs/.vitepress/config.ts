@@ -22,6 +22,7 @@ export default withMermaid(
           text: 'Architecture',
           items: [
             { text: 'System overview', link: '/architecture/system-overview' },
+            { text: 'Kanban architecture', link: '/architecture/kanban' },
             { text: 'Kanban data model', link: '/architecture/data-model' },
             { text: 'Kanban API design', link: '/architecture/api-design' },
             { text: 'Kanban security', link: '/architecture/security' },

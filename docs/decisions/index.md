@@ -3,6 +3,12 @@
 This log tracks accepted architectural decisions for JSVision. ADRs describe design intent; observed
 implementation must not silently supersede them.
 
+The [Kanban architecture overview](/architecture/kanban) maps ADR-006 through ADR-013 to the
+implemented Phase A package. Phase A closes the package, source/session, bounded presentation, and
+responsive read-only viewport foundation. Pointer movement, editors, lane-configuration UI, rich
+card content, and showcase applications remain later-phase work; their implementation must preserve
+the accepted ownership and bounded-degradation decisions below.
+
 ## Decision log
 
 | #                                                 | Date       | Decision                                                  | Status   |
