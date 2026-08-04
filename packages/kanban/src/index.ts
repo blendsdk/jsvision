@@ -13,3 +13,6 @@ export * from './contract/observation.js';
 export * from './contract/request.js';
 export * from './contract/revision.js';
 export * from './contract/semantic-query.js';
+export * from './source/counts.js';
+export * from './source/states.js';
+export * from './source/types.js';

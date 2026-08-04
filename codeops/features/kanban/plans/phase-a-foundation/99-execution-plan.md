@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 02:24 CEST
-> **Progress**: 16/64 tasks (25%)
+> **Last Updated**: 2026-08-04 02:32 CEST
+> **Progress**: 17/64 tasks (27%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -72,7 +72,7 @@ validation contracts. No mounted board behavior is claimed.
 - [x] 2.1.2 `[spec-author]` Add immutable cursor specifications for ST-R02-04/06, ST-R02-10–12/15, and ST-A-SOURCE-LIFECYCLE-01: ranges, unloaded/scoped-error states, placement, disposal, and identity changes — `packages/kanban/test/cursor.spec.test.ts` ✅ (completed: 2026-08-04 02:05)
 - [x] 2.1.3 `[spec-author]` Add immutable eager/windowed scale specifications for ST-R02-01 and ST-A-SOURCE-SCALE-01: exact 5,000-card semantics and pure-source 100,000-logical-card visible/overscan-only reads — `packages/kanban/test/eager-source.spec.test.ts`, `packages/kanban/test/windowed-source.spec.test.ts` ✅ (completed: 2026-08-04 02:15)
 - [x] 2.1.4 Run all Phase 2 specifications and record the expected red failures before source production modules exist — 4 files/15 tests red only for approved absent Phase 2 source/testing symbols; typecheck reports the same absent symbols ✅ (completed: 2026-08-04 02:24)
-- [ ] 2.2.1 Implement documented source/query-session/cursor interfaces, the optional revision-bound locator contract, source/cell state, and honest count-quality unions — `packages/kanban/src/source/{types,states,counts}.ts`
+- [x] 2.2.1 Implement documented source/query-session/cursor interfaces, the optional revision-bound locator contract, source/cell state, and honest count-quality unions — `packages/kanban/src/source/{types,states,counts}.ts` ✅ (completed: 2026-08-04 02:32)
 - [ ] 2.2.2 Implement collision-safe cell addresses, identity-change and placement unions/token checks, and source-publication boundary validation — `packages/kanban/src/source/{address,placement,validation}.ts`
 - [ ] 2.2.3 Implement the private generation-owned session coordinator, explicit visible/overscan/prefetch retention owners, bounded load scheduler, and generation-before-abort disposal order — `packages/kanban/src/source/{session-coordinator,load-scheduler}.ts`
 - [ ] 2.2.4 Implement cursor range normalization/coalescing, revision-scoped placement validation, stale continuation suppression, scoped retry/error handling, and idempotent cleanup — `packages/kanban/src/source/{cursor-coordinator,range-set}.ts`
