@@ -54,8 +54,8 @@ import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 import { createEnglishDatagridI18n } from './i18n/catalog.js';
-import { createRowRevertController } from './row-revert.js';
-import type { RowRevertController } from './row-revert.js';
+import { createRowRevertController, createRowRevertTransactionController } from './row-revert.js';
+import type { RowRevertController, RowRevertTransactionController } from './row-revert.js';
 
 /**
  * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
@@ -437,6 +437,10 @@ export class EditableDataGrid<T> extends Group {
   // Bounded accepted-commit journal for the current exact key-and-object row visit. It is disabled when
   // no row validator exists, so an ordinary editable grid retains no unused recovery history.
   private readonly rowRevert: RowRevertController<T>;
+  // The transaction coordinator owns optimistic batch writes and pending presentation separately from
+  // the bounded session journal, allowing late host decisions to settle captured data without attaching
+  // state to a replacement row or disposed grid.
+  private readonly rowRevertTransaction: RowRevertTransactionController<T>;
   // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
   // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
   private readonly rowGate: RowGate;
@@ -513,6 +517,23 @@ export class EditableDataGrid<T> extends Group {
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
     this.rowRevert = createRowRevertController(opts.validateRow !== undefined);
+    this.rowRevertTransaction = createRowRevertTransactionController({
+      sessions: this.rowRevert,
+      onRevertRow: opts.onRevertRow,
+      internalAllowed: opts.beforeSave === undefined && opts.onCommit === undefined,
+      sourceRow: (rowKey) => this.sourceRow(rowKey),
+      displayedRow: (rowKey) => this.displayedRow(rowKey),
+      focusedRow: () => this.focusedRow(),
+      focusedKey: () => this.focusedKey(),
+      bodyFocused: () => this.isBodyFocused(),
+      addDirty: (key) => this.dirty.add(key),
+      deleteDirty: (key) => this.dirty.delete(key),
+      clearError: (key) => this.errors.clear(key),
+      activeMessage: () => this.errors.active(),
+      note: (message) => this.errors.note(message),
+      bumpVersion: () => this.version.set(this.version() + 1),
+      cellKey,
+    });
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
     if (this.windowed) validateWindowedConfig(opts.source, engineCols, devWarn);
@@ -784,9 +805,15 @@ export class EditableDataGrid<T> extends Group {
           const row = this.focusedRow();
           return { row, rowKey: row === undefined ? undefined : this.source.rowKey(row) };
         },
-        ({ row, rowKey }) => this.rowRevert.reconcileFocus(rowKey, row),
+        ({ row, rowKey }) => {
+          this.rowRevertTransaction.reconcile(rowKey, row);
+          this.rowRevert.reconcileFocus(rowKey, row);
+        },
       );
-      this.onCleanup(() => this.rowRevert.dispose());
+      this.onCleanup(() => {
+        this.rowRevertTransaction.dispose();
+        this.rowRevert.dispose();
+      });
       this.bind(
         () => this.partitionKey(),
         (key) => {
@@ -1716,6 +1743,21 @@ export class EditableDataGrid<T> extends Group {
     return this.selection.read();
   }
 
+  /** Find a key in the source directly, bypassing the derived display cache for settlement checks. */
+  private sourceRow(rowKey: Key): T | undefined {
+    const length = this.source.length();
+    for (let index = 0; index < length; index += 1) {
+      const row = this.source.rowAt(index);
+      if (row !== undefined && this.source.rowKey(row) === rowKey) return row;
+    }
+    return undefined;
+  }
+
+  /** Find a key in the current derived display without assuming that its row index stayed stable. */
+  private displayedRow(rowKey: Key): T | undefined {
+    return this.display().find((row) => this.source.rowKey(row) === rowKey);
+  }
+
   /**
    * The record under the row cursor (reactive), or `undefined` when the grid is empty. Re-anchored by
    * `rowKey` after a sort/filter, so it follows the same record even as its display index moves — the
@@ -1928,7 +1970,9 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   deleteRows(keys: readonly Key[]): void {
-    this.rowRevert.invalidate(new Set(keys));
+    const invalidated = new Set(keys);
+    this.rowRevertTransaction.invalidate(invalidated);
+    this.rowRevert.invalidate(invalidated);
     this.mutations.deleteRows(keys);
   }
 

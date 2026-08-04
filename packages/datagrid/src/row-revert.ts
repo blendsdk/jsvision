@@ -7,6 +7,7 @@
  * captured row and setters, so asynchronous data settlement does not depend on a still-live UI session.
  */
 import type { Key } from './selection.js';
+import type { OnRevertRow, RowRevert, RowRevertCell } from './commit.js';
 
 /** One successfully accepted cell commit reported by the editor. */
 export interface AcceptedCellCommit<T> {
@@ -116,6 +117,224 @@ export interface RowRevertController<T> {
   invalidate(keys?: ReadonlySet<Key>): void;
   /** Dispose the registry and permanently reject future recording or settlement. */
   dispose(): void;
+}
+
+/** Grid-owned effects used by the row-revert transaction without coupling it to a view class. */
+interface RowRevertTransactionDeps<T> {
+  readonly sessions: RowRevertController<T>;
+  readonly onRevertRow?: OnRevertRow<T>;
+  readonly internalAllowed: boolean;
+  readonly sourceRow: (rowKey: Key) => T | undefined;
+  readonly displayedRow: (rowKey: Key) => T | undefined;
+  readonly focusedRow: () => T | undefined;
+  readonly focusedKey: () => Key | undefined;
+  readonly bodyFocused: () => boolean;
+  readonly addDirty: (key: string) => void;
+  readonly deleteDirty: (key: string) => void;
+  readonly clearError: (key: string) => void;
+  readonly activeMessage: () => string | null;
+  readonly note: (message: string | null) => void;
+  readonly bumpVersion: () => void;
+  readonly cellKey: (rowKey: Key, columnId: string) => string;
+}
+
+/** Attempt-owned pending presentation that must never attach to a later same-key row. */
+interface RowRevertPresentation<T> {
+  readonly attempt: PreparedRowRevert<T>;
+  readonly keys: readonly string[];
+}
+
+/** Messages are centralized here until the catalog task replaces them with translated lookups. */
+const ROW_REVERT_PENDING = 'Reverting row…';
+const ROW_REVERT_FAILED = 'Could not revert row changes';
+const ROW_REVERT_UNAVAILABLE = 'Row changes cannot be reverted';
+
+/** Transaction behavior consumed by the grid's input and lifecycle wiring. */
+export interface RowRevertTransactionController<T> {
+  /** Begin an eligible row revert and report whether the request belongs to this feature. */
+  start(rowKey: Key, row: T): boolean;
+  /** Whether a callback-backed or internal revert currently owns grid presentation. */
+  isPending(): boolean;
+  /** Detach a pending attempt when focus or source identity changes. */
+  reconcile(rowKey: Key | undefined, row: T | undefined): void;
+  /** Invalidate attempts for selected row keys before a mutation can reuse them. */
+  invalidate(keys: ReadonlySet<Key>): void;
+  /** Suppress every later grid-state write while captured row data is still allowed to settle. */
+  dispose(): void;
+}
+
+/** Restore attempted cells in reverse order and report whether every setter honored its contract. */
+function compensate<T>(attempt: PreparedRowRevert<T>, cells: readonly PreparedRowRevertCell<T>[]): boolean {
+  let complete = true;
+  for (let index = cells.length - 1; index >= 0; index -= 1) {
+    const cell = cells[index];
+    try {
+      cell.apply(attempt.row, cell.previous);
+    } catch {
+      // Continue through every captured original. A throwing recovery setter has already broken the
+      // documented column contract, so best-effort recovery is safer than leaving later cells unrestored.
+      complete = false;
+    }
+  }
+  return complete;
+}
+
+/** Build the frozen public payload without exposing captured setters or the attempt token. */
+function publicChange<T>(attempt: PreparedRowRevert<T>): RowRevert<T> {
+  const cells = Object.freeze(
+    attempt.cells.map((cell) =>
+      Object.freeze<RowRevertCell>({
+        columnId: cell.columnId,
+        value: cell.value,
+        previous: cell.previous,
+      }),
+    ),
+  );
+  return Object.freeze({ rowKey: attempt.rowKey, row: attempt.row, cells });
+}
+
+/**
+ * Create the optimistic row-revert transaction coordinator.
+ *
+ * Captured-row writes are deliberately separated from live grid settlement. A late veto always
+ * compensates its original row, while token, source, focus, and disposal guards prevent that completion
+ * from writing presentation or session state into a replacement grid context.
+ */
+export function createRowRevertTransactionController<T>(
+  deps: RowRevertTransactionDeps<T>,
+): RowRevertTransactionController<T> {
+  let presentation: RowRevertPresentation<T> | undefined;
+  let disposed = false;
+
+  const ownsPresentation = (attempt: PreparedRowRevert<T>): boolean => presentation?.attempt.token === attempt.token;
+
+  const detach = (attempt: PreparedRowRevert<T>): void => {
+    const current = presentation;
+    if (disposed || current?.attempt.token !== attempt.token) return;
+    for (const key of current.keys) deps.deleteDirty(key);
+    if (deps.activeMessage() === ROW_REVERT_PENDING) deps.note(null);
+    presentation = undefined;
+  };
+
+  const sourceIdentityChanged = (attempt: PreparedRowRevert<T>): boolean =>
+    deps.sourceRow(attempt.rowKey) !== deps.displayedRow(attempt.rowKey);
+
+  const live = (attempt: PreparedRowRevert<T>): boolean =>
+    !disposed &&
+    deps.bodyFocused() &&
+    deps.sourceRow(attempt.rowKey) === attempt.row &&
+    deps.focusedKey() === attempt.rowKey &&
+    deps.focusedRow() === attempt.row &&
+    deps.sessions.isReverting(attempt.rowKey, attempt.row) &&
+    ownsPresentation(attempt);
+
+  const settle = async (attempt: PreparedRowRevert<T>): Promise<void> => {
+    let accepted = true;
+    if (deps.onRevertRow !== undefined) {
+      try {
+        accepted = await deps.onRevertRow(publicChange(attempt));
+      } catch {
+        accepted = false;
+      }
+    }
+
+    const compensationComplete = accepted ? true : compensate(attempt, attempt.cells);
+    if (disposed) return;
+
+    // A custom non-reactive source can replace a row without invalidating the cached display. Refresh
+    // exactly once before judging focus/session ownership so settlement never attaches to the old view.
+    const identityChanged = sourceIdentityChanged(attempt);
+    if (identityChanged) deps.bumpVersion();
+
+    if (!live(attempt)) {
+      // A focus-only stale veto still changed a row that remains visible. Repaint that compensation,
+      // while an identity-change repaint above already covers a newly discovered replacement.
+      if (!accepted && !identityChanged && deps.sourceRow(attempt.rowKey) === attempt.row) deps.bumpVersion();
+      detach(attempt);
+      deps.sessions.finish(attempt, 'invalidated');
+      return;
+    }
+
+    if (accepted) {
+      for (const key of presentation?.keys ?? []) deps.clearError(key);
+      detach(attempt);
+      deps.sessions.finish(attempt, 'accepted');
+      return;
+    }
+
+    // Compensation is its own coherent mutation stage and therefore receives one repaint. A broken
+    // recovery setter makes the captured journal untrustworthy, so it cannot remain retryable.
+    deps.bumpVersion();
+    detach(attempt);
+    deps.sessions.finish(attempt, compensationComplete ? 'rejected' : 'invalidated');
+    deps.note(ROW_REVERT_FAILED);
+  };
+
+  return {
+    start(rowKey, row): boolean {
+      if (disposed || !deps.sessions.isTrapped(rowKey, row)) return false;
+      if (deps.sessions.isReverting(rowKey, row)) return true;
+
+      // Persistence authority must be decided before prepare marks the session reverting or a setter
+      // touches data. Per-cell persistence cannot safely stand in for one atomic row callback.
+      if (deps.onRevertRow === undefined && !deps.internalAllowed) {
+        deps.note(ROW_REVERT_UNAVAILABLE);
+        return true;
+      }
+
+      const attempt = deps.sessions.prepare(rowKey, row);
+      if (attempt === undefined) return true;
+      const keys = Object.freeze(attempt.cells.map((cell) => deps.cellKey(rowKey, cell.columnId)));
+      presentation = { attempt, keys };
+      for (const key of keys) deps.addDirty(key);
+      deps.note(ROW_REVERT_PENDING);
+
+      const attempted: PreparedRowRevertCell<T>[] = [];
+      try {
+        for (const cell of attempt.cells) {
+          attempted.push(cell); // include a setter that mutates and then throws in recovery
+          cell.apply(attempt.row, cell.value);
+        }
+      } catch {
+        compensate(attempt, attempted);
+        if (!disposed) {
+          deps.bumpVersion();
+          detach(attempt);
+          deps.sessions.finish(attempt, 'invalidated');
+          deps.note(ROW_REVERT_FAILED);
+        }
+        return true;
+      }
+
+      deps.bumpVersion();
+      void settle(attempt);
+      return true;
+    },
+
+    isPending(): boolean {
+      return !disposed && presentation !== undefined;
+    },
+
+    reconcile(rowKey, row): void {
+      if (disposed || presentation === undefined) return;
+      const attempt = presentation.attempt;
+      if (rowKey === attempt.rowKey && row === attempt.row) return;
+      detach(attempt);
+      deps.sessions.finish(attempt, 'invalidated');
+    },
+
+    invalidate(keys): void {
+      if (disposed || presentation === undefined || !keys.has(presentation.attempt.rowKey)) return;
+      const attempt = presentation.attempt;
+      detach(attempt);
+      deps.sessions.finish(attempt, 'invalidated');
+    },
+
+    dispose(): void {
+      disposed = true;
+      presentation = undefined;
+    },
+  };
 }
 
 /** Return whether a session belongs to the supplied exact row identity. */

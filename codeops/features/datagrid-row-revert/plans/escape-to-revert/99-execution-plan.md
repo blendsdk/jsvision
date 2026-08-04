@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 14:24
-> **Progress**: 7/31 tasks (23%)
+> **Last Updated**: 2026-08-04 14:32
+> **Progress**: 8/31 tasks (26%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -72,7 +72,7 @@ AR-3, AR-6, AR-7, AR-12
 **Reference**: [03-02 § Implementation Details](03-02-rollback-transaction-and-input.md#implementation-details)
 
 - [x] 1.3.1 Add and document `RowRevertCell`, `RowRevert<T>`, `OnRevertRow<T>`, the grid option, public exports, and the synchronous/deterministic/non-throwing editable-setter precondition — `packages/datagrid/src/commit.ts`, `packages/datagrid/src/column.ts`, `packages/datagrid/src/grid.ts`, `packages/datagrid/src/index.ts` ✅ (completed: 2026-08-04 14:24)
-- [ ] 1.3.2 Implement optimistic batch apply, frozen payload delivery, explicit callback/internal/unavailable precedence before `prepare`, best-effort setter-failure recovery, captured-original compensation, attempt-owned dirty/message cleanup, live stale reconciliation, coherent version stages, and disposal-safe settlement — `packages/datagrid/src/row-revert.ts`, `packages/datagrid/src/grid.ts`
+- [x] 1.3.2 Implement optimistic batch apply, frozen payload delivery, explicit callback/internal/unavailable precedence before `prepare`, best-effort setter-failure recovery, captured-original compensation, attempt-owned dirty/message cleanup, live stale reconciliation, coherent version stages, and disposal-safe settlement — `packages/datagrid/src/row-revert.ts`, `packages/datagrid/src/grid.ts` ✅ (completed: 2026-08-04 14:32)
 - [ ] 1.3.3 Add `revertRow`, default Escape, body eligibility/fallthrough, and pending input/mutation guards — `packages/datagrid/src/keymap.ts`, `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 1.3.4 Add canonical trapped/pending/failure/unavailable catalog keys, placeholder validation, and grid message composition — `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/validation.ts`
 - [ ] 1.3.5 Add reviewed translations for all official Data Grid locales, refresh their digest-bound approvals, and pass locale completeness and review checks — `packages/datagrid/src/i18n/locales.ts`, `tools/i18n-translation-reviews.json`
