@@ -224,6 +224,8 @@ function projectCellCards<TCard>(
       ...(adapterSnapshot.presentationRevision === undefined
         ? {}
         : { presentationRevision: adapterSnapshot.presentationRevision }),
+      presentationPolicyRevision: 'phase-a-mandatory-only-v1',
+      presentationSelectionFingerprint: 'mandatory-only',
       width: columnWidth,
       rowBudget: context.rowBudget,
       density: options.density,

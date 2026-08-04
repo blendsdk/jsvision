@@ -1,4 +1,4 @@
-import { createRoot } from '@jsvision/ui';
+import { createRoot, effect } from '@jsvision/ui';
 
 import type { KanbanCardDensity, KanbanCardDescriptor } from '../card/descriptor.js';
 import { KanbanInvalidDescriptorError, KanbanInvalidGeometryError } from '../contract/error.js';
@@ -24,6 +24,12 @@ export interface KanbanDescriptorCacheKey {
   readonly rendererRevision: KanbanRevision;
   /** Optional application presentation revision for this card. */
   readonly presentationRevision?: KanbanRevision;
+  /** Equality-only resolved presentation-policy revision. */
+  readonly presentationPolicyRevision: KanbanRevision;
+  /** Stable fingerprint of the resolved per-card optional-section selection. */
+  readonly presentationSelectionFingerprint: string;
+  /** Optional equality-only semantic style revision. */
+  readonly styleRevision?: KanbanRevision;
   /** Exact descriptor width in terminal cells. */
   readonly width: number;
   /** Maximum descriptor rows. */
@@ -48,6 +54,12 @@ export interface KanbanDescriptorInvalidation {
   readonly cardKey?: CardKey;
   /** Match one renderer revision. */
   readonly rendererRevision?: KanbanRevision;
+  /** Match one resolved presentation-policy revision. */
+  readonly presentationPolicyRevision?: KanbanRevision;
+  /** Match one per-card optional-section selection fingerprint. */
+  readonly presentationSelectionFingerprint?: string;
+  /** Match one semantic style revision. */
+  readonly styleRevision?: KanbanRevision;
   /** Match one theme revision. */
   readonly themeRevision?: KanbanRevision;
   /** Match one capability revision. */
@@ -64,9 +76,23 @@ interface SnapshotKey extends KanbanDescriptorCacheKey {
 /** One descriptor and its independently disposable reactive projection scope. */
 interface CacheEntry {
   readonly key: SnapshotKey;
-  readonly descriptor: KanbanCardDescriptor;
+  readonly readDescriptor: () => KanbanCardDescriptor;
   readonly disposeScope: () => void;
   lastUsed: number;
+}
+
+/** Optional internal lifecycle observation used by bounded testing instrumentation. */
+export interface KanbanDescriptorCacheObserver {
+  /** Called after a new owned computation publishes its initial descriptor. */
+  readonly onCreated?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
+  /** Called after a retained reactive computation republishes its descriptor. */
+  readonly onRebuilt?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
+  /** Called when an explicit selector invalidates one retained descriptor. */
+  readonly onInvalidated?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
+  /** Called when a retained reactive computation republishes and invalidates its damage region. */
+  readonly onReactiveInvalidated?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
+  /** Called after one retained computation scope is disposed. */
+  readonly onDisposed?: (key: Readonly<KanbanDescriptorCacheKey>) => void;
 }
 
 /** Validates one positive safe terminal-cell value. */
@@ -94,6 +120,20 @@ function tagged(value: CardKey | KanbanRevision): readonly ['number' | 'string',
   return Object.freeze(typeof value === 'number' ? ['number', value] : ['string', value]);
 }
 
+/** Validates one bounded non-empty fingerprint without retaining rejected payloads. */
+function selectionFingerprint(value: unknown): string {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > KANBAN_LIMITS.semanticStringBytes.safe ||
+    /[\u0000-\u001f\u007f-\u009f]/u.test(value) ||
+    new TextEncoder().encode(value).byteLength > KANBAN_LIMITS.semanticStringBytes.safe
+  ) {
+    throw new KanbanInvalidDescriptorError();
+  }
+  return value;
+}
+
 /** Snapshots and validates every semantic key member exactly once. */
 function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new KanbanInvalidDescriptorError();
@@ -106,6 +146,9 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
   let cardKey: CardKey;
   let rendererRevision: KanbanRevision;
   let presentationRevision: KanbanRevision | undefined;
+  let presentationPolicyRevision: KanbanRevision;
+  let presentationSelectionFingerprint: string;
+  let styleRevision: KanbanRevision | undefined;
   let themeRevision: KanbanRevision;
   let capabilityRevision: KanbanRevision;
   let interactionRevision: KanbanRevision;
@@ -119,6 +162,10 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
     const rawPresentationRevision = ownValue(value, 'presentationRevision');
     presentationRevision =
       rawPresentationRevision === undefined ? undefined : snapshotKanbanRevision(rawPresentationRevision);
+    presentationPolicyRevision = snapshotKanbanRevision(ownValue(value, 'presentationPolicyRevision'));
+    presentationSelectionFingerprint = selectionFingerprint(ownValue(value, 'presentationSelectionFingerprint'));
+    const rawStyleRevision = ownValue(value, 'styleRevision');
+    styleRevision = rawStyleRevision === undefined ? undefined : snapshotKanbanRevision(rawStyleRevision);
     themeRevision = snapshotKanbanRevision(ownValue(value, 'themeRevision'));
     capabilityRevision = snapshotKanbanRevision(ownValue(value, 'capabilityRevision'));
     interactionRevision = snapshotKanbanRevision(ownValue(value, 'interactionRevision'));
@@ -140,6 +187,9 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
     tagged(cardKey),
     tagged(rendererRevision),
     presentationRevision === undefined ? null : tagged(presentationRevision),
+    tagged(presentationPolicyRevision),
+    presentationSelectionFingerprint,
+    styleRevision === undefined ? null : tagged(styleRevision),
     width,
     rowBudget,
     density,
@@ -154,6 +204,9 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
     cardKey,
     rendererRevision,
     ...(presentationRevision === undefined ? {} : { presentationRevision }),
+    presentationPolicyRevision,
+    presentationSelectionFingerprint,
+    ...(styleRevision === undefined ? {} : { styleRevision }),
     width,
     rowBudget,
     density,
@@ -165,17 +218,34 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
 }
 
 /** Creates and scopes one descriptor, disposing partial reactive work when creation fails. */
-function createScopedDescriptor(factory: () => KanbanCardDescriptor): {
-  readonly descriptor: KanbanCardDescriptor;
+function createScopedDescriptor(
+  factory: () => KanbanCardDescriptor,
+  onRebuilt: () => void,
+): {
+  readonly readDescriptor: () => KanbanCardDescriptor;
   readonly disposeScope: () => void;
 } {
   return createRoot((disposeScope) => {
     try {
-      const descriptor = factory();
-      if (typeof descriptor !== 'object' || descriptor === null || !Object.isFrozen(descriptor)) {
-        throw new KanbanInvalidDescriptorError();
-      }
-      return Object.freeze({ descriptor, disposeScope });
+      let descriptor: KanbanCardDescriptor | undefined;
+      let initialized = false;
+      effect(() => {
+        const next = factory();
+        if (typeof next !== 'object' || next === null || !Object.isFrozen(next)) {
+          throw new KanbanInvalidDescriptorError();
+        }
+        descriptor = next;
+        if (initialized) onRebuilt();
+        initialized = true;
+      });
+      if (descriptor === undefined) throw new KanbanInvalidDescriptorError();
+      return Object.freeze({
+        readDescriptor: () => {
+          if (descriptor === undefined) throw new KanbanInvalidDescriptorError();
+          return descriptor;
+        },
+        disposeScope,
+      });
     } catch (error) {
       disposeScope();
       throw error;
@@ -192,6 +262,11 @@ function matches(key: SnapshotKey, selector: Readonly<Record<string, unknown>>):
         canonicalizeKanbanCellAddress(selector.address as KanbanCellAddress)) &&
     (selector.cardKey === undefined || key.cardKey === selector.cardKey) &&
     (selector.rendererRevision === undefined || key.rendererRevision === selector.rendererRevision) &&
+    (selector.presentationPolicyRevision === undefined ||
+      key.presentationPolicyRevision === selector.presentationPolicyRevision) &&
+    (selector.presentationSelectionFingerprint === undefined ||
+      key.presentationSelectionFingerprint === selector.presentationSelectionFingerprint) &&
+    (selector.styleRevision === undefined || key.styleRevision === selector.styleRevision) &&
     (selector.themeRevision === undefined || key.themeRevision === selector.themeRevision) &&
     (selector.capabilityRevision === undefined || key.capabilityRevision === selector.capabilityRevision) &&
     (selector.interactionRevision === undefined || key.interactionRevision === selector.interactionRevision)
@@ -209,17 +284,19 @@ export class KanbanDescriptorCache {
   readonly #entries = new Map<string, CacheEntry>();
   #clock = 0;
   #disposed = false;
+  readonly #observer: KanbanDescriptorCacheObserver | undefined;
 
   /** Creates a cache with a finite visible/overscan-derived capacity. */
-  constructor(maximumEntries: number) {
+  constructor(maximumEntries: number, observer?: KanbanDescriptorCacheObserver) {
     if (
       !Number.isSafeInteger(maximumEntries) ||
       maximumEntries <= 0 ||
-      maximumEntries > KANBAN_LIMITS.ensureRangeCards.absolute
+      maximumEntries > KANBAN_LIMITS.retainedDescriptors.absolute
     ) {
       throw new KanbanInvalidGeometryError();
     }
     this.#maximumEntries = maximumEntries;
+    this.#observer = observer;
   }
 
   /** Number of currently retained descriptors. */
@@ -234,18 +311,22 @@ export class KanbanDescriptorCache {
     const current = this.#entries.get(snapshot.canonical);
     if (current !== undefined) {
       current.lastUsed = this.#tick();
-      return current.descriptor;
+      return current.readDescriptor();
     }
-    const created = createScopedDescriptor(factory);
+    const created = createScopedDescriptor(factory, () => {
+      this.#notify('onRebuilt', snapshot);
+      this.#notify('onReactiveInvalidated', snapshot);
+    });
     const entry: CacheEntry = {
       key: snapshot,
-      descriptor: created.descriptor,
+      readDescriptor: created.readDescriptor,
       disposeScope: created.disposeScope,
       lastUsed: this.#tick(),
     };
     this.#entries.set(snapshot.canonical, entry);
+    this.#notify('onCreated', snapshot);
     this.#evictOverflow();
-    return entry.descriptor;
+    return entry.readDescriptor();
   }
 
   /**
@@ -265,6 +346,7 @@ export class KanbanDescriptorCache {
       if (retained.has(canonical)) continue;
       this.#entries.delete(canonical);
       entry.disposeScope();
+      this.#notify('onDisposed', entry.key);
     }
   }
 
@@ -287,6 +369,9 @@ export class KanbanDescriptorCache {
       'address',
       'cardKey',
       'rendererRevision',
+      'presentationPolicyRevision',
+      'presentationSelectionFingerprint',
+      'styleRevision',
       'themeRevision',
       'capabilityRevision',
       'interactionRevision',
@@ -307,9 +392,19 @@ export class KanbanDescriptorCache {
         if (typeof value !== 'string' && typeof value !== 'number') throw new KanbanInvalidDescriptorError();
         snapshot.cardKey = createKanbanCardKey(value);
       }
-      for (const field of ['rendererRevision', 'themeRevision', 'capabilityRevision', 'interactionRevision'] as const) {
+      for (const field of [
+        'rendererRevision',
+        'presentationPolicyRevision',
+        'styleRevision',
+        'themeRevision',
+        'capabilityRevision',
+        'interactionRevision',
+      ] as const) {
         const descriptor = source[field];
         if (descriptor !== undefined) snapshot[field] = snapshotKanbanRevision(descriptor.value);
+      }
+      if (source.presentationSelectionFingerprint !== undefined) {
+        snapshot.presentationSelectionFingerprint = selectionFingerprint(source.presentationSelectionFingerprint.value);
       }
     } catch {
       throw new KanbanInvalidDescriptorError();
@@ -318,7 +413,9 @@ export class KanbanDescriptorCache {
     for (const [canonical, entry] of this.#entries) {
       if (!matches(entry.key, snapshot)) continue;
       this.#entries.delete(canonical);
+      this.#notify('onInvalidated', entry.key);
       entry.disposeScope();
+      this.#notify('onDisposed', entry.key);
       removed += 1;
     }
     return removed;
@@ -329,6 +426,7 @@ export class KanbanDescriptorCache {
     if (this.#disposed) return;
     this.#disposed = true;
     for (const entry of this.#entries.values()) entry.disposeScope();
+    for (const entry of this.#entries.values()) this.#notify('onDisposed', entry.key);
     this.#entries.clear();
   }
 
@@ -356,6 +454,19 @@ export class KanbanDescriptorCache {
       if (oldest === undefined) throw new KanbanInvalidDescriptorError();
       this.#entries.delete(oldest.key.canonical);
       oldest.disposeScope();
+      this.#notify('onDisposed', oldest.key);
+    }
+  }
+
+  /** Calls one optional observer without allowing instrumentation to break cache ownership. */
+  #notify(event: keyof KanbanDescriptorCacheObserver, key: SnapshotKey): void {
+    const callback = this.#observer?.[event];
+    if (callback === undefined) return;
+    const { canonical: _canonical, ...publicKey } = key;
+    try {
+      callback(Object.freeze(publicKey));
+    } catch {
+      // Cache lifecycle remains authoritative when optional instrumentation fails.
     }
   }
 }

@@ -30,6 +30,8 @@ function cacheKey(cardKey: number): KanbanDescriptorCacheKey {
     cursorRevision: 1,
     cardKey,
     rendererRevision: 1,
+    presentationPolicyRevision: 1,
+    presentationSelectionFingerprint: 'mandatory-only',
     width: 18,
     rowBudget: 6,
     density: 'compact',
