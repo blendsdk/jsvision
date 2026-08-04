@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:03
-> **Progress**: 27/31 tasks (87%)
+> **Last Updated**: 2026-08-04 17:06
+> **Progress**: 28/31 tasks (90%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -195,7 +195,14 @@ layout, accessibility cues, and manual 80×24 evidence.
 **Reference**: [03-03 § Implementation Details](03-03-documentation-and-distribution.md#implementation-details)
 
 - [x] 3.2.1 Update package README and changelog with the scoped public behavior and persistence boundary — `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md` ✅ (completed: 2026-08-04 17:03)
-- [ ] 3.2.2 Review and update every canonical JSVision skill reference reported by source impact; do not edit the distributed plugin copy — `tools/jsvision-skill/references/`
+- [x] 3.2.2 Review and update every canonical JSVision skill reference reported by source impact; do not edit the distributed plugin copy — `tools/jsvision-skill/references/` ✅ (completed: 2026-08-04 17:06)
+
+> **Source-impact review**: all 15 references mapped from the changed Data Grid source were reviewed.
+> `references/datagrid.md` now teaches the bounded session, Escape ownership, atomic persistence,
+> retry, identity, localization, and security boundaries; `references/i18n.md` now threads the shared
+> locale service into `EditableDataGrid`. The remaining mapped layout, testing, recipe, lifecycle,
+> and generated API references contain no hand-authored claim changed by this feature; generated
+> API pages remain owned by Task 3.2.3.
 - [ ] 3.2.3 Run `yarn plugin:update` to regenerate API pages, snippets, impact snapshot, and assembled plugin content — generated docs/plugin files
 - [ ] 3.2.4 Run ST-27B–ST-28 and make all generated/distribution specifications pass without changing their expected behavior (green phase) — generated API and plugin checks
 
