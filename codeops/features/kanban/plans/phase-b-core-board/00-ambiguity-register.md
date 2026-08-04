@@ -390,6 +390,33 @@ snapshot support.
 - **Reopen triggers:** Descriptor actions gain a distinct package-owned identity type or composition
   receives a required typed i18n projection.
 
+### PAR-B38 — Phase 2 workflow vocabulary ownership (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact additive locale-key selection for already-approved workflow and structural
+  surfaces; it does not add behavior, application authority, or a new localization mechanism.
+- **Decision:** Add typed Phase B overlay messages for filtered-empty and collapsed state, clear-filter
+  action, definition-of-done, the package-owned WIP minimum/maximum/unavailable codes, the package-owned
+  transition-resolver failure, and the package-created unavailable-swimlane fallback. Keep ordinary
+  swimlane labels, disambiguators, summaries, custom action labels, and custom transition labels
+  application-owned and application-localized.
+- **Evidence:** The structural resolver introduces filtered/collapsed state and clear-filter action;
+  the workflow evaluators introduce three fixed WIP codes and one fixed resolver-failure code. Grouping
+  policy already requires application-supplied labels, while transition results explicitly accept an
+  application label.
+- **Rejected alternatives:** Deferring these fixed package messages violates first-use vocabulary
+  ownership. Adding default labels for application-owned groups or custom outcomes would override the
+  approved generic data and localization boundary.
+- **Strongest counterargument:** Definition-of-done text is supplied by the application, but its compact
+  heading is package chrome and therefore still requires package localization.
+- **Confidence:** High.
+- **Hardening:** Grounded against the exported structure/workflow result codes, grouping policy label
+  requirements, transition label contract, and the typed Phase B overlay compatibility decision.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** A future phase introduces another package-owned visible workflow code or moves
+  group-label ownership into the package.
+
 ## Systematic discovery scan
 
 | Category | Result |

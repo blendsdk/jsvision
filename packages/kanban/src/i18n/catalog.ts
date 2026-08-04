@@ -94,6 +94,24 @@ export interface KanbanPhaseBMessageMap {
   readonly 'kanban.card.feedback.invalid': Message;
   /** Compact feedback shown when a card operation is rejected. */
   readonly 'kanban.card.feedback.rejected': Message;
+  /** Empty-result state used when active filters exclude every card. */
+  readonly 'kanban.state.filtered-empty': Message;
+  /** Non-color cue for a collapsed structural region. */
+  readonly 'kanban.state.collapsed': Message;
+  /** Action that asks the application to remove active filters. */
+  readonly 'kanban.action.clear-filters': Message;
+  /** Compact heading for application-supplied definition-of-done text. */
+  readonly 'kanban.workflow.definition-of-done': Message;
+  /** Feedback for a proposed count below the configured WIP minimum. */
+  readonly 'kanban.workflow.wip-minimum-not-met': Message;
+  /** Feedback for a proposed count above the configured WIP maximum. */
+  readonly 'kanban.workflow.wip-maximum-exceeded': Message;
+  /** Feedback when blocking WIP authority is unavailable. */
+  readonly 'kanban.workflow.wip-count-unavailable': Message;
+  /** Payload-free feedback when the application transition resolver fails. */
+  readonly 'kanban.reason.transition-unavailable': Message;
+  /** Safe package-owned label for a derived-group resolver failure. */
+  readonly 'kanban.swimlane.unavailable': Message;
 }
 
 /** Canonical English messages introduced by the Phase B board surface. */
@@ -102,6 +120,15 @@ export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.card.feedback.pending': 'Pending',
   'kanban.card.feedback.invalid': 'Invalid',
   'kanban.card.feedback.rejected': 'Rejected',
+  'kanban.state.filtered-empty': 'No cards match the active filters',
+  'kanban.state.collapsed': 'Collapsed',
+  'kanban.action.clear-filters': 'Clear filters',
+  'kanban.workflow.definition-of-done': 'Definition of done',
+  'kanban.workflow.wip-minimum-not-met': 'WIP minimum not met',
+  'kanban.workflow.wip-maximum-exceeded': 'WIP limit exceeded',
+  'kanban.workflow.wip-count-unavailable': 'WIP count unavailable',
+  'kanban.reason.transition-unavailable': 'Transition unavailable',
+  'kanban.swimlane.unavailable': 'Unavailable',
 } satisfies KanbanPhaseBMessageMap);
 
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */

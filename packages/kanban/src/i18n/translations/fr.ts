@@ -28,4 +28,13 @@ export const kanbanPhaseBFr = createKanbanPhaseBTranslationCatalog('fr', {
   'kanban.card.feedback.pending': 'En attente',
   'kanban.card.feedback.invalid': 'Non valide',
   'kanban.card.feedback.rejected': 'Rejetée',
+  'kanban.state.filtered-empty': 'Aucune carte ne correspond aux filtres actifs',
+  'kanban.state.collapsed': 'Réduit',
+  'kanban.action.clear-filters': 'Effacer les filtres',
+  'kanban.workflow.definition-of-done': 'Définition de terminé',
+  'kanban.workflow.wip-minimum-not-met': 'Minimum de travail en cours non atteint',
+  'kanban.workflow.wip-maximum-exceeded': 'Limite de travail en cours dépassée',
+  'kanban.workflow.wip-count-unavailable': 'Nombre de travaux en cours indisponible',
+  'kanban.reason.transition-unavailable': 'Transition indisponible',
+  'kanban.swimlane.unavailable': 'Indisponible',
 });

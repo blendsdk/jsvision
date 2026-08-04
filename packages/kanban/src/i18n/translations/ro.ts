@@ -28,4 +28,13 @@ export const kanbanPhaseBRo = createKanbanPhaseBTranslationCatalog('ro', {
   'kanban.card.feedback.pending': 'În așteptare',
   'kanban.card.feedback.invalid': 'Nevalid',
   'kanban.card.feedback.rejected': 'Respins',
+  'kanban.state.filtered-empty': 'Niciun card nu corespunde filtrelor active',
+  'kanban.state.collapsed': 'Restrâns',
+  'kanban.action.clear-filters': 'Șterge filtrele',
+  'kanban.workflow.definition-of-done': 'Definiția finalizării',
+  'kanban.workflow.wip-minimum-not-met': 'Minimul de lucru în curs nu a fost atins',
+  'kanban.workflow.wip-maximum-exceeded': 'Limita de lucru în curs a fost depășită',
+  'kanban.workflow.wip-count-unavailable': 'Numărul lucrărilor în curs nu este disponibil',
+  'kanban.reason.transition-unavailable': 'Tranziție indisponibilă',
+  'kanban.swimlane.unavailable': 'Indisponibil',
 });

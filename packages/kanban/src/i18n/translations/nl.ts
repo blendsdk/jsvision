@@ -28,4 +28,13 @@ export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
   'kanban.card.feedback.pending': 'In behandeling',
   'kanban.card.feedback.invalid': 'Ongeldig',
   'kanban.card.feedback.rejected': 'Afgewezen',
+  'kanban.state.filtered-empty': 'Geen kaarten voldoen aan de actieve filters',
+  'kanban.state.collapsed': 'Ingeklapt',
+  'kanban.action.clear-filters': 'Filters wissen',
+  'kanban.workflow.definition-of-done': 'Definitie van klaar',
+  'kanban.workflow.wip-minimum-not-met': 'WIP-minimum niet bereikt',
+  'kanban.workflow.wip-maximum-exceeded': 'WIP-limiet overschreden',
+  'kanban.workflow.wip-count-unavailable': 'WIP-aantal niet beschikbaar',
+  'kanban.reason.transition-unavailable': 'Overgang niet beschikbaar',
+  'kanban.swimlane.unavailable': 'Niet beschikbaar',
 });

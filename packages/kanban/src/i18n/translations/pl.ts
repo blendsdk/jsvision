@@ -28,4 +28,13 @@ export const kanbanPhaseBPl = createKanbanPhaseBTranslationCatalog('pl', {
   'kanban.card.feedback.pending': 'Oczekuje',
   'kanban.card.feedback.invalid': 'Nieprawidłowa',
   'kanban.card.feedback.rejected': 'Odrzucona',
+  'kanban.state.filtered-empty': 'Żadne karty nie pasują do aktywnych filtrów',
+  'kanban.state.collapsed': 'Zwinięte',
+  'kanban.action.clear-filters': 'Wyczyść filtry',
+  'kanban.workflow.definition-of-done': 'Definicja ukończenia',
+  'kanban.workflow.wip-minimum-not-met': 'Nie osiągnięto minimalnego WIP',
+  'kanban.workflow.wip-maximum-exceeded': 'Przekroczono limit WIP',
+  'kanban.workflow.wip-count-unavailable': 'Liczba WIP jest niedostępna',
+  'kanban.reason.transition-unavailable': 'Przejście niedostępne',
+  'kanban.swimlane.unavailable': 'Niedostępne',
 });

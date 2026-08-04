@@ -20,9 +20,9 @@ export interface KanbanWorkflowViolationEvidence {
 /** Pure presentation advice shared by WIP and arbitrary transition evaluators. */
 export type KanbanWorkflowEvaluation =
   | { readonly kind: 'allowed'; readonly violation?: KanbanWorkflowViolationEvidence }
-  | { readonly kind: 'warning'; readonly code: string; readonly label?: string }
-  | { readonly kind: 'blocked'; readonly code: string; readonly label?: string }
-  | { readonly kind: 'unavailable'; readonly code: string; readonly retryable: boolean };
+  | { readonly kind: 'warning'; readonly code: string; readonly label?: string; readonly violation?: never }
+  | { readonly kind: 'blocked'; readonly code: string; readonly label?: string; readonly violation?: never }
+  | { readonly kind: 'unavailable'; readonly code: string; readonly retryable: boolean; readonly violation?: never };
 
 /** Complete immutable input to one pure WIP policy evaluation. */
 export interface EvaluateKanbanWipInput {

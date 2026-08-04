@@ -88,8 +88,22 @@ export interface KanbanCustomSwimlanePresentation {
 /** Built-in or bounded custom swimlane presentation input. */
 export type KanbanSwimlanePresentationInput = KanbanSwimlanePresentationVariant | KanbanCustomSwimlanePresentation;
 
+/**
+ * Card-key type inferred from a conventional required `id` property.
+ *
+ * Records without that shape retain the package-wide string-or-number key contract.
+ *
+ * @example
+ * ```ts
+ * type WorkItemKey = KanbanCardKeyFor<{ readonly id: number }>;
+ * ```
+ */
+export type KanbanCardKeyFor<TCard> = TCard extends { readonly id: infer TCardKey extends CardKey }
+  ? TCardKey
+  : CardKey;
+
 /** View-owned policy for the sole query-selected grouping field. */
-export interface KanbanGroupingPolicy<TCard> {
+export interface KanbanGroupingPolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
   /** Field that must equal the active query grouping field. */
   readonly fieldId: KanbanFieldId;
   /** Stable group used only for missing or unmapped values. */
@@ -111,17 +125,17 @@ export interface KanbanGroupingPolicy<TCard> {
   /** Preferred width of the rail variant before responsive degradation. */
   readonly railWidth?: number;
   /** Optional card identity resolver for records without a conventional `id` data property. */
-  readonly cardKeyOf?: (card: TCard) => CardKey;
+  readonly cardKeyOf?: (card: TCard) => TCardKey;
 }
 
 /** Complete reactive structure policy snapshotted before scene projection. */
-export interface KanbanStructurePolicy<TCard> {
+export interface KanbanStructurePolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
   /** Equality-only revision covering every layout-affecting policy value. */
   readonly revision: KanbanRevision;
   /** Per-column policy keyed by stable identity. */
   readonly columns: readonly KanbanColumnPolicy[];
   /** Optional policy for the query-owned grouping field. */
-  readonly grouping?: KanbanGroupingPolicy<TCard>;
+  readonly grouping?: KanbanGroupingPolicy<TCard, TCardKey>;
 }
 
 /** Accepted members of one top-level structure policy. */
@@ -355,14 +369,14 @@ function presentation(value: unknown): KanbanSwimlanePresentationInput {
 }
 
 /** Wraps an application card-key callback so every result is validated before publication. */
-function cardKeyResolver<TCard>(value: unknown): ((card: TCard) => CardKey) | undefined {
+function cardKeyResolver<TCard, TCardKey extends CardKey>(value: unknown): ((card: TCard) => TCardKey) | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== 'function') return invalidPolicy();
-  return (card: TCard): CardKey => {
+  return (card: TCard): TCardKey => {
     try {
       const key: unknown = Reflect.apply(value, undefined, [card]);
       if (typeof key !== 'string' && typeof key !== 'number') return invalidPolicy();
-      return createKanbanCardKey(key);
+      return createKanbanCardKey(key) as TCardKey;
     } catch (error) {
       if (error instanceof KanbanInvalidPresentationError) throw error;
       return invalidPolicy();
@@ -381,7 +395,9 @@ function cardKeyResolver<TCard>(value: unknown): ((card: TCard) => CardKey) | un
  * });
  * ```
  */
-export function snapshotKanbanGroupingPolicy<TCard>(value: unknown): KanbanGroupingPolicy<TCard> {
+export function snapshotKanbanGroupingPolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>>(
+  value: unknown,
+): KanbanGroupingPolicy<TCard, TCardKey> {
   const properties = snapshotKanbanDataProperties(value, GROUPING_KEYS.size);
   validateKanbanDataKeys(properties, GROUPING_KEYS);
   if (typeof properties.fieldId !== 'string') return invalidPolicy();
@@ -393,7 +409,7 @@ export function snapshotKanbanGroupingPolicy<TCard>(value: unknown): KanbanGroup
       ? undefined
       : boundedInteger(properties.railWidth, KANBAN_STRUCTURE_PRESENTATION_LIMITS.railWidth);
   if (railWidth === 0) return invalidPolicy();
-  const cardKeyOf = cardKeyResolver<TCard>(properties.cardKeyOf);
+  const cardKeyOf = cardKeyResolver<TCard, TCardKey>(properties.cardKeyOf);
   try {
     return Object.freeze({
       fieldId: createKanbanFieldId(properties.fieldId),

@@ -28,4 +28,13 @@ export const kanbanPhaseBSv = createKanbanPhaseBTranslationCatalog('sv', {
   'kanban.card.feedback.pending': 'Väntar',
   'kanban.card.feedback.invalid': 'Ogiltigt',
   'kanban.card.feedback.rejected': 'Avvisat',
+  'kanban.state.filtered-empty': 'Inga kort matchar de aktiva filtren',
+  'kanban.state.collapsed': 'Komprimerad',
+  'kanban.action.clear-filters': 'Rensa filter',
+  'kanban.workflow.definition-of-done': 'Definition av klart',
+  'kanban.workflow.wip-minimum-not-met': 'Miniminivån för pågående arbete har inte uppnåtts',
+  'kanban.workflow.wip-maximum-exceeded': 'Gränsen för pågående arbete har överskridits',
+  'kanban.workflow.wip-count-unavailable': 'Antal pågående arbeten är inte tillgängligt',
+  'kanban.reason.transition-unavailable': 'Övergång inte tillgänglig',
+  'kanban.swimlane.unavailable': 'Inte tillgänglig',
 });

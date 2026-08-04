@@ -47,6 +47,20 @@ interface EagerKanbanSourceOptions<TCard> {
 }
 ```
 
+## EvaluateKanbanWipInput
+
+Complete immutable input to one pure WIP policy evaluation.
+
+```ts
+interface EvaluateKanbanWipInput {
+  policy: KanbanWipPolicy;   // Validated min/max workflow policy.
+  authoritativeCount: KanbanCount;   // Authoritative count unaffected by the active query filter.
+  matchingCount: KanbanCount;   // Separately qualified count matching the active query.
+  doneCount: KanbanCount;   // Authoritative completed-card count used only when done cards are excluded.
+  proposedDelta: number;   // Signed count change represented by the proposed operation.
+}
+```
+
 ## KANBAN_ACCELERATOR_MANIFEST
 
 Accelerator topology owned by the Phase A Kanban vocabulary.
@@ -148,7 +162,7 @@ const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
 Canonical English messages introduced by the Phase B board surface.
 
 ```ts
-const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; }>
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; }>
 ```
 
 ## KANBAN_PLACEHOLDER_MANIFEST
@@ -504,6 +518,16 @@ interface KanbanCardFormattingContext {
   formatNumber: (value: number | bigint) => string;   // Formats one finite number or bigint without changing its value.
   formatDate: (value: unknown) => string | undefined;   // Formats one opaque application date value, or declines it with `undefined`.
 }
+```
+
+## KanbanCardKeyFor
+
+Card-key type inferred from a conventional required `id` property.
+
+```ts
+type KanbanCardKeyFor<TCard> = TCard extends { readonly id: infer TCardKey extends CardKey }
+  ? TCardKey
+  : CardKey
 ```
 
 ## KanbanCardLocation
@@ -929,6 +953,64 @@ Checklist detail rendered by the standard card pipeline.
 type KanbanChecklistMode = 'hidden' | 'progress' | 'preview'
 ```
 
+## KanbanCollapsedHoverController
+
+Owns one generation-safe temporary expansion lease at a time.
+
+```ts
+new KanbanCollapsedHoverController(options: KanbanCollapsedHoverControllerOptions = {})
+// methods & signals:
+begin(target: KanbanCollapsedHoverTarget): boolean
+leave(swimlaneId: string): void
+cancel(): void
+snapshot(): KanbanCollapsedHoverState
+dispose(): void
+```
+
+## KanbanCollapsedHoverControllerOptions
+
+Construction options for one independent hover lease controller.
+
+```ts
+interface KanbanCollapsedHoverControllerOptions {
+  scheduler?: KanbanCollapsedHoverScheduler;   // Timer boundary; omission uses the current JavaScript host timers.
+}
+```
+
+## KanbanCollapsedHoverScheduler
+
+Injectable timer boundary used by deterministic tests and host schedulers.
+
+```ts
+interface KanbanCollapsedHoverScheduler {
+  schedule: (callback: () => void, delayMs: number) => unknown;   // Schedules one callback after a non-negative millisecond delay.
+  cancel: (handle: unknown) => void;   // Cancels one handle previously returned by `schedule`.
+}
+```
+
+## KanbanCollapsedHoverState
+
+Observable state of one temporary collapsed-swimlane hover lease.
+
+```ts
+type KanbanCollapsedHoverState = | { readonly kind: 'idle' }
+  | { readonly kind: 'waiting'; readonly swimlaneId: string }
+  | { readonly kind: 'expanded'; readonly swimlaneId: string; readonly temporary: true }
+  | { readonly kind: 'disposed' }
+```
+
+## KanbanCollapsedHoverTarget
+
+Candidate semantic swimlane for temporary drag-hover expansion.
+
+```ts
+interface KanbanCollapsedHoverTarget {
+  swimlaneId: string;   // Stable semantic swimlane identity.
+  visible: boolean;   // Whether the group participates in the visible scene.
+  collapsed: boolean;   // Whether the saved/current view state is collapsed.
+}
+```
+
 ## KanbanColumnHeader
 
 Detached column header publication.
@@ -960,6 +1042,23 @@ interface KanbanColumnMeta {
 }
 ```
 
+## KanbanColumnPolicy
+
+View-owned presentation policy for one stable workflow column.
+
+```ts
+interface KanbanColumnPolicy {
+  columnId: string;   // Stable application-owned column identity.
+  visible?: boolean;   // Whether the column participates in the visible scene.
+  collapsed?: boolean;   // Whether the header remains visible while the card region is suppressed.
+  width?: KanbanColumnWidthPreference;   // Optional responsive width preference.
+  wip?: KanbanWipPolicy;   // Optional workflow count policy used by pure eligibility evaluation.
+  definitionOfDone?: KanbanDefinitionOfDone;   // Optional compact and complete definition-of-done text.
+  capabilities?: readonly KanbanStructureCapability[];   // Package-understood presentation capabilities.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic style.
+}
+```
+
 ## KanbanColumnPublicationSubject
 
 Workflow-column publication expected after an accepted application request.
@@ -970,6 +1069,17 @@ interface KanbanColumnPublicationSubject {
   columnId: KanbanColumnId;
   baselineRevision: KanbanRevision;
   expectedRevision: KanbanRevision;
+}
+```
+
+## KanbanColumnSemanticReference
+
+Stable semantic reference retained across display-label changes.
+
+```ts
+interface KanbanColumnSemanticReference {
+  kind: 'column';   // Structural discriminator.
+  columnId: string;   // Stable source-owned column identity.
 }
 ```
 
@@ -985,6 +1095,18 @@ interface KanbanColumnWidthInput {
   maximumWidth?: number;   // Largest configured surface width; defaults to 32 cells.
   chromeMinimumWidth?: number;   // Minimum cells required for mandatory non-color chrome.
   rendererMinimumHint?: number;   // Optional untrusted renderer measurement hint. Invalid hints are ignored.
+}
+```
+
+## KanbanColumnWidthPreference
+
+Complete validated terminal-cell width preference for one workflow column.
+
+```ts
+interface KanbanColumnWidthPreference {
+  minimumWidth: number;   // Smallest usable column surface width.
+  preferredWidth: number;   // Desired column surface width when room is available.
+  maximumWidth: number;   // Largest column surface width allocated by the responsive solver.
 }
 ```
 
@@ -1034,6 +1156,18 @@ interface KanbanCustomPresentation {
 }
 ```
 
+## KanbanCustomSwimlanePresentation
+
+Application-owned custom swimlane chrome producer validated before rendering.
+
+```ts
+interface KanbanCustomSwimlanePresentation {
+  kind: 'custom';   // Discriminator separating custom chrome from built-in variants.
+  revision: KanbanRevision;   // Equality-only revision of the renderer and its configuration.
+  render: (context: KanbanSwimlanePresentationContext) => unknown;   // Produces untrusted renderer-neutral chrome input for bounded validation.
+}
+```
+
 ## KanbanDamageRegion
 
 Bounded changed rectangle returned by viewport damage calculation.
@@ -1062,6 +1196,16 @@ Safe compact and complete definition-of-done text for one workflow column.
 interface KanbanDefinitionOfDone {
   summary: string;   // Compact header/help summary.
   details?: string;   // Optional complete text exposed only through focused help or interaction surfaces.
+}
+```
+
+## KanbanDefinitionOfDoneSnapshot
+
+Complete safe definition-of-done evidence exposed by focused interaction surfaces.
+
+```ts
+interface KanbanDefinitionOfDoneSnapshot {
+  indicator: 'configured';   // Compact non-color evidence rendered by a configured column header.
 }
 ```
 
@@ -1143,6 +1287,28 @@ interface KanbanExpectedSwimlaneRevision {
   kind: 'swimlane';
   swimlaneId: KanbanSwimlaneId;
   revision: KanbanRevision;
+}
+```
+
+## KanbanExplicitGrouping
+
+Explicit ordered groups and memberships from an authoritative source.
+
+```ts
+interface KanbanExplicitGrouping<TCardKey extends CardKey = CardKey> {
+  groups: readonly KanbanSwimlaneMeta[];   // Ordered semantic swimlane metadata.
+  memberships: readonly KanbanExplicitGroupingMembership<TCardKey>[];   // Card memberships independent of view visibility.
+}
+```
+
+## KanbanExplicitGroupingMembership
+
+One explicit application-published card-to-swimlane membership.
+
+```ts
+interface KanbanExplicitGroupingMembership<TCardKey extends CardKey = CardKey> {
+  cardKey: TCardKey;   // Stable application card identity.
+  swimlaneId?: string;   // Semantic group identity; omission means unassigned.
 }
 ```
 
@@ -1298,6 +1464,23 @@ interface KanbanFocusedDetailSnapshot {
 }
 ```
 
+## KanbanGroupedResult
+
+Normalized visible and detached grouping projection.
+
+```ts
+interface KanbanGroupedResult<TCardKey extends CardKey = CardKey> {
+  kind: 'grouped';   // Structural discriminator.
+  activeFieldId: KanbanFieldId;   // Sole field selected by the validated query.
+  groups: readonly KanbanResolvedGroupingMeta[];   // Ordered groups participating in the visible scene.
+  memberships: readonly KanbanResolvedGroupingMembership<TCardKey>[];   // Visible card memberships.
+  detached: {
+    readonly groups: readonly KanbanResolvedGroupingMeta[];
+    readonly memberships: readonly KanbanResolvedGroupingMembership<TCardKey>[];
+  };   // Complete semantic groups and memberships before visibility projection.
+}
+```
+
 ## KanbanGroupingField
 
 Application grouping adapter used by the eager source.
@@ -1306,6 +1489,59 @@ Application grouping adapter used by the eager source.
 interface KanbanGroupingField<TCard> {
   id: KanbanFieldId;   // Semantic field selected by `query.groupBy`.
   swimlaneOf: (card: TCard) => KanbanSwimlaneId | undefined;   // Returns an optional semantic swimlane identity for one card.
+}
+```
+
+## KanbanGroupingPolicy
+
+View-owned policy for the sole query-selected grouping field.
+
+```ts
+interface KanbanGroupingPolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
+  fieldId: KanbanFieldId;   // Field that must equal the active query grouping field.
+  unassigned: KanbanSwimlaneMeta;   // Stable group used only for missing or unmapped values.
+  resolverFallback?: KanbanSwimlaneMeta;   // Stable local group used when an application resolver fails.
+  visibleSwimlaneIds?: readonly string[];   // Optional visible-group allowlist. Hidden membership remains detached.
+  collapsedSwimlaneIds?: readonly string[];   // Visible groups whose headers remain while card regions are suppressed.
+  order?: readonly string[];   // Optional semantic group order applied after source or registry normalization.
+  allowDuplicateLabels?: boolean;   // Whether normalized-equal labels may be shown with distinct disambiguators.
+  disambiguators?: Readonly<Record<string, string>>;   // Visible disambiguators keyed by stable semantic group identity.
+  presentation?: KanbanSwimlanePresentationInput;   // Built-in or bounded custom presentation selected for this grouping.
+  railWidth?: number;   // Preferred width of the rail variant before responsive degradation.
+  cardKeyOf?: (card: TCard) => TCardKey;   // Optional card identity resolver for records without a conventional `id` data property.
+}
+```
+
+## KanbanGroupingRegistryEntry
+
+Registered pure derived grouping behavior for one field.
+
+```ts
+interface KanbanGroupingRegistryEntry<TCard> {
+  fieldId: KanbanFieldId;   // Field selected by `KanbanQuery.groupBy`.
+  groups: readonly KanbanSwimlaneMeta[];   // Ordered semantic groups known by the resolver.
+  resolve: (card: TCard) => string | undefined;   // Resolves one card to a semantic group, or no value when it is unassigned.
+  styleOf?: (group: KanbanSwimlaneMeta) => KanbanStructureStyle | undefined;   // Optional semantic style resolver isolated per group.
+  summaryOf?: (group: KanbanSwimlaneMeta) => KanbanGroupingSummary | undefined;   // Optional numeric summary resolver isolated per group.
+}
+```
+
+## KanbanGroupingResult
+
+Complete pure grouping result.
+
+```ts
+type KanbanGroupingResult<TCardKey extends CardKey = CardKey> = KanbanUngroupedResult | KanbanGroupedResult<TCardKey>
+```
+
+## KanbanGroupingSummary
+
+One application-owned numeric/text summary associated with a semantic swimlane.
+
+```ts
+interface KanbanGroupingSummary {
+  count: number;   // Non-negative safe aggregate.
+  label: string;   // Sanitized compact summary label.
 }
 ```
 
@@ -1805,6 +2041,15 @@ interface KanbanPhaseBMessageMap {
   'kanban.card.feedback.pending': Message;   // Compact feedback shown while a card operation is pending.
   'kanban.card.feedback.invalid': Message;   // Compact feedback shown when card validation is invalid.
   'kanban.card.feedback.rejected': Message;   // Compact feedback shown when a card operation is rejected.
+  'kanban.state.filtered-empty': Message;   // Empty-result state used when active filters exclude every card.
+  'kanban.state.collapsed': Message;   // Non-color cue for a collapsed structural region.
+  'kanban.action.clear-filters': Message;   // Action that asks the application to remove active filters.
+  'kanban.workflow.definition-of-done': Message;   // Compact heading for application-supplied definition-of-done text.
+  'kanban.workflow.wip-minimum-not-met': Message;   // Feedback for a proposed count below the configured WIP minimum.
+  'kanban.workflow.wip-maximum-exceeded': Message;   // Feedback for a proposed count above the configured WIP maximum.
+  'kanban.workflow.wip-count-unavailable': Message;   // Feedback when blocking WIP authority is unavailable.
+  'kanban.reason.transition-unavailable': Message;   // Payload-free feedback when the application transition resolver fails.
+  'kanban.swimlane.unavailable': Message;   // Safe package-owned label for a derived-group resolver failure.
 }
 ```
 
@@ -2074,12 +2319,51 @@ interface KanbanRequestSuperseded {
 }
 ```
 
+## KanbanResolvedGroupingMembership
+
+Resolved card membership in one semantic swimlane address.
+
+```ts
+interface KanbanResolvedGroupingMembership<TCardKey extends CardKey = CardKey> {
+  cardKey: TCardKey;   // Stable application card identity.
+  address: { readonly swimlaneId: string };   // One-dimensional semantic grouping address.
+}
+```
+
+## KanbanResolvedGroupingMeta
+
+Semantic swimlane metadata after safe label, style, summary, and view-state projection.
+
+```ts
+interface KanbanResolvedGroupingMeta {
+  disambiguator?: string;   // Optional visible duplicate-label distinction.
+  visibility: 'visible' | 'hidden';   // Whether the group participates in the visible scene.
+  collapse: 'expanded' | 'collapsed';   // Whether retained chrome suppresses ordinary card regions.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic style.
+  summary?: KanbanGroupingSummary;   // Optional bounded application summary.
+}
+```
+
 ## KanbanResolvedLimits
 
 Every validated concrete limit keyed by the public manifest.
 
 ```ts
 type KanbanResolvedLimits = Readonly<Record<keyof KanbanLimitManifest, number>>
+```
+
+## KanbanResolvedSwimlaneChrome
+
+Built-in or validated custom chrome selected for one semantic swimlane.
+
+```ts
+type KanbanResolvedSwimlaneChrome = | {
+      readonly kind: KanbanSwimlanePresentationVariant;
+      readonly rows: 1;
+      readonly fill: boolean;
+      readonly railWidth: number;
+    }
+  | { readonly kind: 'custom'; readonly descriptor: KanbanSwimlaneChromeDescriptor }
 ```
 
 ## KanbanResolvedThemeRole
@@ -2270,6 +2554,18 @@ Package-understood structural capability labels used for presentation only.
 type KanbanStructureCapability = 'collapse' | 'configure' | 'add-card' | 'rename' | 'reorder' | 'delete'
 ```
 
+## KanbanStructurePolicy
+
+Complete reactive structure policy snapshotted before scene projection.
+
+```ts
+interface KanbanStructurePolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
+  revision: KanbanRevision;   // Equality-only revision covering every layout-affecting policy value.
+  columns: readonly KanbanColumnPolicy[];   // Per-column policy keyed by stable identity.
+  grouping?: KanbanGroupingPolicy<TCard, TCardKey>;   // Optional policy for the query-owned grouping field.
+}
+```
+
 ## KanbanStructurePresentationLimits
 
 Additive fixed limits for structure and custom swimlane presentation.
@@ -2283,6 +2579,84 @@ interface KanbanStructurePresentationLimits {
   descriptorRoles: 16;   // Maximum distinct semantic roles returned by one custom swimlane chrome descriptor.
   descriptorRegions: 64;   // Maximum bounded regions returned by one custom swimlane chrome descriptor.
   descriptorActions: 32;   // Maximum bounded header actions returned by one custom swimlane chrome descriptor.
+}
+```
+
+## KanbanStructureScope
+
+Semantic scope owned by one normalized structure state.
+
+```ts
+type KanbanStructureScope = | { readonly kind: 'board' }
+  | { readonly kind: 'column'; readonly columnId: string }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: string }
+  | { readonly kind: 'cell'; readonly address: { readonly columnId: string; readonly swimlaneId?: string } }
+```
+
+## KanbanStructureSourceState
+
+Source lifecycle facts accepted by the pure structural-state resolver.
+
+```ts
+type KanbanStructureSourceState = | { readonly kind: 'empty' }
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'refreshing' }
+  | { readonly kind: 'partial' }
+  | { readonly kind: 'ready' }
+  | { readonly kind: 'error'; readonly code: string; readonly retry: 'available' | 'unavailable' }
+```
+
+## KanbanStructureState
+
+Detached immutable state presentation for one structural scope.
+
+```ts
+interface KanbanStructureState {
+  code: KanbanStructureStateCode;   // Distinct semantic state code.
+  scope: KanbanStructureScope;   // Semantic owner retained without renderer geometry.
+  actions: readonly KanbanStructureStateAction[];   // Available package-owned semantic actions.
+  nonColorCue?: string;   // Non-color text cue that keeps the state distinguishable.
+}
+```
+
+## KanbanStructureStateAction
+
+Bounded semantic action exposed by one structural state surface.
+
+```ts
+interface KanbanStructureStateAction {
+  kind: 'clear-filters' | 'retry';   // Package-owned action route; application publication remains authoritative.
+}
+```
+
+## KanbanStructureStateCode
+
+Closed semantic state codes used by renderer and interaction layers.
+
+```ts
+type KanbanStructureStateCode = | 'no-columns'
+  | 'true-empty'
+  | 'filtered-empty'
+  | 'loading'
+  | 'refreshing'
+  | 'partial'
+  | 'ready'
+  | 'collapsed'
+  | 'hidden'
+  | 'error'
+```
+
+## KanbanStructureStateInput
+
+Facts used to distinguish empty, filtered, loading, partial, collapsed, hidden, and error states.
+
+```ts
+interface KanbanStructureStateInput {
+  scope: KanbanStructureScope;   // Semantic owner of the state surface.
+  source: KanbanStructureSourceState;   // Authoritative source lifecycle fact.
+  filtered: boolean;   // Whether an active filter explains an empty result.
+  collapsed?: boolean;   // Whether visible chrome suppresses ordinary card regions.
+  hidden?: boolean;   // Whether the semantic entity is detached from the visible scene.
 }
 ```
 
@@ -2323,6 +2697,44 @@ Authority scope declared by one application numeric summary.
 
 ```ts
 type KanbanSummaryScope = 'authoritative' | 'loaded-only'
+```
+
+## KanbanSwimlaneChromeAction
+
+One validated application header action.
+
+```ts
+interface KanbanSwimlaneChromeAction {
+  actionId: string;   // Dotted application extension identity.
+}
+```
+
+## KanbanSwimlaneChromeDescriptor
+
+Complete bounded renderer-neutral custom swimlane chrome descriptor.
+
+```ts
+interface KanbanSwimlaneChromeDescriptor {
+  rows: number;   // Rows occupied by the header/separator region.
+  railWidth: number;   // Optional left label rail width.
+  text: readonly string[];   // Sanitized bounded display fragments.
+  roles: readonly KanbanThemeRole[];   // Allowlisted semantic roles used by the descriptor.
+  regions: readonly KanbanSwimlaneChromeRegion[];   // Bounded header-only regions.
+  actions: readonly KanbanSwimlaneChromeAction[];   // Bounded application header actions.
+}
+```
+
+## KanbanSwimlaneChromeRegion
+
+Bounded custom header region that never creates card or drop targets.
+
+```ts
+interface KanbanSwimlaneChromeRegion {
+  x: number;   // Left cell relative to the swimlane chrome.
+  y: number;   // Top row relative to the swimlane chrome.
+  width: number;   // Positive region width.
+  height: number;   // Positive region height.
+}
 ```
 
 ## KanbanSwimlaneHeader
@@ -2377,6 +2789,92 @@ interface KanbanSwimlaneMeta {
   label: string;   // Human-readable label rendered after terminal sanitization.
   revision: KanbanRevision;   // Equality-only presentation revision for this metadata.
 }
+```
+
+## KanbanSwimlanePresentationColumn
+
+One responsive card-column allocation after optional rail reservation.
+
+```ts
+interface KanbanSwimlanePresentationColumn {
+  columnId: string;   // Stable workflow-column identity.
+  availableWidth: number;   // Cells remaining for this card column.
+}
+```
+
+## KanbanSwimlanePresentationColumnInput
+
+Input constraint for one responsive card column.
+
+```ts
+interface KanbanSwimlanePresentationColumnInput {
+  columnId: string;   // Stable workflow-column identity.
+  minimumWidth: number;   // Effective minimum width that presentation must preserve.
+}
+```
+
+## KanbanSwimlanePresentationContext
+
+Safe semantic context supplied once for one visible swimlane presentation revision.
+
+```ts
+interface KanbanSwimlanePresentationContext {
+  swimlaneId: string;   // Stable semantic swimlane identity.
+  label: string;   // Sanitized visible label.
+  revision: KanbanRevision;   // Equality-only presentation revision.
+  availableWidth: number;   // Available horizontal terminal cells.
+}
+```
+
+## KanbanSwimlanePresentationInput
+
+Built-in or bounded custom swimlane presentation input.
+
+```ts
+type KanbanSwimlanePresentationInput = KanbanSwimlanePresentationVariant | KanbanCustomSwimlanePresentation
+```
+
+## KanbanSwimlanePresentationResolver
+
+Disposable per-board resolver that caches custom callbacks by visible presentation revision.
+
+```ts
+interface KanbanSwimlanePresentationResolver {
+  resolve(input: ResolveKanbanSwimlanePresentationInput): ResolvedKanbanSwimlanePresentation;   // Resolves one immutable presentation snapshot.
+  dispose(): void;   // Releases cached custom results idempotently.
+}
+```
+
+## KanbanSwimlanePresentationResolverOptions
+
+Optional resolver diagnostics.
+
+```ts
+interface KanbanSwimlanePresentationResolverOptions {
+  observe?: (observation: KanbanObservation) => void;   // Sink for already-redacted custom descriptor failures.
+}
+```
+
+## KanbanSwimlanePresentationSemantic
+
+Semantic content shared unchanged by every swimlane chrome strategy.
+
+```ts
+interface KanbanSwimlanePresentationSemantic {
+  swimlaneId: string;   // Stable semantic swimlane identity.
+  label: string;   // Sanitized visible label.
+  revision: KanbanRevision;   // Equality-only visible presentation revision.
+  count?: KanbanCount;   // Optional honest aggregate count.
+  summary?: KanbanGroupingSummary;   // Optional bounded numeric/text summary.
+}
+```
+
+## KanbanSwimlanePresentationVariant
+
+Built-in swimlane chrome strategies with identical semantic membership.
+
+```ts
+type KanbanSwimlanePresentationVariant = 'hybrid' | 'separator' | 'band' | 'rail'
 ```
 
 ## KanbanSwimlanePublicationSubject
@@ -2478,6 +2976,79 @@ Fixed interaction timings that must remain deterministic across resource classes
 ```ts
 interface KanbanTimingDefaults {
   collapsedSwimlaneHoverMs: 500;   // Delay before drag hover temporarily expands one visible collapsed swimlane.
+}
+```
+
+## KanbanTransitionContext
+
+Complete detached context for one synchronous application transition resolver.
+
+```ts
+interface KanbanTransitionContext {
+  source: KanbanTransitionEndpoint;   // Current semantic endpoint.
+  target: KanbanTransitionEndpoint;   // Proposed semantic endpoint.
+  cardKeys: readonly CardKey[];   // Ordered application card identities participating in the proposal.
+  sourceRevision: KanbanRevision;   // Equality-only source endpoint revision.
+  targetRevision: KanbanRevision;   // Equality-only target endpoint revision.
+  sessionRevision: KanbanRevision;   // Equality-only query-session revision.
+  queryGeneration: number;   // Active query generation used to reject stale advice.
+  counts: KanbanTransitionCounts;   // Authoritative source and target counts.
+  definitionOfDone?: KanbanDefinitionOfDoneSnapshot;   // Optional complete definition-of-done evidence for the target.
+}
+```
+
+## KanbanTransitionCounts
+
+Authoritative counts supplied to one transition resolver.
+
+```ts
+interface KanbanTransitionCounts {
+  source: KanbanCount;   // Count at the source endpoint.
+  target: KanbanCount;   // Count at the target endpoint.
+}
+```
+
+## KanbanTransitionEndpoint
+
+Source or target semantic endpoint used by transition advice.
+
+```ts
+interface KanbanTransitionEndpoint {
+  columnId: string;   // Stable workflow-column identity.
+  swimlaneId?: string;   // Optional stable swimlane identity.
+}
+```
+
+## KanbanTransitionObservationSink
+
+Optional sink for already-redacted transition observations.
+
+```ts
+type KanbanTransitionObservationSink = (observation: KanbanObservation) => void
+```
+
+## KanbanTransitionResolver
+
+Pure application callback that provides transition advice without dispatching.
+
+```ts
+type KanbanTransitionResolver = (context: KanbanTransitionContext) => KanbanWorkflowEvaluation
+```
+
+## KanbanUngroupedResult
+
+Normalized result when the query does not select a grouping field.
+
+```ts
+interface KanbanUngroupedResult {
+  kind: 'none';   // Structural discriminator.
+  activeFieldId: undefined;   // Explicit absence retained for inspection.
+  groups: readonly [];   // No semantic swimlane groups.
+  memberships: readonly [];   // No swimlane memberships.
+  detached: {
+    readonly groups: readonly [];
+    readonly memberships: readonly [];
+  };   // Complete empty evidence retained without requiring discriminator narrowing.
 }
 ```
 
@@ -2676,6 +3247,31 @@ interface KanbanWipPolicy {
 }
 ```
 
+## KanbanWorkflowEvaluation
+
+Pure presentation advice shared by WIP and arbitrary transition evaluators.
+
+```ts
+type KanbanWorkflowEvaluation = | { readonly kind: 'allowed'; readonly violation?: KanbanWorkflowViolationEvidence }
+  | { readonly kind: 'warning'; readonly code: string; readonly label?: string; readonly violation?: never }
+  | { readonly kind: 'blocked'; readonly code: string; readonly label?: string; readonly violation?: never }
+  | { readonly kind: 'unavailable'; readonly code: string; readonly retryable: boolean; readonly violation?: never }
+```
+
+## KanbanWorkflowViolationEvidence
+
+Immutable evidence retained when an exact WIP boundary is violated.
+
+```ts
+interface KanbanWorkflowViolationEvidence {
+  boundary: 'minimum' | 'maximum';   // Boundary crossed by the proposed authoritative count.
+  authoritativeCount: number;   // Exact authoritative WIP count before the proposal.
+  matchingCount?: number;   // Separately qualified exact count matching the active query, when known.
+  proposedCount: number;   // Exact authoritative WIP count after the proposed delta.
+  limit: number;   // Configured boundary that the proposal violates.
+}
+```
+
 ## PlacementToken
 
 An opaque source-issued placement token.
@@ -2715,6 +3311,48 @@ interface ProjectKanbanVerticalGeometryOptions {
 }
 ```
 
+## ResolveKanbanGroupingInput
+
+Inputs to query-owned explicit or derived grouping normalization.
+
+```ts
+interface ResolveKanbanGroupingInput<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
+  query: unknown;   // Untyped query boundary; validation rejects competing grouping fields atomically.
+  cards: readonly TCard[];   // Application cards read without mutation.
+  policy?: KanbanGroupingPolicy<TCard, TCardKey>;   // Policy that must name the same active query field.
+  registry?: readonly KanbanGroupingRegistryEntry<TCard>[];   // Registered derived resolvers keyed by field identity.
+  explicit?: KanbanExplicitGrouping<TCardKey>;   // Optional authoritative explicit groups and memberships.
+  previous?: KanbanGroupingResult<TCardKey>;   // Previous immutable result retained by the caller on rejection.
+  observe?: (observation: KanbanObservation) => void;   // Optional sink for already-redacted local fallback observations.
+}
+```
+
+## ResolveKanbanStructureInput
+
+Complete source-authoritative structure input with view-owned projection policy.
+
+```ts
+interface ResolveKanbanStructureInput<TCard> {
+  revision: KanbanRevision;   // Equality-only revision for the resulting structure snapshot.
+  columns: readonly KanbanColumnMeta[];   // Source-ordered workflow columns.
+  policy: KanbanStructurePolicy<TCard>;   // Validated view-owned structure policy.
+}
+```
+
+## ResolveKanbanSwimlanePresentationInput
+
+Inputs to one built-in or custom swimlane presentation resolution.
+
+```ts
+interface ResolveKanbanSwimlanePresentationInput {
+  presentation: KanbanSwimlanePresentationInput;   // Built-in variant or bounded custom producer.
+  swimlane: KanbanSwimlanePresentationSemantic;   // Semantic content shared by every variant.
+  availableWidth: number;   // Total horizontal cells assigned to the swimlane region.
+  columns: readonly KanbanSwimlanePresentationColumnInput[];   // Visible workflow-column minimums.
+  railWidth?: number;   // Requested rail width; defaults to ten cells.
+}
+```
+
 ## ResolvedKanbanCardPresentationSelection
 
 Detached immutable section selection used by the standard card pipeline.
@@ -2726,6 +3364,27 @@ interface ResolvedKanbanCardPresentationSelection {
   fieldIds: readonly KanbanFieldId[];   // Known metadata IDs after intersection and cardinality capping.
   summaryIds: readonly KanbanFieldId[];   // Known summary IDs after intersection and cardinality capping.
   checklistIds: readonly KanbanChecklistId[];   // Known checklist-group IDs after intersection.
+}
+```
+
+## ResolvedKanbanColumn
+
+One source column after validated policy projection.
+
+```ts
+interface ResolvedKanbanColumn {
+  columnId: string;   // Stable source-owned column identity.
+  label: string;   // Sanitized source-owned display label.
+  revision: KanbanRevision;   // Equality-only source metadata revision.
+  semanticReference: KanbanColumnSemanticReference;   // Stable reference used by focus, selection, and saved view semantics.
+  visibility: 'visible' | 'hidden';   // Whether this entity participates in the visible scene.
+  collapse: 'expanded' | 'collapsed';   // Whether card regions are available below retained chrome.
+  cardRegion: 'active' | 'suppressed';   // Whether ordinary card scene nodes may be projected.
+  width?: KanbanColumnWidthPreference;   // Optional complete responsive width preference.
+  wip?: KanbanWipPolicy;   // Optional pure WIP evaluation policy.
+  definitionOfDone?: KanbanDefinitionOfDone;   // Optional compact/full definition-of-done evidence.
+  capabilities: readonly KanbanStructureCapability[];   // Package-understood presentation capabilities.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic style.
 }
 ```
 
@@ -2745,6 +3404,35 @@ interface ResolvedKanbanPresentationBudget {
   checklistMode: KanbanChecklistMode;   // Resolved checklist detail mode.
   checklistPreviewItems: number;   // Maximum checklist preview items across selected groups.
   degradationOrder: readonly KanbanCardSectionKind[];   // Complete low-to-high removal order for optional sections.
+}
+```
+
+## ResolvedKanbanStructure
+
+Immutable normalized workflow structure with hidden/collapsed evidence kept separately.
+
+```ts
+interface ResolvedKanbanStructure {
+  revision: KanbanRevision;   // Equality-only snapshot revision.
+  columns: readonly ResolvedKanbanColumn[];   // Source-ordered columns participating in the visible scene.
+  detached: { readonly columns: readonly ResolvedKanbanColumn[] };   // Complete normalized column evidence, including hidden and collapsed entities.
+  state: KanbanStructureState;   // Board-level structure state.
+}
+```
+
+## ResolvedKanbanSwimlanePresentation
+
+Immutable result of one swimlane presentation resolution.
+
+```ts
+interface ResolvedKanbanSwimlanePresentation {
+  requestedVariant: KanbanSwimlanePresentationVariant | 'custom';   // Requested built-in name or `custom`.
+  resolvedVariant: KanbanSwimlanePresentationVariant | 'custom';   // Effective built-in/custom strategy after responsive or safety fallback.
+  degraded: boolean;   // Whether responsive geometry changed the requested strategy.
+  fallback?: 'invalid-custom';   // Local fallback reason for rejected custom chrome.
+  semantic: KanbanSwimlanePresentationSemantic;   // Presentation-independent semantic content.
+  chrome: KanbanResolvedSwimlaneChrome;   // Effective renderer-neutral chrome.
+  columns: readonly KanbanSwimlanePresentationColumn[];   // Responsive card-column widths after effective rail reservation.
 }
 ```
 
@@ -3030,6 +3718,14 @@ Creates one bounded control-free checklist-item identity.
 createKanbanChecklistItemId(value: string): KanbanChecklistItemId
 ```
 
+## createKanbanCollapsedHoverController
+
+Creates one independent temporary collapsed-swimlane hover controller.
+
+```ts
+createKanbanCollapsedHoverController(options: KanbanCollapsedHoverControllerOptions = {}): KanbanCollapsedHoverController
+```
+
 ## createKanbanColumnId
 
 Creates a validated workflow-column identity.
@@ -3086,6 +3782,14 @@ Creates a validated swimlane identity.
 createKanbanSwimlaneId(value: string): KanbanSwimlaneId
 ```
 
+## createKanbanSwimlanePresentationResolver
+
+Creates a disposable resolver for built-in and bounded custom swimlane presentation.
+
+```ts
+createKanbanSwimlanePresentationResolver(options: KanbanSwimlanePresentationResolverOptions = {}): KanbanSwimlanePresentationResolver
+```
+
 ## createKanbanTheme
 
 Creates the complete immutable Kanban semantic palette for a Core theme.
@@ -3124,6 +3828,22 @@ Validates and dispatches one raw request without consulting UX capabilities or m
 
 ```ts
 dispatchKanbanRequest(request: KanbanRequest, dispatcher: KanbanRequestDispatcher, context: KanbanRequestContext): Promise<KanbanRequestResult>
+```
+
+## evaluateKanbanTransition
+
+Mirrors synchronous application transition advice without dispatching or assuming move direction.
+
+```ts
+evaluateKanbanTransition(context: KanbanTransitionContext, resolver: KanbanTransitionResolver, observe?: KanbanTransitionObservationSink): KanbanWorkflowEvaluation
+```
+
+## evaluateKanbanWip
+
+Evaluates WIP advice from authoritative counts without dispatching or mutating application data.
+
+```ts
+evaluateKanbanWip(input: EvaluateKanbanWipInput): KanbanWorkflowEvaluation
 ```
 
 ## fingerprintKanbanSemanticValue
@@ -3206,12 +3926,36 @@ Resolves one card's optional section order without changing numeric view maxima.
 resolveKanbanCardPresentationSelection(selection: unknown, maximum: KanbanCardPresentationMaximum): ResolvedKanbanCardPresentationSelection
 ```
 
+## resolveKanbanGrouping
+
+Resolves zero-or-one query-owned grouping into visible and detached immutable membership.
+
+```ts
+resolveKanbanGrouping<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>>(input: ResolveKanbanGroupingInput<TCard, TCardKey>): KanbanGroupingResult<TCardKey>
+```
+
 ## resolveKanbanPresentation
 
 Resolves a named or custom presentation policy into one bounded immutable budget.
 
 ```ts
 resolveKanbanPresentation(input: KanbanPresentationInput = 'comfortable', limits?: KanbanResolvedLimits): ResolvedKanbanPresentationBudget
+```
+
+## resolveKanbanStructure
+
+Reconciles source-ordered column metadata with view-owned policy by stable semantic identity.
+
+```ts
+resolveKanbanStructure<TCard>(input: ResolveKanbanStructureInput<TCard>): ResolvedKanbanStructure
+```
+
+## resolveKanbanStructureState
+
+Resolves authoritative lifecycle facts into one distinct, renderer-independent structural state.
+
+```ts
+resolveKanbanStructureState(input: KanbanStructureStateInput): KanbanStructureState
 ```
 
 ## resolveKanbanTheme
@@ -3300,6 +4044,22 @@ Validates, detaches, and freezes one count without converting unknown authority 
 
 ```ts
 snapshotKanbanCount(value: unknown): KanbanCount
+```
+
+## snapshotKanbanDefinitionOfDone
+
+Detaches compact and complete definition-of-done text for safe header/help presentation.
+
+```ts
+snapshotKanbanDefinitionOfDone(value: unknown): KanbanDefinitionOfDoneSnapshot
+```
+
+## snapshotKanbanGroupingPolicy
+
+Snapshots the sole query-owned grouping policy without invoking card callbacks.
+
+```ts
+snapshotKanbanGroupingPolicy<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>>(value: unknown): KanbanGroupingPolicy<TCard, TCardKey>
 ```
 
 ## snapshotKanbanHeaderBatch
@@ -3396,6 +4156,14 @@ Validates, detaches, and freezes one query-session lifecycle state.
 
 ```ts
 snapshotKanbanSourceState(value: unknown): KanbanSourceState
+```
+
+## snapshotKanbanStructurePolicy
+
+Validates and detaches a complete reactive structure policy before it affects scene projection.
+
+```ts
+snapshotKanbanStructurePolicy<TCard>(value: unknown): KanbanStructurePolicy<TCard>
 ```
 
 ## snapshotKanbanSwimlaneLayoutHintBatch

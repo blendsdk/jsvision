@@ -13,10 +13,11 @@ import { snapshotKanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import { KANBAN_THEME_ROLES } from '../card/theme.js';
 import type { KanbanThemeRole } from '../card/theme.js';
+import { KANBAN_PHASE_B_ENGLISH_MESSAGES } from '../i18n/catalog.js';
 import { snapshotKanbanQuery } from '../source/validation.js';
 import type { KanbanStructureStyle, KanbanSwimlaneMeta } from '../source/types.js';
 import { snapshotKanbanGroupingPolicy } from './policy.js';
-import type { KanbanGroupingPolicy } from './policy.js';
+import type { KanbanCardKeyFor, KanbanGroupingPolicy } from './policy.js';
 
 /** One application-owned numeric/text summary associated with a semantic swimlane. */
 export interface KanbanGroupingSummary {
@@ -41,25 +42,25 @@ export interface KanbanGroupingRegistryEntry<TCard> {
 }
 
 /** One explicit application-published card-to-swimlane membership. */
-export interface KanbanExplicitGroupingMembership {
+export interface KanbanExplicitGroupingMembership<TCardKey extends CardKey = CardKey> {
   /** Stable application card identity. */
-  readonly cardKey: CardKey;
+  readonly cardKey: TCardKey;
   /** Semantic group identity; omission means unassigned. */
   readonly swimlaneId?: string;
 }
 
 /** Explicit ordered groups and memberships from an authoritative source. */
-export interface KanbanExplicitGrouping {
+export interface KanbanExplicitGrouping<TCardKey extends CardKey = CardKey> {
   /** Ordered semantic swimlane metadata. */
   readonly groups: readonly KanbanSwimlaneMeta[];
   /** Card memberships independent of view visibility. */
-  readonly memberships: readonly KanbanExplicitGroupingMembership[];
+  readonly memberships: readonly KanbanExplicitGroupingMembership<TCardKey>[];
 }
 
 /** Resolved card membership in one semantic swimlane address. */
-export interface KanbanResolvedGroupingMembership {
+export interface KanbanResolvedGroupingMembership<TCardKey extends CardKey = CardKey> {
   /** Stable application card identity. */
-  readonly cardKey: CardKey;
+  readonly cardKey: TCardKey;
   /** One-dimensional semantic grouping address. */
   readonly address: { readonly swimlaneId: string };
 }
@@ -88,10 +89,15 @@ export interface KanbanUngroupedResult {
   readonly groups: readonly [];
   /** No swimlane memberships. */
   readonly memberships: readonly [];
+  /** Complete empty evidence retained without requiring discriminator narrowing. */
+  readonly detached: {
+    readonly groups: readonly [];
+    readonly memberships: readonly [];
+  };
 }
 
 /** Normalized visible and detached grouping projection. */
-export interface KanbanGroupedResult {
+export interface KanbanGroupedResult<TCardKey extends CardKey = CardKey> {
   /** Structural discriminator. */
   readonly kind: 'grouped';
   /** Sole field selected by the validated query. */
@@ -99,31 +105,32 @@ export interface KanbanGroupedResult {
   /** Ordered groups participating in the visible scene. */
   readonly groups: readonly KanbanResolvedGroupingMeta[];
   /** Visible card memberships. */
-  readonly memberships: readonly KanbanResolvedGroupingMembership[];
+  readonly memberships: readonly KanbanResolvedGroupingMembership<TCardKey>[];
   /** Complete semantic groups and memberships before visibility projection. */
   readonly detached: {
     readonly groups: readonly KanbanResolvedGroupingMeta[];
-    readonly memberships: readonly KanbanResolvedGroupingMembership[];
+    readonly memberships: readonly KanbanResolvedGroupingMembership<TCardKey>[];
   };
 }
 
 /** Complete pure grouping result. */
-export type KanbanGroupingResult = KanbanUngroupedResult | KanbanGroupedResult;
+export type KanbanGroupingResult<TCardKey extends CardKey = CardKey> =
+  KanbanUngroupedResult | KanbanGroupedResult<TCardKey>;
 
 /** Inputs to query-owned explicit or derived grouping normalization. */
-export interface ResolveKanbanGroupingInput<TCard> {
+export interface ResolveKanbanGroupingInput<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>> {
   /** Untyped query boundary; validation rejects competing grouping fields atomically. */
   readonly query: unknown;
   /** Application cards read without mutation. */
   readonly cards: readonly TCard[];
   /** Policy that must name the same active query field. */
-  readonly policy?: KanbanGroupingPolicy<TCard>;
+  readonly policy?: KanbanGroupingPolicy<TCard, TCardKey>;
   /** Registered derived resolvers keyed by field identity. */
   readonly registry?: readonly KanbanGroupingRegistryEntry<TCard>[];
   /** Optional authoritative explicit groups and memberships. */
-  readonly explicit?: KanbanExplicitGrouping;
+  readonly explicit?: KanbanExplicitGrouping<TCardKey>;
   /** Previous immutable result retained by the caller on rejection. */
-  readonly previous?: KanbanGroupingResult;
+  readonly previous?: KanbanGroupingResult<TCardKey>;
   /** Optional sink for already-redacted local fallback observations. */
   readonly observe?: (observation: KanbanObservation) => void;
 }
@@ -136,6 +143,7 @@ const UNGROUPED: KanbanUngroupedResult = Object.freeze({
   activeFieldId: undefined,
   groups: EMPTY,
   memberships: EMPTY,
+  detached: Object.freeze({ groups: EMPTY, memberships: EMPTY }),
 });
 /** Exact registry entry members. */
 const REGISTRY_KEYS = new Set(['fieldId', 'groups', 'resolve', 'styleOf', 'summaryOf']);
@@ -203,7 +211,10 @@ function groupList(value: unknown): readonly KanbanSwimlaneMeta[] {
 }
 
 /** Resolves a card identity through policy or its conventional own `id` data property. */
-function cardKeyOf<TCard>(card: TCard, policy: KanbanGroupingPolicy<TCard>): CardKey {
+function cardKeyOf<TCard, TCardKey extends CardKey>(
+  card: TCard,
+  policy: KanbanGroupingPolicy<TCard, TCardKey>,
+): TCardKey {
   if (policy.cardKeyOf !== undefined) return policy.cardKeyOf(card);
   if (typeof card !== 'object' || card === null) return invalidGrouping();
   let descriptor: PropertyDescriptor | undefined;
@@ -216,15 +227,15 @@ function cardKeyOf<TCard>(card: TCard, policy: KanbanGroupingPolicy<TCard>): Car
   const value: unknown = descriptor?.value;
   if (typeof value !== 'string' && typeof value !== 'number') return invalidGrouping();
   try {
-    return createKanbanCardKey(value);
+    return createKanbanCardKey(value) as TCardKey;
   } catch {
     return invalidGrouping();
   }
 }
 
 /** Snapshots explicit membership records keyed by card identity. */
-function explicitMemberships(value: unknown): ReadonlyMap<CardKey, string | undefined> {
-  const result = new Map<CardKey, string | undefined>();
+function explicitMemberships<TCardKey extends CardKey>(value: unknown): ReadonlyMap<TCardKey, string | undefined> {
+  const result = new Map<TCardKey, string | undefined>();
   for (const entry of snapshotKanbanDataArray(value, KANBAN_LIMITS.selectedKeys.safe)) {
     const properties = snapshotKanbanDataProperties(entry, MEMBERSHIP_KEYS.size);
     validateKanbanDataKeys(properties, MEMBERSHIP_KEYS);
@@ -234,10 +245,10 @@ function explicitMemberships(value: unknown): ReadonlyMap<CardKey, string | unde
     ) {
       return invalidGrouping();
     }
-    let cardKey: CardKey;
+    let cardKey: TCardKey;
     let swimlaneId: string | undefined;
     try {
-      cardKey = createKanbanCardKey(properties.cardKey);
+      cardKey = createKanbanCardKey(properties.cardKey) as TCardKey;
       swimlaneId = properties.swimlaneId === undefined ? undefined : createKanbanSwimlaneId(properties.swimlaneId);
     } catch {
       return invalidGrouping();
@@ -249,15 +260,17 @@ function explicitMemberships(value: unknown): ReadonlyMap<CardKey, string | unde
 }
 
 /** Snapshots an explicit grouping publication. */
-function explicitGrouping(value: unknown): {
+function explicitGrouping<TCardKey extends CardKey>(
+  value: unknown,
+): {
   readonly groups: readonly KanbanSwimlaneMeta[];
-  readonly memberships: ReadonlyMap<CardKey, string | undefined>;
+  readonly memberships: ReadonlyMap<TCardKey, string | undefined>;
 } {
   const properties = snapshotKanbanDataProperties(value, EXPLICIT_KEYS.size);
   validateKanbanDataKeys(properties, EXPLICIT_KEYS);
   return Object.freeze({
     groups: groupList(properties.groups),
-    memberships: explicitMemberships(properties.memberships),
+    memberships: explicitMemberships<TCardKey>(properties.memberships),
   });
 }
 
@@ -345,11 +358,11 @@ function resolvedSummary(value: unknown): KanbanGroupingSummary | undefined {
 }
 
 /** Applies isolated style and summary callbacks to one semantic group. */
-function enrichGroup<TCard>(
+function enrichGroup<TCard, TCardKey extends CardKey>(
   group: KanbanSwimlaneMeta,
   entry: KanbanGroupingRegistryEntry<TCard> | undefined,
-  policy: KanbanGroupingPolicy<TCard>,
-  observe: ResolveKanbanGroupingInput<TCard>['observe'],
+  policy: KanbanGroupingPolicy<TCard, TCardKey>,
+  observe: ResolveKanbanGroupingInput<TCard, TCardKey>['observe'],
 ): KanbanResolvedGroupingMeta {
   let style: KanbanStructureStyle | undefined;
   let summary: KanbanGroupingSummary | undefined;
@@ -371,15 +384,15 @@ function enrichGroup<TCard>(
     ...(disambiguator === undefined ? {} : { disambiguator }),
     visibility: visible ? 'visible' : 'hidden',
     collapse: collapsed ? 'collapsed' : 'expanded',
-    ...(style === undefined ? {} : { style }),
-    ...(summary === undefined ? {} : { summary }),
+    style,
+    summary,
   });
 }
 
 /** Verifies normalized-label collisions and required visible disambiguators. */
-function validateDuplicateLabels<TCard>(
+function validateDuplicateLabels<TCard, TCardKey extends CardKey>(
   groups: readonly KanbanSwimlaneMeta[],
-  policy: KanbanGroupingPolicy<TCard>,
+  policy: KanbanGroupingPolicy<TCard, TCardKey>,
 ): void {
   const collisions = new Map<string, KanbanSwimlaneMeta[]>();
   for (const group of groups) {
@@ -402,9 +415,9 @@ function validateDuplicateLabels<TCard>(
 }
 
 /** Applies an optional semantic group order while retaining unspecified source order. */
-function orderGroups<TCard>(
+function orderGroups<TCard, TCardKey extends CardKey>(
   groups: readonly KanbanSwimlaneMeta[],
-  policy: KanbanGroupingPolicy<TCard>,
+  policy: KanbanGroupingPolicy<TCard, TCardKey>,
 ): readonly KanbanSwimlaneMeta[] {
   if (policy.order === undefined) return groups;
   const rank = new Map(policy.order.map((id, index) => [id, index]));
@@ -428,7 +441,9 @@ function orderGroups<TCard>(
  * const result = resolveKanbanGrouping({ query: {}, cards: [] });
  * ```
  */
-export function resolveKanbanGrouping<TCard>(input: ResolveKanbanGroupingInput<TCard>): KanbanGroupingResult {
+export function resolveKanbanGrouping<TCard, TCardKey extends CardKey = KanbanCardKeyFor<TCard>>(
+  input: ResolveKanbanGroupingInput<TCard, TCardKey>,
+): KanbanGroupingResult<TCardKey> {
   const query = snapshotKanbanQuery(input.query);
   if (query.groupBy === undefined) return UNGROUPED;
   if (
@@ -438,11 +453,11 @@ export function resolveKanbanGrouping<TCard>(input: ResolveKanbanGroupingInput<T
   ) {
     return invalidGrouping();
   }
-  const policy = snapshotKanbanGroupingPolicy<TCard>(input.policy);
+  const policy = snapshotKanbanGroupingPolicy<TCard, TCardKey>(input.policy);
   if (policy.fieldId !== query.groupBy) return invalidGrouping();
   const entries = registry<TCard>(input.registry ?? []);
   const activeEntry = entries.find((entry) => entry.fieldId === query.groupBy);
-  const explicit = input.explicit === undefined ? undefined : explicitGrouping(input.explicit);
+  const explicit = input.explicit === undefined ? undefined : explicitGrouping<TCardKey>(input.explicit);
   if (explicit === undefined && activeEntry === undefined) return invalidGrouping();
   const baseGroups = explicit?.groups ?? activeEntry?.groups;
   if (baseGroups === undefined) return invalidGrouping();
@@ -450,9 +465,13 @@ export function resolveKanbanGrouping<TCard>(input: ResolveKanbanGroupingInput<T
   knownGroups.set(policy.unassigned.swimlaneId, policy.unassigned);
   const fallback =
     policy.resolverFallback ??
-    Object.freeze({ swimlaneId: 'group-unavailable', label: 'Unavailable', revision: policy.fieldId });
+    Object.freeze({
+      swimlaneId: 'group-unavailable',
+      label: KANBAN_PHASE_B_ENGLISH_MESSAGES['kanban.swimlane.unavailable'],
+      revision: policy.fieldId,
+    });
   const membershipMap = explicit?.memberships;
-  const memberships: KanbanResolvedGroupingMembership[] = [];
+  const memberships: KanbanResolvedGroupingMembership<TCardKey>[] = [];
   let fallbackUsed = false;
   for (const card of input.cards) {
     const cardKey = cardKeyOf(card, policy);
