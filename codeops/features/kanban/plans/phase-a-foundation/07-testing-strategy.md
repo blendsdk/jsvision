@@ -178,3 +178,9 @@ routinely run full `yarn verify`; CI owns that gate.
 The execution plan records for each phase: the exact red failures before production changes, green
 focused results, typecheck/build results, and reviewer/auditor findings. No task is marked complete on
 the basis of a later aggregate run alone.
+
+### Recorded red gates
+
+| Phase | Command scope | Expected pre-implementation result |
+|---|---|---|
+| 2 | `query-session`, `cursor`, `eager-source`, and `windowed-source` specification modules | 4 files and 15 tests fail only at the approved absent Phase 2 exports and testing helpers; typecheck reports only those same absent symbols |
