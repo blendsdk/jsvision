@@ -5,5 +5,5 @@
     "rootDir": "."
   },
   "include": ["src", "test"],
-  "exclude": ["dist", "test/fixtures/packed-consumer"]
+  "exclude": ["dist", "test/fixtures/packed-consumer", "test/fixtures/consumer-board-types"]
 }
