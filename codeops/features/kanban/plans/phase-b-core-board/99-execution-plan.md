@@ -125,7 +125,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 2.2.5 Add query-owned explicit/derived grouping registry, normalized names/disambiguators, unassigned semantics, and mismatched-policy rejection — `packages/kanban/src/structure/grouping.ts`
 - [x] 2.2.6 Refactor eager indexing to store occupied semantic cells only, synthesize absent empty cells lazily, and expose allocation counters for regression tests — `packages/kanban/src/source/eager-index.ts`, `packages/kanban/src/source/eager-source.ts`
 - [x] 2.2.7 Add optional abort-aware revision/query-generation-bound aggregate row-layout hints plus source/policy/header/count/state validation and local resolver fallback — `packages/kanban/src/source/types.ts`, `packages/kanban/src/source/validation.ts`, `packages/kanban/src/structure/grouping.ts`
-- [ ] 2.2.8 Add built-in/custom swimlane chrome descriptors and complete PAR-B28 validation — `packages/kanban/src/structure/swimlane-presentation.ts`
+- [x] 2.2.8 Add built-in/custom swimlane chrome descriptors and complete PAR-B28 validation — `packages/kanban/src/structure/swimlane-presentation.ts`
 - [ ] 2.2.9 Implement generation-safe collapsed-swimlane hover leases with injected clock/timer and the resolved central timing limit — `packages/kanban/src/structure/collapsed-hover.ts`
 - [ ] 2.2.10 Export stable policy/grouping/evaluator/presentation APIs with JSDoc/examples and add first-use typed locale vocabulary — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/index.ts`
 - [ ] 2.2.11 Run the Phase 2-owned model/evaluator ST-B-STRUCT assertion slices from 07 and make every assertion authored so far green
