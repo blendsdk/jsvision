@@ -15,6 +15,7 @@ import type {
 } from './adapter.js';
 import { snapshotKanbanChecklistGroups } from './checklist.js';
 import type { KanbanChecklistGroup } from './checklist.js';
+import { formatKanbanCardDate, formatKanbanCardNumber, validateKanbanCardFormattingContext } from './formatting.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
 import { resolveKanbanCardPresentationSelection } from './presentation-policy.js';
 import type { KanbanCardPresentationMaximum, ResolvedKanbanCardPresentationSelection } from './presentation-policy.js';
@@ -168,20 +169,6 @@ function visualState(value: unknown): KanbanCardVisualState {
   });
 }
 
-/** Validates the formatting boundary without wrapping callbacks or changing their arguments. */
-function assertFormatting(value: unknown): asserts value is KanbanCardFormattingContext {
-  const source = snapshotPresentationProperties(value, new Set(['locale', 'formatNumber', 'formatDate']));
-  if (
-    Object.keys(source).length !== 3 ||
-    typeof source.locale !== 'string' ||
-    source.locale.length === 0 ||
-    typeof source.formatNumber !== 'function' ||
-    typeof source.formatDate !== 'function'
-  ) {
-    throw new KanbanInvalidDescriptorError();
-  }
-}
-
 /** Validates all field descriptors before any field value callback can run. */
 function fieldDefinitions<TCard>(value: unknown, maximum: number): readonly FieldDefinition<TCard>[] {
   if (value === undefined) return Object.freeze([]);
@@ -236,12 +223,9 @@ function fieldValues<TCard>(
     if (typeof input !== 'string') throw new KanbanInvalidDescriptorError();
     output = definition.format === undefined ? input : definition.format(input, formatting);
   } else if (definition.kind === 'number') {
-    if ((typeof input !== 'number' || !Number.isFinite(input)) && typeof input !== 'bigint') {
-      throw new KanbanInvalidDescriptorError();
-    }
-    output = definition.format === undefined ? formatting.formatNumber(input) : definition.format(input, formatting);
+    output = formatKanbanCardNumber(input, formatting, definition.format);
   } else if (definition.kind === 'date') {
-    output = definition.format === undefined ? formatting.formatDate(input) : definition.format(input, formatting);
+    output = formatKanbanCardDate(input, formatting, definition.format);
   } else {
     const labels = snapshotPresentationArray(input, KANBAN_LIMITS.cardFields.safe);
     if (labels.some((label) => typeof label !== 'string')) throw new KanbanInvalidDescriptorError();
@@ -310,7 +294,7 @@ export function snapshotKanbanCardPresentation<TCard>(
   const title = snapshotPresentationText(mandatory.title, true) ?? '';
   const status = snapshotPresentationText(mandatory.status, true) ?? '';
   const state = visualState(context.visualState);
-  assertFormatting(context.formatting);
+  validateKanbanCardFormattingContext(context.formatting);
   const formatting = context.formatting;
   const observeFailure = (code: string) => observe(context.observe, code, mandatory.cardKey);
   const defaultSelection = resolveKanbanCardPresentationSelection(undefined, context.maximum);

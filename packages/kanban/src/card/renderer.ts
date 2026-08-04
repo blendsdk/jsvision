@@ -1,6 +1,3 @@
-import { charWidth, sanitize } from '@jsvision/core';
-import type { WidthMode } from '@jsvision/core';
-
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { createKanbanObservation } from '../contract/observation.js';
@@ -16,6 +13,7 @@ import type {
   KanbanCardSection,
 } from './descriptor.js';
 import { validateKanbanCardDescriptor } from './descriptor.js';
+import { clipKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
 
 /** Localized bounded labels used when a renderer cannot produce a safe descriptor. */
 export interface KanbanCardFallbackLabels {
@@ -33,25 +31,10 @@ export interface KanbanSafeRenderOptions {
   readonly observe?: (observation: KanbanObservation) => void;
 }
 
-/** Bidirectional formatting controls removed from localized fallback labels. */
-const BIDI_CONTROL_CHARACTERS = /[\u202a-\u202e\u2066-\u2069]/gu;
-
 /** Sanitizes a bounded fallback label and substitutes package-owned English when it becomes empty. */
 function safeFallbackLabel(value: unknown, fallback: string): string {
   if (typeof value !== 'string') return fallback;
-  const encoder = new TextEncoder();
-  let bounded = '';
-  let encodedBytes = 0;
-  for (const character of value.slice(0, KANBAN_LIMITS.semanticStringBytes.safe)) {
-    const characterBytes = encoder.encode(character).byteLength;
-    if (encodedBytes + characterBytes > KANBAN_LIMITS.semanticStringBytes.safe) break;
-    bounded += character;
-    encodedBytes += characterBytes;
-  }
-  const cleaned = sanitize(bounded)
-    .replace(BIDI_CONTROL_CHARACTERS, '')
-    .replace(/[\t\n]+/gu, ' ')
-    .trim();
+  const cleaned = normalizeKanbanCardText(value);
   return cleaned.length > 0 ? cleaned : fallback;
 }
 
@@ -69,17 +52,14 @@ function readFallbackLabel(
   }
 }
 
-/** Clips fallback text by terminal cells without splitting a Unicode code point. */
-function clipFallbackText(value: string, maximumCells: number, widthMode: WidthMode): string {
-  let result = '';
-  let used = 0;
-  for (const character of value) {
-    const width = charWidth(character.codePointAt(0) ?? 0, widthMode);
-    if (used + width > maximumCells) break;
-    result += character;
-    used += width;
-  }
-  return result.length > 0 && used > 0 ? result : '?';
+/** Clips one fallback label and substitutes a visible marker when it occupies no terminal cells. */
+function visibleFallbackText(
+  value: string,
+  maximumCells: number,
+  widthMode: KanbanCardRenderContext['capabilities']['widthMode'],
+): string {
+  const clipped = clipKanbanCardText(value, maximumCells, widthMode, '');
+  return clipped.cells > 0 ? clipped.text : '?';
 }
 
 /** Copies a caller-owned array by numeric index without invoking its replaceable iterator or methods. */
@@ -189,12 +169,12 @@ export function createFallbackKanbanCardDescriptor(
 ): KanbanCardDescriptor {
   if (!Number.isSafeInteger(context.width) || context.width < 2) throw new KanbanInvalidDescriptorError();
   if (!Number.isSafeInteger(context.rowBudget) || context.rowBudget < 1) throw new KanbanInvalidDescriptorError();
-  const title = clipFallbackText(
+  const title = visibleFallbackText(
     readFallbackLabel(labels, 'invalidCardTitle', 'Invalid card'),
     context.width - 1,
     context.capabilities.widthMode,
   );
-  const status = clipFallbackText(
+  const status = visibleFallbackText(
     readFallbackLabel(labels, 'unknownStatus', 'Unknown status'),
     context.width - 1,
     context.capabilities.widthMode,

@@ -1,4 +1,3 @@
-import { charWidth } from '@jsvision/core';
 import type { ColorDepth, WidthMode } from '@jsvision/core';
 
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
@@ -6,6 +5,7 @@ import type { CardKey, KanbanExtensionId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
+import { measureKanbanCardText } from './text-layout.js';
 import { KANBAN_THEME_ROLES } from './theme.js';
 import type { KanbanTheme, KanbanThemeRole } from './theme.js';
 
@@ -248,13 +248,6 @@ function isLocalId(value: string): boolean {
   );
 }
 
-/** Measures sanitized text using the render context's terminal-width policy. */
-function textWidth(value: string, widthMode: WidthMode): number {
-  let width = 0;
-  for (const character of value) width += charWidth(character.codePointAt(0) ?? 0, widthMode);
-  return width;
-}
-
 /** Returns whether two positive rectangles overlap. */
 function regionsOverlap(left: KanbanCardRegion, right: KanbanCardRegion): boolean {
   return (
@@ -290,7 +283,7 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
   requireDescriptor(isCoordinate(descriptor.marker.column) && descriptor.marker.column < descriptor.width);
   requireDescriptor(isSafeText(descriptor.marker.glyph));
   requireDescriptor(Array.from(descriptor.marker.glyph).length === 1);
-  requireDescriptor(textWidth(descriptor.marker.glyph, context.capabilities.widthMode) === 1);
+  requireDescriptor(measureKanbanCardText(descriptor.marker.glyph, context.capabilities.widthMode) === 1);
   requireDescriptor(THEME_ROLES.has(descriptor.marker.role));
   requireDescriptor(descriptor.marker.cues.length <= CUES.size);
   requireDescriptor(new Set(descriptor.marker.cues).size === descriptor.marker.cues.length);
@@ -303,9 +296,9 @@ export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, c
     for (const span of row.spans) {
       requireDescriptor(isCoordinate(span.column) && span.column >= previousEnd && span.column < descriptor.width);
       requireDescriptor(isSafeText(span.text));
-      requireDescriptor(textWidth(span.text, context.capabilities.widthMode) > 0);
+      requireDescriptor(measureKanbanCardText(span.text, context.capabilities.widthMode) > 0);
       requireDescriptor(THEME_ROLES.has(span.role));
-      previousEnd = span.column + textWidth(span.text, context.capabilities.widthMode);
+      previousEnd = span.column + measureKanbanCardText(span.text, context.capabilities.widthMode);
       requireDescriptor(previousEnd <= descriptor.width);
     }
   }

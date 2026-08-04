@@ -81,7 +81,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 1.2.3 Add generic field/summary/style/selection adapter contracts and safe snapshots — `packages/kanban/src/card/adapter.ts`, `packages/kanban/src/card/presentation-snapshot.ts` ✅ (completed: 2026-08-04 14:15 CEST)
 - [x] 1.2.4 Extend `StandardCard` and its adapter with optional common fields, summaries, and checklist values — `packages/kanban/src/card/standard-card.ts`, `packages/kanban/src/card/adapter.ts` ✅ (completed: 2026-08-04 14:27 CEST)
 - [x] 1.2.5 Add bounded checklist group/item and generic summary models with identity validation — `packages/kanban/src/card/checklist.ts`, `packages/kanban/src/card/summary.ts` ✅ (completed: 2026-08-04 14:36 CEST)
-- [ ] 1.2.6 Extract shared safe display-cell clipping/formatting and injected date behavior — `packages/kanban/src/card/formatting.ts`, `packages/kanban/src/card/text-layout.ts`
+- [x] 1.2.6 Extract shared safe display-cell clipping/formatting and injected date behavior — `packages/kanban/src/card/formatting.ts`, `packages/kanban/src/card/text-layout.ts` ✅ (completed: 2026-08-04 14:44 CEST)
 - [ ] 1.2.7 Implement candidate standard sections and deterministic mandatory/optional degradation — `packages/kanban/src/card/standard-sections.ts`, `packages/kanban/src/card/standard-renderer.ts`
 - [ ] 1.2.8 Implement hidden/progress/preview checklist composition, omitted evidence, and read-only editor-action region — `packages/kanban/src/card/checklist-renderer.ts`, `packages/kanban/src/card/standard-sections.ts`
 - [ ] 1.2.9 Implement semantic style resolution and complete non-color cue precedence — `packages/kanban/src/card/style-resolver.ts`, `packages/kanban/src/card/standard-renderer.ts`
