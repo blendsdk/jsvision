@@ -48,6 +48,8 @@ export interface KanbanCursorCoordinatorOptions<TCard> {
   readonly limits?: KanbanLimitOptions;
   /** Optional already-redacted observation sink. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Whether this wrapper, rather than an outer session owner, disposes the application cursor. */
+  readonly ownsCursor?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ export class KanbanCursorCoordinator<TCard> {
   readonly #keyOf: (card: TCard) => CardKey;
   readonly #observe: ((observation: KanbanObservation) => void) | undefined;
   readonly #maximumSpan: number;
+  readonly #ownsCursor: boolean;
   readonly #scheduler: KanbanLoadScheduler;
   readonly #completed = new KanbanRangeSet();
   readonly #activeAcquisitions = new Set<ActiveAcquisition>();
@@ -78,6 +81,7 @@ export class KanbanCursorCoordinator<TCard> {
     this.#keyOf = options.keyOf;
     this.#observe = options.observe;
     this.#maximumSpan = limits.ensureRangeCards;
+    this.#ownsCursor = options.ownsCursor ?? true;
     this.#scheduler = new KanbanLoadScheduler({
       concurrency: limits.concurrentCellLoads,
       queued: limits.pendingOperations,
@@ -238,7 +242,7 @@ export class KanbanCursorCoordinator<TCard> {
     this.#scheduler.dispose();
     this.#completed.clear();
     this.#activeAcquisitions.clear();
-    this.#cursor.dispose();
+    if (this.#ownsCursor) this.#cursor.dispose();
   }
 
   /** Schedules one microtask so synchronous overlapping requests share a normalized batch. */

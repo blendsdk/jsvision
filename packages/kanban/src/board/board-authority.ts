@@ -15,9 +15,9 @@ const UNAVAILABLE_DISPATCHER: KanbanRequestDispatcher = (request) =>
   Object.freeze({ kind: 'rejected', operationId: request.operationId, code: 'dispatcher-unavailable' });
 
 /** Captures only Kanban UX capabilities when a shared host getter returns another profile shape. */
-function capabilitiesFrom(value: unknown): KanbanCapabilities {
+function capabilitiesFrom(getter: () => unknown): KanbanCapabilities {
   try {
-    return snapshotKanbanCapabilities(value);
+    return snapshotKanbanCapabilities(getter());
   } catch {
     return Object.freeze({});
   }
@@ -41,8 +41,9 @@ export class KanbanBoardAuthority {
 
   /** Validates and dispatches one request, retaining only bounded publication metadata. */
   async request(request: KanbanRequest): Promise<KanbanRequestResult> {
-    const result = await dispatchKanbanRequest(request, this.#dispatcher, {
-      capabilities: capabilitiesFrom(this.#capabilities()),
+    const dispatcher = this.#disposed ? UNAVAILABLE_DISPATCHER : this.#dispatcher;
+    const result = await dispatchKanbanRequest(request, dispatcher, {
+      capabilities: this.#disposed ? Object.freeze({}) : capabilitiesFrom(this.#capabilities),
     });
     if (!this.#disposed && result.kind === 'accepted' && result.publication !== undefined) {
       const withoutSameOperation = this.#pending.filter(

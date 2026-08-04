@@ -14,6 +14,17 @@ export interface KanbanViewportPoint {
   readonly y: number;
 }
 
+/** Confidence attached to one published scroll extent. */
+export type KanbanExtentQuality = 'exact' | 'lower-bound' | 'unknown';
+
+/** Independent confidence for horizontal and vertical viewport extents. */
+export interface KanbanViewportExtentQuality {
+  /** Column structure makes horizontal extent exact. */
+  readonly x: KanbanExtentQuality;
+  /** Cursor length quality represented by the vertical extent. */
+  readonly y: KanbanExtentQuality;
+}
+
 /** Visible half-open logical card range for one retained source cell. */
 export interface KanbanVisibleCardRange {
   /** Canonical column/swimlane address. */
@@ -34,6 +45,8 @@ export interface KanbanViewportMetrics {
   readonly offsets: KanbanViewportPoint;
   /** Greatest currently valid horizontal and vertical offsets. */
   readonly extents: KanbanViewportPoint;
+  /** Whether each numeric extent is final, a proven lower bound, or currently unknown. */
+  readonly extentQuality: KanbanViewportExtentQuality;
   /** Source-ordered columns intersecting the retained projection. */
   readonly visibleColumnIds: readonly string[];
   /** Visible and overscan logical ranges keyed by cell address. */

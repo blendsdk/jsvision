@@ -1,8 +1,21 @@
-import { Group, createRenderRoot, resolveCapabilities } from '@jsvision/ui';
+import { classicTheme } from '@jsvision/core';
+import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
-import type { KanbanCardAdapter, KanbanQuery, KanbanRequest } from '../src/index.js';
+import type {
+  KanbanBoardCounts,
+  KanbanCapabilities,
+  KanbanCardAdapter,
+  KanbanCardDensity,
+  KanbanCellCounts,
+  KanbanCellCursor,
+  KanbanDataSource,
+  KanbanQuery,
+  KanbanQuerySession,
+  KanbanRequest,
+} from '../src/index.js';
+import { createKanbanTheme } from '../src/index.js';
 
 interface Card {
   readonly id: number;
@@ -17,6 +30,16 @@ const ADAPTER: KanbanCardAdapter<Card> = {
   statusOf: () => 'Ready',
 };
 const CAPS = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+const UNKNOWN = Object.freeze({ quality: 'unknown' as const });
+const UNKNOWN_BOARD_COUNTS: KanbanBoardCounts = Object.freeze({
+  total: UNKNOWN,
+  matching: UNKNOWN,
+  loaded: UNKNOWN,
+  visible: UNKNOWN,
+  selected: UNKNOWN,
+  wip: UNKNOWN,
+});
+const UNKNOWN_CELL_COUNTS: KanbanCellCounts = Object.freeze({ total: UNKNOWN, matching: UNKNOWN, loaded: UNKNOWN });
 
 /** Creates one validated request with application-owned semantic payload. */
 function request(operationId: string): KanbanRequest {
@@ -66,7 +89,10 @@ describe('board authority and lifecycle implementation', () => {
     expect(pending).toHaveLength(32);
     expect(new Set(pending.map((entry) => entry.operationId)).size).toBe(32);
     render.unmount();
-    board.dispose();
+    const afterUnmount = await board.request(request('after-unmount'));
+    expect(afterUnmount).toMatchObject({ kind: 'rejected', code: 'dispatcher-unavailable' });
+    expect(dispatcher).toHaveBeenCalledTimes(41);
+    expect(board.inspection().pendingOperations).toEqual([]);
   });
 
   it('delegates scrolling to its sole viewport and leaves disposal idempotent', () => {
@@ -86,5 +112,257 @@ describe('board authority and lifecycle implementation', () => {
     board.dispose();
     board.dispose();
     expect(board.inspection().pendingOperations).toEqual([]);
+  });
+
+  it('publishes one atomic mounted minimum-size state with no scrollable or partial content', () => {
+    const source = createEagerKanbanDataSource<Card>(() => [], {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER });
+    const render = mount(board);
+    render.resize({ width: 10, height: 2 });
+    render.flush();
+    const inspection = board.inspection();
+
+    expect(board.focusable).toBe(true);
+    expect(board.viewport.metrics()).toMatchObject({
+      mode: 'minimum-size',
+      offsets: { x: 0, y: 0 },
+      extents: { x: 0, y: 0 },
+      extentQuality: { x: 'exact', y: 'exact' },
+    });
+    expect(inspection.state).toMatchObject({ kind: 'minimum-size' });
+    expect(inspection.visibleColumns).toEqual([]);
+    expect(inspection.visibleCards).toEqual([]);
+    expect(inspection.regions).toEqual([]);
+    expect(inspection.actionTargets).toEqual([]);
+    render.unmount();
+  });
+
+  it('reserves mandatory focused chrome and stays atomically minimum-size at four total rows', () => {
+    const source = createEagerKanbanDataSource<Card>(() => [], {
+      columns: () => [
+        { columnId: 'ready', label: 'Ready', revision: 1 },
+        { columnId: 'doing', label: 'Doing', revision: 1 },
+      ],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER });
+    const render = mount(board);
+    render.resize({ width: 24, height: 4 });
+    for (let pass = 0; pass < 4; pass += 1) render.flush();
+    const reflows = board.inspection().layoutReflows;
+    render.flush();
+
+    expect(board.viewport.metrics().mode).toBe('minimum-size');
+    expect(board.inspection().state.kind).toBe('minimum-size');
+    expect(board.inspection().state.label).toContain('18 × 5');
+    expect(board.inspection().navigator.visible).toBe(false);
+    expect(board.inspection().layoutReflows).toBe(reflows);
+    render.unmount();
+  });
+
+  it('rejects remount after terminal board resource disposal', () => {
+    const source = createEagerKanbanDataSource<Card>(() => [], {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER });
+    const render = mount(board);
+    render.unmount();
+    expect(() => render.mount(board)).toThrow();
+  });
+
+  it('reacquires clamped content immediately after an authoritative source shrink', () => {
+    const cards = signal<readonly Card[]>(
+      Array.from({ length: 80 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),
+    );
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER });
+    const render = mount(board);
+    board.scrollTo({ y: 120 });
+    render.flush();
+    expect(board.inspection().visibleCards.length).toBeGreaterThan(0);
+
+    cards.set([{ id: 0, columnId: 'ready', title: 'Only card' }]);
+    render.flush();
+    expect(board.viewport.metrics().offsets.y).toBe(0);
+    expect(board.inspection().visibleCards.map((card) => card.cardKey)).toEqual([0]);
+    render.unmount();
+  });
+
+  it('preserves a focused card row when source insertion and resize change geometry', () => {
+    const cards = signal<readonly Card[]>(
+      Array.from({ length: 8 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),
+    );
+    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
+    const render = mount(board);
+    board.scrollTo({ y: 3 });
+    render.flush();
+    const before = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+
+    cards.set([{ id: 99, columnId: 'ready', title: 'Inserted' }, ...cards()]);
+    render.resize({ width: 30, height: 9 });
+    render.flush();
+    const after = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+    expect(after).toBe(before);
+    render.unmount();
+  });
+
+  it('relocates a focused anchor when a source reorder moves it outside the retained range', async () => {
+    const cards = signal<readonly Card[]>(
+      Array.from({ length: 40 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),
+    );
+    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
+    const render = mount(board);
+    board.scrollTo({ y: 3 });
+    render.flush();
+    const before = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+
+    const reordered = [...cards()];
+    const [focused] = reordered.splice(2, 1);
+    if (focused === undefined) throw new Error('Focused fixture card is missing.');
+    reordered.splice(30, 0, focused);
+    cards.set(reordered);
+    render.flush();
+    await vi.waitFor(() => {
+      render.flush();
+      expect(board.viewport.metrics().offsets.y).toBeGreaterThan(80);
+    });
+
+    const after = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+    expect(after).toBe(before);
+    render.unmount();
+  });
+
+  it('does not let a pending reorder locator overwrite newer imperative scrolling', async () => {
+    const cards = signal<readonly Card[]>(
+      Array.from({ length: 40 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),
+    );
+    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
+    const render = mount(board);
+    board.scrollTo({ y: 3 });
+    render.flush();
+    const reordered = [...cards()];
+    const [focused] = reordered.splice(2, 1);
+    if (focused === undefined) throw new Error('Focused fixture card is missing.');
+    reordered.splice(30, 0, focused);
+    cards.set(reordered);
+    render.flush();
+
+    board.scrollTo({ y: 0 });
+    await Promise.resolve();
+    render.flush();
+    expect(board.viewport.metrics().offsets.y).toBe(0);
+    render.unmount();
+  });
+
+  it('drops locator lower bounds when a replacement query reuses the same source revision', async () => {
+    const query = signal<KanbanQuery>({ viewRevision: 1 });
+    const cursor = (): KanbanCellCursor<Card> => ({
+      state: () => ({ kind: 'partial' }),
+      counts: () => UNKNOWN_CELL_COUNTS,
+      length: () => ({ kind: 'unknown' }),
+      cardAt: () => undefined,
+      ensureRange: async () => undefined,
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'unloaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose: () => undefined,
+    });
+    const source: KanbanDataSource<Card> = {
+      openQuery: (openedQuery): KanbanQuerySession<Card> => ({
+        state: () => ({ kind: 'partial' }),
+        revision: () => 1,
+        columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+        swimlanes: () => [],
+        counts: () => UNKNOWN_BOARD_COUNTS,
+        headers: () => ({ revision: 1, columns: [{ columnId: 'ready', label: 'Ready' }], swimlanes: [] }),
+        identityChanges: () => ({ revision: 1, changes: [] }),
+        cell: cursor,
+        locateCard: () => ({
+          kind: 'unloaded',
+          address: { columnId: 'ready' },
+          index: openedQuery.viewRevision === 1 ? 30 : 0,
+          sessionRevision: 1,
+        }),
+        dispose: () => undefined,
+      }),
+    };
+    const board = new KanbanBoard({ source, query, card: ADAPTER });
+    const render = mount(board);
+    await board.revealCard(1, 'start');
+    render.flush();
+    expect(board.viewport.metrics()).toMatchObject({
+      offsets: { y: 90 },
+      extentQuality: { y: 'lower-bound' },
+    });
+
+    query.set({ viewRevision: 2 });
+    render.flush();
+    expect(board.viewport.metrics()).toMatchObject({ offsets: { y: 0 }, extents: { y: 0 } });
+    render.unmount();
+  });
+
+  it('reflows reactive density, theme, and capability replacements while retaining focused identity', () => {
+    const cards = Array.from({ length: 8 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` }));
+    const density = signal<KanbanCardDensity>('comfortable');
+    const theme = signal(createKanbanTheme(classicTheme));
+    const capabilities = signal<KanbanCapabilities>({});
+    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({
+      source,
+      query: () => QUERY,
+      card: ADAPTER,
+      density,
+      theme,
+      capabilities,
+      identity,
+    });
+    const render = mount(board);
+    board.scrollTo({ y: 3 });
+    render.flush();
+    const beforeReflows = board.inspection().layoutReflows;
+
+    density.set('compact');
+    theme.set(createKanbanTheme(classicTheme));
+    capabilities.set({ extensions: { 'example.edit': { state: 'disabled', reasonCode: 'read-only' } } });
+    render.flush();
+
+    expect(board.inspection().identity.focusedCardKey).toBe(2);
+    expect(board.inspection().layoutReflows).toBeGreaterThan(beforeReflows);
+    expect(board.inspection().visibleCards).toContainEqual(expect.objectContaining({ cardKey: 2 }));
+    render.unmount();
   });
 });

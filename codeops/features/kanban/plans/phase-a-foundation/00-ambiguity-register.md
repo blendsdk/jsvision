@@ -1,6 +1,6 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 35 items resolved
+> **Status**: ✅ GATE PASSED — all 37 items resolved
 > **Last Updated**: 2026-08-04 04:51 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
@@ -55,6 +55,8 @@
 | PAR-33 | Public API | Theme families and catalog vocabulary were not exact enough for immutable role/parity/fallback tests | Closed semantic tokens retaining fallback/cue data / flat role-to-style map / defer exactness | Delegated: closed 39-role token palette with inspectable safe resolution, exact 18-key Phase A catalog, and inert explicit locale constants/subpaths | ✅ Resolved |
 | PAR-34 | Public API (runtime) | The standard model made `presentationRevision` optional while the optional adapter getter could return only a present revision | Permit `undefined` from the getter / omit the getter / invent a sentinel | Delegated: the optional getter returns `KanbanRevision \| undefined`; absence remains distinct from every application revision | ✅ Resolved |
 | PAR-35 | Sequencing (runtime) | Descriptor contracts depend on theme-role/theme-token types assigned to the following task | Publish inert theme declarations with descriptors / reorder trace tasks / leave build broken | Delegated: Task 3.2.3 publishes only the closed theme declarations; Task 3.2.4 retains all theme creation, mapping, validation, contrast, and resolution behavior | ✅ Resolved |
+| PAR-36 | Quality hardening | Independent Phase 3 review exposed descriptor, theme, and packed-consumer defects after the green oracle | Preserve the green implementation / harden the approved safety boundary | Delegated: harden snapshotting, validation, fallback rendering, monochrome cues, and the authentic offline packed-consumer fixture | ✅ Resolved |
+| PAR-37 | Quality hardening | Phase 4 review exposed conflicting teardown wording, one-mount lifecycle semantics, sparse-source anchoring, crop behavior, and extent-quality gaps | Preserve the first green implementation / harden the approved board and viewport boundary | Delegated: cancellation-first stale-work suppression followed by descriptor/cursor/session release; terminal one-mount view instances; identity-aware horizontal and locator-assisted vertical anchoring; exact cell cropping and honest extent quality | ✅ Resolved |
 
 ## Resolution notes
 
@@ -589,6 +591,50 @@ rerun. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen 
 performing palette-level capability repairs, Core removes its Node declaration requirement, or descriptors
 adopt a package-owned class that structurally forbids accessors before the safe wrapper.
 
+### PAR-37 — Phase 4 lifecycle, anchoring, and metric hardening
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** The decisions select private lifecycle
+and projection mechanisms inside the already approved read-only board, bounded source, scrolling,
+responsive anchoring, and disposal contracts. They add no application mutation, command, or later-phase
+interaction. **Objective:** Close every major Phase 4 quality-loop finding without weakening an immutable
+product assertion or turning sparse data into an implicit full scan.
+
+**Decision:** Generation invalidation and owned abort controllers run before resource release so stale
+application continuations cannot publish while teardown is in progress. Resource release then remains
+strictly ordered: descriptor scopes, guarded cursor state, raw cursor, session. Board and viewport view
+instances are terminal one-mount resources: unmount and explicit disposal are idempotent, and a host that
+needs to mount again creates a fresh instance. This agrees with their one-shot `onMount` resource graph and
+avoids reviving disposed reactive scopes.
+
+Responsive anchoring uses separate identities for the focused column and the column containing the
+horizontal viewport origin. A source reorder first restores a retained card synchronously; if the stable
+anchor moved outside the retained range, the optional bounded locator restores it asynchronously without
+scanning cursor contents. Newer imperative navigation cancels automatic relocation, while an imperative
+reveal temporarily selects its containing column until the application's focused-column identity changes.
+Every anchor and locator proof is scoped to both source generation and equality-only revision; deleted
+identities and stale lower bounds are dropped. Exact source lengths publish exact extents only with complete
+relevant-column coverage, mixed or locator-proven knowledge publishes a lower bound, and wholly unknown
+lengths remain unknown. Minimum-size mode is one atomic non-scrollable state and includes mandatory host
+chrome in its localized required height. Descriptor text is cropped by terminal cells on both axes,
+including a blank continuation cell when a crop bisects a wide glyph.
+
+**Evidence:** The independent Phase 4 reviewer and auditor converged on duplicate raw cursor disposal,
+scope/cursor ordering, post-unmount authority access, sparse deep-scroll origin, source-shrink reacquisition,
+large-reorder anchoring, clipped descriptor rows, minimum-size behavior, and mixed extent-quality gaps. The
+framework's view mount callback is one-shot, while render-owner cleanup is terminal for owned reactive
+scopes. **Rejected alternatives:** Remounting the same disposed object would require reconstructing every
+readonly resource owner and conflicts with the current view lifecycle. Scanning a sparse cursor to recover
+an anchor violates bounded work. Preserving focused-column identity as the horizontal scroll anchor makes
+manual horizontal scrolling jump back during reflow. Session-last cancellation allows stale async work to
+race resource release. Silently hiding mandatory focused navigation at the height boundary produces an
+incomplete normal state, so the board instead publishes the stable 18×5 minimum-host requirement.
+**Confidence:** High (0.95). **Hardening:** Two independent quality roles supplied
+the challenge set; focused unit and E2E regressions cover every selected mechanism, followed by the complete
+package and repository-local gates. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** Core adopts reusable mounted-view instances, the
+source locator becomes unbounded, or descriptors gain variable-height indexing with authoritative prefix
+sums.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -597,7 +643,7 @@ adopt a package-owned class that structurally forbids accessors before the safe 
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-36 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-37 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

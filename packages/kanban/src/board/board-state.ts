@@ -1,6 +1,35 @@
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanIdentityChangeBatch } from '../source/types.js';
 import type { KanbanIdentityInput } from './kanban-viewport.js';
+import { createKanbanCardKey, createKanbanColumnId } from '../contract/identity.js';
+import { KANBAN_LIMITS } from '../contract/limits.js';
+
+/** Reads and snapshots application identity once, returning an empty value for malformed input. */
+export function readKanbanIdentityInput(getter: (() => KanbanIdentityInput) | undefined): KanbanIdentityInput {
+  try {
+    const value = getter?.();
+    if (value === undefined) return Object.freeze({ selectedCardKeys: Object.freeze([]) });
+    const selected: CardKey[] = [];
+    const seen = new Set<CardKey>();
+    for (const rawKey of value.selectedCardKeys ?? []) {
+      if (selected.length >= KANBAN_LIMITS.selectedKeys.safe) break;
+      const key = createKanbanCardKey(rawKey);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      selected.push(key);
+    }
+    const focusedCardKey = value.focusedCardKey === undefined ? undefined : createKanbanCardKey(value.focusedCardKey);
+    const focusedColumnId =
+      value.focusedColumnId === undefined ? undefined : createKanbanColumnId(value.focusedColumnId);
+    return Object.freeze({
+      selectedCardKeys: Object.freeze(selected),
+      ...(focusedCardKey === undefined ? {} : { focusedCardKey }),
+      ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
+    });
+  } catch {
+    return Object.freeze({ selectedCardKeys: Object.freeze([]) });
+  }
+}
 
 /**
  * Removes identities that an authoritative source publication declares deleted.

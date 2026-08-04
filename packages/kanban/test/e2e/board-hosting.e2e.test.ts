@@ -4,7 +4,13 @@ import type { Application, Rect } from '@jsvision/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource } from '../../src/index.js';
-import type { KanbanCardAdapter, KanbanColumnMeta, KanbanQuery } from '../../src/index.js';
+import type {
+  CardKey,
+  KanbanCardAdapter,
+  KanbanColumnMeta,
+  KanbanIdentityInput,
+  KanbanQuery,
+} from '../../src/index.js';
 import { kanbanDe } from '../../src/i18n/locales.js';
 
 interface WorkItem {
@@ -19,7 +25,7 @@ interface InspectedColumn {
 }
 
 interface InspectedCard {
-  readonly cardKey: number;
+  readonly cardKey: CardKey;
 }
 
 const QUERY: KanbanQuery = { filters: [], sort: [] };
@@ -58,11 +64,8 @@ function fixture(
   options: {
     readonly liveColumns?: ReturnType<typeof signal<readonly KanbanColumnMeta[]>>;
     readonly liveCards?: ReturnType<typeof signal<readonly WorkItem[]>>;
-    readonly identity?: ReturnType<
-      typeof signal<{ readonly selectedCardKeys: readonly number[]; readonly focusedCardKey?: number }>
-    >;
+    readonly identity?: ReturnType<typeof signal<KanbanIdentityInput>>;
     readonly i18n?: ReturnType<typeof signal<ReturnType<typeof createI18n>>>;
-    readonly capabilities?: () => typeof COLOR_CAPS;
   } = {},
 ) {
   const liveColumns = options.liveColumns ?? signal(columns('ready', 'doing', 'done'));
@@ -84,7 +87,6 @@ function fixture(
     card: CARD,
     ...(options.identity === undefined ? {} : { identity: options.identity }),
     ...(options.i18n === undefined ? {} : { i18n: options.i18n }),
-    ...(options.capabilities === undefined ? {} : { capabilities: options.capabilities }),
   });
   board.setLayout({ position: 'fill' });
   return { board, liveColumns, liveCards };
@@ -166,7 +168,8 @@ describe('Kanban real host equivalence', () => {
     const { app: windowApp } = mountWindow(framed.board, 72, 16);
 
     expect(direct.board.bounds).toEqual({ x: 0, y: 0, width: 72, height: 16 });
-    expect(framed.board.bounds).toEqual({ x: 0, y: 0, width: 72, height: 16 });
+    // Window content is parent-relative after the frame's one-cell padding; usable size stays equal.
+    expect(framed.board.bounds).toEqual({ x: 1, y: 1, width: 72, height: 16 });
     expect(contentEvidence(framed.board)).toEqual(contentEvidence(direct.board));
 
     const beforeDirect = direct.board.inspection().identity;
@@ -182,7 +185,7 @@ describe('Kanban real host equivalence', () => {
 
 describe('Kanban responsive identity anchoring', () => {
   it('should preserve focused card and containing-column visibility through multi-column to narrow and back', () => {
-    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const identity = signal<KanbanIdentityInput>({ selectedCardKeys: [2], focusedCardKey: 2 });
     const { board } = fixture({ identity });
     const app = mountSurface(board, 80, 24);
 
@@ -199,6 +202,82 @@ describe('Kanban responsive identity anchoring', () => {
     expect(board.viewport.metrics().visibleColumnIds).toContain('doing');
     expect(restored.identity).toEqual({ selectedCardKeys: [2], focusedCardKey: 2 });
     expect(restored.visibleCards).toContainEqual(expect.objectContaining({ cardKey: 2, columnId: 'doing' }));
+  });
+});
+
+describe('Kanban scrolled cell cropping', () => {
+  it('crops horizontal headers at the content offset instead of pinning their first glyph', () => {
+    const liveColumns = signal(columns(['ready', 'ABCDEFGHIJKLMN'], 'doing', 'done'));
+    const { board } = fixture({ liveColumns });
+    const app = mountSurface(board, 40, 10);
+    const before = frameText(app).split('\n')[0] ?? '';
+    expect(before.startsWith('ABCDEFGHI')).toBe(true);
+
+    board.scrollTo({ x: 5 });
+    app.loop.renderRoot.flush();
+    const after = frameText(app).split('\n')[0] ?? '';
+    expect(after.startsWith('FGHIJKLMN')).toBe(true);
+    expect(after.startsWith('ABCDEFGHI')).toBe(false);
+  });
+
+  it('preserves cell coordinates when horizontal cropping bisects a wide header glyph', () => {
+    const liveColumns = signal(columns(['ready', '界ABCDEFGHIJKLMN'], 'doing', 'done'));
+    const { board } = fixture({ liveColumns });
+    const app = mountSurface(board, 40, 10);
+
+    board.scrollTo({ x: 1 });
+    app.loop.renderRoot.flush();
+    expect((frameText(app).split('\n')[0] ?? '').startsWith(' A')).toBe(true);
+  });
+
+  it('preserves the viewport-origin column when authoritative column order changes', () => {
+    const liveColumns = signal(columns('ready', 'doing', 'done', 'blocked'));
+    const { board } = fixture({ liveColumns });
+    const app = mountSurface(board, 40, 10);
+    board.scrollTo({ x: 19 });
+    app.loop.renderRoot.flush();
+    expect(board.viewport.metrics().visibleColumnIds[0]).toBe('doing');
+
+    liveColumns.set(columns('doing', 'ready', 'done', 'blocked'));
+    app.loop.renderRoot.flush();
+    expect(board.viewport.metrics().offsets.x).toBe(0);
+    expect(board.viewport.metrics().visibleColumnIds[0]).toBe('doing');
+  });
+
+  it('draws the surviving descriptor row when vertical scrolling clips a card top', () => {
+    const liveColumns = signal(columns('ready'));
+    const liveCards = signal<readonly WorkItem[]>([
+      { id: 1, columnId: 'ready', title: 'TITLE ROW', status: 'STATUS ROW' },
+      { id: 2, columnId: 'ready', title: 'SECOND CARD', status: 'READY' },
+      { id: 3, columnId: 'ready', title: 'THIRD CARD', status: 'READY' },
+    ]);
+    const { board } = fixture({ liveColumns, liveCards });
+    const app = mountSurface(board, 24, 8);
+    expect(frameText(app).split('\n')[1]).toContain('TITLE ROW');
+
+    board.scrollTo({ y: 1 });
+    app.loop.renderRoot.flush();
+    const clippedTop = frameText(app).split('\n')[1] ?? '';
+    expect(clippedTop).toContain('STATUS ROW');
+    expect(clippedTop).not.toContain('TITLE ROW');
+  });
+});
+
+describe('Kanban focused-column reveal authority', () => {
+  it('lets imperative reveal temporarily select the containing column until application focus changes', async () => {
+    const identity = signal<KanbanIdentityInput>({ focusedColumnId: 'ready' });
+    const liveCards = signal<readonly WorkItem[]>([
+      { id: 1, columnId: 'ready', title: 'Ready card', status: 'Ready' },
+      { id: 2, columnId: 'doing', title: 'Doing card', status: 'Doing' },
+    ]);
+    const { board } = fixture({ liveCards, identity });
+    const app = mountSurface(board, 24, 8);
+    expect(board.viewport.metrics().visibleColumnIds).toEqual(['ready']);
+
+    await board.revealCard(2, 'start');
+    app.loop.renderRoot.flush();
+    expect(board.viewport.metrics().visibleColumnIds).toEqual(['doing']);
+    expect(board.inspection().visibleCards).toContainEqual(expect.objectContaining({ cardKey: 2 }));
   });
 });
 
@@ -237,9 +316,9 @@ describe('Kanban reactive localization and terminal fallbacks', () => {
       { id: 2, columnId: 'doing', title: 'Focused', status: 'Doing' },
       { id: 3, columnId: 'done', title: 'Complete', status: 'Done' },
     ]);
-    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const identity = signal<KanbanIdentityInput>({ selectedCardKeys: [2], focusedCardKey: 2 });
     const i18n = signal(createI18n({ locale: 'en' }));
-    const { board } = fixture({ liveColumns, liveCards, identity, i18n, capabilities: () => MONO_CAPS });
+    const { board } = fixture({ liveColumns, liveCards, identity, i18n });
     const app = createApplication({ content: board, viewport: { width: 80, height: 18 }, caps: MONO_CAPS });
     ownedApps.push(app);
     app.loop.renderRoot.flush();

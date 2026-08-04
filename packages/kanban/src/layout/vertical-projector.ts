@@ -27,6 +27,8 @@ export interface ProjectKanbanVerticalGeometryOptions {
   readonly swimlaneHeaderHeight?: number;
   /** Requested vertical card-content offset. */
   readonly scrollOffset: number;
+  /** Logical row occupied by the first retained card in a sparse source window. */
+  readonly contentOrigin?: number;
   /** Resting card-spacing policy. */
   readonly density: KanbanCardDensity;
   /** Source-ordered retained cards. */
@@ -191,6 +193,7 @@ export function projectKanbanVerticalGeometry(options: ProjectKanbanVerticalGeom
   const stickyHeaderHeight = cellCount(ownValue(options, 'stickyHeaderHeight'));
   const swimlaneHeaderHeight = cellCount(ownValue(options, 'swimlaneHeaderHeight') ?? 0);
   const requestedOffset = cellCount(ownValue(options, 'scrollOffset'));
+  const contentOrigin = cellCount(ownValue(options, 'contentOrigin') ?? 0);
   const gap = densityGap(ownValue(options, 'density'));
   const verticalOverscan = cellCount(ownValue(options, 'verticalOverscan'));
   if (verticalOverscan > KANBAN_LIMITS.verticalOverscan.absolute) throw new KanbanInvalidGeometryError();
@@ -208,7 +211,7 @@ export function projectKanbanVerticalGeometry(options: ProjectKanbanVerticalGeom
   }
 
   const chromeHeight = addCells(stickyHeaderHeight, swimlaneHeaderHeight);
-  let cardContentHeight = 0;
+  let cardContentHeight = contentOrigin;
   const anchors: KanbanVerticalCardAnchor[] = [];
   for (let index = 0; index < cards.length; index += 1) {
     const card = cards[index];

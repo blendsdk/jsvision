@@ -115,10 +115,12 @@ error does not replace ready neighboring cells.
 
 Damage is the union of changed visible descriptors, sticky header/state rows, and scroll-exposed areas,
 clipped to the viewport. A whole-board redraw is allowed for resize/theme/locale/generation replacement
-but still reads only retained projection. Viewport unmount disposes reactive descriptor scopes, cursor
-owners, cursors, session, and abort controllers idempotently in that order. Board unmount first disposes
+but still reads only retained projection. Viewport unmount first invalidates the source generation and
+aborts owned asynchronous work. It then disposes reactive descriptor scopes, guarded cursor state, raw
+cursors, and the session idempotently in that order, as resolved by PAR-37. Board unmount first disposes
 its board-only request/publication bindings, then disposes its one owned viewport; it never separately
-disposes viewport read resources.
+disposes viewport read resources. Board and viewport instances are terminal one-mount resource owners;
+hosts create a fresh instance after unmount instead of reviving disposed reactive scopes.
 
 ## Responsive test matrix
 

@@ -13,6 +13,7 @@ import type { KanbanObservation } from '../contract/observation.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanActionTarget, KanbanLayoutRegion } from '../layout/hit-map.js';
 import { projectKanbanVerticalGeometry } from '../layout/vertical-projector.js';
+import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
 import type { KanbanViewportSourceCell, KanbanViewportSourceSnapshot } from './viewport-source.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import type { KanbanDescriptorCacheKey } from './descriptor-cache.js';
@@ -34,7 +35,7 @@ function referenceRevision(value: object): number {
 /** Safe board-level or cell-level state projected into the card content rectangle. */
 export interface KanbanProjectedState {
   /** Stable state discriminator. */
-  readonly kind: 'loading' | 'refreshing' | 'partial' | 'empty' | 'error' | 'no-columns';
+  readonly kind: 'loading' | 'refreshing' | 'partial' | 'empty' | 'error' | 'no-columns' | 'minimum-size';
   /** Localized terminal-safe label. */
   readonly label: string;
   /** Optional source cell that owns a scoped state. */
@@ -49,6 +50,10 @@ export interface KanbanProjectedCard {
   readonly index: number;
   /** Validated immutable descriptor. */
   readonly descriptor: KanbanCardDescriptor;
+  /** Descriptor columns cropped from the left by horizontal scrolling. */
+  readonly descriptorColumnOffset: number;
+  /** Descriptor rows cropped from the top by vertical scrolling. */
+  readonly descriptorRowOffset: number;
   /** Clipped viewport-local card rectangle. */
   readonly rect: Readonly<{ x: number; y: number; width: number; height: number }>;
 }
@@ -59,6 +64,8 @@ export interface KanbanProjectedColumn {
   readonly columnId: string;
   /** Sanitized complete header label. */
   readonly label: string;
+  /** Header columns cropped from the left by horizontal scrolling. */
+  readonly contentOffset: number;
   /** Clipped viewport-local column rectangle. */
   readonly rect: Readonly<{ x: number; y: number; width: number; height: number }>;
 }
@@ -99,6 +106,8 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly i18n: I18n;
   /** Current terminal capabilities. */
   readonly capabilities: CapabilityProfile;
+  /** Localized minimum host height including package-owned chrome outside this viewport. */
+  readonly minimumRequiredHeight?: number;
   /** Optional application-owned identity cues. */
   readonly identity?: KanbanIdentityInput;
   /** Viewport-local descriptor cache. */
@@ -251,6 +260,24 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
   const regions: KanbanLayoutRegion[] = [];
   const states: KanbanProjectedState[] = [];
   const retainedKeys: KanbanDescriptorCacheKey[] = [];
+  if (options.source.mode === 'minimum-size') {
+    options.cache.retain([]);
+    const minimum = projectKanbanMinimumGeometry({
+      bounds: { x: 0, y: 0, width: options.width, height: options.height },
+      requiredWidth: 18,
+      requiredHeight: options.minimumRequiredHeight ?? 4,
+      message: options.i18n.t('kanban.layout.minimum-size', {
+        params: { width: 18, height: options.minimumRequiredHeight ?? 4 },
+      }),
+    });
+    return Object.freeze({
+      columns: Object.freeze([]),
+      cards: Object.freeze([]),
+      regions: Object.freeze([]),
+      actionTargets: Object.freeze([]),
+      states: Object.freeze([Object.freeze({ kind: 'minimum-size', label: minimum.message.text })]),
+    });
+  }
   if (options.source.visibleColumns.length === 0) {
     options.cache.retain([]);
     return Object.freeze({
@@ -272,14 +299,16 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     const clippedRight = Math.min(options.width, rawX + solved.width);
     if (clippedRight <= clippedX) continue;
     const rect = Object.freeze({ x: clippedX, y: 0, width: clippedRight - clippedX, height: options.height });
-    columns.push(Object.freeze({ columnId: sourceColumn.columnId, label: sourceColumn.label, rect }));
+    const contentOffset = clippedX - rawX;
+    columns.push(Object.freeze({ columnId: sourceColumn.columnId, label: sourceColumn.label, contentOffset, rect }));
     const cell = cellForColumn(options.source.cells, sourceColumn.columnId);
     if (cell === undefined || rect.width < 2 || rect.height === 0) continue;
-    const projectedCards = projectCellCards(options, cell, rect.width, retainedKeys);
+    const projectedCards = projectCellCards(options, cell, solved.width, retainedKeys);
     const vertical = projectKanbanVerticalGeometry({
       bounds: rect,
       stickyHeaderHeight: 1,
       scrollOffset: options.verticalOffset,
+      contentOrigin: cell.range.start * (options.density === 'compact' ? 2 : 3),
       density: options.density,
       cards: projectedCards.map((entry) => ({
         cardKey: entry.descriptor.cardKey,
@@ -289,15 +318,18 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     });
     regions.push(...vertical.regions);
     for (const entry of projectedCards) {
+      const anchor = vertical.anchors.find((candidate) => candidate.cardKey === entry.descriptor.cardKey);
       const cardRegion = vertical.regions.find(
         (region) => region.kind === 'card' && region.cardKey === entry.descriptor.cardKey,
       );
-      if (cardRegion === undefined) continue;
+      if (cardRegion === undefined || anchor === undefined) continue;
       cards.push(
         Object.freeze({
           columnId: sourceColumn.columnId,
           index: entry.index,
           descriptor: entry.descriptor,
+          descriptorColumnOffset: contentOffset,
+          descriptorRowOffset: Math.max(0, vertical.scrollOffset - anchor.logicalRow),
           rect: Object.freeze({
             x: cardRegion.x,
             y: cardRegion.y,

@@ -1,4 +1,3 @@
-import type { CapabilityProfile } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
 import { View, signal } from '@jsvision/ui';
 import type { DrawContext, Signal } from '@jsvision/ui';
@@ -6,12 +5,9 @@ import type { DrawContext, Signal } from '@jsvision/ui';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanTheme } from '../card/theme.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
-import { createKanbanCardKey, createKanbanColumnId } from '../contract/identity.js';
-import type { CardKey } from '../contract/identity.js';
-import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanFocusedColumnNavigator } from '../layout/width-solver.js';
 import type { KanbanIdentityChangeBatch } from '../source/types.js';
-import { reconcileKanbanBoardIdentity } from './board-state.js';
+import { readKanbanIdentityInput, reconcileKanbanBoardIdentity } from './board-state.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewport } from './kanban-viewport.js';
 
@@ -22,7 +18,7 @@ interface KanbanBoardBindingSnapshot {
   readonly i18n?: I18n;
   readonly density?: KanbanCardDensity;
   readonly theme?: KanbanTheme;
-  readonly capabilities?: KanbanCapabilities | CapabilityProfile;
+  readonly capabilities?: KanbanCapabilities;
   readonly identity: KanbanIdentityInput;
 }
 
@@ -32,32 +28,6 @@ export interface KanbanNavigatorState {
   readonly i18n: I18n;
   /** Current responsive navigator metadata. */
   readonly navigator: KanbanFocusedColumnNavigator;
-}
-
-/** Snapshots application-owned identity hints without retaining caller arrays. */
-function snapshotIdentity(value: KanbanIdentityInput | undefined): KanbanIdentityInput {
-  if (value === undefined) return Object.freeze({ selectedCardKeys: Object.freeze([]) });
-  try {
-    const selected: CardKey[] = [];
-    const seen = new Set<CardKey>();
-    for (const rawKey of value.selectedCardKeys ?? []) {
-      if (selected.length >= KANBAN_LIMITS.selectedKeys.safe) break;
-      const key = createKanbanCardKey(rawKey);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      selected.push(key);
-    }
-    const focusedCardKey = value.focusedCardKey === undefined ? undefined : createKanbanCardKey(value.focusedCardKey);
-    const focusedColumnId =
-      value.focusedColumnId === undefined ? undefined : createKanbanColumnId(value.focusedColumnId);
-    return Object.freeze({
-      selectedCardKeys: Object.freeze(selected),
-      ...(focusedCardKey === undefined ? {} : { focusedCardKey }),
-      ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
-    });
-  } catch {
-    return Object.freeze({ selectedCardKeys: Object.freeze([]) });
-  }
 }
 
 /** Produces a collision-safe value fingerprint for detached identity hints. */
@@ -82,7 +52,7 @@ export class KanbanBoardBindings<TCard> {
   /** Reads and validates initial identity once so the viewport starts from a detached value. */
   constructor(options: KanbanViewportOptions<TCard>) {
     this.#options = options;
-    const identity = snapshotIdentity(options.identity?.());
+    const identity = readKanbanIdentityInput(options.identity);
     this.identity = signal(identity);
     this.#identityFingerprint = identityFingerprint(identity);
     this.#applicationIdentityFingerprint = this.#identityFingerprint;
@@ -98,7 +68,7 @@ export class KanbanBoardBindings<TCard> {
       ...(this.#options.density === undefined ? {} : { density: this.#options.density() }),
       ...(this.#options.theme === undefined ? {} : { theme: this.#options.theme() }),
       ...(this.#options.capabilities === undefined ? {} : { capabilities: this.#options.capabilities() }),
-      identity: snapshotIdentity(this.#options.identity?.()),
+      identity: readKanbanIdentityInput(this.#options.identity),
     });
   }
 

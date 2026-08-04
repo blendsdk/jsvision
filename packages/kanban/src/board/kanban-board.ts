@@ -1,5 +1,5 @@
 import type { I18n } from '@jsvision/i18n';
-import { Group, Show, fixed, grow, signal } from '@jsvision/ui';
+import { Group, Show, createRoot, effect, fixed, grow, runWithOwner, signal, spacer } from '@jsvision/ui';
 import type { Rect } from '@jsvision/ui';
 
 import type {
@@ -10,12 +10,13 @@ import type {
   KanbanRequestResult,
 } from '../contract/request.js';
 import type { CardKey } from '../contract/identity.js';
+import { KanbanDisposedResourceError } from '../contract/error.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
-import { KanbanViewport } from './kanban-viewport.js';
+import { KanbanViewport, setKanbanViewportHostChromeRows } from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
@@ -41,6 +42,7 @@ export interface KanbanBoardNavigatorInspection {
 /** Localized board-wide state shown by the board shell. */
 export type KanbanBoardState =
   | { readonly kind: 'no-columns'; readonly label: string }
+  | { readonly kind: 'minimum-size'; readonly label: string }
   | { readonly kind: KanbanSourceState['kind']; readonly label: string };
 
 /** Detached board-level composition, identity, and viewport evidence. */
@@ -86,7 +88,19 @@ function viewportOptions<TCard>(
 }
 
 /** Returns the localized visible state without exposing a source-provided error payload. */
-function boardState(i18n: I18n, source: KanbanSourceState | undefined, noColumns: boolean): KanbanBoardState {
+function boardState(
+  i18n: I18n,
+  source: KanbanSourceState | undefined,
+  noColumns: boolean,
+  minimumSize: boolean,
+  minimumHeight: number,
+): KanbanBoardState {
+  if (minimumSize) {
+    return Object.freeze({
+      kind: 'minimum-size',
+      label: i18n.t('kanban.layout.minimum-size', { params: { width: 18, height: minimumHeight } }),
+    });
+  }
   if (noColumns) return Object.freeze({ kind: 'no-columns', label: i18n.t('kanban.board.no-columns') });
   const kind = source?.kind ?? 'loading';
   const key =
@@ -102,6 +116,9 @@ function boardState(i18n: I18n, source: KanbanSourceState | undefined, noColumns
 
 /**
  * Responsive DSL-composed Kanban shell that owns exactly one public viewport.
+ *
+ * A board instance owns one terminal mount lifecycle. After unmount or explicit disposal, create a
+ * new board instead of remounting its released reactive and source resource graph.
  */
 export class KanbanBoard<TCard> extends Group {
   /** Single exact-cell read projection owned by this board. */
@@ -110,8 +127,11 @@ export class KanbanBoard<TCard> extends Group {
   readonly #bindings: KanbanBoardBindings<TCard>;
   readonly #authority: KanbanBoardAuthority;
   readonly #navigatorVisible = signal(false);
+  readonly #minimumReserveVisible = signal(false);
   readonly #navigator: KanbanFocusedNavigatorView;
+  readonly #minimumReserve = spacer({ fixed: 1 });
   #layoutReflows = 0;
+  #disposeBindings: (() => void) | undefined;
   #disposed = false;
 
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
@@ -127,6 +147,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#bindings = new KanbanBoardBindings(bindingOptions);
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
     this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#bindings.identity()));
+    setKanbanViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
     this.setLayout({ direction: 'col' });
     this.add(grow(this.viewport));
@@ -137,21 +158,44 @@ export class KanbanBoard<TCard> extends Group {
         () => this.#navigator,
       ),
     );
+    this.addDynamic(() =>
+      Show(
+        () => this.#minimumReserveVisible(),
+        () => this.#minimumReserve,
+      ),
+    );
 
     this.onMount(() => {
-      this.bind(
-        () => this.#bindings.read(this.viewport),
-        (snapshot) => {
-          const layoutChanged = this.#bindings.apply(snapshot);
-          const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
-          const navigatorVisible = this.viewport.metrics().mode === 'focused-column';
-          const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
-          if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
-          if (layoutChanged || identityChanged || navigatorChanged) this.#layoutReflows += 1;
-        },
-        { relayout: true },
+      this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
+        createRoot((dispose) => {
+          effect(() => {
+            const snapshot = this.#bindings.read(this.viewport);
+            const layoutChanged = this.#bindings.apply(snapshot);
+            const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
+            const minimumReserveVisible = this.viewport.focusedNavigator() !== undefined && this.bounds.height < 5;
+            const navigatorVisible = this.viewport.metrics().mode === 'focused-column' && !minimumReserveVisible;
+            const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
+            const reserveChanged = minimumReserveVisible !== this.#minimumReserveVisible.peek();
+            if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
+            if (reserveChanged) this.#minimumReserveVisible.set(minimumReserveVisible);
+            if (layoutChanged || identityChanged || navigatorChanged || reserveChanged) this.#layoutReflows += 1;
+            this.invalidateLayout();
+          });
+          return dispose;
+        }),
       );
+      this.viewport.onCleanup(() => {
+        this.#disposeBindings?.();
+        this.#disposeBindings = undefined;
+        this.#authority.dispose();
+      });
     });
+  }
+
+  /** Rejects remount after the board's terminal owned-resource lifecycle has been released. */
+  override runPendingMounts(): void {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    super.runPendingMounts();
   }
 
   /** Returns detached board composition and viewport evidence. */
@@ -163,9 +207,15 @@ export class KanbanBoard<TCard> extends Group {
     return Object.freeze({
       ...viewport,
       label: i18n.t('kanban.board.label'),
-      state: boardState(i18n, this.viewport.sourceState(), viewport.visibleColumns.length === 0),
+      state: boardState(
+        i18n,
+        this.viewport.sourceState(),
+        viewport.visibleColumns.length === 0,
+        this.viewport.metrics().mode === 'minimum-size',
+        this.viewport.focusedNavigator() === undefined ? 4 : 5,
+      ),
       navigator: Object.freeze({
-        visible: navigator !== undefined,
+        visible: this.#navigatorVisible.peek(),
         ...(navigator === undefined
           ? {}
           : { columnId: navigator.columnId, position: navigator.position, total: navigator.total }),
@@ -173,7 +223,10 @@ export class KanbanBoard<TCard> extends Group {
       viewportRect: Object.freeze({
         ...this.viewport.bounds,
         y: 0,
-        height: Math.max(0, this.bounds.height - (navigator === undefined ? 0 : 1)),
+        height: Math.max(
+          0,
+          this.bounds.height - (this.#navigatorVisible.peek() || this.#minimumReserveVisible.peek() ? 1 : 0),
+        ),
       }),
       layoutReflows: this.#layoutReflows,
       identity: this.#bindings.identity(),
@@ -217,8 +270,16 @@ export class KanbanBoard<TCard> extends Group {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#disposeBindings?.();
+    this.#disposeBindings = undefined;
     this.#authority.dispose();
     this.viewport.dispose();
+  }
+
+  /** Unmounts board-owned authority before descendant scopes tear down the viewport. */
+  override unmount(): void {
+    this.dispose();
+    super.unmount();
   }
 
   /** Resolves current localized navigator content without retaining a service replacement. */

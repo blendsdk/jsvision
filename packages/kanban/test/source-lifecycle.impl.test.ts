@@ -404,6 +404,34 @@ describe('session cursor retention and cleanup', () => {
     await expect(pending).resolves.toEqual({ kind: 'unknown', sessionRevision: 1 });
   });
 
+  it('aborts and settles an ignored locator before direct coordinator disposal completes', async () => {
+    let locatorSignal: AbortSignal | undefined;
+    const session: KanbanQuerySession<never> = {
+      state: () => ({ kind: 'empty' }),
+      revision: () => 1,
+      columns: () => [],
+      swimlanes: () => [],
+      counts: () => ZERO_COUNTS,
+      headers: () => ({ revision: 1, columns: [], swimlanes: [] }),
+      identityChanges: () => ({ revision: 1, changes: [] }),
+      cell: () => {
+        throw new Error('not retained');
+      },
+      locateCard: (_key, options) => {
+        locatorSignal = options?.signal;
+        return new Promise(() => undefined);
+      },
+      dispose: () => undefined,
+    };
+    const coordinator = new KanbanSessionCoordinator({ source: { openQuery: () => session }, initialQuery: {} });
+    const pending = coordinator.locateCard(1);
+
+    coordinator.dispose();
+
+    expect(locatorSignal?.aborted).toBe(true);
+    await expect(pending).resolves.toEqual({ kind: 'unknown', sessionRevision: 1 });
+  });
+
   it.each(['', 'unsafe\u001brevision', '界'.repeat(1_025), Number.NaN])(
     'rejects an invalid session revision before generating locator outcome %#',
     async (revision) => {

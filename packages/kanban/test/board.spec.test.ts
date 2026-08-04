@@ -11,6 +11,7 @@ import { KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
 import type {
   KanbanBoardInspection,
   KanbanCardAdapter,
+  CardKey,
   KanbanColumnMeta,
   KanbanExtensionRequest,
   KanbanPublicationNotice,
@@ -31,7 +32,7 @@ interface InspectedColumn {
 }
 
 interface InspectedCard {
-  readonly cardKey: number;
+  readonly cardKey: CardKey;
 }
 
 const CAPS = resolveCapabilities({ env: {}, platform: 'linux' }).profile;

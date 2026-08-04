@@ -1,3 +1,5 @@
+import { charWidth } from '@jsvision/core';
+import type { WidthMode } from '@jsvision/core';
 import type { DrawContext } from '@jsvision/ui';
 
 import type { KanbanTheme, KanbanThemeRole } from '../card/theme.js';
@@ -6,6 +8,39 @@ import type { KanbanViewportProjection } from './viewport-projector.js';
 /** Returns the already-resolved terminal style for one allowlisted semantic role. */
 function style(theme: KanbanTheme, role: KanbanThemeRole) {
   return theme.roles[role].style;
+}
+
+/** Crops safe text by terminal cells without emitting a partial wide glyph. */
+function cropCellText(value: string, leadingCells: number, maximumCells: number, widthMode: WidthMode): string {
+  if (maximumCells <= 0) return '';
+  let sourceCells = 0;
+  let outputCells = 0;
+  let output = '';
+  let canAttachCombining = false;
+  for (const glyph of value) {
+    const width = charWidth(glyph.codePointAt(0) ?? 0, widthMode);
+    if (width === 0) {
+      if (canAttachCombining) output += glyph;
+      continue;
+    }
+    if (sourceCells < leadingCells) {
+      const glyphEnd = sourceCells + width;
+      if (glyphEnd > leadingCells) {
+        const visibleRemainder = Math.min(glyphEnd - leadingCells, maximumCells - outputCells);
+        output += ' '.repeat(visibleRemainder);
+        outputCells += visibleRemainder;
+      }
+      sourceCells += width;
+      canAttachCombining = false;
+      continue;
+    }
+    if (outputCells + width > maximumCells) break;
+    output += glyph;
+    outputCells += width;
+    sourceCells += width;
+    canAttachCombining = true;
+  }
+  return output;
 }
 
 /**
@@ -24,7 +59,12 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
     );
     if (column.rect.height > 0) {
       ctx.fillRect(column.rect.x, 0, column.rect.width, 1, ' ', style(theme, 'column.header'));
-      ctx.text(column.rect.x, 0, column.label, style(theme, 'column.header'));
+      ctx.text(
+        column.rect.x,
+        0,
+        cropCellText(column.label, column.contentOffset, column.rect.width, ctx.caps.unicode.widthMode),
+        style(theme, 'column.header'),
+      );
     }
     const separatorX = column.rect.x + column.rect.width;
     if (separatorX < ctx.size.width) {
@@ -41,17 +81,23 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
       ' ',
       style(theme, descriptor.surfaceRole),
     );
-    for (let row = 0; row < descriptor.rows.length && row < card.rect.height; row += 1) {
-      const descriptorRow = descriptor.rows[row];
+    for (let row = 0; row < card.rect.height; row += 1) {
+      const descriptorRow = descriptor.rows[row + card.descriptorRowOffset];
       if (descriptorRow === undefined) continue;
       for (const span of descriptorRow.spans) {
-        ctx.text(card.rect.x + span.column, card.rect.y + row, span.text, style(theme, span.role));
+        const relativeX = span.column - card.descriptorColumnOffset;
+        const x = Math.max(0, relativeX);
+        if (x >= card.rect.width) continue;
+        const text = cropCellText(span.text, Math.max(0, -relativeX), card.rect.width - x, ctx.caps.unicode.widthMode);
+        if (text.length > 0) ctx.text(card.rect.x + x, card.rect.y + row, text, style(theme, span.role));
       }
     }
-    if (descriptor.marker.row < card.rect.height) {
+    const markerRow = descriptor.marker.row - card.descriptorRowOffset;
+    const markerColumn = descriptor.marker.column - card.descriptorColumnOffset;
+    if (markerRow >= 0 && markerRow < card.rect.height && markerColumn >= 0 && markerColumn < card.rect.width) {
       ctx.text(
-        card.rect.x + descriptor.marker.column,
-        card.rect.y + descriptor.marker.row,
+        card.rect.x + markerColumn,
+        card.rect.y + markerRow,
         descriptor.marker.glyph,
         style(theme, descriptor.marker.role),
       );
@@ -74,6 +120,13 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
             : projectedState.kind === 'refreshing'
               ? 'state.refreshing'
               : 'state.partial';
-    ctx.text(x, y, projectedState.label, style(theme, role));
+    const contentOffset = column?.contentOffset ?? 0;
+    const maximumWidth = column?.rect.width ?? ctx.size.width;
+    ctx.text(
+      x,
+      y,
+      cropCellText(projectedState.label, contentOffset, maximumWidth, ctx.caps.unicode.widthMode),
+      style(theme, role),
+    );
   }
 }

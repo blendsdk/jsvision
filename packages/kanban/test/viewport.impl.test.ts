@@ -5,11 +5,22 @@ import { fileURLToPath } from 'node:url';
 import { onCleanup } from '@jsvision/ui';
 import { describe, expect, it } from 'vitest';
 
-import type { KanbanCardDescriptor } from '../src/index.js';
+import type {
+  KanbanBoardCounts,
+  KanbanCardAdapter,
+  KanbanCardDescriptor,
+  KanbanCellCounts,
+  KanbanCellCursor,
+  KanbanDataSource,
+  KanbanKnownLength,
+  KanbanQuerySession,
+} from '../src/index.js';
 import { KanbanDescriptorCache } from '../src/board/descriptor-cache.js';
 import type { KanbanDescriptorCacheKey } from '../src/board/descriptor-cache.js';
 import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
+import { createKanbanViewportMetrics } from '../src/board/viewport-metrics.js';
 import type { KanbanViewportProjection } from '../src/board/viewport-projector.js';
+import { KanbanViewportSource } from '../src/board/viewport-source.js';
 
 /** Creates a complete semantic cache key that varies only by card identity. */
 function cacheKey(cardKey: number): KanbanDescriptorCacheKey {
@@ -84,6 +95,8 @@ describe('viewport descriptor cache and damage implementation', () => {
       columnId: 'ready',
       index: 0,
       descriptor: descriptor(1),
+      descriptorColumnOffset: 0,
+      descriptorRowOffset: 0,
       rect: Object.freeze({ x: -5, y: 2, width: 20, height: 4 }),
     });
     const bounds = { x: 0, y: 0, width: 10, height: 5 };
@@ -104,6 +117,125 @@ describe('viewport descriptor cache and damage implementation', () => {
       currentOffsets: { x: 0, y: 1 },
     });
     expect(scrolled).toEqual([{ kind: 'scroll-exposed', ...bounds }]);
+  });
+});
+
+describe('viewport source metric and ownership implementation', () => {
+  it('reports mixed cursor knowledge as a lower bound and disposes each raw cursor once', () => {
+    const unknownCount = Object.freeze({ quality: 'unknown' as const });
+    const boardCounts: KanbanBoardCounts = Object.freeze({
+      total: unknownCount,
+      matching: unknownCount,
+      loaded: unknownCount,
+      visible: unknownCount,
+      selected: unknownCount,
+      wip: unknownCount,
+    });
+    const cellCounts: KanbanCellCounts = Object.freeze({
+      total: unknownCount,
+      matching: unknownCount,
+      loaded: unknownCount,
+    });
+    const disposeCalls = new Map<string, number>();
+    const lifecycle: string[] = [];
+    const cursor = (columnId: string, length: KanbanKnownLength): KanbanCellCursor<{ readonly id: number }> => ({
+      state: () => ({ kind: 'ready' }),
+      counts: () => cellCounts,
+      length: () => length,
+      cardAt: () => undefined,
+      ensureRange: async () => undefined,
+      revision: () => 1,
+      placementAt: () => ({ kind: 'unavailable', code: 'not-loaded', cursorRevision: 1 }),
+      retry: () => undefined,
+      dispose: () => {
+        lifecycle.push(`cursor:${columnId}`);
+        disposeCalls.set(columnId, (disposeCalls.get(columnId) ?? 0) + 1);
+        if (columnId === 'exact') throw new Error('application cursor cleanup failed');
+      },
+    });
+    const session: KanbanQuerySession<{ readonly id: number }> = {
+      state: () => ({ kind: 'ready' }),
+      revision: () => 1,
+      columns: () => [
+        { columnId: 'exact', label: 'Exact', revision: 1 },
+        { columnId: 'unknown', label: 'Unknown', revision: 1 },
+      ],
+      swimlanes: () => [],
+      counts: () => boardCounts,
+      headers: () => ({
+        revision: 1,
+        columns: [
+          { columnId: 'exact', label: 'Exact' },
+          { columnId: 'unknown', label: 'Unknown' },
+        ],
+        swimlanes: [],
+      }),
+      identityChanges: () => ({ revision: 1, changes: [] }),
+      cell: (address) =>
+        cursor(address.columnId, address.columnId === 'exact' ? { kind: 'exact', value: 2 } : { kind: 'unknown' }),
+      dispose: () => {
+        lifecycle.push('session');
+        throw new Error('application session cleanup failed');
+      },
+    };
+    const source: KanbanDataSource<{ readonly id: number }> = {
+      openQuery: (_query, options) => {
+        options?.signal?.addEventListener('abort', () => lifecycle.push('abort'), { once: true });
+        return session;
+      },
+    };
+    const card: KanbanCardAdapter<{ readonly id: number }> = {
+      keyOf: (value) => value.id,
+      titleOf: (value) => String(value.id),
+      statusOf: () => 'Ready',
+    };
+    const viewportSource = new KanbanViewportSource({
+      source,
+      query: { filters: [], sort: [] },
+      card,
+      beforeCursorDispose: (address) => lifecycle.push(`scope:${address.columnId}`),
+    });
+    const snapshot = viewportSource.refresh({
+      width: 80,
+      height: 4,
+      horizontalOffset: 0,
+      verticalOffset: 0,
+      cardStride: 3,
+    });
+
+    const metrics = createKanbanViewportMetrics({
+      bounds: { x: 0, y: 0, width: 80, height: 4 },
+      source: snapshot,
+      offsets: { x: 0, y: 0 },
+      density: 'comfortable',
+      overscan: { x: 0, y: 0 },
+      minimumVerticalExtent: 40,
+    });
+    expect(metrics.extentQuality.y).toBe('lower-bound');
+    expect(metrics.extents.y).toBe(40);
+    const unknownOnlySnapshot = Object.freeze({
+      ...snapshot,
+      cells: Object.freeze(snapshot.cells.filter((cell) => cell.address.columnId === 'unknown')),
+    });
+    const locatorBoundMetrics = createKanbanViewportMetrics({
+      bounds: { x: 0, y: 0, width: 80, height: 4 },
+      source: unknownOnlySnapshot,
+      offsets: { x: 0, y: 0 },
+      density: 'comfortable',
+      overscan: { x: 0, y: 0 },
+      minimumVerticalExtent: 40,
+    });
+    expect(locatorBoundMetrics.extentQuality.y).toBe('lower-bound');
+    expect(locatorBoundMetrics.extents.y).toBe(40);
+    viewportSource.dispose();
+    viewportSource.dispose();
+    expect(disposeCalls).toEqual(
+      new Map([
+        ['exact', 1],
+        ['unknown', 1],
+      ]),
+    );
+    expect(lifecycle).toEqual(['abort', 'scope:exact', 'cursor:exact', 'scope:unknown', 'cursor:unknown', 'session']);
   });
 });
 

@@ -230,8 +230,19 @@ export class KanbanSessionCoordinator<TCard> {
   /** Invalidates and releases the complete generation idempotently. */
   dispose(): void {
     if (this.#disposed) return;
+    this.cancelPendingWork();
     this.#disposed = true;
-    this.#invalidateActiveSession();
+    for (const [key, entry] of [...this.#entries]) this.#disposeEntry(key, entry);
+    this.#disposeSession();
+  }
+
+  /** Invalidates the generation and aborts pending work before an outer owner starts ordered release. */
+  cancelPendingWork(): void {
+    if (this.#disposed) return;
+    this.#generation += 1;
+    this.#sessionController.abort();
+    for (const controller of this.#locatorControllers) controller.abort();
+    this.#locatorControllers.clear();
   }
 
   /** Returns a safe unknown result bound to the currently observable session revision. */
@@ -241,12 +252,9 @@ export class KanbanSessionCoordinator<TCard> {
 
   /** Invalidates first, then aborts work, scopes, cursors, and finally the session. */
   #invalidateActiveSession(): void {
-    this.#generation += 1;
-    this.#sessionController.abort();
-    for (const controller of this.#locatorControllers) controller.abort();
-    this.#locatorControllers.clear();
+    this.cancelPendingWork();
     for (const [key, entry] of [...this.#entries]) this.#disposeEntry(key, entry);
-    this.#session.dispose();
+    this.#disposeSession();
   }
 
   /** Disposes scopes before one cursor and removes all retained application references. */
@@ -260,7 +268,20 @@ export class KanbanSessionCoordinator<TCard> {
       }
     }
     entry.scopes.clear();
-    entry.cursor.dispose();
+    try {
+      entry.cursor.dispose();
+    } catch {
+      this.#emit('cursor-dispose-failed');
+    }
+  }
+
+  /** Isolates application session teardown so earlier cleanup failures cannot strand the owner. */
+  #disposeSession(): void {
+    try {
+      this.#session.dispose();
+    } catch {
+      this.#emit('session-dispose-failed');
+    }
   }
 
   /** Emits one safe source-scoped observation and isolates a throwing application sink. */

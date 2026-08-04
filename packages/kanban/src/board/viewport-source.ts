@@ -39,6 +39,8 @@ export interface KanbanViewportSourceRequest {
   readonly horizontalOffset: number;
   /** Current vertical card-content offset. */
   readonly verticalOffset: number;
+  /** Conservative terminal-row stride used to translate offsets into bounded source ranges. */
+  readonly cardStride: number;
   /** Preferred source column when responsive geometry enters focused mode. */
   readonly focusedColumnId?: string;
   /** Workflow columns excluded before any sparse cursor is opened. */
@@ -89,6 +91,8 @@ export interface KanbanViewportSourceOptions<TCard> {
   readonly observe?: (observation: KanbanObservation) => void;
   /** Called after current asynchronous acquisition settles. */
   readonly invalidate?: () => void;
+  /** Disposes address-owned descriptor scopes before the corresponding source cursor. */
+  readonly beforeCursorDispose?: (address: KanbanCellAddress) => void;
 }
 
 /** One retained guarded cursor and the owner used to release it. */
@@ -189,6 +193,7 @@ export class KanbanViewportSource<TCard> {
   readonly #horizontalOverscan: number;
   readonly #observe: ((observation: KanbanObservation) => void) | undefined;
   readonly #invalidate: (() => void) | undefined;
+  readonly #beforeCursorDispose: ((address: KanbanCellAddress) => void) | undefined;
   readonly #session: KanbanSessionCoordinator<TCard>;
   readonly #cells = new Map<string, RetainedCell<TCard>>();
   #query: KanbanQuery;
@@ -211,6 +216,7 @@ export class KanbanViewportSource<TCard> {
     this.#card = options.card;
     this.#observe = options.observe;
     this.#invalidate = options.invalidate;
+    this.#beforeCursorDispose = options.beforeCursorDispose;
     this.#query = snapshotKanbanQuery(options.query);
     this.#queryKey = queryKey(this.#query);
     this.#session = new KanbanSessionCoordinator({
@@ -226,6 +232,7 @@ export class KanbanViewportSource<TCard> {
     const snapshot = snapshotKanbanQuery(query);
     const key = queryKey(snapshot);
     if (key === this.#queryKey) return;
+    this.#session.cancelPendingWork();
     this.#releaseAllCells();
     this.#session.replaceQuery(snapshot);
     this.#query = snapshot;
@@ -241,13 +248,29 @@ export class KanbanViewportSource<TCard> {
     const height = cellCount(request.height);
     const horizontalOffset = cellCount(request.horizontalOffset);
     const verticalOffset = cellCount(request.verticalOffset);
+    const cardStride = cellCount(request.cardStride);
+    if (cardStride === 0) throw new KanbanInvalidGeometryError();
     const publication = this.#session.snapshot();
     const columns = filteredColumns(publication, this.#query, request.collapsedColumnIds, this.#limits);
+    const focusedColumnId = columns.some((column) => column.columnId === request.focusedColumnId)
+      ? request.focusedColumnId
+      : undefined;
     const widths = solveKanbanColumnWidths({
       availableWidth: width,
       columns: columns.map((column) => ({ columnId: column.columnId })),
-      ...(request.focusedColumnId === undefined ? {} : { focusedColumnId: request.focusedColumnId }),
+      ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
     });
+    if (width < 18 || height < 4) {
+      this.#reconcileCells([], new Set());
+      return Object.freeze({
+        publication,
+        mode: 'minimum-size',
+        widths,
+        visibleColumns: Object.freeze([]),
+        cells: Object.freeze([]),
+        generation: this.#session.generation(),
+      });
+    }
     const indexes = retainedColumnIndexes(widths, horizontalOffset, width, this.#horizontalOverscan);
     const visibleColumns = Object.freeze(
       indexes.visible.flatMap((index) => {
@@ -264,8 +287,8 @@ export class KanbanViewportSource<TCard> {
     this.#reconcileCells(retainedAddresses, new Set(indexes.visible.map((index) => widths.columns[index]?.columnId)));
 
     const visibleRows = Math.max(1, height - 1);
-    const cardsPerViewport = Math.max(1, Math.ceil(visibleRows / 3));
-    const firstVisibleCard = Math.floor(verticalOffset / 3);
+    const cardsPerViewport = Math.max(1, Math.ceil(visibleRows / cardStride));
+    const firstVisibleCard = Math.floor(verticalOffset / cardStride);
     const overscanCards = cardsPerViewport * this.#verticalOverscan;
     const rangeStart = Math.max(0, firstVisibleCard - overscanCards);
     const requestedCards = Math.min(this.#limits.ensureRangeCards, cardsPerViewport + overscanCards * 2);
@@ -310,10 +333,17 @@ export class KanbanViewportSource<TCard> {
     return this.#session.locateCard(key, signal === undefined ? undefined : { signal });
   }
 
+  /** Invalidates source generations and aborts pending work before viewport-wide ordered release. */
+  cancelPendingWork(): void {
+    if (this.#disposed) return;
+    this.#session.cancelPendingWork();
+  }
+
   /** Invalidates pending work and releases cursors before the owned session, idempotently. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#session.cancelPendingWork();
     this.#releaseAllCells();
     this.#session.dispose();
   }
@@ -323,7 +353,6 @@ export class KanbanViewportSource<TCard> {
     const wanted = new Map(addresses.map((address) => [canonicalizeKanbanCellAddress(address), address]));
     for (const [key, retained] of [...this.#cells]) {
       if (wanted.has(key)) continue;
-      retained.cursor.dispose();
       this.#session.releaseCursor(retained.address, retained.owner);
       this.#cells.delete(key);
     }
@@ -332,31 +361,35 @@ export class KanbanViewportSource<TCard> {
       const existing = this.#cells.get(key);
       if (existing !== undefined && existing.owner === owner) continue;
       if (existing !== undefined) {
-        existing.cursor.dispose();
         this.#session.releaseCursor(existing.address, existing.owner);
       }
       const cursor = this.#session.retainCursor(address, owner);
+      const guarded = new KanbanCursorCoordinator({
+        cursor,
+        address,
+        keyOf: (card) => this.#card.keyOf(card),
+        limits: { class: 'advanced', values: this.#limits },
+        observe: this.#observe,
+        ownsCursor: false,
+      });
+      if (this.#beforeCursorDispose !== undefined) {
+        this.#session.registerCursorScope(address, () => this.#beforeCursorDispose?.(address));
+      }
+      this.#session.registerCursorScope(address, () => guarded.dispose());
       this.#cells.set(
         key,
         Object.freeze({
           address,
           owner,
-          cursor: new KanbanCursorCoordinator({
-            cursor,
-            address,
-            keyOf: (card) => this.#card.keyOf(card),
-            limits: { class: 'advanced', values: this.#limits },
-            observe: this.#observe,
-          }),
+          cursor: guarded,
         }),
       );
     }
   }
 
-  /** Releases every guarded wrapper before asking the session coordinator to release raw cursors. */
+  /** Releases every cell through session-owned scope-before-cursor disposal. */
   #releaseAllCells(): void {
     for (const retained of this.#cells.values()) {
-      retained.cursor.dispose();
       this.#session.releaseCursor(retained.address, retained.owner);
     }
     this.#cells.clear();

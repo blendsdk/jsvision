@@ -44,6 +44,8 @@ function cardIdentity(card: KanbanProjectedCard): string {
 function cardFingerprint(card: KanbanProjectedCard): string {
   return JSON.stringify([
     card.rect,
+    card.descriptorColumnOffset,
+    card.descriptorRowOffset,
     card.descriptor.presentationRevision ?? null,
     card.descriptor.surfaceRole,
     card.descriptor.borderRole,
