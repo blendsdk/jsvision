@@ -11,6 +11,7 @@ import type {
   KanbanCardTerminalCapabilities,
 } from './descriptor.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
+import { resolveKanbanCardStyle } from './style-resolver.js';
 import { createStandardKanbanSectionCandidates } from './standard-sections.js';
 import type { KanbanStandardSectionCandidate } from './standard-sections.js';
 import { clipKanbanCardText, measureKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
@@ -28,26 +29,6 @@ export interface KanbanStandardCardCompositionContext {
   readonly capabilities: Readonly<KanbanCardTerminalCapabilities>;
   /** Optional localized label for the read-only checklist editor action. */
   readonly openEditorLabel?: string;
-}
-
-/** Returns a stable surface role for the detached rich-card visual state. */
-function snapshotSurfaceRole(snapshot: KanbanCardPresentationSnapshot): KanbanCardDescriptor['surfaceRole'] {
-  if (snapshot.style.surfaceRole !== undefined) return snapshot.style.surfaceRole;
-  if (snapshot.visualState.readOnly) return 'card.read-only';
-  if (snapshot.visualState.focused && snapshot.visualState.selected) return 'card.focused-selected';
-  if (snapshot.visualState.focused) return 'card.focused';
-  if (snapshot.visualState.selected) return 'card.selected';
-  return 'card.normal';
-}
-
-/** Builds deterministic non-color cues from the detached rich-card visual state. */
-function snapshotCues(snapshot: KanbanCardPresentationSnapshot): readonly KanbanCardCue[] {
-  const cues: KanbanCardCue[] = [];
-  if (snapshot.visualState.focused) cues.push('focused');
-  if (snapshot.visualState.selected) cues.push('selected');
-  if (snapshot.visualState.readOnly) cues.push('read-only');
-  if (snapshot.visualState.operation !== 'idle') cues.push(snapshot.visualState.operation);
-  return Object.freeze(cues);
 }
 
 /** Records one section kind once while preserving first-omission order. */
@@ -217,15 +198,7 @@ export function composeStandardKanbanCard(
       return section;
     }),
   );
-  const surfaceRole = snapshotSurfaceRole(snapshot);
-  const cues = snapshotCues(snapshot);
-  const markerGlyph = snapshot.visualState.focused
-    ? '>'
-    : snapshot.visualState.selected
-      ? '*'
-      : snapshot.visualState.readOnly
-        ? '#'
-        : '|';
+  const resolvedStyle = resolveKanbanCardStyle(snapshot.style, snapshot.visualState, context.capabilities);
   const checklistStart = sections.find(
     (section) => section.kind === 'checklist-progress' || section.kind === 'checklist-preview',
   )?.startRow;
@@ -243,14 +216,14 @@ export function composeStandardKanbanCard(
     ...(snapshot.presentationRevision === undefined ? {} : { presentationRevision: snapshot.presentationRevision }),
     width: context.width,
     measuredHeight: rows.length,
-    surfaceRole,
-    borderRole: snapshot.style.borderRole ?? surfaceRole,
+    surfaceRole: resolvedStyle.surfaceRole,
+    borderRole: resolvedStyle.borderRole,
     marker: Object.freeze({
       row: 0,
       column: 0,
-      glyph: markerGlyph,
-      role: snapshot.style.markerRole ?? surfaceRole,
-      cues,
+      glyph: resolvedStyle.markerGlyph,
+      role: resolvedStyle.markerRole,
+      cues: resolvedStyle.cues,
     }),
     rows,
     sections,
