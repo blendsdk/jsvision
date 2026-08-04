@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 14:54
-> **Progress**: 12/31 tasks (39%)
+> **Last Updated**: 2026-08-04 14:56
+> **Progress**: 13/31 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -88,7 +88,7 @@ AR-3, AR-6, AR-7, AR-12
 **Reference**: [03-01 § Testing Requirements](03-01-row-edit-sessions.md#testing-requirements) ·
 [03-02 § Testing Requirements](03-02-rollback-transaction-and-input.md#testing-requirements)
 
-- [ ] 1.4.1 Add controller implementation tests for map order, repeated commits, row identity, invalidation, retry state, presentation ownership, and retained-state bounds — `packages/datagrid/test/row-revert.impl.test.ts`
+- [x] 1.4.1 Add controller implementation tests for map order, repeated commits, row identity, invalidation, retry state, presentation ownership, and retained-state bounds — `packages/datagrid/test/row-revert.impl.test.ts` ✅ (completed: 2026-08-04 14:56)
 - [ ] 1.4.2 Add transaction/keymap implementation tests for mutate-then-throw apply recovery, recovery-setter failure, callback serialization, repaint counts, live stale reconciliation, disposal, registry ownership, and keymap cache/merge edges — `packages/datagrid/test/row-revert-transaction.impl.test.ts`, `packages/datagrid/test/keymap.impl.test.ts`
 - [ ] 1.4.3 Run existing row-gate, editing, validation, keymap, mutation, reactive-source, master-detail, security, and locale regression suites — `packages/datagrid/test`
 - [ ] 1.4.4 Run Data Grid typecheck/tests/JSDoc, locale completeness/review checks, and the normal changed-file gate — `packages/datagrid`, repository root
