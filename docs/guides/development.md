@@ -8,9 +8,10 @@
 feature branches using Conventional Commits. Public SDK packages live under `packages/`, use ESM
 TypeScript, target Node.js 22+, and expose only supported package entry points.
 
-The Kanban implementation lives in `packages/kanban/`. Its package shell, authority contracts, and
-revisioned eager/windowed source layer are implemented. Later presentation, locale, dialog, and docs
-work follows the Data Grid and Code Editor precedents while retaining Kanban's own public contracts.
+The Kanban implementation lives in `packages/kanban/`. Its package shell, authority contracts,
+revisioned eager/windowed source, bounded presentation, and workflow-structure layers are
+implemented. Later scene geometry, interaction, locale publication, dialog, and docs work follows
+the Data Grid and Code Editor precedents while retaining Kanban's own public contracts.
 
 ## Specification-first sequence
 

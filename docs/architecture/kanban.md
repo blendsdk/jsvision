@@ -1,7 +1,7 @@
 # Kanban architecture
 
 > **Last Updated**: 2026-08-04
-> **Status**: Phase A read-only foundation implemented; interaction and editing phases planned
+> **Status**: Phase A foundation and Phase B workflow structure implemented; canonical scene, interaction, and editing phases planned
 
 ## Boundary and ownership
 
@@ -87,6 +87,26 @@ Phase A pointer inspection deliberately exposes no actionable card, insertion, o
 targets. That keeps the read-only foundation honest while reserving exact geometry for the later
 mouse interaction engine.
 
+## Workflow structure and grouping
+
+Phase B normalizes application-owned workflow policy before scene construction. Column visibility,
+collapse, widths, WIP limits, definition-of-done text, capabilities, and semantic styles are copied
+into immutable snapshots. WIP and transition evaluators are pure eligibility checks: their result
+can explain what the component should present, but it never authorizes a mutation.
+
+One query-selected grouping field may create one horizontal swimlane dimension. Derived resolvers
+and explicit source memberships both produce stable semantic groups, while hidden membership stays
+detached from the visible projection. Missing or unmapped values use an application-configured
+unassigned group. Resolver failures use a separately configured local fallback and emit only
+payload-free observations. Invalid structures retain the caller's previous complete result.
+
+Built-in `hybrid`, `separator`, `band`, and `rail` chrome strategies share the same semantic
+membership. Custom chrome is exact-shape validated, bounded, and prevented from creating card or
+drop targets. Its resolver cache keys every output-affecting semantic and geometry input and has a
+fixed FIFO bound. Collapsed-swimlane hover expansion is a temporary generation-owned lease: it does
+not mutate saved collapse state, and scheduler failure, cancellation, leave, or disposal safely
+restores the underlying projection.
+
 ## Request authority
 
 All future mutation paths—pointer, keyboard, dialogs, commands, and programmatic calls—share the
@@ -96,13 +116,15 @@ optimistically and reconciles only from dispatcher results and authoritative sou
 
 ## Phase boundary
 
-| Implemented in Phase A                                      | Deliberately deferred                                   |
+| Implemented through Phase B workflow structure              | Deliberately deferred                                   |
 | ----------------------------------------------------------- | ------------------------------------------------------- |
 | Public contracts, validation, limits, and semantic defaults | Drag ghosts, insertion targets, and card movement       |
 | Eager and sparse revisioned read sources                    | Keyboard command/keymap completion and selection policy |
 | Generic card adapters and bounded descriptors               | Rich checklist/summary rendering and custom card labs   |
 | Theme roles, English fallback, and ten locale entry points  | Card editors and lane-configuration dialogs             |
-| Responsive board/viewport, scrolling, and host parity       | Workflow enforcement and application persistence        |
+| Responsive board/viewport, scrolling, and host parity       | Application authorization and persistence               |
+| Workflow structure, WIP/DoD eligibility, and grouping       | Canonical scene geometry and mounted rich cards         |
+| Bounded swimlane chrome and temporary hover leases          | Pointer drag/drop and keyboard interaction controllers  |
 | Request and reconciliation contracts                        | Component teaching page, live labs, and kitchen sink    |
 
 This boundary is intentionally publishable and testable, but it is not presented as a complete

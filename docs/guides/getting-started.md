@@ -4,10 +4,11 @@
 
 ## Current status
 
-The Kanban package foundation and read-source layer are implemented on the feature branch. They are
-available for package development and contract testing, but the mounted board, card presentation,
-dialogs, official locale registration, and consumer documentation are not complete yet. Do not treat
-the package as release-ready until those phases close.
+The Kanban package foundation, read-source, card-presentation, and workflow-structure layers are
+implemented on the feature branch. They are available for package development and contract testing,
+but canonical scene geometry, interactive controllers, dialogs, official locale registration, and
+consumer documentation are not complete yet. Do not treat the package as release-ready until those
+phases close.
 
 ## Prerequisites
 

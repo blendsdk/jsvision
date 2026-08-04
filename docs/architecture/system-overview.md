@@ -8,8 +8,8 @@ JSVision is a modular TypeScript SDK monorepo. Public packages form a layered li
 runtime service: applications instantiate components locally, retain authority over their data and
 effects, and select terminal or browser hosts. The Kanban foundation now exists as the specialist
 `@jsvision/kanban` package under `packages/`, following the Data Grid and Code Editor precedent. Its
-contract, source/session, presentation-adapter, descriptor, theme, and English fallback catalog
-layers are implemented; mounted component and dialog layers remain staged work.
+contract, source/session, presentation-adapter, descriptor, theme, English fallback catalog, and
+workflow-structure layers are implemented; canonical scene and dialog layers remain staged work.
 
 ## Kanban component architecture
 
@@ -90,6 +90,17 @@ cards while materializing only requested visible and overscan ranges.
 The standard renderer deliberately covers only title, status, and interaction-state cues in this
 foundation slice. Rich summaries and checklist previews remain represented in the public descriptor
 vocabulary but are not rendered until their later implementation phase.
+
+### Workflow structure boundary
+
+- **Purpose**: Normalize workflow columns, the optional single swimlane dimension, and pure
+  WIP/definition-of-done/transition eligibility before scene construction.
+- **Inputs**: Application-owned structure policy, active query grouping, optional derived resolvers
+  or explicit memberships, and responsive presentation constraints.
+- **Outputs**: Immutable visible and detached structure snapshots, bounded swimlane chrome, and
+  temporary collapsed-hover lease state.
+- **Boundary**: Eligibility never grants authorization; custom resolvers and chrome cannot inject
+  card/drop targets or leak record payloads through observations.
 
 ### Application request dispatcher
 

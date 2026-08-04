@@ -1,7 +1,7 @@
 # Kanban API design
 
 > **Last Updated**: 2026-08-04
-> **Status**: Contracts, source/session, card presentation, theme, and English catalog APIs implemented; board and dialogs planned
+> **Status**: Contracts, sources, card presentation, workflow structure, theme, and Phase B catalog APIs implemented; canonical scene and dialogs planned
 
 ## API style
 
@@ -18,6 +18,9 @@ separate `/model` or `/dialogs` public subpaths.
 | `KanbanDataSource<TCard>`     | Open a coherent query session                       | Application/data adapter                          |
 | Query session and cell cursor | Bounded lazy acquisition and edge/count knowledge   | Data adapter                                      |
 | Card adapter/descriptors      | Map arbitrary records to safe visual content        | Application/package adapter                       |
+| Structure/grouping policy     | Normalize columns and one optional swimlane axis    | Application policy; component projection          |
+| Workflow evaluators           | Report WIP, DoD, and transition eligibility         | Pure presentation logic; never authorization      |
+| Swimlane presentation         | Resolve bounded built-in or custom header chrome    | Component with validated application extension    |
 | `KanbanRequest` dispatcher    | Carry every requested mutation atomically           | Application                                       |
 | Commands and keymap           | Keyboard/menu/programmatic actions                  | Component, gated by capabilities                  |
 | Card/configuration dialogs    | Collect validated request inputs                    | Package UI; application decides whether to invoke |
@@ -76,6 +79,23 @@ in-place fields used by those adapters change.
 Summary adapters declare `authoritative` or `loaded-only` scope and use the package-owned `sum`,
 `min`, `max`, or `average` aggregation vocabulary. Empty numeric summaries remain unknown rather than
 being silently reported as zero.
+
+## Workflow and grouping conventions
+
+- `snapshotKanbanStructurePolicy()` validates complete immutable column and optional grouping
+  policy without retaining hostile caller shapes.
+- Pure WIP, definition-of-done, and transition evaluators return localized reason keys and never
+  dispatch, persist, or authorize an operation.
+- `resolveKanbanGrouping()` accepts either registered derived grouping or explicit source
+  memberships for the one field selected by the query. Visible and detached projections remain
+  separate.
+- Applications configure distinct unassigned and resolver-fallback groups. Resolver failures are
+  contained locally and observed without card data.
+- Swimlane presentation supports `hybrid`, `separator`, `band`, and `rail` variants plus bounded
+  custom header-only chrome. Custom results are cached by complete semantic and geometry input under
+  a fixed retention ceiling.
+- `KanbanCollapsedHoverController` owns one temporary, cancellable, generation-safe expansion lease;
+  it never changes the underlying collapsed policy.
 
 ## Card presentation conventions
 

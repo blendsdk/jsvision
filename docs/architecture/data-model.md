@@ -1,7 +1,7 @@
 # Kanban data model
 
 > **Last Updated**: 2026-08-04
-> **Status**: Contracts, revisioned eager and sparse windowed reads, and card projections implemented
+> **Status**: Contracts, revisioned reads, card projections, and workflow structure implemented
 
 ## Domain model
 
@@ -21,16 +21,16 @@ erDiagram
 
 ## Entities and value objects
 
-| Entity           | Identity and key fields                                             | Ownership                                                 | Invariants                                                               |
-| ---------------- | ------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Board definition | Board ID, ordered columns, optional swimlane dimension              | Application                                               | IDs are stable; column order is explicit                                 |
-| Column           | ID, name, order, workflow metadata, WIP/DoD policy                  | Application                                               | Deletion of non-empty columns requires atomic reassignment or rejection  |
-| Swimlane         | ID, label, order, visibility/collapse state                         | Application for structure; session for transient collapse | At most one grouping dimension; no nested swimlanes                      |
-| Card record      | Application-defined `TCard`                                         | Application                                               | Package never mutates or persists the record directly                    |
-| Card projection  | Stable ID, title/status descriptors, summaries, semantic styles     | Adapter/package                                           | Descriptor output is bounded and safe to render                          |
-| Cell cursor      | Column/swimlane coordinate, revision, loaded window, edge knowledge | Query session                                             | Loaded boundaries are not assumed to be logical edges                    |
-| Placement        | Destination coordinate and opaque rank token                        | Source/dispatcher contract                                | Token is semantic, bounded, and not interpreted by the view              |
-| Saved view       | Version, query, grouping, order, density, visibility                | Application storage                                       | Semantic configuration only; transient focus/drag/load state is excluded |
+| Entity           | Identity and key fields                                             | Ownership                                                  | Invariants                                                               |
+| ---------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Board definition | Board ID, ordered columns, optional swimlane dimension              | Application                                                | IDs are stable; column order is explicit                                 |
+| Column           | ID, name, order, workflow metadata, WIP/DoD policy                  | Application                                                | Deletion of non-empty columns requires atomic reassignment or rejection  |
+| Swimlane         | ID, label, order, visibility/collapse state                         | Application for structure; board for temporary hover lease | At most one grouping dimension; no nested swimlanes                      |
+| Card record      | Application-defined `TCard`                                         | Application                                                | Package never mutates or persists the record directly                    |
+| Card projection  | Stable ID, title/status descriptors, summaries, semantic styles     | Adapter/package                                            | Descriptor output is bounded and safe to render                          |
+| Cell cursor      | Column/swimlane coordinate, revision, loaded window, edge knowledge | Query session                                              | Loaded boundaries are not assumed to be logical edges                    |
+| Placement        | Destination coordinate and opaque rank token                        | Source/dispatcher contract                                 | Token is semantic, bounded, and not interpreted by the view              |
+| Saved view       | Version, query, grouping, order, density, visibility                | Application storage                                        | Semantic configuration only; transient focus/drag/load state is excluded |
 
 ## State ownership
 
@@ -76,6 +76,19 @@ erDiagram
   `jsvision.*` namespace.
 - Theme tokens use an exhaustive package-local role inventory. Unknown roles cannot become renderable
   descriptor values.
+
+## Implemented workflow-structure invariants
+
+- Column and grouping policies are exact-shape, bounded, immutable snapshots with stable semantic
+  identities and equality-only revisions.
+- WIP, definition-of-done, and transition evaluators return presentation eligibility and reasons;
+  the application remains the authorization boundary.
+- Grouping follows only the query-selected field and supports no nested dimension. Hidden groups and
+  memberships remain detached rather than being destroyed.
+- Missing or unmapped values and resolver failures use distinct configured groups. Malformed or
+  throwing resolvers cannot publish partial membership and produce only payload-free observations.
+- Custom swimlane chrome is bounded and header-only. Collapsed hover expansion is temporary and
+  generation-owned, so it never rewrites durable or saved-view collapse state.
 
 ## Compatibility and migration
 

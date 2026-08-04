@@ -16,10 +16,10 @@ semantics. Public packages separate terminal rendering, UI controls, forms, loca
 components, web hosting, and examples so applications can depend only on the surfaces they use.
 
 The `@jsvision/kanban` foundation provides application-owned contracts, revisioned eager and
-windowed data sources, and a bounded card-presentation boundary. Responsive board interaction,
-dialogs, published locale subpaths, and showcase documentation remain staged work. The architecture
-recorded here preserves bounded data access, modern pointer interaction, theming, localization, and
-host authority as those layers arrive.
+windowed data sources, bounded card presentation, and normalized workflow-column/swimlane policy.
+Canonical scene geometry, responsive board interaction, dialogs, published locale subpaths, and
+showcase documentation remain staged work. The architecture recorded here preserves bounded data
+access, modern pointer interaction, theming, localization, and host authority as those layers arrive.
 
 ## Architecture at a glance
 
@@ -35,12 +35,12 @@ graph TB
 
 ## Key components
 
-| Component            | Status             | Purpose                                                        | Documentation                                    |
-| -------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------------------------ |
-| JSVision core and UI | Implemented        | Rendering, reactivity, layout, windows, input, and controls    | [System overview](/architecture/system-overview) |
-| `@jsvision/kanban`   | Phase A complete   | Read sources, presentation, responsive board, and viewport     | [Kanban architecture](/architecture/kanban)      |
-| Application adapter  | Consumer-owned     | Records, persistence, authorization, mutation, and saved views | [Integrations](/reference/integrations)          |
-| Docs and examples    | Planned for Kanban | Teaching page, live labs, kitchen sink, and flagship showcase  | [Development workflow](/guides/development)      |
+| Component            | Status              | Purpose                                                             | Documentation                                    |
+| -------------------- | ------------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
+| JSVision core and UI | Implemented         | Rendering, reactivity, layout, windows, input, and controls         | [System overview](/architecture/system-overview) |
+| `@jsvision/kanban`   | Phase B in progress | Read sources, presentation, workflow structure, board, and viewport | [Kanban architecture](/architecture/kanban)      |
+| Application adapter  | Consumer-owned      | Records, persistence, authorization, mutation, and saved views      | [Integrations](/reference/integrations)          |
+| Docs and examples    | Planned for Kanban  | Teaching page, live labs, kitchen sink, and flagship showcase       | [Development workflow](/guides/development)      |
 
 ## Technology decisions
 
