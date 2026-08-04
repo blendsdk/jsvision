@@ -112,7 +112,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 2.1.1 `[spec-author]` Write the Phase 2-owned model/evaluator workflow/visibility/collapse/WIP/transition/state assertion slices — `packages/kanban/test/structure-workflow.spec.test.ts`
 - [x] 2.1.2 `[spec-author]` Add the Phase 2-owned explicit/derived/unassigned grouping and presentation-contract assertion slices to the same suite — `packages/kanban/test/structure-workflow.spec.test.ts`
-- [ ] 2.1.3 Run the Phase 2 specification suite and record expected red behavior
+- [x] 2.1.3 Run the Phase 2 specification suite and record expected red behavior
 
 ### Step 2.2: Implementation and green phase
 
