@@ -230,7 +230,11 @@ export class KanbanViewport<TCard> extends View {
 
   /** Returns current authoritative identity changes without exposing the query session. */
   identityChanges(): KanbanIdentityChangeBatch | undefined {
-    return this.#snapshot?.publication.identityChanges;
+    if (this.#disposed) return undefined;
+    return (
+      this.#refresh(this.#options.collapsedColumnIds?.(), this.#options.identity?.().focusedColumnId)?.publication
+        .identityChanges ?? this.#snapshot?.publication.identityChanges
+    );
   }
 
   /** Returns current focused-column navigator metadata for the owning DSL shell. */

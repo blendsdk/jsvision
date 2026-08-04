@@ -10,6 +10,8 @@ import { createKanbanCardKey, createKanbanColumnId } from '../contract/identity.
 import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanFocusedColumnNavigator } from '../layout/width-solver.js';
+import type { KanbanIdentityChangeBatch } from '../source/types.js';
+import { reconcileKanbanBoardIdentity } from './board-state.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewport } from './kanban-viewport.js';
 
@@ -74,6 +76,7 @@ export class KanbanBoardBindings<TCard> {
   readonly #options: KanbanViewportOptions<TCard>;
   readonly identity: Signal<KanbanIdentityInput>;
   #identityFingerprint: string;
+  #applicationIdentityFingerprint: string;
   #last: KanbanBoardBindingSnapshot | undefined;
 
   /** Reads and validates initial identity once so the viewport starts from a detached value. */
@@ -82,6 +85,7 @@ export class KanbanBoardBindings<TCard> {
     const identity = snapshotIdentity(options.identity?.());
     this.identity = signal(identity);
     this.#identityFingerprint = identityFingerprint(identity);
+    this.#applicationIdentityFingerprint = this.#identityFingerprint;
   }
 
   /** Reads every layout-affecting reactive getter and the viewport's structural version. */
@@ -101,7 +105,8 @@ export class KanbanBoardBindings<TCard> {
   /** Applies detached identity and reports whether one semantic layout reflow should be counted. */
   apply(snapshot: KanbanBoardBindingSnapshot): boolean {
     const nextIdentityFingerprint = identityFingerprint(snapshot.identity);
-    if (nextIdentityFingerprint !== this.#identityFingerprint) {
+    if (nextIdentityFingerprint !== this.#applicationIdentityFingerprint) {
+      this.#applicationIdentityFingerprint = nextIdentityFingerprint;
       this.#identityFingerprint = nextIdentityFingerprint;
       this.identity.set(snapshot.identity);
     }
@@ -116,6 +121,16 @@ export class KanbanBoardBindings<TCard> {
       previous.capabilities !== snapshot.capabilities ||
       identityFingerprint(previous.identity) !== nextIdentityFingerprint
     );
+  }
+
+  /** Prunes identity only for authoritative deletion facts, never for cursor unload. */
+  reconcileIdentityChanges(batch: KanbanIdentityChangeBatch | undefined): boolean {
+    const next = reconcileKanbanBoardIdentity(this.identity.peek(), batch);
+    const fingerprint = identityFingerprint(next);
+    if (fingerprint === this.#identityFingerprint) return false;
+    this.#identityFingerprint = fingerprint;
+    this.identity.set(next);
+    return true;
   }
 }
 

@@ -5,15 +5,20 @@ import type { Rect } from '@jsvision/ui';
 import type {
   KanbanPublicationExpectation,
   KanbanPublicationNotice,
+  KanbanRequest,
   KanbanRequestDispatcher,
+  KanbanRequestResult,
 } from '../contract/request.js';
+import type { CardKey } from '../contract/identity.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
+import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
 import { KanbanViewport } from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
+import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends KanbanViewportOptions<TCard> {
@@ -103,6 +108,7 @@ export class KanbanBoard<TCard> extends Group {
   readonly viewport: KanbanViewport<TCard>;
   readonly #i18n: () => I18n;
   readonly #bindings: KanbanBoardBindings<TCard>;
+  readonly #authority: KanbanBoardAuthority;
   readonly #navigatorVisible = signal(false);
   readonly #navigator: KanbanFocusedNavigatorView;
   #layoutReflows = 0;
@@ -119,6 +125,7 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.identity === undefined ? {} : { identity: options.identity }),
     };
     this.#bindings = new KanbanBoardBindings(bindingOptions);
+    this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
     this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#bindings.identity()));
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
     this.setLayout({ direction: 'col' });
@@ -136,10 +143,11 @@ export class KanbanBoard<TCard> extends Group {
         () => this.#bindings.read(this.viewport),
         (snapshot) => {
           const layoutChanged = this.#bindings.apply(snapshot);
+          const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
           const navigatorVisible = this.viewport.metrics().mode === 'focused-column';
           const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
           if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
-          if (layoutChanged || navigatorChanged) this.#layoutReflows += 1;
+          if (layoutChanged || identityChanged || navigatorChanged) this.#layoutReflows += 1;
         },
         { relayout: true },
       );
@@ -148,6 +156,7 @@ export class KanbanBoard<TCard> extends Group {
 
   /** Returns detached board composition and viewport evidence. */
   inspection(): KanbanBoardInspection {
+    this.#reconcileIdentityChanges();
     const viewport = this.viewport.inspection();
     const navigator = this.viewport.focusedNavigator();
     const i18n = this.#i18n();
@@ -168,14 +177,47 @@ export class KanbanBoard<TCard> extends Group {
       }),
       layoutReflows: this.#layoutReflows,
       identity: this.#bindings.identity(),
-      pendingOperations: Object.freeze([]),
+      pendingOperations: this.#authority.pendingOperations(),
+      ...(this.#authority.clearedPublication() === undefined
+        ? {}
+        : { clearedPublication: this.#authority.clearedPublication() }),
     });
+  }
+
+  /** Dispatches one raw application-owned request without applying optimistic record changes. */
+  request(request: KanbanRequest): Promise<KanbanRequestResult> {
+    return this.#authority.request(request);
+  }
+
+  /** Clears pending metadata when matching or contradictory authoritative data is published. */
+  reconcilePublication(notice: KanbanPublicationNotice): void {
+    this.#authority.reconcilePublication(notice);
+  }
+
+  /** Delegates absolute terminal-cell scrolling to the board's single viewport. */
+  scrollTo(target: KanbanScrollTarget): void {
+    this.viewport.scrollTo(target);
+  }
+
+  /** Delegates relative terminal-cell scrolling to the board's single viewport. */
+  scrollBy(delta: KanbanScrollTarget): void {
+    this.viewport.scrollBy(delta);
+  }
+
+  /** Delegates bounded semantic reveal to the board's single viewport and source session. */
+  revealCard(
+    key: CardKey,
+    alignment?: KanbanRevealAlignment,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<KanbanRevealResult> {
+    return this.viewport.revealCard(key, alignment, options);
   }
 
   /** Disposes board-only bindings and its single viewport idempotently. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#authority.dispose();
     this.viewport.dispose();
   }
 
@@ -183,5 +225,10 @@ export class KanbanBoard<TCard> extends Group {
   #navigatorState(): KanbanNavigatorState | undefined {
     const navigator = this.viewport.focusedNavigator();
     return navigator === undefined ? undefined : Object.freeze({ i18n: this.#i18n(), navigator });
+  }
+
+  /** Reconciles the latest source deletion facts at the board's public state boundary. */
+  #reconcileIdentityChanges(): void {
+    if (this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges())) this.#layoutReflows += 1;
   }
 }
