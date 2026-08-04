@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Authored Polish Kanban catalog awaiting registry and review closure. */
+/** Official reviewed Polish Kanban catalog. */
 export const kanbanPl = createKanbanTranslationCatalog('pl', {
   'kanban.board.label': 'Tablica Kanban',
   'kanban.board.no-columns': 'Brak kolumn',

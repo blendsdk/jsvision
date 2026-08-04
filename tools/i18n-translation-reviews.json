@@ -405,6 +405,87 @@
       "reviewMethod": "ai-assisted",
       "reviewedAt": "2026-07-28",
       "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "nl",
+      "digest": "60bf278018e73aa48c6329d00961a7e7797180567502b7f742683479e4ff6505",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "de",
+      "digest": "4eff640f1997f98460056d713072b3f58808bd902e97bf8d6b2d0f96e96febad",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "fr",
+      "digest": "3160a0890e81a652a62200a8ad1ac210a25c464f4bde42a72b5421c2923faf08",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "es",
+      "digest": "39f11499a89a61c8b6b52430090df0a97dd280e719912615cb3dc8133114c7f1",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "it",
+      "digest": "d84e3a3b591eacb66eebd9ac466543e349bd3269a7a990bb558feef7f867cebb",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "pt-PT",
+      "digest": "125b7212d9fcd9dc04a66fbe448bd1bdc16fbf42c5b69c4757deecc3042560a6",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "pl",
+      "digest": "5763604cb8068af5d99d13cd9d90ef5ef5da7630d34ed3b5f50e3f51b47f463c",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "ro",
+      "digest": "d945a0a98cac2c0cb1f5ff98308e6eb5cab45a6439a8801d4e03da7ef21cf2cb",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
+    },
+    {
+      "package": "kanban",
+      "locale": "sv",
+      "digest": "db5b1b953c940c1b91d68436081d9cb761046e3fd5952424aa0229a75d8a467a",
+      "reviewer": "OpenAI Codex",
+      "reviewMethod": "ai-assisted",
+      "reviewedAt": "2026-08-04",
+      "status": "approved"
     }
   ]
 }

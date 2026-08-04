@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Authored Romanian Kanban catalog awaiting registry and review closure. */
+/** Official reviewed Romanian Kanban catalog. */
 export const kanbanRo = createKanbanTranslationCatalog('ro', {
   'kanban.board.label': 'Panou Kanban',
   'kanban.board.no-columns': 'Nicio coloană',

@@ -21,6 +21,10 @@
     {
       "name": "code-editor",
       "symbolPrefix": "codeEditor"
+    },
+    {
+      "name": "kanban",
+      "symbolPrefix": "kanban"
     }
   ]
 }

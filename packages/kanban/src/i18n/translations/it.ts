@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Authored Italian Kanban catalog awaiting registry and review closure. */
+/** Official reviewed Italian Kanban catalog. */
 export const kanbanIt = createKanbanTranslationCatalog('it', {
   'kanban.board.label': 'Bacheca Kanban',
   'kanban.board.no-columns': 'Nessuna colonna',

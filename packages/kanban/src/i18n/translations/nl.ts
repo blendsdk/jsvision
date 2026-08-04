@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Authored Dutch Kanban catalog awaiting registry and review closure. */
+/** Official reviewed Dutch Kanban catalog. */
 export const kanbanNl = createKanbanTranslationCatalog('nl', {
   'kanban.board.label': 'Kanbanbord',
   'kanban.board.no-columns': 'Geen kolommen',

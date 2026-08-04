@@ -185,7 +185,10 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     consumer pass 7/7; native-dependency and public-JSDoc checks pass; changed-file verification
     passes. Plugin check remains red only for the immutable canonical test copy intentionally awaiting
     generator synchronization in Task 5.2.8.
-- [ ] 5.2.2 Add Kanban to the official locale registry and add disclosed current digest-bound review evidence for all nine non-English Phase A catalogs — `tools/i18n-locale-exports.json`, `tools/i18n-translation-reviews.json`
+- [x] 5.2.2 Add Kanban to the official locale registry and add disclosed current digest-bound review evidence for all nine non-English Phase A catalogs — `tools/i18n-locale-exports.json`, `tools/i18n-translation-reviews.json` ✅ (completed: 2026-08-04 09:41 CEST)
+  - Green evidence: the registry specification passes 3/3 with exactly six packages and 54 unique
+    approved review records. All nine Kanban records disclose AI-assisted review and match the current
+    normalized catalog digest; package build/typecheck and JSON validation pass.
 - [ ] 5.2.3 Run locale generation/check plus literal and translation-review checks; inspect generator-owned `packages/kanban/src/locales/*.ts` wrappers, make the complete ST-R01-02 tarball runtime/type/export-map oracle green, and preserve the atomic official-catalog invariant — `packages/kanban/test/package-consumer.spec.test.ts`
 - [ ] 5.2.4 Add Kanban to docs API/package/install inventories and auxiliary locale API generation without adding a placeholder component page/live example — `packages/docs-site/src/api/packages.mjs`, `packages/docs-site/scripts/gen-api.mjs`, `packages/docs-site/test/{install-and-packages-guide,api-barrel-exports}.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`
 - [ ] 5.2.5 Generate Kanban API pages and run focused docs typecheck/tests/build; inspect `packages/docs-site/api/kanban/`, generated locale auxiliary entries, and affected navigation links

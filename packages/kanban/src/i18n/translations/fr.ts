@@ -1,6 +1,6 @@
 import { createKanbanTranslationCatalog } from '../translation.js';
 
-/** Authored French Kanban catalog awaiting registry and review closure. */
+/** Official reviewed French Kanban catalog. */
 export const kanbanFr = createKanbanTranslationCatalog('fr', {
   'kanban.board.label': 'Tableau Kanban',
   'kanban.board.no-columns': 'Aucune colonne',
