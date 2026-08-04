@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 07:21 CEST
-> **Progress**: 47/64 tasks (73%)
+> **Last Updated**: 2026-08-04 07:37 CEST
+> **Progress**: 48/64 tasks (75%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -138,7 +138,7 @@ card renderer required by the Phase A slice.
 - [x] 4.2.5 Implement clipped descriptor projection, sticky workflow headers, and loading/partial/empty/error state drawing — `packages/kanban/src/board/{viewport-projector,viewport-render}.ts` ✅ (completed: 2026-08-04 07:06 CEST)
 - [x] 4.2.6 Implement two-axis wheel/imperative scrolling, revision-bound `revealCard`, immutable metrics, and stable resize anchors — `packages/kanban/src/board/{viewport-scroll,viewport-metrics}.ts` ✅ (completed: 2026-08-04 07:14 CEST)
 - [x] 4.2.7 Implement bounded damage maps, a non-actionable inspection-geometry snapshot, and the Phase A pointer map with no card/action/insertion targets — `packages/kanban/src/board/{viewport-damage,viewport-inspection}.ts` ✅ (completed: 2026-08-04 07:21 CEST)
-- [ ] 4.2.8 Implement the responsive `KanbanBoard<TCard>` DSL shell and reactive query/density/theme/i18n/capability/identity bindings with one-reflow invalidation — `packages/kanban/src/board/{kanban-board,board-bindings}.ts`
+- [x] 4.2.8 Implement the responsive `KanbanBoard<TCard>` DSL shell and reactive query/density/theme/i18n/capability/identity bindings with one-reflow invalidation — `packages/kanban/src/board/{kanban-board,board-bindings}.ts` ✅ (completed: 2026-08-04 07:37 CEST)
 - [ ] 4.2.9 Implement board request-publication coordination, one-viewport composition/delegation, public request/viewport delegators, and idempotent disposal without a second read coordinator — `packages/kanban/src/board/{board-state,board-authority}.ts`
 - [ ] 4.2.10 Add the sanctioned-exception/absolute-placement guard and implementation/property tests for solver ties, cache eviction, damage/reflow, lifecycle, and out-of-clip safety — `packages/kanban/test/{layout,viewport,board-lifecycle}.impl.test.ts`
 - [ ] 4.3.1 Confirm every Phase 4 spec/E2E green; run Kanban build/typecheck/unit/E2E/dependency/JSDoc checks, deterministic 5,000/100,000 instrumentation, `yarn verify:local`, `yarn plugin:check`, and phase reviewer/auditor loop

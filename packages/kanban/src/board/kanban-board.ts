@@ -1,0 +1,187 @@
+import type { I18n } from '@jsvision/i18n';
+import { Group, Show, fixed, grow, signal } from '@jsvision/ui';
+import type { Rect } from '@jsvision/ui';
+
+import type {
+  KanbanPublicationExpectation,
+  KanbanPublicationNotice,
+  KanbanRequestDispatcher,
+} from '../contract/request.js';
+import { createEnglishKanbanI18n } from '../i18n/catalog.js';
+import type { KanbanSourceState } from '../source/states.js';
+import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
+import type { KanbanNavigatorState } from './board-bindings.js';
+import { KanbanViewport } from './kanban-viewport.js';
+import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
+import type { KanbanViewportInspection } from './viewport-inspection.js';
+
+/** Construction options for the responsive board shell and application authority seam. */
+export interface KanbanBoardOptions<TCard> extends KanbanViewportOptions<TCard> {
+  /** Optional application-owned request dispatcher; read projection never depends on it. */
+  readonly dispatcher?: KanbanRequestDispatcher;
+}
+
+/** Conditional focused-column navigator evidence. */
+export interface KanbanBoardNavigatorInspection {
+  /** Whether the one-row navigator currently consumes layout space. */
+  readonly visible: boolean;
+  /** Active source column in focused mode. */
+  readonly columnId?: string;
+  /** One-based source-order position. */
+  readonly position?: number;
+  /** Complete visible-column count. */
+  readonly total?: number;
+}
+
+/** Localized board-wide state shown by the board shell. */
+export type KanbanBoardState =
+  | { readonly kind: 'no-columns'; readonly label: string }
+  | { readonly kind: KanbanSourceState['kind']; readonly label: string };
+
+/** Detached board-level composition, identity, and viewport evidence. */
+export interface KanbanBoardInspection extends KanbanViewportInspection {
+  /** Localized accessible board label. */
+  readonly label: string;
+  /** Current localized board/source state. */
+  readonly state: KanbanBoardState;
+  /** Conditional focused-column navigator evidence. */
+  readonly navigator: KanbanBoardNavigatorInspection;
+  /** Current parent-relative viewport rectangle. */
+  readonly viewportRect: Readonly<Rect>;
+  /** Semantic one-reflow invalidation count for responsive/reactive binding changes. */
+  readonly layoutReflows: number;
+  /** Detached reconciled application identity hints. */
+  readonly identity: KanbanIdentityInput;
+  /** Accepted operations awaiting authoritative source publication. */
+  readonly pendingOperations: readonly KanbanPublicationExpectation[];
+  /** Most recent publication notice that cleared pending metadata. */
+  readonly clearedPublication?: KanbanPublicationNotice;
+}
+
+/** Copies the shared viewport options while replacing identity with the board-owned detached signal. */
+function viewportOptions<TCard>(
+  options: KanbanBoardOptions<TCard>,
+  i18n: () => I18n,
+  identity: () => KanbanIdentityInput,
+): KanbanViewportOptions<TCard> {
+  return {
+    source: options.source,
+    query: options.query,
+    card: options.card,
+    i18n,
+    identity,
+    ...(options.density === undefined ? {} : { density: options.density }),
+    ...(options.theme === undefined ? {} : { theme: options.theme }),
+    ...(options.limits === undefined ? {} : { limits: options.limits }),
+    ...(options.overscan === undefined ? {} : { overscan: options.overscan }),
+    ...(options.observe === undefined ? {} : { observe: options.observe }),
+    ...(options.capabilities === undefined ? {} : { capabilities: options.capabilities }),
+    ...(options.collapsedColumnIds === undefined ? {} : { collapsedColumnIds: options.collapsedColumnIds }),
+  };
+}
+
+/** Returns the localized visible state without exposing a source-provided error payload. */
+function boardState(i18n: I18n, source: KanbanSourceState | undefined, noColumns: boolean): KanbanBoardState {
+  if (noColumns) return Object.freeze({ kind: 'no-columns', label: i18n.t('kanban.board.no-columns') });
+  const kind = source?.kind ?? 'loading';
+  const key =
+    kind === 'error'
+      ? 'kanban.state.error'
+      : kind === 'ready'
+        ? 'kanban.board.label'
+        : kind === 'empty'
+          ? 'kanban.state.empty'
+          : `kanban.state.${kind}`;
+  return Object.freeze({ kind, label: i18n.t(key) });
+}
+
+/**
+ * Responsive DSL-composed Kanban shell that owns exactly one public viewport.
+ */
+export class KanbanBoard<TCard> extends Group {
+  /** Single exact-cell read projection owned by this board. */
+  readonly viewport: KanbanViewport<TCard>;
+  readonly #i18n: () => I18n;
+  readonly #bindings: KanbanBoardBindings<TCard>;
+  readonly #navigatorVisible = signal(false);
+  readonly #navigator: KanbanFocusedNavigatorView;
+  #layoutReflows = 0;
+  #disposed = false;
+
+  /** Builds direct conditional navigator + growing viewport composition without opening a session. */
+  constructor(options: KanbanBoardOptions<TCard>) {
+    super();
+    this.focusable = true;
+    const fallbackI18n = createEnglishKanbanI18n();
+    this.#i18n = options.i18n ?? (() => fallbackI18n);
+    const bindingOptions: KanbanViewportOptions<TCard> = {
+      ...viewportOptions(options, this.#i18n, options.identity ?? (() => Object.freeze({}))),
+      ...(options.identity === undefined ? {} : { identity: options.identity }),
+    };
+    this.#bindings = new KanbanBoardBindings(bindingOptions);
+    this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#bindings.identity()));
+    this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
+    this.setLayout({ direction: 'col' });
+    this.add(grow(this.viewport));
+    fixed(this.#navigator, 1);
+    this.addDynamic(() =>
+      Show(
+        () => this.#navigatorVisible(),
+        () => this.#navigator,
+      ),
+    );
+
+    this.onMount(() => {
+      this.bind(
+        () => this.#bindings.read(this.viewport),
+        (snapshot) => {
+          const layoutChanged = this.#bindings.apply(snapshot);
+          const navigatorVisible = this.viewport.metrics().mode === 'focused-column';
+          const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
+          if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
+          if (layoutChanged || navigatorChanged) this.#layoutReflows += 1;
+        },
+        { relayout: true },
+      );
+    });
+  }
+
+  /** Returns detached board composition and viewport evidence. */
+  inspection(): KanbanBoardInspection {
+    const viewport = this.viewport.inspection();
+    const navigator = this.viewport.focusedNavigator();
+    const i18n = this.#i18n();
+    return Object.freeze({
+      ...viewport,
+      label: i18n.t('kanban.board.label'),
+      state: boardState(i18n, this.viewport.sourceState(), viewport.visibleColumns.length === 0),
+      navigator: Object.freeze({
+        visible: navigator !== undefined,
+        ...(navigator === undefined
+          ? {}
+          : { columnId: navigator.columnId, position: navigator.position, total: navigator.total }),
+      }),
+      viewportRect: Object.freeze({
+        ...this.viewport.bounds,
+        y: 0,
+        height: Math.max(0, this.bounds.height - (navigator === undefined ? 0 : 1)),
+      }),
+      layoutReflows: this.#layoutReflows,
+      identity: this.#bindings.identity(),
+      pendingOperations: Object.freeze([]),
+    });
+  }
+
+  /** Disposes board-only bindings and its single viewport idempotently. */
+  dispose(): void {
+    if (this.#disposed) return;
+    this.#disposed = true;
+    this.viewport.dispose();
+  }
+
+  /** Resolves current localized navigator content without retaining a service replacement. */
+  #navigatorState(): KanbanNavigatorState | undefined {
+    const navigator = this.viewport.focusedNavigator();
+    return navigator === undefined ? undefined : Object.freeze({ i18n: this.#i18n(), navigator });
+  }
+}

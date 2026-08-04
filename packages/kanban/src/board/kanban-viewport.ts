@@ -1,7 +1,8 @@
 import { classicTheme } from '@jsvision/core';
+import type { CapabilityProfile } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
-import { View } from '@jsvision/ui';
-import type { DispatchEvent, DrawContext } from '@jsvision/ui';
+import { View, signal } from '@jsvision/ui';
+import type { DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
 
 import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity } from '../card/descriptor.js';
@@ -14,8 +15,10 @@ import type { KanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
+import type { KanbanFocusedColumnNavigator } from '../layout/width-solver.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
-import type { KanbanDataSource, KanbanQuery } from '../source/types.js';
+import type { KanbanSourceState } from '../source/states.js';
+import type { KanbanDataSource, KanbanIdentityChangeBatch, KanbanQuery } from '../source/types.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import { calculateKanbanViewportDamage } from './viewport-damage.js';
 import { createKanbanViewportInspection } from './viewport-inspection.js';
@@ -68,7 +71,7 @@ export interface KanbanViewportOptions<TCard> {
   /** Optional already-redacted observation sink. */
   readonly observe?: (observation: KanbanObservation) => void;
   /** Optional reactive UX capability descriptions. */
-  readonly capabilities?: () => KanbanCapabilities;
+  readonly capabilities?: () => KanbanCapabilities | CapabilityProfile;
   /** Optional reactive application-owned identity hints. */
   readonly identity?: () => KanbanIdentityInput;
   /** Optional reactive column-collapse projection applied before cursor acquisition. */
@@ -107,8 +110,11 @@ export class KanbanViewport<TCard> extends View {
   readonly #descriptorCache = new KanbanDescriptorCache(KANBAN_VIEWPORT_DESCRIPTOR_LIMIT);
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
+  readonly #metricsVersion = signal(0);
   #requestedOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
   #locatedVerticalExtent = 0;
+  #focusedColumnAnchor: string | undefined;
+  #metricsFingerprint = '';
   #revealController: AbortController | undefined;
   #disposed = false;
 
@@ -133,6 +139,10 @@ export class KanbanViewport<TCard> extends View {
           const query = options.query();
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = options.identity?.();
+          void options.i18n?.();
+          void options.density?.();
+          void options.theme?.();
+          void options.capabilities?.();
           this.#source?.replaceQuery(query);
           return this.#refresh(collapsedColumnIds, identity?.focusedColumnId);
         },
@@ -140,6 +150,7 @@ export class KanbanViewport<TCard> extends View {
           this.#snapshot = snapshot;
           this.#updateMetrics(snapshot);
         },
+        { relayout: true },
       );
       this.onCleanup(() => this.dispose());
     });
@@ -168,6 +179,17 @@ export class KanbanViewport<TCard> extends View {
       ...(this.#options.identity === undefined ? {} : { identity: this.#options.identity() }),
       ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
     });
+    const focusedCardKey = this.#options.identity?.().focusedCardKey;
+    const focusedCard = projection.cards.find((card) => card.descriptor.cardKey === focusedCardKey);
+    if (focusedCard !== undefined) this.#focusedColumnAnchor = focusedCard.columnId;
+    if (
+      focusedCardKey !== undefined &&
+      snapshot.publication.identityChanges.changes.some(
+        (change) => change.kind === 'deleted-card' && change.cardKey === focusedCardKey,
+      )
+    ) {
+      this.#focusedColumnAnchor = undefined;
+    }
     this.#damage = calculateKanbanViewportDamage({
       ...(this.#projection === undefined ? {} : { previous: this.#projection }),
       current: projection,
@@ -194,6 +216,26 @@ export class KanbanViewport<TCard> extends View {
   /** Returns an immutable exact-cell metric snapshot from the latest projection. */
   metrics(): KanbanViewportMetrics {
     return this.#metrics;
+  }
+
+  /** Internal reactive tick used by the owning board to reconcile conditional DSL chrome. */
+  metricsSignal(): Signal<number> {
+    return this.#metricsVersion;
+  }
+
+  /** Returns the current detached board-wide source state for board-level inspection. */
+  sourceState(): KanbanSourceState | undefined {
+    return this.#snapshot?.publication.state;
+  }
+
+  /** Returns current authoritative identity changes without exposing the query session. */
+  identityChanges(): KanbanIdentityChangeBatch | undefined {
+    return this.#snapshot?.publication.identityChanges;
+  }
+
+  /** Returns current focused-column navigator metadata for the owning DSL shell. */
+  focusedNavigator(): KanbanFocusedColumnNavigator | undefined {
+    return this.#snapshot?.widths.navigator;
   }
 
   /** Scrolls to an absolute partial terminal-cell target and clamps both axes to live extents. */
@@ -294,13 +336,14 @@ export class KanbanViewport<TCard> extends View {
 
   /** Performs one bounded refresh using current assigned geometry. */
   #refresh(collapsedColumnIds: readonly string[] | undefined, focusedColumnId: string | undefined) {
+    const effectiveFocusedColumnId = focusedColumnId ?? this.#focusedColumnAnchor;
     return this.#source?.refresh({
       width: this.bounds.width,
       height: this.bounds.height,
       horizontalOffset: this.#requestedOffsets.x,
       verticalOffset: this.#requestedOffsets.y,
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
-      ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
+      ...(effectiveFocusedColumnId === undefined ? {} : { focusedColumnId: effectiveFocusedColumnId }),
     });
   }
 
@@ -310,7 +353,7 @@ export class KanbanViewport<TCard> extends View {
     projection?: KanbanViewportProjection,
   ): void {
     if (snapshot === undefined) return;
-    this.#metrics = createKanbanViewportMetrics({
+    const metrics = createKanbanViewportMetrics({
       bounds: this.bounds,
       source: snapshot,
       ...(projection === undefined ? {} : { projection }),
@@ -322,6 +365,20 @@ export class KanbanViewport<TCard> extends View {
       },
       minimumVerticalExtent: this.#locatedVerticalExtent,
     });
+    this.#metrics = metrics;
     this.#requestedOffsets = this.#metrics.offsets;
+    const fingerprint = JSON.stringify([
+      metrics.assignedRect,
+      metrics.mode,
+      metrics.visibleColumnIds,
+      metrics.stickyRows,
+      metrics.generation,
+      typeof metrics.sourceRevision,
+      metrics.sourceRevision ?? null,
+    ]);
+    if (fingerprint !== this.#metricsFingerprint) {
+      this.#metricsFingerprint = fingerprint;
+      this.#metricsVersion.update((version) => (version === Number.MAX_SAFE_INTEGER ? 0 : version + 1));
+    }
   }
 }

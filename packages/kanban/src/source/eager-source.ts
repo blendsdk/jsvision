@@ -25,8 +25,10 @@ import type {
   KanbanPlacement,
   KanbanQuery,
   KanbanQuerySession,
+  KanbanColumnMeta,
+  KanbanSwimlaneMeta,
 } from './types.js';
-import { snapshotKanbanQuery } from './validation.js';
+import { snapshotKanbanColumnMeta, snapshotKanbanQuery, snapshotKanbanSwimlaneMeta } from './validation.js';
 
 /** Complete eager derivation plus authoritative deletion facts from its predecessor. */
 interface EagerDerivation<TCard> {
@@ -71,6 +73,26 @@ function snapshotApplicationRevision(value: KanbanRevision | undefined): KanbanR
   if (typeof value === 'number' && Number.isFinite(value)) return Object.is(value, -0) ? 0 : value;
   if (typeof value === 'string' && value.length > 0 && value.length <= 2_048) return value;
   throw new KanbanInvalidSourcePublicationError();
+}
+
+/** Returns whether two detached source-order metadata arrays are semantically equal. */
+function metadataEqual<T extends KanbanColumnMeta | KanbanSwimlaneMeta>(
+  left: readonly T[] | undefined,
+  right: readonly T[],
+  identity: (value: T) => string,
+): boolean {
+  if (left === undefined || left.length !== right.length) return false;
+  return left.every(
+    (value, index) =>
+      identity(value) === identity(right[index]!) &&
+      value.label === right[index]!.label &&
+      Object.is(value.revision, right[index]!.revision),
+  );
+}
+
+/** Returns whether two card snapshots preserve the same application record references and order. */
+function cardReferencesEqual<TCard>(left: readonly TCard[] | undefined, right: readonly TCard[]): boolean {
+  return left !== undefined && left.length === right.length && left.every((card, index) => card === right[index]);
 }
 
 /** Narrows one descriptor from a statically typed array to its matching data value. */
@@ -254,6 +276,10 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
   #attemptedColumns: readonly import('./types.js').KanbanColumnMeta[] | undefined;
   #attemptedSwimlanes: readonly import('./types.js').KanbanSwimlaneMeta[] | undefined;
   #attemptedApplicationRevision: KanbanRevision | undefined;
+  #lastCardsSnapshot: readonly TCard[] | undefined;
+  #lastColumnsSnapshot: readonly KanbanColumnMeta[] | undefined;
+  #lastSwimlanesSnapshot: readonly KanbanSwimlaneMeta[] | undefined;
+  #lastApplicationRevision: KanbanRevision | undefined;
   #failed = false;
   #hasValidPublication = false;
   #disposed = false;
@@ -415,6 +441,17 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       const cards = snapshotTypedArray(cardsInput, this.#limits.selectedKeys);
       const columns = snapshotTypedArray(columnsInput, this.#limits.columns);
       const swimlanes = snapshotTypedArray(swimlanesInput, this.#limits.swimlanes);
+      const columnSnapshots = Object.freeze(columns.map(snapshotKanbanColumnMeta));
+      const swimlaneSnapshots = Object.freeze(swimlanes.map(snapshotKanbanSwimlaneMeta));
+      if (
+        this.#last !== undefined &&
+        cardReferencesEqual(this.#lastCardsSnapshot, cards) &&
+        metadataEqual(this.#lastColumnsSnapshot, columnSnapshots, (column) => column.columnId) &&
+        metadataEqual(this.#lastSwimlanesSnapshot, swimlaneSnapshots, (swimlane) => swimlane.swimlaneId) &&
+        Object.is(applicationRevision, this.#lastApplicationRevision)
+      ) {
+        return this.#last;
+      }
       const index = buildEagerKanbanIndex(cards, columns, swimlanes, {
         query: this.#query,
         revision: this.#nextRevision(),
@@ -423,6 +460,10 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       });
       const next = Object.freeze({ index, identityChanges: deriveIdentityChanges(this.#last?.index, index) });
       this.#last = next;
+      this.#lastCardsSnapshot = cards;
+      this.#lastColumnsSnapshot = columnSnapshots;
+      this.#lastSwimlanesSnapshot = swimlaneSnapshots;
+      this.#lastApplicationRevision = applicationRevision;
       this.#failed = false;
       this.#hasValidPublication = true;
       return next;
