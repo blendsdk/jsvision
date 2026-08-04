@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 01:41
-> **Progress**: 0/31 tasks (0%)
+> **Last Updated**: 2026-08-04 14:01
+> **Progress**: 1/31 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -44,12 +44,17 @@ reviewable and keeps implementation behind an observed red oracle.
 
 **Lenses**: concurrent/async state; compatibility evolution
 
+> **Phase baseline tree**: `d639765bf9dd0c6abb837670a40c5eabcb5eb573`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/datagrid/src/`, `packages/datagrid/test/`,
+> `tools/i18n-translation-reviews.json`, this execution plan, and the feature traceability graph.
+
 ### Step 1.1: Specification Tests
 
 **Reference**: [07 ST-1–ST-23 and ST-27A](07-testing-strategy.md#-specification-test-cases) ·
 [03-01](03-01-row-edit-sessions.md) · [03-02](03-02-rollback-transaction-and-input.md)
 
-- [ ] 1.1.1 [spec-author] Write row-session and integration oracles for ST-1–ST-9C, ST-11, ST-16–ST-17, and ST-20 — `packages/datagrid/test/row-revert.spec.test.ts`
+- [x] 1.1.1 [spec-author] Write row-session and integration oracles for ST-1–ST-9C, ST-11, ST-16–ST-17, and ST-20 — `packages/datagrid/test/row-revert.spec.test.ts` ✅ (completed: 2026-08-04 14:01)
 - [ ] 1.1.2 [spec-author] Write transaction, keymap, locale, security, and public source API oracles for ST-10, ST-12–ST-15, ST-18–ST-19, ST-21–ST-23, and ST-27A — `packages/datagrid/test/row-revert-transaction.spec.test.ts`, `packages/datagrid/test/keymap.spec.test.ts`, `packages/datagrid/test/security.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts`, existing public API specification gates
 - [ ] 1.1.3 Run ST-1–ST-23 plus ST-27A and record the expected missing-contract failures before implementation (red phase) — `packages/datagrid/test`, public API checks
 

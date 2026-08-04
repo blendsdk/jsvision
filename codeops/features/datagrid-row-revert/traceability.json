@@ -193,21 +193,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         }
@@ -235,10 +235,11 @@
     {
       "edges": [],
       "evidence": [
-        "Execution phase: complete ST-1 through ST-23 row-recovery vertical slice"
+        "Execution phase: complete ST-1 through ST-23 row-recovery vertical slice",
+        "summary:Phase 1 execution started after the execution-readiness gate passed; specification-first work is in progress."
       ],
       "id": "TASK-PHASE-1",
-      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -249,7 +250,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "implemented",
       "title": "Execute complete row-recovery behavior phase",
       "type": "task",
       "validations": []
@@ -260,7 +261,7 @@
         "Execution phase: showcase and docs-site teaching"
       ],
       "id": "TASK-PHASE-2",
-      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -282,7 +283,7 @@
         "Execution phase: package, API, skill, and plugin distribution"
       ],
       "id": "TASK-PHASE-3",
-      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -366,21 +367,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "revision": "sha256:053666a5a82b1b422f4f5c3f85532e18b56a1859e9f2be976d05dccbfc0b12aa",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
