@@ -36,7 +36,7 @@ import { FilterPopup } from './filter-popup.js';
 import type { FilterPopupContext } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect, EditorOverlay, PopupCatcher } from './overlay.js';
 import { devWarn } from './dev.js';
-import type { OnCommit, BeforeSave } from './commit.js';
+import type { OnCommit, BeforeSave, OnRevertRow } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { mergeKeymap } from './keymap.js';
 import type { GridKeymap } from './keymap.js';
@@ -101,6 +101,28 @@ export interface EditableDataGridOptions<T> {
   readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
+  /**
+   * Atomic persistence sink for restoring every committed cell in a trapped row session.
+   *
+   * The callback receives the original row after all session baselines are applied and one immutable
+   * changed-cell list in first-commit order. Return `false`, throw, or reject to compensate the row to
+   * its committed pre-revert values and keep the session available for retry.
+   *
+   * When this callback is absent, a grid with no `beforeSave` or `onCommit` may revert locally. A grid
+   * with either per-cell persistence hook refuses rollback without this row-level transaction seam so
+   * the UI cannot diverge from host persistence.
+   *
+   * @example
+   * ```ts
+   * const grid = new EditableDataGrid({
+   *   columns,
+   *   source,
+   *   validateRow,
+   *   onRevertRow: async ({ rowKey, cells }) => persistRowRevert(rowKey, cells),
+   * });
+   * ```
+   */
+  readonly onRevertRow?: OnRevertRow<T>;
   /**
    * A per-cell gate that runs **above** `onCommit`: after the optimistic in-memory write and before
    * `onCommit`. Return `true` to proceed to `onCommit`, or `false`/a rejected promise to veto — a veto

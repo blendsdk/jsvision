@@ -141,7 +141,7 @@ export type { ValueListConfig } from './value-list-popup.js';
 // and skips `onCommit`), and the `commitCell` primitive that applies an edit immediately and reverts it
 // on veto.
 export { commitCell } from './commit.js';
-export type { CellCommit, OnCommit, BeforeSave } from './commit.js';
+export type { CellCommit, OnCommit, BeforeSave, RowRevertCell, RowRevert, OnRevertRow } from './commit.js';
 
 // Validation surfacing — the reactive invalid-cell registry (`createErrorRegistry`, the twin of
 // `createDirtyRegistry`: a message per blocked cell plus one active-message channel for the band) and
