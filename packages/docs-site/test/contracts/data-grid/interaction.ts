@@ -189,13 +189,35 @@ export const VALIDATION_CONTRACT = dataGridContract(
       'run-save-gates',
       ['row-validation', 'before-save'],
       [{ probe: 'validation-status', operator: 'equals', value: 'valid' }],
-      [
-        key('enter'),
-        { kind: 'key', key: 'a', modifiers: ['Ctrl'] },
-        { kind: 'paste', text: 'Ada Lovelace' },
-        key('enter'),
-      ],
+      [key('enter'), { kind: 'key', key: 'a', modifiers: ['Ctrl'] }, { kind: 'paste', text: '2' }, key('enter')],
       [{ probe: 'validation-status', operator: 'contains', value: 'row accepted · save accepted' }],
+    ),
+    gridCase(
+      'hold-revert-pending-and-block-grid-input',
+      ['row-revert-trap', 'row-revert-pending-settled'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [alt('p'), key('9'), key('tab'), key('arrowdown'), key('escape'), key('arrowdown')],
+      [
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:end' },
+        { probe: 'editing-state', operator: 'equals', value: 'idle' },
+        { probe: 'selected-row-keys', operator: 'equals', value: '' },
+        { probe: 'validation-status', operator: 'contains', value: 'Reverting row' },
+        { probe: 'status-text', operator: 'contains', value: 'controls temporarily inert' },
+      ],
+    ),
+    gridCase(
+      'settle-held-revert-and-release-navigation',
+      ['row-revert-pending-settled', 'row-revert-success', 'row-revert-release'],
+      [{ probe: 'cursor-cell', operator: 'equals', value: 'r1:start' }],
+      [alt('p'), key('9'), key('arrowdown'), key('escape'), alt('r'), key('arrowdown')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r2:start' },
+      ],
     ),
     gridCase(
       'restore-trapped-row-and-release-navigation',
@@ -209,7 +231,7 @@ export const VALIDATION_CONTRACT = dataGridContract(
       [
         { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
         { probe: 'validation-status', operator: 'equals', value: 'valid' },
-        { probe: 'cursor-cell', operator: 'equals', value: 'r2:end' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r2:start' },
         { probe: 'status-text', operator: 'contains', value: 'trapped → pending → restored · row released' },
       ],
     ),

@@ -1,5 +1,6 @@
 import { Button, DataGrid, Group, Input, Text, at, createKeymap, signal } from '@jsvision/ui';
 import type { Application, Column, DispatchEvent, Keymap, Signal, SortState } from '@jsvision/ui';
+import type { I18n } from '@jsvision/i18n';
 import {
   EditableDataGrid,
   column,
@@ -58,6 +59,8 @@ export interface DataGridLabDefinition {
   readonly title: string;
   /** One-line learning objective above the grid. */
   readonly objective: string;
+  /** Optional locale service used by layout tests and translated teaching variants. */
+  readonly i18n?: I18n;
 }
 
 interface LabAction {
@@ -72,11 +75,17 @@ const CONTENT_HEIGHT = 16;
 const GRID_WIDTH = 50;
 const GRID_HEIGHT = 10;
 const VALIDATION_VETO_COMMAND = 'data-grid.validation.arm-veto';
-const validationVetoKeymap = createKeymap({ 'alt+v': VALIDATION_VETO_COMMAND });
+const VALIDATION_HOLD_COMMAND = 'data-grid.validation.hold-revert';
+const VALIDATION_RELEASE_COMMAND = 'data-grid.validation.release-revert';
+const validationControlKeymap = createKeymap({
+  'alt+v': VALIDATION_VETO_COMMAND,
+  'alt+p': VALIDATION_HOLD_COMMAND,
+  'alt+r': VALIDATION_RELEASE_COMMAND,
+});
 
 /** Add the validation veto chord without losing the Data Grid's application-level Tab traversal. */
 const validationKeymap: Keymap = {
-  lookup: (event) => validationVetoKeymap.lookup(event) ?? gridKeymap.lookup(event),
+  lookup: (event) => validationControlKeymap.lookup(event) ?? gridKeymap.lookup(event),
 };
 
 /** Small public-seam custom editor used by the rating laboratory. */
@@ -153,18 +162,16 @@ function createColumns(scenario: DataGridLabScenario): GridColumn<DataGridLabRow
   });
   if (scenario === 'validation') {
     const interval = (id: 'start' | 'end', title: string) =>
-      column<DataGridLabRow, string>({
+      column<DataGridLabRow, number>({
         id,
         title,
-        value: (row) => String(row[id] ?? 0),
-        parse: (text) => text,
-        set: (row, text) => {
-          const value = Number(text);
-          // The shared save-gate exercise also submits non-numeric text through the first column. Keep
-          // the interval unchanged in that compatibility path while still running the public save gate.
-          if (Number.isFinite(value)) row[id] = value;
+        value: (row) => row[id] ?? 0,
+        parse: (text) => Number(text),
+        set: (row, value) => {
+          row[id] = value;
         },
-        editor: { kind: 'text' },
+        validate: (value) => (Number.isFinite(value) ? null : `${title} must be a number`),
+        editor: { kind: 'integer' },
         width: 10,
       });
     return [interval('start', 'Start'), interval('end', 'End'), amount];
@@ -791,11 +798,14 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
   const sourceState = createSource(definition.scenario, rows);
   const personalizationState = signal('closed');
   const vetoNextRevert = signal(false);
+  const holdNextRevert = signal(false);
+  let releasePendingRevert: (() => void) | undefined;
   const personalizationStore = createMemoryVariantStore();
   let nextKey = 100;
   const grid = new EditableDataGrid<DataGridLabRow>({
     columns,
     source: sourceState.source,
+    i18n: definition.i18n,
     zebra: true,
     quickFilter: definition.scenario === 'quick-filter',
     checkboxColumn: definition.scenario === 'selection-navigation',
@@ -831,7 +841,17 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
       definition.scenario === 'validation'
         ? async () => {
             status.set('trapped → pending · controls temporarily inert');
-            await Promise.resolve();
+            if (holdNextRevert()) {
+              holdNextRevert.set(false);
+              await new Promise<void>((resolve) => {
+                releasePendingRevert = () => {
+                  releasePendingRevert = undefined;
+                  resolve();
+                };
+              });
+            } else {
+              await Promise.resolve();
+            }
             if (vetoNextRevert()) {
               vetoNextRevert.set(false);
               status.set('trapped → pending → vetoed · Escape retries');
@@ -857,6 +877,19 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
     // A successful recovery leaves the cursor on the gate's End field. Re-arm the exercise from Start
     // so the same live laboratory can demonstrate the veto path without rebuilding the application.
     void grid.prevCell();
+  });
+  const removeHoldCommand = app.loop.onCommand(VALIDATION_HOLD_COMMAND, () => {
+    if (definition.scenario !== 'validation' || releasePendingRevert !== undefined) return;
+    holdNextRevert.set(true);
+    status.set('Alt+P hold armed · next Escape remains pending until Alt+R');
+  });
+  const removeReleaseCommand = app.loop.onCommand(VALIDATION_RELEASE_COMMAND, () => {
+    if (definition.scenario !== 'validation') return;
+    if (releasePendingRevert === undefined) {
+      status.set('No held revert · use Alt+P before Escape');
+      return;
+    }
+    releasePendingRevert();
   });
   const openPersonalization = (): void => {
     personalizationState.set('open');
@@ -929,10 +962,21 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
     });
   }
   const actionButtons = addActions(content, actions);
-  const state = new Text(() => `${definition.scenario === 'validation' ? 'Status' : 'State'}: ${status()}`);
+  const state = new Text(() => {
+    if (definition.scenario !== 'validation') return `State: ${status()}`;
+    const message = grid.activeMessage();
+    if (message !== null && status().startsWith('trapped ·')) {
+      const trapped =
+        definition.i18n?.t('datagrid.validation.row-trapped', { params: { message } }) ??
+        `${message} · Esc reverts row changes`;
+      return `Status: ${trapped}`;
+    }
+    if (message !== null) return `Status: ${message} · ${status()}`;
+    return `Status: ${status()}`;
+  });
   const instructions = new Text(
     definition.scenario === 'validation'
-      ? 'Enter edits · Tab commits · ↑/↓ tests leave · Esc reverts · Alt+V veto'
+      ? 'Enter/Tab edit · ↑↓ leave · Esc revert · Alt+P/R/V hold/go/veto'
       : 'Click ↕ to restore · drag corners after restore · Alt+hotkeys act',
   );
   content.add(at(state, 0, 13, CONTENT_WIDTH, 2));
@@ -960,6 +1004,9 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
   dialog.onMount(() => {
     dialog.onCleanup(uninstallNavigation);
     dialog.onCleanup(removeVetoCommand);
+    dialog.onCleanup(removeHoldCommand);
+    dialog.onCleanup(removeReleaseCommand);
+    dialog.onCleanup(() => releasePendingRevert?.());
   });
   app.desktop.addWindow(dialog);
   app.loop.focusView(grid.rows);

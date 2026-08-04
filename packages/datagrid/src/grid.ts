@@ -123,6 +123,7 @@ export interface EditableDataGridOptions<T> {
    *   id: 'start',
    *   title: 'Start',
    *   value: (row: Line) => row.start,
+   *   parse: (text) => Number(text),
    *   set: (row, value) => { row.start = value; },
    * })];
    * const grid = new EditableDataGrid<Line>({

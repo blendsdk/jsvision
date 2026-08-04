@@ -1,7 +1,7 @@
 ## Ambiguity Register: Data Grid Escape-to-Revert
 
-> **Status**: ✅ GATE PASSED — all 14 items resolved
-> **Last Updated**: 2026-08-04 01:41
+> **Status**: ✅ GATE PASSED — all 15 items resolved
+> **Last Updated**: 2026-08-04 16:31
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|----------|-----------------|-------------------|---------------|--------|
@@ -19,6 +19,7 @@
 | 12 | Non-functional gaps | What resource and compatibility boundaries apply? | Unbounded history / active-session journal; breaking keymap / additive action | Retain only active sessions and changed columns, clean them deterministically, add a remappable `revertRow` action with default plain Escape, preserve editor precedence, and keep existing behavior unchanged for untouched/read-only/empty grids. | ✅ Resolved |
 | 13 | UX & presentation | What exact package-owned messages and composition rule ship? | Concatenate an English hint / localized full template plus state messages / separate multi-row band | Use localized keys with exact English text: trapped template ``${message} · Esc reverts row changes``; pending `Reverting row…`; failure `Could not revert row changes`; unavailable `Row changes cannot be reverted`. The trapped template owns locale ordering and the caller message remains a parameter. | ✅ Resolved |
 | 14 | Naming & terminology | What exact exported callback types and payload fields ship? | `RowRevertChange` with `current`/`baseline` / `RowRevert` with commit-aligned `value`/`previous` / source-level rollback API | Export `RowRevertCell`, `RowRevert<T>`, and `OnRevertRow<T>`. `RowRevert` contains `rowKey`, the already-restored `row`, and a frozen `cells` list; each cell contains `columnId`, `value` (restored baseline), and `previous` (committed value before revert), matching `CellCommit` timing and vocabulary. | ✅ Resolved |
+| 15 | Runtime quality correction | How should the docs lab prove pending input ownership and translated feedback without synthetic state? | Deterministic deferred transaction over the real grid / timing-based microtask observation / waive the showcase claim | Add lab-only hold/release commands around the real `onRevertRow` promise, bind probes to public grid state, use typed numeric editors, and render one official longer locale through compact/maximized recovery states. Correct the contradictory save-gate fixture to submit a numeric Start value. | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -49,3 +50,11 @@ exposed to the event loop.
 **AR-13:** User confirmed the exact localized strings and parameterized trapped-message composition on 2026-08-03.
 
 **AR-14:** User confirmed the exact public type names and commit-aligned payload vocabulary on 2026-08-03.
+
+**AR-15 (runtime, auto-design):** Independent Phase 2 review showed that a one-microtask callback and
+event-predicted cursor could not prove the documented pending-input contract. The deterministic
+deferred seam is confined to the teaching fixture and drives the same public callback and command
+paths as the live example. Timing sleeps and waiver were rejected because neither provides
+observable evidence. The save-gate oracle's non-numeric Start edit contradicted the column's typed
+model, so its input is corrected to a valid numeric value without changing the asserted save-gate
+behavior.

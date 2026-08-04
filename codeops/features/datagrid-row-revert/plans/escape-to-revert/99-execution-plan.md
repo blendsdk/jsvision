@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 16:23
+> **Last Updated**: 2026-08-04 16:41
 > **Progress**: 24/31 tasks (77%)
 > **CodeOps Artifact Schema**: 1
 
@@ -113,8 +113,10 @@ failure and stale-settlement hardening; focused package gates green.
 > **Scope mode**: `strict`
 > **Expected modification set**: `packages/examples/datagrid-showcase/`, `packages/examples/test/`,
 > `packages/docs-site/examples/data-grid/`, `packages/docs-site/src/example-fixtures/data-grid/`,
-> `packages/docs-site/components/data-grid/`, `packages/docs-site/test/`, this execution plan, and
-> the feature traceability graph.
+> `packages/docs-site/components/data-grid/`, `packages/docs-site/test/`, the public API examples in
+> `packages/datagrid/src/commit.ts` and `packages/datagrid/src/grid.ts`, this plan's quality evidence,
+> this execution plan, and the feature traceability graph. The Data Grid source files are limited to
+> verification-only JSDoc corrections discovered when compiling the new public examples.
 
 ### Step 2.1: Specification Tests
 
@@ -154,6 +156,13 @@ failure and stale-settlement hardening; focused package gates green.
 
 **Deliverables**: polished standalone and Template1 teaching workflows; verified interaction,
 layout, accessibility cues, and manual 80×24 evidence.
+
+> **Phase 2 quality gate (2026-08-04):** Independent correctness and concurrency/security review
+> findings were corrected without waiver. The deterministic lab now exposes a real pending
+> transaction through public grid state, uses typed numeric editors, renders official German
+> recovery feedback through responsive window states, and documents exact session invalidation.
+> Both reviewers returned clean closure on the permitted one-time fix re-review. Evidence:
+> [09-phase-2-quality-review.md](09-phase-2-quality-review.md).
 
 **Verify**: `yarn workspace @jsvision/examples typecheck && yarn workspace @jsvision/examples test && yarn workspace @jsvision/docs-site typecheck && yarn workspace @jsvision/docs-site test && yarn docs:build && yarn verify:local`
 

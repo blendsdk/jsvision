@@ -193,21 +193,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         }
@@ -247,7 +247,7 @@
         "verificationEvidence:Data Grid 767/767 tests, typecheck, JSDoc, locale completeness, 45 digest-bound translation reviews, and yarn verify:local passed."
       ],
       "id": "TASK-PHASE-1",
-      "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+      "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -267,10 +267,14 @@
       "edges": [],
       "evidence": [
         "Execution phase: showcase and docs-site teaching",
-        "summary:Phase 2 specification-first execution started after Phase 1 quality verification."
+        "lifecycle:Phase 2 tasks and post-phase quality loop completed.",
+        "qualityArtifact:codeops/features/datagrid-row-revert/plans/escape-to-revert/09-phase-2-quality-review.md",
+        "reviewEvidence:Independent correctness and concurrency/security findings were corrected without waiver; both reviewers returned clean closure on the single fix re-review.",
+        "summary:Phase 2 specification-first execution started after Phase 1 quality verification.",
+        "verificationEvidence:Focused docs 94/94, examples product 400/400, docs product 1799/1799, both typechecks, and Data Grid JSDoc passed; Phase 3 distribution gates remain intentionally red."
       ],
       "id": "TASK-PHASE-2",
-      "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+      "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -281,7 +285,7 @@
           }
         }
       ],
-      "status": "implemented",
+      "status": "verified",
       "title": "Execute showcase and docs-site teaching phase",
       "type": "task",
       "validations": []
@@ -292,7 +296,7 @@
         "Execution phase: package, API, skill, and plugin distribution"
       ],
       "id": "TASK-PHASE-3",
-      "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+      "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -311,7 +315,7 @@
     {
       "edges": [],
       "id": "DEC-CONTRACT",
-      "revision": "sha256:b82c2215b80412a9024e3366bd8edcfecc8c4e57d79d475f77180c24aa3f9dc1",
+      "revision": "sha256:2c10d0f9b1bddf5887f8a17d6c43fdf2243ecb23e12c894f19235ff6dfbf55d7",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -323,7 +327,7 @@
         }
       ],
       "status": "approved",
-      "title": "Approved Escape-to-revert scope and design decisions AR-1 through AR-14",
+      "title": "Approved Escape-to-revert scope and design decisions AR-1 through AR-15",
       "type": "decision",
       "validations": []
     },
@@ -376,21 +380,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:a82138b643f543c2e1b1eb1f1efec6579a90b501bbdc535c2fceffb3506a9cfb",
+          "revision": "sha256:cfdd56244ee55866f114c25890330ad3cf58a4e4af82c3026f23fabec9b29189",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         },

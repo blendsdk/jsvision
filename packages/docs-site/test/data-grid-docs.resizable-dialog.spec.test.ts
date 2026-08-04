@@ -2,8 +2,11 @@
  * Specification coverage for the experimental resizable Data Grid laboratory.
  */
 import { EditableDataGrid } from '@jsvision/datagrid';
+import { datagridDe } from '@jsvision/datagrid/locales/de';
+import { createI18n } from '@jsvision/i18n';
 import { DataGrid, createRoot } from '@jsvision/ui';
 import { expect, test } from 'vitest';
+import type { ExampleDefinition } from '../examples/_contract.js';
 import masterDetail from '../examples/data-grid/master-detail.js';
 import quickStart from '../examples/data-grid/quick-start.js';
 import validation from '../examples/data-grid/validation.js';
@@ -16,8 +19,21 @@ import {
   viewsIn,
 } from './example-lab-harness.js';
 import { DataGridLabProbe } from '../src/example-fixtures/data-grid/probe.js';
+import { buildDataGridLab } from '../src/example-fixtures/data-grid/lab.js';
 
 const settleValidation = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+const germanValidation: ExampleDefinition = {
+  title: 'Validation and Escape Recovery',
+  blurb: 'Exercise official translated trap, pending, and failure feedback.',
+  build: (ctx) =>
+    buildDataGridLab(ctx, {
+      scenario: 'validation',
+      title: 'Validation & Recovery',
+      objective: 'Commit Start ≥ End, test row-leave, then use Escape to restore the session baseline.',
+      i18n: createI18n({ locale: 'de', catalogs: [datagridDe] }),
+    }),
+};
 
 async function makeValidationRowInvalid(app: ReturnType<typeof buildLabExample>['app']): Promise<void> {
   for (const action of [
@@ -166,8 +182,8 @@ test('validation lab preserves Classic reflow and complete recovery instructions
       expect(dialog.isZoomed()).toBe(true);
       const maximizedGrid = { ...grid.bounds };
       let text = frameText(app);
-      expect(text).toContain('Enter edits · Tab commits · ↑/↓ tests leave · Esc reverts');
-      expect(text).toContain('Alt+V veto');
+      expect(text).toContain('Enter/Tab edit · ↑↓ leave · Esc revert');
+      expect(text).toContain('Alt+P/R/V hold/go/veto');
       expect(text).toContain('Status: ready');
 
       dialog.zoom();
@@ -176,8 +192,8 @@ test('validation lab preserves Classic reflow and complete recovery instructions
       expect(grid.bounds.width).toBeLessThan(maximizedGrid.width);
       expect(grid.bounds.height).toBeLessThan(maximizedGrid.height);
       text = frameText(app);
-      expect(text).toContain('Esc reverts');
-      expect(text).toContain('Alt+V veto');
+      expect(text).toContain('Esc revert');
+      expect(text).toContain('Alt+P/R/V hold/go/veto');
       expect(text).toContain('Status: ready');
 
       dialog.zoom();
@@ -221,7 +237,52 @@ test('validation lab keeps keyboard recovery and non-color success or veto feedb
       expect(probe.read('status-text')).toContain('vetoed · Escape retries');
       const failure = frameText(app);
       expect(failure).toContain('Could not revert row changes');
-      expect(failure).toContain('Escape retries');
+      expect(failure).toContain('vetoed · Escape');
+      expect(failure).toContain('retries');
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});
+
+test('validation lab keeps longer official translated recovery feedback unclipped across window states', async () => {
+  await createRoot(async (dispose) => {
+    const { app, dialog } = buildLabExample('data-grid/validation', germanValidation, {
+      viewport: { width: 80, height: 24 },
+    });
+    try {
+      const grid = viewsIn(dialog).find((view): view is EditableDataGrid<unknown> => view instanceof EditableDataGrid);
+      if (grid === undefined) throw new Error('translated validation lab requires a real grid');
+      app.loop.focusView(grid.rows);
+
+      dispatchExampleAction(app, { kind: 'key', key: 'p', modifiers: ['Alt'] });
+      await makeValidationRowInvalid(app);
+      expect(frameText(app).replaceAll(/\s+/gu, ' ')).toContain(
+        'End must be after Start · Esc macht Zeilenänderungen rückgängig',
+      );
+      dispatchExampleAction(app, { kind: 'key', key: 'escape', modifiers: [] });
+      await settleValidation();
+      expect(frameText(app)).toContain('Zeilenänderungen werden rückgängig gemacht…');
+
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      collectTemplate1Evidence(app, dialog, { startup: 'compact' });
+      expect(frameText(app)).toContain('Zeilenänderungen werden rückgängig gemacht…');
+
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+      expect(frameText(app)).toContain('Zeilenänderungen werden rückgängig gemacht…');
+
+      dispatchExampleAction(app, { kind: 'key', key: 'r', modifiers: ['Alt'] });
+      await settleValidation();
+      dispatchExampleAction(app, { kind: 'key', key: 'v', modifiers: ['Alt'] });
+      app.loop.focusView(grid.rows);
+      await makeValidationRowInvalid(app);
+      dispatchExampleAction(app, { kind: 'key', key: 'escape', modifiers: [] });
+      await settleValidation();
+      expect(frameText(app)).toContain('Zeilenänderungen konnten nicht rückgängig gemacht werden');
     } finally {
       app.loop.dispose();
       dispose();

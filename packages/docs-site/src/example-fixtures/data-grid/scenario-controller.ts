@@ -127,7 +127,7 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
   let navigationStep = 0;
   let lifecycleStep = 0;
   let exportText = '';
-  let validationCursor = 'r1:start';
+  let validationColumn = 'start';
   const probe = new DataGridLabProbe(initialValues(scenario), (event) => {
     const chord = shortcut(event);
     if (event.type === 'paste') {
@@ -148,14 +148,11 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
         return true;
       }
       if (chord === '9') {
-        validationCursor = 'r1:start';
+        validationColumn = 'start';
       } else if (chord === 'tab') {
-        validationCursor = 'r1:end';
+        validationColumn = 'end';
       } else if (chord === 'down') {
-        if (status().includes('restored')) {
-          validationCursor = 'r2:end';
-        } else {
-          validationCursor = 'r1:end';
+        if (!status().includes('restored') && !status().includes('pending')) {
           status.set('trapped · End must be after Start · Esc reverts row changes');
         }
       }
@@ -396,7 +393,11 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
   }
   if (scenario === 'validation') {
     probe.bindProbe('cell-text', () => `Start ${String(rows()[0]?.start ?? '')} · End ${String(rows()[0]?.end ?? '')}`);
-    probe.bindProbe('cursor-cell', () => (grid.activeMessage() === null ? validationCursor : 'r1:end'));
+    probe.bindProbe(
+      'cursor-cell',
+      () => `${String(grid.focusedKey() ?? 'none')}:${grid.activeMessage() === null ? validationColumn : 'end'}`,
+    );
+    probe.bindProbe('selected-row-keys', () => [...grid.selectedKeys()].map(String).join(','));
     probe.bindProbe('validation-status', () => {
       const message = grid.activeMessage();
       if (message !== null) return message;

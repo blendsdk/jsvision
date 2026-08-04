@@ -64,3 +64,47 @@ test('validation Alt+V command wins over Classic View menu and leaves a retryabl
     }
   });
 });
+
+test('held row revert exposes real pending state and blocks editing, navigation, selection, and filters', async () => {
+  await createRoot(async (dispose) => {
+    const { app, dialog } = buildLabExample('data-grid/validation', validation);
+    try {
+      const grid = viewsIn(dialog).find((view): view is EditableDataGrid<unknown> => view instanceof EditableDataGrid);
+      const probe = viewsIn(dialog).find((view): view is DataGridLabProbe => view instanceof DataGridLabProbe);
+      if (grid === undefined || probe === undefined) throw new Error('validation laboratory wiring is incomplete');
+
+      dispatchExampleAction(app, { kind: 'key', key: 'p', modifiers: ['Alt'] });
+      app.loop.focusView(grid.rows);
+      await trapFirstRow(app);
+      dispatchExampleAction(app, { kind: 'key', key: 'escape', modifiers: [] });
+      await settle();
+
+      expect(grid.activeMessage()).toBe('Reverting row…');
+      expect(grid.focusedKey()).toBe('r1');
+      expect(probe.read('status-text')).toContain('controls temporarily inert');
+
+      for (const action of [
+        { kind: 'key' as const, key: 'arrowdown', modifiers: [] },
+        { kind: 'key' as const, key: '4', modifiers: [] },
+        { kind: 'key' as const, key: 'space', modifiers: [] },
+        { kind: 'key' as const, key: 'arrowdown', modifiers: ['Alt' as const] },
+      ]) {
+        dispatchExampleAction(app, action);
+        await settle();
+      }
+
+      expect(grid.focusedKey()).toBe('r1');
+      expect(grid.rows.isEditing()).toBe(false);
+      expect([...grid.selectedKeys()]).toEqual([]);
+      expect(grid.popupOverlay.children).toHaveLength(0);
+
+      dispatchExampleAction(app, { kind: 'key', key: 'r', modifiers: ['Alt'] });
+      await settle();
+      expect(grid.activeMessage()).toBeNull();
+      expect(grid.displayedRows()[0]).toMatchObject({ start: 1, end: 9 });
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});

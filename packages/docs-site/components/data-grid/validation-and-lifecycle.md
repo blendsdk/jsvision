@@ -62,9 +62,10 @@ wide sizes. Its text status distinguishes restored and vetoed outcomes without r
 | The row is untouched, valid, or already released | Falls through; no row rollback starts              |
 | A row revert is pending                          | Is consumed with other grid input until settlement |
 
-Correcting the row and leaving successfully releases the session. Sorting or filtering may keep the
-same key-and-row-object session alive, but replacing, deleting, refreshing, or losing ownership of
-that row invalidates it. A late asynchronous result cannot attach to a replacement row.
+Correcting the row and leaving successfully releases the session. Sorting, filtering, or
+republishing the same key-and-row-object collection may keep the session alive, but replacing or
+deleting that row, publishing a collection that omits it, or losing ownership invalidates the
+session. A late asynchronous result cannot attach to a replacement row.
 
 ## Persist an atomic row revert
 
