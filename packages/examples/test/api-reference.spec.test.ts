@@ -27,8 +27,9 @@ const DATAGRID = entry('../../datagrid/src/index.ts');
 const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
+const KANBAN = entry('../../kanban/src/index.ts');
 
-// Generate once (each generation runs the TypeScript compiler over six barrels) and reuse.
+// Generate once (each generation runs the TypeScript compiler over every registered barrel) and reuse.
 const generated = generateApiDocs();
 
 // ST-A1 — coverage: every public export across the three barrels is documented, and nothing extra.
@@ -42,6 +43,7 @@ test('ST-A1: the API reference covers exactly the public barrel surface', () => 
     ...barrelExports(CODE_EDITOR),
     ...barrelExports(WEB),
     ...barrelExports(FILES),
+    ...barrelExports(KANBAN),
   ]);
   expect([...surface].filter((n) => !documented.has(n))).toEqual([]); // nothing missing
   expect([...documented].filter((n) => !surface.has(n))).toEqual([]); // nothing invented

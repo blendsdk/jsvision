@@ -158,7 +158,12 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
 >
 > **Reference**: 03-06; RD01-AC02, AC10; PAR-15–PAR-18, PAR-24
 
-- [ ] 5.1.1 `[spec-author]` Extend immutable docs package/install/API inventory specifications for Kanban before registry changes — `packages/docs-site/test/{install-and-packages-guide,api-barrel-exports}.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`
+- [x] 5.1.1 `[spec-author]` Extend immutable docs package/install/API inventory specifications for Kanban before registry changes — `packages/docs-site/test/{install-and-packages-guide,api-barrel-exports}.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts` ✅ (completed: 2026-08-04 09:12 CEST)
+  - Red evidence: the two docs-site specifications report 3 expected failures with 8 passing
+    assertions: the API registry omits Kanban, the install course omits its exact package command,
+    and the isolated teaching consumer cannot resolve it. The examples API oracle reports one
+    expected failure with 6 passing assertions because all 229 Kanban barrel exports are absent
+    from generated API coverage.
 - [ ] 5.1.2 `[spec-author]` Add the immutable complete ST-R01-02/10 tarball oracle for main/testing plus all ten locale runtime/type entry points and extend official locale registration/digest-review specifications before wrapper/registry changes — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
 - [ ] 5.1.3 `[spec-author]` Extend immutable canonical API/source-impact/generated-parity specifications before plugin changes — `packages/examples/test/api-reference.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
 - [ ] 5.1.4 Run Phase 5 distribution/docs/i18n/plugin specifications and record expected red failures before registry/documentation changes

@@ -28,6 +28,7 @@ const PUBLIC_PACKAGES = [
   '@jsvision/files',
   '@jsvision/datagrid',
   '@jsvision/code-editor',
+  '@jsvision/kanban',
 ] as const;
 
 interface GuideCatalog {
@@ -143,6 +144,7 @@ describe('Install & packages course contract', () => {
     expect(hasExactInstallCommand(['@jsvision/ui', '@jsvision/files'])).toBe(true);
     expect(hasExactInstallCommand(['@jsvision/ui', '@jsvision/datagrid'])).toBe(true);
     expect(hasExactInstallCommand(['@jsvision/ui', '@jsvision/code-editor'])).toBe(true);
+    expect(hasExactInstallCommand(['@jsvision/ui', '@jsvision/kanban'])).toBe(true);
 
     for (const packageName of PUBLIC_PACKAGES) expect(GUIDE).toContain(`\`${packageName}\``);
     expect(GUIDE).toMatch(
@@ -221,8 +223,9 @@ import { FileDialog } from '@jsvision/files';
 import { EditableDataGrid } from '@jsvision/datagrid';
 import { CodeEditor } from '@jsvision/code-editor';
 import { typescriptLanguageId } from '@jsvision/code-editor/languages/typescript';
+import { KanbanBoard } from '@jsvision/kanban';
 import { helper } from './helper.js';
-void [createApplication, createI18n, createForm, FileDialog, EditableDataGrid, CodeEditor];
+void [createApplication, createI18n, createForm, FileDialog, EditableDataGrid, CodeEditor, KanbanBoard];
 void typescriptLanguageId;
 void helper;
 `);
