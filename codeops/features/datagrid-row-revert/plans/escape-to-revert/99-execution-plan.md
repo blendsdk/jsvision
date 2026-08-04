@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 16:04
-> **Progress**: 20/31 tasks (65%)
+> **Last Updated**: 2026-08-04 16:08
+> **Progress**: 21/31 tasks (68%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -134,7 +134,7 @@ failure and stale-settlement hardening; focused package gates green.
 
 - [x] 2.2.1 Upgrade the standalone row-gate story with real success/veto transactions, visible feedback, and keyboard instructions — `packages/examples/datagrid-showcase/stories/validation-lifecycle/row-gate.story.ts`, `packages/examples/datagrid-showcase/shell.ts` ✅ (completed: 2026-08-04 15:54)
 - [x] 2.2.2 Extend the existing docs validation lab scenario and probes for trapped, pending, restored, released, and failed states — `packages/docs-site/src/example-fixtures/data-grid/data.ts`, `packages/docs-site/src/example-fixtures/data-grid/lab.ts`, `packages/docs-site/src/example-fixtures/data-grid/scenario-controller.ts`, `packages/docs-site/test/example-lab-harness.ts` ✅ (completed: 2026-08-04 16:04)
-- [ ] 2.2.3 Update validation example metadata and the teaching page with the real Escape/persistence workflow and generated API links — `packages/docs-site/examples/data-grid/validation.ts`, `packages/docs-site/components/data-grid/validation-and-lifecycle.md`
+- [x] 2.2.3 Update validation example metadata and the teaching page with the real Escape/persistence workflow and generated API links — `packages/docs-site/examples/data-grid/validation.ts`, `packages/docs-site/components/data-grid/validation-and-lifecycle.md` ✅ (completed: 2026-08-04 16:08)
 - [ ] 2.2.4 Run ST-24–ST-26 and make the showcase/docs behavior pass without changing the oracle (green phase) — examples and docs-site
 
 ### Step 2.3: Implementation Tests and Hardening
