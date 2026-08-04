@@ -1,3 +1,4 @@
+import type { KanbanThemeRole } from '../card/theme.js';
 import type {
   CardKey,
   KanbanColumnId,
@@ -65,6 +66,41 @@ export interface KanbanSwimlaneMeta {
   readonly label: string;
   /** Equality-only presentation revision for this metadata. */
   readonly revision: KanbanRevision;
+}
+
+/** How a workflow limit affects application-owned move eligibility. */
+export type KanbanWipMode = 'informational' | 'advisory' | 'blocking';
+
+/** Whether cards already classified as done contribute to a WIP count. */
+export type KanbanWipDonePolicy = 'include' | 'exclude';
+
+/** Validated minimum/maximum workflow policy for one structural entity. */
+export interface KanbanWipPolicy {
+  /** Optional inclusive minimum authoritative card count. */
+  readonly minimum?: number;
+  /** Optional inclusive maximum authoritative card count. */
+  readonly maximum?: number;
+  /** Presentation and eligibility behavior when a boundary is violated. */
+  readonly mode: KanbanWipMode;
+  /** Explicit treatment of cards classified as done. */
+  readonly countDone: KanbanWipDonePolicy;
+}
+
+/** Safe compact and complete definition-of-done text for one workflow column. */
+export interface KanbanDefinitionOfDone {
+  /** Compact header/help summary. */
+  readonly summary: string;
+  /** Optional complete text exposed only through focused help or interaction surfaces. */
+  readonly details?: string;
+}
+
+/** Package-understood structural capability labels used for presentation only. */
+export type KanbanStructureCapability = 'collapse' | 'configure' | 'add-card' | 'rename' | 'reorder' | 'delete';
+
+/** Allowlisted semantic role attached to one column or swimlane surface. */
+export interface KanbanStructureStyle {
+  /** Theme role resolved through the complete Kanban fallback chain. */
+  readonly role: KanbanThemeRole;
 }
 
 /** Collision-safe semantic address of one column/swimlane cell. */

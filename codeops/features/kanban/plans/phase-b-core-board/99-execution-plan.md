@@ -118,7 +118,7 @@ implementation → green → implementation tests/hardening → verification.
 
 **Reference**: 03-03; PAR-B07/PAR-B12/PAR-B27/PAR-B28
 
-- [ ] 2.2.1 Add validated column/swimlane visibility, collapse, WIP, DoD, capability, style, presentation, and hover-timing limit contracts — `packages/kanban/src/source/types.ts`, `packages/kanban/src/structure/policy.ts`, `packages/kanban/src/contract/limits.ts`
+- [x] 2.2.1 Add validated column/swimlane visibility, collapse, WIP, DoD, capability, style, presentation, and hover-timing limit contracts — `packages/kanban/src/source/types.ts`, `packages/kanban/src/structure/policy.ts`, `packages/kanban/src/contract/limits.ts`
 - [ ] 2.2.2 Implement normalized structure snapshots with distinct hidden/collapsed semantics and stable ID reconciliation — `packages/kanban/src/structure/model.ts`, `packages/kanban/src/structure/policy.ts`
 - [ ] 2.2.3 Implement pure WIP evaluation for exact/unknown counts, including immutable informational violation evidence, and advisory/blocking modes — `packages/kanban/src/workflow/wip.ts`
 - [ ] 2.2.4 Implement pure DoD/transition evaluation and sanitized resolver failure outcomes — `packages/kanban/src/workflow/transition.ts`, `packages/kanban/src/workflow/definition-of-done.ts`

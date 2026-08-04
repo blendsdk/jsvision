@@ -191,6 +191,14 @@ Closed ordered semantic-role inventory understood by Kanban descriptors and them
 const KANBAN_THEME_ROLES: readonly ["board.surface", "column.surface", "column.header", "column.header.focused", "column.separator", "swimlane.surface", "swimlane.header", "swimlane.header.focused", "swimlane.separator", "card.normal", "card.focused", "card.selected", "card.focused-selected", "card.read-only", "card.grabbed", "card.source-placeholder", "card.ghost", "drop-target.valid", "drop-target.warning", "drop-target.invalid", "operation.pending", "operation.rejected", "wip.warning", "wip.error", "dod.indicator", "state.loading", "state.refreshing", "state.partial", "state.empty", "state.error", "state.retry", "content.title", "content.status", "content.metadata", "content.label", "content.summary", "checklist.complete", "checklist.incomplete", "checklist.progress"]
 ```
 
+## KANBAN_TIMING_DEFAULTS
+
+Package-owned deterministic interaction timings.
+
+```ts
+const KANBAN_TIMING_DEFAULTS: KanbanTimingDefaults
+```
+
 ## KanbanActionTarget
 
 Future-proof actionable hit entry; Phase A viewport snapshots always expose an empty list.
@@ -1038,6 +1046,17 @@ interface KanbanDataSource<TCard> {
 }
 ```
 
+## KanbanDefinitionOfDone
+
+Safe compact and complete definition-of-done text for one workflow column.
+
+```ts
+interface KanbanDefinitionOfDone {
+  summary: string;   // Compact header/help summary.
+  details?: string;   // Optional complete text exposed only through focused help or interaction surfaces.
+}
+```
+
 ## KanbanDisposedResourceError
 
 Raised when a caller uses a source, cursor, or viewport after disposal.
@@ -1571,6 +1590,12 @@ interface KanbanLimitManifest {
   cardRowsComfortable: KanbanLimitRow;
   cardRowsSpacious: KanbanLimitRow;
   descriptorRows: KanbanLimitRow;
+  structureWidthCells: KanbanLimitRow;   // Maximum terminal-cell width accepted for one structural column preference.
+  swimlaneRailWidth: KanbanLimitRow;   // Maximum terminal-cell width reserved by a custom swimlane label rail.
+  swimlaneDescriptorTextBytes: KanbanLimitRow;   // Maximum safe text bytes returned by one custom swimlane chrome descriptor.
+  swimlaneDescriptorRoles: KanbanLimitRow;   // Maximum distinct semantic roles returned by one custom swimlane chrome descriptor.
+  swimlaneDescriptorRegions: KanbanLimitRow;   // Maximum bounded regions returned by one custom swimlane chrome descriptor.
+  swimlaneDescriptorActions: KanbanLimitRow;   // Maximum bounded header actions returned by one custom swimlane chrome descriptor.
   selectedKeys: KanbanLimitRow;
   concurrentCellLoads: KanbanLimitRow;
   concurrentValidators: KanbanLimitRow;
@@ -2226,6 +2251,24 @@ interface KanbanStandardCardCompositionContext {
 }
 ```
 
+## KanbanStructureCapability
+
+Package-understood structural capability labels used for presentation only.
+
+```ts
+type KanbanStructureCapability = 'collapse' | 'configure' | 'add-card' | 'rename' | 'reorder' | 'delete'
+```
+
+## KanbanStructureStyle
+
+Allowlisted semantic role attached to one column or swimlane surface.
+
+```ts
+interface KanbanStructureStyle {
+  role: KanbanThemeRole;   // Theme role resolved through the complete Kanban fallback chain.
+}
+```
+
 ## KanbanSummaryAdapter
 
 Application numeric summary adapter used by eager headers.
@@ -2363,6 +2406,16 @@ interface KanbanThemeToken {
   mappedFallback: ThemeRole;   // Role-specific style derived directly from the application Core theme.
   terminalFallback: ThemeRole;   // Family-level terminal-safe fallback used after the mapped role.
   cues: readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];   // Non-empty redundant cues that preserve meaning without color.
+}
+```
+
+## KanbanTimingDefaults
+
+Fixed interaction timings that must remain deterministic across resource classes.
+
+```ts
+interface KanbanTimingDefaults {
+  collapsedSwimlaneHoverMs: 500;   // Delay before drag hover temporarily expands one visible collapsed swimlane.
 }
 ```
 
@@ -2529,6 +2582,35 @@ interface KanbanVisibleCardRange {
   address: KanbanCellAddress;   // Canonical column/swimlane address.
   start: number;   // First retained logical card index.
   end: number;   // Exclusive retained logical card index.
+}
+```
+
+## KanbanWipDonePolicy
+
+Whether cards already classified as done contribute to a WIP count.
+
+```ts
+type KanbanWipDonePolicy = 'include' | 'exclude'
+```
+
+## KanbanWipMode
+
+How a workflow limit affects application-owned move eligibility.
+
+```ts
+type KanbanWipMode = 'informational' | 'advisory' | 'blocking'
+```
+
+## KanbanWipPolicy
+
+Validated minimum/maximum workflow policy for one structural entity.
+
+```ts
+interface KanbanWipPolicy {
+  minimum?: number;   // Optional inclusive minimum authoritative card count.
+  maximum?: number;   // Optional inclusive maximum authoritative card count.
+  mode: KanbanWipMode;   // Presentation and eligibility behavior when a boundary is violated.
+  countDone: KanbanWipDonePolicy;   // Explicit treatment of cards classified as done.
 }
 ```
 

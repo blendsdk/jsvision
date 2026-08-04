@@ -33,6 +33,18 @@ export interface KanbanLimitManifest {
   readonly cardRowsComfortable: KanbanLimitRow;
   readonly cardRowsSpacious: KanbanLimitRow;
   readonly descriptorRows: KanbanLimitRow;
+  /** Maximum terminal-cell width accepted for one structural column preference. */
+  readonly structureWidthCells: KanbanLimitRow;
+  /** Maximum terminal-cell width reserved by a custom swimlane label rail. */
+  readonly swimlaneRailWidth: KanbanLimitRow;
+  /** Maximum safe text bytes returned by one custom swimlane chrome descriptor. */
+  readonly swimlaneDescriptorTextBytes: KanbanLimitRow;
+  /** Maximum distinct semantic roles returned by one custom swimlane chrome descriptor. */
+  readonly swimlaneDescriptorRoles: KanbanLimitRow;
+  /** Maximum bounded regions returned by one custom swimlane chrome descriptor. */
+  readonly swimlaneDescriptorRegions: KanbanLimitRow;
+  /** Maximum bounded header actions returned by one custom swimlane chrome descriptor. */
+  readonly swimlaneDescriptorActions: KanbanLimitRow;
   readonly selectedKeys: KanbanLimitRow;
   readonly concurrentCellLoads: KanbanLimitRow;
   readonly concurrentValidators: KanbanLimitRow;
@@ -83,6 +95,12 @@ export interface KanbanPresentationPresetDefaultManifest {
   readonly spacious: KanbanPresentationPresetDefault;
 }
 
+/** Fixed interaction timings that must remain deterministic across resource classes. */
+export interface KanbanTimingDefaults {
+  /** Delay before drag hover temporarily expands one visible collapsed swimlane. */
+  readonly collapsedSwimlaneHoverMs: 500;
+}
+
 /** A safe typed error raised before invalid resource limits can be used. */
 export class KanbanInvalidLimitError extends KanbanError {
   /** Stable machine-readable failure code. */
@@ -122,6 +140,12 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   cardRowsComfortable: limit(12, 12, 12),
   cardRowsSpacious: limit(18, 18, 18),
   descriptorRows: limit(32, 32, 32),
+  structureWidthCells: limit(512, 2_048, 8_192),
+  swimlaneRailWidth: limit(64, 128, 256),
+  swimlaneDescriptorTextBytes: limit(4_096, 16_384, 65_536),
+  swimlaneDescriptorRoles: limit(16, 32, 64),
+  swimlaneDescriptorRegions: limit(64, 256, 1_024),
+  swimlaneDescriptorActions: limit(32, 128, 512),
   selectedKeys: limit(10_000, 50_000, 100_000),
   concurrentCellLoads: limit(8, 16, 64),
   concurrentValidators: limit(4, 16, 32),
@@ -163,6 +187,11 @@ export const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaul
   compact: presentationPreset(6, 0, 2, 0, 0),
   comfortable: presentationPreset(12, 1, 4, 1, 1),
   spacious: presentationPreset(18, 1, 6, 2, 2),
+});
+
+/** Package-owned deterministic interaction timings. */
+export const KANBAN_TIMING_DEFAULTS: KanbanTimingDefaults = Object.freeze({
+  collapsedSwimlaneHoverMs: 500,
 });
 
 /** Manifest keys captured once from the immutable package-owned object. */
