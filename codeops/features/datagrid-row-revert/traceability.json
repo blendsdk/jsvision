@@ -1,0 +1,399 @@
+{
+  "feature": "datagrid-row-revert",
+  "nodes": [
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "datagrid-row-revert/SPEC-SESSION"
+        },
+        {
+          "relation": "specified-by",
+          "target": "datagrid-row-revert/SPEC-TRANSACTION"
+        },
+        {
+          "relation": "specified-by",
+          "target": "datagrid-row-revert/SPEC-DISTRIBUTION"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "datagrid-row-revert/CRIT-DONE"
+        },
+        {
+          "relation": "affected-by",
+          "target": "datagrid-row-revert/DEC-CONTRACT"
+        }
+      ],
+      "id": "REQ-ROW-REVERT",
+      "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Trapped Data Grid row recovery requirements",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+          "upstream": "datagrid-row-revert/CRIT-DONE",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:7740d12763a09907d08519fb8e82f38e8bc5d77ec587be0e172c98d630f64a1b",
+          "upstream": "datagrid-row-revert/SPEC-DISTRIBUTION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:028ed191a42e6c12800e63916d26a819d6df8a2f812a4606f9ce80f7081a8075",
+          "upstream": "datagrid-row-revert/SPEC-SESSION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:e51cc581b3708d265eb1bec79efce3f34abc1fcd74d3f73ba774759c62b3c43f",
+          "upstream": "datagrid-row-revert/SPEC-TRANSACTION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+          "upstream": "datagrid-row-revert/CRIT-DONE",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:7740d12763a09907d08519fb8e82f38e8bc5d77ec587be0e172c98d630f64a1b",
+          "upstream": "datagrid-row-revert/SPEC-DISTRIBUTION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:028ed191a42e6c12800e63916d26a819d6df8a2f812a4606f9ce80f7081a8075",
+          "upstream": "datagrid-row-revert/SPEC-SESSION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:e51cc581b3708d265eb1bec79efce3f34abc1fcd74d3f73ba774759c62b3c43f",
+          "upstream": "datagrid-row-revert/SPEC-TRANSACTION",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "SPEC-SESSION",
+      "revision": "sha256:028ed191a42e6c12800e63916d26a819d6df8a2f812a4606f9ce80f7081a8075",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/03-01-row-edit-sessions.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Bounded row edit-session and identity lifecycle",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-TRANSACTION",
+      "revision": "sha256:e51cc581b3708d265eb1bec79efce3f34abc1fcd74d3f73ba774759c62b3c43f",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/03-02-rollback-transaction-and-input.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Atomic rollback, keyboard, async, and localized feedback contract",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-DISTRIBUTION",
+      "revision": "sha256:7740d12763a09907d08519fb8e82f38e8bc5d77ec587be0e172c98d630f64a1b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/03-03-documentation-and-distribution.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Documentation, locale, generated API, and plugin distribution contract",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "datagrid-row-revert/TEST-SPEC"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-3"
+        }
+      ],
+      "id": "CRIT-DONE",
+      "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Escape-to-revert acceptance criteria C1 through C12",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-1",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-2",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-3",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "TEST-SPEC",
+      "revision": "sha256:1e833c2340387d8096fd00ff58485347fb6df8c89d8bd57c2b7687308ed12447",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "ST-1 through ST-28 specification evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution phase: complete ST-1 through ST-23 row-recovery vertical slice"
+      ],
+      "id": "TASK-PHASE-1",
+      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Execute complete row-recovery behavior phase",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution phase: showcase and docs-site teaching"
+      ],
+      "id": "TASK-PHASE-2",
+      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Execute showcase and docs-site teaching phase",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution phase: package, API, skill, and plugin distribution"
+      ],
+      "id": "TASK-PHASE-3",
+      "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Execute package, API, skill, and plugin distribution phase",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "DEC-CONTRACT",
+      "revision": "sha256:b82c2215b80412a9024e3366bd8edcfecc8c4e57d79d475f77180c24aa3f9dc1",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved Escape-to-revert scope and design decisions AR-1 through AR-14",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "datagrid-row-revert/REQ-ROW-REVERT"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "datagrid-row-revert/TASK-PHASE-3"
+        }
+      ],
+      "evidence": [
+        "summary:Preflight completed after three bounded review iterations; all nine findings are resolved and the final semantic rescan is clean.",
+        "summary:User confirmed the complete Zero-Ambiguity Register on 2026-08-03."
+      ],
+      "id": "PLAN-ESCAPE-REVERT",
+      "revision": "sha256:cb3b9402c9555c846d9b5dfdf47f747a86efabc3f549fa5088a27b49880362e6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/datagrid-row-revert/plans/escape-to-revert/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Data Grid Escape-to-Revert implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+          "upstream": "datagrid-row-revert/REQ-ROW-REVERT",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-1",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-2",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:78aa5b8b69cd00081dd94ddd6802344bc77e8cdb79a685030fdbd8ae81425449",
+          "upstream": "datagrid-row-revert/TASK-PHASE-3",
+          "validatedAt": "2026-08-04T00:00:01Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:be4cab1964574024819989bb12f9ab3b504383a99cfbd8f691c8799379c285cc",
+          "upstream": "datagrid-row-revert/REQ-ROW-REVERT",
+          "validatedAt": "2026-08-04T00:00:02Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-08-04T00:00:01Z"
+}
