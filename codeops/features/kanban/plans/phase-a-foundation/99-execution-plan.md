@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 03:54 CEST
-> **Progress**: 24/64 tasks (38%)
+> **Last Updated**: 2026-08-04 04:13 CEST
+> **Progress**: 25/64 tasks (39%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -91,7 +91,7 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 >
 > **Reference**: 03-04; RD04-AC01–02; RD01-AC14; PAR-13–PAR-15, PAR-23–PAR-24
 
-- [ ] 3.1.1 `[spec-author]` Add immutable ST-A-CARD-01/02 and ST-R01-14 card specifications for application records, stable identity, title/status/focus at widths 18–32, safe fallback, and deferred-section absence — `packages/kanban/test/cards.spec.test.ts`
+- [x] 3.1.1 `[spec-author]` Add immutable ST-A-CARD-01/02 and ST-R01-14 card specifications for application records, stable identity, title/status/focus at widths 18–32, safe fallback, and deferred-section absence — `packages/kanban/test/cards.spec.test.ts` ✅ (completed: 2026-08-04 04:13)
 - [ ] 3.1.2 `[spec-author]` Add immutable ST-A-DESCRIPTOR-SAFETY-01 descriptor/theme/catalog specifications for bounded rows/regions, safe text/roles, local failure isolation, role/catalog parity, fallback, side-effect-free imports, and monochrome cues — `packages/kanban/test/{descriptor,theme,i18n}.spec.test.ts`
 - [ ] 3.1.3 Run Phase 3 specifications and record expected red failures before card/theme/catalog implementations
 - [ ] 3.2.1 Implement documented generic adapter and complete `StandardCard` convenience/checklist/summary data types without imposing them on generic records — `packages/kanban/src/card/{adapter,standard-card}.ts`

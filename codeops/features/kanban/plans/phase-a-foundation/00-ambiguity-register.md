@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 31 items resolved
-> **Last Updated**: 2026-08-04 03:42 CEST
+> **Status**: ✅ GATE PASSED — all 32 items resolved
+> **Last Updated**: 2026-08-04 04:05 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -51,6 +51,7 @@
 | PAR-29 | Technical (runtime) | The approved 100,000-card windowed fixture lacked an exact constructor, settlement controller, and bounded metrics needed for an immutable scale oracle | Lazy testing fixture with explicit range settlement and metrics / self-reported opaque benchmark / mount Board early | Delegated: lazy testing-only windowed source/controller with request-proportional frozen metrics and safe bounded events; no board or coordinator exposure | ✅ Resolved |
 | PAR-30 | Technical (runtime) | Eager filter, sort, and summary adapter names were approved without exact callback/result shapes or honest summary publication values | Explicit operator registry plus package numeric aggregations / opaque predicates and arbitrary reducers / defer summary execution | Delegated: finite operator registries, tri-state sort comparison, and package-owned numeric aggregations with explicit authoritative/loaded-only scope and count-like quality | ✅ Resolved |
 | PAR-31 | Quality hardening | Independent Phase 2 review exposed contradictions and untested lifecycle/source edge cases after the green oracle | Preserve the green implementation / harden the durable source contract and revise the conflicting signal oracle | Delegated: mandatory hardening with composed locator cancellation, bounded active-range sharing, atomic snapshots, explicit eager search/revision, authoritative identity facts, honest unknown projection counts, exact headers, safe card keys, and session-local windowed fixture state | ✅ Resolved |
+| PAR-32 | Public API | Card behavior was specified but the callable adapter/renderer/context/descriptor/fallback surface was not exact enough for immutable tests | Durable semantic descriptor seam / temporary Phase A render result / defer the oracle | Delegated: durable generic adapter + render context + semantic descriptor, pure standard/validation/fallback helpers, and one safe catch/observe wrapper | ✅ Resolved |
 
 ## Resolution notes
 
@@ -414,6 +415,39 @@ the findings against source, requirements, and tests. **Policy:** v1, root
 signal-composition primitive that preserves identity, or visible-count ownership moves out of the
 viewport.
 
+### PAR-32 — durable card rendering seam
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** Generic adapters, the standard card,
+bounded descriptors, safe renderer fallback, themes, and later section compatibility were already
+approved; this fixes exact names and value shapes without adding a Phase A interaction. **Objective:**
+Let immutable card/descriptor tests target a durable public boundary before production rendering code
+exists.
+
+**Decision:** `KanbanCardAdapter<TCard>` owns only `keyOf`, `titleOf`, `statusOf`, and optional
+`presentationRevisionOf`; styling remains renderer/theme policy. `StandardCard<TDate,TCustom>` fixes the
+approved required and optional convenience fields while dates and custom data remain opaque. A renderer
+receives the already-validated card key, optional presentation revision, exact width/row budget,
+density, semantic interaction state, Kanban theme, terminal capability projection, and injected
+formatting context. It returns a semantic descriptor with measured rows/spans, marker/cues, sections,
+actions/regions, surface/border roles, and degradation metadata. Descriptors own no inter-card gap.
+The standard renderer, descriptor validator, and fallback constructor are pure. One
+`renderKanbanCardSafely` wrapper alone catches renderer/validation failures, emits exactly one bounded
+payload-free renderer observation, and returns the localized package fallback. Phase A standard output
+keeps actions/regions and deferred metadata/summary/checklist sections empty.
+
+**Evidence:** The spec-author could not freeze Task 3.1.1 without inventing the function used to render
+or the rows used to inspect it. **Rejected alternatives:** A temporary two-string result would require
+a breaking replacement for Phase B sections and Phase 4 hit geometry. Letting adapters choose colors
+mixes semantic extraction with theme policy. Giving renderers observation/fallback callbacks creates
+multiple inconsistent failure paths. **Strongest counterargument:** Declaring section/action geometry
+freezes later semantics early; the chosen contract includes only already-approved normalized concepts
+and no checklist-specific payload or active region in Phase A. **Confidence:** High (0.94).
+**Hardening:** An independent challenger refined identity ownership, operation-state exclusivity, the
+pure/safe boundary, and the Phase A empty-array claims. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** a renderer must establish identity, descriptors
+move away from semantic terminal rows, or Phase B requires a section concept outside the approved
+normalized union.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -422,7 +456,7 @@ viewport.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-31 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-32 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.

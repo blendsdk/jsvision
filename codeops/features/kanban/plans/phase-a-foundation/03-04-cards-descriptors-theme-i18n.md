@@ -2,7 +2,7 @@
 
 > **Document**: 03-04-cards-descriptors-theme-i18n.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24
+> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24, PAR-32
 > **CodeOps Artifact Schema**: 1
 
 ## Generic adapter and standard model
@@ -24,6 +24,57 @@ Runtime validation is deferred to RD-10, which introduces the Kanban-owned Zod a
 the standard editor/schema protocol and Forms integration. Phase A validates bounded values at the
 adapter and renderer boundaries without a Zod dependency.
 
+The exact durable adapter and convenience model are:
+
+```ts
+export interface KanbanCardAdapter<TCard> {
+  keyOf(card: TCard): CardKey;
+  titleOf(card: TCard): string;
+  statusOf(card: TCard): string;
+  presentationRevisionOf?(card: TCard): KanbanRevision;
+}
+
+export interface StandardCard<TDate = unknown, TCustom = unknown> {
+  readonly key: CardKey;
+  readonly columnId: KanbanColumnId;
+  readonly swimlaneId?: KanbanSwimlaneId;
+  readonly rank?: string | number;
+  readonly presentationRevision?: KanbanRevision;
+  readonly title: string;
+  readonly status: string;
+  readonly description?: string;
+  readonly type?: string;
+  readonly priority?: string;
+  readonly assignees?: readonly StandardCardAssignee[];
+  readonly labels?: readonly StandardCardLabel[];
+  readonly startDate?: TDate;
+  readonly dueDate?: TDate;
+  readonly estimate?: string;
+  readonly value?: string;
+  readonly checklists?: readonly StandardCardChecklist[];
+  readonly summaries?: readonly StandardCardSummary[];
+  readonly custom?: TCustom;
+}
+
+export interface StandardCardAssignee { readonly id: string; readonly label: string }
+export interface StandardCardLabel { readonly id: string; readonly label: string }
+export interface StandardCardChecklist {
+  readonly checklistId: KanbanChecklistId;
+  readonly title?: string;
+  readonly items: readonly StandardCardChecklistItem[];
+}
+export interface StandardCardChecklistItem {
+  readonly itemId: string;
+  readonly text: string;
+  readonly completed: boolean;
+}
+export interface StandardCardSummary {
+  readonly fieldId: KanbanFieldId;
+  readonly label: string;
+  readonly value: string;
+}
+```
+
 ## Descriptor contract
 
 A renderer receives only bounded values:
@@ -44,6 +95,134 @@ hit region.
 Renderer/resolver exceptions create one local observation and a bounded fallback descriptor. Neighbor
 cards and the last valid source snapshot remain usable. Diagnostics identify the card key only; they do
 not include title/status/custom data or raw exception text.
+
+The exact render and descriptor surface is:
+
+```ts
+export type KanbanCardDensity = 'compact' | 'comfortable' | 'spacious';
+export type KanbanCardOperationState = 'idle' | 'grabbed' | 'pending' | 'rejected';
+export interface KanbanCardTerminalCapabilities {
+  readonly colorDepth: ColorDepth;
+  readonly widthMode: WidthMode;
+  readonly boxDrawing: boolean;
+  readonly ambiguousWide: boolean;
+}
+export interface KanbanCardFormattingContext {
+  readonly locale: string;
+  readonly formatNumber: (value: number | bigint) => string;
+  readonly formatDate: (value: unknown) => string | undefined;
+}
+export interface KanbanCardRenderContext {
+  readonly cardKey: CardKey;
+  readonly presentationRevision?: KanbanRevision;
+  readonly width: number;
+  readonly rowBudget: number;
+  readonly density: KanbanCardDensity;
+  readonly focused: boolean;
+  readonly selected: boolean;
+  readonly readOnly: boolean;
+  readonly operation: KanbanCardOperationState;
+  readonly theme: Readonly<KanbanTheme>;
+  readonly capabilities: Readonly<KanbanCardTerminalCapabilities>;
+  readonly formatting: Readonly<KanbanCardFormattingContext>;
+}
+export interface KanbanCardRenderer<TCard> {
+  render(card: TCard, context: KanbanCardRenderContext): KanbanCardDescriptor;
+}
+
+export type KanbanCardSectionKind =
+  | 'title' | 'status' | 'metadata' | 'labels' | 'summary'
+  | 'checklist-progress' | 'checklist-preview' | 'feedback' | 'custom';
+export type KanbanCardCue = 'focused' | 'selected' | 'read-only' | 'grabbed' | 'pending' | 'rejected';
+export interface KanbanCardSpan {
+  readonly column: number;
+  readonly text: string;
+  readonly role: KanbanThemeRole;
+}
+export interface KanbanCardRow {
+  readonly section: KanbanCardSectionKind;
+  readonly spans: readonly KanbanCardSpan[];
+}
+export interface KanbanCardMarker {
+  readonly row: number;
+  readonly column: number;
+  readonly glyph: string;
+  readonly role: KanbanThemeRole;
+  readonly cues: readonly KanbanCardCue[];
+}
+export interface KanbanCardSection {
+  readonly id: string;
+  readonly kind: KanbanCardSectionKind;
+  readonly startRow: number;
+  readonly rowCount: number;
+  readonly priority: number;
+}
+export interface KanbanCardAction {
+  readonly actionId: KanbanExtensionId;
+  readonly label: string;
+  readonly enabled: boolean;
+}
+export interface KanbanCardRegion {
+  readonly regionId: string;
+  readonly kind: 'section' | 'action';
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly actionId?: KanbanExtensionId;
+}
+export interface KanbanCardDegradation {
+  readonly level: 'none' | 'reduced' | 'minimum' | 'fallback';
+  readonly omittedSections: readonly KanbanCardSectionKind[];
+}
+export interface KanbanCardDescriptor {
+  readonly cardKey: CardKey;
+  readonly presentationRevision?: KanbanRevision;
+  readonly width: number;
+  readonly measuredHeight: number;
+  readonly surfaceRole: KanbanThemeRole;
+  readonly borderRole: KanbanThemeRole;
+  readonly marker: KanbanCardMarker;
+  readonly rows: readonly KanbanCardRow[];
+  readonly sections: readonly KanbanCardSection[];
+  readonly actions: readonly KanbanCardAction[];
+  readonly regions: readonly KanbanCardRegion[];
+  readonly degradation: KanbanCardDegradation;
+}
+```
+
+The pure and guarded entry points are:
+
+```ts
+export function createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>():
+  KanbanCardAdapter<StandardCard<TDate, TCustom>>;
+export function renderStandardKanbanCard<TCard>(
+  card: TCard,
+  adapter: KanbanCardAdapter<TCard>,
+  context: KanbanCardRenderContext,
+): KanbanCardDescriptor;
+export function validateKanbanCardDescriptor(
+  descriptor: KanbanCardDescriptor,
+  context: KanbanCardRenderContext,
+): void;
+export function createFallbackKanbanCardDescriptor(
+  context: KanbanCardRenderContext,
+  labels: KanbanCardFallbackLabels,
+): KanbanCardDescriptor;
+export function renderKanbanCardSafely<TCard>(
+  card: TCard,
+  renderer: KanbanCardRenderer<TCard>,
+  context: KanbanCardRenderContext,
+  options: KanbanSafeRenderOptions,
+): KanbanCardDescriptor;
+```
+
+`KanbanCardFallbackLabels` contains only bounded localized `invalidCardTitle` and `unknownStatus`
+strings. `KanbanSafeRenderOptions` contains those labels plus an optional observation sink. The safe
+wrapper validates, detaches, and freezes renderer output. It alone catches renderer/validation errors,
+emits one `card-render-failed` renderer-scoped observation carrying only the already-validated card key,
+and returns the package fallback. Identity extraction happens before rendering; a failing `keyOf`
+cannot synthesize an index-based identity.
 
 ## Phase A standard rendering
 
