@@ -39,6 +39,11 @@ const auxiliaryPackages = [
     entry: '../code-editor/src/i18n/locales.ts',
     tsconfig: '../code-editor/tsconfig.json',
   },
+  {
+    name: 'kanban-locales',
+    entry: '../kanban/src/i18n/locales.ts',
+    tsconfig: '../kanban/tsconfig.json',
+  },
 ];
 const generatedPackages = [...PACKAGES, ...auxiliaryPackages];
 

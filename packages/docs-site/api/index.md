@@ -22,6 +22,8 @@ variables). Each package's page links into its own tree:
 - [`@jsvision/files`](/api/files/) — the file-system dialog family (file/directory pickers).
 - [`@jsvision/forms`](/api/forms/) — the headless, reactive form/field store with Zod validation.
 - [`@jsvision/datagrid`](/api/datagrid/) — the editable, enterprise-class data grid.
+- [`@jsvision/kanban`](/api/kanban/) — responsive terminal task boards, generic data sources, cards,
+  themes, and application authority.
 
 Where a symbol has a hand-written component guide, its reference page links back to it under
 **Documented in →**, and the component page links here under **API reference →**.

@@ -55,6 +55,7 @@ module resolution predictable.
 | File workflows        | `@jsvision/ui`, `@jsvision/files`        | Adds dialogs and the injectable `FileSystem` seam          |
 | Data Grid             | `@jsvision/ui`, `@jsvision/datagrid`     | Adds the specialist editable grid                          |
 | Code Editor           | `@jsvision/ui`, `@jsvision/code-editor`  | Adds documents, languages, and editor services             |
+| Kanban foundation     | `@jsvision/ui`, `@jsvision/kanban`       | Adds responsive read-only boards and generic data sources  |
 | Rendering engine only | `@jsvision/core`                         | Use the engine or rendering layer without the widgets      |
 | Direct i18n services  | `@jsvision/i18n`                         | Only when application code imports the i18n service itself |
 | Browser deployment    | No supported package set yet             | The browser host is internal; see the boundary below       |
@@ -83,11 +84,16 @@ npm install @jsvision/ui @jsvision/datagrid
 npm install @jsvision/ui @jsvision/code-editor
 ```
 
+```sh [Kanban]
+npm install @jsvision/ui @jsvision/kanban
+```
+
 :::
 
 The published family contains `@jsvision/core`, `@jsvision/ui`, `@jsvision/i18n`,
-`@jsvision/forms`, `@jsvision/files`, `@jsvision/datagrid`, and `@jsvision/code-editor`. Install
-packages from the same release so their exact internal `@jsvision/*` versions remain aligned.
+`@jsvision/forms`, `@jsvision/files`, `@jsvision/datagrid`, `@jsvision/code-editor`, and
+`@jsvision/kanban`. Install packages from the same release so their exact internal `@jsvision/*`
+versions remain aligned.
 
 ### Browser boundary
 
@@ -185,6 +191,7 @@ import { createForm } from '@jsvision/forms';
 import { FileDialog } from '@jsvision/files';
 import { EditableDataGrid } from '@jsvision/datagrid';
 import { CodeEditor } from '@jsvision/code-editor';
+import { KanbanBoard } from '@jsvision/kanban';
 ```
 
 Packages may expose deliberate subpaths. For example, the code editor exports its TypeScript
@@ -219,7 +226,7 @@ The published JSVision packages are released with matching versions, and their i
 dependencies use exact versions. Check the resolved tree after adding or upgrading packages:
 
 ```sh
-npm ls @jsvision/core @jsvision/ui @jsvision/i18n @jsvision/forms @jsvision/files @jsvision/datagrid @jsvision/code-editor
+npm ls @jsvision/core @jsvision/ui @jsvision/i18n @jsvision/forms @jsvision/files @jsvision/datagrid @jsvision/code-editor @jsvision/kanban
 ```
 
 One version per package family is the healthy result. If the tree is mixed, update all direct

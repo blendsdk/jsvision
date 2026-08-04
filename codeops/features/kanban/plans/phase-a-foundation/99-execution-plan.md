@@ -194,7 +194,11 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     literal ownership classifies 51 candidates; all 54 digest-bound reviews pass; the authentic
     offline main/testing/ten-locale runtime, NodeNext declaration, exact export-map, and private-path
     rejection oracle passes 2/2; changed-file verification passes.
-- [ ] 5.2.4 Add Kanban to docs API/package/install inventories and auxiliary locale API generation without adding a placeholder component page/live example — `packages/docs-site/src/api/packages.mjs`, `packages/docs-site/scripts/gen-api.mjs`, `packages/docs-site/test/{install-and-packages-guide,api-barrel-exports}.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`
+- [x] 5.2.4 Add Kanban to docs API/package/install inventories and auxiliary locale API generation without adding a placeholder component page/live example — `packages/docs-site/src/api/packages.mjs`, `packages/docs-site/scripts/gen-api.mjs`, `packages/docs-site/test/{install-and-packages-guide,api-barrel-exports}.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts` ✅ (completed: 2026-08-04 09:50 CEST)
+  - Green evidence: docs API inventory, install/package course, i18n navigation, and declaration
+    coverage pass 14/14; docs-site typecheck passes. Kanban is in the package/API/locale-generation
+    inventories and install guidance, with no component page, live-example registration, or dead
+    component backlink added.
 - [ ] 5.2.5 Generate Kanban API pages and run focused docs typecheck/tests/build; inspect `packages/docs-site/api/kanban/`, generated locale auxiliary entries, and affected navigation links
 - [ ] 5.2.6 Update `docs/architecture/kanban.md`, `docs/index.md`, and `docs/decisions/index.md` for ownership, package topology, session/cursor lifecycle, bounded viewport, and honest Phase A/later-phase boundaries; validate links/diagrams
 - [ ] 5.2.7 Update canonical JSVision skill Kanban API/discovery guidance and source-impact mapping — `tools/jsvision-skill/SKILL.md`, `tools/jsvision-skill/references/{architecture,component-catalog}.md`, `tools/jsvision-skill/references/api/index.md`, `tools/jsvision-plugin-impact.json`; before editing, record and include only additional canonical paths emitted by the checked-in impact map
