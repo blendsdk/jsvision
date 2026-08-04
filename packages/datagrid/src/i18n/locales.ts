@@ -37,7 +37,7 @@ export const datagridNl = datagridCatalog('nl', {
   'datagrid.lifecycle.loading': 'Laden…',
   'datagrid.lifecycle.retry': 'Opnieuw',
   'datagrid.validation.row-trapped': '${message} · Esc herstelt de rijwijzigingen',
-  'datagrid.revert.pending': 'Rijwijzigingen herstellen…',
+  'datagrid.revert.pending': 'Rijwijzigingen worden hersteld…',
   'datagrid.revert.failed': 'Rijwijzigingen konden niet worden hersteld',
   'datagrid.revert.unavailable': 'Rijwijzigingen kunnen niet worden hersteld',
   'datagrid.filter.operator.contains': 'bevat',
