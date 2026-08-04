@@ -199,7 +199,12 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     coverage pass 14/14; docs-site typecheck passes. Kanban is in the package/API/locale-generation
     inventories and install guidance, with no component page, live-example registration, or dead
     component backlink added.
-- [ ] 5.2.5 Generate Kanban API pages and run focused docs typecheck/tests/build; inspect `packages/docs-site/api/kanban/`, generated locale auxiliary entries, and affected navigation links
+- [x] 5.2.5 Generate Kanban API pages and run focused docs typecheck/tests/build; inspect `packages/docs-site/api/kanban/`, generated locale auxiliary entries, and affected navigation links ✅ (completed: 2026-08-04 10:02 CEST)
+  - Green evidence: TypeDoc generates 230 Kanban pages and 11 Kanban-locale pages with the expected
+    Board, Viewport, and reviewed-catalog declarations; generated sidebar and ten locale links are
+    present. Docs-site typecheck, 14 focused assertions, the 309-second VitePress production build,
+    sitemap generation, and changed-file verification pass. Existing Rollup circular-chunk warnings
+    remain non-fatal and unrelated to Kanban.
 - [ ] 5.2.6 Update `docs/architecture/kanban.md`, `docs/index.md`, and `docs/decisions/index.md` for ownership, package topology, session/cursor lifecycle, bounded viewport, and honest Phase A/later-phase boundaries; validate links/diagrams
 - [ ] 5.2.7 Update canonical JSVision skill Kanban API/discovery guidance and source-impact mapping — `tools/jsvision-skill/SKILL.md`, `tools/jsvision-skill/references/{architecture,component-catalog}.md`, `tools/jsvision-skill/references/api/index.md`, `tools/jsvision-plugin-impact.json`; before editing, record and include only additional canonical paths emitted by the checked-in impact map
 - [ ] 5.2.8 Run `yarn plugin:update`; inspect/include `tools/jsvision-skill/references/api/kanban.md`, the source-impact snapshot, synchronized recipes, and `plugins/jsvision-plugin/skills/jsvision/`; make `packages/examples/test/api-reference.spec.test.ts` and `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` green

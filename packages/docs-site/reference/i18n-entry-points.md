@@ -69,3 +69,16 @@
 - [`@jsvision/code-editor/locales/pl`](/api/code-editor-locales/variables/codeEditorPl) — `codeEditorPl`
 - [`@jsvision/code-editor/locales/ro`](/api/code-editor-locales/variables/codeEditorRo) — `codeEditorRo`
 - [`@jsvision/code-editor/locales/sv`](/api/code-editor-locales/variables/codeEditorSv) — `codeEditorSv`
+
+## @jsvision/kanban
+
+- [`@jsvision/kanban/locales/en`](/api/kanban-locales/variables/kanbanEn) — `kanbanEn`
+- [`@jsvision/kanban/locales/nl`](/api/kanban-locales/variables/kanbanNl) — `kanbanNl`
+- [`@jsvision/kanban/locales/de`](/api/kanban-locales/variables/kanbanDe) — `kanbanDe`
+- [`@jsvision/kanban/locales/fr`](/api/kanban-locales/variables/kanbanFr) — `kanbanFr`
+- [`@jsvision/kanban/locales/es`](/api/kanban-locales/variables/kanbanEs) — `kanbanEs`
+- [`@jsvision/kanban/locales/it`](/api/kanban-locales/variables/kanbanIt) — `kanbanIt`
+- [`@jsvision/kanban/locales/pt-PT`](/api/kanban-locales/variables/kanbanPtPT) — `kanbanPtPT`
+- [`@jsvision/kanban/locales/pl`](/api/kanban-locales/variables/kanbanPl) — `kanbanPl`
+- [`@jsvision/kanban/locales/ro`](/api/kanban-locales/variables/kanbanRo) — `kanbanRo`
+- [`@jsvision/kanban/locales/sv`](/api/kanban-locales/variables/kanbanSv) — `kanbanSv`
