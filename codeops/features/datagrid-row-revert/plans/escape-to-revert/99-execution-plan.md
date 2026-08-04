@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 14:14
-> **Progress**: 3/31 tasks (10%)
+> **Last Updated**: 2026-08-04 14:17
+> **Progress**: 4/31 tasks (13%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -63,7 +63,7 @@ reviewable and keeps implementation behind an observed red oracle.
 **Reference**: [03-01 § Implementation Details](03-01-row-edit-sessions.md#implementation-details) ·
 AR-3, AR-6, AR-7, AR-12
 
-- [ ] 1.2.1 Implement the bounded session registry, earliest-value journal, identity checks, attempt tokens, and cleanup — `packages/datagrid/src/row-revert.ts`
+- [x] 1.2.1 Implement the bounded session registry, earliest-value journal, identity checks, attempt tokens, and cleanup — `packages/datagrid/src/row-revert.ts` ✅ (completed: 2026-08-04 14:17)
 - [ ] 1.2.2 Replace touched-only edit notification with accepted commit details after `commitCell` succeeds — `packages/datagrid/src/editing.ts`, `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 1.2.3 Add row-gate pass/trap notifications and container session/focus/deletion/disposal wiring — `packages/datagrid/src/validation.ts`, `packages/datagrid/src/grid.ts`
 

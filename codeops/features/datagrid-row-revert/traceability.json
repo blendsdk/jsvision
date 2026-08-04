@@ -193,21 +193,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         }
@@ -242,7 +242,7 @@
         "summary:Phase 1 execution started after the execution-readiness gate passed; specification-first work is in progress."
       ],
       "id": "TASK-PHASE-1",
-      "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+      "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -264,7 +264,7 @@
         "Execution phase: showcase and docs-site teaching"
       ],
       "id": "TASK-PHASE-2",
-      "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+      "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -286,7 +286,7 @@
         "Execution phase: package, API, skill, and plugin distribution"
       ],
       "id": "TASK-PHASE-3",
-      "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+      "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -370,21 +370,21 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-1",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-2",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:c9176397c6b1bef2dbf2d5fb815b42abde4c3fcbee040182142820533d5355fe",
+          "revision": "sha256:cfc96fd44e252bc23b7585ae4367c210fd1abce697dfd3365bf179abc137d2fc",
           "upstream": "datagrid-row-revert/TASK-PHASE-3",
           "validatedAt": "2026-08-04T00:00:01Z"
         },
