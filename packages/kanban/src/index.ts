@@ -39,7 +39,14 @@ export * from './board/kanban-board.js';
 export * from './board/scene-builder.js';
 export * from './board/scene-model.js';
 export type { KanbanViewportInspection } from './board/viewport-inspection.js';
-export type { KanbanOverscanOptions } from './board/viewport-source.js';
+export {
+  resolveKanbanSceneWindow,
+  type KanbanOverscanOptions,
+  type KanbanSceneWindowCell,
+  type KanbanSceneWindowLayoutHint,
+  type KanbanSceneWindowLayoutRow,
+  type KanbanSceneWindowResult,
+} from './board/viewport-source.js';
 export type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './board/viewport-scroll.js';
 export * from './source/address.js';
 export * from './source/counts.js';

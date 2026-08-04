@@ -2532,6 +2532,60 @@ interface KanbanSceneSwimlane {
 }
 ```
 
+## KanbanSceneWindowCell
+
+Preliminary column plus logical swimlane-index coordinate.
+
+```ts
+interface KanbanSceneWindowCell {
+  columnId: string;   // Stable visible workflow-column identity.
+  swimlaneIndex: number;   // Source-ordered semantic swimlane index resolved to identity by the owning publication.
+}
+```
+
+## KanbanSceneWindowLayoutHint
+
+Revision-bound aggregate hint used by preliminary scene-window projection.
+
+```ts
+interface KanbanSceneWindowLayoutHint {
+  queryGeneration: number;   // Query generation that owns the hint.
+  sessionRevision: KanbanRevision;   // Query-session revision that owns the hint.
+  rows: readonly KanbanSceneWindowLayoutRow[];   // Source-ordered bounded aggregate row spans.
+}
+```
+
+## KanbanSceneWindowLayoutRow
+
+Preliminary row-axis aggregate used without opening preceding semantic cells.
+
+```ts
+interface KanbanSceneWindowLayoutRow {
+  start: number;   // First included semantic swimlane index covered by this aggregate.
+  end: number;   // First excluded semantic swimlane index covered by this aggregate.
+  extent: number;   // Aggregate terminal rows occupied by the covered semantic range.
+  quality: 'exact' | 'lower-bound' | 'unknown';   // Honest completeness of the aggregate row extent.
+}
+```
+
+## KanbanSceneWindowResult
+
+Honest preliminary row projection outcome.
+
+```ts
+type KanbanSceneWindowResult = | {
+      readonly kind: 'available';
+      readonly requestedCells: readonly KanbanSceneWindowCell[];
+      readonly range: { readonly start: number; readonly end: number };
+      readonly quality: 'known' | 'hinted';
+    }
+  | {
+      readonly kind: 'unavailable';
+      readonly code: 'distant-layout-unknown' | 'retention-limit' | 'cell-open-failed';
+      readonly retryable: boolean;
+    }
+```
+
 ## KanbanScrollAnchor
 
 Stable semantic anchor used to restore a containing column and relative card row.
@@ -4216,6 +4270,14 @@ Resolves a named or custom presentation policy into one bounded immutable budget
 
 ```ts
 resolveKanbanPresentation(input: KanbanPresentationInput = 'comfortable', limits?: KanbanResolvedLimits): ResolvedKanbanPresentationBudget
+```
+
+## resolveKanbanSceneWindow
+
+Resolves a bounded preliminary semantic cell window without enumerating preceding rows.
+
+```ts
+resolveKanbanSceneWindow(options: ResolveKanbanSceneWindowOptions): KanbanSceneWindowResult
 ```
 
 ## resolveKanbanStructure

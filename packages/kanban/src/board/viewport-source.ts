@@ -1,8 +1,15 @@
 import { KanbanInvalidGeometryError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
+import {
+  snapshotKanbanDataArray,
+  snapshotKanbanDataProperties,
+  validateKanbanDataKeys,
+} from '../contract/data-snapshot.js';
 import { createKanbanColumnId } from '../contract/identity.js';
-import { validateKanbanLimitOptions } from '../contract/limits.js';
+import { KANBAN_LIMITS, validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
+import { snapshotKanbanRevision } from '../contract/revision.js';
+import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanViewportMode, KanbanVisibleCardRange } from '../layout/metrics.js';
 import { solveKanbanColumnWidths } from '../layout/width-solver.js';
@@ -29,6 +36,233 @@ export interface KanbanOverscanOptions {
   readonly horizontal?: number;
 }
 
+/** Preliminary row-axis aggregate used without opening preceding semantic cells. */
+export interface KanbanSceneWindowLayoutRow {
+  /** First included semantic swimlane index covered by this aggregate. */
+  readonly start: number;
+  /** First excluded semantic swimlane index covered by this aggregate. */
+  readonly end: number;
+  /** Aggregate terminal rows occupied by the covered semantic range. */
+  readonly extent: number;
+  /** Honest completeness of the aggregate row extent. */
+  readonly quality: 'exact' | 'lower-bound' | 'unknown';
+}
+
+/** Revision-bound aggregate hint used by preliminary scene-window projection. */
+export interface KanbanSceneWindowLayoutHint {
+  /** Query generation that owns the hint. */
+  readonly queryGeneration: number;
+  /** Query-session revision that owns the hint. */
+  readonly sessionRevision: KanbanRevision;
+  /** Source-ordered bounded aggregate row spans. */
+  readonly rows: readonly KanbanSceneWindowLayoutRow[];
+}
+
+/** Preliminary column plus logical swimlane-index coordinate. */
+export interface KanbanSceneWindowCell {
+  /** Stable visible workflow-column identity. */
+  readonly columnId: string;
+  /** Source-ordered semantic swimlane index resolved to identity by the owning publication. */
+  readonly swimlaneIndex: number;
+}
+
+/** Inputs for bounded preliminary visible/overscan cell selection. */
+export interface ResolveKanbanSceneWindowOptions {
+  /** Active query generation. */
+  readonly queryGeneration: number;
+  /** Active query-session revision. */
+  readonly sessionRevision: KanbanRevision;
+  /** Requested half-open semantic swimlane range. */
+  readonly requestedSwimlaneRange: { readonly start: number; readonly end: number };
+  /** Source-ordered workflow columns intersecting the horizontal projection. */
+  readonly visibleColumnIds: readonly string[];
+  /** Finite semantic row/column overscan. */
+  readonly overscan: { readonly rows: number; readonly columns: number };
+  /** Optional compatible aggregate row-layout evidence. */
+  readonly layoutHint?: KanbanSceneWindowLayoutHint;
+  /** Called once for each completed preliminary cell selection. */
+  readonly openCell: (cell: KanbanSceneWindowCell) => void;
+}
+
+/** Honest preliminary row projection outcome. */
+export type KanbanSceneWindowResult =
+  | {
+      readonly kind: 'available';
+      readonly requestedCells: readonly KanbanSceneWindowCell[];
+      readonly range: { readonly start: number; readonly end: number };
+      readonly quality: 'known' | 'hinted';
+    }
+  | {
+      readonly kind: 'unavailable';
+      readonly code: 'distant-layout-unknown' | 'retention-limit' | 'cell-open-failed';
+      readonly retryable: boolean;
+    };
+
+/** Exact accepted top-level preliminary scene-window members. */
+const SCENE_WINDOW_KEYS = new Set([
+  'queryGeneration',
+  'sessionRevision',
+  'requestedSwimlaneRange',
+  'visibleColumnIds',
+  'overscan',
+  'layoutHint',
+  'openCell',
+]);
+/** Exact half-open range members. */
+const SCENE_WINDOW_RANGE_KEYS = new Set(['start', 'end']);
+/** Exact overscan members. */
+const SCENE_WINDOW_OVERSCAN_KEYS = new Set(['rows', 'columns']);
+/** Exact aggregate hint members. */
+const SCENE_WINDOW_HINT_KEYS = new Set(['queryGeneration', 'sessionRevision', 'rows']);
+/** Exact aggregate row members. */
+const SCENE_WINDOW_ROW_KEYS = new Set(['start', 'end', 'extent', 'quality']);
+
+/** Validates one non-negative safe scene-window integer. */
+function sceneWindowInteger(value: unknown, maximum = Number.MAX_SAFE_INTEGER): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0 || value > maximum) {
+    throw new KanbanInvalidGeometryError();
+  }
+  return value;
+}
+
+/** Snapshots one exact half-open scene-window range. */
+function sceneWindowRange(value: unknown): { readonly start: number; readonly end: number } {
+  const properties = snapshotKanbanDataProperties(value, SCENE_WINDOW_RANGE_KEYS.size);
+  validateKanbanDataKeys(properties, SCENE_WINDOW_RANGE_KEYS);
+  if (Object.keys(properties).length !== SCENE_WINDOW_RANGE_KEYS.size) throw new KanbanInvalidGeometryError();
+  const start = sceneWindowInteger(properties.start);
+  const end = sceneWindowInteger(properties.end);
+  if (end < start || end - start > KANBAN_LIMITS.swimlanes.safe) throw new KanbanInvalidGeometryError();
+  return Object.freeze({ start, end });
+}
+
+/** Snapshots and validates one optional aggregate row-layout hint. */
+function sceneWindowHint(value: unknown): KanbanSceneWindowLayoutHint {
+  const properties = snapshotKanbanDataProperties(value, SCENE_WINDOW_HINT_KEYS.size);
+  validateKanbanDataKeys(properties, SCENE_WINDOW_HINT_KEYS);
+  if (Object.keys(properties).length !== SCENE_WINDOW_HINT_KEYS.size) throw new KanbanInvalidGeometryError();
+  const rows = snapshotKanbanDataArray(properties.rows, KANBAN_LIMITS.swimlanes.safe).map((row) => {
+    const rowProperties = snapshotKanbanDataProperties(row, SCENE_WINDOW_ROW_KEYS.size);
+    validateKanbanDataKeys(rowProperties, SCENE_WINDOW_ROW_KEYS);
+    if (Object.keys(rowProperties).length !== SCENE_WINDOW_ROW_KEYS.size) throw new KanbanInvalidGeometryError();
+    const start = sceneWindowInteger(rowProperties.start);
+    const end = sceneWindowInteger(rowProperties.end);
+    const extent = sceneWindowInteger(rowProperties.extent);
+    if (
+      end <= start ||
+      (rowProperties.quality !== 'exact' &&
+        rowProperties.quality !== 'lower-bound' &&
+        rowProperties.quality !== 'unknown')
+    ) {
+      throw new KanbanInvalidGeometryError();
+    }
+    return Object.freeze({ start, end, extent, quality: rowProperties.quality });
+  });
+  for (let index = 1; index < rows.length; index += 1) {
+    if (rows[index - 1]!.end > rows[index]!.start) throw new KanbanInvalidGeometryError();
+  }
+  return Object.freeze({
+    queryGeneration: sceneWindowInteger(properties.queryGeneration),
+    sessionRevision: snapshotKanbanRevision(properties.sessionRevision),
+    rows: Object.freeze(rows),
+  });
+}
+
+/** Returns whether aggregate hint spans cover a requested semantic row window. */
+function hintCovers(
+  rows: readonly KanbanSceneWindowLayoutRow[],
+  range: { readonly start: number; readonly end: number },
+): boolean {
+  let coveredUntil = range.start;
+  for (const row of rows) {
+    if (row.end <= coveredUntil) continue;
+    if (row.start > coveredUntil) return false;
+    coveredUntil = Math.max(coveredUntil, row.end);
+    if (coveredUntil >= range.end) return true;
+  }
+  return coveredUntil >= range.end;
+}
+
+/**
+ * Resolves a bounded preliminary semantic cell window without enumerating preceding rows.
+ *
+ * A request beginning at row zero is locally known. Distant requests require revision-compatible
+ * aggregate hint coverage; otherwise the caller receives an explicit retryable unavailable result.
+ *
+ * @example
+ * ```ts
+ * const result = resolveKanbanSceneWindow({
+ *   queryGeneration: 1,
+ *   sessionRevision: 'session-v1',
+ *   requestedSwimlaneRange: { start: 0, end: 2 },
+ *   visibleColumnIds: ['ready'],
+ *   overscan: { rows: 1, columns: 0 },
+ *   openCell: () => {},
+ * });
+ * ```
+ */
+export function resolveKanbanSceneWindow(options: ResolveKanbanSceneWindowOptions): KanbanSceneWindowResult {
+  try {
+    const properties = snapshotKanbanDataProperties(options, SCENE_WINDOW_KEYS.size);
+    validateKanbanDataKeys(properties, SCENE_WINDOW_KEYS);
+    if (Object.keys(properties).length < SCENE_WINDOW_KEYS.size - 1 || typeof properties.openCell !== 'function') {
+      throw new KanbanInvalidGeometryError();
+    }
+    const queryGeneration = sceneWindowInteger(properties.queryGeneration);
+    const sessionRevision = snapshotKanbanRevision(properties.sessionRevision);
+    const requested = sceneWindowRange(properties.requestedSwimlaneRange);
+    const overscanProperties = snapshotKanbanDataProperties(properties.overscan, SCENE_WINDOW_OVERSCAN_KEYS.size);
+    validateKanbanDataKeys(overscanProperties, SCENE_WINDOW_OVERSCAN_KEYS);
+    if (Object.keys(overscanProperties).length !== SCENE_WINDOW_OVERSCAN_KEYS.size) {
+      throw new KanbanInvalidGeometryError();
+    }
+    const overscanRows = sceneWindowInteger(overscanProperties.rows, KANBAN_LIMITS.verticalOverscan.absolute);
+    sceneWindowInteger(overscanProperties.columns, KANBAN_LIMITS.horizontalOverscan.absolute);
+    const visibleColumnIds = Object.freeze(
+      snapshotKanbanDataArray(properties.visibleColumnIds, KANBAN_LIMITS.columns.safe).map((value) => {
+        if (typeof value !== 'string') throw new KanbanInvalidGeometryError();
+        return createKanbanColumnId(value);
+      }),
+    );
+    if (new Set(visibleColumnIds).size !== visibleColumnIds.length) throw new KanbanInvalidGeometryError();
+    const range = Object.freeze({
+      start: Math.max(0, requested.start - overscanRows),
+      end: Math.min(Number.MAX_SAFE_INTEGER, requested.end + overscanRows),
+    });
+    const hint = properties.layoutHint === undefined ? undefined : sceneWindowHint(properties.layoutHint);
+    const compatibleHint =
+      hint !== undefined &&
+      hint.queryGeneration === queryGeneration &&
+      hint.sessionRevision === sessionRevision &&
+      hintCovers(hint.rows, range);
+    if (range.start > 0 && !compatibleHint) {
+      return Object.freeze({ kind: 'unavailable', code: 'distant-layout-unknown', retryable: true });
+    }
+    const demand = (range.end - range.start) * visibleColumnIds.length;
+    if (!Number.isSafeInteger(demand) || demand > KANBAN_LIMITS.retainedCursors.safe) {
+      return Object.freeze({ kind: 'unavailable', code: 'retention-limit', retryable: false });
+    }
+    const cells: KanbanSceneWindowCell[] = [];
+    for (let swimlaneIndex = range.start; swimlaneIndex < range.end; swimlaneIndex += 1) {
+      for (const columnId of visibleColumnIds) cells.push(Object.freeze({ columnId, swimlaneIndex }));
+    }
+    try {
+      for (const cell of cells) properties.openCell(cell);
+    } catch {
+      return Object.freeze({ kind: 'unavailable', code: 'cell-open-failed', retryable: true });
+    }
+    return Object.freeze({
+      kind: 'available',
+      requestedCells: Object.freeze(cells),
+      range,
+      quality: compatibleHint ? 'hinted' : 'known',
+    });
+  } catch (error) {
+    if (error instanceof KanbanInvalidGeometryError) throw error;
+    throw new KanbanInvalidGeometryError();
+  }
+}
+
 /** Exact geometry and semantic filters used to refresh one viewport source projection. */
 export interface KanbanViewportSourceRequest {
   /** Current parent-assigned width in terminal cells. */
@@ -45,6 +279,8 @@ export interface KanbanViewportSourceRequest {
   readonly focusedColumnId?: string;
   /** Workflow columns excluded before any sparse cursor is opened. */
   readonly collapsedColumnIds?: readonly string[];
+  /** Optional revision-bound aggregate row evidence for a grouped distant projection. */
+  readonly sceneWindowLayoutHint?: KanbanSceneWindowLayoutHint;
 }
 
 /** Safe retained state for one sparse source cell. */
@@ -73,6 +309,8 @@ export interface KanbanViewportSourceSnapshot<TCard> {
   readonly cells: readonly KanbanViewportSourceCell<TCard>[];
   /** Current coordinator generation used to reject stale asynchronous work. */
   readonly generation: number;
+  /** Honest grouped row-window availability; omitted for an ungrouped query. */
+  readonly sceneWindow?: KanbanSceneWindowResult;
 }
 
 /** Construction input for the viewport-owned source boundary. */
@@ -280,15 +518,40 @@ export class KanbanViewportSource<TCard> {
         return column === undefined ? [] : [column];
       }),
     );
-    const retainedAddresses = indexes.retained.flatMap((index) => {
+    const retainedColumnIds = indexes.retained.flatMap((index) => {
       const solved = widths.columns[index];
-      return solved === undefined ? [] : [Object.freeze({ columnId: solved.columnId })];
+      return solved === undefined ? [] : [solved.columnId];
     });
+    let sceneWindow: KanbanSceneWindowResult | undefined;
+    let retainedAddresses: readonly KanbanCellAddress[];
+    if (this.#query.groupBy === undefined || publication.swimlanes.length === 0) {
+      retainedAddresses = Object.freeze(retainedColumnIds.map((columnId) => Object.freeze({ columnId })));
+    } else {
+      const firstRequestedRow = Math.min(publication.swimlanes.length, Math.floor(verticalOffset / cardStride));
+      const requestedRows = Math.max(1, Math.ceil(Math.max(1, height - 1) / cardStride));
+      const lastRequestedRow = Math.min(publication.swimlanes.length, firstRequestedRow + requestedRows);
+      const addresses: KanbanCellAddress[] = [];
+      sceneWindow = resolveKanbanSceneWindow({
+        queryGeneration: this.#session.generation(),
+        sessionRevision: publication.revision,
+        requestedSwimlaneRange: { start: firstRequestedRow, end: lastRequestedRow },
+        visibleColumnIds: retainedColumnIds,
+        overscan: { rows: this.#verticalOverscan, columns: this.#horizontalOverscan },
+        ...(request.sceneWindowLayoutHint === undefined ? {} : { layoutHint: request.sceneWindowLayoutHint }),
+        openCell: ({ columnId, swimlaneIndex }) => {
+          const swimlane = publication.swimlanes[swimlaneIndex];
+          if (swimlane !== undefined) {
+            addresses.push(Object.freeze({ columnId, swimlaneId: swimlane.swimlaneId }));
+          }
+        },
+      });
+      retainedAddresses = Object.freeze(addresses);
+    }
     this.#reconcileCells(retainedAddresses, new Set(indexes.visible.map((index) => widths.columns[index]?.columnId)));
 
     const visibleRows = Math.max(1, height - 1);
     const cardsPerViewport = Math.max(1, Math.ceil(visibleRows / cardStride));
-    const firstVisibleCard = Math.floor(verticalOffset / cardStride);
+    const firstVisibleCard = this.#query.groupBy === undefined ? Math.floor(verticalOffset / cardStride) : 0;
     const overscanCards = cardsPerViewport * this.#verticalOverscan;
     const rangeStart = Math.max(0, firstVisibleCard - overscanCards);
     const requestedCards = Math.min(this.#limits.ensureRangeCards, cardsPerViewport + overscanCards * 2);
@@ -325,6 +588,7 @@ export class KanbanViewportSource<TCard> {
       visibleColumns,
       cells: Object.freeze(cells),
       generation,
+      ...(sceneWindow === undefined ? {} : { sceneWindow }),
     });
   }
 
