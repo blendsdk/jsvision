@@ -45,6 +45,10 @@ export const DATAGRID_ENGLISH_CATALOG = defineCatalog(
       'datagrid.empty.filtered': 'No matching rows',
       'datagrid.lifecycle.loading': 'Loading…',
       'datagrid.lifecycle.retry': 'Retry',
+      'datagrid.validation.row-trapped': '${message} · Esc reverts row changes',
+      'datagrid.revert.pending': 'Reverting row…',
+      'datagrid.revert.failed': 'Could not revert row changes',
+      'datagrid.revert.unavailable': 'Row changes cannot be reverted',
       'datagrid.filter.operator.contains': 'contains',
       'datagrid.filter.operator.starts-with': 'starts with',
       'datagrid.filter.operator.ends-with': 'ends with',
@@ -93,6 +97,7 @@ export const DATAGRID_ENGLISH_CATALOG = defineCatalog(
       'datagrid.personalize.visible-count': ['visible', 'total'],
       'datagrid.personalize.confirm.overwrite': ['name'],
       'datagrid.personalize.confirm.delete': ['name'],
+      'datagrid.validation.row-trapped': ['message'],
     },
   },
 );

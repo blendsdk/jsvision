@@ -5,6 +5,7 @@
  */
 import { Text } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
+import { sanitize } from '@jsvision/core';
 
 /**
  * Build the grid's one-line message band — a reactive `Text` bound to the active validation/veto
@@ -68,6 +69,8 @@ export interface RowGateDeps<T> {
   focusColumn(index: number): void;
   /** Push (or clear, with `null`) the active band message. */
   note(message: string | null): void;
+  /** Compose a failed validator's text with the locale-owned Escape recovery hint. */
+  trappedMessage?: (message: string) => string;
 }
 
 /** The row-leave decision surface — every leave path consults {@link RowGate.tryLeave} first. */
@@ -120,6 +123,7 @@ export interface RowGate {
  *   isRowTouched: (k) => touched.has(k), clearTouched: (k) => touched.delete(k),
  *   columnIndex: (id) => visibleIds.indexOf(id), currentColumn: () => focusedCol(),
  *   focusColumn: (i) => focusedCol.set(i), note: (m) => errors.note(m),
+ *   trappedMessage: (message) => `${message} · Esc reverts row changes`,
  * });
  *
  * function leaveRow(): void {
@@ -156,7 +160,8 @@ export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {
       const named = res.field !== undefined ? deps.columnIndex(res.field) : -1;
       deps.focusColumn(named >= 0 ? named : deps.currentColumn());
       deps.onBlocked?.(key, row);
-      deps.note(res.message ?? 'This row is invalid');
+      const message = sanitize(res.message ?? 'This row is invalid');
+      deps.note(deps.trappedMessage?.(message) ?? message);
       return false;
     },
   };

@@ -136,6 +136,11 @@ interface RowRevertTransactionDeps<T> {
   readonly note: (message: string | null) => void;
   readonly bumpVersion: () => void;
   readonly cellKey: (rowKey: Key, columnId: string) => string;
+  readonly messages: {
+    readonly pending: string;
+    readonly failed: string;
+    readonly unavailable: string;
+  };
 }
 
 /** Attempt-owned pending presentation that must never attach to a later same-key row. */
@@ -143,11 +148,6 @@ interface RowRevertPresentation<T> {
   readonly attempt: PreparedRowRevert<T>;
   readonly keys: readonly string[];
 }
-
-/** Messages are centralized here until the catalog task replaces them with translated lookups. */
-const ROW_REVERT_PENDING = 'Reverting row…';
-const ROW_REVERT_FAILED = 'Could not revert row changes';
-const ROW_REVERT_UNAVAILABLE = 'Row changes cannot be reverted';
 
 /** Transaction behavior consumed by the grid's input and lifecycle wiring. */
 export interface RowRevertTransactionController<T> {
@@ -212,7 +212,7 @@ export function createRowRevertTransactionController<T>(
     const current = presentation;
     if (disposed || current?.attempt.token !== attempt.token) return;
     for (const key of current.keys) deps.deleteDirty(key);
-    if (deps.activeMessage() === ROW_REVERT_PENDING) deps.note(null);
+    if (deps.activeMessage() === deps.messages.pending) deps.note(null);
     presentation = undefined;
   };
 
@@ -267,7 +267,7 @@ export function createRowRevertTransactionController<T>(
     deps.bumpVersion();
     detach(attempt);
     deps.sessions.finish(attempt, compensationComplete ? 'rejected' : 'invalidated');
-    deps.note(ROW_REVERT_FAILED);
+    deps.note(deps.messages.failed);
   };
 
   return {
@@ -278,7 +278,7 @@ export function createRowRevertTransactionController<T>(
       // Persistence authority must be decided before prepare marks the session reverting or a setter
       // touches data. Per-cell persistence cannot safely stand in for one atomic row callback.
       if (deps.onRevertRow === undefined && !deps.internalAllowed) {
-        deps.note(ROW_REVERT_UNAVAILABLE);
+        deps.note(deps.messages.unavailable);
         return true;
       }
 
@@ -287,7 +287,7 @@ export function createRowRevertTransactionController<T>(
       const keys = Object.freeze(attempt.cells.map((cell) => deps.cellKey(rowKey, cell.columnId)));
       presentation = { attempt, keys };
       for (const key of keys) deps.addDirty(key);
-      deps.note(ROW_REVERT_PENDING);
+      deps.note(deps.messages.pending);
 
       const attempted: PreparedRowRevertCell<T>[] = [];
       try {
@@ -301,7 +301,7 @@ export function createRowRevertTransactionController<T>(
           deps.bumpVersion();
           detach(attempt);
           deps.sessions.finish(attempt, 'invalidated');
-          deps.note(ROW_REVERT_FAILED);
+          deps.note(deps.messages.failed);
         }
         return true;
       }

@@ -53,7 +53,7 @@ import { buildMessageBand, createRowGate } from './validation.js';
 import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
-import { createEnglishDatagridI18n } from './i18n/catalog.js';
+import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 import { createRowRevertController, createRowRevertTransactionController } from './row-revert.js';
 import type { RowRevertController, RowRevertTransactionController } from './row-revert.js';
 
@@ -537,6 +537,11 @@ export class EditableDataGrid<T> extends Group {
       note: (message) => this.errors.note(message),
       bumpVersion: () => this.version.set(this.version() + 1),
       cellKey,
+      messages: {
+        pending: this.datagridText('datagrid.revert.pending'),
+        failed: this.datagridText('datagrid.revert.failed'),
+        unavailable: this.datagridText('datagrid.revert.unavailable'),
+      },
     });
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
@@ -684,6 +689,11 @@ export class EditableDataGrid<T> extends Group {
       currentColumn: () => this.focusedCol(),
       focusColumn: (index) => this.focusedCol.set(index),
       note: (message) => this.errors.note(message),
+      trappedMessage: (message) =>
+        this.i18n.t('datagrid.validation.row-trapped', {
+          defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.validation.row-trapped'],
+          params: { message },
+        }),
     });
 
     // Lifecycle: the controller drives the body-region swap (loading/error) from the caller `status`; the
@@ -1776,6 +1786,11 @@ export class EditableDataGrid<T> extends Group {
    */
   selectedKeys(): ReadonlySet<Key> {
     return this.selection.read();
+  }
+
+  /** Resolve one package-owned message with its canonical English fallback. */
+  private datagridText(key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
   }
 
   /** Find a key in the source directly, bypassing the derived display cache for settlement checks. */
