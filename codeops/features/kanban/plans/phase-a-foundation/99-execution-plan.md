@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 04:38 CEST
-> **Progress**: 26/64 tasks (41%)
+> **Last Updated**: 2026-08-04 04:41 CEST
+> **Progress**: 27/64 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -95,7 +95,9 @@ cancellable, sparse lifecycle and deterministic consumer testing fixtures.
 - [x] 3.1.2 `[spec-author]` Add immutable ST-A-DESCRIPTOR-SAFETY-01 descriptor/theme/catalog specifications for bounded rows/regions, safe text/roles, local failure isolation, role/catalog parity, fallback, side-effect-free imports, and monochrome cues — `packages/kanban/test/{descriptor,theme,i18n}.spec.test.ts` ✅ (completed: 2026-08-04 04:38)
   - Red evidence: 3 files/19 tests fail only because the approved Phase 3 descriptor/theme/catalog
     symbols and authored locale assembly do not exist; typecheck reports only those same absent exports.
-- [ ] 3.1.3 Run Phase 3 specifications and record expected red failures before card/theme/catalog implementations
+- [x] 3.1.3 Run Phase 3 specifications and record expected red failures before card/theme/catalog implementations ✅ (completed: 2026-08-04 04:41)
+  - Red evidence: all 4 Phase 3 files and 37 tests fail only for the approved absent card adapter,
+    renderer/descriptor, semantic theme, English catalog, and authored locale assembly symbols.
 - [ ] 3.2.1 Implement documented generic adapter and complete `StandardCard` convenience/checklist/summary data types without imposing them on generic records — `packages/kanban/src/card/{adapter,standard-card}.ts`
 - [ ] 3.2.2 Implement the bounded formatter context and adapter-boundary value validation without a runtime schema or Forms dependency — `packages/kanban/src/card/formatting.ts`, `packages/kanban/src/card/adapter.ts`
 - [ ] 3.2.3 Implement bounded descriptor/renderer contracts and validation plus the Phase A standard/fallback renderer with sanitized cell-correct title/status/non-color focus — `packages/kanban/src/card/{descriptor,renderer,standard-renderer}.ts`
