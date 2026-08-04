@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:06
-> **Progress**: 28/31 tasks (90%)
+> **Last Updated**: 2026-08-04 17:08
+> **Progress**: 29/31 tasks (94%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -203,7 +203,7 @@ layout, accessibility cues, and manual 80×24 evidence.
 > locale service into `EditableDataGrid`. The remaining mapped layout, testing, recipe, lifecycle,
 > and generated API references contain no hand-authored claim changed by this feature; generated
 > API pages remain owned by Task 3.2.3.
-- [ ] 3.2.3 Run `yarn plugin:update` to regenerate API pages, snippets, impact snapshot, and assembled plugin content — generated docs/plugin files
+- [x] 3.2.3 Run `yarn plugin:update` to regenerate API pages, snippets, impact snapshot, and assembled plugin content — generated docs/plugin files ✅ (completed: 2026-08-04 17:08)
 - [ ] 3.2.4 Run ST-27B–ST-28 and make all generated/distribution specifications pass without changing their expected behavior (green phase) — generated API and plugin checks
 
 ### Step 3.3: Final Hardening
