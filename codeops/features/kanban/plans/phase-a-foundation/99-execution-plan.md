@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 02:05 CEST
-> **Progress**: 14/64 tasks (22%)
+> **Last Updated**: 2026-08-04 02:15 CEST
+> **Progress**: 15/64 tasks (23%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -70,7 +70,7 @@ validation contracts. No mounted board behavior is claimed.
 
 - [x] 2.1.1 `[spec-author]` Add immutable query/session specifications for ST-R02-05, ST-R02-08/09, ST-R02-14, and ST-R02-16/17: query changes, states/count quality, bounded identity location, cancellation, stale suppression, atomicity, and safe observations — `packages/kanban/test/query-session.spec.test.ts` ✅ (completed: 2026-08-04 01:54)
 - [x] 2.1.2 `[spec-author]` Add immutable cursor specifications for ST-R02-04/06, ST-R02-10–12/15, and ST-A-SOURCE-LIFECYCLE-01: ranges, unloaded/scoped-error states, placement, disposal, and identity changes — `packages/kanban/test/cursor.spec.test.ts` ✅ (completed: 2026-08-04 02:05)
-- [ ] 2.1.3 `[spec-author]` Add immutable eager/windowed scale specifications for ST-R02-01 and ST-A-SOURCE-SCALE-01: exact 5,000-card semantics and pure-source 100,000-logical-card visible/overscan-only reads — `packages/kanban/test/eager-source.spec.test.ts`, `packages/kanban/test/windowed-source.spec.test.ts`
+- [x] 2.1.3 `[spec-author]` Add immutable eager/windowed scale specifications for ST-R02-01 and ST-A-SOURCE-SCALE-01: exact 5,000-card semantics and pure-source 100,000-logical-card visible/overscan-only reads — `packages/kanban/test/eager-source.spec.test.ts`, `packages/kanban/test/windowed-source.spec.test.ts` ✅ (completed: 2026-08-04 02:15)
 - [ ] 2.1.4 Run all Phase 2 specifications and record the expected red failures before source production modules exist
 - [ ] 2.2.1 Implement documented source/query-session/cursor interfaces, the optional revision-bound locator contract, source/cell state, and honest count-quality unions — `packages/kanban/src/source/{types,states,counts}.ts`
 - [ ] 2.2.2 Implement collision-safe cell addresses, identity-change and placement unions/token checks, and source-publication boundary validation — `packages/kanban/src/source/{address,placement,validation}.ts`

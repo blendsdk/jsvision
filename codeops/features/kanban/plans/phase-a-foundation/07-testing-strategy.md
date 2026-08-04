@@ -26,7 +26,7 @@ distribution evidence.
 | `test/query-session.spec.test.ts` | Specification | Exact source values plus testing-harness session generation, state/counts, cancellation, stale suppression, atomic publication, redaction, and bounded location |
 | `test/cursor.spec.test.ts` | Specification | Exact cursor values plus testing-harness range coalescing/validation, unloaded reads, placement completeness, stale-token rejection, scoped error, identity deletion, and disposal suppression |
 | `test/eager-source.spec.test.ts` | Specification | 5,000-card eager semantics, ordering, validation, exact counts |
-| `test/windowed-source.spec.test.ts` | Specification | 100,000 logical cards, range bounds, partial/error isolation |
+| `test/windowed-source.spec.test.ts` | Specification | Testing-only lazy 100,000-card fixture, visible/finite-overscan ranges, cursor/materialization bounds, cancellation, and safe metrics |
 | `test/cards.spec.test.ts` | Specification | Generic adapter and standard Phase A renderer |
 | `test/layout.spec.test.ts` | Specification | Width solver, density gaps, minimum geometry, monotonicity |
 | `test/viewport.spec.test.ts` | Specification | Projection bounds, sticky headers, scrolling, cache, topology |

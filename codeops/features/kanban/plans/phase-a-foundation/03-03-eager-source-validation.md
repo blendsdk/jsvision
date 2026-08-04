@@ -2,7 +2,7 @@
 
 > **Document**: 03-03-eager-source-validation.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-28
+> **Decision sources**: PAR-11, PAR-14, PAR-17, PAR-19–PAR-20, PAR-27–PAR-29
 > **CodeOps Artifact Schema**: 1
 
 ## Eager helper API
@@ -132,6 +132,69 @@ queues, retention owners, scheduler state, or mutable internals. A controlled cu
 deferred range resolution/rejection/publication and safe instrumentation. Disposing invalidates the
 harness before aborting work, delegates cursor disposal exactly once, and suppresses every late result
 from subsequent snapshots and observations.
+
+The deterministic windowed scale fixture has this minimum testing-only shape:
+
+```ts
+export function createWindowedKanbanFixture<TCard>(options: {
+  readonly logicalCardCount: number;
+  readonly columns: readonly KanbanColumnMeta[];
+  readonly swimlanes?: readonly KanbanSwimlaneMeta[];
+  readonly initialRevision?: KanbanRevision;
+  readonly materialize: (request: {
+    readonly address: KanbanCellAddress;
+    readonly start: number;
+    readonly end: number;
+  }) => readonly TCard[];
+  readonly keyOf: (card: TCard) => CardKey;
+  readonly eventCapacity?: number;
+}): KanbanWindowedFixture<TCard>;
+```
+
+The fixture returns a public `source`, a `controller`, frozen `metrics()`, and idempotent `dispose()`.
+The controller exposes detached `pendingRanges()` and resolves or rejects a request by numeric
+`requestId`; it may also publish an exact deterministic session snapshot. Each pending range carries
+session ID, safe address, half-open bounds, session/cursor revisions, and no card/query data.
+
+```ts
+export interface KanbanWindowedFixtureController {
+  pendingRanges(): readonly KanbanPendingRange[];
+  resolveRange(requestId: number): void;
+  rejectRange(requestId: number, error: { readonly code: string; readonly label?: string }): void;
+  publishSession(publication: KanbanSessionPublication): void;
+}
+
+export interface KanbanWindowedFixtureMetrics {
+  readonly logicalCardCount: number;
+  readonly openedSessions: number;
+  readonly disposedSessions: number;
+  readonly createdCursors: number;
+  readonly disposedCursors: number;
+  readonly ensureRangeCalls: number;
+  readonly requestedRanges: readonly KanbanMetricRange[];
+  readonly materializedCards: number;
+  readonly cardAtReads: number;
+  readonly abortedRequests: number;
+  readonly suppressedLateSettlements: number;
+  readonly publications: number;
+  readonly retainedEvents: readonly KanbanWindowedFixtureEvent[];
+}
+```
+
+Metrics contain logical card count; opened/disposed sessions; created/disposed cursors; range calls and
+bounded requested intervals; cards materialized and read; aborted requests; suppressed late
+settlements; publications; and a fixed-capacity event ring. Event kinds are limited to open session,
+create cursor, ensure/resolve/reject/abort range, publish, and cursor/session disposal. Events contain
+only numeric IDs, addresses, bounds, revisions, and safe codes.
+
+Construction retains only O(columns + swimlanes + bounded telemetry), never an array or index sized by
+`logicalCardCount`. `cell(address)` creates a cursor only on explicit access. `ensureRange` records one
+validated request and cannot call `materialize` until controller resolution. Resolution invokes it once
+for that span and validates the complete returned publication atomically. Metrics/event work remains
+proportional to actual requests. The fixture never exposes coordinator maps, queues, schedulers,
+retention owners, private cursor registries, card bodies/keys, placement tokens, raw errors, callbacks,
+or promises. Overlap coalescing remains owned by the private cursor coordinator; metrics record only
+what reaches the source.
 
 Fixtures must be useful to package consumers testing their adapters; they are not production imports.
 

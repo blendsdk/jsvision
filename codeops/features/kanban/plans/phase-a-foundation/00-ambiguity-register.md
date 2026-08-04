@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 28 items resolved
-> **Last Updated**: 2026-08-04 02:00 CEST
+> **Status**: ✅ GATE PASSED — all 29 items resolved
+> **Last Updated**: 2026-08-04 02:11 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -48,6 +48,7 @@
 | PAR-26 | Technical (runtime) | The requirement mandated namespaced extension IDs but did not fix their grammar or reserved package namespace | Reuse lowercase dotted JSVision message-key grammar / introduce slash-separated IDs | Delegated: reuse lowercase dotted segments and reserve the complete `jsvision.` prefix for package-owned IDs | ✅ Resolved |
 | PAR-27 | Technical (runtime) | Query-session criteria fixed lifecycle behavior but not the exact public value shapes or a black-box seam that can test the private generation coordinator | Testing-only lifecycle harness plus exact value unions / expose the coordinator / defer lifecycle proof to Phase 4 | Delegated: exact public query/state/count/structure/publication/location values plus a narrow testing-only lifecycle harness; coordinator internals remain private | ✅ Resolved |
 | PAR-28 | Technical (runtime) | Cursor criteria fixed behavior but not exact cell/count/length/placement/identity values, stale-placement validation, or a black-box seam for the private range coordinator | Exact unions plus pure validators and testing-only cursor harness / expose coordinator / move cursor lifecycle to Phase 4 | Delegated: exact immutable cursor unions, pure placement/identity validators, and a narrow testing-only cursor harness; selection reconciliation remains Phase 4 | ✅ Resolved |
+| PAR-29 | Technical (runtime) | The approved 100,000-card windowed fixture lacked an exact constructor, settlement controller, and bounded metrics needed for an immutable scale oracle | Lazy testing fixture with explicit range settlement and metrics / self-reported opaque benchmark / mount Board early | Delegated: lazy testing-only windowed source/controller with request-proportional frozen metrics and safe bounded events; no board or coordinator exposure | ✅ Resolved |
 
 ## Resolution notes
 
@@ -317,6 +318,36 @@ selection ownership. **Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T22094
 placement anchor semantics change, selection ownership moves into the source layer, or consumers need
 public coordinator control.
 
+### PAR-29 — deterministic windowed scale fixture
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** The 100,000-logical-card fixture,
+deterministic controller, instrumentation, and testing export were already approved. This fixes their
+minimal representation without adding a production adapter or changing scale semantics. **Objective:**
+Make visible/overscan-only acquisition, lazy cursor creation, bounded telemetry, and absence of a
+whole-card scan observable in a pure source test.
+
+**Decision:** `createWindowedKanbanFixture` receives a logical card count, bounded column/swimlane
+metadata, deterministic initial revision, a card-key adapter, and a `materialize({ address, start,
+end })` callback. It returns a public data source plus a testing controller that lists exact pending
+half-open requests by numeric ID and explicitly resolves/rejects them or publishes a deterministic
+session snapshot. Materialization cannot run until the controller resolves a recorded request.
+Detached frozen metrics count actual sessions, cursors, ranges, cards materialized/read, aborts, late
+suppression, publication, and disposal. A fixed-capacity safe event ring carries only numeric IDs,
+addresses, bounds, revisions, and safe codes—never queries, card keys/bodies, tokens, raw errors,
+callbacks, promises, or private identities.
+
+**Evidence:** The scale criterion requires proving that 100,000 logical cards do not cause a full scan
+or theoretical cell allocation. A logical count alone cannot prove that; explicit range settlement and
+request-proportional counters can. **Rejected alternatives:** Opaque self-reported benchmark numbers
+cannot prove callback/materialization boundaries. Mounting the board early violates the pure-source
+phase and duplicates Phase 4. Exporting coordinator queues exposes private implementation.
+**Strongest counterargument:** The controller is a supported testing surface, but deterministic
+deferred settlement is already an approved consumer fixture category and remains isolated under
+`./testing`. **Confidence:** High (0.95). **Hardening:** Independent challenge converged on lazy cursor
+creation, explicit request IDs, controller settlement, bounded frozen metrics, and safe telemetry.
+**Policy:** v1, root `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** the 100,000 target or
+visible/overscan semantics change, or a production windowed adapter becomes package-owned.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -325,7 +356,7 @@ public coordinator control.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-28 have complete delegated records; consequential request, query-lifecycle,
-  and cursor-lifecycle shapes received independent challenge and the namespace grammar was grounded in
-  the existing shared validator.
+- [x] PAR-20 through PAR-29 have complete delegated records; consequential request, lifecycle, and
+  scale-fixture shapes received independent challenge and the namespace grammar was grounded in the
+  existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.
