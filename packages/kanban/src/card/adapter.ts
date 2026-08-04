@@ -1,14 +1,19 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import { createKanbanCardKey } from '../contract/identity.js';
-import type { CardKey, KanbanChecklistId, KanbanFieldId } from '../contract/identity.js';
+import type { CardKey, KanbanFieldId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardPresentationSelection } from './presentation-policy.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
 import type { KanbanCardOperationState } from './descriptor.js';
+import type { KanbanChecklistGroup } from './checklist.js';
 import type { StandardCard, StandardCardSummary } from './standard-card.js';
+import type { KanbanCardSummary, KanbanCardSummaryInput, KanbanCardSummaryValue } from './summary.js';
 import type { KanbanThemeRole } from './theme.js';
+
+export type { KanbanChecklistGroup, KanbanChecklistItem, KanbanChecklistItemId } from './checklist.js';
+export type { KanbanCardSummary, KanbanCardSummaryInput, KanbanCardSummaryValue } from './summary.js';
 
 /**
  * Pure presentation getters that adapt an application-owned record to mandatory card semantics.
@@ -76,59 +81,6 @@ export type KanbanCardField<TCard> =
         context: KanbanCardFormattingContext,
       ) => readonly string[] | undefined;
     });
-
-/** Detached bounded summary result containing text, count, or both. */
-export interface KanbanCardSummaryValue {
-  /** Optional application-formatted summary text. */
-  readonly text?: string;
-  /** Optional non-negative safe-integer aggregate count. */
-  readonly count?: number;
-}
-
-/** Raw summary value accepted before optional formatting and validation. */
-export type KanbanCardSummaryInput = string | number | bigint | KanbanCardSummaryValue;
-
-/** Generic application-owned aggregate projection for one standard card summary. */
-export interface KanbanCardSummary<TCard> {
-  /** Stable summary identity in the application field namespace. */
-  readonly summaryId: KanbanFieldId;
-  /** Display label sanitized at the snapshot boundary. */
-  readonly label: string;
-  /** Non-negative priority used only when optional content must degrade. */
-  readonly priority: number;
-  /** Optional semantic summary role. */
-  readonly role?: KanbanThemeRole;
-  /** Reads one bounded aggregate value without transferring card ownership. */
-  readonly valueOf: (card: TCard) => KanbanCardSummaryInput | undefined;
-  /** Optionally formats the unchanged aggregate input once. */
-  readonly format?: (
-    value: KanbanCardSummaryInput,
-    context: KanbanCardFormattingContext,
-  ) => KanbanCardSummaryValue | undefined;
-}
-
-/** Stable item identity whose uniqueness is scoped to one checklist group. */
-export type KanbanChecklistItemId = string;
-
-/** One application-owned checklist item snapshotted for read-only card display. */
-export interface KanbanChecklistItem {
-  /** Stable group-scoped item identity. */
-  readonly itemId: KanbanChecklistItemId;
-  /** Display text sanitized at the snapshot boundary. */
-  readonly text: string;
-  /** Application-owned completion state. */
-  readonly completed: boolean;
-}
-
-/** One ordered application-owned checklist group. */
-export interface KanbanChecklistGroup {
-  /** Stable card-scoped checklist identity. */
-  readonly checklistId: KanbanChecklistId;
-  /** Optional group title sanitized at the snapshot boundary. */
-  readonly title?: string;
-  /** Ordered read-only item publication. */
-  readonly items: readonly KanbanChecklistItem[];
-}
 
 /** Complete card-local interaction state available to semantic style selection. */
 export interface KanbanCardVisualState {

@@ -14,6 +14,7 @@ export * from './contract/request.js';
 export * from './contract/revision.js';
 export * from './contract/semantic-query.js';
 export * from './card/adapter.js';
+export { createKanbanChecklistItemId } from './card/checklist.js';
 export type { KanbanCardFormattingContext } from './card/formatting.js';
 export * from './card/descriptor.js';
 export * from './card/presentation-policy.js';

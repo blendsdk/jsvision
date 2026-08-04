@@ -2652,6 +2652,14 @@ Creates a validated checklist-group identity.
 createKanbanChecklistId(value: string): KanbanChecklistId
 ```
 
+## createKanbanChecklistItemId
+
+Creates one bounded control-free checklist-item identity.
+
+```ts
+createKanbanChecklistItemId(value: string): KanbanChecklistItemId
+```
+
 ## createKanbanColumnId
 
 Creates a validated workflow-column identity.
