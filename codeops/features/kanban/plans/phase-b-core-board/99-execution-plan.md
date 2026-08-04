@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 18:19 CEST
-> **Progress**: 42/106 tasks (40%)
+> **Last Updated**: 2026-08-04 18:24 CEST
+> **Progress**: 43/106 tasks (41%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -165,7 +165,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 3.2.1 Implement bounded sparse prefix-height runs, exact anchors, estimates, and saturated conversions — `packages/kanban/src/layout/sparse-height-index.ts` ✅ (completed: 2026-08-04 18:15 CEST)
 - [x] 3.2.2 Implement measurement correction, revision invalidation, stable-anchor preservation, and bounded eviction — `packages/kanban/src/layout/sparse-height-index.ts`, `packages/kanban/src/board/descriptor-cache.ts` ✅ (completed: 2026-08-04 18:19 CEST)
-- [ ] 3.2.3 Build immutable canonical 2-D scene nodes from normalized structure, stable interaction snapshots, and resident cells capped by `retainedDescriptors`, with deterministic partial-state clipping — `packages/kanban/src/board/scene-model.ts`, `packages/kanban/src/board/scene-builder.ts`
+- [x] 3.2.3 Build immutable canonical 2-D scene nodes from normalized structure, stable interaction snapshots, and resident cells capped by `retainedDescriptors`, with deterministic partial-state clipping — `packages/kanban/src/board/scene-model.ts`, `packages/kanban/src/board/scene-builder.ts` ✅ (completed: 2026-08-04 18:24 CEST)
 - [ ] 3.2.4 Generalize viewport-source retention to visible/overscan semantic cells, consume bounded compatible row-layout hints, and degrade distant no-hint projection honestly — `packages/kanban/src/board/viewport-source.ts`
 - [ ] 3.2.5 Implement hybrid/separator/band geometry strategies over the canonical scene — `packages/kanban/src/layout/swimlane-geometry.ts`
 - [ ] 3.2.6 Implement rail geometry, sticky label behavior, and deterministic hybrid degradation — `packages/kanban/src/layout/swimlane-rail.ts`, `packages/kanban/src/layout/swimlane-geometry.ts`

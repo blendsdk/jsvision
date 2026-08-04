@@ -6,6 +6,23 @@ Board and viewport composition, generic sources, cards, themes, localization, an
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/kanban`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
+## BuildKanbanSceneOptions
+
+Options accepted by the canonical scene builder's untrusted pure boundary.
+
+```ts
+interface BuildKanbanSceneOptions {
+  revision: KanbanRevision;   // Equality-only scene revision.
+  queryGeneration: number;   // Active query generation.
+  sessionRevision: KanbanRevision;   // Owning query-session revision.
+  columns: readonly unknown[];   // Source-ordered workflow-column metadata.
+  swimlanes: readonly unknown[];   // Source-ordered visible swimlane metadata.
+  cells: readonly unknown[];   // Occupied or explicitly retained source cells.
+  detached: unknown;   // Hidden and collapsed evidence retained outside visible scene nodes.
+  descriptorLimit: number;   // Maximum resident descriptors allowed in the completed scene.
+}
+```
+
 ## CardKey
 
 A stable application-owned card identity.
@@ -2428,6 +2445,93 @@ interface KanbanSafeRenderOptions {
 }
 ```
 
+## KanbanScene
+
+Canonical immutable semantic scene shared by every presentation variant.
+
+```ts
+interface KanbanScene {
+  revision: KanbanRevision;   // Equality-only scene revision.
+  queryGeneration: number;   // Query generation that owns every resident cell.
+  sessionRevision: KanbanRevision;   // Revision of the owning board-wide query session.
+  columns: readonly KanbanColumnMeta[];   // Source-ordered workflow columns.
+  swimlanes: readonly KanbanSceneSwimlane[];   // Source-ordered visible swimlanes.
+  cells: readonly KanbanSceneCell[];   // Occupied or explicitly retained cells only; no Cartesian synthesis.
+  cards: readonly KanbanSceneCard[];   // Source-ordered resident cards flattened for bounded projection.
+  states: readonly KanbanSceneLimitState[];   // Non-actionable partial-state evidence.
+  detached: KanbanSemanticValue;   // Hidden and collapsed semantic evidence with no terminal geometry.
+}
+```
+
+## KanbanSceneCard
+
+One resident card in the canonical semantic scene.
+
+```ts
+interface KanbanSceneCard {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  address: KanbanCellAddress;   // Semantic source cell containing the card.
+  logicalIndex: number;   // Zero-based logical position in the owning cursor.
+  entityRevision: KanbanRevision;   // Equality-only application entity revision.
+  descriptor: KanbanSceneCardDescriptor;   // Immutable renderer-neutral descriptor.
+  interaction: KanbanSemanticValue;   // Detached focus and selection evidence.
+  workflow: KanbanSemanticValue;   // Detached workflow eligibility evidence.
+}
+```
+
+## KanbanSceneCardDescriptor
+
+Renderer-neutral card descriptor fields required by scene geometry and inspection.
+
+```ts
+interface KanbanSceneCardDescriptor {
+  cardKey: CardKey;   // Typed card identity repeated by the descriptor.
+  width: number;   // Exact descriptor width in terminal cells.
+  measuredHeight: number;   // Exact descriptor height in terminal rows.
+  presentationRevision?: KanbanRevision;   // Equality-only card presentation revision.
+  value: KanbanSemanticValue;   // Complete detached descriptor payload already validated by its owning presentation boundary.
+}
+```
+
+## KanbanSceneCell
+
+One occupied or explicitly retained semantic source cell.
+
+```ts
+interface KanbanSceneCell {
+  address: KanbanCellAddress;   // Stable workflow-column and optional swimlane coordinate.
+  cursorRevision: KanbanRevision;   // Equality-only owning cursor revision.
+  state: KanbanCellState;   // Current source lifecycle state.
+  cards: readonly KanbanSceneCard[];   // Source-ordered resident cards retained within the descriptor ceiling.
+}
+```
+
+## KanbanSceneLimitState
+
+Non-actionable semantic evidence that visible descriptor demand exceeded its finite budget.
+
+```ts
+interface KanbanSceneLimitState {
+  code: 'descriptor-limit';   // Stable state code used by drawing and inspection.
+  scope: { readonly kind: 'cell'; readonly address: KanbanCellAddress };   // Owning source cell.
+  actionable: false;   // Limit surfaces never become an interaction target.
+  omittedCount: number;   // Number of source-ordered resident descriptors omitted from this scene.
+}
+```
+
+## KanbanSceneSwimlane
+
+Semantic swimlane header retained before any terminal geometry is assigned.
+
+```ts
+interface KanbanSceneSwimlane {
+  swimlaneId: string;   // Stable application-owned swimlane identity.
+  label: string;   // Sanitized display label.
+  revision: KanbanRevision;   // Equality-only presentation revision.
+  count?: KanbanSemanticValue;   // Optional detached count or summary evidence.
+}
+```
+
 ## KanbanScrollAnchor
 
 Stable semantic anchor used to restore a containing column and relative card row.
@@ -3800,6 +3904,14 @@ Rejects any placement derived from a different cursor revision.
 
 ```ts
 assertKanbanPlacementCurrent(placement: KanbanPlacement, currentRevision: KanbanRevision): KanbanPlacement
+```
+
+## buildKanbanScene
+
+Builds one immutable geometry-free semantic scene from bounded resident source data.
+
+```ts
+buildKanbanScene(options: BuildKanbanSceneOptions): KanbanScene
 ```
 
 ## canonicalizeKanbanCellAddress
