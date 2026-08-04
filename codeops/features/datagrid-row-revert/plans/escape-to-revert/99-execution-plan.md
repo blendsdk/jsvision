@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 16:10
-> **Progress**: 22/31 tasks (71%)
+> **Last Updated**: 2026-08-04 16:13
+> **Progress**: 23/31 tasks (74%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -144,7 +144,7 @@ failure and stale-settlement hardening; focused package gates green.
 
 **Reference**: [03-03 § Testing Requirements](03-03-documentation-and-distribution.md#testing-requirements)
 
-- [ ] 2.3.1 Add focused implementation/layout assertions for probe wiring, Classic surface, approved maximized startup, restore/maximize reflow, unclipped translated feedback, and non-color cues — `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts`, focused docs implementation tests
+- [x] 2.3.1 Add focused implementation/layout assertions for probe wiring, Classic surface, approved maximized startup, restore/maximize reflow, unclipped translated feedback, and non-color cues — `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts`, `packages/docs-site/test/data-grid-docs.row-revert.impl.test.ts` ✅ (completed: 2026-08-04 16:13)
 - [ ] 2.3.2 Run examples/docs typechecks and tests, `yarn docs:build`, manual 80×24 acceptance, and the normal changed-file gate — repository root
 
 **Deliverables**: polished standalone and Template1 teaching workflows; verified interaction,
