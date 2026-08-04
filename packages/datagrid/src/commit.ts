@@ -64,8 +64,12 @@ export interface RowRevert<T> {
  *
  * @example
  * ```ts
- * import type { OnRevertRow } from '@jsvision/datagrid';
+ * import type { OnRevertRow, RowRevertCell } from '@jsvision/datagrid';
  * interface Line { id: number; qty: number }
+ * const saveRowRevert = async (
+ *   _rowKey: string | number,
+ *   _cells: readonly RowRevertCell[],
+ * ): Promise<void> => Promise.resolve();
  * const persistRevert: OnRevertRow<Line> = async ({ rowKey, cells }) => {
  *   await saveRowRevert(rowKey, cells);
  *   return true;

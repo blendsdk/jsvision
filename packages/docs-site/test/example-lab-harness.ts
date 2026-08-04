@@ -55,7 +55,7 @@ export function dispatchExampleAction(app: Application, action: ExampleAction): 
   if (action.kind === 'key') {
     // Behavior contracts use familiar browser-style Arrow names, while the decoded JSVision event
     // vocabulary uses the shorter terminal names consumed by widget keymaps.
-    const keyName = action.key.toLowerCase().replace(/^arrow/, '');
+    const keyName = /^arrow/i.test(action.key) ? action.key.slice('arrow'.length).toLowerCase() : action.key;
     app.loop.dispatch(
       key(keyName, {
         alt: action.modifiers.includes('Alt'),

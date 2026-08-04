@@ -114,11 +114,22 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
-   * const grid = new EditableDataGrid({
+   * import { signal } from '@jsvision/ui';
+   * import { column, EditableDataGrid, fromRows } from '@jsvision/datagrid';
+   *
+   * interface Line { id: number; start: number; end: number }
+   * const rows = signal<Line[]>([{ id: 1, start: 1, end: 9 }]);
+   * const columns = [column({
+   *   id: 'start',
+   *   title: 'Start',
+   *   value: (row: Line) => row.start,
+   *   set: (row, value) => { row.start = value; },
+   * })];
+   * const grid = new EditableDataGrid<Line>({
    *   columns,
-   *   source,
-   *   validateRow,
-   *   onRevertRow: async ({ rowKey, cells }) => persistRowRevert(rowKey, cells),
+   *   source: fromRows(rows, { rowKey: (row) => row.id }),
+   *   validateRow: (row) => row.end > row.start ? { ok: true } : { ok: false, field: 'start' },
+   *   onRevertRow: async () => true,
    * });
    * ```
    */
