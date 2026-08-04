@@ -54,6 +54,8 @@ import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 import { createEnglishDatagridI18n } from './i18n/catalog.js';
+import { createRowRevertController } from './row-revert.js';
+import type { RowRevertController } from './row-revert.js';
 
 /**
  * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
@@ -410,10 +412,9 @@ export class EditableDataGrid<T> extends Group {
   // active message the footer band shows. Threaded into the body (the `gridInvalid` paint) and the edit
   // pipeline (set on a blocked/vetoed commit, cleared on a successful re-commit or an abandoned edit).
   private readonly errors = createErrorRegistry();
-  // Rows edited this visit (a cell committed) — the trigger for the row-leave gate. A row is added on a
-  // successful commit and removed when it leaves with `validateRow` passing, so an untouched row (seed
-  // data) never traps and a validated row does not re-trap. Distinct from `dirty` (in-flight commits).
-  private readonly touched = new Set<Key>();
+  // Bounded accepted-commit journal for the current exact key-and-object row visit. It is disabled when
+  // no row validator exists, so an ordinary editable grid retains no unused recovery history.
+  private readonly rowRevert: RowRevertController<T>;
   // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
   // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
   private readonly rowGate: RowGate;
@@ -489,6 +490,7 @@ export class EditableDataGrid<T> extends Group {
     });
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
+    this.rowRevert = createRowRevertController(opts.validateRow !== undefined);
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
     if (this.windowed) validateWindowedConfig(opts.source, engineCols, devWarn);
@@ -624,8 +626,13 @@ export class EditableDataGrid<T> extends Group {
       validateRow: opts.validateRow,
       focusedRow: () => this.focusedRow(),
       focusedKey: () => this.focusedKey(),
-      isRowTouched: (rowKey) => this.touched.has(rowKey),
-      clearTouched: (rowKey) => this.touched.delete(rowKey),
+      isRowTouched: (rowKey) => {
+        const row = this.focusedRow();
+        return row !== undefined && this.rowRevert.isTouched(rowKey, row);
+      },
+      clearTouched: () => undefined,
+      onPassed: (rowKey, row) => this.rowRevert.release(rowKey, row),
+      onBlocked: (rowKey, row) => this.rowRevert.markTrapped(rowKey, row),
       columnIndex: (columnId) => this.visibleIds().indexOf(columnId),
       currentColumn: () => this.focusedCol(),
       focusColumn: (index) => this.focusedCol.set(index),
@@ -703,7 +710,7 @@ export class EditableDataGrid<T> extends Group {
       bumpVersion: () => this.version.set(this.version() + 1),
       dirty: this.dirty,
       errors: this.errors,
-      markRowTouched: (rowKey) => this.touched.add(rowKey),
+      onAcceptedCommit: (change) => this.rowRevert.recordCommit(change),
       rowLeaveGate: () => this.rowGate.tryLeave(),
       messageBand,
       lifecycle: opts.status !== undefined,
@@ -748,6 +755,16 @@ export class EditableDataGrid<T> extends Group {
     // column resized (which resizes its fixed panel band). A pure width change to a scrolling column is
     // NOT a shape change: the reactive width getters re-flow it live without a rebuild.
     this.onMount(() => {
+      // Sorting and collection republication preserve a session only while the focused key still names
+      // the exact captured row object. A replacement, disappearance, or cursor change releases it.
+      this.bind(
+        () => {
+          const row = this.focusedRow();
+          return { row, rowKey: row === undefined ? undefined : this.source.rowKey(row) };
+        },
+        ({ row, rowKey }) => this.rowRevert.reconcileFocus(rowKey, row),
+      );
+      this.onCleanup(() => this.rowRevert.dispose());
       this.bind(
         () => this.partitionKey(),
         (key) => {
@@ -1889,6 +1906,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   deleteRows(keys: readonly Key[]): void {
+    this.rowRevert.invalidate(new Set(keys));
     this.mutations.deleteRows(keys);
   }
 

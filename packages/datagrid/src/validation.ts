@@ -56,6 +56,10 @@ export interface RowGateDeps<T> {
   isRowTouched(rowKey: string | number): boolean;
   /** Forget a row's touched mark (called on a passing leave, so a validated row does not re-trap). */
   clearTouched(rowKey: string | number): void;
+  /** Notify the session owner before a touched row is released after successful validation. */
+  onPassed?: (rowKey: string | number, row: T) => void;
+  /** Notify the session owner before a failed validation message is published. */
+  onBlocked?: (rowKey: string | number, row: T) => void;
   /** The visible column index for a column id, or `-1` when it is unknown/hidden. */
   columnIndex(columnId: string): number;
   /** The current column-cursor index (the refocus fallback). */
@@ -142,6 +146,7 @@ export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {
         res = { ok: false }; // a throwing validator is a blocking failure, never a crash
       }
       if (res.ok) {
+        deps.onPassed?.(key, row);
         deps.clearTouched(key); // a validated row will not re-trap on a later leave
         deps.note(null);
         return true;
@@ -150,6 +155,7 @@ export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {
       // the message, and keep the cursor on the row.
       const named = res.field !== undefined ? deps.columnIndex(res.field) : -1;
       deps.focusColumn(named >= 0 ? named : deps.currentColumn());
+      deps.onBlocked?.(key, row);
       deps.note(res.message ?? 'This row is invalid');
       return false;
     },

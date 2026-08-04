@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 14:19
-> **Progress**: 5/31 tasks (16%)
+> **Last Updated**: 2026-08-04 14:22
+> **Progress**: 6/31 tasks (19%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -65,7 +65,7 @@ AR-3, AR-6, AR-7, AR-12
 
 - [x] 1.2.1 Implement the bounded session registry, earliest-value journal, identity checks, attempt tokens, and cleanup — `packages/datagrid/src/row-revert.ts` ✅ (completed: 2026-08-04 14:17)
 - [x] 1.2.2 Replace touched-only edit notification with accepted commit details after `commitCell` succeeds — `packages/datagrid/src/editing.ts`, `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-08-04 14:19)
-- [ ] 1.2.3 Add row-gate pass/trap notifications and container session/focus/deletion/disposal wiring — `packages/datagrid/src/validation.ts`, `packages/datagrid/src/grid.ts`
+- [x] 1.2.3 Add row-gate pass/trap notifications and container session/focus/deletion/disposal wiring — `packages/datagrid/src/validation.ts`, `packages/datagrid/src/grid.ts`, plus the existing `packages/datagrid/src/grid-panels.ts` configuration bridge ✅ (completed: 2026-08-04 14:22)
 
 ### Step 1.3: Transaction, Input, and Localization
 
