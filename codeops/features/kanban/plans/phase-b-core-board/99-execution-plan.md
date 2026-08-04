@@ -96,7 +96,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 1.3.1 Add normalization/fingerprint/immutability/boundary implementation tests — `packages/kanban/test/presentation-policy.impl.test.ts` ✅ (completed: 2026-08-04 15:33 CEST)
 - [x] 1.3.2 Add composition/degradation/callback-isolation property tests — `packages/kanban/test/standard-card-rich.impl.test.ts` ✅ (completed: 2026-08-04 15:37 CEST)
-- [ ] 1.3.3 Add implementation-level hostile-field/descriptor/theme-role branch coverage without payload leakage — `packages/kanban/test/standard-card-rich.impl.test.ts`
+- [x] 1.3.3 Add implementation-level hostile-field/descriptor/theme-role branch coverage without payload leakage — `packages/kanban/test/standard-card-rich.impl.test.ts` ✅ (completed: 2026-08-04 15:39 CEST)
 - [ ] 1.3.4 Run Phase 1 build/typecheck/unit/JSDoc and `yarn verify:local`; resolve quality-loop critical/major findings
 
 **Verify**: `yarn workspace @jsvision/kanban build && yarn workspace @jsvision/kanban typecheck && yarn workspace @jsvision/kanban test && yarn workspace @jsvision/kanban check:docs && yarn verify:local`

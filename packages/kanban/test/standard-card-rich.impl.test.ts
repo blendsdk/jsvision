@@ -12,6 +12,7 @@ import {
 } from '../src/index.js';
 import type {
   KanbanCardFormattingContext,
+  KanbanCardDescriptor,
   KanbanCardPresentationAdapter,
   KanbanCardPresentationMaximum,
   KanbanCardPresentationSnapshot,
@@ -231,5 +232,111 @@ describe('rich standard-card implementation', () => {
       'card-style-failed',
     ]);
     expect(JSON.stringify(observations)).not.toContain(secret);
+  });
+
+  it('contains hostile field descriptors without invoking accessors or leaking observer failures', () => {
+    const secret = 'field-schema-secret';
+    let accessorCalls = 0;
+    const hostileAdapter: KanbanCardPresentationAdapter<WorkItem> = {
+      keyOf: (card) => card.id,
+      titleOf: (card) => card.title,
+      statusOf: (card) => card.status,
+      fields: [
+        {
+          fieldId: 'priority',
+          label: 'Priority',
+          priority: 1,
+          kind: 'text',
+          valueOf: (card) => card.priority,
+          get role() {
+            accessorCalls += 1;
+            throw new Error(secret);
+          },
+        },
+      ],
+      checklistOf: (card) => [{ checklistId: 'tasks', items: card.tasks }],
+    };
+    const value = snapshotKanbanCardPresentation(workItem(), hostileAdapter, {
+      maximum: maximum(),
+      visualState,
+      formatting,
+      observe: () => {
+        throw new Error(secret);
+      },
+    });
+
+    expect(accessorCalls).toBe(0);
+    expect(value.fields).toEqual([]);
+    expect(value.checklists[0]?.items).toHaveLength(3);
+  });
+
+  it('rejects hostile descriptor text and geometry with a payload-free package error', () => {
+    const value = snapshot();
+    const context = renderContext(value, 24, 12);
+    const valid = composeStandardKanbanCard(value, { width: 24, rowBudget: 12, theme, capabilities });
+    const secret = 'descriptor-secret';
+    const hostileText: KanbanCardDescriptor = {
+      ...valid,
+      rows: [
+        {
+          ...valid.rows[0]!,
+          spans: [{ ...valid.rows[0]!.spans[0]!, text: `${secret}\u001b[31m` }],
+        },
+        ...valid.rows.slice(1),
+      ],
+    };
+    const hostileGeometry: KanbanCardDescriptor = {
+      ...valid,
+      regions: valid.regions.map((region, index) => (index === 0 ? { ...region, width: valid.width + 1 } : region)),
+    };
+
+    for (const descriptor of [hostileText, hostileGeometry]) {
+      let thrown: unknown;
+      try {
+        validateKanbanCardDescriptor(descriptor, context);
+      } catch (error) {
+        thrown = error;
+      }
+      expect(thrown).toBeDefined();
+      expect(String(thrown)).not.toContain(secret);
+    }
+  });
+
+  it('applies semantic role and non-color cue precedence for every interaction branch', () => {
+    const cases = [
+      [{ invalid: true }, 'operation.rejected', ['rejected']],
+      [{ operation: 'rejected' as const }, 'operation.rejected', ['rejected']],
+      [{ operation: 'pending' as const }, 'operation.pending', ['pending']],
+      [{ operation: 'grabbed' as const }, 'card.grabbed', ['grabbed']],
+      [{ focused: true, selected: true }, 'card.focused-selected', ['focused', 'selected']],
+      [{ focused: true }, 'card.focused', ['focused']],
+      [{ selected: true }, 'card.selected', ['selected']],
+      [{ rangeAnchor: true }, 'card.selected', ['selected']],
+      [{ readOnly: true }, 'card.read-only', ['read-only']],
+      [{}, 'card.normal', []],
+    ] as const;
+
+    for (const [replacement, expectedRole, expectedCues] of cases) {
+      const state: KanbanCardVisualState = {
+        focused: false,
+        selected: false,
+        rangeAnchor: false,
+        readOnly: false,
+        invalid: false,
+        operation: 'idle',
+        ...replacement,
+      };
+      const value = snapshotKanbanCardPresentation(workItem(), adapter(), {
+        maximum: maximum(),
+        visualState: state,
+        formatting,
+      });
+      const descriptor = composeStandardKanbanCard(value, { width: 24, rowBudget: 12, theme, capabilities });
+
+      expect(descriptor.surfaceRole).toBe(expectedRole);
+      expect(descriptor.borderRole).toBe(expectedRole);
+      expect(descriptor.marker.cues).toEqual(expectedCues);
+      expect(stringWidth(descriptor.marker.glyph)).toBe(1);
+    }
   });
 });
