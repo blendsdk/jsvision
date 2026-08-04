@@ -92,6 +92,12 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    * already refocused the offending field). A within-row column move never consults it. Omit for no gate.
    */
   rowLeaveGate?: () => boolean;
+  /** Whether the exact focused row has a trapped edit session eligible for row revert. */
+  canRevertRow?: () => boolean;
+  /** Whether an optimistic row revert currently owns grid input and presentation. */
+  rowRevertPending?: () => boolean;
+  /** Start the eligible focused row's revert transaction. */
+  onRevertRow?: () => void;
   /**
    * The message to draw when the body has zero rows (the lifecycle empty state). Omit to keep the plain
    * `<empty>` placeholder, so a grid with no lifecycle configured is byte-identical.
@@ -264,6 +270,12 @@ export class EditableGridRows<T> extends GridRows<T> {
   private readonly markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate for the body-owned leave paths (row-nav, Enter-advance, cross-row click). */
   private readonly rowLeaveGate?: () => boolean;
+  /** Exact focused-row eligibility for the remappable row-revert action. */
+  private readonly canRevertRow?: () => boolean;
+  /** Pending-state guard that serializes grid-owned input during a row revert. */
+  private readonly rowRevertPending?: () => boolean;
+  /** Container transaction starter for an eligible row revert. */
+  private readonly onRevertRow?: () => void;
   /** The zero-row message getter (lifecycle empty state), or `undefined` to keep the plain `<empty>`. */
   private readonly emptyText?: () => string;
   /** The datagrid selection set the body paints from (empty when the container wires no selection). */
@@ -327,6 +339,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.onAcceptedCommit = cfg.onAcceptedCommit;
     this.markRowTouched = cfg.markRowTouched;
     this.rowLeaveGate = cfg.rowLeaveGate;
+    this.canRevertRow = cfg.canRevertRow;
+    this.rowRevertPending = cfg.rowRevertPending;
+    this.onRevertRow = cfg.onRevertRow;
     this.emptyText = cfg.emptyText;
     this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
     this.onToggleRow = cfg.onToggleRow;
@@ -486,6 +501,10 @@ export class EditableGridRows<T> extends GridRows<T> {
    * @param ev The dispatch envelope.
    */
   override onEvent(ev: DispatchEvent): void {
+    if (this.rowRevertPending?.() === true) {
+      ev.handled = true;
+      return;
+    }
     const inner = ev.event;
     if (inner.type === 'key') {
       const action = resolveGridAction(inner, this.keymap);
@@ -585,6 +604,14 @@ export class EditableGridRows<T> extends GridRows<T> {
       case 'beginEdit':
         if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → base activate
         this.controller.beginEdit(ev);
+        return true;
+      case 'revertRow':
+        // An open editor's host consumes Escape before the body sees it. While idle, an ineligible action
+        // deliberately falls through so a parent dialog retains its historical Escape behavior.
+        if (this.controller.isEditing()) return false;
+        if (this.rowRevertPending?.() === true) return true;
+        if (this.canRevertRow?.() !== true || this.onRevertRow === undefined) return false;
+        this.onRevertRow();
         return true;
       case 'valueHelp':
         if (this.editableCol() < 0) return false;

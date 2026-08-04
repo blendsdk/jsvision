@@ -142,6 +142,12 @@ export interface GridBodyDeps<T> {
   markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate consulted by the body before a row-changing move (row-nav / Enter / cross-row click). */
   rowLeaveGate?: () => boolean;
+  /** Whether the exact focused row owns a trapped session eligible for the row-revert action. */
+  canRevertRow?: () => boolean;
+  /** Whether a row-revert transaction currently serializes grid-owned input. */
+  rowRevertPending?: () => boolean;
+  /** Start the focused row's eligible revert transaction. */
+  onRevertRow?: () => void;
   /**
    * The grid's one-line validation message band, or `undefined` when validation is not configured. When
    * present it is assembled as a dedicated one-cell band in the footer region — independent of any footer
@@ -371,6 +377,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onAcceptedCommit: deps.onAcceptedCommit,
       markRowTouched: deps.markRowTouched,
       rowLeaveGate: deps.rowLeaveGate,
+      canRevertRow: deps.canRevertRow,
+      rowRevertPending: deps.rowRevertPending,
+      onRevertRow: deps.onRevertRow,
       emptyText: deps.emptyText,
       columnOffset: offset,
       totalCols: () => total,
@@ -418,6 +427,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       rowKey: deps.rowKey,
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
+      canRevertRow: deps.canRevertRow,
+      rowRevertPending: deps.rowRevertPending,
+      onRevertRow: deps.onRevertRow,
       errors: deps.errors,
       onAcceptedCommit: deps.onAcceptedCommit,
       markRowTouched: deps.markRowTouched,

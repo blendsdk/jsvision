@@ -496,6 +496,10 @@ export class EditableDataGrid<T> extends Group {
   // wiring, like GridSelection, lives in row-mutations.ts so grid.ts stays thin public delegators).
   private readonly mutations: RowMutations<T>;
   private readonly footer?: FooterController<T>;
+  // Client sort/filter updates the display before they synchronously re-anchor the cursor. Suppressing
+  // reconciliation during that tiny transition prevents the old cursor index from invalidating a
+  // stable key-and-object row session merely because its display position changed.
+  private reanchoringDisplay = false;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -755,6 +759,16 @@ export class EditableDataGrid<T> extends Group {
       errors: this.errors,
       onAcceptedCommit: (change) => this.rowRevert.recordCommit(change),
       rowLeaveGate: () => this.rowGate.tryLeave(),
+      canRevertRow: () => {
+        const row = this.focusedRow();
+        const rowKey = row === undefined ? undefined : this.source.rowKey(row);
+        return row !== undefined && rowKey !== undefined && this.rowRevert.isTrapped(rowKey, row);
+      },
+      rowRevertPending: () => this.rowRevertTransaction.isPending(),
+      onRevertRow: () => {
+        const row = this.focusedRow();
+        if (row !== undefined) this.rowRevertTransaction.start(this.source.rowKey(row), row);
+      },
       messageBand,
       lifecycle: opts.status !== undefined,
       emptyText: emptyResolver,
@@ -806,6 +820,7 @@ export class EditableDataGrid<T> extends Group {
           return { row, rowKey: row === undefined ? undefined : this.source.rowKey(row) };
         },
         ({ row, rowKey }) => {
+          if (this.reanchoringDisplay) return;
           this.rowRevertTransaction.reconcile(rowKey, row);
           this.rowRevert.reconcileFocus(rowKey, row);
         },
@@ -1686,13 +1701,19 @@ export class EditableDataGrid<T> extends Group {
   private applySort(next: SortKey[]): void {
     const anchor = this.focusAnchorKey();
 
-    this.sortKeys.set(next);
+    this.reanchoringDisplay = true;
+    try {
+      this.sortKeys.set(next);
 
-    if (this.source.setSort) return; // push-down re-queries; the client-side re-anchor doesn't apply
-    const after = this.display();
-    if (anchor !== undefined) {
-      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
-      if (i >= 0) this.focused.set(i);
+      if (this.source.setSort) return; // push-down re-queries; the client-side re-anchor doesn't apply
+      const after = this.display();
+      if (anchor !== undefined) {
+        const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+        if (i >= 0) this.focused.set(i);
+      }
+    } finally {
+      this.reanchoringDisplay = false;
+      this.reconcileRowRevertFocus();
     }
   }
 
@@ -1706,15 +1727,29 @@ export class EditableDataGrid<T> extends Group {
   private applyFilter(next: FilterModel): void {
     const anchor = this.focusAnchorKey();
 
-    this.filters.set(next);
+    this.reanchoringDisplay = true;
+    try {
+      this.filters.set(next);
 
-    if (this.source.setFilter) return; // push-down re-queries; the client-side re-anchor doesn't apply
-    const after = this.display();
-    if (anchor !== undefined) {
-      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
-      // The focused row survived → follow it; else clamp the cursor into the shrunk display.
-      this.focused.set(i >= 0 ? i : Math.max(0, Math.min(this.focused(), after.length - 1)));
+      if (this.source.setFilter) return; // push-down re-queries; the client-side re-anchor doesn't apply
+      const after = this.display();
+      if (anchor !== undefined) {
+        const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+        // The focused row survived → follow it; else clamp the cursor into the shrunk display.
+        this.focused.set(i >= 0 ? i : Math.max(0, Math.min(this.focused(), after.length - 1)));
+      }
+    } finally {
+      this.reanchoringDisplay = false;
+      this.reconcileRowRevertFocus();
     }
+  }
+
+  /** Reconcile row-revert ownership after an atomic display/cursor re-anchor has completed. */
+  private reconcileRowRevertFocus(): void {
+    const row = this.focusedRow();
+    const rowKey = row === undefined ? undefined : this.source.rowKey(row);
+    this.rowRevertTransaction.reconcile(rowKey, row);
+    this.rowRevert.reconcileFocus(rowKey, row);
   }
 
   /**
@@ -1868,6 +1903,7 @@ export class EditableDataGrid<T> extends Group {
    * on a block the cursor stays and the grid keeps focus (`'moved'`).
    */
   private async advanceCell(forward: boolean): Promise<'moved' | 'exit'> {
+    if (this.rowRevertTransaction.isPending()) return 'moved';
     if (this._center.isEditing()) {
       const committed = await this._center.commitEdit();
       if (!committed) return 'moved'; // vetoed → editor stays open, cursor does not advance
@@ -1947,6 +1983,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   insertRow(row: T, at?: number): void {
+    if (this.rowRevertTransaction.isPending()) return;
     this.mutations.insertRow(row, at);
   }
 
@@ -1970,6 +2007,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   deleteRows(keys: readonly Key[]): void {
+    if (this.rowRevertTransaction.isPending()) return;
     const invalidated = new Set(keys);
     this.rowRevertTransaction.invalidate(invalidated);
     this.rowRevert.invalidate(invalidated);
@@ -2005,6 +2043,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   duplicateRow(key: Key): void {
+    if (this.rowRevertTransaction.isPending()) return;
     this.mutations.duplicateRow(key);
   }
 }
