@@ -52,8 +52,12 @@ export interface KanbanDescriptorInvalidation {
   readonly address?: KanbanCellAddress;
   /** Match one stable card identity. */
   readonly cardKey?: CardKey;
+  /** Match one owning cursor revision. */
+  readonly cursorRevision?: KanbanRevision;
   /** Match one renderer revision. */
   readonly rendererRevision?: KanbanRevision;
+  /** Match one optional card presentation revision. */
+  readonly presentationRevision?: KanbanRevision;
   /** Match one resolved presentation-policy revision. */
   readonly presentationPolicyRevision?: KanbanRevision;
   /** Match one per-card optional-section selection fingerprint. */
@@ -290,7 +294,9 @@ function matches(key: SnapshotKey, selector: Readonly<Record<string, unknown>>):
       canonicalizeKanbanCellAddress(key.address) ===
         canonicalizeKanbanCellAddress(selector.address as KanbanCellAddress)) &&
     (selector.cardKey === undefined || key.cardKey === selector.cardKey) &&
+    (selector.cursorRevision === undefined || key.cursorRevision === selector.cursorRevision) &&
     (selector.rendererRevision === undefined || key.rendererRevision === selector.rendererRevision) &&
+    (selector.presentationRevision === undefined || key.presentationRevision === selector.presentationRevision) &&
     (selector.presentationPolicyRevision === undefined ||
       key.presentationPolicyRevision === selector.presentationPolicyRevision) &&
     (selector.presentationSelectionFingerprint === undefined ||
@@ -408,7 +414,9 @@ export class KanbanDescriptorCache {
       'generation',
       'address',
       'cardKey',
+      'cursorRevision',
       'rendererRevision',
+      'presentationRevision',
       'presentationPolicyRevision',
       'presentationSelectionFingerprint',
       'styleRevision',
@@ -433,7 +441,9 @@ export class KanbanDescriptorCache {
         snapshot.cardKey = createKanbanCardKey(value);
       }
       for (const field of [
+        'cursorRevision',
         'rendererRevision',
+        'presentationRevision',
         'presentationPolicyRevision',
         'styleRevision',
         'themeRevision',

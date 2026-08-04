@@ -2533,6 +2533,18 @@ type KanbanSourceState = | { readonly kind: 'loading' | 'ready' | 'refreshing' |
   | { readonly kind: 'error'; readonly code: string; readonly label?: string }
 ```
 
+## KanbanSparseHeightAnchor
+
+Stable card position used while exact measurements correct estimated geometry.
+
+```ts
+interface KanbanSparseHeightAnchor {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  logicalIndex: number;   // Zero-based logical position in the owning cursor.
+  viewportRow: number;   // Preferred row relative to the card-content viewport.
+}
+```
+
 ## KanbanSparseHeightIndex
 
 Bounded sparse prefix-height index for one retained semantic cell.
@@ -2540,6 +2552,12 @@ Bounded sparse prefix-height index for one retained semantic cell.
 ```ts
 new KanbanSparseHeightIndex(options: KanbanSparseHeightIndexOptions)
 // methods & signals:
+anchor(anchor: KanbanSparseHeightAnchor): KanbanSparseHeightAnchor
+anchorFor(cardKey: CardKey): KanbanSparseHeightRetainedAnchor | undefined
+unload(cardKey: CardKey): void
+interactionIdentity(cardKey: CardKey): Readonly<{ cardKey: CardKey; logicalIndex: number }> | undefined
+reconcile(input: KanbanSparseHeightReconciliation): void
+invalidateRevisions(input: KanbanSparseHeightRevisionInput): number
 rowAt(logicalIndex: number): KanbanSparseHeightPosition
 indexAt(row: number): KanbanSparseHeightLookup
 snapshot(): KanbanSparseHeightSnapshot
@@ -2583,7 +2601,23 @@ interface KanbanSparseHeightMeasurement {
   cardKey: CardKey;   // Stable application-owned card identity.
   logicalIndex: number;   // Zero-based logical position in the owning cursor.
   height: number;   // Exact occupied rows for this card under the active presentation revision.
+  anchor?: KanbanSparseHeightAnchor;   // Optional stable visible anchor that must retain its viewport-relative row.
 }
+```
+
+## KanbanSparseHeightMeasurementResult
+
+Result of applying one resident measurement.
+
+```ts
+type KanbanSparseHeightMeasurementResult = | { readonly kind: 'measured'; readonly cardKey: CardKey; readonly logicalIndex: number }
+  | {
+      readonly kind: 'corrected';
+      readonly cardKey: CardKey;
+      readonly logicalIndex: number;
+      readonly viewportRow: number;
+      readonly passes: 1;
+    }
 ```
 
 ## KanbanSparseHeightPosition
@@ -2594,6 +2628,43 @@ Estimated or exact conversion between logical positions and terminal rows.
 interface KanbanSparseHeightPosition {
   value: number;   // Saturated non-negative terminal row.
   quality: 'exact' | 'estimated';   // Whether the conversion crossed any estimated card span.
+}
+```
+
+## KanbanSparseHeightReconciliation
+
+Authoritative source reconciliation for one retained interaction identity.
+
+```ts
+type KanbanSparseHeightReconciliation = | {
+      readonly kind: 'reorder';
+      readonly cardKey: CardKey;
+      readonly logicalIndex: number;
+      readonly sourceRevision: KanbanRevision;
+    }
+  | { readonly kind: 'delete'; readonly cardKey: CardKey; readonly sourceRevision: KanbanRevision }
+```
+
+## KanbanSparseHeightRetainedAnchor
+
+Retained exact or estimated evidence for one stable card anchor.
+
+```ts
+interface KanbanSparseHeightRetainedAnchor {
+  height: number;   // Exact measured or fallback estimated occupied rows.
+  quality: 'exact' | 'estimated';   // Whether the retained height remains compatible with current revisions.
+}
+```
+
+## KanbanSparseHeightRevisionInput
+
+Complete active revision tuple used to prune incompatible exact measurements.
+
+```ts
+interface KanbanSparseHeightRevisionInput {
+  sourceRevision: KanbanRevision;   // Current source publication revision.
+  cursorRevision: KanbanRevision;   // Current owning cursor revision.
+  presentationRevision: KanbanRevision;   // Current presentation revision for height measurement.
 }
 ```
 
