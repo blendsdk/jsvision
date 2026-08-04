@@ -2008,6 +2008,19 @@ type KanbanSourceState = | { readonly kind: 'loading' | 'ready' | 'refreshing' |
   | { readonly kind: 'error'; readonly code: string; readonly label?: string }
 ```
 
+## KanbanStandardCardCompositionContext
+
+Geometry/theme inputs used to compose one detached rich card snapshot.
+
+```ts
+interface KanbanStandardCardCompositionContext {
+  width: number;   // Exact descriptor width in terminal cells.
+  rowBudget: number;   // Maximum descriptor rows for this projection.
+  theme: Readonly<KanbanTheme>;   // Fully resolved semantic theme.
+  capabilities: Readonly<KanbanCardTerminalCapabilities>;   // Terminal features used for deterministic text geometry.
+}
+```
+
 ## KanbanSummaryAdapter
 
 Application numeric summary adapter used by eager headers.
@@ -2610,6 +2623,14 @@ Clamps requested offsets to current live extents without retaining caller object
 
 ```ts
 clampKanbanScroll(options: ClampKanbanScrollOptions): KanbanViewportPoint
+```
+
+## composeStandardKanbanCard
+
+Composes one detached presentation snapshot into a bounded immutable descriptor.
+
+```ts
+composeStandardKanbanCard(snapshot: KanbanCardPresentationSnapshot, context: KanbanStandardCardCompositionContext): KanbanCardDescriptor
 ```
 
 ## createEagerKanbanDataSource
