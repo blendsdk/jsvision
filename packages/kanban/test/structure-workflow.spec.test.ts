@@ -2,16 +2,20 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createKanbanCollapsedHoverController,
+  createKanbanSwimlanePresentationResolver,
   evaluateKanbanTransition,
   evaluateKanbanWip,
+  resolveKanbanGrouping,
   resolveKanbanStructure,
   resolveKanbanStructureState,
   snapshotKanbanDefinitionOfDone,
 } from '../src/index.js';
 import type {
   KanbanColumnMeta,
+  KanbanGroupingPolicy,
   KanbanStructurePolicy,
   KanbanStructureStateInput,
+  KanbanSwimlaneMeta,
   KanbanTransitionContext,
   KanbanWorkflowEvaluation,
 } from '../src/index.js';
@@ -20,6 +24,8 @@ interface WorkItem {
   readonly id: number;
   readonly columnId: string;
   readonly title: string;
+  readonly team?: string;
+  readonly project?: string;
 }
 
 const COLUMNS: readonly KanbanColumnMeta[] = Object.freeze([
@@ -29,9 +35,14 @@ const COLUMNS: readonly KanbanColumnMeta[] = Object.freeze([
 ]);
 
 const CARDS: readonly WorkItem[] = Object.freeze([
-  Object.freeze({ id: 1, columnId: 'ready', title: 'First' }),
-  Object.freeze({ id: 2, columnId: 'doing', title: 'Second' }),
+  Object.freeze({ id: 1, columnId: 'ready', title: 'First', team: 'alpha', project: 'phoenix' }),
+  Object.freeze({ id: 2, columnId: 'doing', title: 'Second', team: 'beta', project: 'phoenix' }),
   Object.freeze({ id: 3, columnId: 'done', title: 'Third' }),
+]);
+
+const SWIMLANES: readonly KanbanSwimlaneMeta[] = Object.freeze([
+  Object.freeze({ swimlaneId: 'team-alpha', label: 'Team Alpha', revision: 'team-alpha-v1' }),
+  Object.freeze({ swimlaneId: 'team-beta', label: 'Team Beta', revision: 'team-beta-v1' }),
 ]);
 
 function structurePolicy(columns: KanbanStructurePolicy<WorkItem>['columns'] = []): KanbanStructurePolicy<WorkItem> {
@@ -58,6 +69,14 @@ function transitionContext(): KanbanTransitionContext {
       summary: 'Tests pass',
       details: 'Tests pass and the release is approved',
     }),
+  };
+}
+
+function groupingPolicy(replacement: Partial<KanbanGroupingPolicy<WorkItem>> = {}): KanbanGroupingPolicy<WorkItem> {
+  return {
+    fieldId: 'team',
+    unassigned: { swimlaneId: 'unassigned', label: 'Unassigned', revision: 'unassigned-v1' },
+    ...replacement,
   };
 }
 
@@ -356,5 +375,305 @@ describe('Kanban structure and workflow contract', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('accepts zero or one query-owned grouping field and rejects competing fields atomically', () => {
+    const ungrouped = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [] },
+      cards: CARDS,
+    });
+    const grouped = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy(),
+      registry: [
+        {
+          fieldId: 'team',
+          groups: SWIMLANES,
+          resolve: (card: WorkItem) => (card.team === undefined ? undefined : `team-${card.team}`),
+        },
+      ],
+    });
+    const ungroupedFingerprint = JSON.stringify(ungrouped);
+    const groupedFingerprint = JSON.stringify(grouped);
+    const twoFields: unknown = {
+      filters: [],
+      sort: [],
+      groupBy: ['team', 'project'],
+    };
+
+    expect(ungrouped).toMatchObject({ kind: 'none', activeFieldId: undefined, groups: [], memberships: [] });
+    expect(grouped).toMatchObject({ kind: 'grouped', activeFieldId: 'team' });
+    expect(() =>
+      resolveKanbanGrouping({ query: twoFields, cards: CARDS, policy: groupingPolicy(), previous: grouped }),
+    ).toThrow();
+    expect(() =>
+      resolveKanbanGrouping({
+        query: { filters: [], sort: [], groupBy: 'team' },
+        cards: CARDS,
+        policy: groupingPolicy({ fieldId: 'project' }),
+        previous: grouped,
+      }),
+    ).toThrow();
+    expect(JSON.stringify(ungrouped)).toBe(ungroupedFingerprint);
+    expect(JSON.stringify(grouped)).toBe(groupedFingerprint);
+    expect([ungrouped, grouped, grouped.groups, grouped.memberships].every(Object.isFrozen)).toBe(true);
+  });
+
+  it('normalizes explicit memberships without changing semantic addresses', () => {
+    const grouped = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy(),
+      explicit: {
+        groups: SWIMLANES,
+        memberships: [
+          { cardKey: 1, swimlaneId: 'team-alpha' },
+          { cardKey: 2, swimlaneId: 'team-beta' },
+          { cardKey: 3 },
+        ],
+      },
+    });
+
+    expect(grouped.groups.map(({ swimlaneId }: { readonly swimlaneId: string }) => swimlaneId)).toEqual([
+      'team-alpha',
+      'team-beta',
+      'unassigned',
+    ]);
+    expect(grouped.memberships).toEqual([
+      { cardKey: 1, address: { swimlaneId: 'team-alpha' } },
+      { cardKey: 2, address: { swimlaneId: 'team-beta' } },
+      { cardKey: 3, address: { swimlaneId: 'unassigned' } },
+    ]);
+  });
+
+  it('resolves derived values once and sends only missing or unmapped values to unassigned', () => {
+    const resolve = vi.fn((card: WorkItem) =>
+      card.team === 'alpha' ? 'team-alpha' : card.team === 'beta' ? 'team-beta' : undefined,
+    );
+    const grouped = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy(),
+      registry: [{ fieldId: 'team', groups: SWIMLANES, resolve }],
+    });
+
+    expect(resolve).toHaveBeenCalledTimes(CARDS.length);
+    expect(resolve.mock.calls.map(([card]) => card)).toEqual(CARDS);
+    expect(grouped.memberships).toEqual([
+      { cardKey: 1, address: { swimlaneId: 'team-alpha' } },
+      { cardKey: 2, address: { swimlaneId: 'team-beta' } },
+      { cardKey: 3, address: { swimlaneId: 'unassigned' } },
+    ]);
+  });
+
+  it('restores hidden group membership without remapping cards to unassigned', () => {
+    const hidden = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy({ visibleSwimlaneIds: ['team-beta', 'unassigned'] }),
+      registry: [
+        {
+          fieldId: 'team',
+          groups: SWIMLANES,
+          resolve: (card: WorkItem) => (card.team === undefined ? undefined : `team-${card.team}`),
+        },
+      ],
+    });
+    const revealed = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy(),
+      registry: [
+        {
+          fieldId: 'team',
+          groups: SWIMLANES,
+          resolve: (card: WorkItem) => (card.team === undefined ? undefined : `team-${card.team}`),
+        },
+      ],
+      previous: hidden,
+    });
+
+    expect(hidden.groups.some(({ swimlaneId }: { readonly swimlaneId: string }) => swimlaneId === 'team-alpha')).toBe(
+      false,
+    );
+    expect(hidden.memberships.some(({ cardKey }: { readonly cardKey: number }) => cardKey === 1)).toBe(false);
+    expect(hidden.detached.memberships).toContainEqual({ cardKey: 1, address: { swimlaneId: 'team-alpha' } });
+    expect(hidden.detached.memberships).not.toContainEqual({ cardKey: 1, address: { swimlaneId: 'unassigned' } });
+    expect(revealed.memberships).toContainEqual({ cardKey: 1, address: { swimlaneId: 'team-alpha' } });
+  });
+
+  it('rejects normalized duplicate labels unless every collision has a distinct disambiguator', () => {
+    const collidingGroups: readonly KanbanSwimlaneMeta[] = [
+      { swimlaneId: 'alpha-one', label: ' Team   Alpha ', revision: 'alpha-one-v1' },
+      { swimlaneId: 'alpha-two', label: 'team alpha', revision: 'alpha-two-v1' },
+    ];
+    const base = {
+      query: { filters: [], sort: [], groupBy: 'team' } as const,
+      cards: CARDS,
+      explicit: { groups: collidingGroups, memberships: [] },
+    };
+
+    expect(() => resolveKanbanGrouping({ ...base, policy: groupingPolicy() })).toThrow();
+    expect(() =>
+      resolveKanbanGrouping({
+        ...base,
+        policy: groupingPolicy({
+          allowDuplicateLabels: true,
+          disambiguators: { 'alpha-one': 'North', 'alpha-two': 'North' },
+        }),
+      }),
+    ).toThrow();
+
+    const resolved = resolveKanbanGrouping({
+      ...base,
+      policy: groupingPolicy({
+        allowDuplicateLabels: true,
+        disambiguators: { 'alpha-one': 'North', 'alpha-two': 'South' },
+      }),
+    });
+    expect(
+      resolved.groups.map(({ label, disambiguator }: { readonly label: string; readonly disambiguator?: string }) => ({
+        label,
+        disambiguator,
+      })),
+    ).toEqual([
+      { label: 'Team Alpha', disambiguator: 'North' },
+      { label: 'team alpha', disambiguator: 'South' },
+      { label: 'Unassigned', disambiguator: undefined },
+    ]);
+  });
+
+  it('contains hostile derived, style, and summary resolver failures per group', () => {
+    const observations: unknown[] = [];
+    const grouped = resolveKanbanGrouping<WorkItem>({
+      query: { filters: [], sort: [], groupBy: 'team' },
+      cards: CARDS,
+      policy: groupingPolicy({
+        resolverFallback: { swimlaneId: 'group-unavailable', label: 'Unavailable', revision: 'fallback-v1' },
+      }),
+      registry: [
+        {
+          fieldId: 'team',
+          groups: SWIMLANES,
+          resolve: (card: WorkItem) => {
+            if (card.id === 2) throw new Error('derived-secret\u001b[31m');
+            return card.team === undefined ? undefined : `team-${card.team}`;
+          },
+          styleOf: (group: KanbanSwimlaneMeta) => {
+            if (group.swimlaneId === 'team-alpha') throw new Error('style-secret');
+            return { role: 'swimlane.header' };
+          },
+          summaryOf: (group: KanbanSwimlaneMeta) => {
+            if (group.swimlaneId === 'team-alpha') throw new Error('summary-secret');
+            return { count: 1, label: 'One' };
+          },
+        },
+      ],
+      observe: (observation: unknown) => observations.push(observation),
+    });
+
+    expect(grouped.memberships).toContainEqual({ cardKey: 2, address: { swimlaneId: 'group-unavailable' } });
+    expect(grouped.memberships).not.toContainEqual({ cardKey: 2, address: { swimlaneId: 'unassigned' } });
+    expect(
+      grouped.groups.find(({ swimlaneId }: { readonly swimlaneId: string }) => swimlaneId === 'team-alpha'),
+    ).toMatchObject({ style: undefined, summary: undefined });
+    expect(grouped.groups.some(({ swimlaneId }: { readonly swimlaneId: string }) => swimlaneId === 'team-beta')).toBe(
+      true,
+    );
+    expect(observations).toHaveLength(3);
+    expect(JSON.stringify(observations)).not.toMatch(/derived-secret|style-secret|summary-secret|\u001b/u);
+  });
+
+  it('keeps semantic swimlane content equal across built-in presentation variants', () => {
+    const resolver = createKanbanSwimlanePresentationResolver();
+    const swimlane = {
+      swimlaneId: 'team-alpha',
+      label: 'Team Alpha',
+      count: { quality: 'exact' as const, value: 2 },
+      summary: { count: 5, label: 'Points' },
+      revision: 'team-alpha-visible-v1',
+    };
+    const variants = ['hybrid', 'separator', 'band', 'rail'] as const;
+    const resolved = variants.map((presentation) =>
+      resolver.resolve({
+        presentation,
+        swimlane,
+        availableWidth: 80,
+        columns: [
+          { columnId: 'ready', minimumWidth: 18 },
+          { columnId: 'doing', minimumWidth: 18 },
+        ],
+        railWidth: 10,
+      }),
+    );
+
+    expect(resolved.map(({ resolvedVariant }) => resolvedVariant)).toEqual(variants);
+    expect(resolved.map(({ semantic }) => semantic)).toEqual([swimlane, swimlane, swimlane, swimlane]);
+    expect(new Set(resolved.map(({ chrome }) => chrome.kind))).toEqual(new Set(variants));
+    expect(resolved.every(Object.isFrozen)).toBe(true);
+    resolver.dispose();
+  });
+
+  it('degrades rail to hybrid before any card column falls below eighteen cells', () => {
+    const resolver = createKanbanSwimlanePresentationResolver();
+    const result = resolver.resolve({
+      presentation: 'rail',
+      swimlane: { swimlaneId: 'team-alpha', label: 'Team Alpha', revision: 'team-alpha-visible-v1' },
+      availableWidth: 45,
+      columns: [
+        { columnId: 'ready', minimumWidth: 18 },
+        { columnId: 'doing', minimumWidth: 18 },
+      ],
+      railWidth: 10,
+    });
+
+    expect(result).toMatchObject({ requestedVariant: 'rail', resolvedVariant: 'hybrid', degraded: true });
+    expect(
+      result.columns.every(({ availableWidth }: { readonly availableWidth: number }) => availableWidth >= 18),
+    ).toBe(true);
+    resolver.dispose();
+  });
+
+  it('falls back locally for an over-budget custom descriptor and caches once per visible revision', () => {
+    const observations: unknown[] = [];
+    const render = vi.fn(() => ({
+      rows: 33,
+      railWidth: 80,
+      text: ['Unsafe\u001b[31m'],
+      roles: ['host.raw-role'],
+      regions: Array.from({ length: 100 }, () => ({ x: 0, y: 0, width: 1, height: 1 })),
+      actions: Array.from({ length: 100 }, (_, index) => ({ actionId: `action-${index}` })),
+      targets: [{ kind: 'drop' }],
+    }));
+    const resolver = createKanbanSwimlanePresentationResolver({
+      observe: (observation: unknown) => observations.push(observation),
+    });
+    const input = {
+      presentation: { kind: 'custom' as const, revision: 'custom-v1', render },
+      swimlane: { swimlaneId: 'team-alpha', label: 'Team Alpha', revision: 'visible-v1' },
+      availableWidth: 80,
+      columns: [{ columnId: 'ready', minimumWidth: 18 }],
+    };
+
+    const first = resolver.resolve(input);
+    const repeated = resolver.resolve(input);
+    const nextRevision = resolver.resolve({
+      ...input,
+      swimlane: { ...input.swimlane, revision: 'visible-v2' },
+    });
+
+    expect(first).toMatchObject({ requestedVariant: 'custom', resolvedVariant: 'hybrid', fallback: 'invalid-custom' });
+    expect(repeated).toEqual(first);
+    expect(nextRevision).toMatchObject({
+      requestedVariant: 'custom',
+      resolvedVariant: 'hybrid',
+      fallback: 'invalid-custom',
+    });
+    expect(render).toHaveBeenCalledTimes(2);
+    expect(observations).toHaveLength(2);
+    expect(JSON.stringify([first, repeated, nextRevision, observations])).not.toContain('\u001b');
+    expect([first, repeated, nextRevision].every(Object.isFrozen)).toBe(true);
+    resolver.dispose();
   });
 });
