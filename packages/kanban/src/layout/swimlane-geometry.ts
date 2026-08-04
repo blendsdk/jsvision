@@ -5,10 +5,12 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanScene, KanbanSceneCard, KanbanSceneCell } from '../board/scene-model.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import { resolveKanbanCustomSwimlaneGeometry } from './swimlane-custom.js';
+import type { KanbanResolvedCustomSwimlaneGeometry, KanbanSceneCustomChromeInput } from './swimlane-custom.js';
 import { resolveKanbanSwimlaneRail } from './swimlane-rail.js';
 
-/** Built-in scene layouts supported by the geometry projector. */
-export type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail';
+/** Scene presentation layouts supported by the geometry projector. */
+export type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail' | 'custom';
 
 /** Stable resize anchor retained independently from terminal rectangles. */
 export interface KanbanSceneGeometryAnchor {
@@ -25,6 +27,7 @@ export type KanbanSceneRegionKind =
   | 'swimlane-band'
   | 'swimlane-separator'
   | 'swimlane-rail'
+  | 'swimlane-custom'
   | 'cell'
   | 'card'
   | 'state';
@@ -95,6 +98,8 @@ export interface ProjectKanbanSceneGeometryOptions {
   readonly minimumColumnWidth: number;
   /** Requested left rail width; defaults to ten terminal cells. */
   readonly railWidth?: number;
+  /** Per-visible-swimlane descriptors required by the custom strategy. */
+  readonly customChrome?: readonly KanbanSceneCustomChromeInput[];
   /** Optional focused workflow column; exactly this column remains visible. */
   readonly focusedColumnId?: string;
   /** Optional stable anchor preserved through responsive recomputation. */
@@ -251,7 +256,8 @@ export function projectKanbanSceneGeometry(
     options.variant !== 'hybrid' &&
     options.variant !== 'separator' &&
     options.variant !== 'band' &&
-    options.variant !== 'rail'
+    options.variant !== 'rail' &&
+    options.variant !== 'custom'
   ) {
     throw new KanbanInvalidGeometryError();
   }
@@ -261,6 +267,28 @@ export function projectKanbanSceneGeometry(
   if (focused !== undefined && visibleColumns.length !== 1) throw new KanbanInvalidGeometryError();
   if (visibleColumns.length === 0) throw new KanbanInvalidGeometryError();
 
+  const customBySwimlane = new Map<string, KanbanResolvedCustomSwimlaneGeometry>();
+  if (options.variant === 'custom') {
+    if (!Array.isArray(options.customChrome) || options.customChrome.length !== scene.swimlanes.length) {
+      throw new KanbanInvalidGeometryError();
+    }
+    for (const chrome of options.customChrome) {
+      const resolved = resolveKanbanCustomSwimlaneGeometry({
+        chrome,
+        availableWidth: bounds.width,
+        visibleColumnCount: visibleColumns.length,
+        minimumColumnWidth,
+      });
+      if (customBySwimlane.has(resolved.swimlaneId)) throw new KanbanInvalidGeometryError();
+      customBySwimlane.set(resolved.swimlaneId, resolved);
+    }
+    if (scene.swimlanes.some(({ swimlaneId }) => !customBySwimlane.has(swimlaneId))) {
+      throw new KanbanInvalidGeometryError();
+    }
+  } else if (options.customChrome !== undefined) {
+    throw new KanbanInvalidGeometryError();
+  }
+  const customRailWidth = Math.max(0, ...[...customBySwimlane.values()].map(({ railWidth }) => railWidth));
   const rail =
     options.variant === 'rail'
       ? resolveKanbanSwimlaneRail({
@@ -270,7 +298,18 @@ export function projectKanbanSceneGeometry(
           railWidth: options.railWidth,
           focused: focused !== undefined,
         })
-      : Object.freeze({ resolvedVariant: options.variant, railWidth: 0, cardBounds: bounds });
+      : options.variant === 'custom'
+        ? Object.freeze({
+            resolvedVariant: 'custom' as const,
+            railWidth: customRailWidth,
+            cardBounds: Object.freeze({
+              x: bounds.x + customRailWidth,
+              y: bounds.y,
+              width: bounds.width - customRailWidth,
+              height: bounds.height,
+            }),
+          })
+        : Object.freeze({ resolvedVariant: options.variant, railWidth: 0, cardBounds: bounds });
   const resolvedVariant = rail.resolvedVariant;
   const cardBounds = rail.cardBounds;
   const naturalColumnWidth = Math.max(minimumColumnWidth, Math.floor(cardBounds.width / visibleColumns.length));
@@ -291,7 +330,8 @@ export function projectKanbanSceneGeometry(
       0,
       ...cellsForSwimlane(scene, swimlane.swimlaneId).map(({ cards }) => stackHeight(cards)),
     );
-    const height = resolvedVariant === 'rail' ? Math.max(1, cellHeight) : add(1, cellHeight);
+    const customRows = customBySwimlane.get(swimlane.swimlaneId)?.rows;
+    const height = resolvedVariant === 'rail' ? Math.max(1, cellHeight) : add(customRows ?? 1, cellHeight);
     swimlanePlacements.push(
       Object.freeze({ swimlaneId: swimlane.swimlaneId, top: logicalTop, height, cardHeight: cellHeight }),
     );
@@ -325,10 +365,12 @@ export function projectKanbanSceneGeometry(
     const naturalY = contentOriginY + placement.top - offsetY;
     const sticky = swimlane.swimlaneId === options.activeSwimlaneId;
     const chromeY = sticky ? Math.max(contentOriginY, naturalY) : naturalY;
+    const customGeometry = customBySwimlane.get(swimlane.swimlaneId);
+    const chromeRows = customGeometry?.rows ?? 1;
     const chromeRect =
       resolvedVariant === 'rail'
         ? { x: bounds.x, y: chromeY, width: rail.railWidth, height: placement.height }
-        : { x: bounds.x, y: chromeY, width: bounds.width, height: 1 };
+        : { x: bounds.x, y: chromeY, width: bounds.width, height: chromeRows };
     const clippedChrome = clip(chromeRect, bounds, contentOriginY);
     if (clippedChrome !== undefined) {
       swimlaneChrome.push(
@@ -343,22 +385,58 @@ export function projectKanbanSceneGeometry(
       const chromeKind =
         resolvedVariant === 'rail'
           ? 'swimlane-rail'
-          : resolvedVariant === 'separator'
-            ? 'swimlane-separator'
-            : resolvedVariant === 'band'
-              ? 'swimlane-band'
-              : 'swimlane-header';
+          : resolvedVariant === 'custom'
+            ? 'swimlane-custom'
+            : resolvedVariant === 'separator'
+              ? 'swimlane-separator'
+              : resolvedVariant === 'band'
+                ? 'swimlane-band'
+                : 'swimlane-header';
       regions.push(region(chromeKind, clippedChrome, { swimlaneId: swimlane.swimlaneId }));
     }
 
-    const cardMinimumY = sticky && resolvedVariant !== 'rail' ? contentOriginY + 1 : contentOriginY;
+    if (customGeometry !== undefined) {
+      for (const customRegion of customGeometry.regions) {
+        const clippedCustomRegion = clip(
+          {
+            x: bounds.x + customRegion.x,
+            y: chromeY + customRegion.y,
+            width: customRegion.width,
+            height: customRegion.height,
+          },
+          bounds,
+          contentOriginY,
+        );
+        if (clippedCustomRegion !== undefined) {
+          regions.push(region('swimlane-custom', clippedCustomRegion, { swimlaneId: swimlane.swimlaneId }));
+        }
+      }
+      if (customGeometry.railWidth > 0 && placement.cardHeight > 0) {
+        const customRail = clip(
+          {
+            x: bounds.x,
+            y: naturalY + chromeRows,
+            width: customGeometry.railWidth,
+            height: placement.cardHeight,
+          },
+          bounds,
+          contentOriginY,
+        );
+        if (customRail !== undefined) {
+          regions.push(region('swimlane-custom', customRail, { swimlaneId: swimlane.swimlaneId }));
+        }
+      }
+    }
+
+    const cardMinimumY = sticky && resolvedVariant !== 'rail' ? contentOriginY + chromeRows : contentOriginY;
+    const cardRowOffset = resolvedVariant === 'rail' ? 0 : chromeRows;
     for (const sourceCell of cellsForSwimlane(scene, swimlane.swimlaneId)) {
       const column = placements.find(({ columnId }) => columnId === sourceCell.address.columnId);
       if (column === undefined || placement.cardHeight === 0) continue;
       const cellRect = clip(
         {
           x: column.x,
-          y: naturalY + (resolvedVariant === 'rail' ? 0 : 1),
+          y: naturalY + cardRowOffset,
           width: column.width,
           height: placement.cardHeight,
         },
@@ -369,7 +447,7 @@ export function projectKanbanSceneGeometry(
         cells.push(Object.freeze({ ...cellRect, address: sourceCell.address }));
         regions.push(region('cell', cellRect, sourceCell.address));
       }
-      let cardTop = naturalY + (resolvedVariant === 'rail' ? 0 : 1);
+      let cardTop = naturalY + cardRowOffset;
       for (const sourceCard of sourceCell.cards) {
         const cardWidth = Math.min(sourceCard.descriptor.width, column.width);
         const cardRect = clip(

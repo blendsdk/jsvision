@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 18:44 CEST
-> **Progress**: 46/106 tasks (43%)
+> **Last Updated**: 2026-08-04 18:49 CEST
+> **Progress**: 47/106 tasks (44%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -169,7 +169,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 3.2.4 Generalize viewport-source retention to visible/overscan semantic cells, consume bounded compatible row-layout hints, and degrade distant no-hint projection honestly — `packages/kanban/src/board/viewport-source.ts` ✅ (completed: 2026-08-04 18:30 CEST)
 - [x] 3.2.5 Implement hybrid/separator/band geometry strategies over the canonical scene — `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-04 18:38 CEST)
 - [x] 3.2.6 Implement rail geometry, sticky label behavior, and deterministic hybrid degradation — `packages/kanban/src/layout/swimlane-rail.ts`, `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-04 18:44 CEST)
-- [ ] 3.2.7 Implement custom swimlane chrome geometry within validated budgets — `packages/kanban/src/layout/swimlane-custom.ts`
+- [x] 3.2.7 Implement custom swimlane chrome geometry within validated budgets — `packages/kanban/src/layout/swimlane-custom.ts` ✅ (completed: 2026-08-04 18:49 CEST)
 - [ ] 3.2.8 Replace fixed-stride card stacking/origin/extent assumptions with sparse height projections — `packages/kanban/src/layout/vertical-projector.ts`, `packages/kanban/src/board/viewport-metrics.ts`
 - [ ] 3.2.9 Extend clipped closed-scope card/header/state/retry inspection targets and z-order while keeping drag/insertion targets absent — `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/src/board/viewport-inspection.ts`
 - [ ] 3.2.10 Rebuild viewport projection/drawing around scene geometry, activate rich/custom renderer selection only now that sparse heights exist, add first-use locale vocabulary, and preserve targeted damage — `packages/kanban/src/board/viewport-projector.ts`, `packages/kanban/src/board/viewport-render.ts`, `packages/kanban/src/board/viewport-damage.ts`, `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`

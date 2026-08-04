@@ -2346,6 +2346,24 @@ interface KanbanRequestSuperseded {
 }
 ```
 
+## KanbanResolvedCustomSwimlaneGeometry
+
+Geometry-only custom chrome values safe to consume during scene projection.
+
+```ts
+interface KanbanResolvedCustomSwimlaneGeometry {
+  swimlaneId: string;   // Stable validated swimlane identity.
+  rows: number;   // Horizontal rows reserved above this swimlane's cards.
+  railWidth: number;   // Left cells reserved beside every card column.
+  regions: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
+  }[];   // Bounded header-only regions copied away from application ownership.
+}
+```
+
 ## KanbanResolvedGroupingMembership
 
 Resolved card membership in one semantic swimlane address.
@@ -2536,6 +2554,17 @@ interface KanbanSceneCellGeometry {
 }
 ```
 
+## KanbanSceneCustomChromeInput
+
+One application-produced, already semantic-scoped custom swimlane descriptor.
+
+```ts
+interface KanbanSceneCustomChromeInput {
+  swimlaneId: string;   // Stable swimlane identity receiving this chrome.
+  descriptor: KanbanSwimlaneChromeDescriptor;   // Bounded renderer-neutral descriptor returned by the presentation resolver.
+}
+```
+
 ## KanbanSceneGeometry
 
 Complete immutable exact-cell projection of a canonical semantic scene.
@@ -2586,10 +2615,10 @@ interface KanbanSceneGeometryRegion {
 
 ## KanbanSceneGeometryVariant
 
-Built-in scene layouts supported by the geometry projector.
+Scene presentation layouts supported by the geometry projector.
 
 ```ts
-type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail'
+type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail' | 'custom'
 ```
 
 ## KanbanSceneLimitState
@@ -2615,6 +2644,7 @@ type KanbanSceneRegionKind = | 'workflow-header'
   | 'swimlane-band'
   | 'swimlane-separator'
   | 'swimlane-rail'
+  | 'swimlane-custom'
   | 'cell'
   | 'card'
   | 'state'
@@ -3758,6 +3788,7 @@ interface ProjectKanbanSceneGeometryOptions {
   activeSwimlaneId?: string;   // Active swimlane whose visible chrome may pin beneath workflow headers.
   minimumColumnWidth: number;   // Effective minimum width of each visible card column.
   railWidth?: number;   // Requested left rail width; defaults to ten terminal cells.
+  customChrome?: readonly KanbanSceneCustomChromeInput[];   // Per-visible-swimlane descriptors required by the custom strategy.
   focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.
   anchor?: KanbanSceneGeometryAnchor;   // Optional stable anchor preserved through responsive recomputation.
 }
@@ -3778,6 +3809,19 @@ interface ProjectKanbanVerticalGeometryOptions {
   cards: readonly KanbanVerticalCardInput[];   // Source-ordered retained cards.
   verticalOverscan: number;   // Finite extra card rows retained around the visible range.
   projectInsertionGutters?: boolean;   // Whether to expose non-actionable future insertion geometry for inspection.
+}
+```
+
+## ResolveKanbanCustomSwimlaneGeometryOptions
+
+Inputs for validating custom chrome against current responsive geometry.
+
+```ts
+interface ResolveKanbanCustomSwimlaneGeometryOptions {
+  chrome: KanbanSceneCustomChromeInput;   // Application-produced semantic-scoped descriptor.
+  availableWidth: number;   // Complete available viewport width.
+  visibleColumnCount: number;   // Number of visible card columns.
+  minimumColumnWidth: number;   // Effective minimum width of every card column.
 }
 ```
 
@@ -4432,6 +4476,14 @@ Resolves one card's optional section order without changing numeric view maxima.
 
 ```ts
 resolveKanbanCardPresentationSelection(selection: unknown, maximum: KanbanCardPresentationMaximum): ResolvedKanbanCardPresentationSelection
+```
+
+## resolveKanbanCustomSwimlaneGeometry
+
+Copies custom swimlane chrome into a bounded geometry-only snapshot.
+
+```ts
+resolveKanbanCustomSwimlaneGeometry(options: ResolveKanbanCustomSwimlaneGeometryOptions): KanbanResolvedCustomSwimlaneGeometry
 ```
 
 ## resolveKanbanGrouping

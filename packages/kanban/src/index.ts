@@ -33,6 +33,7 @@ export * from './layout/metrics.js';
 export * from './layout/scroll-model.js';
 export * from './layout/sparse-height-index.js';
 export * from './layout/swimlane-geometry.js';
+export * from './layout/swimlane-custom.js';
 export * from './layout/swimlane-rail.js';
 export * from './layout/vertical-projector.js';
 export * from './layout/width-solver.js';
