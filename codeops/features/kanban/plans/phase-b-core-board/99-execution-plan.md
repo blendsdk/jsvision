@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 18:08 CEST
-> **Progress**: 39/106 tasks (37%)
+> **Last Updated**: 2026-08-04 18:09 CEST
+> **Progress**: 40/106 tasks (38%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -149,7 +149,15 @@ implementation → green → implementation tests/hardening → verification.
 **Reference**: 03-04; ST-B-GEO-01..09; SPEC-B-HEIGHT-INDEX; PAR-B26
 
 - [x] 3.1.1 `[spec-author]` Write immutable canonical-scene/sparse-height/variant/hit/damage plus mounted-card/structure assertion slices owned by Phase 3 — `packages/kanban/test/scene-geometry.spec.test.ts`, `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts` ✅ (completed: 2026-08-04 18:08 CEST)
-- [ ] 3.1.2 Run the Phase 3 specification suite and record expected red behavior
+- [x] 3.1.2 Run the Phase 3 specification suite and record expected red behavior ✅ (completed: 2026-08-04 18:09 CEST)
+
+> **Phase 3 red evidence (2026-08-04 18:09 CEST):** The combined canonical-scene, rich-card, and
+> structure specification command ran 42 assertions: all 28 previously implemented assertions stayed
+> green and all 14 Phase 3-owned assertions failed at the intended missing boundaries. Ten scene and
+> geometry assertions fail at the absent sparse-height, canonical-scene, window, geometry, hit, and
+> damage functions; two mounted rich-card assertions fail because inspection has no integrated rich
+> descriptor; and two mounted structure assertions fail because Phase A inspection has no normalized
+> structure state or mounted-card-view count. No prior behavior regressed.
 
 ### Step 3.2: Implementation and green phase
 
