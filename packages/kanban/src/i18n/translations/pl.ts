@@ -1,0 +1,23 @@
+import { createKanbanTranslationCatalog } from '../translation.js';
+
+/** Official Polish Kanban catalog. */
+export const kanbanPl = createKanbanTranslationCatalog('pl', {
+  'kanban.board.label': 'Tablica Kanban',
+  'kanban.board.no-columns': 'Brak kolumn',
+  'kanban.state.loading': 'Ładowanie…',
+  'kanban.state.refreshing': 'Odświeżanie…',
+  'kanban.state.partial': 'Niektóre karty są niedostępne',
+  'kanban.state.empty': 'Brak kart',
+  'kanban.state.error': 'Nie udało się załadować tablicy',
+  'kanban.action.retry': 'Ponów',
+  'kanban.layout.minimum-size': 'Kanban wymaga co najmniej ${width} × ${height} komórek',
+  'kanban.count.unknown': 'Liczba nieznana',
+  'kanban.count.truncated': '${count} lub więcej',
+  'kanban.focused-column.previous': 'Poprzednia kolumna',
+  'kanban.focused-column.next': 'Następna kolumna',
+  'kanban.focused-column.position': 'Kolumna ${current} z ${total}',
+  'kanban.card.invalid-title': 'Nieprawidłowa karta',
+  'kanban.card.unknown-status': 'Nieznany status',
+  'kanban.reason.source-unavailable': 'Źródło niedostępne',
+  'kanban.reason.renderer-unavailable': 'Karta niedostępna',
+});
