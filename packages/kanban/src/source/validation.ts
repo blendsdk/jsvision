@@ -33,6 +33,9 @@ import type {
   KanbanQuery,
   KanbanSessionPublication,
   KanbanSort,
+  KanbanSwimlaneLayoutHintBatch,
+  KanbanSwimlaneLayoutHintRequest,
+  KanbanSwimlaneRowLayoutHint,
   KanbanSwimlaneHeader,
   KanbanSwimlaneMeta,
 } from './types.js';
@@ -69,6 +72,14 @@ const LOCATION_KEYS = new Set(['kind', 'address', 'index', 'placement', 'session
 const PUBLICATION_KEYS = new Set(['revision', 'state', 'columns', 'swimlanes', 'counts', 'headers', 'identityChanges']);
 /** Exact accepted members of one honest numeric summary. */
 const NUMERIC_SUMMARY_KEYS = new Set(['scope', 'quality', 'value']);
+/** Exact accepted members of one bounded layout-hint request. */
+const LAYOUT_HINT_REQUEST_KEYS = new Set(['start', 'end', 'sessionRevision', 'queryGeneration']);
+/** Exact accepted members of one aggregate swimlane row hint. */
+const LAYOUT_HINT_ROW_KEYS = new Set(['swimlaneId', 'extent', 'count']);
+/** Exact accepted members of one honest row extent. */
+const ROW_EXTENT_KEYS = new Set(['quality', 'value']);
+/** Exact accepted members of one layout-hint batch. */
+const LAYOUT_HINT_BATCH_KEYS = new Set([...LAYOUT_HINT_REQUEST_KEYS, 'rows']);
 
 /** Raises the bounded public error for an invalid query. */
 function invalidQuery(): never {
@@ -480,6 +491,112 @@ export function snapshotKanbanSessionPublication(value: unknown): KanbanSessionP
       headers,
       identityChanges,
     });
+  } catch (error) {
+    if (error instanceof KanbanInvalidSourcePublicationError) throw error;
+    return invalidPublication();
+  }
+}
+
+/** Validates one bounded non-negative safe integer. */
+function layoutInteger(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) return invalidPublication();
+  return value;
+}
+
+/**
+ * Validates and detaches one bounded swimlane-axis layout-hint request.
+ *
+ * @example
+ * ```ts
+ * const request = snapshotKanbanSwimlaneLayoutHintRequest({
+ *   start: 0,
+ *   end: 20,
+ *   sessionRevision: 'session-v1',
+ *   queryGeneration: 1,
+ * });
+ * ```
+ */
+export function snapshotKanbanSwimlaneLayoutHintRequest(value: unknown): KanbanSwimlaneLayoutHintRequest {
+  try {
+    const properties = snapshotKanbanDataProperties(value, LAYOUT_HINT_REQUEST_KEYS.size);
+    validateKanbanDataKeys(properties, LAYOUT_HINT_REQUEST_KEYS);
+    if (Object.keys(properties).length !== LAYOUT_HINT_REQUEST_KEYS.size) return invalidPublication();
+    const start = layoutInteger(properties.start);
+    const end = layoutInteger(properties.end);
+    const queryGeneration = layoutInteger(properties.queryGeneration);
+    if (end < start || end - start > KANBAN_LIMITS.swimlanes.safe) return invalidPublication();
+    return Object.freeze({
+      start,
+      end,
+      sessionRevision: snapshotRevision(properties.sessionRevision),
+      queryGeneration,
+    });
+  } catch (error) {
+    if (error instanceof KanbanInvalidSourcePublicationError) throw error;
+    return invalidPublication();
+  }
+}
+
+/** Validates one honest aggregate row extent. */
+function snapshotRowExtent(value: unknown): KanbanSwimlaneRowLayoutHint['extent'] {
+  const properties = snapshotKanbanDataProperties(value, ROW_EXTENT_KEYS.size);
+  validateKanbanDataKeys(properties, ROW_EXTENT_KEYS);
+  if (properties.quality === 'unknown') {
+    if (Object.keys(properties).length !== 1) return invalidPublication();
+    return Object.freeze({ quality: 'unknown' });
+  }
+  if (
+    (properties.quality !== 'exact' && properties.quality !== 'lower-bound') ||
+    Object.keys(properties).length !== 2
+  ) {
+    return invalidPublication();
+  }
+  return Object.freeze({ quality: properties.quality, value: layoutInteger(properties.value) });
+}
+
+/** Validates one payload-free aggregate swimlane row hint. */
+function snapshotLayoutHintRow(value: unknown): KanbanSwimlaneRowLayoutHint {
+  const properties = snapshotKanbanDataProperties(value, LAYOUT_HINT_ROW_KEYS.size);
+  validateKanbanDataKeys(properties, LAYOUT_HINT_ROW_KEYS);
+  if (Object.keys(properties).length !== LAYOUT_HINT_ROW_KEYS.size || typeof properties.swimlaneId !== 'string') {
+    return invalidPublication();
+  }
+  return Object.freeze({
+    swimlaneId: createKanbanSwimlaneId(properties.swimlaneId),
+    extent: snapshotRowExtent(properties.extent),
+    count: snapshotKanbanCount(properties.count),
+  });
+}
+
+/**
+ * Validates one revision/query-generation-bound aggregate layout-hint response.
+ *
+ * @example
+ * ```ts
+ * const batch = snapshotKanbanSwimlaneLayoutHintBatch({
+ *   start: 0,
+ *   end: 1,
+ *   sessionRevision: 'session-v1',
+ *   queryGeneration: 1,
+ *   rows: [{ swimlaneId: 'team-a', extent: { quality: 'exact', value: 6 }, count: { quality: 'exact', value: 2 } }],
+ * });
+ * ```
+ */
+export function snapshotKanbanSwimlaneLayoutHintBatch(value: unknown): KanbanSwimlaneLayoutHintBatch {
+  try {
+    const properties = snapshotKanbanDataProperties(value, LAYOUT_HINT_BATCH_KEYS.size);
+    validateKanbanDataKeys(properties, LAYOUT_HINT_BATCH_KEYS);
+    if (Object.keys(properties).length !== LAYOUT_HINT_BATCH_KEYS.size) return invalidPublication();
+    const request = snapshotKanbanSwimlaneLayoutHintRequest({
+      start: properties.start,
+      end: properties.end,
+      sessionRevision: properties.sessionRevision,
+      queryGeneration: properties.queryGeneration,
+    });
+    const rows = mapArray(properties.rows, KANBAN_LIMITS.swimlanes.safe, snapshotLayoutHintRow);
+    if (rows.length !== request.end - request.start) return invalidPublication();
+    if (new Set(rows.map((row) => row.swimlaneId)).size !== rows.length) return invalidPublication();
+    return Object.freeze({ ...request, rows });
   } catch (error) {
     if (error instanceof KanbanInvalidSourcePublicationError) throw error;
     return invalidPublication();

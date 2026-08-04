@@ -33,18 +33,6 @@ export interface KanbanLimitManifest {
   readonly cardRowsComfortable: KanbanLimitRow;
   readonly cardRowsSpacious: KanbanLimitRow;
   readonly descriptorRows: KanbanLimitRow;
-  /** Maximum terminal-cell width accepted for one structural column preference. */
-  readonly structureWidthCells: KanbanLimitRow;
-  /** Maximum terminal-cell width reserved by a custom swimlane label rail. */
-  readonly swimlaneRailWidth: KanbanLimitRow;
-  /** Maximum safe text bytes returned by one custom swimlane chrome descriptor. */
-  readonly swimlaneDescriptorTextBytes: KanbanLimitRow;
-  /** Maximum distinct semantic roles returned by one custom swimlane chrome descriptor. */
-  readonly swimlaneDescriptorRoles: KanbanLimitRow;
-  /** Maximum bounded regions returned by one custom swimlane chrome descriptor. */
-  readonly swimlaneDescriptorRegions: KanbanLimitRow;
-  /** Maximum bounded header actions returned by one custom swimlane chrome descriptor. */
-  readonly swimlaneDescriptorActions: KanbanLimitRow;
   readonly selectedKeys: KanbanLimitRow;
   readonly concurrentCellLoads: KanbanLimitRow;
   readonly concurrentValidators: KanbanLimitRow;
@@ -101,6 +89,24 @@ export interface KanbanTimingDefaults {
   readonly collapsedSwimlaneHoverMs: 500;
 }
 
+/** Additive fixed limits for structure and custom swimlane presentation. */
+export interface KanbanStructurePresentationLimits {
+  /** Maximum terminal-cell width accepted for one structural column preference. */
+  readonly columnWidthCells: 512;
+  /** Maximum rows returned by one custom swimlane chrome descriptor. */
+  readonly descriptorRows: 32;
+  /** Maximum terminal-cell width reserved by a custom swimlane label rail. */
+  readonly railWidth: 64;
+  /** Maximum safe text bytes returned by one custom swimlane chrome descriptor. */
+  readonly descriptorTextBytes: 4096;
+  /** Maximum distinct semantic roles returned by one custom swimlane chrome descriptor. */
+  readonly descriptorRoles: 16;
+  /** Maximum bounded regions returned by one custom swimlane chrome descriptor. */
+  readonly descriptorRegions: 64;
+  /** Maximum bounded header actions returned by one custom swimlane chrome descriptor. */
+  readonly descriptorActions: 32;
+}
+
 /** A safe typed error raised before invalid resource limits can be used. */
 export class KanbanInvalidLimitError extends KanbanError {
   /** Stable machine-readable failure code. */
@@ -140,12 +146,6 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   cardRowsComfortable: limit(12, 12, 12),
   cardRowsSpacious: limit(18, 18, 18),
   descriptorRows: limit(32, 32, 32),
-  structureWidthCells: limit(512, 2_048, 8_192),
-  swimlaneRailWidth: limit(64, 128, 256),
-  swimlaneDescriptorTextBytes: limit(4_096, 16_384, 65_536),
-  swimlaneDescriptorRoles: limit(16, 32, 64),
-  swimlaneDescriptorRegions: limit(64, 256, 1_024),
-  swimlaneDescriptorActions: limit(32, 128, 512),
   selectedKeys: limit(10_000, 50_000, 100_000),
   concurrentCellLoads: limit(8, 16, 64),
   concurrentValidators: limit(4, 16, 32),
@@ -192,6 +192,17 @@ export const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaul
 /** Package-owned deterministic interaction timings. */
 export const KANBAN_TIMING_DEFAULTS: KanbanTimingDefaults = Object.freeze({
   collapsedSwimlaneHoverMs: 500,
+});
+
+/** Fixed additive structure/presentation budgets that preserve the original limit-manifest shape. */
+export const KANBAN_STRUCTURE_PRESENTATION_LIMITS: KanbanStructurePresentationLimits = Object.freeze({
+  columnWidthCells: 512,
+  descriptorRows: 32,
+  railWidth: 64,
+  descriptorTextBytes: 4_096,
+  descriptorRoles: 16,
+  descriptorRegions: 64,
+  descriptorActions: 32,
 });
 
 /** Manifest keys captured once from the immutable package-owned object. */

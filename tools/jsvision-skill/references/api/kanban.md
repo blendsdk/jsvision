@@ -183,6 +183,14 @@ Stable field identities used by the standard-card presentation adapter.
 const KANBAN_STANDARD_CARD_FIELD_IDS: Readonly<Record<StandardKanbanCardFieldName, KanbanFieldId>>
 ```
 
+## KANBAN_STRUCTURE_PRESENTATION_LIMITS
+
+Fixed additive structure/presentation budgets that preserve the original limit-manifest shape.
+
+```ts
+const KANBAN_STRUCTURE_PRESENTATION_LIMITS: KanbanStructurePresentationLimits
+```
+
 ## KANBAN_THEME_ROLES
 
 Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
@@ -1590,12 +1598,6 @@ interface KanbanLimitManifest {
   cardRowsComfortable: KanbanLimitRow;
   cardRowsSpacious: KanbanLimitRow;
   descriptorRows: KanbanLimitRow;
-  structureWidthCells: KanbanLimitRow;   // Maximum terminal-cell width accepted for one structural column preference.
-  swimlaneRailWidth: KanbanLimitRow;   // Maximum terminal-cell width reserved by a custom swimlane label rail.
-  swimlaneDescriptorTextBytes: KanbanLimitRow;   // Maximum safe text bytes returned by one custom swimlane chrome descriptor.
-  swimlaneDescriptorRoles: KanbanLimitRow;   // Maximum distinct semantic roles returned by one custom swimlane chrome descriptor.
-  swimlaneDescriptorRegions: KanbanLimitRow;   // Maximum bounded regions returned by one custom swimlane chrome descriptor.
-  swimlaneDescriptorActions: KanbanLimitRow;   // Maximum bounded header actions returned by one custom swimlane chrome descriptor.
   selectedKeys: KanbanLimitRow;
   concurrentCellLoads: KanbanLimitRow;
   concurrentValidators: KanbanLimitRow;
@@ -1955,6 +1957,7 @@ interface KanbanQuerySession<TCard> {
   identityChanges(): KanbanIdentityChangeBatch;   // Returns authoritative reactive deletion facts.
   cell(address: KanbanCellAddress): KanbanCellCursor<TCard>;   // Opens a sparse cursor only for the explicitly requested semantic cell.
   locateCard?(key: CardKey, options?: { readonly signal?: AbortSignal }): Promise<KanbanCardLocation> | KanbanCardLocation;   // Performs one bounded optional identity lookup without scanning cursor contents.
+  swimlaneLayoutHints?(request: KanbanSwimlaneLayoutHintRequest, options?: { readonly signal?: AbortSignal }): Promise<KanbanSwimlaneLayoutHintBatch> | KanbanSwimlaneLayoutHintBatch;   // Optionally returns payload-free aggregate swimlane extents for preliminary grouped layout. The signal aborts only this hint request and never disposes the owning query session.
   dispose(): void;   // Releases session work and child resources idempotently.
 }
 ```
@@ -2120,6 +2123,14 @@ Equality-only revision value published by an application or data source.
 type KanbanRevision = string | number
 ```
 
+## KanbanRowExtent
+
+Honest row-extent knowledge that never converts incomplete data to zero.
+
+```ts
+type KanbanRowExtent = { readonly quality: 'unknown' } | { readonly quality: 'exact' | 'lower-bound'; readonly value: number }
+```
+
 ## KanbanSafeRenderOptions
 
 Options for isolated renderer execution and redacted diagnostics.
@@ -2259,6 +2270,22 @@ Package-understood structural capability labels used for presentation only.
 type KanbanStructureCapability = 'collapse' | 'configure' | 'add-card' | 'rename' | 'reorder' | 'delete'
 ```
 
+## KanbanStructurePresentationLimits
+
+Additive fixed limits for structure and custom swimlane presentation.
+
+```ts
+interface KanbanStructurePresentationLimits {
+  columnWidthCells: 512;   // Maximum terminal-cell width accepted for one structural column preference.
+  descriptorRows: 32;   // Maximum rows returned by one custom swimlane chrome descriptor.
+  railWidth: 64;   // Maximum terminal-cell width reserved by a custom swimlane label rail.
+  descriptorTextBytes: 4096;   // Maximum safe text bytes returned by one custom swimlane chrome descriptor.
+  descriptorRoles: 16;   // Maximum distinct semantic roles returned by one custom swimlane chrome descriptor.
+  descriptorRegions: 64;   // Maximum bounded regions returned by one custom swimlane chrome descriptor.
+  descriptorActions: 32;   // Maximum bounded header actions returned by one custom swimlane chrome descriptor.
+}
+```
+
 ## KanbanStructureStyle
 
 Allowlisted semantic role attached to one column or swimlane surface.
@@ -2317,6 +2344,29 @@ A validated swimlane identity.
 type KanbanSwimlaneId = string
 ```
 
+## KanbanSwimlaneLayoutHintBatch
+
+Revision-bound aggregate hints for one requested swimlane-axis window.
+
+```ts
+interface KanbanSwimlaneLayoutHintBatch {
+  rows: readonly KanbanSwimlaneRowLayoutHint[];   // Source-ordered rows corresponding exactly to the returned bounded window.
+}
+```
+
+## KanbanSwimlaneLayoutHintRequest
+
+Bounded half-open swimlane-axis window requested for preliminary layout.
+
+```ts
+interface KanbanSwimlaneLayoutHintRequest {
+  start: number;   // First included semantic swimlane index.
+  end: number;   // First excluded semantic swimlane index.
+  sessionRevision: KanbanRevision;   // Equality-only active query-session revision.
+  queryGeneration: number;   // Active query generation used to reject stale asynchronous responses.
+}
+```
+
 ## KanbanSwimlaneMeta
 
 Display metadata for one optional horizontal swimlane.
@@ -2339,6 +2389,18 @@ interface KanbanSwimlanePublicationSubject {
   swimlaneId: KanbanSwimlaneId;
   baselineRevision: KanbanRevision;
   expectedRevision: KanbanRevision;
+}
+```
+
+## KanbanSwimlaneRowLayoutHint
+
+Payload-free aggregate layout hint for one semantic swimlane row.
+
+```ts
+interface KanbanSwimlaneRowLayoutHint {
+  swimlaneId: KanbanSwimlaneId;   // Stable semantic swimlane identity.
+  extent: KanbanRowExtent;   // Aggregate terminal-row extent with explicit completeness.
+  count: KanbanCount;   // Aggregate card count with explicit authority/completeness.
 }
 ```
 
@@ -3334,6 +3396,22 @@ Validates, detaches, and freezes one query-session lifecycle state.
 
 ```ts
 snapshotKanbanSourceState(value: unknown): KanbanSourceState
+```
+
+## snapshotKanbanSwimlaneLayoutHintBatch
+
+Validates one revision/query-generation-bound aggregate layout-hint response.
+
+```ts
+snapshotKanbanSwimlaneLayoutHintBatch(value: unknown): KanbanSwimlaneLayoutHintBatch
+```
+
+## snapshotKanbanSwimlaneLayoutHintRequest
+
+Validates and detaches one bounded swimlane-axis layout-hint request.
+
+```ts
+snapshotKanbanSwimlaneLayoutHintRequest(value: unknown): KanbanSwimlaneLayoutHintRequest
 ```
 
 ## snapshotKanbanSwimlaneMeta

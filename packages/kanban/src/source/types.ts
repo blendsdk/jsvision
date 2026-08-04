@@ -236,6 +236,38 @@ export interface KanbanSessionPublication {
   readonly identityChanges: KanbanIdentityChangeBatch;
 }
 
+/** Bounded half-open swimlane-axis window requested for preliminary layout. */
+export interface KanbanSwimlaneLayoutHintRequest {
+  /** First included semantic swimlane index. */
+  readonly start: number;
+  /** First excluded semantic swimlane index. */
+  readonly end: number;
+  /** Equality-only active query-session revision. */
+  readonly sessionRevision: KanbanRevision;
+  /** Active query generation used to reject stale asynchronous responses. */
+  readonly queryGeneration: number;
+}
+
+/** Honest row-extent knowledge that never converts incomplete data to zero. */
+export type KanbanRowExtent =
+  { readonly quality: 'unknown' } | { readonly quality: 'exact' | 'lower-bound'; readonly value: number };
+
+/** Payload-free aggregate layout hint for one semantic swimlane row. */
+export interface KanbanSwimlaneRowLayoutHint {
+  /** Stable semantic swimlane identity. */
+  readonly swimlaneId: KanbanSwimlaneId;
+  /** Aggregate terminal-row extent with explicit completeness. */
+  readonly extent: KanbanRowExtent;
+  /** Aggregate card count with explicit authority/completeness. */
+  readonly count: KanbanCount;
+}
+
+/** Revision-bound aggregate hints for one requested swimlane-axis window. */
+export interface KanbanSwimlaneLayoutHintBatch extends KanbanSwimlaneLayoutHintRequest {
+  /** Source-ordered rows corresponding exactly to the returned bounded window. */
+  readonly rows: readonly KanbanSwimlaneRowLayoutHint[];
+}
+
 /** Sparse, independently disposable card reader for one semantic cell. */
 export interface KanbanCellCursor<TCard> {
   /** Returns the reactive cell lifecycle state. */
@@ -281,6 +313,15 @@ export interface KanbanQuerySession<TCard> {
     key: CardKey,
     options?: { readonly signal?: AbortSignal },
   ): Promise<KanbanCardLocation> | KanbanCardLocation;
+  /**
+   * Optionally returns payload-free aggregate swimlane extents for preliminary grouped layout.
+   *
+   * The signal aborts only this hint request and never disposes the owning query session.
+   */
+  swimlaneLayoutHints?(
+    request: KanbanSwimlaneLayoutHintRequest,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<KanbanSwimlaneLayoutHintBatch> | KanbanSwimlaneLayoutHintBatch;
   /** Releases session work and child resources idempotently. */
   dispose(): void;
 }

@@ -11,7 +11,7 @@ import {
   createKanbanSwimlaneId,
 } from '../contract/identity.js';
 import type { CardKey, KanbanFieldId } from '../contract/identity.js';
-import { KANBAN_LIMITS } from '../contract/limits.js';
+import { KANBAN_LIMITS, KANBAN_STRUCTURE_PRESENTATION_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
@@ -236,7 +236,7 @@ function swimlaneMeta(value: unknown): KanbanSwimlaneMeta {
 function columnWidth(value: unknown): KanbanColumnWidthPreference {
   const properties = snapshotKanbanDataProperties(value, WIDTH_KEYS.size);
   validateKanbanDataKeys(properties, WIDTH_KEYS);
-  const maximum = KANBAN_LIMITS.structureWidthCells.safe;
+  const maximum = KANBAN_STRUCTURE_PRESENTATION_LIMITS.columnWidthCells;
   const minimumWidth = boundedInteger(properties.minimumWidth ?? KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH, maximum);
   const preferredWidth = boundedInteger(properties.preferredWidth ?? KANBAN_DEFAULT_COLUMN_PREFERRED_WIDTH, maximum);
   const maximumWidth = boundedInteger(properties.maximumWidth ?? KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH, maximum);
@@ -391,7 +391,7 @@ export function snapshotKanbanGroupingPolicy<TCard>(value: unknown): KanbanGroup
   const railWidth =
     properties.railWidth === undefined
       ? undefined
-      : boundedInteger(properties.railWidth, KANBAN_LIMITS.swimlaneRailWidth.safe);
+      : boundedInteger(properties.railWidth, KANBAN_STRUCTURE_PRESENTATION_LIMITS.railWidth);
   if (railWidth === 0) return invalidPolicy();
   const cardKeyOf = cardKeyResolver<TCard>(properties.cardKeyOf);
   try {
