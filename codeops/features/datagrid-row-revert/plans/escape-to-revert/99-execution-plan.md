@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 15:00
-> **Progress**: 14/31 tasks (45%)
+> **Last Updated**: 2026-08-04 15:02
+> **Progress**: 15/31 tasks (48%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -90,7 +90,7 @@ AR-3, AR-6, AR-7, AR-12
 
 - [x] 1.4.1 Add controller implementation tests for map order, repeated commits, row identity, invalidation, retry state, presentation ownership, and retained-state bounds — `packages/datagrid/test/row-revert.impl.test.ts` ✅ (completed: 2026-08-04 14:56)
 - [x] 1.4.2 Add transaction/keymap implementation tests for mutate-then-throw apply recovery, recovery-setter failure, callback serialization, repaint counts, live stale reconciliation, disposal, registry ownership, and keymap cache/merge edges — `packages/datagrid/test/row-revert-transaction.impl.test.ts`, `packages/datagrid/test/keymap.impl.test.ts` ✅ (completed: 2026-08-04 15:00)
-- [ ] 1.4.3 Run existing row-gate, editing, validation, keymap, mutation, reactive-source, master-detail, security, and locale regression suites — `packages/datagrid/test`
+- [x] 1.4.3 Run existing row-gate, editing, validation, keymap, mutation, reactive-source, master-detail, security, and locale regression suites — `packages/datagrid/test` ✅ (completed: 2026-08-04 15:02; 15-file matrix passed)
 - [ ] 1.4.4 Run Data Grid typecheck/tests/JSDoc, locale completeness/review checks, and the normal changed-file gate — `packages/datagrid`, repository root
 
 **Deliverables**: immutable ST-1–ST-23 and ST-27A oracles observed red then green; bounded session
