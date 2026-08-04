@@ -175,6 +175,43 @@ export class KanbanCursorCoordinator<TCard> {
     });
   }
 
+  /**
+   * Returns whether a range still needs acquisition after completed, active, and queued work.
+   *
+   * Viewport projection uses this before attaching an invalidation continuation, preventing an
+   * already-resident range from scheduling an endless resolved-promise repaint loop.
+   */
+  needsRange(start: number, end: number): boolean {
+    this.#assertActive();
+    const range = snapshotKanbanRange(start, end, this.#maximumSpan);
+    if (range.start === range.end) return false;
+    const covered = new KanbanRangeSet();
+    covered.addAll(this.#completed.values());
+    covered.addAll([...this.#activeAcquisitions].map((acquisition) => acquisition.range));
+    covered.addAll(this.#pending.filter((waiter) => !waiter.settled).map((waiter) => waiter.range));
+    return !covered.covers(range);
+  }
+
+  /** Returns whether the complete bounded range has settled successfully for this generation. */
+  hasRange(start: number, end: number): boolean {
+    this.#assertActive();
+    const range = snapshotKanbanRange(start, end, this.#maximumSpan);
+    return this.#completed.covers(range);
+  }
+
+  /**
+   * Starts the currently queued normalized batch immediately.
+   *
+   * Normal callers rely on the default microtask coalescing. A synchronous terminal render may call
+   * this after it has queued every range for a cell so instrumentation and cancellation ownership are
+   * established before the frame returns.
+   */
+  flushPending(): void {
+    this.#assertActive();
+    this.#flushQueued = false;
+    this.#flush();
+  }
+
   /** Runs one explicit scoped retry and converts application failures to bounded source errors. */
   async retry(): Promise<void> {
     this.#assertActive();

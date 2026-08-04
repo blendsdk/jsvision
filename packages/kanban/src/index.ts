@@ -28,6 +28,8 @@ export * from './layout/metrics.js';
 export * from './layout/scroll-model.js';
 export * from './layout/vertical-projector.js';
 export * from './layout/width-solver.js';
+export * from './board/kanban-viewport.js';
+export type { KanbanOverscanOptions } from './board/viewport-source.js';
 export * from './source/address.js';
 export * from './source/counts.js';
 export { createEagerKanbanDataSource } from './source/eager-source.js';
