@@ -160,7 +160,16 @@ export const DIRTY_COMMIT_CONTRACT = dataGridContract(
 /** Validation contract: cell, row, and before-save gates remain distinguishable. */
 export const VALIDATION_CONTRACT = dataGridContract(
   'data-grid/validation',
-  ['cell-validation', 'row-validation', 'before-save'],
+  [
+    'cell-validation',
+    'row-validation',
+    'before-save',
+    'row-revert-trap',
+    'row-revert-pending-settled',
+    'row-revert-success',
+    'row-revert-release',
+    'row-revert-veto-retry',
+  ],
   [
     gridCase(
       'reject-cell',
@@ -187,6 +196,37 @@ export const VALIDATION_CONTRACT = dataGridContract(
         key('enter'),
       ],
       [{ probe: 'validation-status', operator: 'contains', value: 'row accepted · save accepted' }],
+    ),
+    gridCase(
+      'restore-trapped-row-and-release-navigation',
+      ['row-validation', 'row-revert-trap', 'row-revert-pending-settled', 'row-revert-success', 'row-revert-release'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [key('9'), key('tab'), key('arrowdown'), key('escape'), key('arrowdown')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r2:end' },
+        { probe: 'status-text', operator: 'contains', value: 'trapped → pending → restored · row released' },
+      ],
+    ),
+    gridCase(
+      'retain-trapped-row-after-veto-for-retry',
+      ['row-revert-trap', 'row-revert-pending-settled', 'row-revert-veto-retry'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [alt('v'), key('9'), key('tab'), key('arrowdown'), key('escape')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 9 · End 9' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:end' },
+        { probe: 'validation-status', operator: 'equals', value: 'Could not revert row changes' },
+        { probe: 'status-text', operator: 'contains', value: 'trapped → pending → vetoed · Escape retries' },
+      ],
     ),
   ],
 );

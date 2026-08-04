@@ -6,8 +6,29 @@ import { DataGrid, createRoot } from '@jsvision/ui';
 import { expect, test } from 'vitest';
 import masterDetail from '../examples/data-grid/master-detail.js';
 import quickStart from '../examples/data-grid/quick-start.js';
+import validation from '../examples/data-grid/validation.js';
 import windowed from '../examples/data-grid/windowed.js';
-import { buildLabExample, dispatchExampleAction, frameText, viewsIn } from './example-lab-harness.js';
+import {
+  buildLabExample,
+  collectTemplate1Evidence,
+  dispatchExampleAction,
+  frameText,
+  viewsIn,
+} from './example-lab-harness.js';
+import { DataGridLabProbe } from '../src/example-fixtures/data-grid/probe.js';
+
+const settleValidation = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+async function makeValidationRowInvalid(app: ReturnType<typeof buildLabExample>['app']): Promise<void> {
+  for (const action of [
+    { kind: 'key' as const, key: '9', modifiers: [] },
+    { kind: 'key' as const, key: 'tab', modifiers: [] },
+    { kind: 'key' as const, key: 'arrowdown', modifiers: [] },
+  ]) {
+    dispatchExampleAction(app, action);
+    await settleValidation();
+  }
+}
 
 // The overview starts maximized and gives both public grid surfaces the additional space.
 test('overview reflows both comparison grids across restore and maximize', () => {
@@ -126,6 +147,81 @@ test('windowed lab starts maximized and reflows the grid across restore and maxi
       app.loop.renderRoot.flush();
       expect(dialog.isZoomed()).toBe(true);
       expect(grid.bounds).toEqual(maximizedGrid);
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});
+
+test('validation lab preserves Classic reflow and complete recovery instructions at 80x24', () => {
+  createRoot((dispose) => {
+    const { app, dialog } = buildLabExample('data-grid/validation', validation, {
+      viewport: { width: 80, height: 24 },
+    });
+    try {
+      const grid = viewsIn(dialog).find((view) => view instanceof EditableDataGrid);
+      if (grid === undefined) throw new Error('the validation laboratory is missing its Data Grid');
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+      expect(dialog.isZoomed()).toBe(true);
+      const maximizedGrid = { ...grid.bounds };
+      let text = frameText(app);
+      expect(text).toContain('Enter edits · Tab commits · ↑/↓ tests leave · Esc reverts');
+      expect(text).toContain('Alt+V veto');
+      expect(text).toContain('Status: ready');
+
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      collectTemplate1Evidence(app, dialog, { startup: 'compact' });
+      expect(grid.bounds.width).toBeLessThan(maximizedGrid.width);
+      expect(grid.bounds.height).toBeLessThan(maximizedGrid.height);
+      text = frameText(app);
+      expect(text).toContain('Esc reverts');
+      expect(text).toContain('Alt+V veto');
+      expect(text).toContain('Status: ready');
+
+      dialog.zoom();
+      app.loop.renderRoot.flush();
+      collectTemplate1Evidence(app, dialog, { startup: 'maximized' });
+      expect(grid.bounds).toEqual(maximizedGrid);
+    } finally {
+      app.loop.dispose();
+      dispose();
+    }
+  });
+});
+
+test('validation lab keeps keyboard recovery and non-color success or veto feedback visible', async () => {
+  await createRoot(async (dispose) => {
+    const { app, dialog } = buildLabExample('data-grid/validation', validation, {
+      viewport: { width: 80, height: 24 },
+    });
+    try {
+      const grid = viewsIn(dialog).find((view): view is EditableDataGrid<unknown> => view instanceof EditableDataGrid);
+      const probe = viewsIn(dialog).find((view): view is DataGridLabProbe => view instanceof DataGridLabProbe);
+      if (grid === undefined || probe === undefined) throw new Error('validation lab requires a real grid and probe');
+      app.loop.focusView(grid.rows);
+
+      await makeValidationRowInvalid(app);
+      expect(probe.read('validation-status')).toContain('End must be after Start');
+      expect(frameText(app)).toContain('Esc reverts row changes');
+      dispatchExampleAction(app, { kind: 'key', key: 'escape', modifiers: [] });
+      await settleValidation();
+      expect(probe.read('cell-text')).toContain('Start 1 · End 9');
+      expect(probe.read('status-text')).toContain('pending → restored');
+      expect(frameText(app)).toContain('restored');
+
+      dispatchExampleAction(app, { kind: 'key', key: 'v', modifiers: ['Alt'] });
+      app.loop.focusView(grid.rows);
+      await makeValidationRowInvalid(app);
+      dispatchExampleAction(app, { kind: 'key', key: 'escape', modifiers: [] });
+      await settleValidation();
+      expect(probe.read('cell-text')).toContain('Start 9 · End 9');
+      expect(probe.read('validation-status')).toBe('Could not revert row changes');
+      expect(probe.read('status-text')).toContain('vetoed · Escape retries');
+      const failure = frameText(app);
+      expect(failure).toContain('Could not revert row changes');
+      expect(failure).toContain('Escape retries');
     } finally {
       app.loop.dispose();
       dispose();

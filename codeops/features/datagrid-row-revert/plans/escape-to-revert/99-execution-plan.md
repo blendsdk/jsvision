@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 15:32
-> **Progress**: 16/31 tasks (52%)
+> **Last Updated**: 2026-08-04 15:45
+> **Progress**: 17/31 tasks (55%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -109,12 +109,19 @@ failure and stale-settlement hardening; focused package gates green.
 
 **Lenses**: compatibility evolution; concurrent/async user workflows
 
+> **Phase baseline tree**: `9b27ba9eab455b49e4d13c5f66f9a54961c38b93`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/examples/datagrid-showcase/`, `packages/examples/test/`,
+> `packages/docs-site/examples/data-grid/`, `packages/docs-site/src/example-fixtures/data-grid/`,
+> `packages/docs-site/components/data-grid/`, `packages/docs-site/test/`, this execution plan, and
+> the feature traceability graph.
+
 ### Step 2.1: Specification Tests
 
 **Reference**: [07 ST-24–ST-26](07-testing-strategy.md#security-localization-documentation-and-distribution) ·
 [03-03](03-03-documentation-and-distribution.md)
 
-- [ ] 2.1.1 [spec-author] Extend showcase, docs-contract, and Template1 layout specification coverage for ST-24–ST-26 — `packages/examples/test/datagrid-showcase.walkthrough.spec.test.ts`, `packages/docs-site/test/contracts/data-grid/interaction.ts`, `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts`
+- [x] 2.1.1 [spec-author] Extend showcase, docs-contract, and Template1 layout specification coverage for ST-24–ST-26 — `packages/examples/test/datagrid-showcase.walkthrough.spec.test.ts`, `packages/docs-site/test/contracts/data-grid/interaction.ts`, `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts` ✅ (completed: 2026-08-04 15:45)
 - [ ] 2.1.2 Run ST-24–ST-26 and record the expected stale-surface failures before implementation (red phase) — `packages/examples`, `packages/docs-site`
 
 ### Step 2.2: Implementation
