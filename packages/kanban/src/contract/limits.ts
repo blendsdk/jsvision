@@ -55,6 +55,34 @@ export interface KanbanLimitOptions {
   readonly values?: Partial<KanbanResolvedLimits>;
 }
 
+/** Fixed scan-oriented values that define one named presentation preset. */
+export interface KanbanPresentationPresetDefault {
+  /** Maximum rows occupied by the card descriptor. */
+  readonly cardRows: number;
+  /** Empty rows reserved between adjacent cards. */
+  readonly cardGap: number;
+  /** Maximum metadata fields selected before geometry degradation. */
+  readonly metadataFields: number;
+  /** Maximum rows available to wrapped labels. */
+  readonly labelRows: number;
+  /** Maximum summary sections selected before geometry degradation. */
+  readonly summarySections: number;
+  /** Named presets keep checklist detail opt-in. */
+  readonly checklistMode: 'hidden';
+  /** Hidden named presets do not reserve checklist preview work. */
+  readonly checklistPreviewItems: 0;
+}
+
+/** Complete fixed defaults for the three durable named presentation presets. */
+export interface KanbanPresentationPresetDefaultManifest {
+  /** Dense preset for terminals where vertical space is scarce. */
+  readonly compact: KanbanPresentationPresetDefault;
+  /** Default preset balancing scanability and optional card detail. */
+  readonly comfortable: KanbanPresentationPresetDefault;
+  /** Detail-oriented preset for larger terminal surfaces. */
+  readonly spacious: KanbanPresentationPresetDefault;
+}
+
 /** A safe typed error raised before invalid resource limits can be used. */
 export class KanbanInvalidLimitError extends KanbanError {
   /** Stable machine-readable failure code. */
@@ -102,6 +130,39 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   retainedObservations: limit(256, 2_048, 8_192),
   verticalOverscan: limit(1, 4, 8),
   horizontalOverscan: limit(1, 4, 8),
+});
+
+/** Freezes one fixed named-preset definition before public exposure. */
+function presentationPreset(
+  cardRows: number,
+  cardGap: number,
+  metadataFields: number,
+  labelRows: number,
+  summarySections: number,
+): KanbanPresentationPresetDefault {
+  return Object.freeze({
+    cardRows,
+    cardGap,
+    metadataFields,
+    labelRows,
+    summarySections,
+    checklistMode: 'hidden',
+    checklistPreviewItems: 0,
+  });
+}
+
+/**
+ * Fixed named-preset defaults, kept separate from caller-adjustable safety ceilings.
+ *
+ * @example
+ * ```ts
+ * KANBAN_PRESENTATION_PRESET_DEFAULTS.comfortable.cardRows; // 12
+ * ```
+ */
+export const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaultManifest = Object.freeze({
+  compact: presentationPreset(6, 0, 2, 0, 0),
+  comfortable: presentationPreset(12, 1, 4, 1, 1),
+  spacious: presentationPreset(18, 1, 6, 2, 2),
 });
 
 /** Manifest keys captured once from the immutable package-owned object. */

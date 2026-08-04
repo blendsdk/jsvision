@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 31 items resolved
-> **Last Updated**: 2026-08-04 13:17 CEST
+> **Status**: ✅ GATE PASSED — all 33 items resolved
+> **Last Updated**: 2026-08-04 13:52 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -42,6 +42,8 @@
 | PAR-B29 | Compatibility | How does the existing `identity` getter relate to the new single-owner controller? | Keep as competing live control / migrate to controller seed-and-observation compatibility | **Delegated and preflight-refined: preserve it only as a deprecated default-controller construction seed; source identity publication remains deletion authority, and identity plus custom factory rejects.** | ✅ Resolved |
 | PAR-B30 | Public API | Which exact public seam proves that per-card section selection can reorder/omit configured IDs without enlarging view maxima? | Pure bounded selection resolver / renderer-only implicit intersection / numeric per-card overrides | **Runtime delegated after independent challenge: add one pure `resolveKanbanCardPresentationSelection` contract over frozen configured ID universes and the resolved presentation budget; it intersects known IDs, caps field/summary cardinality, and never creates numeric overrides.** | ✅ Resolved |
 | PAR-B31 | Public API | What exact adapter, snapshot, composition, style, and cache-testing contracts let the rich-card oracle precede implementation without exposing private machinery? | Final-shaped public snapshot/composition plus testing-only cache harness / infer names in tests / expose production cache internals | **Runtime delegated after independent challenge: define discriminated public field/summary/checklist/style contracts, one detached snapshot boundary, one high-level composer, and a counter-only `@jsvision/kanban/testing` cache harness; retain `presentationRevisionOf` as the sole card revision authority.** | ✅ Resolved |
+| PAR-B32 | UX & presentation | Which exact numeric budgets, checklist defaults, degradation order, and export identity define the three named presets? | Modest scan-oriented budgets with dedicated defaults / reuse broad safety ceilings / undocumented literals | **Runtime delegated after independent challenge: publish canonical deeply frozen 6/12/18-row presets with 0/1/1 gaps, modest optional-section budgets, hidden checklist modes, and one complete deterministic degradation order sourced from dedicated centralized defaults.** | ✅ Resolved |
+| PAR-B33 | Execution ordering | Which implementation task owns the already-specified selection resolver and first public presentation-policy export? | Produce them with policy normalization / defer public behavior until the final Phase 1 barrel task | **Runtime delegated: task 1.2.2 owns the policy module, bounded selection resolver, error, and first barrel export so its public specification can turn green; task 1.2.12 remains the final aggregate export/i18n closure.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -231,6 +233,68 @@ snapshot support.
 - **Confidence:** Medium-high.
 - **Reopen triggers:** Checklist item identities become globally rather than group scoped, or the UI
   scheduler proves that deterministic tests require an explicit testing-only flush operation.
+
+### PAR-B32 — exact named presentation presets (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact immutable defaults and object-identity mechanics for already-approved named
+  presets; no product capability, acceptance criterion, or application authority changes.
+- **Objective:** Keep named presets useful and predictable in terminal geometry without presenting
+  broad safety ceilings as practical card capacity or invoking unnecessary application getters.
+- **Decision:** Centralize fixed preset defaults separately from caller-adjustable safety ceilings.
+  Compact uses rows/gap/metadata/labels/summaries `6/0/2/0/0`; comfortable uses `12/1/4/1/1`;
+  spacious uses `18/1/6/2/2`. All named presets keep checklist mode hidden and preview count zero;
+  explicit custom preview defaults remain application-selected and the documented common value is two.
+  The complete first-removed-to-last-removed order is `custom`, `checklist-preview`,
+  `checklist-progress`, `summary`, `labels`, `metadata`. Export one frozen
+  `KANBAN_PRESENTATION_PRESETS` record, and let preset resolution return its canonical frozen member
+  after validating caller-lowered ceilings. Canonical identity is an optimization; revision/value
+  equality remains the semantic contract. A partial custom degradation order is completed by appending
+  missing optional kinds in the package order.
+- **Evidence:** Density row ceilings are already fixed at 6/12/18; approved terminal behavior reserves
+  no resting gutter for compact and one row for comfortable/spacious; checklist defaults are hidden;
+  preview mode documents two items; broad field/summary resource limits are safety bounds rather than
+  usable 80×24 content budgets.
+- **Rejected alternatives:** Reusing 64+ field and 16+ summary ceilings creates false UX capacity and
+  excess callback work. Unexplained literals or deriving gaps/labels from unrelated limits creates
+  hidden coupling. Enabling checklist detail in a named preset conflicts with default-hidden behavior.
+  Fresh preset snapshots add allocation without improving safety.
+- **Strongest counterargument:** Dedicated fixed-default metadata expands the centralized contract for
+  values that are not caller-adjustable limits. The separation is intentional and prevents named
+  presets from changing meaning through `KanbanLimitOptions`.
+- **Confidence:** High.
+- **Hardening:** A blind independent challenger selected the modest budgets, complete order, separate
+  fixed-default manifest, public preset record, and canonical identity semantics.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** Real compact 80×24 composition evidence shows comfortable cards expose too few
+  useful cards, or product review explicitly enables checklist progress/preview in a named preset.
+
+### PAR-B33 — presentation producer task and export timing (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Implementation sequencing and additive barrel-export timing inside the confirmed
+  Phase 1 public contract; no scope or product behavior changes.
+- **Objective:** Verify each task honestly against the immutable public specification rather than
+  leaving a completed producer unreachable until an unrelated final aggregation task.
+- **Decision:** Task 1.2.2 implements and exports presentation normalization, bounded per-card selection,
+  the sanitized presentation error, and named preset record together. Task 1.2.12 still owns the final
+  aggregate Phase 1 exports and first-use locale vocabulary.
+- **Evidence:** The public specification imports both resolvers and the error from `src/index.ts`; both
+  resolvers share the same closed-data validation boundary and live in `presentation-policy.ts`.
+- **Rejected alternatives:** Deferring the barrel export leaves task 1.2.2 unverifiable through the
+  promised public API. Assigning selection to adapter snapshot work splits one pure policy boundary
+  across tasks without a technical seam.
+- **Strongest counterargument:** The task touches the barrel and error module earlier than the original
+  target list. Those are necessary producer dependencies and remain inside the approved Phase 1
+  modification set.
+- **Confidence:** High.
+- **Hardening:** Repository grounding against the immutable spec suite, public barrel, and task order;
+  no second design remained equally viable.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** The package adopts generated exports or separates presentation selection into a
+  different durable public module before this task is implemented.
 
 ## Systematic discovery scan
 

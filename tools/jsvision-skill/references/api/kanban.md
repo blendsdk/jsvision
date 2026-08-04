@@ -111,6 +111,22 @@ Exact placeholders accepted by parameterized Kanban messages.
 const KANBAN_PLACEHOLDER_MANIFEST: PlaceholderManifest
 ```
 
+## KANBAN_PRESENTATION_PRESETS
+
+Canonical deeply frozen named presentation budgets.
+
+```ts
+const KANBAN_PRESENTATION_PRESETS: Readonly<Record<KanbanCardDensity, ResolvedKanbanPresentationBudget>>
+```
+
+## KANBAN_PRESENTATION_PRESET_DEFAULTS
+
+Fixed named-preset defaults, kept separate from caller-adjustable safety ceilings.
+
+```ts
+const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaultManifest
+```
+
 ## KANBAN_THEME_ROLES
 
 Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
@@ -376,6 +392,32 @@ Interaction or persistence state that can affect one card's presentation.
 type KanbanCardOperationState = 'idle' | 'grabbed' | 'pending' | 'rejected'
 ```
 
+## KanbanCardPresentationMaximum
+
+Validated view maximum against which one card selection is intersected.
+
+```ts
+interface KanbanCardPresentationMaximum {
+  budget: ResolvedKanbanPresentationBudget;   // Resolved immutable numeric presentation budget.
+  limits: KanbanResolvedLimits;   // Active immutable resource ceilings selected by the board.
+  availableFieldIds: readonly KanbanFieldId[];   // Configured metadata fields available to this card.
+  availableSummaryIds: readonly KanbanFieldId[];   // Configured summaries available to this card.
+  availableChecklistIds: readonly KanbanChecklistId[];   // Configured checklist groups available to this card.
+}
+```
+
+## KanbanCardPresentationSelection
+
+Optional card-specific ordering and subset request.
+
+```ts
+interface KanbanCardPresentationSelection {
+  fieldIds?: readonly KanbanFieldId[];   // Requested metadata field order and subset.
+  summaryIds?: readonly KanbanFieldId[];   // Requested summary order and subset.
+  checklistIds?: readonly KanbanChecklistId[];   // Requested checklist-group order and subset.
+}
+```
+
 ## KanbanCardPublicationSubject
 
 Card publication expected after an accepted application request.
@@ -565,6 +607,14 @@ A validated checklist-group identity.
 type KanbanChecklistId = string
 ```
 
+## KanbanChecklistMode
+
+Checklist detail rendered by the standard card pipeline.
+
+```ts
+type KanbanChecklistMode = 'hidden' | 'progress' | 'preview'
+```
+
 ## KanbanColumnHeader
 
 Detached column header publication.
@@ -652,6 +702,24 @@ type KanbanCount = | { readonly quality: 'unknown' }
     }
 ```
 
+## KanbanCustomPresentation
+
+Caller-defined card presentation budget before validation and normalization.
+
+```ts
+interface KanbanCustomPresentation {
+  revision: KanbanRevision;   // Equality-only revision for the complete custom policy.
+  cardRows: number;   // Maximum descriptor rows, including mandatory title and status rows.
+  cardGap: number;   // Empty terminal rows reserved between adjacent cards by scene geometry.
+  metadataFields: number;   // Maximum selected metadata fields.
+  labelRows: number;   // Maximum rows used to wrap labels.
+  summarySections: number;   // Maximum selected summary sections.
+  checklistMode: KanbanChecklistMode;   // Checklist detail available to the standard renderer.
+  checklistPreviewItems: number;   // Maximum checklist items displayed across selected groups.
+  degradationOrder?: readonly KanbanCardSectionKind[];   // Optional low-to-high removal order for non-mandatory sections.
+}
+```
+
 ## KanbanDamageRegion
 
 Bounded changed rectangle returned by viewport damage calculation.
@@ -703,6 +771,7 @@ type KanbanErrorCode = | 'invalid-identity'
   | 'invalid-query'
   | 'invalid-range'
   | 'invalid-source-publication'
+  | 'invalid-presentation'
   | 'invalid-descriptor'
   | 'invalid-geometry'
   | 'disposed-resource'
@@ -987,6 +1056,16 @@ A safe typed error raised before invalid resource limits can be used.
 
 ```ts
 new KanbanInvalidLimitError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidPresentationError
+
+Raised when presentation policy or per-card selection data is structurally invalid.
+
+```ts
+new KanbanInvalidPresentationError()   // extends KanbanError
 // methods & signals:
 code
 ```
@@ -1310,6 +1389,42 @@ Half-open source range used as an optional placement prefetch hint.
 interface KanbanPrefetchRange {
   start: number;   // First included logical card index.
   end: number;   // First excluded logical card index.
+}
+```
+
+## KanbanPresentationInput
+
+Preset name or complete custom presentation policy accepted by the public resolver.
+
+```ts
+type KanbanPresentationInput = KanbanCardDensity | KanbanCustomPresentation
+```
+
+## KanbanPresentationPresetDefault
+
+Fixed scan-oriented values that define one named presentation preset.
+
+```ts
+interface KanbanPresentationPresetDefault {
+  cardRows: number;   // Maximum rows occupied by the card descriptor.
+  cardGap: number;   // Empty rows reserved between adjacent cards.
+  metadataFields: number;   // Maximum metadata fields selected before geometry degradation.
+  labelRows: number;   // Maximum rows available to wrapped labels.
+  summarySections: number;   // Maximum summary sections selected before geometry degradation.
+  checklistMode: 'hidden';   // Named presets keep checklist detail opt-in.
+  checklistPreviewItems: 0;   // Hidden named presets do not reserve checklist preview work.
+}
+```
+
+## KanbanPresentationPresetDefaultManifest
+
+Complete fixed defaults for the three durable named presentation presets.
+
+```ts
+interface KanbanPresentationPresetDefaultManifest {
+  compact: KanbanPresentationPresetDefault;   // Dense preset for terminals where vertical space is scarce.
+  comfortable: KanbanPresentationPresetDefault;   // Default preset balancing scanability and optional card detail.
+  spacious: KanbanPresentationPresetDefault;   // Detail-oriented preset for larger terminal surfaces.
 }
 ```
 
@@ -1989,6 +2104,39 @@ interface ProjectKanbanVerticalGeometryOptions {
 }
 ```
 
+## ResolvedKanbanCardPresentationSelection
+
+Detached immutable section selection used by the standard card pipeline.
+
+```ts
+interface ResolvedKanbanCardPresentationSelection {
+  budget: ResolvedKanbanPresentationBudget;   // Exact resolved budget supplied by the maximum.
+  limits: KanbanResolvedLimits;   // Exact active limits supplied by the maximum.
+  fieldIds: readonly KanbanFieldId[];   // Known metadata IDs after intersection and cardinality capping.
+  summaryIds: readonly KanbanFieldId[];   // Known summary IDs after intersection and cardinality capping.
+  checklistIds: readonly KanbanChecklistId[];   // Known checklist-group IDs after intersection.
+}
+```
+
+## ResolvedKanbanPresentationBudget
+
+Immutable card budget consumed by snapshot, composition, and scene geometry.
+
+```ts
+interface ResolvedKanbanPresentationBudget {
+  preset: KanbanCardDensity | 'custom';   // Preset that supplied the values, or `custom` for caller data.
+  revision: KanbanRevision;   // Equality-only normalized policy revision.
+  cardRows: number;   // Maximum descriptor rows.
+  cardGap: number;   // Empty scene rows between adjacent cards.
+  metadataFields: number;   // Maximum selected metadata fields.
+  labelRows: number;   // Maximum label wrapping rows.
+  summarySections: number;   // Maximum selected summary sections.
+  checklistMode: KanbanChecklistMode;   // Resolved checklist detail mode.
+  checklistPreviewItems: number;   // Maximum checklist preview items across selected groups.
+  degradationOrder: readonly KanbanCardSectionKind[];   // Complete low-to-high removal order for optional sections.
+}
+```
+
 ## ResolvedKanbanTheme
 
 Complete safe theme together with inspectable resolution evidence.
@@ -2323,6 +2471,22 @@ Renders mandatory title and status values from an application-owned card through
 
 ```ts
 renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>, context: KanbanCardRenderContext): KanbanCardDescriptor
+```
+
+## resolveKanbanCardPresentationSelection
+
+Resolves one card's optional section order without changing numeric view maxima.
+
+```ts
+resolveKanbanCardPresentationSelection(selection: KanbanCardPresentationSelection | undefined, maximum: KanbanCardPresentationMaximum): ResolvedKanbanCardPresentationSelection
+```
+
+## resolveKanbanPresentation
+
+Resolves a named or custom presentation policy into one bounded immutable budget.
+
+```ts
+resolveKanbanPresentation(input: KanbanPresentationInput = 'comfortable', limits?: KanbanResolvedLimits): ResolvedKanbanPresentationBudget
 ```
 
 ## resolveKanbanTheme

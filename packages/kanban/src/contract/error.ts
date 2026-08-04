@@ -6,6 +6,7 @@ export type KanbanErrorCode =
   | 'invalid-query'
   | 'invalid-range'
   | 'invalid-source-publication'
+  | 'invalid-presentation'
   | 'invalid-descriptor'
   | 'invalid-geometry'
   | 'disposed-resource';
@@ -61,6 +62,18 @@ export class KanbanInvalidSourcePublicationError extends KanbanError {
   constructor() {
     super('Invalid Kanban source publication.');
     this.name = 'KanbanInvalidSourcePublicationError';
+  }
+}
+
+/** Raised when presentation policy or per-card selection data is structurally invalid. */
+export class KanbanInvalidPresentationError extends KanbanError {
+  /** Stable machine-readable failure code. */
+  readonly code = 'invalid-presentation' as const;
+
+  /** Creates a bounded error that never retains rejected card or policy data. */
+  constructor() {
+    super('Invalid Kanban presentation configuration.');
+    this.name = 'KanbanInvalidPresentationError';
   }
 }
 

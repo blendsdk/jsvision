@@ -49,7 +49,22 @@ export interface ResolvedKanbanPresentationBudget {
 returns a deeply frozen budget, and rejects invalid revisions, non-integers, duplicate/mandatory
 degradation entries, or values above the caller's lowered ceilings. Comfortable remains the default.
 Preset budgets are deterministic and exported for testing/documentation; their numeric values come
-from `KANBAN_LIMITS`, not duplicated literals (PAR-B09/PAR-B24).
+from centralized package-owned constants rather than duplicated resolver literals (PAR-B09/PAR-B24).
+
+The package centralizes fixed preset defaults separately from caller-adjustable safety ceilings and
+exports the canonical deeply frozen `KANBAN_PRESENTATION_PRESETS` record. Preset resolution validates
+the selected member against active lowered ceilings, then returns that canonical object; identity reuse
+is an optimization rather than the semantic comparison contract. Exact values are:
+
+| Preset | Rows | Gap | Metadata | Label rows | Summaries | Checklist | Preview items |
+|---|---:|---:|---:|---:|---:|---|---:|
+| `compact` | 6 | 0 | 2 | 0 | 0 | `hidden` | 0 |
+| `comfortable` | 12 | 1 | 4 | 1 | 1 | `hidden` | 0 |
+| `spacious` | 18 | 1 | 6 | 2 | 2 | `hidden` | 0 |
+
+The complete default removal order is `custom`, `checklist-preview`, `checklist-progress`, `summary`,
+`labels`, `metadata`. A valid partial custom order takes precedence and missing optional kinds append in
+that package order, yielding one complete deterministic result (PAR-B32).
 
 An optional per-card selection may reorder or omit configured optional field/summary/checklist IDs but
 cannot increase any resolved view maximum. The public pure intersection contract is:

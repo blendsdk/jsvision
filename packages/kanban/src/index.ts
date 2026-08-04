@@ -17,6 +17,7 @@ export { createStandardKanbanCardAdapter } from './card/adapter.js';
 export type { KanbanCardAdapter } from './card/adapter.js';
 export type { KanbanCardFormattingContext } from './card/formatting.js';
 export * from './card/descriptor.js';
+export * from './card/presentation-policy.js';
 export * from './card/renderer.js';
 export * from './card/standard-card.js';
 export { renderStandardKanbanCard } from './card/standard-renderer.js';

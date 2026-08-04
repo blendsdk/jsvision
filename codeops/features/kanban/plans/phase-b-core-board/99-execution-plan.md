@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 13:42 CEST
-> **Progress**: 4/106 tasks (4%)
+> **Last Updated**: 2026-08-04 14:04 CEST
+> **Progress**: 5/106 tasks (5%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -77,7 +77,7 @@ implementation → green → implementation tests/hardening → verification.
 **Reference**: 03-01 §Public presentation policy/Card adapters; 03-02; PAR-B09/PAR-B15
 
 - [x] 1.2.1 Extend centralized presentation/checklist/summary and `retainedDescriptors` limits, including validated standard/absolute values — `packages/kanban/src/contract/limits.ts`, `packages/kanban/src/card/presentation-policy.ts` ✅ (completed: 2026-08-04 13:42 CEST)
-- [ ] 1.2.2 Implement preset/custom policy normalization, immutable budgets, and stable fingerprints — `packages/kanban/src/card/presentation-policy.ts`
+- [x] 1.2.2 Implement centralized fixed preset defaults, preset/custom policy normalization, immutable budgets, bounded per-card selection, sanitized errors, stable fingerprints, and first public exports — `packages/kanban/src/contract/limits.ts`, `packages/kanban/src/contract/error.ts`, `packages/kanban/src/card/presentation-policy.ts`, `packages/kanban/src/index.ts` ✅ (completed: 2026-08-04 14:04 CEST)
 - [ ] 1.2.3 Add generic field/summary/style/selection adapter contracts and safe snapshots — `packages/kanban/src/card/adapter.ts`, `packages/kanban/src/card/presentation-snapshot.ts`
 - [ ] 1.2.4 Extend `StandardCard` and its adapter with optional common fields, summaries, and checklist values — `packages/kanban/src/card/standard-card.ts`, `packages/kanban/src/card/adapter.ts`
 - [ ] 1.2.5 Add bounded checklist group/item and generic summary models with identity validation — `packages/kanban/src/card/checklist.ts`, `packages/kanban/src/card/summary.ts`
