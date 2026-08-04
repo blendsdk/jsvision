@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 06:22 CEST
-> **Progress**: 39/64 tasks (61%)
+> **Last Updated**: 2026-08-04 06:24 CEST
+> **Progress**: 40/64 tasks (63%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -126,7 +126,11 @@ card renderer required by the Phase A slice.
 - [x] 4.1.1 `[spec-author]` Add immutable ST-R03-01/02, ST-R03-05–07, ST-R03-11/12, and ST-A-LAYOUT-01 width/vertical-layout specifications — `packages/kanban/test/layout.spec.test.ts` ✅ (completed: 2026-08-04 06:03)
 - [x] 4.1.2 `[spec-author]` Add immutable ST-R01-01/03/04/06, ST-R02-02/03/07/13, ST-R03-08/10/14/15, ST-A-COLUMN-01/02, and ST-A-VIEWPORT-LIFECYCLE-01 viewport/board specifications; ST-R01-01 uses an isolated NodeNext fixture and invokes consumer `tsc` before Board implementation — `packages/kanban/test/{viewport,board}.spec.test.ts`, `packages/kanban/test/fixtures/consumer-board-types/{package,tsconfig}.json`, `packages/kanban/test/fixtures/consumer-board-types/index.ts` ✅ (completed: 2026-08-04 06:14)
 - [x] 4.1.3 `[spec-author]` Add real headless ST-R03-03/04/09/13 E2E specifications for hosting, resize/maximize/restore, reactive i18n replacement, long locale/wide glyphs, monochrome, reorder/removal, and clipping — `packages/kanban/test/e2e/board-hosting.e2e.test.ts` ✅ (completed: 2026-08-04 06:22)
-- [ ] 4.1.4 Run Phase 4 specifications/E2E and record expected red failures before layout/UI production changes
+- [x] 4.1.4 Run Phase 4 specifications/E2E and record expected red failures before layout/UI production changes ✅ (completed: 2026-08-04 06:24)
+  - Red evidence: the combined unit oracle executes 28 cases with 27 red and the raw-placement guard
+    already green; the four real-host E2E cases are red. Every failure is caused only by the absent
+    approved pure-layout functions/types and `KanbanViewport`/`KanbanBoard` constructors/inspection
+    declarations; the isolated NodeNext consumer fails for the same absent public surface.
 - [ ] 4.2.1 Implement pure validated monotone tiered width solver, focused-column navigator model, and immutable viewport metrics/hit-damage types — `packages/kanban/src/layout/{width-solver,metrics,hit-map}.ts`
 - [ ] 4.2.2 Implement vertical card/header/gap projection plus scroll extents and stable card/column anchors — `packages/kanban/src/layout/{vertical-projector,scroll-model}.ts`
 - [ ] 4.2.3 Implement bounded viewport-local descriptor cache with complete semantic key, owned reactive scopes, targeted invalidation, visible/overscan eviction, and disposal-before-cursor ordering — `packages/kanban/src/board/descriptor-cache.ts`
