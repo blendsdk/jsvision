@@ -325,6 +325,40 @@ snapshot support.
 - **Reopen triggers:** The public snapshot contract removes checklist data, or a future lazy checklist
   source replaces the current bounded synchronous adapter.
 
+### PAR-B35 — localized standard-card presentation configuration (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact additive factory configuration needed to expose already-approved optional
+  `StandardCard` values through the final-shaped presentation adapter; it adds no card fields or new
+  rendering behavior.
+- **Objective:** Keep the convenience adapter useful without inventing English display labels, treating
+  per-card summary content as adapter configuration, or breaking existing no-argument callers.
+- **Decision:** Keep `StandardCard` as the application-owned value model completed in Phase A. Extend
+  `createStandardKanbanCardAdapter` with optional configuration that enables named common fields in
+  canonical order, supplies application-localized labels/priorities/formatters, declares stable summary
+  sections whose values are looked up by ID, and optionally supplies per-card selection/style callbacks.
+  Checklist groups are projected directly when present. With no configuration the factory remains the
+  same mandatory-only adapter, except that optional checklist data is now available to the rich snapshot.
+- **Evidence:** `KanbanCardPresentationAdapter` separates configured field/summary descriptors from
+  per-card values; `StandardCard.summaries` carries values with stable IDs, while its checklists already
+  match the generic checklist shape. The package i18n catalog does not yet own common-field labels, and
+  applications must be able to use their own vocabulary.
+- **Rejected alternatives:** Hard-coded English labels violate the i18n requirement. Deriving summary
+  descriptors from one card makes adapter identity depend on data and cannot describe heterogeneous
+  records safely. Ordinal summary slots discard application IDs. Requiring callers to rewrite all
+  standard getters as generic descriptors defeats the convenience model.
+- **Strongest counterargument:** The configuration surface is larger than a fixed automatic adapter.
+  Each option corresponds to an approved field family and keeps localization and formatter authority
+  explicit; omitted options perform no optional field work.
+- **Confidence:** High.
+- **Hardening:** Grounded against the final adapter/snapshot contracts, existing no-argument usages,
+  Phase A `StandardCard` shape, and the package locale inventory; the rejected alternatives each violate
+  a recorded requirement or an existing compatibility boundary.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** Standard field labels become package-owned typed locale keys, or presentation
+  adapters gain a bounded per-card summary-descriptor callback.
+
 ## Systematic discovery scan
 
 | Category | Result |

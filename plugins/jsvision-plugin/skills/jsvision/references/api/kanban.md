@@ -127,6 +127,14 @@ Fixed named-preset defaults, kept separate from caller-adjustable safety ceiling
 const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaultManifest
 ```
 
+## KANBAN_STANDARD_CARD_FIELD_IDS
+
+Stable field identities used by the standard-card presentation adapter.
+
+```ts
+const KANBAN_STANDARD_CARD_FIELD_IDS: Readonly<Record<StandardKanbanCardFieldName, KanbanFieldId>>
+```
+
 ## KANBAN_THEME_ROLES
 
 Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
@@ -2488,6 +2496,98 @@ interface StandardCardSummary {
 }
 ```
 
+## StandardKanbanCardAdapterOptions
+
+Optional rich-presentation configuration for the standard-card adapter factory.
+
+```ts
+interface StandardKanbanCardAdapterOptions<TDate = unknown, TCustom = unknown> {
+  fields?: StandardKanbanCardFieldsConfiguration;   // Common fields to expose, in the package's stable canonical order.
+  summaries?: readonly StandardKanbanCardSummaryConfiguration[];   // Ordered configured summaries read from each card by stable field identity.
+  selectionOf?: (card: StandardCard<TDate, TCustom>) => KanbanCardPresentationSelection | undefined;   // Optionally selects a reordered subset for each card without enlarging policy maxima.
+  styleOf?: (card: StandardCard<TDate, TCustom>, state: KanbanCardVisualState) => KanbanCardStyleSelection;   // Optionally selects semantic roles from the detached visual state.
+}
+```
+
+## StandardKanbanCardDateFieldConfiguration
+
+Localized configuration for one opaque standard-card date field.
+
+```ts
+interface StandardKanbanCardDateFieldConfiguration {
+  format?: (value: unknown, context: KanbanCardFormattingContext) => string | undefined;   // Optionally formats the exact unchanged application date value once.
+}
+```
+
+## StandardKanbanCardFieldConfiguration
+
+Shared localized display configuration for one optional standard-card field.
+
+```ts
+interface StandardKanbanCardFieldConfiguration {
+  label: string;   // Application-localized field label.
+  priority: number;   // Non-negative priority used only when optional content must degrade.
+  role?: KanbanThemeRole;   // Optional semantic text role.
+}
+```
+
+## StandardKanbanCardFieldName
+
+Common optional property names understood by the StandardCard convenience adapter.
+
+```ts
+type StandardKanbanCardFieldName = 'description' | 'type' | 'priority' | 'assignees' | 'labels' | 'startDate' | 'dueDate' | 'estimate' | 'value'
+```
+
+## StandardKanbanCardFieldsConfiguration
+
+Optional common fields exposed by the standard-card presentation adapter.
+
+```ts
+interface StandardKanbanCardFieldsConfiguration {
+  description?: StandardKanbanCardTextFieldConfiguration;   // Long description metadata.
+  type?: StandardKanbanCardTextFieldConfiguration;   // Work-item type metadata.
+  priority?: StandardKanbanCardTextFieldConfiguration;   // Priority metadata.
+  assignees?: StandardKanbanCardListFieldConfiguration;   // Ordered assignee labels.
+  labels?: StandardKanbanCardListFieldConfiguration;   // Ordered card labels.
+  startDate?: StandardKanbanCardDateFieldConfiguration;   // Opaque start date.
+  dueDate?: StandardKanbanCardDateFieldConfiguration;   // Opaque due date.
+  estimate?: StandardKanbanCardTextFieldConfiguration;   // Application-formatted estimate text.
+  value?: StandardKanbanCardTextFieldConfiguration;   // Application-formatted business-value text.
+}
+```
+
+## StandardKanbanCardListFieldConfiguration
+
+Localized configuration for one standard-card list field.
+
+```ts
+interface StandardKanbanCardListFieldConfiguration {
+  format?: (value: readonly string[], context: KanbanCardFormattingContext) => readonly string[] | undefined;   // Optionally formats the detached ordered labels once.
+}
+```
+
+## StandardKanbanCardSummaryConfiguration
+
+One configured standard-card summary section whose value is read by stable identity.
+
+```ts
+interface StandardKanbanCardSummaryConfiguration {
+  fieldId: KanbanFieldId;   // Stable summary identity matching `StandardCard.summaries[].fieldId`.
+  format?: (value: string, context: KanbanCardFormattingContext) => KanbanCardSummaryValue | undefined;   // Optionally formats the unchanged summary string once.
+}
+```
+
+## StandardKanbanCardTextFieldConfiguration
+
+Localized configuration for one standard-card text field.
+
+```ts
+interface StandardKanbanCardTextFieldConfiguration {
+  format?: (value: string, context: KanbanCardFormattingContext) => string | undefined;   // Optionally formats the unchanged string value once.
+}
+```
+
 ## assertKanbanPlacementCurrent
 
 Rejects any placement derived from a different cursor revision.
@@ -2637,9 +2737,7 @@ createPlacementToken(value: string): PlacementToken
 Creates the direct adapter for the optional StandardCard convenience model.
 
 ```ts
-createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(): KanbanCardAdapter<
-  StandardCard<TDate, TCustom>
->
+createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(options: StandardKanbanCardAdapterOptions<TDate, TCustom> = {}): KanbanCardPresentationAdapter<StandardCard<TDate, TCustom>>
 ```
 
 ## dispatchKanbanRequest
