@@ -33,6 +33,8 @@ export interface QuickFilterRowConfig<T> {
    * — never an empty-needle `contains`, which would match every row.
    */
   onQuickFilter: (columnId: string, text: string) => void;
+  /** Whether grid-owned quick-filter edits must be rejected and restored to their last accepted text. */
+  inputBlocked?: () => boolean;
   /**
    * Compact density (default `false`): no reserved inter-column divider cell, so each input fills its
    * column's full width and the band stays aligned with a compact header/body.
@@ -69,6 +71,8 @@ export class QuickFilterRow<T> extends Group {
   private readonly autoWidths: () => (number | null)[];
   private readonly indent: Signal<number>;
   private readonly onQuickFilter: (columnId: string, text: string) => void;
+  /** Live transaction guard supplied by the owning grid container. */
+  private readonly inputBlocked?: () => boolean;
   /** Whether a divider cell is reserved between columns (`false` in compact density). */
   private readonly dividers: boolean;
   /**
@@ -91,6 +95,7 @@ export class QuickFilterRow<T> extends Group {
     this.dividers = cfg.compact !== true;
     this.indent = cfg.indent;
     this.onQuickFilter = cfg.onQuickFilter;
+    this.inputBlocked = cfg.inputBlocked;
     // A `filterable: false` column gets a null slot (no input); every other column gets a live Input.
     // The array stays index-parallel to `columns` so positions never shift when a column opts out.
     const filterable = cfg.filterable;
@@ -117,13 +122,20 @@ export class QuickFilterRow<T> extends Group {
         if (!input) return; // non-filterable column: no input, nothing to wire
         const value = input.getValueSignal();
         let first = true;
+        let acceptedText = value();
         this.bind(
           () => value(),
           (text) => {
             if (first) {
               first = false;
+              acceptedText = text;
               return;
             }
+            if (untrack(() => this.inputBlocked?.() === true)) {
+              if (text !== acceptedText) untrack(() => value.set(acceptedText));
+              return;
+            }
+            acceptedText = text;
             untrack(() => this.onQuickFilter(this.columnIds[c], text));
           },
         );

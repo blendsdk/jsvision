@@ -599,6 +599,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       autoWidths: sliceAuto(fullVisible),
       indent: deps.indent,
       onQuickFilter: deps.onQuickFilter,
+      inputBlocked: deps.rowRevertPending,
       compact: deps.compact,
       filterable: sliceFilterable(fullVisible),
     });

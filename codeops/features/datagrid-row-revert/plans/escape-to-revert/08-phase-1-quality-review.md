@@ -5,7 +5,7 @@
 >
 > **Profile**: Strict defaults — independent correctness and concurrency/security review
 >
-> **Status**: REMEDIATION IN PROGRESS — four accepted major findings are being corrected
+> **Status**: PASS — every accepted major finding and the one-time re-review rejection are corrected
 
 ## Findings and rulings
 
@@ -63,13 +63,30 @@ above.
 revert loses the captured key, a frozen-side attempt settles stale, or any grid-owned action mutates
 state while the callback is pending.
 
+## One-time fix re-review
+
+The permitted fix re-review closed RV-001/SA-001, RV-002, and SA-002. It rejected the initial SA-003
+closeout because the quick-filter callback guard prevented the model update only after the grid-owned
+`Input` signal had already changed, leaving visible text that did not correspond to an active filter.
+
+| Finding | Severity | Ruling | Resolution |
+|---|---|---|---|
+| RV-003 / SA-003 | Major | Accepted by auto-design | Restore each blocked quick-filter signal to its last accepted text before it can diverge from the filter model; cover accepted and vetoed settlement |
+
+The correction passed focused and full verification. In accordance with the quality policy, no third
+review was dispatched after the one-time fix re-review.
+
 ## Verification evidence
 
 - Regression oracles failed in the intended windowed, client-sort, frozen-panel, and non-body input
   paths; the windowed failure also produced two unhandled rejections before correction.
 - Focused correction matrix: 138/138 tests passed.
-- Full Data Grid suite: 766/766 tests passed across 115 files.
+- Full Data Grid suite before re-review: 766/766 tests passed across 115 files.
 - Data Grid typecheck and JSDoc checks passed.
 - Locale completeness and all 45 digest-bound translation reviews passed.
 - Repository `yarn verify:local` passed after the package gates.
-- Pending: the required one-time fix re-review.
+- Re-review correction oracle observed both accepted and vetoed quick-filter text failures red, then
+  passed 29/29 focused tests with typecheck.
+- Final Data Grid suite: 767/767 tests passed across 115 files.
+- Final Data Grid typecheck, JSDoc, locale completeness, 45 translation reviews, and
+  `yarn verify:local` passed.

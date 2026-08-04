@@ -231,32 +231,38 @@ test('should serialize competing grid actions while a rollback decision is pendi
   expect(dirtyMarkers(context)).toBe(0);
 });
 
-test('should serialize header sorting, funnel opening, and quick filtering while rollback is pending', async () => {
-  const pending = deferred();
-  const filterableStart = { ...editable('start'), showFunnel: true };
-  const context = mount({ columns: [filterableStart, END, ID], quickFilter: true, onRevertRow: pending.callback });
-  await trapTwo(context);
-  await pressEscape(context);
+test.each([true, false])(
+  'should serialize header sorting, funnel opening, and quick-filter text when accepted is %s',
+  async (accepted) => {
+    const pending = deferred();
+    const filterableStart = { ...editable('start'), showFunnel: true };
+    const context = mount({ columns: [filterableStart, END, ID], quickFilter: true, onRevertRow: pending.callback });
+    await trapTwo(context);
+    await pressEscape(context);
 
-  context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 2, y: 1 });
-  context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 8, y: 1 });
-  const quickFilter = descendants(context.grid).find(
-    (view): view is QuickFilterRow<Row> => view instanceof QuickFilterRow,
-  );
-  expect(quickFilter).toBeDefined();
-  const input = quickFilter?.children.find((view): view is Input => view instanceof Input);
-  expect(input).toBeDefined();
-  input?.getValueSignal().set('1');
-  await tick();
+    context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 2, y: 1 });
+    context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 8, y: 1 });
+    const quickFilter = descendants(context.grid).find(
+      (view): view is QuickFilterRow<Row> => view instanceof QuickFilterRow,
+    );
+    expect(quickFilter).toBeDefined();
+    const input = quickFilter?.children.find((view): view is Input => view instanceof Input);
+    expect(input).toBeDefined();
+    input?.getValueSignal().set('1');
+    await tick();
 
-  expect(context.grid.sort()).toEqual([]);
-  expect(context.grid.filterModel().size).toBe(0);
-  expect(context.loop.getFocused()).toBe(context.grid.rows);
-  expect(context.grid.activeMessage()).toBe('Reverting row…');
+    expect(context.grid.sort()).toEqual([]);
+    expect(context.grid.filterModel().size).toBe(0);
+    expect(input?.getValueSignal()()).toBe('');
+    expect(context.loop.getFocused()).toBe(context.grid.rows);
+    expect(context.grid.activeMessage()).toBe('Reverting row…');
 
-  pending.resolve(true);
-  await tick();
-});
+    pending.resolve(accepted);
+    await tick();
+    expect(input?.getValueSignal()()).toBe('');
+    expect(context.grid.filterModel().size).toBe(0);
+  },
+);
 
 test.each([true, false])(
   'should settle a windowed row revert without scanning or whole-display operations when accepted is %s',
