@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 03:31 CEST
-> **Progress**: 22/64 tasks (34%)
+> **Last Updated**: 2026-08-04 03:36 CEST
+> **Progress**: 23/64 tasks (36%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -78,7 +78,7 @@ validation contracts. No mounted board behavior is claimed.
 - [x] 2.2.4 Implement cursor range normalization/coalescing, revision-scoped placement validation, stale continuation suppression, scoped retry/error handling, and idempotent cleanup — `packages/kanban/src/source/{cursor-coordinator,range-set}.ts` ✅ (completed: 2026-08-04 03:03)
 - [x] 2.2.5 Implement the reactive eager source transaction with validation, stable ordering, exact counts, per-cell indexes, placement, and last-valid publication retention — `packages/kanban/src/source/{eager-source,eager-index}.ts` ✅ (completed: 2026-08-04 03:18)
 - [x] 2.2.6 Implement documented deterministic eager/windowed/revision/deferred/instrumentation helpers in the testing entry without production imports reaching them — `packages/kanban/src/testing/{eager-fixture,windowed-fixture,instrumentation}.ts` ✅ (completed: 2026-08-04 03:31)
-- [ ] 2.3.1 Add implementation/property tests for stable sorting, duplicate/unknown IDs, range arithmetic, scheduler concurrency, cursor retention transitions, disposal ordering, late results, exact/unknown counts, and payload redaction — `packages/kanban/test/{source-lifecycle,eager-index}.impl.test.ts`
+- [x] 2.3.1 Add implementation/property tests for stable sorting, duplicate/unknown IDs, range arithmetic, scheduler concurrency, cursor retention transitions, disposal ordering, late results, exact/unknown counts, and payload redaction — `packages/kanban/test/{source-lifecycle,eager-index}.impl.test.ts` ✅ (completed: 2026-08-04 03:36)
 - [ ] 2.3.2 Confirm every Phase 2 specification green; run Kanban build/typecheck/unit/dependency/JSDoc checks, deterministic scale instrumentation, `yarn verify:local`, `yarn plugin:check`, and the phase reviewer/auditor loop
 
 **Phase 2 deliverable:** One authoritative read contract for eager and windowed sources with bounded,
