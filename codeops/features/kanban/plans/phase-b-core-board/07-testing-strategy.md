@@ -41,7 +41,7 @@ seeds are reported on property-test failure.
 | ST-B-CARD-15 | Field/style/summary getter throws with secret-bearing error | One local fallback and payload-free observation occur; board remains mounted and secret/card content is absent | RD04-AC14; PAR-B16 |
 | ST-B-CARD-16 | Date adapter returns one object/value and injected formatter records its input | Formatter receives the unchanged value once; card data is unchanged and no hidden timezone conversion occurs | RD04-AC15; 03-02 §Metadata… |
 | ST-B-PRES-01 | Resolve all presets and a valid custom policy | Frozen budgets satisfy central limits; comfortable is default; repeated equal input has stable revision/fingerprint | 03-01 §Public presentation policy; PAR-B09 |
-| ST-B-PRES-02 | Per-card selection requests more rows/fields/items than view maxima | Normalized selection is intersected with maxima and cannot enlarge the budget | RD-04 should-have; 03-01 §Public presentation policy |
+| ST-B-PRES-02 | Per-card selection reorders configured IDs, includes absent IDs, and exceeds field/summary cardinality maxima | Known IDs are intersected in requested order, field/summary results are capped, checklist groups remain independent of item-preview count, and the resolved numeric budget is unchanged | RD-04 should-have; 03-01 §Public presentation policy |
 | ST-B-PRES-03 | Custom policy has negative/fractional/oversized values, duplicate mandatory degradation, or invalid revision | Validation rejects with payload-free package error and no partial policy publication | 03-01 §Validation; PAR-B09/PAR-B16 |
 
 ### Structure, workflow, and swimlanes

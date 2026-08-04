@@ -52,9 +52,50 @@ Preset budgets are deterministic and exported for testing/documentation; their n
 from `KANBAN_LIMITS`, not duplicated literals (PAR-B09/PAR-B24).
 
 An optional per-card selection may reorder or omit configured optional field/summary/checklist IDs but
-cannot increase any resolved view maximum. The standard renderer intersects the selection with the
-view budget. Custom renderers receive only the resolved maximum and remain subject to descriptor
-validation (PAR-B09/PAR-B16).
+cannot increase any resolved view maximum. The public pure intersection contract is:
+
+```ts
+export interface KanbanCardPresentationSelection {
+  readonly fieldIds?: readonly KanbanFieldId[];
+  readonly summaryIds?: readonly KanbanFieldId[];
+  readonly checklistIds?: readonly KanbanChecklistId[];
+}
+
+export interface KanbanCardPresentationMaximum {
+  readonly budget: ResolvedKanbanPresentationBudget;
+  readonly limits: KanbanResolvedLimits;
+  readonly availableFieldIds: readonly KanbanFieldId[];
+  readonly availableSummaryIds: readonly KanbanFieldId[];
+  readonly availableChecklistIds: readonly KanbanChecklistId[];
+}
+
+export interface ResolvedKanbanCardPresentationSelection {
+  readonly budget: ResolvedKanbanPresentationBudget;
+  readonly limits: KanbanResolvedLimits;
+  readonly fieldIds: readonly KanbanFieldId[];
+  readonly summaryIds: readonly KanbanFieldId[];
+  readonly checklistIds: readonly KanbanChecklistId[];
+}
+
+export function resolveKanbanCardPresentationSelection(
+  selection: KanbanCardPresentationSelection | undefined,
+  maximum: KanbanCardPresentationMaximum,
+): ResolvedKanbanCardPresentationSelection;
+```
+
+Both inputs must be closed plain data without accessors or unknown keys. `limits` is the active frozen
+result of `validateKanbanLimitOptions`. Configured and requested IDs are validated and duplicate-free;
+configured field, summary, and checklist universes must respectively fit `limits.cardFields`,
+`limits.summarySections`, and `limits.checklistGroups`, and every numeric budget value must fit the
+corresponding active limit. An omitted category retains configured order; an explicit category requests
+a reordered subset. Well-formed requested IDs absent from the configured universe are ignored before
+cardinality truncation so one selection can serve heterogeneous cards. Fields cap to `metadataFields`,
+summaries cap to `summarySections`, and hidden checklist mode yields no checklist IDs. Otherwise
+checklist IDs intersect independently of the checklist-item preview count. The detached result and
+arrays are frozen and retain the same resolved budget and limits objects, so selection never creates or
+enlarges numeric maxima. Invalid data raises one payload-free `KanbanInvalidPresentationError` before
+publication. The standard renderer consumes this result; custom renderers receive only the resolved
+maximum and remain subject to descriptor validation (PAR-B09/PAR-B16/PAR-B30).
 
 ## Card presentation adapters
 

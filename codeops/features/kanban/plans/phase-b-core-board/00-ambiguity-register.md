@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 29 items resolved
-> **Last Updated**: 2026-08-04 11:44 CEST
+> **Status**: ✅ GATE PASSED — all 30 items resolved
+> **Last Updated**: 2026-08-04 12:56 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -40,6 +40,7 @@
 | PAR-B27 | State | Are hidden and collapsed structural entities represented by the same source projection? | Distinct normalized states / remove both before acquisition | **Delegated: hidden omits the entity; collapsed preserves header/count/actions while suppressing its card region and ordinary card cursor retention.** | ✅ Resolved |
 | PAR-B28 | Extension bounds | What does a custom swimlane chrome budget bound? | Rows only / complete geometry-style-region budget | **Delegated: bound header rows, rail width, semantic roles, text bytes, regions/actions, and one descriptor invocation per visible swimlane revision.** | ✅ Resolved |
 | PAR-B29 | Compatibility | How does the existing `identity` getter relate to the new single-owner controller? | Keep as competing live control / migrate to controller seed-and-observation compatibility | **Delegated and preflight-refined: preserve it only as a deprecated default-controller construction seed; source identity publication remains deletion authority, and identity plus custom factory rejects.** | ✅ Resolved |
+| PAR-B30 | Public API | Which exact public seam proves that per-card section selection can reorder/omit configured IDs without enlarging view maxima? | Pure bounded selection resolver / renderer-only implicit intersection / numeric per-card overrides | **Runtime delegated after independent challenge: add one pure `resolveKanbanCardPresentationSelection` contract over frozen configured ID universes and the resolved presentation budget; it intersects known IDs, caps field/summary cardinality, and never creates numeric overrides.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -178,6 +179,33 @@ without changing any node status, then rerun the plan-target execution gate. Rej
 gate or editing unrelated invalid feature graphs. Confidence is high because the refusal and required
 snapshot set are deterministic; reopen if the transition engine gains specification-target execution
 snapshot support.
+
+### PAR-B30 — explicit per-card presentation intersection (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Final-shaped public API naming and validation semantics needed to execute an already
+  approved per-card presentation behavior; it does not add product behavior or expand scope.
+- **Decision:** Add a public pure `resolveKanbanCardPresentationSelection(selection, maximum)` beside
+  presentation normalization. `maximum` carries the already-resolved budget plus the configured field,
+  summary, and checklist ID universes. Omitted categories retain configured order; explicit categories
+  request a reordered subset. Well-formed absent IDs are ignored before truncation, duplicates and
+  malformed data reject atomically, hidden checklist mode yields no checklist IDs, and the detached
+  result is deeply frozen. The maximum carries the active frozen resolved limits; configured field,
+  summary, and checklist universes must respectively fit `cardFields`, `summarySections`, and
+  `checklistGroups`, while resolved budget values must fit the same active limits. Fields and summaries
+  then cap to their numeric view maxima. Checklist group selection remains independent of
+  `checklistPreviewItems`.
+- **Rejected:** Renderer-only implicit behavior leaves no public contract oracle and can drift between
+  standard/custom paths. Numeric per-card overrides create a second policy authority. Treating preview
+  items as a group ceiling conflates independent dimensions.
+- **Evidence:** Existing `KanbanFieldId`/`KanbanChecklistId` identities and separate checklist group/item
+  limits support the contract without new dependencies or identity kinds.
+- **Hardening:** An independent challenger converged on the pure resolver, then a targeted second pass
+  found and closed a Major limit-provenance hole by carrying active resolved limits in the maximum.
+  The configured checklist universe, rather than the item-preview number, is the honest group bound.
+- **Confidence:** High.
+- **Reopen triggers:** A later approved card adapter replaces configured section IDs with a different
+  durable identity model, or selection gains authority to change numeric presentation budgets.
 
 ## Systematic discovery scan
 

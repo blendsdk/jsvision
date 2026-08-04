@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 11:44 CEST
-> **Progress**: 0/106 tasks (0%)
+> **Last Updated**: 2026-08-04 13:05 CEST
+> **Progress**: 1/106 tasks (1%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -48,14 +48,18 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 1: Presentation contracts and rich cards
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 1 task
+> **Phase baseline tree**: `a34f90ce993556107f7140be99d6f6c1d7ff3e4c`
+> **Expected modification set**: Phase 1 Kanban source/tests/locales and exports; mapped canonical
+> skill/plugin generated output; this plan, Kanban traceability, and the Kanban feature roadmap
+> **Scope mode**: strict; the pre-existing `codeops/00-roadmap.md` modification is unrelated user work
+> and is excluded from Phase 1 review and commits
 > **Lenses**: data/compatibility, bounded custom code, terminal geometry, security
 
 ### Step 1.1: Specification tests
 
 **Reference**: 03-01; 03-02; ST-B-PRES-01..03; ST-B-CARD-01..16; PAR-B09/PAR-B11/PAR-B16
 
-- [ ] 1.1.1 `[spec-author]` Write immutable presentation-policy public contract specifications — `packages/kanban/test/presentation-policy.spec.test.ts`
+- [x] 1.1.1 `[spec-author]` Write immutable presentation-policy public contract specifications — `packages/kanban/test/presentation-policy.spec.test.ts` ✅ (completed: 2026-08-04 13:05 CEST)
 - [ ] 1.1.2 `[spec-author]` Write the Phase 1-owned pure/cache rich-card/checklist/summary/style and hostile-input assertion slices before production — `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/cards-security.spec.test.ts`
 - [ ] 1.1.3 Run the Phase 1 specification suites and record expected red behavior, separately justifying any already-green Phase A substrate assertion
 
