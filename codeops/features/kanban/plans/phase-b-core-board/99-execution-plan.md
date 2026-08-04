@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:52 CEST
-> **Progress**: 38/106 tasks (36%)
+> **Last Updated**: 2026-08-04 18:08 CEST
+> **Progress**: 39/106 tasks (37%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -141,14 +141,14 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 3: Canonical scene and variable-height geometry
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 3 task
+> **Phase baseline tree**: `e2b11763e0b0480566eb38588eb34016010e1f29`
 > **Lenses**: virtualization, responsive terminal geometry, scale, damage/hit safety
 
 ### Step 3.1: Specification tests
 
 **Reference**: 03-04; ST-B-GEO-01..09; SPEC-B-HEIGHT-INDEX; PAR-B26
 
-- [ ] 3.1.1 `[spec-author]` Write immutable canonical-scene/sparse-height/variant/hit/damage plus mounted-card/structure assertion slices owned by Phase 3 — `packages/kanban/test/scene-geometry.spec.test.ts`, `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts`
+- [x] 3.1.1 `[spec-author]` Write immutable canonical-scene/sparse-height/variant/hit/damage plus mounted-card/structure assertion slices owned by Phase 3 — `packages/kanban/test/scene-geometry.spec.test.ts`, `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts` ✅ (completed: 2026-08-04 18:08 CEST)
 - [ ] 3.1.2 Run the Phase 3 specification suite and record expected red behavior
 
 ### Step 3.2: Implementation and green phase

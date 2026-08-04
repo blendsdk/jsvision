@@ -1,14 +1,17 @@
+import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   createKanbanCollapsedHoverController,
   createKanbanSwimlanePresentationResolver,
+  createEagerKanbanDataSource,
   evaluateKanbanTransition,
   evaluateKanbanWip,
   resolveKanbanGrouping,
   resolveKanbanStructure,
   resolveKanbanStructureState,
   snapshotKanbanDefinitionOfDone,
+  KanbanViewport,
 } from '../src/index.js';
 import type {
   KanbanColumnMeta,
@@ -24,6 +27,7 @@ interface WorkItem {
   readonly id: number;
   readonly columnId: string;
   readonly title: string;
+  readonly status?: string;
   readonly team?: string;
   readonly project?: string;
 }
@@ -78,6 +82,19 @@ function groupingPolicy(replacement: Partial<KanbanGroupingPolicy<WorkItem>> = {
     unassigned: { swimlaneId: 'unassigned', label: 'Unassigned', revision: 'unassigned-v1' },
     ...replacement,
   };
+}
+
+function mountStructureViewport(viewport: KanbanViewport<WorkItem>, width = 80, height = 24) {
+  viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
+  const host = new Group();
+  host.add(viewport);
+  const render = createRenderRoot(
+    { width, height },
+    { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
+  );
+  render.mount(host);
+  render.flush();
+  return render;
 }
 
 describe('Kanban structure and workflow contract', () => {
@@ -675,5 +692,76 @@ describe('Kanban structure and workflow contract', () => {
     expect(JSON.stringify([first, repeated, nextRevision, observations])).not.toContain('\u001b');
     expect([first, repeated, nextRevision].every(Object.isFrozen)).toBe(true);
     resolver.dispose();
+  });
+
+  it('mounts a focusable no-columns surface without card, header, or action targets', () => {
+    const source = createEagerKanbanDataSource<WorkItem>(() => [], {
+      columns: () => [],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: {
+        keyOf: (card: WorkItem) => card.id,
+        titleOf: (card: WorkItem) => card.title,
+        statusOf: (card: WorkItem) => card.status ?? 'Ready',
+      },
+      structure: () => structurePolicy(),
+    });
+    const render = mountStructureViewport(viewport, 40, 12);
+    const inspection = viewport.inspection();
+
+    expect(viewport.focusable).toBe(true);
+    expect(inspection.structureState).toMatchObject({ code: 'no-columns', scope: { kind: 'board' } });
+    expect(inspection.visibleCards).toEqual([]);
+    expect(inspection.actionTargets).toEqual([]);
+    expect(inspection.regions.filter(({ kind }) => kind === 'workflow-header' || kind === 'card')).toEqual([]);
+
+    render.unmount();
+  });
+
+  it('mounts reordered authoritative columns without changing card identity or cell membership', () => {
+    const columns = signal<readonly KanbanColumnMeta[]>(COLUMNS);
+    const cards = signal<readonly WorkItem[]>(CARDS);
+    const source = createEagerKanbanDataSource(cards, {
+      columns,
+      keyOf: (card: WorkItem) => card.id,
+      columnOf: (card: WorkItem) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: {
+        keyOf: (card: WorkItem) => card.id,
+        titleOf: (card: WorkItem) => card.title,
+        statusOf: (card: WorkItem) => card.status ?? 'Ready',
+      },
+      structure: () => structurePolicy(),
+    });
+    const render = mountStructureViewport(viewport);
+    const before = viewport.inspection();
+
+    columns.set([COLUMNS[2]!, COLUMNS[0]!, COLUMNS[1]!]);
+    render.flush();
+    const after = viewport.inspection();
+
+    expect(after.visibleColumns.map(({ columnId }) => columnId)).toEqual(['done', 'ready', 'doing']);
+    expect(after.visibleCards.map(({ cardKey }) => cardKey).sort()).toEqual(
+      before.visibleCards.map(({ cardKey }) => cardKey).sort(),
+    );
+    expect(
+      after.visibleCards
+        .map(({ cardKey, address }) => ({ cardKey, address }))
+        .sort((left, right) => String(left.cardKey).localeCompare(String(right.cardKey))),
+    ).toEqual(
+      before.visibleCards
+        .map(({ cardKey, address }) => ({ cardKey, address }))
+        .sort((left, right) => String(left.cardKey).localeCompare(String(right.cardKey))),
+    );
+    expect(after.mountedCardViews).toBe(0);
+
+    render.unmount();
   });
 });

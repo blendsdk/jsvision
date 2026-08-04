@@ -1,11 +1,14 @@
 import { classicTheme } from '@jsvision/core';
-import { stringWidth } from '@jsvision/ui';
+import { Group, createRenderRoot, resolveCapabilities, signal, stringWidth } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   composeStandardKanbanCard,
+  createEagerKanbanDataSource,
   createKanbanTheme,
+  KanbanViewport,
   resolveKanbanPresentation,
+  renderStandardKanbanCard,
   snapshotKanbanCardPresentation,
   validateKanbanLimitOptions,
 } from '../src/index.js';
@@ -16,6 +19,7 @@ import type {
   KanbanCardPresentationAdapter,
   KanbanCardPresentationMaximum,
   KanbanCardPresentationSnapshot,
+  KanbanCardRenderContext,
   KanbanCardSectionKind,
   KanbanCardVisualState,
   KanbanPresentationInput,
@@ -25,6 +29,7 @@ import type { KanbanDescriptorCacheKey } from '../src/testing.js';
 
 interface Ticket {
   readonly ticketNumber: CardKey;
+  readonly columnId: string;
   readonly caption: string;
   readonly stateLabel: string;
   readonly revision: string;
@@ -70,6 +75,7 @@ function maximum(input: KanbanPresentationInput = 'comfortable'): KanbanCardPres
 function ticket(replacement: Partial<Ticket> = {}): Ticket {
   return {
     ticketNumber: 417,
+    columnId: 'ready',
     caption: 'Production alert',
     stateLabel: 'Triage',
     revision: 'ticket-417-v1',
@@ -298,5 +304,169 @@ describe('rich Kanban card presentation', () => {
     expect(harness.snapshot()).toMatchObject({ retained: 2, activeComputations: 2, disposed: beforeEviction + 1 });
     harness.dispose();
     expect(harness.snapshot()).toMatchObject({ retained: 0, activeComputations: 0, disposed: beforeEviction + 3 });
+  });
+
+  it('mounts rich variable-height descriptors without one view per logical card', () => {
+    const due = { instant: 'mounted-opaque-date' };
+    const dateFormat = vi.fn((value: unknown) => (value === due ? 'Unchanged date' : 'Wrong date'));
+    const mountedAdapter = adapter(dateFormat);
+    const cards = signal<readonly Ticket[]>([
+      ticket({
+        ticketNumber: 1,
+        caption: 'Preview card',
+        due,
+        tasks: [
+          { itemId: 'one', text: 'First task', completed: true },
+          { itemId: 'two', text: 'Long task ending beyond the mounted edge 界', completed: false },
+          { itemId: 'three', text: 'Third task', completed: false },
+        ],
+      }),
+      ticket({ ticketNumber: 2, caption: 'Compact neighbor', tasks: [] }),
+    ]);
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 'ready-v1' }],
+      keyOf: (card: Ticket) => card.ticketNumber,
+      columnOf: (card: Ticket) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: mountedAdapter,
+      presentation: () => custom('preview', 12),
+      formatting: () => formatting,
+      cardPresentation: (card: Ticket) => ({
+        selection: card.ticketNumber === 1 ? { checklistIds: ['tasks'] } : { checklistIds: [] },
+        visualState: visualState({ focused: card.ticketNumber === 1 }),
+      }),
+    });
+    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 18 } });
+    const host = new Group();
+    host.add(viewport);
+    const render = createRenderRoot(
+      { width: 40, height: 18 },
+      { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
+    );
+    render.mount(host);
+    render.flush();
+    const inspection = viewport.inspection();
+    const first = inspection.visibleCards.find(({ cardKey }) => cardKey === 1);
+    const neighbor = inspection.visibleCards.find(({ cardKey }) => cardKey === 2);
+    const firstText =
+      first?.descriptor.rows
+        .flatMap(({ spans }: { readonly spans: readonly { readonly text: string }[] }) =>
+          spans.map(({ text }: { readonly text: string }) => text),
+        )
+        .join(' ') ?? '';
+
+    expect(first?.descriptor.sections.map(({ kind }: { readonly kind: string }) => kind)).toEqual(
+      expect.arrayContaining(['title', 'status', 'checklist-preview']),
+    );
+    expect(first?.descriptor.measuredHeight).toBeGreaterThan(neighbor?.descriptor.measuredHeight ?? 0);
+    expect(first?.descriptor.marker.cues).toContain('focused');
+    expect(firstText).toContain('First task');
+    expect(firstText).toContain('+1');
+    expect(firstText).not.toContain('child-0');
+    expect(firstText).not.toContain('\ufffd');
+    expect(
+      neighbor?.descriptor.sections.some(({ kind }: { readonly kind: string }) => kind.startsWith('checklist')),
+    ).toBe(false);
+    expect(dateFormat).toHaveBeenCalledWith(due, formatting);
+    expect(inspection.mountedCardViews).toBe(0);
+    expect(inspection.visibleCards.every(({ descriptor }) => Object.isFrozen(descriptor))).toBe(true);
+
+    const firstDescriptor = first?.descriptor;
+    const neighborDescriptor = neighbor?.descriptor;
+    cards.set([
+      ticket({
+        ...cards()[0],
+        revision: 'ticket-1-v2',
+        stateLabel: 'In progress',
+        tasks: [cards()[0]!.tasks[2]!, cards()[0]!.tasks[0]!],
+      }),
+      cards()[1]!,
+    ]);
+    render.flush();
+    const republished = viewport.inspection();
+    const changed = republished.visibleCards.find(({ cardKey }) => cardKey === 1);
+    const unchangedNeighbor = republished.visibleCards.find(({ cardKey }) => cardKey === 2);
+    expect(changed?.descriptor).not.toBe(firstDescriptor);
+    expect(unchangedNeighbor?.descriptor).toBe(neighborDescriptor);
+    const changedText = changed?.descriptor.rows
+      .flatMap(({ spans }: { readonly spans: readonly { readonly text: string }[] }) =>
+        spans.map(({ text }: { readonly text: string }) => text),
+      )
+      .join(' ');
+    expect(changedText).toContain('In progress');
+    expect(changedText).toContain('Third task');
+
+    render.unmount();
+  });
+
+  it('contains invalid mounted custom output and throwing rich callbacks to the affected card', () => {
+    const observations: unknown[] = [];
+    const cards: readonly Ticket[] = [
+      ticket({ ticketNumber: 1, caption: 'Affected card' }),
+      ticket({ ticketNumber: 2, caption: 'Usable neighbor' }),
+    ];
+    const baseAdapter = adapter();
+    const hostileAdapter: KanbanCardPresentationAdapter<Ticket> = {
+      ...baseAdapter,
+      fields: [
+        {
+          fieldId: 'priority',
+          label: 'Priority',
+          priority: 1,
+          kind: 'text',
+          valueOf: (card) => {
+            if (card.ticketNumber === 1) throw new Error('field-secret\u001b[31m');
+            return card.priority;
+          },
+        },
+      ],
+      styleOf: (card, state) => {
+        if (card.ticketNumber === 1) throw new Error('style-secret');
+        return baseAdapter.styleOf!(card, state);
+      },
+    };
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 'ready-v1' }],
+      keyOf: (card: Ticket) => card.ticketNumber,
+      columnOf: (card: Ticket) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: hostileAdapter,
+      presentation: () => custom('preview', 12),
+      formatting: () => formatting,
+      rendererRevision: () => 'mounted-custom-v1',
+      renderer: () => ({
+        render: (card: Ticket, context: KanbanCardRenderContext) => {
+          const valid = renderStandardKanbanCard(card, hostileAdapter, context);
+          return card.ticketNumber === 1 ? { ...valid, measuredHeight: context.rowBudget + 1 } : valid;
+        },
+      }),
+      observe: (observation) => observations.push(observation),
+    });
+    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 18 } });
+    const host = new Group();
+    host.add(viewport);
+    const render = createRenderRoot(
+      { width: 40, height: 18 },
+      { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
+    );
+    render.mount(host);
+    render.flush();
+    const inspection = viewport.inspection();
+    const affected = inspection.visibleCards.find(({ cardKey }) => cardKey === 1);
+    const neighbor = inspection.visibleCards.find(({ cardKey }) => cardKey === 2);
+
+    expect(affected?.descriptor.degradation.level).toBe('fallback');
+    expect(neighbor?.descriptor.degradation.level).not.toBe('fallback');
+    expect(JSON.stringify(inspection)).not.toMatch(/field-secret|style-secret|\u001b/u);
+    expect(JSON.stringify(observations)).not.toMatch(/field-secret|style-secret|\u001b/u);
+    expect(inspection.visibleCards).toHaveLength(2);
+
+    render.unmount();
   });
 });
