@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:01
-> **Progress**: 26/31 tasks (84%)
+> **Last Updated**: 2026-08-04 17:03
+> **Progress**: 27/31 tasks (87%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -194,7 +194,7 @@ layout, accessibility cues, and manual 80×24 evidence.
 
 **Reference**: [03-03 § Implementation Details](03-03-documentation-and-distribution.md#implementation-details)
 
-- [ ] 3.2.1 Update package README and changelog with the scoped public behavior and persistence boundary — `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md`
+- [x] 3.2.1 Update package README and changelog with the scoped public behavior and persistence boundary — `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md` ✅ (completed: 2026-08-04 17:03)
 - [ ] 3.2.2 Review and update every canonical JSVision skill reference reported by source impact; do not edit the distributed plugin copy — `tools/jsvision-skill/references/`
 - [ ] 3.2.3 Run `yarn plugin:update` to regenerate API pages, snippets, impact snapshot, and assembled plugin content — generated docs/plugin files
 - [ ] 3.2.4 Run ST-27B–ST-28 and make all generated/distribution specifications pass without changing their expected behavior (green phase) — generated API and plugin checks
