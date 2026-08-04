@@ -127,13 +127,7 @@ test('ST-19: archetype validation catches malformed archetype directories', () =
 // ST-28 — every canonical reference routed from Data Grid source changes must be reviewed and the
 // distributed plugin must remain a byte-for-byte assembly of that canonical content.
 test('ST-28: Data Grid source impact and distributed plugin references are synchronized', () => {
-  const registry = readImpactRegistry() as {
-    readonly areas: readonly {
-      readonly name: string;
-      readonly paths: readonly string[];
-      readonly references: readonly string[];
-    }[];
-  };
+  const registry = readImpactRegistry();
   const areas = registry.areas.filter((area) => area.paths.includes('packages/datagrid/src'));
   expect(areas.map((area) => area.name)).toEqual(expect.arrayContaining(['datagrid', 'internationalization']));
 

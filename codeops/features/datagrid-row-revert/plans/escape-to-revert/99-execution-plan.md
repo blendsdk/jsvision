@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-04 17:17
-> **Progress**: 30/31 tasks (97%)
+> **Last Updated**: 2026-08-04 17:21
+> **Progress**: 31/31 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -213,7 +213,14 @@ layout, accessibility cues, and manual 80×24 evidence.
 
 ### Step 3.3: Final Hardening
 
-- [ ] 3.3.1 Run package/docs regressions, `yarn plugin:check`, and `yarn verify:local`; record final distribution evidence — repository root
+- [x] 3.3.1 Run package/docs regressions, `yarn plugin:check`, and `yarn verify:local`; record final distribution evidence — repository root ✅ (completed: 2026-08-04 17:21)
+
+> **Final distribution evidence**: Data Grid typecheck, 767/767 tests, and public JSDoc pass;
+> examples typecheck and 403/403 tests pass; docs-site typecheck and 1,812/1,812 unit/DOM tests
+> pass. All 50 explicit locale entry points and 45 digest-bound translation reviews pass, plugin
+> integrity is clean, and `yarn verify:local` passes. The final sweep also added a typed NodeNext
+> declaration for the plugin-impact maintenance seam; this removed the specification harness's
+> implicit `any` without changing ST-28 behavior.
 
 **Deliverables**: public/package/generated docs; canonical skill; drift-free plugin; final local
 distribution evidence.
