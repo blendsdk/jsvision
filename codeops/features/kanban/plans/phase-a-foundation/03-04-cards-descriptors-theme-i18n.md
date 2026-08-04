@@ -2,7 +2,7 @@
 
 > **Document**: 03-04-cards-descriptors-theme-i18n.md
 > **Parent**: [Index](00-index.md)
-> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24, PAR-32
+> **Decision sources**: PAR-13–PAR-16, PAR-23–PAR-24, PAR-32–PAR-33
 > **CodeOps Artifact Schema**: 1
 
 ## Generic adapter and standard model
@@ -259,26 +259,116 @@ public source contract and may yield a development observation.
 
 ## Kanban theme contract
 
-Publish an exhaustive `KanbanThemeRole` union and immutable `KanbanTheme`. Stable role families cover:
+Publish the following exhaustive ordered tuple and derived union. The dotted values are package-local
+semantic identities, not Core `Theme` property names or an open extension namespace.
+
+```ts
+export const KANBAN_THEME_ROLES = Object.freeze([
+  'board.surface',
+  'column.surface', 'column.header', 'column.header.focused', 'column.separator',
+  'swimlane.surface', 'swimlane.header', 'swimlane.header.focused', 'swimlane.separator',
+  'card.normal', 'card.focused', 'card.selected', 'card.focused-selected', 'card.read-only',
+  'card.grabbed', 'card.source-placeholder', 'card.ghost',
+  'drop-target.valid', 'drop-target.warning', 'drop-target.invalid',
+  'operation.pending', 'operation.rejected',
+  'wip.warning', 'wip.error', 'dod.indicator',
+  'state.loading', 'state.refreshing', 'state.partial', 'state.empty', 'state.error', 'state.retry',
+  'content.title', 'content.status', 'content.metadata', 'content.label', 'content.summary',
+  'checklist.complete', 'checklist.incomplete', 'checklist.progress',
+] as const);
+export type KanbanThemeRole = (typeof KANBAN_THEME_ROLES)[number];
+```
+
+The inventory covers these stable role families:
 
 | Family | Roles declared in Phase A contract |
 |---|---|
 | Surfaces | board, column, swimlane, separators, focused header/group |
-| Cards | normal, focused, selected, focused+selected, disabled/read-only |
+| Cards | normal, focused, selected, focused+selected, read-only |
 | Operations | grabbed, source placeholder, ghost, valid/warning/invalid target, pending, rejected |
-| Policy/state | WIP warning/error, DoD, loading, partial, empty, error, retry |
+| Policy/state | WIP warning/error, DoD, loading, refreshing, partial, empty, error, retry |
 | Content | title, status, metadata, labels, summaries, checklist complete/incomplete/progress |
 
-`createKanbanTheme(coreTheme, overrides?)` validates known roles and returns a complete package-local
-palette. Phase A actively maps board, column/header/separator, card normal/focused, title, status,
-loading/partial/empty/error/retry roles. Remaining roles are stable, documented mappings ready for
-later behavior; they are not evidence that those states are implemented.
+The exact durable palette and resolution surface is:
 
-Resolution follows application status override → explicit Kanban override → mapped Core role →
-`listNormal` for ordinary content or `dangerText` for errors. Mandatory title/status/focus receive a
-non-color cue. The contract exposes the RD-13 contrast resolver/fallback types durably; Phase A verifies
-safe malformed-input rejection and basic color-depth/monochrome mappings, while the full quantized
-contrast matrix and every later state remain Phase E completion evidence.
+```ts
+export type KanbanNonColorCue =
+  | { readonly kind: 'marker'; readonly glyph: string }
+  | { readonly kind: 'border'; readonly style: 'single' | 'double' | 'heavy' | 'dashed' }
+  | { readonly kind: 'attribute'; readonly attrs: AttrMask }
+  | { readonly kind: 'text'; readonly prefix: string };
+
+export interface KanbanThemeToken {
+  readonly style: ThemeRole;
+  readonly mappedFallback: ThemeRole;
+  readonly terminalFallback: ThemeRole;
+  readonly cues: readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];
+}
+export interface KanbanTheme {
+  readonly contractVersion: 1;
+  readonly roles: Readonly<Record<KanbanThemeRole, KanbanThemeToken>>;
+}
+export type KanbanThemeOverrides = Readonly<
+  Partial<Record<KanbanThemeRole, Readonly<Partial<ThemeRole>>>>
+>;
+export interface KanbanThemeResolutionReport {
+  readonly rejected: readonly string[];
+  readonly adjustments: readonly {
+    readonly path: string;
+    readonly reason: 'minimum-contrast' | 'capability-fallback' | 'unknown-role';
+  }[];
+}
+export interface ResolvedKanbanTheme {
+  readonly theme: KanbanTheme;
+  readonly report: KanbanThemeResolutionReport;
+}
+export interface KanbanResolvedThemeRole {
+  readonly role: KanbanThemeRole;
+  readonly style: ThemeRole;
+  readonly cues: readonly [KanbanNonColorCue, ...KanbanNonColorCue[]];
+  readonly fallback: 'none' | 'mapped-core' | 'family' | 'emergency';
+  readonly contrastRatio?: number;
+}
+
+export function resolveKanbanTheme(
+  coreTheme: Theme,
+  overrides?: KanbanThemeOverrides,
+): ResolvedKanbanTheme;
+export function createKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOverrides): KanbanTheme;
+export function resolveKanbanThemeRole(
+  theme: KanbanTheme,
+  requestedRole: unknown,
+  fallbackRole: KanbanThemeRole,
+  capabilities: Pick<CapabilityProfile, 'colorDepth'> & { readonly noColor?: boolean },
+): KanbanResolvedThemeRole;
+```
+
+`createKanbanTheme` returns exactly `resolveKanbanTheme(...).theme`. Resolution reads only the fixed
+schema, invokes no accessors, never retains caller-owned objects, and deeply freezes the result. Unknown
+or malformed overrides are named only by bounded semantic path in `report.rejected`, do not partially
+apply, and fall back safely instead of throwing. A dynamic status style resolver returns only a
+`KanbanThemeRole | undefined`; an unknown value or exception is observed locally by its caller and uses
+the required allowlisted `fallbackRole`. Theme revision belongs to the reactive board projection and is
+not caller-controlled palette data.
+
+Phase A actively consumes board, column/header/separator, card normal/focused, title, status,
+loading/refreshing/partial/empty/error/retry roles. Remaining roles are stable, documented mappings ready
+for later behavior; they are not evidence that those states are implemented.
+
+Resolution follows application status semantic role → explicit Kanban token override → mapped Core
+role → terminal/family fallback. Exact Core mapping is surfaces/content → `listNormal`; headers →
+`tableHeader`; focused → `listFocused`; selected → `listSelected`; read-only → `buttonDisabled`;
+separators → `listDivider`; pending/progress → `progressFill`/`progressTrack`; warning/WIP warning →
+`warningText`; rejected/invalid/error/WIP error → `dangerText`; grabbed/source-placeholder/ghost →
+`splitterDragging`; and status feedback → `statusBar`. Focused-selected tries `listFocused` then
+`listSelected`.
+
+Every token carries at least one non-color cue. Truecolor, 256-color, and 16-color mandatory text uses
+the effective-depth 4.5 chain already fixed by RD-13 and ends at canonical black-on-white when every
+theme-derived pair is unsafe. Monochrome/`noColor` retains mapped attributes and cues and omits
+`contrastRatio`; it never claims a numeric ratio. Phase A verifies safe malformed-input handling, role
+allowlisting, basic color-depth mappings, and monochrome cues. The complete quantized contrast matrix and
+every later rendered state remain Phase E completion evidence.
 
 ## Catalog contract
 
@@ -292,11 +382,50 @@ kanbanEn, kanbanNl, kanbanDe, kanbanFr, kanbanEs,
 kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv
 ```
 
-Phase A vocabulary covers every visible/error/help value implemented now: board label, no columns,
-loading, refreshing, partial, empty, error, retry, minimum size, unknown/truncated count qualifiers,
-focused-column previous/next/position, invalid card fallback, and safe source/renderer reason labels.
-Applications compose the chosen catalog through existing `I18n`; English is the fallback. Locale
-modules register no global state.
+The exact Phase A catalog surface is:
+
+```ts
+export interface KanbanMessageMap {
+  readonly 'kanban.board.label': Message;
+  readonly 'kanban.board.no-columns': Message;
+  readonly 'kanban.state.loading': Message;
+  readonly 'kanban.state.refreshing': Message;
+  readonly 'kanban.state.partial': Message;
+  readonly 'kanban.state.empty': Message;
+  readonly 'kanban.state.error': Message;
+  readonly 'kanban.action.retry': Message;
+  readonly 'kanban.layout.minimum-size': Message;
+  readonly 'kanban.count.unknown': Message;
+  readonly 'kanban.count.truncated': Message;
+  readonly 'kanban.focused-column.previous': Message;
+  readonly 'kanban.focused-column.next': Message;
+  readonly 'kanban.focused-column.position': Message;
+  readonly 'kanban.card.invalid-title': Message;
+  readonly 'kanban.card.unknown-status': Message;
+  readonly 'kanban.reason.source-unavailable': Message;
+  readonly 'kanban.reason.renderer-unavailable': Message;
+}
+
+export const KANBAN_PLACEHOLDER_MANIFEST: PlaceholderManifest;
+export const KANBAN_ACCELERATOR_MANIFEST: AcceleratorManifest;
+export const KANBAN_ENGLISH_MESSAGES: KanbanMessageMap;
+export const KANBAN_ENGLISH_CATALOG: Catalog;
+export function createEnglishKanbanI18n(): I18n;
+```
+
+English values are respectively `Kanban board`, `No columns`, `Loading…`, `Refreshing…`, `Some cards
+are unavailable`, `No cards`, `Could not load the board`, `Retry`, `Kanban needs at least ${width} ×
+${height} cells`, `Count unknown`, `${count} or more`, `Previous column`, `Next column`, `Column
+${current} of ${total}`, `Invalid card`, `Unknown status`, `Source unavailable`, and `Card unavailable`.
+The placeholder manifest contains only minimum size (`width`, `height`), truncated count (`count`), and
+focused-column position (`current`, `total`). The Phase A accelerator manifest has an empty frozen scope
+list because this slice has no translated mnemonic-bearing control group.
+
+Applications compose the chosen catalog through existing `I18n`; English is the fallback. The main
+entry exports the typed schema, manifests, English messages/catalog, and English factory but does not
+eagerly import the nine non-English catalogs. `src/i18n/locales.ts` owns all ten complete typed catalog
+values. Each explicit generated locale subpath exports exactly its named constant, with no default export
+or global registration. Locale modules perform no filesystem, network, or host work.
 
 All nine non-English catalogs receive disclosed digest-bound review evidence in the same change that
 adds Kanban to `tools/i18n-locale-exports.json`. Reviews cover the complete Phase A catalog, not only

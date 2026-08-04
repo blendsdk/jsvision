@@ -1,7 +1,7 @@
 # Kanban Phase A Foundation Plan Ambiguity Register
 
-> **Status**: ✅ GATE PASSED — all 32 items resolved
-> **Last Updated**: 2026-08-04 04:05 CEST
+> **Status**: ✅ GATE PASSED — all 33 items resolved
+> **Last Updated**: 2026-08-04 04:26 CEST
 > **Mode**: Auto-design active from PAR-20 onward and for the Phase A execution chain
 > **Root Invocation IDs**: `AD-KANBAN-PHASE-A-20260803T213242Z`,
 > `AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`
@@ -52,6 +52,7 @@
 | PAR-30 | Technical (runtime) | Eager filter, sort, and summary adapter names were approved without exact callback/result shapes or honest summary publication values | Explicit operator registry plus package numeric aggregations / opaque predicates and arbitrary reducers / defer summary execution | Delegated: finite operator registries, tri-state sort comparison, and package-owned numeric aggregations with explicit authoritative/loaded-only scope and count-like quality | ✅ Resolved |
 | PAR-31 | Quality hardening | Independent Phase 2 review exposed contradictions and untested lifecycle/source edge cases after the green oracle | Preserve the green implementation / harden the durable source contract and revise the conflicting signal oracle | Delegated: mandatory hardening with composed locator cancellation, bounded active-range sharing, atomic snapshots, explicit eager search/revision, authoritative identity facts, honest unknown projection counts, exact headers, safe card keys, and session-local windowed fixture state | ✅ Resolved |
 | PAR-32 | Public API | Card behavior was specified but the callable adapter/renderer/context/descriptor/fallback surface was not exact enough for immutable tests | Durable semantic descriptor seam / temporary Phase A render result / defer the oracle | Delegated: durable generic adapter + render context + semantic descriptor, pure standard/validation/fallback helpers, and one safe catch/observe wrapper | ✅ Resolved |
+| PAR-33 | Public API | Theme families and catalog vocabulary were not exact enough for immutable role/parity/fallback tests | Closed semantic tokens retaining fallback/cue data / flat role-to-style map / defer exactness | Delegated: closed 39-role token palette with inspectable safe resolution, exact 18-key Phase A catalog, and inert explicit locale constants/subpaths | ✅ Resolved |
 
 ## Resolution notes
 
@@ -448,6 +449,63 @@ pure/safe boundary, and the Phase A empty-array claims. **Policy:** v1, root
 move away from semantic terminal rows, or Phase B requires a section concept outside the approved
 normalized union.
 
+### PAR-33 — exact theme tokens and Phase A catalog
+
+**Authority:** AI — delegated by `--auto-design`. **Eligibility:** Package-local semantic theme roles,
+fallback order, non-color cues, the Phase A vocabulary, ten locale values, and inert locale subpaths were
+already approved. This fixes their exact TypeScript and message-key representations so immutable tests do
+not invent a compatibility surface. It adds no visible state, interaction, locale, or later-phase dialog
+vocabulary. **Objective:** Make role allowlisting, malformed-input containment, monochrome meaning,
+catalog parity, and side-effect-free composition testable before implementation.
+
+**Decision:** Publish a closed ordered 39-role dotted `KANBAN_THEME_ROLES` tuple and derived
+`KanbanThemeRole` union. Each immutable `KanbanThemeToken` retains its resolved style, mapped Core
+fallback, terminal/family fallback, and a non-empty tuple of marker/border/attribute/text cues.
+`resolveKanbanTheme` returns a complete safe theme plus bounded rejected-path and accessibility-adjustment
+evidence; `createKanbanTheme` returns exactly its theme. Both read a fixed schema, invoke no accessors,
+retain no caller object, and reject malformed or unknown override data into the report rather than
+throwing or partially applying it. `resolveKanbanThemeRole` accepts an untrusted requested role, an
+allowlisted fallback role, and color-depth/`noColor` capabilities; it returns the allowlisted effective
+role, detached style, non-empty cues, fallback stage, and an optional numeric ratio. Truecolor/256/16
+mandatory text follows explicit token → mapped Core → family → canonical black-on-white at 4.5;
+monochrome/`noColor` preserves cues and makes no numeric-ratio claim. Application status styling selects a
+semantic role; it does not inject raw colors or move styling into the card adapter. Theme revision remains
+owned by the reactive board projection instead of caller-controlled palette data.
+
+The exact role inventory is board surface; column surface/header/focused header/separator; swimlane
+surface/header/focused header/separator; card normal/focused/selected/focused-selected/read-only;
+grabbed/source-placeholder/ghost; valid/warning/invalid drop targets; pending/rejected operation; WIP
+warning/error; DoD indicator; loading/refreshing/partial/empty/error/retry states; and title/status/
+metadata/label/summary plus checklist complete/incomplete/progress content. The exact 18-key Phase A
+catalog is `kanban.board.label`, `kanban.board.no-columns`, the six `kanban.state.*` keys, retry action,
+minimum-size layout, unknown/truncated counts, focused-column previous/next/position, invalid-title/
+unknown-status card fallbacks, and source/renderer unavailable reasons. Only minimum size (`width`,
+`height`), truncated count (`count`), and focused-column position (`current`, `total`) have placeholders.
+The Phase A accelerator manifest has no scopes. Authored source exports the typed map, manifests, English
+messages/catalog, English factory, and ten complete typed locale constants. The main entry exposes the
+catalog contract and English fallback but does not eagerly import non-English catalogs; each explicit
+locale subpath exports only its named constant and performs no registration or host work.
+
+**Evidence:** The fixed-schema, detached, non-throwing specialist resolver pattern already exists in
+`packages/code-editor/src/theme/resolve.ts`; Core theme attributes render at monochrome depth; Code Editor
+publishes a typed message map, English messages/catalog/factory, and an empty accelerator manifest; the
+repository locale generator creates explicit one-constant wrappers. RD-13 fixes the Core fallback groups,
+contrast threshold, effective-depth helpers, emergency pair, and non-color obligation. **Rejected
+alternatives:** A flat `Record<KanbanThemeRole, ThemeRole>` cannot prove later fallback steps or
+monochrome cues without hidden Core state or a breaking render-context change. An open string role union
+defeats descriptor allowlisting. Putting a caller-controlled revision on immutable theme data risks stale
+cache keys. Eagerly re-exporting non-English catalogs from the main entry contradicts the approved inert
+subpath boundary and specialist packaging pattern. **Strongest counterargument:** Tokenizing every role
+exposes more durable fallback machinery than Phase A renders. The machinery is already requirements-owned,
+and retaining it now is the smallest way for the existing render context to resolve later states without a
+breaking shape change. **Confidence:** High (0.90). **Hardening:** Independent blind challenger converged
+on the closed dotted inventory, tokenized fallback/cue model, safe report, exact 18-key catalog, empty
+accelerator manifest, and explicit inert locale subpaths. Reconciliation retained the plan's narrower main
+entry instead of additionally re-exporting `kanbanEn`. **Policy:** v1, root
+`AD-KANBAN-PHASE-A-EXEC-20260803T220942Z`. **Reopen if:** Core publishes an extensible cross-package theme
+token protocol, Phase E cannot satisfy contrast with the retained chain, or generator policy changes the
+one-constant locale wrapper boundary.
+
 ## Zero-Ambiguity Gate checklist
 
 - [x] All twelve ambiguity categories were scanned.
@@ -456,7 +514,7 @@ normalized union.
 - [x] PAR-08 through PAR-18 have explicit user decisions.
 - [x] The complete register has final user confirmation.
 - [x] PAR-19 has an explicit user decision.
-- [x] PAR-20 through PAR-32 have complete delegated records; consequential request, lifecycle, scale,
+- [x] PAR-20 through PAR-33 have complete delegated records; consequential request, lifecycle, scale,
   and eager-adapter shapes received independent challenge and the namespace grammar was grounded in
   the existing shared validator.
 - [x] Header reads `✅ GATE PASSED` before any other plan document is created.
