@@ -370,8 +370,18 @@ function cardKeyResolver<TCard>(value: unknown): ((card: TCard) => CardKey) | un
   };
 }
 
-/** Snapshots the sole query-owned grouping policy. */
-function groupingPolicy<TCard>(value: unknown): KanbanGroupingPolicy<TCard> {
+/**
+ * Snapshots the sole query-owned grouping policy without invoking card callbacks.
+ *
+ * @example
+ * ```ts
+ * const policy = snapshotKanbanGroupingPolicy({
+ *   fieldId: 'team',
+ *   unassigned: { swimlaneId: 'unassigned', label: 'Unassigned', revision: 'u1' },
+ * });
+ * ```
+ */
+export function snapshotKanbanGroupingPolicy<TCard>(value: unknown): KanbanGroupingPolicy<TCard> {
   const properties = snapshotKanbanDataProperties(value, GROUPING_KEYS.size);
   validateKanbanDataKeys(properties, GROUPING_KEYS);
   if (typeof properties.fieldId !== 'string') return invalidPolicy();
@@ -432,7 +442,9 @@ export function snapshotKanbanStructurePolicy<TCard>(value: unknown): KanbanStru
     return Object.freeze({
       revision: snapshotKanbanRevision(properties.revision),
       columns: Object.freeze(columns),
-      ...(properties.grouping === undefined ? {} : { grouping: groupingPolicy<TCard>(properties.grouping) }),
+      ...(properties.grouping === undefined
+        ? {}
+        : { grouping: snapshotKanbanGroupingPolicy<TCard>(properties.grouping) }),
     });
   } catch (error) {
     if (error instanceof KanbanInvalidPresentationError) throw error;
