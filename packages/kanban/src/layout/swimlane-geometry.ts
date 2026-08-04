@@ -5,6 +5,7 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanScene, KanbanSceneCard, KanbanSceneCell } from '../board/scene-model.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import { resolveKanbanSwimlaneRail } from './swimlane-rail.js';
 
 /** Built-in scene layouts supported by the geometry projector. */
 export type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail';
@@ -19,7 +20,14 @@ export interface KanbanSceneGeometryAnchor {
 
 /** Semantic region kinds emitted by built-in scene geometry. */
 export type KanbanSceneRegionKind =
-  'workflow-header' | 'swimlane-header' | 'swimlane-band' | 'swimlane-separator' | 'cell' | 'card' | 'state';
+  | 'workflow-header'
+  | 'swimlane-header'
+  | 'swimlane-band'
+  | 'swimlane-separator'
+  | 'swimlane-rail'
+  | 'cell'
+  | 'card'
+  | 'state';
 
 /** One clipped positive-area region available to drawing, damage, and inspection. */
 export interface KanbanSceneGeometryRegion extends Readonly<Rect> {
@@ -54,7 +62,7 @@ export interface KanbanSceneSwimlaneChromeGeometry extends Readonly<Rect> {
   /** Whether this active row is pinned beneath the workflow headers. */
   readonly sticky: boolean;
   /** Effective built-in visual treatment. */
-  readonly variant: 'hybrid' | 'separator' | 'band';
+  readonly variant: KanbanSceneGeometryVariant;
 }
 
 /** One projected sparse source cell. */
@@ -85,6 +93,8 @@ export interface ProjectKanbanSceneGeometryOptions {
   readonly activeSwimlaneId?: string;
   /** Effective minimum width of each visible card column. */
   readonly minimumColumnWidth: number;
+  /** Requested left rail width; defaults to ten terminal cells. */
+  readonly railWidth?: number;
   /** Optional focused workflow column; exactly this column remains visible. */
   readonly focusedColumnId?: string;
   /** Optional stable anchor preserved through responsive recomputation. */
@@ -237,8 +247,12 @@ export function projectKanbanSceneGeometry(
   const bounds = rect(options.bounds);
   const offsets = point(options.offsets);
   const minimumColumnWidth = integer(options.minimumColumnWidth, true);
-  if (options.variant === 'rail') throw new KanbanInvalidGeometryError();
-  if (options.variant !== 'hybrid' && options.variant !== 'separator' && options.variant !== 'band') {
+  if (
+    options.variant !== 'hybrid' &&
+    options.variant !== 'separator' &&
+    options.variant !== 'band' &&
+    options.variant !== 'rail'
+  ) {
     throw new KanbanInvalidGeometryError();
   }
   const focused = options.focusedColumnId;
@@ -247,14 +261,26 @@ export function projectKanbanSceneGeometry(
   if (focused !== undefined && visibleColumns.length !== 1) throw new KanbanInvalidGeometryError();
   if (visibleColumns.length === 0) throw new KanbanInvalidGeometryError();
 
-  const naturalColumnWidth = Math.max(minimumColumnWidth, Math.floor(bounds.width / visibleColumns.length));
+  const rail =
+    options.variant === 'rail'
+      ? resolveKanbanSwimlaneRail({
+          bounds,
+          visibleColumnCount: visibleColumns.length,
+          minimumColumnWidth,
+          railWidth: options.railWidth,
+          focused: focused !== undefined,
+        })
+      : Object.freeze({ resolvedVariant: options.variant, railWidth: 0, cardBounds: bounds });
+  const resolvedVariant = rail.resolvedVariant;
+  const cardBounds = rail.cardBounds;
+  const naturalColumnWidth = Math.max(minimumColumnWidth, Math.floor(cardBounds.width / visibleColumns.length));
   const totalWidth = add(0, naturalColumnWidth * visibleColumns.length);
   if (!Number.isSafeInteger(totalWidth)) throw new KanbanInvalidGeometryError();
-  const extentX = Math.max(0, totalWidth - bounds.width);
+  const extentX = Math.max(0, totalWidth - cardBounds.width);
   const offsetX = Math.min(offsets.x, extentX);
   const placements: readonly ColumnPlacement[] = Object.freeze(
     visibleColumns.map(({ columnId }, index) =>
-      Object.freeze({ columnId, x: bounds.x + index * naturalColumnWidth - offsetX, width: naturalColumnWidth }),
+      Object.freeze({ columnId, x: cardBounds.x + index * naturalColumnWidth - offsetX, width: naturalColumnWidth }),
     ),
   );
 
@@ -265,7 +291,7 @@ export function projectKanbanSceneGeometry(
       0,
       ...cellsForSwimlane(scene, swimlane.swimlaneId).map(({ cards }) => stackHeight(cards)),
     );
-    const height = add(1, cellHeight);
+    const height = resolvedVariant === 'rail' ? Math.max(1, cellHeight) : add(1, cellHeight);
     swimlanePlacements.push(
       Object.freeze({ swimlaneId: swimlane.swimlaneId, top: logicalTop, height, cardHeight: cellHeight }),
     );
@@ -276,7 +302,7 @@ export function projectKanbanSceneGeometry(
   const viewportContentHeight = Math.max(0, bounds.height - 1);
   const extentY = Math.max(0, contentHeight - viewportContentHeight);
   const offsetY = Math.min(offsets.y, extentY);
-  const contentOrigin = Object.freeze({ x: bounds.x, y: contentOriginY });
+  const contentOrigin = Object.freeze({ x: cardBounds.x, y: contentOriginY });
   const anchor = snapshotAnchor(options.anchor);
   const workflowHeaders: KanbanSceneWorkflowHeaderGeometry[] = [];
   const swimlaneChrome: KanbanSceneSwimlaneChromeGeometry[] = [];
@@ -287,7 +313,7 @@ export function projectKanbanSceneGeometry(
   for (const column of visibleColumns) {
     const placement = placements.find(({ columnId }) => columnId === column.columnId);
     if (placement === undefined) continue;
-    const clipped = clip({ x: placement.x, y: bounds.y, width: placement.width, height: 1 }, bounds);
+    const clipped = clip({ x: placement.x, y: bounds.y, width: placement.width, height: 1 }, cardBounds);
     if (clipped === undefined) continue;
     workflowHeaders.push(Object.freeze({ ...clipped, columnId: column.columnId, label: column.label, sticky: true }));
     regions.push(region('workflow-header', clipped, { columnId: column.columnId }));
@@ -299,7 +325,11 @@ export function projectKanbanSceneGeometry(
     const naturalY = contentOriginY + placement.top - offsetY;
     const sticky = swimlane.swimlaneId === options.activeSwimlaneId;
     const chromeY = sticky ? Math.max(contentOriginY, naturalY) : naturalY;
-    const clippedChrome = clip({ x: bounds.x, y: chromeY, width: bounds.width, height: 1 }, bounds, contentOriginY);
+    const chromeRect =
+      resolvedVariant === 'rail'
+        ? { x: bounds.x, y: chromeY, width: rail.railWidth, height: placement.height }
+        : { x: bounds.x, y: chromeY, width: bounds.width, height: 1 };
+    const clippedChrome = clip(chromeRect, bounds, contentOriginY);
     if (clippedChrome !== undefined) {
       swimlaneChrome.push(
         Object.freeze({
@@ -307,24 +337,31 @@ export function projectKanbanSceneGeometry(
           swimlaneId: swimlane.swimlaneId,
           label: swimlane.label,
           sticky,
-          variant: options.variant,
+          variant: resolvedVariant,
         }),
       );
       const chromeKind =
-        options.variant === 'separator'
-          ? 'swimlane-separator'
-          : options.variant === 'band'
-            ? 'swimlane-band'
-            : 'swimlane-header';
+        resolvedVariant === 'rail'
+          ? 'swimlane-rail'
+          : resolvedVariant === 'separator'
+            ? 'swimlane-separator'
+            : resolvedVariant === 'band'
+              ? 'swimlane-band'
+              : 'swimlane-header';
       regions.push(region(chromeKind, clippedChrome, { swimlaneId: swimlane.swimlaneId }));
     }
 
-    const cardMinimumY = sticky ? contentOriginY + 1 : contentOriginY;
+    const cardMinimumY = sticky && resolvedVariant !== 'rail' ? contentOriginY + 1 : contentOriginY;
     for (const sourceCell of cellsForSwimlane(scene, swimlane.swimlaneId)) {
       const column = placements.find(({ columnId }) => columnId === sourceCell.address.columnId);
       if (column === undefined || placement.cardHeight === 0) continue;
       const cellRect = clip(
-        { x: column.x, y: naturalY + 1, width: column.width, height: placement.cardHeight },
+        {
+          x: column.x,
+          y: naturalY + (resolvedVariant === 'rail' ? 0 : 1),
+          width: column.width,
+          height: placement.cardHeight,
+        },
         bounds,
         cardMinimumY,
       );
@@ -332,7 +369,7 @@ export function projectKanbanSceneGeometry(
         cells.push(Object.freeze({ ...cellRect, address: sourceCell.address }));
         regions.push(region('cell', cellRect, sourceCell.address));
       }
-      let cardTop = naturalY + 1;
+      let cardTop = naturalY + (resolvedVariant === 'rail' ? 0 : 1);
       for (const sourceCard of sourceCell.cards) {
         const cardWidth = Math.min(sourceCard.descriptor.width, column.width);
         const cardRect = clip(
@@ -365,7 +402,7 @@ export function projectKanbanSceneGeometry(
   return Object.freeze({
     revision: scene.revision,
     requestedVariant: options.variant,
-    resolvedVariant: options.variant,
+    resolvedVariant,
     visibleColumnIds: Object.freeze(visibleColumns.map(({ columnId }) => columnId)),
     offsets: Object.freeze({ x: offsetX, y: offsetY }),
     extents: Object.freeze({ x: extentX, y: extentY }),

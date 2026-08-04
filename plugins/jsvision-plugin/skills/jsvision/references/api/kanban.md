@@ -110,6 +110,14 @@ Default preferred width of one Kanban column surface, excluding its separator.
 const KANBAN_DEFAULT_COLUMN_PREFERRED_WIDTH: 24
 ```
 
+## KANBAN_DEFAULT_SWIMLANE_RAIL_WIDTH
+
+Default terminal-cell width reserved by the built-in swimlane rail.
+
+```ts
+const KANBAN_DEFAULT_SWIMLANE_RAIL_WIDTH: 10
+```
+
 ## KANBAN_ENGLISH_CATALOG
 
 Complete immutable English fallback catalog for `@jsvision/kanban`.
@@ -2602,7 +2610,14 @@ interface KanbanSceneLimitState {
 Semantic region kinds emitted by built-in scene geometry.
 
 ```ts
-type KanbanSceneRegionKind = 'workflow-header' | 'swimlane-header' | 'swimlane-band' | 'swimlane-separator' | 'cell' | 'card' | 'state'
+type KanbanSceneRegionKind = | 'workflow-header'
+  | 'swimlane-header'
+  | 'swimlane-band'
+  | 'swimlane-separator'
+  | 'swimlane-rail'
+  | 'cell'
+  | 'card'
+  | 'state'
 ```
 
 ## KanbanSceneSwimlane
@@ -2627,7 +2642,7 @@ interface KanbanSceneSwimlaneChromeGeometry {
   swimlaneId: string;   // Stable semantic swimlane identity.
   label: string;   // Sanitized source label.
   sticky: boolean;   // Whether this active row is pinned beneath the workflow headers.
-  variant: 'hybrid' | 'separator' | 'band';   // Effective built-in visual treatment.
+  variant: KanbanSceneGeometryVariant;   // Effective built-in visual treatment.
 }
 ```
 
@@ -3315,6 +3330,19 @@ interface KanbanSwimlanePublicationSubject {
 }
 ```
 
+## KanbanSwimlaneRailResolution
+
+Immutable rail allocation or its responsive hybrid fallback.
+
+```ts
+interface KanbanSwimlaneRailResolution {
+  resolvedVariant: 'rail' | 'hybrid';   // Effective presentation after responsive resolution.
+  degraded: boolean;   // Whether the requested rail was removed.
+  railWidth: number;   // Effective reserved width, or zero after fallback.
+  cardBounds: Readonly<Rect>;   // Exact rectangle available to card columns and workflow headers.
+}
+```
+
 ## KanbanSwimlaneRowLayoutHint
 
 Payload-free aggregate layout hint for one semantic swimlane row.
@@ -3729,6 +3757,7 @@ interface ProjectKanbanSceneGeometryOptions {
   offsets: { readonly x: number; readonly y: number };   // Independent requested horizontal and vertical content offsets.
   activeSwimlaneId?: string;   // Active swimlane whose visible chrome may pin beneath workflow headers.
   minimumColumnWidth: number;   // Effective minimum width of each visible card column.
+  railWidth?: number;   // Requested left rail width; defaults to ten terminal cells.
   focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.
   anchor?: KanbanSceneGeometryAnchor;   // Optional stable anchor preserved through responsive recomputation.
 }
@@ -3791,6 +3820,20 @@ interface ResolveKanbanSwimlanePresentationInput {
   availableWidth: number;   // Total horizontal cells assigned to the swimlane region.
   columns: readonly KanbanSwimlanePresentationColumnInput[];   // Visible workflow-column minimums.
   railWidth?: number;   // Requested rail width; defaults to ten cells.
+}
+```
+
+## ResolveKanbanSwimlaneRailOptions
+
+Inputs for deterministic rail reservation and responsive fallback.
+
+```ts
+interface ResolveKanbanSwimlaneRailOptions {
+  bounds: Readonly<Rect>;   // Complete parent-assigned scene rectangle.
+  visibleColumnCount: number;   // Number of visible workflow columns.
+  minimumColumnWidth: number;   // Effective minimum width for every card column.
+  railWidth?: number;   // Requested rail width, defaulting to ten cells.
+  focused: boolean;   // Focused-column layouts use horizontal hybrid chrome instead of a permanent rail.
 }
 ```
 
@@ -4429,6 +4472,14 @@ Resolves authoritative lifecycle facts into one distinct, renderer-independent s
 
 ```ts
 resolveKanbanStructureState(input: KanbanStructureStateInput): KanbanStructureState
+```
+
+## resolveKanbanSwimlaneRail
+
+Reserves a bounded left swimlane rail without changing the board's minimum usable width.
+
+```ts
+resolveKanbanSwimlaneRail(options: ResolveKanbanSwimlaneRailOptions): KanbanSwimlaneRailResolution
 ```
 
 ## resolveKanbanTheme
