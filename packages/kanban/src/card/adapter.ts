@@ -1,10 +1,14 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import { createKanbanCardKey } from '../contract/identity.js';
-import type { CardKey } from '../contract/identity.js';
+import type { CardKey, KanbanChecklistId, KanbanFieldId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import type { KanbanCardPresentationSelection } from './presentation-policy.js';
+import type { KanbanCardFormattingContext } from './formatting.js';
+import type { KanbanCardOperationState } from './descriptor.js';
 import type { StandardCard } from './standard-card.js';
+import type { KanbanThemeRole } from './theme.js';
 
 /**
  * Pure presentation getters that adapt an application-owned record to mandatory card semantics.
@@ -30,6 +34,150 @@ export interface KanbanCardAdapter<TCard> {
   statusOf(card: TCard): string;
   /** Optionally returns an equality-only revision for presentation-affecting values. */
   presentationRevisionOf?(card: TCard): KanbanRevision | undefined;
+}
+
+/** Supported value and formatter contracts for one optional metadata field. */
+export type KanbanCardFieldKind = 'text' | 'number' | 'date' | 'labels';
+
+/** Shared identity, label, priority, and semantic-role metadata for one field. */
+export interface KanbanCardFieldBase {
+  /** Stable application field identity. */
+  readonly fieldId: KanbanFieldId;
+  /** Display label sanitized at the snapshot boundary. */
+  readonly label: string;
+  /** Non-negative priority used only when optional content must degrade. */
+  readonly priority: number;
+  /** Optional semantic text role. */
+  readonly role?: KanbanThemeRole;
+}
+
+/** Generic application-owned field projection understood by the standard snapshot boundary. */
+export type KanbanCardField<TCard> =
+  | (KanbanCardFieldBase & {
+      readonly kind: 'text';
+      readonly valueOf: (card: TCard) => string | undefined;
+      readonly format?: (value: string, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'number';
+      readonly valueOf: (card: TCard) => number | bigint | undefined;
+      readonly format?: (value: number | bigint, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'date';
+      readonly valueOf: (card: TCard) => unknown;
+      readonly format?: (value: unknown, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'labels';
+      readonly valueOf: (card: TCard) => readonly string[] | undefined;
+      readonly format?: (
+        value: readonly string[],
+        context: KanbanCardFormattingContext,
+      ) => readonly string[] | undefined;
+    });
+
+/** Detached bounded summary result containing text, count, or both. */
+export interface KanbanCardSummaryValue {
+  /** Optional application-formatted summary text. */
+  readonly text?: string;
+  /** Optional non-negative safe-integer aggregate count. */
+  readonly count?: number;
+}
+
+/** Raw summary value accepted before optional formatting and validation. */
+export type KanbanCardSummaryInput = string | number | bigint | KanbanCardSummaryValue;
+
+/** Generic application-owned aggregate projection for one standard card summary. */
+export interface KanbanCardSummary<TCard> {
+  /** Stable summary identity in the application field namespace. */
+  readonly summaryId: KanbanFieldId;
+  /** Display label sanitized at the snapshot boundary. */
+  readonly label: string;
+  /** Non-negative priority used only when optional content must degrade. */
+  readonly priority: number;
+  /** Optional semantic summary role. */
+  readonly role?: KanbanThemeRole;
+  /** Reads one bounded aggregate value without transferring card ownership. */
+  readonly valueOf: (card: TCard) => KanbanCardSummaryInput | undefined;
+  /** Optionally formats the unchanged aggregate input once. */
+  readonly format?: (
+    value: KanbanCardSummaryInput,
+    context: KanbanCardFormattingContext,
+  ) => KanbanCardSummaryValue | undefined;
+}
+
+/** Stable item identity whose uniqueness is scoped to one checklist group. */
+export type KanbanChecklistItemId = string;
+
+/** One application-owned checklist item snapshotted for read-only card display. */
+export interface KanbanChecklistItem {
+  /** Stable group-scoped item identity. */
+  readonly itemId: KanbanChecklistItemId;
+  /** Display text sanitized at the snapshot boundary. */
+  readonly text: string;
+  /** Application-owned completion state. */
+  readonly completed: boolean;
+}
+
+/** One ordered application-owned checklist group. */
+export interface KanbanChecklistGroup {
+  /** Stable card-scoped checklist identity. */
+  readonly checklistId: KanbanChecklistId;
+  /** Optional group title sanitized at the snapshot boundary. */
+  readonly title?: string;
+  /** Ordered read-only item publication. */
+  readonly items: readonly KanbanChecklistItem[];
+}
+
+/** Complete card-local interaction state available to semantic style selection. */
+export interface KanbanCardVisualState {
+  /** Whether the card owns keyboard focus. */
+  readonly focused: boolean;
+  /** Whether the card belongs to the current selection. */
+  readonly selected: boolean;
+  /** Whether the card is the range-selection anchor. */
+  readonly rangeAnchor: boolean;
+  /** Whether mutation actions are disabled. */
+  readonly readOnly: boolean;
+  /** Whether current application validation rejects the card. */
+  readonly invalid: boolean;
+  /** Current drag or persistence operation state. */
+  readonly operation: KanbanCardOperationState;
+}
+
+/** Optional semantic roles and glyph policy selected from card/application state. */
+export interface KanbanCardStyleSelection {
+  /** Optional equality-only style revision for descriptor caching. */
+  readonly revision?: KanbanRevision;
+  /** Optional card interior role. */
+  readonly surfaceRole?: KanbanThemeRole;
+  /** Optional card boundary role. */
+  readonly borderRole?: KanbanThemeRole;
+  /** Optional non-color marker role. */
+  readonly markerRole?: KanbanThemeRole;
+  /** Optional title role. */
+  readonly titleRole?: KanbanThemeRole;
+  /** Optional status role. */
+  readonly statusRole?: KanbanThemeRole;
+  /** Optional general metadata role. */
+  readonly textRole?: KanbanThemeRole;
+  /** Preferred safe glyph family. */
+  readonly glyphFamily?: 'automatic' | 'unicode' | 'ascii';
+}
+
+/** Final-shaped generic adapter for rich standard-card presentation. */
+export interface KanbanCardPresentationAdapter<TCard> extends KanbanCardAdapter<TCard> {
+  /** Ordered configured metadata fields. */
+  readonly fields?: readonly KanbanCardField<TCard>[];
+  /** Ordered configured aggregate summaries. */
+  readonly summaries?: readonly KanbanCardSummary<TCard>[];
+  /** Reads ordered checklist groups once for one card snapshot. */
+  readonly checklistOf?: (card: TCard) => readonly KanbanChecklistGroup[];
+  /** Selects an optional reordered subset without changing numeric maxima. */
+  readonly selectionOf?: (card: TCard) => KanbanCardPresentationSelection | undefined;
+  /** Resolves semantic style roles from card and detached visual state. */
+  readonly styleOf?: (card: TCard, state: KanbanCardVisualState) => KanbanCardStyleSelection;
 }
 
 /** Detached mandatory presentation values read from one application card. */

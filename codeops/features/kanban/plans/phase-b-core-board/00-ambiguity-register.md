@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 33 items resolved
-> **Last Updated**: 2026-08-04 13:52 CEST
+> **Status**: ✅ GATE PASSED — all 34 items resolved
+> **Last Updated**: 2026-08-04 14:11 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -44,6 +44,7 @@
 | PAR-B31 | Public API | What exact adapter, snapshot, composition, style, and cache-testing contracts let the rich-card oracle precede implementation without exposing private machinery? | Final-shaped public snapshot/composition plus testing-only cache harness / infer names in tests / expose production cache internals | **Runtime delegated after independent challenge: define discriminated public field/summary/checklist/style contracts, one detached snapshot boundary, one high-level composer, and a counter-only `@jsvision/kanban/testing` cache harness; retain `presentationRevisionOf` as the sole card revision authority.** | ✅ Resolved |
 | PAR-B32 | UX & presentation | Which exact numeric budgets, checklist defaults, degradation order, and export identity define the three named presets? | Modest scan-oriented budgets with dedicated defaults / reuse broad safety ceilings / undocumented literals | **Runtime delegated after independent challenge: publish canonical deeply frozen 6/12/18-row presets with 0/1/1 gaps, modest optional-section budgets, hidden checklist modes, and one complete deterministic degradation order sourced from dedicated centralized defaults.** | ✅ Resolved |
 | PAR-B33 | Execution ordering | Which implementation task owns the already-specified selection resolver and first public presentation-policy export? | Produce them with policy normalization / defer public behavior until the final Phase 1 barrel task | **Runtime delegated: task 1.2.2 owns the policy module, bounded selection resolver, error, and first barrel export so its public specification can turn green; task 1.2.12 remains the final aggregate export/i18n closure.** | ✅ Resolved |
+| PAR-B34 | Snapshot semantics | Does hidden checklist selection prevent bounded checklist data from being detached into the safe presentation snapshot? | Retain configured safe groups but select/render none / skip checklist acquisition entirely | **Runtime delegated from immutable-oracle evidence: snapshot bounded configured groups once when the adapter provides them; hidden mode keeps resolved checklist IDs empty, so composition and interaction expose no checklist content.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -295,6 +296,34 @@ snapshot support.
 - **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
 - **Reopen triggers:** The package adopts generated exports or separates presentation selection into a
   different durable public module before this task is implemented.
+
+### PAR-B34 — hidden selection versus safe checklist snapshot (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal snapshot/data-flow interpretation within already-approved hidden checklist
+  behavior; it changes no visible checklist default, editor authority, or acceptance criterion.
+- **Objective:** Satisfy the immutable snapshot oracle while preserving the public guarantee that hidden
+  checklist mode emits no checklist rows, regions, or active checklist selection.
+- **Decision:** When an adapter supplies checklist data, snapshot its configured, bounded, validated
+  groups once even if the current policy resolves `selection.checklistIds` to empty. Composition and
+  interaction consume the resolved selection, so hidden mode remains visually and behaviorally hidden.
+- **Evidence:** The immutable rich-card oracle requires safe detached checklist items in a spacious
+  named-preset snapshot, while the presentation-policy oracle requires hidden mode to resolve no
+  checklist IDs. Keeping detached data and active selection separate satisfies both without weakening
+  either test.
+- **Rejected alternatives:** Changing the immutable oracle is prohibited. Enabling checklist display in
+  the spacious preset changes approved default-hidden behavior. Treating snapshotted data as selected
+  would contradict the public selection contract.
+- **Strongest counterargument:** Hidden cards still pay one bounded checklist callback/snapshot cost when
+  applications configure the optional adapter. This is explicit opt-in adapter work and remains bounded;
+  applications that need zero acquisition omit `checklistOf`.
+- **Confidence:** High.
+- **Hardening:** Direct reconciliation of two independent public specification assertions; no second
+  compatible behavior remained.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260804`.
+- **Reopen triggers:** The public snapshot contract removes checklist data, or a future lazy checklist
+  source replaces the current bounded synchronous adapter.
 
 ## Systematic discovery scan
 

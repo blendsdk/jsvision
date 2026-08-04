@@ -297,6 +297,11 @@ Date fields pass the exact unchanged opaque value once to their field formatter 
 snapshot retains only safe formatted text. Style failures yield the frozen neutral selection. Mandatory
 key/title/status failure propagates to the existing safe-render fallback boundary.
 
+Checklist snapshot data and active checklist selection are intentionally separate. When `checklistOf`
+is configured, the snapshot retains its bounded validated groups once even under hidden mode; hidden
+mode still resolves no checklist IDs, and composition/interaction therefore emits no checklist content
+or action region (PAR-B34).
+
 The composer exposes no candidate-section internals. It returns a deeply frozen descriptor that passes
 the public descriptor validator. `renderStandardKanbanCard` remains the backwards-compatible
 convenience wrapper over snapshot then compose, deriving default maximum/state from its Phase A render

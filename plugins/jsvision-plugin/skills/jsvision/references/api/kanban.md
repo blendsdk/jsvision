@@ -284,6 +284,19 @@ interface KanbanCardAdapter<TCard> {
 }
 ```
 
+## KanbanCardAdapterSnapshot
+
+Detached mandatory presentation values read from one application card.
+
+```ts
+interface KanbanCardAdapterSnapshot {
+  cardKey: CardKey;   // Validated card identity with number/string distinction preserved.
+  title: string;   // Bounded non-empty title awaiting output sanitization.
+  status: string;   // Bounded non-empty status awaiting output sanitization.
+  presentationRevision?: KanbanRevision;   // Optional validated equality-only presentation revision.
+}
+```
+
 ## KanbanCardCue
 
 Non-color card state represented by a marker or equivalent visual cue.
@@ -343,6 +356,72 @@ interface KanbanCardFallbackLabels {
 }
 ```
 
+## KanbanCardField
+
+Generic application-owned field projection understood by the standard snapshot boundary.
+
+```ts
+type KanbanCardField<TCard> = | (KanbanCardFieldBase & {
+      readonly kind: 'text';
+      readonly valueOf: (card: TCard) => string | undefined;
+      readonly format?: (value: string, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'number';
+      readonly valueOf: (card: TCard) => number | bigint | undefined;
+      readonly format?: (value: number | bigint, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'date';
+      readonly valueOf: (card: TCard) => unknown;
+      readonly format?: (value: unknown, context: KanbanCardFormattingContext) => string | undefined;
+    })
+  | (KanbanCardFieldBase & {
+      readonly kind: 'labels';
+      readonly valueOf: (card: TCard) => readonly string[] | undefined;
+      readonly format?: (
+        value: readonly string[],
+        context: KanbanCardFormattingContext,
+      ) => readonly string[] | undefined;
+    })
+```
+
+## KanbanCardFieldBase
+
+Shared identity, label, priority, and semantic-role metadata for one field.
+
+```ts
+interface KanbanCardFieldBase {
+  fieldId: KanbanFieldId;   // Stable application field identity.
+  label: string;   // Display label sanitized at the snapshot boundary.
+  priority: number;   // Non-negative priority used only when optional content must degrade.
+  role?: KanbanThemeRole;   // Optional semantic text role.
+}
+```
+
+## KanbanCardFieldKind
+
+Supported value and formatter contracts for one optional metadata field.
+
+```ts
+type KanbanCardFieldKind = 'text' | 'number' | 'date' | 'labels'
+```
+
+## KanbanCardFieldSnapshot
+
+Detached safe display values for one selected metadata field.
+
+```ts
+interface KanbanCardFieldSnapshot {
+  fieldId: KanbanFieldId;   // Stable configured field identity.
+  kind: KanbanCardFieldKind;   // Value and formatter contract used for the field.
+  label: string;   // Sanitized non-empty field label.
+  priority: number;   // Non-negative degradation priority.
+  role?: KanbanThemeRole;   // Optional allowlisted semantic role.
+  values: readonly string[];   // Detached sanitized display strings.
+}
+```
+
 ## KanbanCardFormattingContext
 
 Bounded application formatting functions available to a card renderer.
@@ -392,6 +471,20 @@ Interaction or persistence state that can affect one card's presentation.
 type KanbanCardOperationState = 'idle' | 'grabbed' | 'pending' | 'rejected'
 ```
 
+## KanbanCardPresentationAdapter
+
+Final-shaped generic adapter for rich standard-card presentation.
+
+```ts
+interface KanbanCardPresentationAdapter<TCard> {
+  fields?: readonly KanbanCardField<TCard>[];   // Ordered configured metadata fields.
+  summaries?: readonly KanbanCardSummary<TCard>[];   // Ordered configured aggregate summaries.
+  checklistOf?: (card: TCard) => readonly KanbanChecklistGroup[];   // Reads ordered checklist groups once for one card snapshot.
+  selectionOf?: (card: TCard) => KanbanCardPresentationSelection | undefined;   // Selects an optional reordered subset without changing numeric maxima.
+  styleOf?: (card: TCard, state: KanbanCardVisualState) => KanbanCardStyleSelection;   // Resolves semantic style roles from card and detached visual state.
+}
+```
+
 ## KanbanCardPresentationMaximum
 
 Validated view maximum against which one card selection is intersected.
@@ -415,6 +508,38 @@ interface KanbanCardPresentationSelection {
   fieldIds?: readonly KanbanFieldId[];   // Requested metadata field order and subset.
   summaryIds?: readonly KanbanFieldId[];   // Requested summary order and subset.
   checklistIds?: readonly KanbanChecklistId[];   // Requested checklist-group order and subset.
+}
+```
+
+## KanbanCardPresentationSnapshot
+
+Complete detached, deeply frozen standard-card presentation snapshot.
+
+```ts
+interface KanbanCardPresentationSnapshot {
+  cardKey: CardKey;   // Validated application-owned card identity.
+  presentationRevision?: KanbanRevision;   // Optional equality-only card presentation revision.
+  title: string;   // Sanitized mandatory title.
+  status: string;   // Sanitized mandatory status.
+  fields: readonly KanbanCardFieldSnapshot[];   // Selected safe metadata fields.
+  summaries: readonly KanbanCardSummarySnapshot[];   // Selected safe aggregate summaries.
+  checklists: readonly KanbanChecklistGroup[];   // Selected safe read-only checklist groups.
+  selection: ResolvedKanbanCardPresentationSelection;   // Resolved optional-section selection and unchanged numeric maxima.
+  visualState: KanbanCardVisualState;   // Detached visual state used for style resolution.
+  style: KanbanCardStyleSelection;   // Safe semantic style selection.
+}
+```
+
+## KanbanCardPresentationSnapshotContext
+
+Inputs required to detach one application card into safe presentation values.
+
+```ts
+interface KanbanCardPresentationSnapshotContext {
+  maximum: KanbanCardPresentationMaximum;   // Resolved view maxima and configured optional-section identities.
+  visualState: KanbanCardVisualState;   // Current card-local interaction state.
+  formatting: KanbanCardFormattingContext;   // Application-owned locale formatting callbacks.
+  observe?: (observation: KanbanObservation) => void;   // Optional payload-free observation sink.
 }
 ```
 
@@ -531,6 +656,75 @@ interface KanbanCardSpan {
 }
 ```
 
+## KanbanCardStyleSelection
+
+Optional semantic roles and glyph policy selected from card/application state.
+
+```ts
+interface KanbanCardStyleSelection {
+  revision?: KanbanRevision;   // Optional equality-only style revision for descriptor caching.
+  surfaceRole?: KanbanThemeRole;   // Optional card interior role.
+  borderRole?: KanbanThemeRole;   // Optional card boundary role.
+  markerRole?: KanbanThemeRole;   // Optional non-color marker role.
+  titleRole?: KanbanThemeRole;   // Optional title role.
+  statusRole?: KanbanThemeRole;   // Optional status role.
+  textRole?: KanbanThemeRole;   // Optional general metadata role.
+  glyphFamily?: 'automatic' | 'unicode' | 'ascii';   // Preferred safe glyph family.
+}
+```
+
+## KanbanCardSummary
+
+Generic application-owned aggregate projection for one standard card summary.
+
+```ts
+interface KanbanCardSummary<TCard> {
+  summaryId: KanbanFieldId;   // Stable summary identity in the application field namespace.
+  label: string;   // Display label sanitized at the snapshot boundary.
+  priority: number;   // Non-negative priority used only when optional content must degrade.
+  role?: KanbanThemeRole;   // Optional semantic summary role.
+  valueOf: (card: TCard) => KanbanCardSummaryInput | undefined;   // Reads one bounded aggregate value without transferring card ownership.
+  format?: (
+    value: KanbanCardSummaryInput,
+    context: KanbanCardFormattingContext,
+  ) => KanbanCardSummaryValue | undefined;   // Optionally formats the unchanged aggregate input once.
+}
+```
+
+## KanbanCardSummaryInput
+
+Raw summary value accepted before optional formatting and validation.
+
+```ts
+type KanbanCardSummaryInput = string | number | bigint | KanbanCardSummaryValue
+```
+
+## KanbanCardSummarySnapshot
+
+Detached bounded aggregate value for one selected summary.
+
+```ts
+interface KanbanCardSummarySnapshot {
+  summaryId: KanbanFieldId;   // Stable configured summary identity.
+  label: string;   // Sanitized non-empty summary label.
+  priority: number;   // Non-negative degradation priority.
+  role?: KanbanThemeRole;   // Optional allowlisted semantic role.
+  text?: string;   // Optional sanitized aggregate text.
+  count?: number;   // Optional non-negative safe-integer aggregate count.
+}
+```
+
+## KanbanCardSummaryValue
+
+Detached bounded summary result containing text, count, or both.
+
+```ts
+interface KanbanCardSummaryValue {
+  text?: string;   // Optional application-formatted summary text.
+  count?: number;   // Optional non-negative safe-integer aggregate count.
+}
+```
+
 ## KanbanCardTerminalCapabilities
 
 Terminal features that affect text measurement and presentation fallback.
@@ -541,6 +735,21 @@ interface KanbanCardTerminalCapabilities {
   widthMode: WidthMode;   // Width algorithm used for Unicode code points.
   boxDrawing: boolean;   // Whether box-drawing glyphs are safe to use.
   ambiguousWide: boolean;   // Whether ambiguous-width code points occupy two cells.
+}
+```
+
+## KanbanCardVisualState
+
+Complete card-local interaction state available to semantic style selection.
+
+```ts
+interface KanbanCardVisualState {
+  focused: boolean;   // Whether the card owns keyboard focus.
+  selected: boolean;   // Whether the card belongs to the current selection.
+  rangeAnchor: boolean;   // Whether the card is the range-selection anchor.
+  readOnly: boolean;   // Whether mutation actions are disabled.
+  invalid: boolean;   // Whether current application validation rejects the card.
+  operation: KanbanCardOperationState;   // Current drag or persistence operation state.
 }
 ```
 
@@ -599,12 +808,44 @@ type KanbanCellState = | { readonly kind: 'loading' | 'ready' | 'refreshing' | '
     }
 ```
 
+## KanbanChecklistGroup
+
+One ordered application-owned checklist group.
+
+```ts
+interface KanbanChecklistGroup {
+  checklistId: KanbanChecklistId;   // Stable card-scoped checklist identity.
+  title?: string;   // Optional group title sanitized at the snapshot boundary.
+  items: readonly KanbanChecklistItem[];   // Ordered read-only item publication.
+}
+```
+
 ## KanbanChecklistId
 
 A validated checklist-group identity.
 
 ```ts
 type KanbanChecklistId = string
+```
+
+## KanbanChecklistItem
+
+One application-owned checklist item snapshotted for read-only card display.
+
+```ts
+interface KanbanChecklistItem {
+  itemId: KanbanChecklistItemId;   // Stable group-scoped item identity.
+  text: string;   // Display text sanitized at the snapshot boundary.
+  completed: boolean;   // Application-owned completion state.
+}
+```
+
+## KanbanChecklistItemId
+
+Stable item identity whose uniqueness is scoped to one checklist group.
+
+```ts
+type KanbanChecklistItemId = string
 ```
 
 ## KanbanChecklistMode
@@ -2449,6 +2690,14 @@ Projects sticky headers and a bounded source-ordered card stack into exact termi
 projectKanbanVerticalGeometry(options: ProjectKanbanVerticalGeometryOptions): KanbanVerticalGeometry
 ```
 
+## readKanbanCardAdapter
+
+Reads and validates one card through its adapter as one atomic presentation snapshot.
+
+```ts
+readKanbanCardAdapter<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>): KanbanCardAdapterSnapshot
+```
+
 ## reconcileKanbanPublication
 
 Clears publication metadata after either matching or contradictory authoritative data arrives.
@@ -2527,6 +2776,14 @@ Validates and freezes one bounded, revision-bound card-location result.
 
 ```ts
 snapshotKanbanCardLocation(value: unknown): KanbanCardLocation
+```
+
+## snapshotKanbanCardPresentation
+
+Detaches one application card into bounded, display-safe, deeply frozen presentation values.
+
+```ts
+snapshotKanbanCardPresentation<TCard>(card: TCard, adapter: KanbanCardPresentationAdapter<TCard>, context: KanbanCardPresentationSnapshotContext): KanbanCardPresentationSnapshot
 ```
 
 ## snapshotKanbanCellAddress
