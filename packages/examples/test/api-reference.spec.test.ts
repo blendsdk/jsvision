@@ -16,6 +16,7 @@ import {
   CATEGORIES,
   compareApiNames,
   firstLineDifference,
+  PACKAGES,
 } from '../../../scripts/gen-plugin-api.mjs';
 import { barrelExports } from '../../docs-site/src/api/barrel-exports.mjs';
 
@@ -32,7 +33,7 @@ const KANBAN = entry('../../kanban/src/index.ts');
 // Generate once (each generation runs the TypeScript compiler over every registered barrel) and reuse.
 const generated = generateApiDocs();
 
-// ST-A1 — coverage: every public export across the three barrels is documented, and nothing extra.
+// ST-A1 — coverage: every public export across the registered barrels is documented, and nothing extra.
 test('ST-A1: the API reference covers exactly the public barrel surface', () => {
   const documented = new Set(generated.names);
   const surface = new Set<string>([
@@ -65,8 +66,13 @@ test('ST-A4: pages carry real option fields and signatures', () => {
   expect(generated.files['data-views.md']).toContain('rows: Signal<T[]>');
   expect(generated.files['controls.md']).toContain('interface ButtonOptions');
   expect(generated.files['datagrid.md']).toContain('const gridKeymap: import("@jsvision/ui").Keymap');
+  expect(generated.files['kanban.md'] ?? '').toContain('new KanbanBoard<TCard>(options: KanbanBoardOptions<TCard>)');
+  expect(generated.files['kanban.md'] ?? '').toContain(
+    'new KanbanViewport<TCard>(options: KanbanViewportOptions<TCard>)',
+  );
   expect(Object.values(generated.files).join('\n')).not.toMatch(/import\(["'](?:\/|[A-Za-z]:[\\/])/);
   expect(generated.files['index.md']).toContain('Data views');
+  expect(generated.files['index.md']).toContain('@jsvision/kanban');
 });
 
 // ST-A5 — index integrity: every category page the index links to was actually generated.
@@ -85,6 +91,7 @@ test('ST-A6: exports route to the expected category', () => {
   expect(categoryFor('forms', 'packages/forms/src/create-form.ts')).toBe('forms');
   expect(categoryFor('datagrid', 'packages/datagrid/src/grid.ts')).toBe('datagrid');
   expect(categoryFor('code-editor', 'packages/code-editor/src/index.ts')).toBe('code-editor');
+  expect(categoryFor('kanban', 'packages/kanban/src/index.ts')).toBe('kanban');
   expect(categoryFor('core', 'packages/core/src/engine/color/theme.ts')).toBe('core-essentials');
   expect(categoryFor('ui', 'packages/ui/src/table/columns.ts')).toBe('data-views');
   expect(categoryFor('ui', 'packages/core/dist/engine/color/theme.d.ts')).toBe('core-essentials');
@@ -96,4 +103,25 @@ test('ST-A7: API ordering is code-point deterministic and drift identifies the f
   expect(firstLineDifference('same\nold\nlast\n', 'same\nnew\nlast\n')).toBe(
     'line 2: committed "old"; generated "new"',
   );
+});
+
+// Kanban is a first-class stable package and owns a dedicated generated lookup page.
+test('ST-A8: the canonical API generator registers the complete Kanban package category', () => {
+  expect(PACKAGES.map(({ pkg }) => pkg)).toEqual([
+    'core',
+    'i18n',
+    'ui',
+    'forms',
+    'datagrid',
+    'code-editor',
+    'files',
+    'web',
+    'kanban',
+  ]);
+  expect(CATEGORIES.find(({ slug }) => slug === 'kanban')).toEqual({
+    slug: 'kanban',
+    title: '@jsvision/kanban — responsive terminal task boards',
+    blurb: 'Board and viewport composition, generic sources, cards, themes, localization, and application authority.',
+    importPath: '@jsvision/kanban',
+  });
 });

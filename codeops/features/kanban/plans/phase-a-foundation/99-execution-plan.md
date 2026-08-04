@@ -170,7 +170,11 @@ zero/populated columns, scrolling, equal host behavior, and identity-preserving 
     registry oracle reports two expected failures for the absent sixth package and nine review
     records. The canonical localized-recipe oracle reports the expected missing sixth import and
     generated-copy drift; its source-impact assertion remains green.
-- [ ] 5.1.3 `[spec-author]` Extend immutable canonical API/source-impact/generated-parity specifications before plugin changes — `packages/examples/test/api-reference.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
+- [x] 5.1.3 `[spec-author]` Extend immutable canonical API/source-impact/generated-parity specifications before plugin changes — `packages/examples/test/api-reference.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` ✅ (completed: 2026-08-04 09:29 CEST)
+  - Red evidence: the canonical API oracle reports four expected failures with four passing
+    assertions for the absent Kanban package/category/page and its 229 uncovered exports. The
+    source-impact/plugin oracle reports four expected failures for absent i18n routing, absent
+    dedicated Kanban routing, generated-copy drift, and the not-yet-updated localized recipe.
 - [ ] 5.1.4 Run Phase 5 distribution/docs/i18n/plugin specifications and record expected red failures before registry/documentation changes
 - [ ] 5.2.1 Complete package README/changelog/public examples and rerun the already-green Phase 1 contract-only packed-consumer oracle against the complete Phase A package; run dependency, native-dependency, main/testing tarball runtime/type, and JSDoc checks — `packages/kanban/{README,CHANGELOG}.md`, `packages/kanban/test/package-consumer-contract.spec.test.ts`, `packages/kanban/test/fixtures/packed-consumer/{package,tsconfig}.json`, `packages/kanban/test/fixtures/packed-consumer/index.ts`
 - [ ] 5.2.2 Add Kanban to the official locale registry and add disclosed current digest-bound review evidence for all nine non-English Phase A catalogs — `tools/i18n-locale-exports.json`, `tools/i18n-translation-reviews.json`
