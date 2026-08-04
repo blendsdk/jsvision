@@ -78,7 +78,7 @@ function harness(
     note: (next) => {
       message = next;
     },
-    bumpVersion: bump,
+    publishMutation: bump,
     cellKey: (key, columnId) => `${key}:${columnId}`,
     messages: { pending: 'pending', failed: 'failed', unavailable: 'unavailable' },
   });

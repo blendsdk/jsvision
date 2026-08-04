@@ -389,6 +389,8 @@ export class EditableDataGrid<T> extends Group {
   }
   /** The focusable body — the center panel when frozen, the single body otherwise (backs {@link rows}). */
   private _center!: EditableGridRows<T>;
+  /** Every current body panel, retained so frozen-side focus counts as grid-body focus. */
+  private _panels: EditableGridRows<T>[] = [];
   /**
    * The current header panels, retained (and refreshed on every rebuild) so the keyboard filter opener
    * can resolve a column's owning header — the mouse path captures its header in a closure, but the
@@ -528,7 +530,9 @@ export class EditableDataGrid<T> extends Group {
       bodyFocused: () => this.isBodyFocused(),
       dirty: this.dirty,
       errors: this.errors,
-      bumpVersion: () => this.version.set(this.version() + 1),
+      focusedIndex: this.focused,
+      version: this.version,
+      setReanchoring: (active) => (this.reanchoringDisplay = active),
     });
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
@@ -694,8 +698,8 @@ export class EditableDataGrid<T> extends Group {
       keymap,
       selected: this.selected,
       selectedKeys: this.selection.keys,
-      onToggleRow: (rowIndex) => this.selection.toggleAtRow(rowIndex),
-      onRangeToRow: (rowIndex) => this.selection.rangeToRow(rowIndex),
+      onToggleRow: this.rowRevert.guardInput((rowIndex) => this.selection.toggleAtRow(rowIndex)),
+      onRangeToRow: this.rowRevert.guardInput((rowIndex) => this.selection.rangeToRow(rowIndex)),
       // The opt-in synthetic prefix (checkbox + row-number gutter). The gutter width is sized from the
       // source row count so it does not reflow as a filter shrinks the display.
       prefix: {
@@ -704,7 +708,7 @@ export class EditableDataGrid<T> extends Group {
         rowCount: this.source.length(),
       } satisfies SyntheticPrefix,
       triState: () => this.selection.currentTriState(),
-      onToggleAll: () => this.selection.toggleAll(),
+      onToggleAll: this.rowRevert.guardInput(() => this.selection.toggleAll()),
       indent: this.indent,
       display: this.display,
       rowKey: this.source.rowKey,
@@ -720,30 +724,32 @@ export class EditableDataGrid<T> extends Group {
       freezeRows,
       sort: this.sortKeys,
       filters: this.filters,
-      onHeaderClick: (columnId, additive) => {
+      onHeaderClick: this.rowRevert.guardInput((columnId, additive) => {
         // Snapshot the pre-sort keys before sorting on the down, so onReorderStart can undo it if this
         // press turns into a reorder drag (a plain click keeps the sort; the snapshot is just discarded).
         this.reorderSortSnapshot = this.sortKeys();
         if (additive) this.addSort(columnId);
         else this.sortBy(columnId);
-      },
-      onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
-      onOpenFilter: (globalCol, ev) => this.openFilterFromKeyboard(globalCol, ev),
-      onColumnResize: (id, w) => this.setColumnWidth(id, w),
-      onColumnAutoFit: (id) => this.autoFitColumn(id),
-      onColumnReorder: (from, to) => this.reorderWithinPanel(from, to),
-      onReorderStart: () => {
+      }),
+      onFunnelClick: this.rowRevert.guardInput((columnId, anchor, ev, header) =>
+        this.openFilterPopup(columnId, anchor, ev, header),
+      ),
+      onOpenFilter: this.rowRevert.guardInput((globalCol, ev) => this.openFilterFromKeyboard(globalCol, ev)),
+      onColumnResize: this.rowRevert.guardInput((id, width) => this.setColumnWidth(id, width)),
+      onColumnAutoFit: this.rowRevert.guardInput((id) => this.autoFitColumn(id)),
+      onColumnReorder: this.rowRevert.guardInput((from, to) => this.reorderWithinPanel(from, to)),
+      onReorderStart: this.rowRevert.guardInput(() => {
         // A press became a drag → undo the sort the down applied, so a reorder never also sorts.
         if (this.reorderSortSnapshot !== null) {
           this.applySort(this.reorderSortSnapshot);
           this.reorderSortSnapshot = null;
         }
-      },
+      }),
       quickFilter: opts.quickFilter === true,
-      onQuickFilter: (columnId, text) =>
-        text.length === 0
-          ? this.clearFilter(columnId)
-          : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
+      onQuickFilter: this.rowRevert.guardInput((columnId, text) => {
+        if (text.length === 0) this.clearFilter(columnId);
+        else this.setFilter(columnId, { kind: 'text', op: 'contains', value: text });
+      }),
       overlay: this.overlay,
       onCommit: opts.onCommit,
       beforeSave: opts.beforeSave,
@@ -780,6 +786,7 @@ export class EditableDataGrid<T> extends Group {
     this.maybeWarnOverFreeze();
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
     this._center = parts.center;
+    this._panels = parts.panels;
     this._inner = parts.inner;
     this._headers = parts.headers;
     this._lifecycleSwap = parts.lifecycleSwap;
@@ -876,6 +883,7 @@ export class EditableDataGrid<T> extends Group {
     const old = this._inner;
     this._inner = parts.inner;
     this._center = parts.center;
+    this._panels = parts.panels;
     this._headers = parts.headers; // refresh: the old headers are unmounted by the swap below, so the keyboard opener must not hold a stale reference
     this._lifecycleSwap = parts.lifecycleSwap; // the new inner carries a fresh swap host
     this.add(parts.inner); // new inner present before the old is removed → focus heals into it
@@ -1704,7 +1712,7 @@ export class EditableDataGrid<T> extends Group {
       }
     } finally {
       this.reanchoringDisplay = false;
-      this.reconcileRowRevertFocus();
+      this.rowRevert.reconcileFocused();
     }
   }
 
@@ -1731,15 +1739,8 @@ export class EditableDataGrid<T> extends Group {
       }
     } finally {
       this.reanchoringDisplay = false;
-      this.reconcileRowRevertFocus();
+      this.rowRevert.reconcileFocused();
     }
-  }
-
-  /** Reconcile row-revert ownership after an atomic display/cursor re-anchor has completed. */
-  private reconcileRowRevertFocus(): void {
-    const row = this.focusedRow();
-    const rowKey = row === undefined ? undefined : this.source.rowKey(row);
-    this.rowRevert.reconcile(rowKey, row);
   }
 
   /**
@@ -1795,7 +1796,7 @@ export class EditableDataGrid<T> extends Group {
 
   /** Whether the grid body currently holds keyboard focus (used by the Tab-navigation helper). */
   isBodyFocused(): boolean {
-    return this._center.state.focused;
+    return this._panels.some((panel) => panel.state.focused);
   }
 
   /**

@@ -136,7 +136,7 @@ test('a stale attempt detaches only its presentation and compensates only its ca
     note: (message) => {
       active = message;
     },
-    bumpVersion: vi.fn(),
+    publishMutation: vi.fn(),
     cellKey: (key, columnId) => `${key}:${columnId}`,
     messages: { pending: 'pending', failed: 'failed', unavailable: 'unavailable' },
   });

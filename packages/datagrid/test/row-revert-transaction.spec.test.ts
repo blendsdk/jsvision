@@ -5,19 +5,22 @@
  */
 import { expect, test, vi } from 'vitest';
 import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
-import type { DispatchEvent } from '@jsvision/ui';
+import type { DispatchEvent, View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
+import type { GridDataSource } from '../src/data-source.js';
+import { EditableGridRows } from '../src/editable-grid-rows.js';
 import { PARSE_FAILED } from '../src/format.js';
 import { EditableDataGrid } from '../src/grid.js';
 import type { EditableDataGridOptions } from '../src/grid.js';
+import { QuickFilterRow } from '../src/quick-filter-row.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
-const key = (name: string, mods: { alt?: boolean; shift?: boolean } = {}) => ({
+const key = (name: string, mods: { alt?: boolean; ctrl?: boolean; shift?: boolean } = {}) => ({
   type: 'key' as const,
   key: name,
-  ctrl: false,
+  ctrl: mods.ctrl ?? false,
   alt: mods.alt ?? false,
   shift: mods.shift ?? false,
 });
@@ -67,11 +70,14 @@ class EscapeHost extends Group {
   }
 }
 
-function mount(options: FutureOptions = {}) {
-  const rows = signal<Row[]>([
+function mount(
+  options: FutureOptions = {},
+  initial: Row[] = [
     { id: 1, start: 1, end: 9 },
     { id: 2, start: 2, end: 30 },
-  ]);
+  ],
+) {
+  const rows = signal<Row[]>(initial);
   const gridOptions: EditableDataGridOptions<Row> & FutureOptions = {
     columns: [START, END, ID],
     source: fromRows(rows, { rowKey: (row) => row.id }),
@@ -133,6 +139,19 @@ function deferred() {
     resolve = settle;
   });
   return { callback: vi.fn<RevertDecision>(() => promise), resolve };
+}
+
+/** Return every view below one mounted root so a test can target generated frozen/filter surfaces. */
+function descendants(view: View): View[] {
+  const found: View[] = [];
+  const pending: View[] = [view];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === undefined) continue;
+    found.push(current);
+    if (current instanceof Group) pending.push(...current.children);
+  }
+  return found;
 }
 
 test('should deliver one frozen first-commit-ordered transaction after applying every baseline', async () => {
@@ -210,6 +229,134 @@ test('should serialize competing grid actions while a rollback decision is pendi
   await tick();
   expect(context.grid.activeMessage()).toBeNull();
   expect(dirtyMarkers(context)).toBe(0);
+});
+
+test('should serialize header sorting, funnel opening, and quick filtering while rollback is pending', async () => {
+  const pending = deferred();
+  const filterableStart = { ...editable('start'), showFunnel: true };
+  const context = mount({ columns: [filterableStart, END, ID], quickFilter: true, onRevertRow: pending.callback });
+  await trapTwo(context);
+  await pressEscape(context);
+
+  context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 2, y: 1 });
+  context.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 8, y: 1 });
+  const quickFilter = descendants(context.grid).find(
+    (view): view is QuickFilterRow<Row> => view instanceof QuickFilterRow,
+  );
+  expect(quickFilter).toBeDefined();
+  const input = quickFilter?.children.find((view): view is Input => view instanceof Input);
+  expect(input).toBeDefined();
+  input?.getValueSignal().set('1');
+  await tick();
+
+  expect(context.grid.sort()).toEqual([]);
+  expect(context.grid.filterModel().size).toBe(0);
+  expect(context.loop.getFocused()).toBe(context.grid.rows);
+  expect(context.grid.activeMessage()).toBe('Reverting row…');
+
+  pending.resolve(true);
+  await tick();
+});
+
+test.each([true, false])(
+  'should settle a windowed row revert without scanning or whole-display operations when accepted is %s',
+  async (accepted) => {
+    const first: Row = { id: 1, start: 1, end: 9 };
+    const second: Row = { id: 2, start: 2, end: 30 };
+    const records = new Map<number, Row>([
+      [99_998, first],
+      [99_999, second],
+    ]);
+    let rowReads = 0;
+    const source: GridDataSource<Row> = {
+      rowKey: (row) => row.id,
+      length: () => 100_000,
+      rowAt: (index) => {
+        rowReads += 1;
+        return records.get(index);
+      },
+      ensureRange: () => undefined,
+      setSort: () => undefined,
+      setFilter: () => undefined,
+    };
+    const callback = vi.fn<RevertDecision>(() => accepted);
+    const context = mount({ source, onRevertRow: callback }, [first, second]);
+    context.loop.dispatch(key('end', { ctrl: true }));
+    context.loop.dispatch(key('up'));
+    context.loop.dispatch(key('left'));
+    context.loop.dispatch(key('left'));
+    await editNext(context, '10');
+    context.loop.dispatch(key('f2'));
+    setEditor(context.loop, '8');
+    context.loop.dispatch(key('enter'));
+    await tick();
+    expect(context.grid.focusedKey()).toBe(1);
+    rowReads = 0;
+    await pressEscape(context);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(first).toMatchObject(accepted ? { start: 1, end: 9 } : { start: 10, end: 8 });
+    expect(context.grid.activeMessage()).toBe(accepted ? null : 'Could not revert row changes');
+    // Event dispatch, focus reconciliation, and reactive repaint may each resolve the loaded row, but
+    // settlement must stay bounded rather than scale with the source's total row count.
+    expect(rowReads).toBeLessThanOrEqual(64);
+  },
+);
+
+test('should keep a client-sorted row focused through accepted and vetoed revert stages', async () => {
+  const decisions = [false, true];
+  const callback = vi.fn<RevertDecision>(() => decisions.shift() ?? true);
+  const context = mount({ onRevertRow: callback });
+  await trapTwo(context);
+  context.grid.sortBy('start', 'desc');
+  expect(context.grid.focusedKey()).toBe(1);
+
+  await pressEscape(context);
+  expect(context.rows()[0]).toMatchObject({ start: 10, end: 8 });
+  expect(context.grid.focusedKey()).toBe(1);
+
+  await pressEscape(context);
+  expect(context.rows()[0]).toMatchObject({ start: 1, end: 9 });
+  expect(context.grid.displayedRows().map((row) => row.id)).toEqual([2, 1]);
+  expect(context.grid.focusedKey()).toBe(1);
+});
+
+test.each([
+  ['left', true],
+  ['left', false],
+  ['right', true],
+  ['right', false],
+] as const)('should settle from the %s frozen body panel when accepted is %s', async (side, accepted) => {
+  const callback = vi.fn<RevertDecision>(() => accepted);
+  const context = mount({
+    columns: [START, ID, END],
+    freezeLeft: ['start'],
+    freezeRight: ['end'],
+    onRevertRow: callback,
+  });
+  const panels = descendants(context.grid)
+    .filter((view): view is EditableGridRows<Row> => view instanceof EditableGridRows)
+    .sort((left, right) => left.columnOffset - right.columnOffset);
+  expect(panels).toHaveLength(3);
+  context.loop.focusView(panels[0]);
+  if (side === 'right') {
+    context.loop.dispatch(key('end', { ctrl: true }));
+    context.loop.dispatch(key('up'));
+  }
+
+  context.loop.dispatch(key('f2'));
+  setEditor(context.loop, side === 'left' ? '10' : '0');
+  context.loop.dispatch(key('enter'));
+  await tick();
+  expect(context.grid.activeMessage()).not.toBeNull();
+  context.loop.dispatch(key('escape'));
+  await tick();
+
+  expect(callback).toHaveBeenCalledTimes(1);
+  expect(context.rows()[0]).toMatchObject(
+    accepted ? { start: 1, end: 9 } : side === 'left' ? { start: 10, end: 9 } : { start: 1, end: 0 },
+  );
+  expect(context.grid.activeMessage()).toBe(accepted ? null : 'Could not revert row changes');
 });
 
 test('should compensate every cell and retain a trapped retry when the callback vetoes', async () => {

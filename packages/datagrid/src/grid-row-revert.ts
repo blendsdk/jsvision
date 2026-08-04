@@ -7,6 +7,7 @@
  * hint rendered in the message band.
  */
 import type { I18n } from '@jsvision/i18n';
+import type { Signal } from '@jsvision/ui';
 import type { OnRevertRow } from './commit.js';
 import type { GridDataSource } from './data-source.js';
 import type { DirtyRegistry } from './editing.js';
@@ -14,8 +15,9 @@ import { cellKey } from './editing.js';
 import type { ErrorRegistry } from './error-registry.js';
 import { DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
 import { createRowRevertController, createRowRevertTransactionController } from './row-revert.js';
-import type { AcceptedCellCommit } from './row-revert.js';
+import type { AcceptedCellCommit, RowRevertTransactionController } from './row-revert.js';
 import type { Key } from './selection.js';
+import { isWindowed } from './windowing.js';
 
 /** Live container dependencies needed by the row-revert integration. */
 interface GridRowRevertDeps<T> {
@@ -30,11 +32,15 @@ interface GridRowRevertDeps<T> {
   readonly bodyFocused: () => boolean;
   readonly dirty: DirtyRegistry;
   readonly errors: ErrorRegistry;
-  readonly bumpVersion: () => void;
+  readonly focusedIndex: Signal<number>;
+  readonly version: Signal<number>;
+  readonly setReanchoring: (active: boolean) => void;
 }
 
 /** Thin surface consumed by the grid constructor, row gate, body, and mutation methods. */
 export interface GridRowRevert<T> {
+  /** Wrap a grid-owned input sink so it becomes inert while a transaction is pending. */
+  guardInput<Args extends readonly unknown[]>(action: (...args: Args) => void): (...args: Args) => void;
   /** Record a successfully accepted editable-cell commit. */
   recordCommit(change: AcceptedCellCommit<T>): void;
   /** Whether the exact focused visit contains accepted edits. */
@@ -51,6 +57,8 @@ export interface GridRowRevert<T> {
   isPending(): boolean;
   /** Reconcile session and presentation ownership with the newly focused exact row. */
   reconcile(rowKey: Key | undefined, row: T | undefined): void;
+  /** Reconcile ownership from the adapter's current focused-row dependencies. */
+  reconcileFocused(): void;
   /** Invalidate selected keys before row mutation. */
   invalidate(keys: ReadonlySet<Key>): void;
   /** Dispose session and transaction ownership. */
@@ -78,13 +86,40 @@ function text(i18n: I18n, key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): 
 /** Create the Data Grid adapter around the view-free row-revert controllers. */
 export function createGridRowRevert<T>(deps: GridRowRevertDeps<T>): GridRowRevert<T> {
   const sessions = createRowRevertController<T>(deps.enabled);
+  const windowed = isWindowed(deps.source);
+  const focusedExactRow = (key: Key): T | undefined => {
+    const row = deps.focusedRow();
+    return row !== undefined && deps.source.rowKey(row) === key ? row : undefined;
+  };
   let trapped: { readonly raw: string; readonly display: string } | undefined;
-  const transaction = createRowRevertTransactionController({
+  const reconcileFocused = (): void => {
+    const row = deps.focusedRow();
+    const rowKey = row === undefined ? undefined : deps.source.rowKey(row);
+    transaction.reconcile(rowKey, row);
+    sessions.reconcileFocus(rowKey, row);
+  };
+  const publishMutation = (rowKey: Key, row: T, reanchor: boolean): void => {
+    deps.setReanchoring(true);
+    try {
+      deps.version.set(deps.version() + 1);
+      if (!reanchor || windowed) return;
+      const after = deps.display();
+      const index = after.findIndex((candidate) => deps.source.rowKey(candidate) === rowKey && candidate === row);
+      if (index >= 0) deps.focusedIndex.set(index);
+    } finally {
+      deps.setReanchoring(false);
+      reconcileFocused();
+    }
+  };
+  const transaction: RowRevertTransactionController<T> = createRowRevertTransactionController({
     sessions,
     onRevertRow: deps.onRevertRow,
     internalAllowed: deps.internalAllowed,
-    sourceRow: (key) => sourceRow(deps.source, key),
-    displayedRow: (key) => deps.display().find((row) => deps.source.rowKey(row) === key),
+    // A windowed source cannot enumerate unloaded rows. While an attempt is live, its exact row must
+    // still be the focused loaded row; after focus changes, settlement only needs to detach its UI.
+    sourceRow: (key) => (windowed ? focusedExactRow(key) : sourceRow(deps.source, key)),
+    displayedRow: (key) =>
+      windowed ? focusedExactRow(key) : deps.display().find((row) => deps.source.rowKey(row) === key),
     focusedRow: deps.focusedRow,
     focusedKey: deps.focusedKey,
     bodyFocused: deps.bodyFocused,
@@ -93,7 +128,7 @@ export function createGridRowRevert<T>(deps: GridRowRevertDeps<T>): GridRowRever
     clearError: deps.errors.clear,
     activeMessage: deps.errors.active,
     note: deps.errors.note,
-    bumpVersion: deps.bumpVersion,
+    publishMutation,
     cellKey,
     messages: {
       pending: text(deps.i18n, 'datagrid.revert.pending'),
@@ -103,6 +138,11 @@ export function createGridRowRevert<T>(deps: GridRowRevertDeps<T>): GridRowRever
   });
 
   return {
+    guardInput:
+      (action) =>
+      (...args): void => {
+        if (!transaction.isPending()) action(...args);
+      },
     recordCommit: sessions.recordCommit,
     isTouched: sessions.isTouched,
     markTrapped: sessions.markTrapped,
@@ -120,6 +160,7 @@ export function createGridRowRevert<T>(deps: GridRowRevertDeps<T>): GridRowRever
       sessions.reconcileFocus(rowKey, row);
       if (rowKey === undefined || row === undefined) trapped = undefined;
     },
+    reconcileFocused,
     invalidate(keys): void {
       transaction.invalidate(keys);
       sessions.invalidate(keys);

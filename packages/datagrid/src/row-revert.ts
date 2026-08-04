@@ -134,7 +134,8 @@ interface RowRevertTransactionDeps<T> {
   readonly clearError: (key: string) => void;
   readonly activeMessage: () => string | null;
   readonly note: (message: string | null) => void;
-  readonly bumpVersion: () => void;
+  /** Publish one mutation stage, optionally preserving the captured row under the live cursor. */
+  readonly publishMutation: (rowKey: Key, row: T, reanchor: boolean) => void;
   readonly cellKey: (rowKey: Key, columnId: string) => string;
   readonly messages: {
     readonly pending: string;
@@ -244,12 +245,12 @@ export function createRowRevertTransactionController<T>(
     // A custom non-reactive source can replace a row without invalidating the cached display. Refresh
     // exactly once before judging focus/session ownership so settlement never attaches to the old view.
     const identityChanged = sourceIdentityChanged(attempt);
-    if (identityChanged) deps.bumpVersion();
+    if (identityChanged) deps.publishMutation(attempt.rowKey, attempt.row, false);
 
     if (!live(attempt)) {
       // A focus-only stale veto still changed a row that remains visible. Repaint that compensation,
       // while an identity-change repaint above already covers a newly discovered replacement.
-      if (!accepted && !identityChanged && deps.sourceRow(attempt.rowKey) === attempt.row) deps.bumpVersion();
+      if (!accepted && !identityChanged) deps.publishMutation(attempt.rowKey, attempt.row, false);
       detach(attempt);
       deps.sessions.finish(attempt, 'invalidated');
       return;
@@ -264,7 +265,7 @@ export function createRowRevertTransactionController<T>(
 
     // Compensation is its own coherent mutation stage and therefore receives one repaint. A broken
     // recovery setter makes the captured journal untrustworthy, so it cannot remain retryable.
-    deps.bumpVersion();
+    deps.publishMutation(attempt.rowKey, attempt.row, true);
     detach(attempt);
     deps.sessions.finish(attempt, compensationComplete ? 'rejected' : 'invalidated');
     deps.note(deps.messages.failed);
@@ -298,7 +299,7 @@ export function createRowRevertTransactionController<T>(
       } catch {
         compensate(attempt, attempted);
         if (!disposed) {
-          deps.bumpVersion();
+          deps.publishMutation(attempt.rowKey, attempt.row, true);
           detach(attempt);
           deps.sessions.finish(attempt, 'invalidated');
           deps.note(deps.messages.failed);
@@ -306,7 +307,7 @@ export function createRowRevertTransactionController<T>(
         return true;
       }
 
-      deps.bumpVersion();
+      deps.publishMutation(attempt.rowKey, attempt.row, true);
       void settle(attempt);
       return true;
     },
