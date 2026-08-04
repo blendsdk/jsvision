@@ -24,6 +24,8 @@ export interface DataGridScenarioTargets {
   readonly openPersonalization?: () => void;
   /** Current result of the real personalization modal lifecycle. */
   readonly personalizationState?: Signal<string>;
+  /** One-shot persistence decision used by the validation laboratory's Alt+V recovery path. */
+  readonly vetoNextRevert?: Signal<boolean>;
 }
 
 /** Scenario-specific initial evidence required by the documentation contract. */
@@ -66,7 +68,12 @@ function initialValues(scenario: DataGridLabScenario): Record<string, string | n
     case 'dirty-commit':
       return { ...shared, 'dirty-cell-count': 0 };
     case 'validation':
-      return { ...shared, 'validation-status': 'valid' };
+      return {
+        ...shared,
+        'validation-status': 'valid',
+        'cell-text': 'Start 1 · End 9',
+        'cursor-cell': 'r1:start',
+      };
     case 'lifecycle-states':
       return { ...shared, 'lifecycle-state': 'ready' };
     case 'aggregates':
@@ -103,13 +110,24 @@ function shortcut(event: AppEvent): string | undefined {
  * state rather than inferred private grid internals.
  */
 export function createDataGridScenarioController(targets: DataGridScenarioTargets): DataGridLabProbe {
-  const { scenario, grid, rows, status, lifecycle, windowed, openPersonalization, personalizationState } = targets;
+  const {
+    scenario,
+    grid,
+    rows,
+    status,
+    lifecycle,
+    windowed,
+    openPersonalization,
+    personalizationState,
+    vetoNextRevert,
+  } = targets;
   let editorStep = 0;
   let structuredEditorStep = 0;
   let selectionStep = 0;
   let navigationStep = 0;
   let lifecycleStep = 0;
   let exportText = '';
+  let validationCursor = 'r1:start';
   const probe = new DataGridLabProbe(initialValues(scenario), (event) => {
     const chord = shortcut(event);
     if (event.type === 'paste') {
@@ -121,6 +139,26 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
         probe.set('status-text', status());
       }
       return scenario === 'quick-filter';
+    }
+
+    if (scenario === 'validation') {
+      if (chord === 'alt+v') {
+        vetoNextRevert?.set(true);
+        status.set('Alt+V veto armed · Escape will keep edits for retry');
+        return true;
+      }
+      if (chord === '9') {
+        validationCursor = 'r1:start';
+      } else if (chord === 'tab') {
+        validationCursor = 'r1:end';
+      } else if (chord === 'down') {
+        if (status().includes('restored')) {
+          validationCursor = 'r2:end';
+        } else {
+          validationCursor = 'r1:end';
+          status.set('trapped · End must be after Start · Esc reverts row changes');
+        }
+      }
     }
 
     if (scenario === 'quick-start' && chord === 'alt+g') {
@@ -357,11 +395,14 @@ export function createDataGridScenarioController(targets: DataGridScenarioTarget
     probe.bindProbe('status-text', () => status());
   }
   if (scenario === 'validation') {
+    probe.bindProbe('cell-text', () => `Start ${String(rows()[0]?.start ?? '')} · End ${String(rows()[0]?.end ?? '')}`);
+    probe.bindProbe('cursor-cell', () => (grid.activeMessage() === null ? validationCursor : 'r1:end'));
     probe.bindProbe('validation-status', () => {
       const message = grid.activeMessage();
       if (message !== null) return message;
       return status().includes('accepted') ? status() : 'valid';
     });
+    probe.bindProbe('status-text', () => status());
   }
   if (scenario === 'variants-personalization' && personalizationState !== undefined) {
     probe.bindProbe('personalize-state', () => personalizationState());

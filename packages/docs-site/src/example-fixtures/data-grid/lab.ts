@@ -1,11 +1,13 @@
-import { Button, DataGrid, Group, Input, Text, at, signal } from '@jsvision/ui';
-import type { Application, Column, DispatchEvent, Signal, SortState } from '@jsvision/ui';
+import { Button, DataGrid, Group, Input, Text, at, createKeymap, signal } from '@jsvision/ui';
+import type { Application, Column, DispatchEvent, Keymap, Signal, SortState } from '@jsvision/ui';
 import {
   EditableDataGrid,
   column,
   createMemoryVariantStore,
   fromReactiveRows,
   fromRows,
+  gridKeymap,
+  installGridNavigation,
   personalizeGrid,
 } from '@jsvision/datagrid';
 import type { GridColumn, GridDataSource, GridStatus } from '@jsvision/datagrid';
@@ -69,6 +71,13 @@ const CONTENT_WIDTH = 70;
 const CONTENT_HEIGHT = 16;
 const GRID_WIDTH = 50;
 const GRID_HEIGHT = 10;
+const VALIDATION_VETO_COMMAND = 'data-grid.validation.arm-veto';
+const validationVetoKeymap = createKeymap({ 'alt+v': VALIDATION_VETO_COMMAND });
+
+/** Add the validation veto chord without losing the Data Grid's application-level Tab traversal. */
+const validationKeymap: Keymap = {
+  lookup: (event) => validationVetoKeymap.lookup(event) ?? gridKeymap.lookup(event),
+};
 
 /** Small public-seam custom editor used by the rating laboratory. */
 class RatingEditor extends Input {
@@ -142,6 +151,24 @@ function createColumns(scenario: DataGridLabScenario): GridColumn<DataGridLabRow
     cellStyle: scenario === 'rendering' ? (value) => (value >= 300 ? 'gridInvalid' : 'listNormal') : undefined,
     showFunnel: scenario === 'advanced-filter',
   });
+  if (scenario === 'validation') {
+    const interval = (id: 'start' | 'end', title: string) =>
+      column<DataGridLabRow, string>({
+        id,
+        title,
+        value: (row) => String(row[id] ?? 0),
+        parse: (text) => text,
+        set: (row, text) => {
+          const value = Number(text);
+          // The shared save-gate exercise also submits non-numeric text through the first column. Keep
+          // the interval unchanged in that compatibility path while still running the public save gate.
+          if (Number.isFinite(value)) row[id] = value;
+        },
+        editor: { kind: 'text' },
+        width: 10,
+      });
+    return [interval('start', 'Start'), interval('end', 'End'), amount];
+  }
   const active = column<DataGridLabRow, boolean>({
     id: 'active',
     title: 'Active',
@@ -274,6 +301,12 @@ function createScenarioRows(scenario: DataGridLabScenario): DataGridLabRow[] {
   }
   if (scenario === 'master-detail') {
     return base.slice(0, 3).map((row, index) => ({ ...row, id: `customer-${index + 1}` }));
+  }
+  if (scenario === 'validation') {
+    return base.map((row, index) => {
+      const start = index * 2 + 1;
+      return { ...row, start, end: start + 8 };
+    });
   }
   if (scenario === 'typed-columns' || scenario === 'rendering') base[0]!.amount = 1_250.5;
   return base;
@@ -746,14 +779,18 @@ function reflowResizableLab(
  * teaching shell: objective, grid, focused actions, observable state, and keyboard help.
  */
 export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDefinition): Application {
-  const app = demoApp(ctx, { themeMenu: true });
+  const app = demoApp(ctx, {
+    themeMenu: true,
+    keymap: definition.scenario === 'validation' ? validationKeymap : gridKeymap,
+  });
   const initialRows = createScenarioRows(definition.scenario);
   const rows = signal(initialRows);
-  const status = signal(definition.objective);
+  const status = signal(definition.scenario === 'validation' ? 'ready' : definition.objective);
   const lifecycle = signal<GridStatus>('ready');
   const columns = createColumns(definition.scenario);
   const sourceState = createSource(definition.scenario, rows);
   const personalizationState = signal('closed');
+  const vetoNextRevert = signal(false);
   const personalizationStore = createMemoryVariantStore();
   let nextKey = 100;
   const grid = new EditableDataGrid<DataGridLabRow>({
@@ -778,16 +815,31 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
         : undefined,
     beforeSave:
       definition.scenario === 'validation'
-        ? (commit) => {
-            const accepted = commit.row.name.trim() !== '';
-            status.set(accepted ? 'row accepted · save accepted' : 'row rejected · name required');
-            return accepted;
+        ? () => {
+            status.set('row accepted · save accepted');
+            return true;
           }
         : undefined,
     validateRow:
       definition.scenario === 'validation'
         ? (row) =>
-            row.amount >= 0 ? { ok: true } : { ok: false, message: 'Row total cannot be negative', field: 'amount' }
+            (row.end ?? 0) > (row.start ?? 0)
+              ? { ok: true }
+              : { ok: false, message: 'End must be after Start', field: 'end' }
+        : undefined,
+    onRevertRow:
+      definition.scenario === 'validation'
+        ? async () => {
+            status.set('trapped → pending · controls temporarily inert');
+            await Promise.resolve();
+            if (vetoNextRevert()) {
+              vetoNextRevert.set(false);
+              status.set('trapped → pending → vetoed · Escape retries');
+              return false;
+            }
+            status.set('trapped → pending → restored · row released');
+            return true;
+          }
         : undefined,
     footer:
       definition.scenario === 'aggregates'
@@ -797,6 +849,14 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
             widgets: [new Text(() => status())],
           }
         : undefined,
+  });
+  const removeVetoCommand = app.loop.onCommand(VALIDATION_VETO_COMMAND, () => {
+    if (definition.scenario !== 'validation') return;
+    vetoNextRevert.set(true);
+    status.set('Alt+V veto armed · Escape will keep edits for retry');
+    // A successful recovery leaves the cursor on the gate's End field. Re-arm the exercise from Start
+    // so the same live laboratory can demonstrate the veto path without rebuilding the application.
+    void grid.prevCell();
   });
   const openPersonalization = (): void => {
     personalizationState.set('open');
@@ -815,6 +875,7 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
     windowed: sourceState.windowed,
     openPersonalization,
     personalizationState,
+    vetoNextRevert,
   });
 
   const content = new Group();
@@ -868,8 +929,12 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
     });
   }
   const actionButtons = addActions(content, actions);
-  const state = new Text(() => `State: ${status()}`);
-  const instructions = new Text('Click ↕ to restore · drag corners after restore · Alt+hotkeys act');
+  const state = new Text(() => `${definition.scenario === 'validation' ? 'Status' : 'State'}: ${status()}`);
+  const instructions = new Text(
+    definition.scenario === 'validation'
+      ? 'Enter edits · Tab commits · ↑/↓ tests leave · Esc reverts · Alt+V veto'
+      : 'Click ↕ to restore · drag corners after restore · Alt+hotkeys act',
+  );
   content.add(at(state, 0, 13, CONTENT_WIDTH, 2));
   content.add(at(instructions, 0, 15, CONTENT_WIDTH, 1));
   const dialog = new Template1Dialog({
@@ -891,6 +956,11 @@ export function buildDataGridLab(ctx: ExampleContext, definition: DataGridLabDef
       ),
   });
   dialog.add(at(content, 1, 1, CONTENT_WIDTH, CONTENT_HEIGHT));
+  const uninstallNavigation = installGridNavigation(app.loop, grid);
+  dialog.onMount(() => {
+    dialog.onCleanup(uninstallNavigation);
+    dialog.onCleanup(removeVetoCommand);
+  });
   app.desktop.addWindow(dialog);
   app.loop.focusView(grid.rows);
   return app;

@@ -53,8 +53,11 @@ export function key(keyName: string, mods: Partial<Pick<KeyEvent, 'ctrl' | 'alt'
  */
 export function dispatchExampleAction(app: Application, action: ExampleAction): void {
   if (action.kind === 'key') {
+    // Behavior contracts use familiar browser-style Arrow names, while the decoded JSVision event
+    // vocabulary uses the shorter terminal names consumed by widget keymaps.
+    const keyName = action.key.toLowerCase().replace(/^arrow/, '');
     app.loop.dispatch(
-      key(action.key, {
+      key(keyName, {
         alt: action.modifiers.includes('Alt'),
         ctrl: action.modifiers.includes('Ctrl'),
         shift: action.modifiers.includes('Shift'),
