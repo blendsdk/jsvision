@@ -1,4 +1,5 @@
 # Translated layout and multilingual QA implementation plan
+> **Implements**: i18n/REQ-LAYOUT-QA
 
 > **Feature**: Shared translated-control geometry and multilingual QA kitchen sink
 > **Status**: Planning Complete

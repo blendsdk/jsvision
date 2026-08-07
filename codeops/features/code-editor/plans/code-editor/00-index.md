@@ -3,7 +3,7 @@
 > **Feature**: Terminal-native source-code editor and window
 > **Status**: Planning Complete
 > **Created**: 2026-07-23
-> **Implements**: code-editor/SET-REQUIREMENTS (RD-01 through RD-06)
+> **Implements**: code-editor/RD-01, code-editor/RD-06
 > **CodeOps Artifact Schema**: 1
 
 ## Overview

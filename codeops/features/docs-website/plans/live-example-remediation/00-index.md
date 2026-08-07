@@ -1,4 +1,5 @@
 # Plan: Live-Example Remediation
+> **Implements**: docs-website/RD-03
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
