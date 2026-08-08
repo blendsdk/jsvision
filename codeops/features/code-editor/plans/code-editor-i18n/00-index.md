@@ -1,4 +1,5 @@
 # Code Editor internationalization implementation plan
+> **Implements**: code-editor/T-05
 
 > **Feature**: Explicit `@jsvision/i18n` integration and localized Code Editor presentation
 > **Status**: Planning Complete

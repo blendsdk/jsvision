@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/docs-site",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "private": true,
   "description": "JSVision documentation & showcase website (VitePress). Dev-only; never shipped.",
   "license": "MIT",
@@ -26,13 +26,13 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@jsvision/code-editor": "1.5.2",
-    "@jsvision/core": "1.5.2",
-    "@jsvision/datagrid": "1.5.2",
-    "@jsvision/files": "1.5.2",
-    "@jsvision/forms": "1.5.2",
-    "@jsvision/ui": "1.5.2",
-    "@jsvision/web": "1.5.2",
+    "@jsvision/code-editor": "1.5.3",
+    "@jsvision/core": "1.5.3",
+    "@jsvision/datagrid": "1.5.3",
+    "@jsvision/files": "1.5.3",
+    "@jsvision/forms": "1.5.3",
+    "@jsvision/ui": "1.5.3",
+    "@jsvision/web": "1.5.3",
     "@types/node": "^26.1.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/test-utils": "^2.4.6",

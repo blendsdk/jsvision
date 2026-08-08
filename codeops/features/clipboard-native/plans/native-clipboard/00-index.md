@@ -1,7 +1,7 @@
 # Native Clipboard Implementation Plan
 
 > **Feature**: Optional host-neutral native plain-text clipboard integration
-> **Implements**: `clipboard-native/RD-01`, `clipboard-native/RD-02`, `clipboard-native/RD-03`
+> **Implements**: clipboard-native/RD-01, clipboard-native/RD-02, clipboard-native/RD-03
 > **Status**: Implementation Complete
 > **Created**: 2026-07-28
 > **Source**: [GitHub issue #191](https://github.com/blendsdk/jsvision/issues/191)
