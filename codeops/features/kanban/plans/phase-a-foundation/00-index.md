@@ -5,7 +5,7 @@
 > **Created**: 2026-08-03
 > **CodeOps Artifact Schema**: 1
 >
-> **Implements**: kanban/RD-01, kanban/RD-02, kanban/RD-03, kanban/SPEC-A-CARD-SLICE, kanban/SPEC-A-COLUMN-SLICE
+> **Implements**: kanban/RD-01, kanban/RD-02, kanban/RD-03
 
 ## Overview
 

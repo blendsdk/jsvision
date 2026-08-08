@@ -3,7 +3,7 @@
 > **Feature**: Complete the visually rich, structured, keyboard-and-pointer-navigable Kanban core
 > **Status**: Executing
 > **Created**: 2026-08-04
-> **Implements**: independently executable slices of kanban/RD-04, kanban/RD-05, kanban/RD-06
+> **Implements**: kanban/RD-04, kanban/RD-05, kanban/RD-06
 > **CodeOps Artifact Schema**: 1
 
 ## Overview

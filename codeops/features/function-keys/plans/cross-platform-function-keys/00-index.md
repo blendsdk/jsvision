@@ -1,4 +1,5 @@
 # Cross-Platform Function Keys Implementation Plan
+> **Implements**: function-keys/REQ-CROSS
 
 > **Feature**: Canonical F1–F12 input across native terminals and xterm.js, with portable number-row fallbacks
 > **Status**: Planning Complete
