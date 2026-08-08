@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-30
-> **Features**: 0 / 2 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime` and `docs-website` active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
+> **Last Updated**: 2026-08-03
+> **Features**: 0 / 3 done — `bun-runtime`, `docs-website`, and `kanban` are active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Eight completed features were archived on 2026-07-21. Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 live on their archived roadmaps
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -15,6 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done · RD-05 🔄 executing (187/193 tasks) · RD-08 🔄 executing (246/246 Guide tasks complete; separate Reference/trust planning remains) · RD-04/07/09/10 ✏️ drafted | 4/10 RDs | 🔄 | 2026-07-30 |
+| kanban | [→](features/kanban/00-roadmap.md) | Phase A 📋 planned for RD-01–03 plus RD-04/05 foundation slices; RD-04–15 remain 🔎 preflighted | 0/15 RDs | 🔄 | 2026-08-03 |
 
 ## Archived
 
