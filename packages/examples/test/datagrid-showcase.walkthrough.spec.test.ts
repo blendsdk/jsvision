@@ -12,7 +12,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities, createRoot, Group } from '@jsvision/ui';
+import { resolveCapabilities, createRoot, Group, Input } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { EditableDataGrid } from '@jsvision/datagrid';
 import { createDatagridShowcase, SIDEBAR_W } from '../datagrid-showcase/shell.js';
@@ -58,6 +58,39 @@ function containsInstance(view: View, Ctor: new (...args: never[]) => unknown): 
     for (const child of view.children) if (containsInstance(child, Ctor)) return true;
   }
   return false;
+}
+
+/** Find the first real editable grid in a mounted showcase story. */
+function editableGridIn(view: View): EditableDataGrid<unknown> | undefined {
+  if (view instanceof EditableDataGrid) return view;
+  if (view instanceof Group) {
+    for (const child of view.children) {
+      const found = editableGridIn(child);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+const showcaseKey = (key: string, mods: { alt?: boolean } = {}) => ({
+  type: 'key' as const,
+  key,
+  ctrl: false,
+  alt: mods.alt ?? false,
+  shift: false,
+});
+const settleShowcase = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** Commit Start=10, then attempt to leave the now-invalid first row. */
+async function trapShowcaseRow(showcase: ReturnType<typeof createDatagridShowcase>): Promise<void> {
+  showcase.app.loop.dispatch(showcaseKey('f2'));
+  const editor = showcase.app.loop.getFocused();
+  expect(editor).toBeInstanceOf(Input);
+  if (editor instanceof Input) editor.getValueSignal().set('10');
+  showcase.app.loop.dispatch(showcaseKey('tab'));
+  await settleShowcase();
+  showcase.app.loop.dispatch(showcaseKey('down'));
+  await settleShowcase();
 }
 
 // ST-8 — the shell navigates to every registry entry through the real command path, and each swap
@@ -112,4 +145,48 @@ test('ST-10: the Foundation seed demo mounts a real EditableDataGrid, driven thr
   showcase.app.loop.emitCommand(seed!.id);
   const rows = showcase.app.loop.renderRoot.buffer().rows();
   expect(canvasInteriorPainted(rows), 'the seed grid painted nothing in the canvas').toBeGreaterThan(0);
+});
+
+test('should demonstrate successful and retryable-veto Escape recovery in the row-gate showcase', async () => {
+  const storyId = 'datagrid/validation-lifecycle/row-gate';
+  const showcase = createDatagridShowcase(caps);
+  showcase.app.loop.resize({ width: W, height: H });
+
+  showcase.app.loop.emitCommand(storyId);
+  let grid = editableGridIn(showcase.app.desktop);
+  if (grid === undefined) throw new Error('the row-gate showcase must mount an EditableDataGrid');
+  await trapShowcaseRow(showcase);
+  expect(grid.displayedRows()[0]).toMatchObject({ start: 10, end: 9 });
+  expect(grid.activeMessage()).toBe('End must be after Start');
+  expect(grid.focusedKey()).toBe(1);
+  expect(canvasInteriorText(showcase.app.loop.renderRoot.buffer().rows())).toContain('Esc reverts row changes');
+
+  showcase.app.loop.dispatch(showcaseKey('escape'));
+  await settleShowcase();
+  expect(grid.displayedRows()[0]).toMatchObject({ start: 1, end: 9 });
+  expect(grid.activeMessage()).toBeNull();
+  expect(grid.focusedKey()).toBe(1);
+  showcase.app.loop.dispatch(showcaseKey('down'));
+  await settleShowcase();
+  expect(grid.focusedKey()).toBe(2);
+  let text = canvasInteriorText(showcase.app.loop.renderRoot.buffer().rows());
+  expect(text).toContain('Esc reverts');
+  expect(text).toContain('restored');
+
+  showcase.app.loop.emitCommand(storyId);
+  showcase.app.loop.dispatch(showcaseKey('v', { alt: true }));
+  grid = editableGridIn(showcase.app.desktop);
+  if (grid === undefined) throw new Error('the veto-mode row-gate showcase must retain its grid');
+  await trapShowcaseRow(showcase);
+  showcase.app.loop.dispatch(showcaseKey('escape'));
+  await settleShowcase();
+  expect(grid.displayedRows()[0]).toMatchObject({ start: 10, end: 9 });
+  expect(grid.focusedKey()).toBe(1);
+  expect(grid.activeMessage()).toBe('Could not revert row changes');
+  text = canvasInteriorText(showcase.app.loop.renderRoot.buffer().rows());
+  expect(text).toContain('Alt+V');
+  expect(text).toContain('veto');
+  expect(text).toContain('Could not revert row changes');
+  expect(text).toContain('Esc');
+  showcase.app.loop.dispose();
 });

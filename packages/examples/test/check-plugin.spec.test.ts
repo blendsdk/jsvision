@@ -4,7 +4,7 @@
 // is validated once by the uncached `plugin:check` step at the end of the repository-wide verify
 // command, where TypeScript API extraction is not constrained by a per-test timeout.
 
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
@@ -16,8 +16,13 @@ import {
   checkGotchas,
   checkLinksInDir,
   checkManifestData,
+  checkTreesEqual,
   countGotchas,
 } from '../../../scripts/check-plugin.mjs';
+import { checkPluginImpact, readImpactRegistry } from '../../../scripts/plugin-impact.mjs';
+
+const CANONICAL_SKILL = fileURLToPath(new URL('../../../tools/jsvision-skill/', import.meta.url));
+const DISTRIBUTED_SKILL = fileURLToPath(new URL('../../../plugins/jsvision-plugin/skills/jsvision/', import.meta.url));
 
 // ST-13 — a reference file linking to a missing target fails, naming the file + dead target.
 test('ST-13: a dead link is reported with the file and the missing target', () => {
@@ -117,4 +122,36 @@ test('ST-19: archetype validation catches malformed archetype directories', () =
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// ST-28 — every canonical reference routed from Data Grid source changes must be reviewed and the
+// distributed plugin must remain a byte-for-byte assembly of that canonical content.
+test('ST-28: Data Grid source impact and distributed plugin references are synchronized', () => {
+  const registry = readImpactRegistry();
+  const areas = registry.areas.filter((area) => area.paths.includes('packages/datagrid/src'));
+  expect(areas.map((area) => area.name)).toEqual(expect.arrayContaining(['datagrid', 'internationalization']));
+
+  const areaNames = new Set(areas.map((area) => area.name));
+  expect(checkPluginImpact().filter((finding) => areaNames.has(finding.name))).toEqual([]);
+
+  const datagridReference = readFileSync(join(CANONICAL_SKILL, 'references/datagrid.md'), 'utf8');
+  expect(datagridReference).toContain('An open cell editor consumes Escape');
+  expect(datagridReference).toContain('atomic `onRevertRow` callback');
+  expect(datagridReference).toContain('row changes cannot be reverted');
+  expect(datagridReference).toContain('Keep row keys and row object identity stable during a session');
+  expect(datagridReference).toContain('cannot reattach retry state');
+  expect(datagridReference).toContain('Never echo callback exceptions or row values in status text');
+
+  const i18nReference = readFileSync(join(CANONICAL_SKILL, 'references/i18n.md'), 'utf8');
+  expect(i18nReference).toContain('Pass that same service');
+  expect(i18nReference).toContain('`EditableDataGrid`');
+  expect(i18nReference).toContain('pending-revert, failed-revert, and unavailable-revert feedback');
+
+  const references = new Set(areas.flatMap((area) => area.references));
+  for (const reference of references) {
+    expect(readFileSync(join(DISTRIBUTED_SKILL, reference), 'utf8')).toBe(
+      readFileSync(join(CANONICAL_SKILL, reference), 'utf8'),
+    );
+  }
+  expect(checkTreesEqual(CANONICAL_SKILL, DISTRIBUTED_SKILL)).toEqual([]);
 });

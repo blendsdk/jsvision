@@ -31,6 +31,53 @@ export interface CellCommit<T, V = unknown> {
  */
 export type OnCommit<T> = (change: CellCommit<T>) => boolean | Promise<boolean>;
 
+/** One cell in an atomic row-revert transaction. */
+export interface RowRevertCell {
+  /** Stable id of the changed column. */
+  readonly columnId: string;
+  /** Restored session baseline, already applied to the row when the callback runs. */
+  readonly value: unknown;
+  /** Committed value immediately before this revert attempt. */
+  readonly previous: unknown;
+}
+
+/**
+ * The complete optimistic row-revert transaction described to a trusted host callback.
+ *
+ * The original row already contains every `cells[].value` baseline when the callback runs. The cell
+ * list and every descriptor are frozen and retain first-commit order.
+ */
+export interface RowRevert<T> {
+  /** Stable key of the reverted row. */
+  readonly rowKey: string | number;
+  /** Original row object with every restored baseline already applied. */
+  readonly row: T;
+  /** Immutable changed-cell descriptors in first-commit order. */
+  readonly cells: readonly RowRevertCell[];
+}
+
+/**
+ * Accept or veto one atomic row revert.
+ *
+ * Return `true` to accept the restored baselines or `false` to compensate the row to its previously
+ * committed values. A thrown error or rejected promise is contained and treated as `false`.
+ *
+ * @example
+ * ```ts
+ * import type { OnRevertRow, RowRevertCell } from '@jsvision/datagrid';
+ * interface Line { id: number; qty: number }
+ * const saveRowRevert = async (
+ *   _rowKey: string | number,
+ *   _cells: readonly RowRevertCell[],
+ * ): Promise<void> => Promise.resolve();
+ * const persistRevert: OnRevertRow<Line> = async ({ rowKey, cells }) => {
+ *   await saveRowRevert(rowKey, cells);
+ *   return true;
+ * };
+ * ```
+ */
+export type OnRevertRow<T> = (change: RowRevert<T>) => boolean | Promise<boolean>;
+
 /**
  * A per-cell gate that decides **whether** an already-applied edit may proceed to `onCommit`, layered
  * directly above it. Return `true` to allow the commit to continue to `onCommit`, or `false` (or a

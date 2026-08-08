@@ -160,7 +160,16 @@ export const DIRTY_COMMIT_CONTRACT = dataGridContract(
 /** Validation contract: cell, row, and before-save gates remain distinguishable. */
 export const VALIDATION_CONTRACT = dataGridContract(
   'data-grid/validation',
-  ['cell-validation', 'row-validation', 'before-save'],
+  [
+    'cell-validation',
+    'row-validation',
+    'before-save',
+    'row-revert-trap',
+    'row-revert-pending-settled',
+    'row-revert-success',
+    'row-revert-release',
+    'row-revert-veto-retry',
+  ],
   [
     gridCase(
       'reject-cell',
@@ -180,13 +189,66 @@ export const VALIDATION_CONTRACT = dataGridContract(
       'run-save-gates',
       ['row-validation', 'before-save'],
       [{ probe: 'validation-status', operator: 'equals', value: 'valid' }],
-      [
-        key('enter'),
-        { kind: 'key', key: 'a', modifiers: ['Ctrl'] },
-        { kind: 'paste', text: 'Ada Lovelace' },
-        key('enter'),
-      ],
+      [key('enter'), { kind: 'key', key: 'a', modifiers: ['Ctrl'] }, { kind: 'paste', text: '2' }, key('enter')],
       [{ probe: 'validation-status', operator: 'contains', value: 'row accepted · save accepted' }],
+    ),
+    gridCase(
+      'hold-revert-pending-and-block-grid-input',
+      ['row-revert-trap', 'row-revert-pending-settled'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [alt('p'), key('9'), key('tab'), key('arrowdown'), key('escape'), key('arrowdown')],
+      [
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:end' },
+        { probe: 'editing-state', operator: 'equals', value: 'idle' },
+        { probe: 'selected-row-keys', operator: 'equals', value: '' },
+        { probe: 'validation-status', operator: 'contains', value: 'Reverting row' },
+        { probe: 'status-text', operator: 'contains', value: 'controls temporarily inert' },
+      ],
+    ),
+    gridCase(
+      'settle-held-revert-and-release-navigation',
+      ['row-revert-pending-settled', 'row-revert-success', 'row-revert-release'],
+      [{ probe: 'cursor-cell', operator: 'equals', value: 'r1:start' }],
+      [alt('p'), key('9'), key('arrowdown'), key('escape'), alt('r'), key('arrowdown')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r2:start' },
+      ],
+    ),
+    gridCase(
+      'restore-trapped-row-and-release-navigation',
+      ['row-validation', 'row-revert-trap', 'row-revert-pending-settled', 'row-revert-success', 'row-revert-release'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [key('9'), key('tab'), key('arrowdown'), key('escape'), key('arrowdown')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 1 · End 9' },
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r2:start' },
+        { probe: 'status-text', operator: 'contains', value: 'trapped → pending → restored · row released' },
+      ],
+    ),
+    gridCase(
+      'retain-trapped-row-after-veto-for-retry',
+      ['row-revert-trap', 'row-revert-pending-settled', 'row-revert-veto-retry'],
+      [
+        { probe: 'validation-status', operator: 'equals', value: 'valid' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:start' },
+      ],
+      [alt('v'), key('9'), key('tab'), key('arrowdown'), key('escape')],
+      [
+        { probe: 'cell-text', operator: 'contains', value: 'Start 9 · End 9' },
+        { probe: 'cursor-cell', operator: 'equals', value: 'r1:end' },
+        { probe: 'validation-status', operator: 'equals', value: 'Could not revert row changes' },
+        { probe: 'status-text', operator: 'contains', value: 'trapped → pending → vetoed · Escape retries' },
+      ],
     ),
   ],
 );

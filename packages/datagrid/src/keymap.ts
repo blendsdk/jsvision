@@ -51,6 +51,7 @@ export type GridAction =
   | 'beginEdit'
   | 'commit' // editor-host-scoped (documented here, not body-resolved)
   | 'cancel'
+  | 'revertRow'
   // selection
   | 'toggleSelect'
   | 'extendUp'
@@ -99,6 +100,7 @@ const GRID_ACTIONS: ReadonlySet<GridAction> = new Set<GridAction>([
   'beginEdit',
   'commit',
   'cancel',
+  'revertRow',
   'toggleSelect',
   'extendUp',
   'extendDown',
@@ -117,6 +119,7 @@ const GRID_ACTIONS: ReadonlySet<GridAction> = new Set<GridAction>([
  * | `home`/`end` | `rowStart`/`rowEnd` | | `space` | `toggleSelect` |
  * | `ctrl+home`/`ctrl+end` | `gridStart`/`gridEnd` | | `shift+up`/`shift+down` | `extendUp`/`extendDown` |
  * | `pageup`/`pagedown` | `pageUp`/`pageDown` | | `alt+down` | `openFilter` |
+ * | `escape` | `revertRow` | | | |
  */
 export const DEFAULT_KEYMAP: GridKeymap = {
   left: 'moveLeft',
@@ -131,6 +134,7 @@ export const DEFAULT_KEYMAP: GridKeymap = {
   pagedown: 'pageDown',
   f2: 'beginEdit',
   enter: 'beginEdit',
+  escape: 'revertRow',
   f4: 'valueHelp',
   space: 'toggleSelect',
   'shift+up': 'extendUp',

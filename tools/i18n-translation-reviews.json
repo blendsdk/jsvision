@@ -247,82 +247,82 @@
     {
       "package": "datagrid",
       "locale": "nl",
-      "digest": "c24415d961b455cd95134cfc2cdcf9491fdc6bed99ac18ec0aeb4baaf4b8c2f7",
+      "digest": "7077aa80add3d51c64007d3d73ab4c1777a7a26daede50624c56010671633390",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "de",
-      "digest": "87da2d6505c12db2088be513eb7ff341dbe5d646d335fedb1c9b1656668c188d",
+      "digest": "c92cabdc49e793f1dac3eb284601160c83e70fe938613f5a39e592e20f6ee4cf",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "fr",
-      "digest": "356a6866ccf801e565b534788b85a7751eb344466b0f23286b922f94658c9d1c",
+      "digest": "7e2f8223e223229693489d6fcdb8928ccc79bd1ad0071e1d8ad53e81777f811d",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "es",
-      "digest": "81da8001bb12563e42be34f75edcebd5f04c3d54648f62175963dace5e5bc070",
+      "digest": "f1cf4ecca4c609ef6d9382654d493eae226a19bb318d26a51d4ea430d2b61343",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "it",
-      "digest": "da427966ba8b94ed090926983fc4c6d4c1e6c9b47a9e774ab7e53ef63bb934d0",
+      "digest": "9f2eeb37484f460e4c771d70efd206db3eafad63af5062c03db979e7564ce04f",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "pt-PT",
-      "digest": "c2b05cc86ac28335f0f6d9c7fbc92edae6ef323ec8998a5326f63c5d118b4c03",
+      "digest": "4b2b2f530d6e6f83c3f5eea9199e01f38b237faf6041801810ef5fa7cf606457",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "pl",
-      "digest": "1ad3972fd1710066bab923782ce95e9dbf90d74c082614a38174e6e4c64734ea",
+      "digest": "461a13643010ae703257d616892834a3d0b673667f8a05d720ca5618527ce20b",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "ro",
-      "digest": "7c332211d34bfaedc5b7127efc7291337d27b4b9fa6781d618b75f887d59948c",
+      "digest": "45301237f457f2ec9c09d7782973eb0639a5f392fa531618e6c98df19d6d5c3c",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {
       "package": "datagrid",
       "locale": "sv",
-      "digest": "8127404ab0517154b1707287662bde7bcc89962d8377d716cdcc0f613c29e79f",
+      "digest": "30d5587acadd7cf0bb216661ce9c7795f3ba1b5592a04917cf1f12b231330022",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-07-28",
+      "reviewedAt": "2026-08-04",
       "status": "approved"
     },
     {

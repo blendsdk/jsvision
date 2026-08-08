@@ -36,7 +36,7 @@ import { FilterPopup } from './filter-popup.js';
 import type { FilterPopupContext } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect, EditorOverlay, PopupCatcher } from './overlay.js';
 import { devWarn } from './dev.js';
-import type { OnCommit, BeforeSave } from './commit.js';
+import type { OnCommit, BeforeSave, OnRevertRow } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { mergeKeymap } from './keymap.js';
 import type { GridKeymap } from './keymap.js';
@@ -54,6 +54,8 @@ import type { RowValidation, RowGate } from './validation.js';
 import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 import { createEnglishDatagridI18n } from './i18n/catalog.js';
+import { createGridRowRevert } from './grid-row-revert.js';
+import type { GridRowRevert } from './grid-row-revert.js';
 
 /**
  * Compatibility fallback geometry used before a popup reports its reactive desired size. The overlay
@@ -99,6 +101,47 @@ export interface EditableDataGridOptions<T> {
   readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
+  /**
+   * Atomic persistence sink for restoring every committed cell in a trapped row session.
+   *
+   * The callback receives the original row after all session baselines are applied and one immutable
+   * changed-cell list in first-commit order. Return `false`, throw, or reject to compensate the row to
+   * its committed pre-revert values. The session remains available for retry only while the same row
+   * and session remain live and compensation completes. Stale settlement still compensates its
+   * captured row but cannot reattach retry state.
+   *
+   * When this callback is absent, a grid with no `beforeSave` or `onCommit` may revert locally. A grid
+   * with either per-cell persistence hook refuses rollback without this row-level transaction seam so
+   * the UI cannot diverge from host persistence.
+   *
+   * The default English message band reports `Reverting row…` while the callback is pending, `Could not
+   * revert row changes` after a veto or failure, and `Row changes cannot be reverted` when persisted
+   * edits have no row-level transaction seam. A trapped row's validation hint ends with `Esc reverts row
+   * changes`. Supply an `i18n` service to translate these messages.
+   *
+   * @example
+   * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, EditableDataGrid, fromRows } from '@jsvision/datagrid';
+   *
+   * interface Line { id: number; start: number; end: number }
+   * const rows = signal<Line[]>([{ id: 1, start: 1, end: 9 }]);
+   * const columns = [column({
+   *   id: 'start',
+   *   title: 'Start',
+   *   value: (row: Line) => row.start,
+   *   parse: (text) => Number(text),
+   *   set: (row, value) => { row.start = value; },
+   * })];
+   * const grid = new EditableDataGrid<Line>({
+   *   columns,
+   *   source: fromRows(rows, { rowKey: (row) => row.id }),
+   *   validateRow: (row) => row.end > row.start ? { ok: true } : { ok: false, field: 'start' },
+   *   onRevertRow: async () => true,
+   * });
+   * ```
+   */
+  readonly onRevertRow?: OnRevertRow<T>;
   /**
    * A per-cell gate that runs **above** `onCommit`: after the optimistic in-memory write and before
    * `onCommit`. Return `true` to proceed to `onCommit`, or `false`/a rejected promise to veto — a veto
@@ -365,6 +408,8 @@ export class EditableDataGrid<T> extends Group {
   }
   /** The focusable body — the center panel when frozen, the single body otherwise (backs {@link rows}). */
   private _center!: EditableGridRows<T>;
+  /** Every current body panel, retained so frozen-side focus counts as grid-body focus. */
+  private _panels: EditableGridRows<T>[] = [];
   /**
    * The current header panels, retained (and refreshed on every rebuild) so the keyboard filter opener
    * can resolve a column's owning header — the mouse path captures its header in a closure, but the
@@ -410,10 +455,9 @@ export class EditableDataGrid<T> extends Group {
   // active message the footer band shows. Threaded into the body (the `gridInvalid` paint) and the edit
   // pipeline (set on a blocked/vetoed commit, cleared on a successful re-commit or an abandoned edit).
   private readonly errors = createErrorRegistry();
-  // Rows edited this visit (a cell committed) — the trigger for the row-leave gate. A row is added on a
-  // successful commit and removed when it leaves with `validateRow` passing, so an untouched row (seed
-  // data) never traps and a validated row does not re-trap. Distinct from `dirty` (in-flight commits).
-  private readonly touched = new Set<Key>();
+  // Bounded accepted-commit journal for the current exact key-and-object row visit. It is disabled when
+  // no row validator exists, so an ordinary editable grid retains no unused recovery history.
+  private readonly rowRevert: GridRowRevert<T>;
   // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
   // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
   private readonly rowGate: RowGate;
@@ -469,6 +513,10 @@ export class EditableDataGrid<T> extends Group {
   // wiring, like GridSelection, lives in row-mutations.ts so grid.ts stays thin public delegators).
   private readonly mutations: RowMutations<T>;
   private readonly footer?: FooterController<T>;
+  // Client sort/filter updates the display before they synchronously re-anchor the cursor. Suppressing
+  // reconciliation during that tiny transition prevents the old cursor index from invalidating a
+  // stable key-and-object row session merely because its display position changed.
+  private reanchoringDisplay = false;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -489,6 +537,22 @@ export class EditableDataGrid<T> extends Group {
     });
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
+    this.rowRevert = createGridRowRevert({
+      enabled: opts.validateRow !== undefined,
+      source: this.source,
+      display: () => this.display(),
+      i18n: this.i18n,
+      onRevertRow: opts.onRevertRow,
+      internalAllowed: opts.beforeSave === undefined && opts.onCommit === undefined,
+      focusedRow: () => this.focusedRow(),
+      focusedKey: () => this.focusedKey(),
+      bodyFocused: () => this.isBodyFocused(),
+      dirty: this.dirty,
+      errors: this.errors,
+      focusedIndex: this.focused,
+      version: this.version,
+      setReanchoring: (active) => (this.reanchoringDisplay = active),
+    });
     this.windowed = isWindowed(opts.source);
     // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
     if (this.windowed) validateWindowedConfig(opts.source, engineCols, devWarn);
@@ -612,7 +676,7 @@ export class EditableDataGrid<T> extends Group {
       opts.columns.some((c) => c.validate !== undefined);
     const messageBand = validationConfigured
       ? buildMessageBand(
-          () => this.errors.active(),
+          () => this.rowRevert.displayMessage(this.errors.active()),
           () => 'error',
         )
       : undefined;
@@ -624,12 +688,18 @@ export class EditableDataGrid<T> extends Group {
       validateRow: opts.validateRow,
       focusedRow: () => this.focusedRow(),
       focusedKey: () => this.focusedKey(),
-      isRowTouched: (rowKey) => this.touched.has(rowKey),
-      clearTouched: (rowKey) => this.touched.delete(rowKey),
+      isRowTouched: (rowKey) => {
+        const row = this.focusedRow();
+        return row !== undefined && this.rowRevert.isTouched(rowKey, row);
+      },
+      clearTouched: () => undefined,
+      onPassed: (rowKey, row) => this.rowRevert.release(rowKey, row),
+      onBlocked: (rowKey, row) => this.rowRevert.markTrapped(rowKey, row),
       columnIndex: (columnId) => this.visibleIds().indexOf(columnId),
       currentColumn: () => this.focusedCol(),
       focusColumn: (index) => this.focusedCol.set(index),
       note: (message) => this.errors.note(message),
+      trappedMessage: (message) => this.rowRevert.trapMessage(message),
     });
 
     // Lifecycle: the controller drives the body-region swap (loading/error) from the caller `status`; the
@@ -647,8 +717,8 @@ export class EditableDataGrid<T> extends Group {
       keymap,
       selected: this.selected,
       selectedKeys: this.selection.keys,
-      onToggleRow: (rowIndex) => this.selection.toggleAtRow(rowIndex),
-      onRangeToRow: (rowIndex) => this.selection.rangeToRow(rowIndex),
+      onToggleRow: this.rowRevert.guardInput((rowIndex) => this.selection.toggleAtRow(rowIndex)),
+      onRangeToRow: this.rowRevert.guardInput((rowIndex) => this.selection.rangeToRow(rowIndex)),
       // The opt-in synthetic prefix (checkbox + row-number gutter). The gutter width is sized from the
       // source row count so it does not reflow as a filter shrinks the display.
       prefix: {
@@ -657,7 +727,7 @@ export class EditableDataGrid<T> extends Group {
         rowCount: this.source.length(),
       } satisfies SyntheticPrefix,
       triState: () => this.selection.currentTriState(),
-      onToggleAll: () => this.selection.toggleAll(),
+      onToggleAll: this.rowRevert.guardInput(() => this.selection.toggleAll()),
       indent: this.indent,
       display: this.display,
       rowKey: this.source.rowKey,
@@ -673,38 +743,50 @@ export class EditableDataGrid<T> extends Group {
       freezeRows,
       sort: this.sortKeys,
       filters: this.filters,
-      onHeaderClick: (columnId, additive) => {
+      onHeaderClick: this.rowRevert.guardInput((columnId, additive) => {
         // Snapshot the pre-sort keys before sorting on the down, so onReorderStart can undo it if this
         // press turns into a reorder drag (a plain click keeps the sort; the snapshot is just discarded).
         this.reorderSortSnapshot = this.sortKeys();
         if (additive) this.addSort(columnId);
         else this.sortBy(columnId);
-      },
-      onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
-      onOpenFilter: (globalCol, ev) => this.openFilterFromKeyboard(globalCol, ev),
-      onColumnResize: (id, w) => this.setColumnWidth(id, w),
-      onColumnAutoFit: (id) => this.autoFitColumn(id),
-      onColumnReorder: (from, to) => this.reorderWithinPanel(from, to),
-      onReorderStart: () => {
+      }),
+      onFunnelClick: this.rowRevert.guardInput((columnId, anchor, ev, header) =>
+        this.openFilterPopup(columnId, anchor, ev, header),
+      ),
+      onOpenFilter: this.rowRevert.guardInput((globalCol, ev) => this.openFilterFromKeyboard(globalCol, ev)),
+      onColumnResize: this.rowRevert.guardInput((id, width) => this.setColumnWidth(id, width)),
+      onColumnAutoFit: this.rowRevert.guardInput((id) => this.autoFitColumn(id)),
+      onColumnReorder: this.rowRevert.guardInput((from, to) => this.reorderWithinPanel(from, to)),
+      onReorderStart: this.rowRevert.guardInput(() => {
         // A press became a drag → undo the sort the down applied, so a reorder never also sorts.
         if (this.reorderSortSnapshot !== null) {
           this.applySort(this.reorderSortSnapshot);
           this.reorderSortSnapshot = null;
         }
-      },
+      }),
       quickFilter: opts.quickFilter === true,
-      onQuickFilter: (columnId, text) =>
-        text.length === 0
-          ? this.clearFilter(columnId)
-          : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
+      onQuickFilter: this.rowRevert.guardInput((columnId, text) => {
+        if (text.length === 0) this.clearFilter(columnId);
+        else this.setFilter(columnId, { kind: 'text', op: 'contains', value: text });
+      }),
       overlay: this.overlay,
       onCommit: opts.onCommit,
       beforeSave: opts.beforeSave,
       bumpVersion: () => this.version.set(this.version() + 1),
       dirty: this.dirty,
       errors: this.errors,
-      markRowTouched: (rowKey) => this.touched.add(rowKey),
+      onAcceptedCommit: (change) => this.rowRevert.recordCommit(change),
       rowLeaveGate: () => this.rowGate.tryLeave(),
+      canRevertRow: () => {
+        const row = this.focusedRow();
+        const rowKey = row === undefined ? undefined : this.source.rowKey(row);
+        return row !== undefined && rowKey !== undefined && this.rowRevert.canStart(rowKey, row);
+      },
+      rowRevertPending: () => this.rowRevert.isPending(),
+      onRevertRow: () => {
+        const row = this.focusedRow();
+        if (row !== undefined) this.rowRevert.start(this.source.rowKey(row), row);
+      },
       messageBand,
       lifecycle: opts.status !== undefined,
       emptyText: emptyResolver,
@@ -723,6 +805,7 @@ export class EditableDataGrid<T> extends Group {
     this.maybeWarnOverFreeze();
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
     this._center = parts.center;
+    this._panels = parts.panels;
     this._inner = parts.inner;
     this._headers = parts.headers;
     this._lifecycleSwap = parts.lifecycleSwap;
@@ -748,6 +831,21 @@ export class EditableDataGrid<T> extends Group {
     // column resized (which resizes its fixed panel band). A pure width change to a scrolling column is
     // NOT a shape change: the reactive width getters re-flow it live without a rebuild.
     this.onMount(() => {
+      // Sorting and collection republication preserve a session only while the focused key still names
+      // the exact captured row object. A replacement, disappearance, or cursor change releases it.
+      this.bind(
+        () => {
+          const row = this.focusedRow();
+          return { row, rowKey: row === undefined ? undefined : this.source.rowKey(row) };
+        },
+        ({ row, rowKey }) => {
+          if (this.reanchoringDisplay) return;
+          this.rowRevert.reconcile(rowKey, row);
+        },
+      );
+      this.onCleanup(() => {
+        this.rowRevert.dispose();
+      });
       this.bind(
         () => this.partitionKey(),
         (key) => {
@@ -804,6 +902,7 @@ export class EditableDataGrid<T> extends Group {
     const old = this._inner;
     this._inner = parts.inner;
     this._center = parts.center;
+    this._panels = parts.panels;
     this._headers = parts.headers; // refresh: the old headers are unmounted by the swap below, so the keyboard opener must not hold a stale reference
     this._lifecycleSwap = parts.lifecycleSwap; // the new inner carries a fresh swap host
     this.add(parts.inner); // new inner present before the old is removed → focus heals into it
@@ -1620,13 +1719,19 @@ export class EditableDataGrid<T> extends Group {
   private applySort(next: SortKey[]): void {
     const anchor = this.focusAnchorKey();
 
-    this.sortKeys.set(next);
+    this.reanchoringDisplay = true;
+    try {
+      this.sortKeys.set(next);
 
-    if (this.source.setSort) return; // push-down re-queries; the client-side re-anchor doesn't apply
-    const after = this.display();
-    if (anchor !== undefined) {
-      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
-      if (i >= 0) this.focused.set(i);
+      if (this.source.setSort) return; // push-down re-queries; the client-side re-anchor doesn't apply
+      const after = this.display();
+      if (anchor !== undefined) {
+        const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+        if (i >= 0) this.focused.set(i);
+      }
+    } finally {
+      this.reanchoringDisplay = false;
+      this.rowRevert.reconcileFocused();
     }
   }
 
@@ -1640,14 +1745,20 @@ export class EditableDataGrid<T> extends Group {
   private applyFilter(next: FilterModel): void {
     const anchor = this.focusAnchorKey();
 
-    this.filters.set(next);
+    this.reanchoringDisplay = true;
+    try {
+      this.filters.set(next);
 
-    if (this.source.setFilter) return; // push-down re-queries; the client-side re-anchor doesn't apply
-    const after = this.display();
-    if (anchor !== undefined) {
-      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
-      // The focused row survived → follow it; else clamp the cursor into the shrunk display.
-      this.focused.set(i >= 0 ? i : Math.max(0, Math.min(this.focused(), after.length - 1)));
+      if (this.source.setFilter) return; // push-down re-queries; the client-side re-anchor doesn't apply
+      const after = this.display();
+      if (anchor !== undefined) {
+        const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+        // The focused row survived → follow it; else clamp the cursor into the shrunk display.
+        this.focused.set(i >= 0 ? i : Math.max(0, Math.min(this.focused(), after.length - 1)));
+      }
+    } finally {
+      this.reanchoringDisplay = false;
+      this.rowRevert.reconcileFocused();
     }
   }
 
@@ -1704,7 +1815,7 @@ export class EditableDataGrid<T> extends Group {
 
   /** Whether the grid body currently holds keyboard focus (used by the Tab-navigation helper). */
   isBodyFocused(): boolean {
-    return this._center.state.focused;
+    return this._panels.some((panel) => panel.state.focused);
   }
 
   /**
@@ -1787,6 +1898,7 @@ export class EditableDataGrid<T> extends Group {
    * on a block the cursor stays and the grid keeps focus (`'moved'`).
    */
   private async advanceCell(forward: boolean): Promise<'moved' | 'exit'> {
+    if (this.rowRevert.isPending()) return 'moved';
     if (this._center.isEditing()) {
       const committed = await this._center.commitEdit();
       if (!committed) return 'moved'; // vetoed → editor stays open, cursor does not advance
@@ -1866,6 +1978,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   insertRow(row: T, at?: number): void {
+    if (this.rowRevert.isPending()) return;
     this.mutations.insertRow(row, at);
   }
 
@@ -1889,6 +2002,9 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   deleteRows(keys: readonly Key[]): void {
+    if (this.rowRevert.isPending()) return;
+    const invalidated = new Set(keys);
+    this.rowRevert.invalidate(invalidated);
     this.mutations.deleteRows(keys);
   }
 
@@ -1921,6 +2037,7 @@ export class EditableDataGrid<T> extends Group {
    * ```
    */
   duplicateRow(key: Key): void {
+    if (this.rowRevert.isPending()) return;
     this.mutations.duplicateRow(key);
   }
 }

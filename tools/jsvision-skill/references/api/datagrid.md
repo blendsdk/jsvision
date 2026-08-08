@@ -321,6 +321,7 @@ interface EditableDataGridOptions<T> {
   rowNumbers?: boolean;   // Show a leading **row-number gutter** (default `false`): 1-based, right-aligned display numbers that renumber whenever the display re-derives (after a sort/filter). Left-pinned and display-only.
   quickFilter?: boolean;   // Show the opt-in quick-filter row — a band of per-column text inputs below the header that drive a live `contains` filter as you type (default `false`; the band is never built when off).
   onCommit?: OnCommit<T>;   // The per-cell veto sink — accept or reject each edit (see OnCommit).
+  onRevertRow?: OnRevertRow<T>;   // Atomic persistence sink for restoring every committed cell in a trapped row session. The callback receives the original row after all session baselines are applied and one immutable changed-cell list in first-commit order. Return `false`, throw, or reject to compensate the row to its committed pre-revert values. The session remains available for retry only while the same row and session remain live and compensation completes. Stale settlement still compensates its captured row but cannot reattach retry state. When this callback is absent, a grid with no `beforeSave` or `onCommit` may revert locally. A grid with either per-cell persistence hook refuses rollback without this row-level transaction seam so the UI cannot diverge from host persistence. The default English message band reports `Reverting row…` while the callback is pending, `Could not revert row changes` after a veto or failure, and `Row changes cannot be reverted` when persisted edits have no row-level transaction seam. A trapped row's validation hint ends with `Esc reverts row changes`. Supply an `i18n` service to translate these messages.
   beforeSave?: BeforeSave<T>;   // A per-cell gate that runs **above** `onCommit`: after the optimistic in-memory write and before `onCommit`. Return `true` to proceed to `onCommit`, or `false`/a rejected promise to veto — a veto reverts the cell to its previous value, surfaces a rejection message, and `onCommit` is never called. Use it for a policy check (permission, a business rule) that should short-circuit persistence. Client-side gating is UX only — the authoritative check still belongs in `onCommit`/the source.
   validateRow?: (row: T) => RowValidation;   // A per-row cross-field gate that runs when the cursor leaves a row **that was edited** this visit (a cell in it committed). Return `{ ok: true }` to allow the leave, or `{ ok: false, message?, field? }` to block it: the cursor stays on the row, refocuses the `field` column (the offending field), and `message` surfaces in the message band. An untouched row — even a pre-existing invalid one — leaves freely; a row that once passes will not re-trap. Use it for cross-field rules a single cell cannot check (e.g. `end` after `start`). Client-side gating is UX only — the source stays authoritative.
   keymap?: GridKeymap;   // A per-grid keyboard remap layered over the default binding table (see `DEFAULT_KEYMAP`). Each entry maps a chord (`'ctrl+alt+shift+key'`) to a `GridAction`; a caller entry wins on a chord conflict, and the untouched defaults still fire. An entry naming an unknown action or a malformed chord is ignored (a dev warning, never thrown), so a typo can never break construction. Omit to use the defaults.
@@ -367,8 +368,12 @@ interface EditableGridRowsConfig<T> {
   bumpVersion: () => void;   // Bump-on-write so an in-place `set` repaints the mutated row.
   dirty?: DirtyRegistry;   // The shared dirty registry (pending-commit markers); omit to disable dirty tracking.
   errors?: ErrorRegistry;   // The shared invalid-cell registry (the `gridInvalid` band + message); omit to disable surfacing.
-  markRowTouched?: (rowKey: string | number) => void;   // Mark a row as edited (a cell committed) — fed to the container's row-leave gate.
+  onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;   // Report a complete accepted commit to the container's row-session journal.
+  markRowTouched?: (rowKey: string | number) => void;   // Touched-only compatibility notification for direct body consumers. New integrations should use EditableGridRowsConfig.onAcceptedCommit; this callback cannot retain the values and setter required for complete row recovery.
   rowLeaveGate?: () => boolean;   // The row-leave gate: consulted before a **row-changing** move (keyboard row-nav, the `Enter`-advance, or a click on a different row). Returns `true` to allow the leave, `false` to block it (the gate has already refocused the offending field). A within-row column move never consults it. Omit for no gate.
+  canRevertRow?: () => boolean;   // Whether the exact focused row has a trapped edit session eligible for row revert.
+  rowRevertPending?: () => boolean;   // Whether an optimistic row revert currently owns grid input and presentation.
+  onRevertRow?: () => void;   // Start the eligible focused row's revert transaction.
   emptyText?: () => string;   // The message to draw when the body has zero rows (the lifecycle empty state). Omit to keep the plain `<empty>` placeholder, so a grid with no lifecycle configured is byte-identical.
   selectedKeys?: Signal<ReadonlySet<Key>>;   // The datagrid selection set, keyed by `rowKey` — the body paints a row's `selected` role by membership here (not the base's single `selected` index, which is kept only as the base's required click sink). Optional: omit for a body that shows no selection (defaults to an empty set).
   onToggleRow?: (rowIndex: number) => void;   // Toggle the selection of the row at a display index — wired to `Space` on a read-only focused cell and `Ctrl`+click. The container maps the index to a key, moves the cursor to it, and toggles it. Omitted for a body without selection (the gesture then falls through to the base).
@@ -541,6 +546,7 @@ type GridAction = | 'moveUp'
   | 'beginEdit'
   | 'commit' // editor-host-scoped (documented here, not body-resolved)
   | 'cancel'
+  | 'revertRow'
   // selection
   | 'toggleSelect'
   | 'extendUp'
@@ -561,7 +567,7 @@ interface GridColumn<T, V = unknown> {
   value: (row: T) => V;   // Extracts this column's typed value from a row — the sort/filter key.
   format?: (value: V, row: T) => string;   // Formats the value for display (default: `String(value)`).
   parse?: (text: string) => V | ParseFailed;   // Parses edited text back to the typed value (editable columns only). May return the `PARSE_FAILED` sentinel for an unparseable string (as the invertible `fmt.*` formatters do); the commit path rejects that — the record is left unchanged and the editor stays open.
-  set?: (row: T, value: V) => void;   // Writes the parsed value back into the record (editable columns only). Pairs with `parse`: a column is editable exactly when it has both, so an edit round-trips text → value → record.
+  set?: (row: T, value: V) => void;   // Writes the parsed value back into the record (editable columns only). Pairs with `parse`: a column is editable exactly when it has both, so an edit round-trips text → value → record. The setter must be synchronous, deterministic, and non-throwing. Row-level rollback calls it more than once when compensation is required; violating this contract degrades recovery to best effort.
   validate?: (value: V, row: T) => string | null;   // Validate the parsed value at commit time (editable columns). Return `null` to accept, or a short message describing why the value is invalid. On a message the commit is blocked, nothing is written, the editor stays open, and the cell is marked in the `gridInvalid` role with the message surfaced in the grid's message band. Runs on the typed value **after** `parse`, so it composes with the editor's live keystroke filter (which is unaffected). Not called when a `nullable` column is cleared to `null` — an empty clear is not a typed value to validate, so a validator written for the typed `V` never receives `null`. Client-side validation is **UX only**: the authoritative gate is the caller's `onCommit`/source.
   width?: ColumnWidth;   // Sizing rule (default `'auto'` when adapted): fixed cells, `${n}fr`, or `'auto'`.
   minWidth?: number;   // Minimum width in cells. A resize clamps to this floor and an `'auto'`/`fr` column never apportions below it. Defaults to a small built-in floor when omitted.
@@ -757,6 +763,14 @@ A per-cell veto sink.
 type OnCommit<T> = (change: CellCommit<T>) => boolean | Promise<boolean>
 ```
 
+## OnRevertRow
+
+Accept or veto one atomic row revert.
+
+```ts
+type OnRevertRow<T> = (change: RowRevert<T>) => boolean | Promise<boolean>
+```
+
 ## PARSE_FAILED
 
 The sentinel an inverse `parse` returns for a string it cannot convert — distinct from a valid value and from `NaN`, so the commit path can reject an unparseable edit instead of writing garbage.
@@ -814,6 +828,7 @@ interface QuickFilterRowConfig<T> {
   autoWidths: () => (number | null)[];   // The memoized `auto`-width measurement (shared with the header + body).
   indent: Signal<number>;   // The horizontal cell offset (shared — the band pans in lockstep with header and body).
   onQuickFilter: (columnId: string, text: string) => void;   // Reports a column's live quick-filter text. An **empty** string means "clear this column's filter" — never an empty-needle `contains`, which would match every row.
+  inputBlocked?: () => boolean;   // Whether grid-owned quick-filter edits must be rejected and restored to their last accepted text.
   compact?: boolean;   // Compact density (default `false`): no reserved inter-column divider cell, so each input fills its column's full width and the band stays aligned with a compact header/body.
   filterable?: boolean[];   // Per-column filterability, parallel to `columns` (index → filterable). A `false` entry omits that column's input entirely — a blank, non-interactive slot — while the surrounding inputs keep their positions under their columns. Omit to make every column filterable.
 }
@@ -831,6 +846,30 @@ interface RenderCell<T, V> {
   value: V;   // The cell's typed value.
   row: T;   // The row record.
   state: CellState;   // Which composited states are active on this cell.
+}
+```
+
+## RowRevert
+
+The complete optimistic row-revert transaction described to a trusted host callback.
+
+```ts
+interface RowRevert<T> {
+  rowKey: string | number;   // Stable key of the reverted row.
+  row: T;   // Original row object with every restored baseline already applied.
+  cells: readonly RowRevertCell[];   // Immutable changed-cell descriptors in first-commit order.
+}
+```
+
+## RowRevertCell
+
+One cell in an atomic row-revert transaction.
+
+```ts
+interface RowRevertCell {
+  columnId: string;   // Stable id of the changed column.
+  value: unknown;   // Restored session baseline, already applied to the row when the callback runs.
+  previous: unknown;   // Committed value immediately before this revert attempt.
 }
 ```
 

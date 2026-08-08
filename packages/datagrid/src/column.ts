@@ -45,7 +45,9 @@ export interface GridColumn<T, V = unknown> {
   readonly parse?: (text: string) => V | ParseFailed;
   /**
    * Writes the parsed value back into the record (editable columns only). Pairs with `parse`: a
-   * column is editable exactly when it has both, so an edit round-trips text → value → record.
+   * column is editable exactly when it has both, so an edit round-trips text → value → record. The
+   * setter must be synchronous, deterministic, and non-throwing. Row-level rollback calls it more
+   * than once when compensation is required; violating this contract degrades recovery to best effort.
    */
   readonly set?: (row: T, value: V) => void;
   /**
