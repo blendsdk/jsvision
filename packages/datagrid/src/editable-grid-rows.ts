@@ -33,6 +33,7 @@ import { safeRender } from './cell-draw.js';
 import type { RenderCell } from './cell-draw.js';
 import { resolveGridAction, mergeKeymap } from './keymap.js';
 import type { GridAction, GridKeymap } from './keymap.js';
+import type { AcceptedCellCommit } from './row-revert.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
@@ -76,7 +77,14 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band + message); omit to disable surfacing. */
   errors?: ErrorRegistry;
-  /** Mark a row as edited (a cell committed) — fed to the container's row-leave gate. */
+  /** Report a complete accepted commit to the container's row-session journal. */
+  onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
+  /**
+   * Touched-only compatibility notification for direct body consumers.
+   *
+   * New integrations should use {@link EditableGridRowsConfig.onAcceptedCommit}; this callback cannot
+   * retain the values and setter required for complete row recovery.
+   */
   markRowTouched?: (rowKey: string | number) => void;
   /**
    * The row-leave gate: consulted before a **row-changing** move (keyboard row-nav, the `Enter`-advance,
@@ -84,6 +92,12 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    * already refocused the offending field). A within-row column move never consults it. Omit for no gate.
    */
   rowLeaveGate?: () => boolean;
+  /** Whether the exact focused row has a trapped edit session eligible for row revert. */
+  canRevertRow?: () => boolean;
+  /** Whether an optimistic row revert currently owns grid input and presentation. */
+  rowRevertPending?: () => boolean;
+  /** Start the eligible focused row's revert transaction. */
+  onRevertRow?: () => void;
   /**
    * The message to draw when the body has zero rows (the lifecycle empty state). Omit to keep the plain
    * `<empty>` placeholder, so a grid with no lifecycle configured is byte-identical.
@@ -250,10 +264,18 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band), or `undefined` when surfacing is off. */
   protected readonly errors?: ErrorRegistry;
+  /** Report an accepted commit with the row, values, column, and captured setter. */
+  private readonly onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
   /** Mark a row edited (a cell committed) — threaded into the edit controller's host. */
   private readonly markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate for the body-owned leave paths (row-nav, Enter-advance, cross-row click). */
   private readonly rowLeaveGate?: () => boolean;
+  /** Exact focused-row eligibility for the remappable row-revert action. */
+  private readonly canRevertRow?: () => boolean;
+  /** Pending-state guard that serializes grid-owned input during a row revert. */
+  private readonly rowRevertPending?: () => boolean;
+  /** Container transaction starter for an eligible row revert. */
+  private readonly onRevertRow?: () => void;
   /** The zero-row message getter (lifecycle empty state), or `undefined` to keep the plain `<empty>`. */
   private readonly emptyText?: () => string;
   /** The datagrid selection set the body paints from (empty when the container wires no selection). */
@@ -314,8 +336,12 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
     this.errors = cfg.errors;
+    this.onAcceptedCommit = cfg.onAcceptedCommit;
     this.markRowTouched = cfg.markRowTouched;
     this.rowLeaveGate = cfg.rowLeaveGate;
+    this.canRevertRow = cfg.canRevertRow;
+    this.rowRevertPending = cfg.rowRevertPending;
+    this.onRevertRow = cfg.onRevertRow;
     this.emptyText = cfg.emptyText;
     this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
     this.onToggleRow = cfg.onToggleRow;
@@ -345,6 +371,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       bumpVersion: this.bumpVersion,
       dirty: this.dirty,
       errors: this.errors,
+      onAcceptedCommit: this.onAcceptedCommit,
       markRowTouched: this.markRowTouched,
       currentCell: () => this.currentCell(),
       cellRect: () => this.cellRect(),
@@ -474,6 +501,10 @@ export class EditableGridRows<T> extends GridRows<T> {
    * @param ev The dispatch envelope.
    */
   override onEvent(ev: DispatchEvent): void {
+    if (this.rowRevertPending?.() === true) {
+      ev.handled = true;
+      return;
+    }
     const inner = ev.event;
     if (inner.type === 'key') {
       const action = resolveGridAction(inner, this.keymap);
@@ -573,6 +604,14 @@ export class EditableGridRows<T> extends GridRows<T> {
       case 'beginEdit':
         if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → base activate
         this.controller.beginEdit(ev);
+        return true;
+      case 'revertRow':
+        // An open editor's host consumes Escape before the body sees it. While idle, an ineligible action
+        // deliberately falls through so a parent dialog retains its historical Escape behavior.
+        if (this.controller.isEditing()) return false;
+        if (this.rowRevertPending?.() === true) return true;
+        if (this.canRevertRow?.() !== true || this.onRevertRow === undefined) return false;
+        this.onRevertRow();
         return true;
       case 'valueHelp':
         if (this.editableCol() < 0) return false;

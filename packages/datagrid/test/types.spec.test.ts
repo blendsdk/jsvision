@@ -11,6 +11,7 @@ import { signal } from '@jsvision/ui';
 import { fromRows } from '../src/data-source.js';
 import { column } from '../src/column.js';
 import { EditableDataGrid } from '../src/grid.js';
+import type { EditableDataGridOptions, GridAction, OnRevertRow, RowRevert, RowRevertCell } from '../src/index.js';
 
 interface Row {
   id: number;
@@ -38,6 +39,29 @@ test('should require a rowKey-bearing source when constructing the grid', () => 
     // A source that omits rowKey fails to construct, so the grid does too.
     // @ts-expect-error - the source's rowKey is required.
     new EditableDataGrid<Row>({ columns, source: fromRows(signal<Row[]>([]), {}) });
+  };
+  expect(typeOnly).toBeTypeOf('function');
+});
+
+test('should expose the typed atomic row-revert contract from the public entry point', () => {
+  const typeOnly = (): void => {
+    const cell: RowRevertCell = { columnId: 'id', value: 1, previous: 2 };
+    const row: Row = { id: 1 };
+    const change: RowRevert<Row> = { rowKey: 1, row, cells: [cell] };
+    const onRevertRow: OnRevertRow<Row> = (received: RowRevert<Row>) => {
+      const restoredValue: unknown = received.cells[0]?.value;
+      return restoredValue !== undefined;
+    };
+    const action: GridAction = 'revertRow';
+    const options: EditableDataGridOptions<Row> = {
+      columns: [column<Row, number>({ id: 'id', title: 'Id', value: (record) => record.id })],
+      source: fromRows(signal([row]), { rowKey: (record) => record.id }),
+      onRevertRow,
+    };
+
+    onRevertRow(change);
+    new EditableDataGrid(options);
+    expect(action).toBe('revertRow');
   };
   expect(typeOnly).toBeTypeOf('function');
 });

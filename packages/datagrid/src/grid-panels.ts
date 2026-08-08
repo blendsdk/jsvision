@@ -24,6 +24,7 @@ import type { OnCommit, BeforeSave } from './commit.js';
 import type { DirtyRegistry } from './editing.js';
 import type { ErrorRegistry } from './error-registry.js';
 import type { GridKeymap } from './keymap.js';
+import type { AcceptedCellCommit } from './row-revert.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
 import { EditableGridRows } from './editable-grid-rows.js';
@@ -135,10 +136,18 @@ export interface GridBodyDeps<T> {
   dirty: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band + message). */
   errors?: ErrorRegistry;
+  /** Report a complete accepted commit to the container's row-session journal. */
+  onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
   /** Mark a row edited (a cell committed) — fed to the row-leave gate. */
   markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate consulted by the body before a row-changing move (row-nav / Enter / cross-row click). */
   rowLeaveGate?: () => boolean;
+  /** Whether the exact focused row owns a trapped session eligible for the row-revert action. */
+  canRevertRow?: () => boolean;
+  /** Whether a row-revert transaction currently serializes grid-owned input. */
+  rowRevertPending?: () => boolean;
+  /** Start the focused row's eligible revert transaction. */
+  onRevertRow?: () => void;
   /**
    * The grid's one-line validation message band, or `undefined` when validation is not configured. When
    * present it is assembled as a dedicated one-cell band in the footer region — independent of any footer
@@ -365,8 +374,12 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
       errors: deps.errors,
+      onAcceptedCommit: deps.onAcceptedCommit,
       markRowTouched: deps.markRowTouched,
       rowLeaveGate: deps.rowLeaveGate,
+      canRevertRow: deps.canRevertRow,
+      rowRevertPending: deps.rowRevertPending,
+      onRevertRow: deps.onRevertRow,
       emptyText: deps.emptyText,
       columnOffset: offset,
       totalCols: () => total,
@@ -414,7 +427,11 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       rowKey: deps.rowKey,
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
+      canRevertRow: deps.canRevertRow,
+      rowRevertPending: deps.rowRevertPending,
+      onRevertRow: deps.onRevertRow,
       errors: deps.errors,
+      onAcceptedCommit: deps.onAcceptedCommit,
       markRowTouched: deps.markRowTouched,
       rowLeaveGate: deps.rowLeaveGate,
       emptyText: deps.emptyText,
@@ -582,6 +599,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       autoWidths: sliceAuto(fullVisible),
       indent: deps.indent,
       onQuickFilter: deps.onQuickFilter,
+      inputBlocked: deps.rowRevertPending,
       compact: deps.compact,
       filterable: sliceFilterable(fullVisible),
     });

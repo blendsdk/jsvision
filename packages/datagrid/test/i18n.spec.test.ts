@@ -16,6 +16,18 @@ import { fmt } from '../src/format.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { personalizeGrid } from '../src/personalize.js';
 import { createMemoryVariantStore } from '../src/variant-store.js';
+import {
+  datagridDe,
+  datagridEn,
+  datagridEs,
+  datagridFr,
+  datagridIt,
+  datagridNl,
+  datagridPl,
+  datagridPtPT,
+  datagridRo,
+  datagridSv,
+} from '../src/i18n/locales.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -201,4 +213,38 @@ test('explicit distinct collation uses I18n.compare and omission keeps ambient o
     new Intl.Collator(undefined, { sensitivity: 'accent', numeric: false }).compare,
   );
   expect(computeDistinct(rows, col)).toEqual(ambient);
+});
+
+test('should construct every official locale with the complete row-revert message contract', () => {
+  const catalogs = [
+    datagridEn,
+    datagridNl,
+    datagridDe,
+    datagridFr,
+    datagridEs,
+    datagridIt,
+    datagridPtPT,
+    datagridPl,
+    datagridRo,
+    datagridSv,
+  ] as const;
+  const keys = [
+    'datagrid.validation.row-trapped',
+    'datagrid.revert.pending',
+    'datagrid.revert.failed',
+    'datagrid.revert.unavailable',
+  ] as const;
+
+  for (const catalog of catalogs) {
+    expect(() => createI18n({ locale: catalog.locale, catalogs: [catalog] })).not.toThrow();
+    for (const messageKey of keys) expect(catalog.messages).toHaveProperty(messageKey);
+    const trapped = String(catalog.messages['datagrid.validation.row-trapped']);
+    const placeholders = [...trapped.matchAll(/\$\{([^}]+)\}/g)].map((match) => match[1]);
+    expect(placeholders).toEqual(['message']);
+  }
+
+  expect(datagridEn.messages['datagrid.validation.row-trapped']).toBe('${message} · Esc reverts row changes');
+  expect(datagridEn.messages['datagrid.revert.pending']).toBe('Reverting row…');
+  expect(datagridEn.messages['datagrid.revert.failed']).toBe('Could not revert row changes');
+  expect(datagridEn.messages['datagrid.revert.unavailable']).toBe('Row changes cannot be reverted');
 });

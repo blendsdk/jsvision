@@ -1,0 +1,267 @@
+# Execution Plan: Data Grid Escape-to-Revert
+
+> **Document**: 99-execution-plan.md
+> **Parent**: [Index](00-index.md)
+> **Last Updated**: 2026-08-04 17:21
+> **Progress**: 31/31 tasks (100%)
+> **CodeOps Artifact Schema**: 1
+
+## Overview
+
+Execute the bounded row-session journal, atomic rollback transaction, remappable Escape flow, and
+consumer-facing documentation/distribution in specification-first order. Every phase is independently
+reviewable and keeps implementation behind an observed red oracle.
+
+**🚨 Update this document after EACH completed task!**
+
+## Implementation Phases
+
+| Phase | Title | Tasks |
+|-------|-------|-------|
+| 1 | Complete row-recovery behavior | 16 |
+| 2 | Showcase and docs-site teaching | 8 |
+| 3 | Package, API, skill, and plugin distribution | 7 |
+
+**Total: 31 tasks across 3 phases**
+
+> **⚠️ EXECUTION RULE — APPLIES TO EVERY AGENT EXECUTING THIS PLAN:**
+>
+> The task checkboxes in the phase sections below are the **single source of truth** for progress.
+> Every task line appears exactly once. The executing agent MUST:
+>
+> 1. On implementation, mark the task `[~]` with
+>    `⏳ (implemented: YYYY-MM-DD HH:MM)`.
+> 2. On verification pass, promote it to `[x]` with
+>    `✅ (completed: YYYY-MM-DD HH:MM)`.
+> 3. Update the Progress header and Last Updated timestamp after every task. Only `[x]` counts as
+>    complete.
+> 4. Resume with the first `[~]` task, otherwise the first `[ ]` task, scanning top-to-bottom.
+>
+> Timestamps come from `date '+%Y-%m-%d %H:%M'`. Specification expectations are immutable: fix
+> implementation failures, never rewrite the oracle to match code.
+
+## Phase 1: Complete Row-Recovery Behavior
+
+**Lenses**: concurrent/async state; compatibility evolution
+
+> **Phase baseline tree**: `d639765bf9dd0c6abb837670a40c5eabcb5eb573`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/datagrid/src/`, `packages/datagrid/test/`,
+> `tools/i18n-translation-reviews.json`, this execution plan, and the feature traceability graph.
+
+### Step 1.1: Specification Tests
+
+**Reference**: [07 ST-1–ST-23 and ST-27A](07-testing-strategy.md#-specification-test-cases) ·
+[03-01](03-01-row-edit-sessions.md) · [03-02](03-02-rollback-transaction-and-input.md)
+
+- [x] 1.1.1 [spec-author] Write row-session and integration oracles for ST-1–ST-9C, ST-11, ST-16–ST-17, and ST-20 — `packages/datagrid/test/row-revert.spec.test.ts` ✅ (completed: 2026-08-04 14:01)
+- [x] 1.1.2 [spec-author] Write transaction, keymap, locale, security, and public source API oracles for ST-10, ST-12–ST-15, ST-18–ST-19, ST-21–ST-23, and ST-27A — `packages/datagrid/test/row-revert-transaction.spec.test.ts`, `packages/datagrid/test/keymap.spec.test.ts`, `packages/datagrid/test/security.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts`, existing public API specification gates ✅ (completed: 2026-08-04 14:11)
+- [x] 1.1.3 Run ST-1–ST-23 plus ST-27A and record the expected missing-contract failures before implementation (red phase) — `packages/datagrid/test`, public API checks ✅ (completed: 2026-08-04 14:14)
+
+### Step 1.2: Session Foundation
+
+**Reference**: [03-01 § Implementation Details](03-01-row-edit-sessions.md#implementation-details) ·
+AR-3, AR-6, AR-7, AR-12
+
+- [x] 1.2.1 Implement the bounded session registry, earliest-value journal, identity checks, attempt tokens, and cleanup — `packages/datagrid/src/row-revert.ts` ✅ (completed: 2026-08-04 14:17)
+- [x] 1.2.2 Replace touched-only edit notification with accepted commit details after `commitCell` succeeds — `packages/datagrid/src/editing.ts`, `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-08-04 14:19)
+- [x] 1.2.3 Add row-gate pass/trap notifications and container session/focus/deletion/disposal wiring — `packages/datagrid/src/validation.ts`, `packages/datagrid/src/grid.ts`, plus the existing `packages/datagrid/src/grid-panels.ts` configuration bridge ✅ (completed: 2026-08-04 14:22)
+
+### Step 1.3: Transaction, Input, and Localization
+
+**Reference**: [03-02 § Implementation Details](03-02-rollback-transaction-and-input.md#implementation-details)
+
+- [x] 1.3.1 Add and document `RowRevertCell`, `RowRevert<T>`, `OnRevertRow<T>`, the grid option, public exports, and the synchronous/deterministic/non-throwing editable-setter precondition — `packages/datagrid/src/commit.ts`, `packages/datagrid/src/column.ts`, `packages/datagrid/src/grid.ts`, `packages/datagrid/src/index.ts` ✅ (completed: 2026-08-04 14:24)
+- [x] 1.3.2 Implement optimistic batch apply, frozen payload delivery, explicit callback/internal/unavailable precedence before `prepare`, best-effort setter-failure recovery, captured-original compensation, attempt-owned dirty/message cleanup, live stale reconciliation, coherent version stages, and disposal-safe settlement — `packages/datagrid/src/row-revert.ts`, `packages/datagrid/src/grid.ts` ✅ (completed: 2026-08-04 14:32)
+- [x] 1.3.3 Add `revertRow`, default Escape, body eligibility/fallthrough, and pending input/mutation guards — `packages/datagrid/src/keymap.ts`, `packages/datagrid/src/editable-grid-rows.ts`, plus the existing `packages/datagrid/src/grid-panels.ts` and `packages/datagrid/src/grid.ts` configuration and mutation bridges ✅ (completed: 2026-08-04 14:38)
+- [x] 1.3.4 Add canonical trapped/pending/failure/unavailable catalog keys, placeholder validation, and grid message composition — `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/validation.ts`, plus the existing `packages/datagrid/src/row-revert.ts`, `packages/datagrid/src/grid.ts`, and locale manifest bridge ✅ (completed: 2026-08-04 14:43)
+- [x] 1.3.5 Add reviewed translations for all official Data Grid locales, refresh their digest-bound approvals, and pass locale completeness and review checks — `packages/datagrid/src/i18n/locales.ts`, `tools/i18n-translation-reviews.json` ✅ (completed: 2026-08-04 14:46)
+- [x] 1.3.6 Run ST-1–ST-23 plus ST-27A and make the complete public behavior/source contract pass; repair only the contradictory ST-17 fixture setup under its spec-author's ruling — `packages/datagrid/test`, public API checks ✅ (completed: 2026-08-04 14:54)
+
+> **Green-gate resolution (2026-08-04, auto-design):** The original spec author confirmed that ST-17
+> confused master key `1` with detail key `11` and provided only one visible master-1 detail row, so
+> Down could not attempt a leave. The fixture now expects key `11` and includes detail key `12`; its
+> production behavior and revert assertions are unchanged. Full result: 745/745 tests passed.
+
+### Step 1.4: Implementation Tests and Hardening
+
+**Reference**: [03-01 § Testing Requirements](03-01-row-edit-sessions.md#testing-requirements) ·
+[03-02 § Testing Requirements](03-02-rollback-transaction-and-input.md#testing-requirements)
+
+- [x] 1.4.1 Add controller implementation tests for map order, repeated commits, row identity, invalidation, retry state, presentation ownership, and retained-state bounds — `packages/datagrid/test/row-revert.impl.test.ts` ✅ (completed: 2026-08-04 14:56)
+- [x] 1.4.2 Add transaction/keymap implementation tests for mutate-then-throw apply recovery, recovery-setter failure, callback serialization, repaint counts, live stale reconciliation, disposal, registry ownership, and keymap cache/merge edges — `packages/datagrid/test/row-revert-transaction.impl.test.ts`, `packages/datagrid/test/keymap.impl.test.ts` ✅ (completed: 2026-08-04 15:00)
+- [x] 1.4.3 Run existing row-gate, editing, validation, keymap, mutation, reactive-source, master-detail, security, and locale regression suites — `packages/datagrid/test` ✅ (completed: 2026-08-04 15:02; 15-file matrix passed)
+- [x] 1.4.4 Run Data Grid typecheck/tests/JSDoc, locale completeness/review checks, and the normal changed-file gate — `packages/datagrid`, repository root ✅ (completed: 2026-08-04 15:06)
+
+**Deliverables**: immutable ST-1–ST-23 and ST-27A oracles observed red then green; bounded session
+controller; public atomic transaction/source contract; deterministic input and localization;
+failure and stale-settlement hardening; focused package gates green.
+
+> **Phase 1 quality gate (2026-08-04):** Independent correctness and concurrency/security review
+> findings were corrected without waiver. The permitted fix re-review closed windowed settlement,
+> client-sort focus, and frozen-panel focus, then rejected a quick-filter value/model divergence; that
+> final correction passed 767/767 Data Grid tests and every configured Phase 1 gate. No third review
+> was dispatched. Evidence: [08-phase-1-quality-review.md](08-phase-1-quality-review.md).
+
+**Verify**: `yarn workspace @jsvision/datagrid typecheck && yarn workspace @jsvision/datagrid test && yarn workspace @jsvision/datagrid check:docs && yarn i18n:locales:check && yarn i18n:reviews:check && yarn verify:local`
+
+## Phase 2: Showcase and Docs-Site Teaching
+
+**Lenses**: compatibility evolution; concurrent/async user workflows
+
+> **Phase baseline tree**: `9b27ba9eab455b49e4d13c5f66f9a54961c38b93`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/examples/datagrid-showcase/`, `packages/examples/test/`,
+> `packages/docs-site/examples/data-grid/`, `packages/docs-site/src/example-fixtures/data-grid/`,
+> `packages/docs-site/components/data-grid/`, `packages/docs-site/test/`, the public API examples in
+> `packages/datagrid/src/commit.ts` and `packages/datagrid/src/grid.ts`, this plan's quality evidence,
+> this execution plan, and the feature traceability graph. The Data Grid source files are limited to
+> verification-only JSDoc corrections discovered when compiling the new public examples.
+
+### Step 2.1: Specification Tests
+
+**Reference**: [07 ST-24–ST-26](07-testing-strategy.md#security-localization-documentation-and-distribution) ·
+[03-03](03-03-documentation-and-distribution.md)
+
+- [x] 2.1.1 [spec-author] Extend showcase, docs-contract, and Template1 layout specification coverage for ST-24–ST-26 — `packages/examples/test/datagrid-showcase.walkthrough.spec.test.ts`, `packages/docs-site/test/contracts/data-grid/interaction.ts`, `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts` ✅ (completed: 2026-08-04 15:45)
+- [x] 2.1.2 Run ST-24–ST-26 and record the expected stale-surface failures before implementation (red phase) — `packages/examples`, `packages/docs-site` ✅ (completed: 2026-08-04 15:46)
+
+> **Red evidence**: the focused showcase and docs runs produced exactly five expected stale-surface
+> failures while 72 compatibility tests passed. The changed-file formatting and lint gate also passed.
+
+### Step 2.2: Implementation
+
+**Reference**: [03-03 § Standalone Data Grid Showcase](03-03-documentation-and-distribution.md#standalone-data-grid-showcase) ·
+[03-03 § Docs-Site Validation Laboratory](03-03-documentation-and-distribution.md#docs-site-validation-laboratory)
+
+- [x] 2.2.1 Upgrade the standalone row-gate story with real success/veto transactions, visible feedback, and keyboard instructions — `packages/examples/datagrid-showcase/stories/validation-lifecycle/row-gate.story.ts`, `packages/examples/datagrid-showcase/shell.ts` ✅ (completed: 2026-08-04 15:54)
+- [x] 2.2.2 Extend the existing docs validation lab scenario and probes for trapped, pending, restored, released, and failed states — `packages/docs-site/src/example-fixtures/data-grid/data.ts`, `packages/docs-site/src/example-fixtures/data-grid/lab.ts`, `packages/docs-site/src/example-fixtures/data-grid/scenario-controller.ts`, `packages/docs-site/test/example-lab-harness.ts` ✅ (completed: 2026-08-04 16:04)
+- [x] 2.2.3 Update validation example metadata and the teaching page with the real Escape/persistence workflow and generated API links — `packages/docs-site/examples/data-grid/validation.ts`, `packages/docs-site/components/data-grid/validation-and-lifecycle.md` ✅ (completed: 2026-08-04 16:08)
+- [x] 2.2.4 Run ST-24–ST-26 and make the showcase/docs behavior pass without changing the oracle (green phase) — examples and docs-site ✅ (completed: 2026-08-04 16:10)
+
+> **Green evidence**: the standalone walkthrough passed 4/4 and the focused docs topology,
+> interaction, and Template1 layout runs passed 88/88 with both package typechecks green.
+
+### Step 2.3: Implementation Tests and Hardening
+
+**Reference**: [03-03 § Testing Requirements](03-03-documentation-and-distribution.md#testing-requirements)
+
+- [x] 2.3.1 Add focused implementation/layout assertions for probe wiring, Classic surface, approved maximized startup, restore/maximize reflow, unclipped translated feedback, and non-color cues — `packages/docs-site/test/data-grid-docs.resizable-dialog.spec.test.ts`, `packages/docs-site/test/data-grid-docs.row-revert.impl.test.ts` ✅ (completed: 2026-08-04 16:13)
+- [x] 2.3.2 Run examples/docs typechecks and tests, `yarn docs:build`, manual 80×24 acceptance, and the normal changed-file gate — repository root ✅ (completed: 2026-08-04 16:23)
+
+> **Phase verification**: examples passed 400/400 product tests and docs passed 1795/1795 unit
+> product tests plus 12/12 DOM tests. The two distribution-only checks remain intentionally red for
+> Phase 3 (generated API drift and source-impact/plugin integrity). Both typechecks, the production
+> docs build, 80×24 maximize/restore evidence, JSDoc example compilation, and `yarn verify:local` passed.
+
+**Deliverables**: polished standalone and Template1 teaching workflows; verified interaction,
+layout, accessibility cues, and manual 80×24 evidence.
+
+> **Phase 2 quality gate (2026-08-04):** Independent correctness and concurrency/security review
+> findings were corrected without waiver. The deterministic lab now exposes a real pending
+> transaction through public grid state, uses typed numeric editors, renders official German
+> recovery feedback through responsive window states, and documents exact session invalidation.
+> Both reviewers returned clean closure on the permitted one-time fix re-review. Evidence:
+> [09-phase-2-quality-review.md](09-phase-2-quality-review.md).
+
+**Verify**: `yarn workspace @jsvision/examples typecheck && yarn workspace @jsvision/examples test && yarn workspace @jsvision/docs-site typecheck && yarn workspace @jsvision/docs-site test && yarn docs:build && yarn verify:local`
+
+## Phase 3: Package, API, Skill, and Plugin Distribution
+
+**Lenses**: compatibility evolution
+
+> **Phase baseline tree**: `71696751380d0329513ac155538f49f82f630788`
+> **Scope mode**: `strict`
+> **Expected modification set**: `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md`, the
+> public recovery JSDoc in `packages/datagrid/src/grid.ts`, every impacted canonical reference under
+> `tools/jsvision-skill/`, generated API and synchronized plugin artifacts owned by
+> `yarn plugin:update`, existing API/plugin specification gates, the NodeNext declaration for the
+> imported `scripts/plugin-impact.mjs` test seam, this plan's quality evidence, this execution plan,
+> and the feature traceability graph.
+
+### Step 3.1: Specification Tests
+
+**Reference**: [07 ST-27B–ST-28](07-testing-strategy.md#security-localization-documentation-and-distribution) ·
+[03-03](03-03-documentation-and-distribution.md) · AR-11, AR-12, AR-13, AR-14
+
+- [x] 3.1.1 [spec-author] Extend generated API, source-impact, and plugin specification coverage for ST-27B–ST-28 — existing API/plugin specification gates ✅ (completed: 2026-08-04 16:58)
+- [x] 3.1.2 Run ST-27B–ST-28 and record the expected stale distribution failures before implementation (red phase) — generated API and plugin checks ✅ (completed: 2026-08-04 17:01)
+
+> **Red evidence**: the focused API/plugin run passed 12 compatibility checks and failed exactly
+> three planned distribution assertions: the existing generated API drift guard, the new committed
+> row-revert API contract, and the source-impact snapshot for the `internationalization` and
+> `datagrid` areas. No runtime, package, or unrelated plugin failure appeared.
+
+### Step 3.2: Implementation
+
+**Reference**: [03-03 § Implementation Details](03-03-documentation-and-distribution.md#implementation-details)
+
+- [x] 3.2.1 Update package README and changelog with the scoped public behavior and persistence boundary — `packages/datagrid/README.md`, `packages/datagrid/CHANGELOG.md` ✅ (completed: 2026-08-04 17:03)
+- [x] 3.2.2 Review and update every canonical JSVision skill reference reported by source impact; do not edit the distributed plugin copy — `tools/jsvision-skill/references/` ✅ (completed: 2026-08-04 17:06)
+
+> **Source-impact review**: all 15 references mapped from the changed Data Grid source were reviewed.
+> `references/datagrid.md` now teaches the bounded session, Escape ownership, atomic persistence,
+> retry, identity, localization, and security boundaries; `references/i18n.md` now threads the shared
+> locale service into `EditableDataGrid`. The remaining mapped layout, testing, recipe, lifecycle,
+> and generated API references contain no hand-authored claim changed by this feature; generated
+> API pages remain owned by Task 3.2.3.
+- [x] 3.2.3 Run `yarn plugin:update` to regenerate API pages, snippets, impact snapshot, and assembled plugin content — generated docs/plugin files ✅ (completed: 2026-08-04 17:08)
+- [x] 3.2.4 Run ST-27B–ST-28 and make all generated/distribution specifications pass without changing their expected behavior (green phase) — generated API and plugin checks ✅ (completed: 2026-08-04 17:17)
+
+> **Green evidence**: the focused generated API and plugin run passes all 15 assertions without
+> changing ST-27B or ST-28. The public source JSDoc now supplies the default localized recovery
+> states to the generated API page, and `yarn plugin:check` confirms the canonical and assembled
+> plugin trees are synchronized.
+
+### Step 3.3: Final Hardening
+
+- [x] 3.3.1 Run package/docs regressions, `yarn plugin:check`, and `yarn verify:local`; record final distribution evidence — repository root ✅ (completed: 2026-08-04 17:21)
+
+> **Final distribution evidence**: Data Grid typecheck, 767/767 tests, and public JSDoc pass;
+> examples typecheck and 403/403 tests pass; docs-site typecheck and 1,812/1,812 unit/DOM tests
+> pass. All 50 explicit locale entry points and 45 digest-bound translation reviews pass, plugin
+> integrity is clean, and `yarn verify:local` passes. The final sweep also added a typed NodeNext
+> declaration for the plugin-impact maintenance seam; this removed the specification harness's
+> implicit `any` without changing ST-28 behavior.
+
+**Deliverables**: public/package/generated docs; canonical skill; drift-free plugin; final local
+distribution evidence.
+
+> **Phase 3 quality gate (2026-08-04):** Independent correctness and security/distribution findings
+> were corrected without waiver. Package docs now teach explicit callback acceptance and the exact
+> retained baseline; retry guidance matches live identity and compensation rules; and ST-28 pins the
+> canonical skill's recovery, persistence, lifecycle, privacy, and shared-i18n semantics in addition
+> to source-impact and byte/tree integrity. Both reviewers returned clean closure on the permitted
+> one-time fix re-review. Evidence: [10-phase-3-quality-review.md](10-phase-3-quality-review.md).
+
+**Verify**: `yarn plugin:check && yarn verify:local`
+
+## Dependencies
+
+```text
+Phase 1: ST-1–ST-23 + ST-27A red oracle → complete row-recovery behavior → green
+    ↓
+Phase 2: ST-24–ST-26 red oracle → showcase/docs teaching → green
+    ↓
+Phase 3: ST-27B–ST-28 red oracle → package/generated distribution → green
+```
+
+- Phase 2 depends on Phase 1's final public contract and behavior.
+- Phase 3 depends on Phase 1's public API and Phase 2's finalized teaching surfaces.
+- Local execution requires installed workspace dependencies; dependency installation needs explicit
+  workflow authorization if they remain absent.
+
+## Success Criteria
+
+The feature is complete when:
+
+1. All 31 tasks are verified and every phase-specific oracle observed red before implementation.
+2. ST-1–ST-28, including the lettered ST-8/ST-9 lifecycle and ST-27 source/generated cases, pass
+   without expectation changes alongside existing Data Grid regressions.
+3. Public API, all official locales, showcase, docs-site, canonical skill, generated API, and plugin
+   content agree.
+4. No stale sessions, late async writes, partial compensation, sensitive logs, unsafe text, or dead
+   code remain.
+5. Package/docs/plugin gates and `yarn verify:local` pass; CI retains ownership of full `yarn verify`.
+6. Manual 80×24 evidence confirms trap → localized hint → Escape → restored row → normal navigation.
+7. Post-completion project re-analysis is performed by the execution workflow.

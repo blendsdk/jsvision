@@ -5,6 +5,7 @@
  */
 import { Text } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
+import { sanitize } from '@jsvision/core';
 
 /**
  * Build the grid's one-line message band — a reactive `Text` bound to the active validation/veto
@@ -56,6 +57,10 @@ export interface RowGateDeps<T> {
   isRowTouched(rowKey: string | number): boolean;
   /** Forget a row's touched mark (called on a passing leave, so a validated row does not re-trap). */
   clearTouched(rowKey: string | number): void;
+  /** Notify the session owner before a touched row is released after successful validation. */
+  onPassed?: (rowKey: string | number, row: T) => void;
+  /** Notify the session owner before a failed validation message is published. */
+  onBlocked?: (rowKey: string | number, row: T) => void;
   /** The visible column index for a column id, or `-1` when it is unknown/hidden. */
   columnIndex(columnId: string): number;
   /** The current column-cursor index (the refocus fallback). */
@@ -64,6 +69,8 @@ export interface RowGateDeps<T> {
   focusColumn(index: number): void;
   /** Push (or clear, with `null`) the active band message. */
   note(message: string | null): void;
+  /** Compose a failed validator's text with the locale-owned Escape recovery hint. */
+  trappedMessage?: (message: string) => string;
 }
 
 /** The row-leave decision surface — every leave path consults {@link RowGate.tryLeave} first. */
@@ -116,6 +123,7 @@ export interface RowGate {
  *   isRowTouched: (k) => touched.has(k), clearTouched: (k) => touched.delete(k),
  *   columnIndex: (id) => visibleIds.indexOf(id), currentColumn: () => focusedCol(),
  *   focusColumn: (i) => focusedCol.set(i), note: (m) => errors.note(m),
+ *   trappedMessage: (message) => `${message} · Esc reverts row changes`,
  * });
  *
  * function leaveRow(): void {
@@ -142,6 +150,7 @@ export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {
         res = { ok: false }; // a throwing validator is a blocking failure, never a crash
       }
       if (res.ok) {
+        deps.onPassed?.(key, row);
         deps.clearTouched(key); // a validated row will not re-trap on a later leave
         deps.note(null);
         return true;
@@ -150,7 +159,9 @@ export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {
       // the message, and keep the cursor on the row.
       const named = res.field !== undefined ? deps.columnIndex(res.field) : -1;
       deps.focusColumn(named >= 0 ? named : deps.currentColumn());
-      deps.note(res.message ?? 'This row is invalid');
+      deps.onBlocked?.(key, row);
+      const message = sanitize(res.message ?? 'This row is invalid');
+      deps.note(deps.trappedMessage?.(message) ?? message);
       return false;
     },
   };

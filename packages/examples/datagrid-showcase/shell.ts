@@ -64,9 +64,22 @@ const CMD_HOME = 'showcase.home';
 const CMD_NEXT = 'showcase.next';
 const CMD_PREV = 'showcase.prev';
 
-/** Mark a string's first character as its `Alt` hotkey (`'Editing'` → `'~E~diting'`). */
+/**
+ * Category hotkeys that must avoid a story-local accelerator.
+ *
+ * The row-recovery laboratory uses Alt+V to arm a persistence veto while the Validation story is
+ * active. Assigning that category Alt+L keeps both the menu and the laboratory keyboard-reachable.
+ */
+const CATEGORY_HOTKEYS: Readonly<Record<string, string>> = {
+  'Validation & lifecycle': 'l',
+};
+
+/** Mark a category's assigned character as its `Alt` hotkey, defaulting to the first character. */
 function withHotkey(s: string): string {
-  return `~${s[0]}~${s.slice(1)}`;
+  const hotkey = CATEGORY_HOTKEYS[s] ?? s[0];
+  const index = s.toLowerCase().indexOf(hotkey.toLowerCase());
+  if (index < 0) return s;
+  return `${s.slice(0, index)}~${s[index]}~${s.slice(index + 1)}`;
 }
 
 /** Group the registry by category, preserving first-seen order. */

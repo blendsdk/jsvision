@@ -20,6 +20,7 @@ import { createCellEditor } from './cell-editor.js';
 import { PARSE_FAILED } from './format.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { CellRect } from './overlay.js';
+import type { AcceptedCellCommit } from './row-revert.js';
 
 /** The cell-key separator — a NUL byte, which cannot occur in a realistic row key or column id. */
 const KEY_SEP = String.fromCharCode(0);
@@ -136,7 +137,14 @@ export interface EditHost<T> {
   readonly dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (marker + message); omit to disable error surfacing. */
   readonly errors?: ErrorRegistry;
-  /** Mark a row as edited (a cell committed) so the row-leave gate knows to validate it; omit to disable. */
+  /** Report the complete accepted commit after every persistence gate succeeds. */
+  readonly onAcceptedCommit?: (change: AcceptedCellCommit<T>) => void;
+  /**
+   * Legacy touched-only notification retained for direct `EditableGridRows` consumers.
+   *
+   * Container integrations should use {@link EditHost.onAcceptedCommit}, which preserves the values,
+   * row identity, column identity, and setter needed for complete row recovery.
+   */
   readonly markRowTouched?: (rowKey: string | number) => void;
   /** The focused cell (row + column), or `null` when the grid is empty. */
   currentCell(): CellRef<T> | null;
@@ -379,7 +387,15 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     committing.delete(ck);
     if (res.committed) {
       host.errors?.clear(ck); // the cell now holds a committed, valid value
-      host.markRowTouched?.(cell.rowKey); // the row was edited → the row-leave gate will validate it
+      host.onAcceptedCommit?.({
+        rowKey: cell.rowKey,
+        row: cell.row,
+        columnId: cell.columnId,
+        previous,
+        value,
+        apply: (row, accepted) => tcol.set!(row, accepted),
+      });
+      host.markRowTouched?.(cell.rowKey); // compatibility for direct body consumers using the old seam
       closeEditor();
       state = { kind: 'idle' };
       return true;

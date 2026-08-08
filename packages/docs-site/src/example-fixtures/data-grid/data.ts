@@ -8,6 +8,10 @@ export interface DataGridLabRow {
   region: 'North' | 'South' | 'East' | 'West';
   /** Typed numeric value used by editing, sorting, validation, and aggregation examples. */
   amount: number;
+  /** Cross-field interval start used by the row-recovery validation laboratory. */
+  start?: number;
+  /** Cross-field interval end used by the row-recovery validation laboratory. */
+  end?: number;
   /** Boolean lifecycle value used by editor and conditional-rendering examples. */
   active: boolean;
   /** Nullable ratio used to demonstrate typed percentage and null presentation. */
