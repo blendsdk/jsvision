@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-08
+
+Added:
+- Implemented retryable row recovery with successful and vetoed transactions, including compact keyboard guidance. 
+
+Changed:
+- Enhanced row recovery process to teach explicit row-revert acceptance and live-session retry limits.
+- Updated tests for plugin impact maintenance seam to align with NodeNext specification.
+  
+Fixed:
+- Resolved issues with row recovery distribution findings by incorporating a retained pre-first-commit baseline across multiple surfaces.
+
 ## [1.5.1] - 2026-07-31
 
 Changed:

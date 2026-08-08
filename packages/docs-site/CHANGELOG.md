@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-08
+
+### Changed
+- Closed row recovery quality findings by exposing a deterministic pending revert through real public grid state.
+- Updated round-trip numeric validation data to verify official German feedback.
+- Refined independent Phase 2 quality closure documentation across several files.
+- Enhanced documentation and examples for row recovery teaching phase with updated JSDoc examples.
+
+### Added
+- Introduced row recovery validation lab featuring real Start and End edits, asynchronous restore persistence, and observable status and cursor probes.
+
+### Fixed
+- Resolved action-adapter case preservation issues and improved self-containment of new row-revert examples in documentation.
+
+### Test
+- Strengthened implementation coverage for row recovery lab wiring including browser-style Arrow action normalization.
+
 ## [1.5.1] - 2026-07-31
 
 Fixed:

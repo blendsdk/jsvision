@@ -125,7 +125,7 @@ Use this minimal `package.json` shape:
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@jsvision/ui": "^1.5.3"
+    "@jsvision/ui": "^1.6.0"
   },
   "devDependencies": {
     "@types/node": "^22",

@@ -12,6 +12,25 @@ first published release has an accurate history.
 > `[Unreleased]` is the authoritative surface; from 1.0.0 the package follows
 > [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-08
+
+Added:
+- Add the remappable `revertRow` action and preserve Escape fallthrough for ineligible trapped sessions.
+- Add atomic row transaction coordinator with bounded setter-failure recovery.
+- Add canonical trapped, pending, failure, and unavailable catalog messages with placeholders.
+
+Changed:
+- Update validation laboratory metadata and teaching page with the commit-then-trap model.
+- Improve the documentation to cover atomic persistence, retry behavior, and exact generated messages for row recovery.
+
+Fixed:
+- Close row recovery quality findings by exposing deterministic pending revert through public grid state.
+- Keep pending quick filters inert by restoring blocked quick-filter text to its last accepted value.
+- Fix action-adapter case preservation and close regression in examples and documentation.
+
+Security:
+- Validate row-revert behavior against security, ensuring compliance with internationalization standards and public types.
+
 ## [1.3.0] - 2026-07-28
 
 Changed:
