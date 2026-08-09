@@ -42,6 +42,17 @@ interface ClampKanbanScrollOptions {
 }
 ```
 
+## CreateKanbanVerticalHeightProjectionOptions
+
+Inputs for creating one bounded immutable height projection.
+
+```ts
+interface CreateKanbanVerticalHeightProjectionOptions {
+  index: KanbanSparseHeightIndex;   // Mutable sparse index sampled synchronously into detached evidence.
+  cards: readonly Pick<KanbanVerticalHeightProjectionRow, 'cardKey' | 'logicalIndex'>[];   // Source-ordered retained card identities and their global logical positions.
+}
+```
+
 ## EagerKanbanSourceOptions
 
 Public options shared by every query session opened from one eager source.
@@ -3544,6 +3555,8 @@ interface KanbanVerticalCardAnchor {
   cardKey: CardKey;   // Stable card identity.
   logicalRow: number;   // Logical top row in the unscrolled card stack.
   height: number;   // Descriptor height in terminal rows.
+  logicalIndex?: number;   // Global logical position when sparse height evidence owns placement.
+  quality?: KanbanSparseHeightPosition['quality'];   // Whether the logical row is exact or still estimated.
 }
 ```
 
@@ -3555,6 +3568,7 @@ Bounded card extent consumed by the pure vertical projector.
 interface KanbanVerticalCardInput {
   cardKey: CardKey;   // Stable application-owned card identity.
   height: number;   // Validated descriptor height in terminal rows.
+  logicalIndex?: number;   // Global logical position required when a sparse height projection is supplied.
 }
 ```
 
@@ -3567,11 +3581,52 @@ interface KanbanVerticalGeometry {
   regions: readonly KanbanLayoutRegion[];   // Clipped semantic regions visible in the assigned rectangle.
   actionTargets: readonly KanbanActionTarget[];   // Actionable targets; deliberately empty in Phase A.
   contentHeight: number;   // Complete unscrolled height including sticky chrome and resting gaps.
+  extentQuality: 'exact' | 'unknown';   // Confidence in the card-content portion of `contentHeight`.
   scrollExtent: number;   // Greatest valid vertical card-content offset.
   scrollOffset: number;   // Clamped offset used for this projection.
   retainedStart: number;   // First retained source-card index.
   retainedEnd: number;   // Exclusive retained source-card index.
   anchors: readonly KanbanVerticalCardAnchor[];   // Source-ordered stable anchors independent of clipping.
+}
+```
+
+## KanbanVerticalHeightProjection
+
+Immutable bounded sparse-height evidence shared by projection and metrics.
+
+```ts
+interface KanbanVerticalHeightProjection {
+  logicalLength: number;   // Complete logical card count represented arithmetically rather than by allocation.
+  rows: readonly KanbanVerticalHeightProjectionRow[];   // Bounded retained rows needed by the current visible and overscan window.
+  descriptorExtent: KanbanSparseHeightPosition;   // Descriptor-only aggregate extent at the logical end boundary.
+  revisions: {
+    readonly source: KanbanRevision;
+    readonly cursor: KanbanRevision;
+    readonly presentation: KanbanRevision;
+  };   // Revisions that make every retained row and the aggregate extent compatible.
+}
+```
+
+## KanbanVerticalHeightProjectionRow
+
+One retained card row detached from a mutable sparse height index.
+
+```ts
+interface KanbanVerticalHeightProjectionRow {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  logicalIndex: number;   // Global logical position in the owning semantic cell.
+  descriptorRow: KanbanSparseHeightPosition;   // Descriptor-only row before density-owned resting gaps are added.
+}
+```
+
+## KanbanVerticalProjectionExtent
+
+Aggregate vertical content extent after density-owned gaps are applied.
+
+```ts
+interface KanbanVerticalProjectionExtent {
+  value: number;   // Saturated card-content height in terminal rows.
+  quality: 'exact' | 'unknown';   // Exact only when the complete descriptor prefix is exact.
 }
 ```
 
@@ -3805,6 +3860,7 @@ interface ProjectKanbanVerticalGeometryOptions {
   swimlaneHeaderHeight?: number;   // Optional swimlane-header rows below the workflow header.
   scrollOffset: number;   // Requested vertical card-content offset.
   contentOrigin?: number;   // Logical row occupied by the first retained card in a sparse source window.
+  heightProjection?: KanbanVerticalHeightProjection;   // Optional immutable sparse row evidence for global variable-height placement.
   density: KanbanCardDensity;   // Resting card-spacing policy.
   cards: readonly KanbanVerticalCardInput[];   // Source-ordered retained cards.
   verticalOverscan: number;   // Finite extra card rows retained around the visible range.
@@ -4342,6 +4398,14 @@ Creates the complete immutable Kanban semantic palette for a Core theme.
 createKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOverrides): KanbanTheme
 ```
 
+## createKanbanVerticalHeightProjection
+
+Samples retained rows and the logical end boundary from one sparse index.
+
+```ts
+createKanbanVerticalHeightProjection(options: CreateKanbanVerticalHeightProjectionOptions): KanbanVerticalHeightProjection
+```
+
 ## createKanbanViewId
 
 Creates a validated saved-view identity.
@@ -4548,6 +4612,14 @@ Resolves one dynamic semantic role through the explicit, mapped, family, and eme
 
 ```ts
 resolveKanbanThemeRole(theme: KanbanTheme, requestedRole: unknown, fallbackRole: KanbanThemeRole, capabilities: KanbanThemeCapabilities): KanbanResolvedThemeRole
+```
+
+## resolveKanbanVerticalProjectionExtent
+
+Adds density-owned global resting gaps to a detached sparse descriptor extent.
+
+```ts
+resolveKanbanVerticalProjectionExtent(projection: KanbanVerticalHeightProjection, density: KanbanCardDensity): KanbanVerticalProjectionExtent
 ```
 
 ## snapshotKanbanBoardCounts
@@ -4764,6 +4836,14 @@ Validates one ordered swimlane metadata record.
 
 ```ts
 snapshotKanbanSwimlaneMeta(value: unknown): KanbanSwimlaneMeta
+```
+
+## snapshotKanbanVerticalHeightProjection
+
+Validates and detaches one bounded sparse-height projection.
+
+```ts
+snapshotKanbanVerticalHeightProjection(value: unknown): KanbanVerticalHeightProjection
 ```
 
 ## solveKanbanColumnWidths
