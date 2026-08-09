@@ -327,6 +327,7 @@ new KanbanBoard<TCard>(options: KanbanBoardOptions<TCard>)   // extends Group
 viewport: KanbanViewport<TCard>
 runPendingMounts(): void
 inspection(): KanbanBoardInspection
+interaction(): KanbanInteractionFacade
 request(request: KanbanRequest): Promise<KanbanRequestResult>
 reconcilePublication(notice: KanbanPublicationNotice): void
 scrollTo(target: KanbanScrollTarget): void
@@ -387,6 +388,7 @@ Construction options for the responsive board shell and application authority se
 ```ts
 interface KanbanBoardOptions<TCard> {
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
+  interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
 }
 ```
 
@@ -3985,6 +3987,10 @@ metricsSignal(): Signal<number>
 sourceState(): KanbanSourceState | undefined
 identityChanges(): KanbanIdentityChangeBatch | undefined
 focusedNavigator(): KanbanFocusedColumnNavigator | undefined
+interactionScene(): KanbanNavigationSnapshot
+interactionRevisions(): KanbanInteractionRevisions
+interactionEligibleSelection(): readonly KanbanEligibleSelectionCandidate[]
+revealInteractionTarget(target: KanbanFocusTarget, options?: { readonly signal?: AbortSignal }): Promise<KanbanInteractionAcquisitionResult>
 scrollTo(target: KanbanScrollTarget): void
 scrollBy(delta: KanbanScrollTarget): void
 revealCard(key: CardKey, alignment?: KanbanRevealAlignment, options?: { readonly signal?: AbortSignal }): Promise<KanbanRevealResult>

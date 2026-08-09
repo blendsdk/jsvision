@@ -10,8 +10,23 @@ import type {
   KanbanRequestResult,
 } from '../contract/request.js';
 import type { CardKey } from '../contract/identity.js';
-import { KanbanDisposedResourceError } from '../contract/error.js';
+import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
+import { validateKanbanLimitOptions } from '../contract/limits.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
+import { createKanbanInteractionController } from '../interaction/controller.js';
+import type { KanbanInteractionControllerFactory, KanbanInteractionFacade } from '../interaction/facade.js';
+import { KanbanInteractionFacadeOwner } from '../interaction/facade.js';
+import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
+import type {
+  KanbanFocusTarget,
+  KanbanInteractionAcquisitionRequest,
+  KanbanInteractionAcquisitionResult,
+  KanbanInteractionEnvironment,
+  KanbanInteractionFeedback,
+  KanbanInteractionFeedbackCode,
+  KanbanInteractionSnapshot,
+  KanbanSelectionSnapshot,
+} from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
 import { KanbanBoardAuthority } from './board-authority.js';
@@ -26,6 +41,8 @@ import { setViewportHostChromeRows } from './viewport-host-chrome.js';
 export interface KanbanBoardOptions<TCard> extends KanbanViewportOptions<TCard> {
   /** Optional application-owned request dispatcher; read projection never depends on it. */
   readonly dispatcher?: KanbanRequestDispatcher;
+  /** Optional mount factory replacing the package default interaction controller. */
+  readonly interactionFactory?: KanbanInteractionControllerFactory;
 }
 
 /** Conditional focused-column navigator evidence. */
@@ -133,6 +150,9 @@ export class KanbanBoard<TCard> extends Group {
   readonly #i18n: () => I18n;
   readonly #bindings: KanbanBoardBindings<TCard>;
   readonly #authority: KanbanBoardAuthority;
+  readonly #interactionFacade: KanbanInteractionFacadeOwner;
+  readonly #interactionFactory: KanbanInteractionControllerFactory | undefined;
+  readonly #legacyIdentity: (() => KanbanIdentityInput) | undefined;
   readonly #navigatorVisible = signal(false);
   readonly #minimumReserveVisible = signal(false);
   readonly #navigator: KanbanFocusedNavigatorView;
@@ -144,6 +164,9 @@ export class KanbanBoard<TCard> extends Group {
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
   constructor(options: KanbanBoardOptions<TCard>) {
     super();
+    if (options.identity !== undefined && options.interactionFactory !== undefined) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
     this.focusable = true;
     const fallbackI18n = createEnglishKanbanI18n();
     this.#i18n = options.i18n ?? (() => fallbackI18n);
@@ -153,7 +176,14 @@ export class KanbanBoard<TCard> extends Group {
     };
     this.#bindings = new KanbanBoardBindings(bindingOptions);
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
-    this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#bindings.identity()));
+    this.#interactionFactory = options.interactionFactory;
+    this.#legacyIdentity = options.identity;
+    this.#interactionFacade = new KanbanInteractionFacadeOwner({
+      snapshotEligibleSelection: () => this.#snapshotEligibleSelection(),
+      invalidate: () => this.viewport.invalidate(),
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
+    });
+    this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#interactionIdentity()));
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
     this.setLayout({ direction: 'col' });
@@ -171,6 +201,8 @@ export class KanbanBoard<TCard> extends Group {
         () => this.#minimumReserve,
       ),
     );
+
+    this.viewport.onMount(() => this.#setupInteraction(options.limits));
 
     this.onMount(() => {
       this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
@@ -192,6 +224,7 @@ export class KanbanBoard<TCard> extends Group {
         }),
       );
       this.viewport.onCleanup(() => {
+        this.#interactionFacade.dispose();
         this.#disposeBindings?.();
         this.#disposeBindings = undefined;
         this.#authority.dispose();
@@ -244,6 +277,11 @@ export class KanbanBoard<TCard> extends Group {
     });
   }
 
+  /** Returns the board's stable programmatic interaction facade before and after mount. */
+  interaction(): KanbanInteractionFacade {
+    return this.#interactionFacade;
+  }
+
   /** Dispatches one raw application-owned request without applying optimistic record changes. */
   request(request: KanbanRequest): Promise<KanbanRequestResult> {
     return this.#authority.request(request);
@@ -277,10 +315,17 @@ export class KanbanBoard<TCard> extends Group {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#interactionFacade.dispose();
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
     this.#authority.dispose();
     this.viewport.dispose();
+  }
+
+  /** Mounts this board only while its single owned-resource lifecycle remains available. */
+  override mount(...parameters: Parameters<Group['mount']>): void {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    super.mount(...parameters);
   }
 
   /** Unmounts board-owned authority before descendant scopes tear down the viewport. */
@@ -298,5 +343,105 @@ export class KanbanBoard<TCard> extends Group {
   /** Reconciles the latest source deletion facts at the board's public state boundary. */
   #reconcileIdentityChanges(): void {
     if (this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges())) this.#layoutReflows += 1;
+  }
+
+  /** Attaches one controller only after the viewport has acquired its source/session resources. */
+  #setupInteraction(limits: KanbanBoardOptions<TCard>['limits']): void {
+    try {
+      const environment = this.#interactionEnvironment();
+      const controller =
+        this.#interactionFactory === undefined
+          ? createKanbanInteractionController(environment, validateKanbanLimitOptions(limits).selectedKeys)
+          : this.#interactionFactory(environment);
+      this.#interactionFacade.attach(controller);
+    } catch {
+      this.#interactionFacade.failSetup();
+      this.#disposeBindings?.();
+      this.#disposeBindings = undefined;
+      this.#authority.dispose();
+      this.viewport.dispose();
+    }
+  }
+
+  /** Creates the exact bounded service object supplied to one mount-owned controller factory. */
+  #interactionEnvironment(): KanbanInteractionEnvironment {
+    return Object.freeze({
+      scene: () => this.viewport.interactionScene(),
+      revisions: () => this.viewport.interactionRevisions(),
+      reveal: (target: KanbanFocusTarget, options?: { readonly signal?: AbortSignal }) =>
+        this.viewport.revealInteractionTarget(snapshotKanbanFocusTarget(target), options),
+      acquire: (request: KanbanInteractionAcquisitionRequest, options?: { readonly signal?: AbortSignal }) =>
+        this.#acquireInteractionTarget(request, options),
+      feedback: (code: KanbanInteractionFeedbackCode, count?: number) => this.#interactionFeedback(code, count),
+      invalidate: () => this.viewport.invalidate(),
+    });
+  }
+
+  /** Validates one acquisition request before delegating bounded viewport work. */
+  #acquireInteractionTarget(
+    request: KanbanInteractionAcquisitionRequest,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<KanbanInteractionAcquisitionResult> | KanbanInteractionAcquisitionResult {
+    if (request.kind !== 'reveal' && request.kind !== 'acquire') {
+      return Object.freeze({ kind: 'unavailable', retry: 'unavailable' });
+    }
+    return this.viewport.revealInteractionTarget(snapshotKanbanFocusTarget(request.target), options);
+  }
+
+  /** Creates bounded payload-free feedback pending dedicated locale vocabulary. */
+  #interactionFeedback(code: KanbanInteractionFeedbackCode, count?: number): KanbanInteractionFeedback {
+    const safeCount = count !== undefined && Number.isSafeInteger(count) && count >= 0 ? count : undefined;
+    const label =
+      code === 'navigation-error' || code === 'navigation-unavailable'
+        ? this.#i18n().t('kanban.reason.source-unavailable')
+        : code.replaceAll('-', ' ');
+    return Object.freeze({ code, label, ...(safeCount === undefined ? {} : { count: safeCount }) });
+  }
+
+  /** Projects controller state into the legacy viewport identity carrier during migration. */
+  #interactionIdentity(): KanbanIdentityInput {
+    if (this.#legacyIdentity !== undefined) return this.#bindings.identity();
+    const snapshot = this.#interactionFacade.snapshot();
+    if (snapshot.revision === 0) return this.#bindings.identity();
+    const pendingColumnId =
+      snapshot.pendingNavigation?.kind === 'reveal' && snapshot.pendingNavigation.target.kind === 'column-header'
+        ? snapshot.pendingNavigation.target.columnId
+        : undefined;
+    return Object.freeze({
+      selectedCardKeys: snapshot.selectedCardKeys,
+      ...(snapshot.focused.kind === 'card'
+        ? {
+            focusedCardKey: snapshot.focused.cardKey,
+            focusedColumnId: pendingColumnId ?? snapshot.focused.address.columnId,
+          }
+        : snapshot.focused.kind === 'column-header'
+          ? { focusedColumnId: pendingColumnId ?? snapshot.focused.columnId }
+          : pendingColumnId === undefined
+            ? {}
+            : { focusedColumnId: pendingColumnId }),
+    });
+  }
+
+  /** Captures ordered eligible selection with exact current card and query revisions. */
+  #snapshotEligibleSelection(): KanbanSelectionSnapshot {
+    const snapshot: KanbanInteractionSnapshot = this.#interactionFacade.snapshot();
+    const eligible = new Map(
+      this.viewport
+        .interactionEligibleSelection()
+        .map((entry) => [JSON.stringify([typeof entry.cardKey, entry.cardKey]), entry]),
+    );
+    const entries = Object.freeze(
+      snapshot.selectedCardKeys.flatMap((key) => {
+        const entry = eligible.get(JSON.stringify([typeof key, key]));
+        return entry === undefined ? [] : [entry];
+      }),
+    );
+    const revisions = this.viewport.interactionRevisions();
+    return Object.freeze({
+      entries,
+      sessionRevision: revisions.sessionRevision,
+      queryGeneration: revisions.queryGeneration,
+      ...(revisions.viewRevision === undefined ? {} : { viewRevision: revisions.viewRevision }),
+    });
   }
 }

@@ -95,6 +95,34 @@ function cardReferencesEqual<TCard>(left: readonly TCard[] | undefined, right: r
   return left !== undefined && left.length === right.length && left.every((card, index) => card === right[index]);
 }
 
+/** Encodes one type-preserving card identity for deterministic semantic comparison. */
+function encodedCardKey(key: CardKey): readonly [string, CardKey] {
+  return Object.freeze([typeof key, key]);
+}
+
+/**
+ * Captures source-visible eager semantics without retaining application record references.
+ *
+ * Fresh equivalent arrays are common in reactive getters. They must not manufacture a torn
+ * publication solely because their containers and records were reallocated between getters.
+ */
+function eagerIndexSemanticFingerprint<TCard>(index: EagerKanbanIndex<TCard>): string {
+  return JSON.stringify({
+    columns: index.columns,
+    swimlanes: index.swimlanes,
+    grouped: index.grouped,
+    cellKeys: [...index.cellKeys].map(([address, keys]) => [address, keys.map(encodedCardKey)]),
+    cellTotals: [...index.cellTotals],
+    authoritativeKeys: [...index.authoritativeKeys].map(encodedCardKey),
+    total: index.total,
+    matching: index.matching,
+    summaries: [...index.summaries],
+    columnSummaries: [...index.columnSummaries],
+    swimlaneSummaries: [...index.swimlaneSummaries],
+    allocationCounts: index.allocationCounts,
+  });
+}
+
 /** Narrows one descriptor from a statically typed array to its matching data value. */
 function isTypedDataDescriptor<T>(
   descriptor: PropertyDescriptor | undefined,
@@ -280,6 +308,7 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
   #lastColumnsSnapshot: readonly KanbanColumnMeta[] | undefined;
   #lastSwimlanesSnapshot: readonly KanbanSwimlaneMeta[] | undefined;
   #lastApplicationRevision: KanbanRevision | undefined;
+  #lastSemanticFingerprint: string | undefined;
   #failed = false;
   #hasValidPublication = false;
   #disposed = false;
@@ -459,18 +488,26 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       ) {
         return this.#last;
       }
-      const index = buildEagerKanbanIndex(cards, columns, swimlanes, {
+      const candidateIndex = buildEagerKanbanIndex(cards, columns, swimlanes, {
         query: this.#query,
         revision: this.#nextRevision(),
         sourceOptions: this.#options,
         limits: this.#limits,
       });
+      const semanticFingerprint = eagerIndexSemanticFingerprint(candidateIndex);
+      const index =
+        this.#last !== undefined &&
+        Object.is(applicationRevision, this.#lastApplicationRevision) &&
+        semanticFingerprint === this.#lastSemanticFingerprint
+          ? Object.freeze({ ...candidateIndex, revision: this.#last.index.revision })
+          : candidateIndex;
       const next = Object.freeze({ index, identityChanges: deriveIdentityChanges(this.#last?.index, index) });
       this.#last = next;
       this.#lastCardsSnapshot = cards;
       this.#lastColumnsSnapshot = columnSnapshots;
       this.#lastSwimlanesSnapshot = swimlaneSnapshots;
       this.#lastApplicationRevision = applicationRevision;
+      this.#lastSemanticFingerprint = semanticFingerprint;
       this.#failed = false;
       this.#hasValidPublication = true;
       return next;

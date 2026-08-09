@@ -303,6 +303,13 @@ export class KanbanSelectionModel {
     return update('changed', this.#selected, undefined);
   }
 
+  /** Ends range extension without changing current ordered membership. */
+  endRangeExtension(): KanbanSelectionUpdate {
+    if (this.#rangeAnchor === undefined) return update('unchanged', this.#selected, undefined);
+    this.#rangeAnchor = undefined;
+    return update('changed', this.#selected, undefined);
+  }
+
   /** Prunes view-hidden membership, while a cursor unload deliberately removes nothing. */
   prune(visibleCardKeys: readonly CardKey[], reason: 'visibility' | 'cursor-unload'): KanbanSelectionUpdate {
     if (reason === 'cursor-unload') return update('unchanged', this.#selected, this.#rangeAnchor, 0);

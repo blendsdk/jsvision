@@ -27,7 +27,11 @@ export type { KanbanStandardCardCompositionContext } from './card/standard-rende
 export * from './card/theme.js';
 export * from './card/theme-resolver.js';
 export * from './i18n/catalog.js';
-export * from './interaction/facade.js';
+export type {
+  KanbanInteractionController,
+  KanbanInteractionControllerFactory,
+  KanbanInteractionFacade,
+} from './interaction/facade.js';
 export * from './interaction/types.js';
 export * from './layout/hit-map.js';
 export * from './layout/metrics.js';

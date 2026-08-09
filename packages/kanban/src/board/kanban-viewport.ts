@@ -4,6 +4,7 @@ import { View, signal } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext, Signal, Size2D } from '@jsvision/ui';
 
 import type { KanbanCardPresentationAdapter } from '../card/adapter.js';
+import { readKanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity, KanbanCardRenderer } from '../card/descriptor.js';
 import type { KanbanCardFormattingContext } from '../card/formatting.js';
 import type { KanbanPresentationInput } from '../card/presentation-policy.js';
@@ -17,6 +18,14 @@ import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import type { KanbanEligibleSelectionCandidate } from '../interaction/selection.js';
+import type {
+  KanbanFocusTarget,
+  KanbanInteractionAcquisitionResult,
+  KanbanInteractionRevisions,
+  KanbanNavigationSnapshot,
+  KanbanNavigationTarget,
+} from '../interaction/types.js';
 import type { KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
@@ -188,6 +197,8 @@ export class KanbanViewport<TCard> extends View {
   #metricsFingerprint = '';
   #revealController: AbortController | undefined;
   #anchorController: AbortController | undefined;
+  #everMounted = false;
+  #releasedLifecycle = false;
   #disposed = false;
 
   /** Stores configuration without opening application resources before mount. */
@@ -204,6 +215,7 @@ export class KanbanViewport<TCard> extends View {
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
     this.focusable = true;
     this.onMount(() => {
+      this.#everMounted = true;
       if (this.#disposed) return;
       this.#source = new KanbanViewportSource({
         source: options.source,
@@ -244,10 +256,25 @@ export class KanbanViewport<TCard> extends View {
     });
   }
 
+  /** Mounts only while this viewport's terminal owned-resource lifecycle remains available. */
+  override mount(...parameters: Parameters<View['mount']>): void {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    super.mount(...parameters);
+  }
+
   /** Rejects remount after the viewport's terminal owned-resource lifecycle has been released. */
   override runPendingMounts(): void {
-    if (this.#disposed) throw new KanbanDisposedResourceError();
+    if (this.#disposed && (!this.#everMounted || this.#releasedLifecycle)) {
+      throw new KanbanDisposedResourceError();
+    }
     super.runPendingMounts();
+  }
+
+  /** Records release of a disposed mount so a later remount remains invalid. */
+  override unmount(): void {
+    const wasMounted = this.mounted;
+    super.unmount();
+    if (wasMounted && this.#disposed) this.#releasedLifecycle = true;
   }
 
   /** Refreshes bounded source acquisition; visual descriptor drawing is added by the render task. */
@@ -407,6 +434,183 @@ export class KanbanViewport<TCard> extends View {
   /** Returns current focused-column navigator metadata for the owning DSL shell. */
   focusedNavigator(): KanbanFocusedColumnNavigator | undefined {
     return this.#snapshot?.widths.navigator;
+  }
+
+  /** Returns detached bounded navigation geometry for the owning board interaction adapter. */
+  interactionScene(): KanbanNavigationSnapshot {
+    const projection = this.#projection;
+    const geometry = projection?.geometry;
+    const revision =
+      this.#snapshot === undefined
+        ? 0
+        : JSON.stringify([
+            this.#snapshot.publication.revision,
+            this.#snapshot.generation,
+            this.#snapshot.widths.columns.map((column) => column.columnId),
+          ]);
+    if (geometry === undefined) {
+      return Object.freeze({
+        revision,
+        targets: Object.freeze([
+          Object.freeze({
+            target: Object.freeze({ kind: 'board-state' as const }),
+            sceneIndex: 0,
+            centerColumn: Math.max(0, (this.bounds.width - 1) / 2),
+            centerRow: Math.max(0, (this.bounds.height - 1) / 2),
+            enabled: true,
+          }),
+        ]),
+        viewportContentHeight: Math.max(0, this.bounds.height - this.#metrics.stickyRows),
+      });
+    }
+    const targets: KanbanNavigationTarget[] = [];
+    let sceneIndex = 0;
+    const workflowColumns = this.#snapshot?.publication.columns ?? [];
+    for (const [columnIndex, column] of workflowColumns.entries()) {
+      const header = geometry.workflowHeaders.find((candidate) => candidate.columnId === column.columnId);
+      targets.push(
+        Object.freeze({
+          target: Object.freeze({ kind: 'column-header' as const, columnId: column.columnId }),
+          sceneIndex,
+          centerColumn: header === undefined ? columnIndex * 18 + 8.5 : header.x + (header.width - 1) / 2,
+          centerRow: header === undefined ? 0 : header.y + (header.height - 1) / 2,
+          enabled: true,
+        }),
+      );
+      sceneIndex += 1;
+    }
+    for (const header of geometry.swimlaneChrome) {
+      targets.push(
+        Object.freeze({
+          target: Object.freeze({ kind: 'swimlane-header' as const, swimlaneId: header.swimlaneId }),
+          sceneIndex,
+          centerColumn: header.x + (header.width - 1) / 2,
+          centerRow: header.y + (header.height - 1) / 2,
+          enabled: true,
+        }),
+      );
+      sceneIndex += 1;
+    }
+    const activeColumnIds = new Set(this.#snapshot?.widths.columns.map((column) => column.columnId) ?? []);
+    const retainedCardKeys = new Set<string>();
+    for (const card of geometry.cards.filter((candidate) => activeColumnIds.has(candidate.address.columnId))) {
+      retainedCardKeys.add(JSON.stringify([typeof card.cardKey, card.cardKey]));
+      targets.push(
+        Object.freeze({
+          target: Object.freeze({ kind: 'card' as const, cardKey: card.cardKey, address: card.address }),
+          sceneIndex,
+          centerColumn: card.x + (card.width - 1) / 2,
+          centerRow: card.y + (card.height - 1) / 2,
+          enabled: true,
+        }),
+      );
+      sceneIndex += 1;
+    }
+    for (const cell of this.#snapshot?.cells ?? []) {
+      for (let index = cell.range.start; index < cell.range.end; index += 1) {
+        const record = cell.cursor.cardAt(index);
+        if (record === undefined) continue;
+        let key: CardKey;
+        try {
+          key = readKanbanCardAdapter(record, this.#options.card).cardKey;
+        } catch {
+          continue;
+        }
+        const encoded = JSON.stringify([typeof key, key]);
+        if (retainedCardKeys.has(encoded)) continue;
+        retainedCardKeys.add(encoded);
+        const columnIndex = workflowColumns.findIndex((column) => column.columnId === cell.address.columnId);
+        targets.push(
+          Object.freeze({
+            target: Object.freeze({ kind: 'card' as const, cardKey: key, address: cell.address }),
+            sceneIndex,
+            centerColumn: Math.max(0, columnIndex) * 18 + 8.5,
+            centerRow: 1.5 + Math.max(0, index - cell.range.start) * 3,
+            enabled: true,
+          }),
+        );
+        sceneIndex += 1;
+      }
+    }
+    if (targets.length === 0) {
+      targets.push(
+        Object.freeze({
+          target: Object.freeze({ kind: 'board-state' as const }),
+          sceneIndex,
+          centerColumn: Math.max(0, (this.bounds.width - 1) / 2),
+          centerRow: Math.max(0, (this.bounds.height - 1) / 2),
+          enabled: true,
+        }),
+      );
+    }
+    return Object.freeze({
+      revision,
+      targets: Object.freeze(targets),
+      viewportContentHeight: Math.max(0, this.bounds.height - geometry.contentOrigin.y),
+    });
+  }
+
+  /** Returns current query/session revision evidence without exposing source resources. */
+  interactionRevisions(): KanbanInteractionRevisions {
+    return Object.freeze({
+      sessionRevision: this.#snapshot?.publication.revision ?? 0,
+      queryGeneration: this.#snapshot?.generation ?? 0,
+    });
+  }
+
+  /** Returns visible eligible cards with exact current entity revisions. */
+  interactionEligibleSelection(): readonly KanbanEligibleSelectionCandidate[] {
+    const scene = this.#projection?.scene;
+    const geometry = this.#projection?.geometry;
+    if (scene === undefined || geometry === undefined) return Object.freeze([]);
+    const visible = new Set(geometry.cards.map((card) => JSON.stringify([typeof card.cardKey, card.cardKey])));
+    return Object.freeze(
+      scene.cards.flatMap((card) =>
+        visible.has(JSON.stringify([typeof card.cardKey, card.cardKey]))
+          ? [
+              Object.freeze({
+                cardKey: card.cardKey,
+                address: card.address,
+                entityRevision: card.entityRevision,
+              }),
+            ]
+          : [],
+      ),
+    );
+  }
+
+  /** Reveals one bounded semantic interaction target without transferring viewport ownership. */
+  async revealInteractionTarget(
+    target: KanbanFocusTarget,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<KanbanInteractionAcquisitionResult> {
+    if (target.kind === 'board-state') return Object.freeze({ kind: 'available' });
+    if (target.kind === 'card') {
+      const result = await this.revealCard(target.cardKey, 'nearest', options);
+      return result.location.kind === 'found' || result.location.kind === 'unloaded'
+        ? Object.freeze({ kind: 'available' })
+        : Object.freeze({ kind: 'unavailable', retry: 'available' });
+    }
+    if (target.kind === 'column-header') {
+      const exists = this.#snapshot?.publication.columns.some((column) => column.columnId === target.columnId) ?? false;
+      if (!exists) return Object.freeze({ kind: 'unavailable', retry: 'unavailable' });
+      this.#imperativeFocusedColumnAnchor = target.columnId;
+      this.#focusedColumnAnchor = target.columnId;
+      this.scrollTo({ x: this.#columnStart(target.columnId) });
+      const refreshed = this.#refresh(
+        this.#options.collapsedColumnIds?.(),
+        target.columnId,
+        this.#options.density?.() ?? 'comfortable',
+        this.#options.structure?.(),
+      );
+      if (refreshed !== undefined) {
+        this.#snapshot = refreshed;
+        this.#updateMetrics(refreshed);
+      }
+      return Object.freeze({ kind: 'available' });
+    }
+    const exists = this.#snapshot?.visibleSwimlanes.some((lane) => lane.swimlaneId === target.swimlaneId) ?? false;
+    return exists ? Object.freeze({ kind: 'available' }) : Object.freeze({ kind: 'unavailable', retry: 'unavailable' });
   }
 
   /** Scrolls to an absolute partial terminal-cell target and clamps both axes to live extents. */
