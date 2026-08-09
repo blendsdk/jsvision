@@ -492,8 +492,35 @@ export class KanbanViewport<TCard> extends View {
       sceneIndex += 1;
     }
     const activeColumnIds = new Set(this.#snapshot?.widths.columns.map((column) => column.columnId) ?? []);
+    const snapshotCards: Array<{
+      readonly cardKey: CardKey;
+      readonly address: KanbanCellAddress;
+      readonly visibleIndex: number;
+    }> = [];
+    for (const cell of this.#snapshot?.cells ?? []) {
+      for (let index = cell.range.start; index < cell.range.end; index += 1) {
+        const record = cell.cursor.cardAt(index);
+        if (record === undefined) continue;
+        try {
+          snapshotCards.push(
+            Object.freeze({
+              cardKey: readKanbanCardAdapter(record, this.#options.card).cardKey,
+              address: cell.address,
+              visibleIndex: index - cell.range.start,
+            }),
+          );
+        } catch {
+          // A malformed card is excluded from navigation without affecting neighboring targets.
+        }
+      }
+    }
+    const residentCardKeys = new Set(snapshotCards.map((card) => JSON.stringify([typeof card.cardKey, card.cardKey])));
     const retainedCardKeys = new Set<string>();
-    for (const card of geometry.cards.filter((candidate) => activeColumnIds.has(candidate.address.columnId))) {
+    for (const card of geometry.cards.filter(
+      (candidate) =>
+        activeColumnIds.has(candidate.address.columnId) &&
+        residentCardKeys.has(JSON.stringify([typeof candidate.cardKey, candidate.cardKey])),
+    )) {
       retainedCardKeys.add(JSON.stringify([typeof card.cardKey, card.cardKey]));
       targets.push(
         Object.freeze({
@@ -506,31 +533,21 @@ export class KanbanViewport<TCard> extends View {
       );
       sceneIndex += 1;
     }
-    for (const cell of this.#snapshot?.cells ?? []) {
-      for (let index = cell.range.start; index < cell.range.end; index += 1) {
-        const record = cell.cursor.cardAt(index);
-        if (record === undefined) continue;
-        let key: CardKey;
-        try {
-          key = readKanbanCardAdapter(record, this.#options.card).cardKey;
-        } catch {
-          continue;
-        }
-        const encoded = JSON.stringify([typeof key, key]);
-        if (retainedCardKeys.has(encoded)) continue;
-        retainedCardKeys.add(encoded);
-        const columnIndex = workflowColumns.findIndex((column) => column.columnId === cell.address.columnId);
-        targets.push(
-          Object.freeze({
-            target: Object.freeze({ kind: 'card' as const, cardKey: key, address: cell.address }),
-            sceneIndex,
-            centerColumn: Math.max(0, columnIndex) * 18 + 8.5,
-            centerRow: 1.5 + Math.max(0, index - cell.range.start) * 3,
-            enabled: true,
-          }),
-        );
-        sceneIndex += 1;
-      }
+    for (const card of snapshotCards) {
+      const encoded = JSON.stringify([typeof card.cardKey, card.cardKey]);
+      if (retainedCardKeys.has(encoded)) continue;
+      retainedCardKeys.add(encoded);
+      const columnIndex = workflowColumns.findIndex((column) => column.columnId === card.address.columnId);
+      targets.push(
+        Object.freeze({
+          target: Object.freeze({ kind: 'card' as const, cardKey: card.cardKey, address: card.address }),
+          sceneIndex,
+          centerColumn: Math.max(0, columnIndex) * 18 + 8.5,
+          centerRow: 1.5 + Math.max(0, card.visibleIndex) * 3,
+          enabled: true,
+        }),
+      );
+      sceneIndex += 1;
     }
     if (targets.length === 0) {
       targets.push(

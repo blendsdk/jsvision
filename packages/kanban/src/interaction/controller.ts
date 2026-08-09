@@ -36,6 +36,16 @@ import type {
 } from './types.js';
 import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from './types.js';
 
+/** Deprecated application identity captured once for the package default controller. */
+export interface KanbanDefaultInteractionSeed {
+  /** Preferred initial card identity when it is eligible in the first usable scene. */
+  readonly focusedCardKey?: CardKey;
+  /** Preferred initial workflow column when no seeded card is eligible. */
+  readonly focusedColumnId?: string;
+  /** Ordered initial selected identities intersected with the first usable scene. */
+  readonly selectedCardKeys: readonly CardKey[];
+}
+
 /** Exact top-level members accepted from an injected controller snapshot. */
 const SNAPSHOT_KEYS = new Set([
   'revision',
@@ -247,6 +257,7 @@ function candidateFor(
 class DefaultKanbanInteractionController implements KanbanInteractionController {
   readonly #environment: KanbanInteractionEnvironment;
   readonly #selection: KanbanSelectionModel;
+  readonly #seed: KanbanDefaultInteractionSeed | undefined;
   readonly #acquisition = new KanbanAcquisitionCoordinator();
   readonly #transient = new KanbanTransientOwner();
   readonly #subscribers = new Set<() => void>();
@@ -255,9 +266,14 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   #disposed = false;
 
   /** Creates an empty controller and defers initial focus until usable scene evidence exists. */
-  constructor(environment: KanbanInteractionEnvironment, maximumSelectedKeys: number) {
+  constructor(
+    environment: KanbanInteractionEnvironment,
+    maximumSelectedKeys: number,
+    seed?: KanbanDefaultInteractionSeed,
+  ) {
     this.#environment = environment;
     this.#selection = new KanbanSelectionModel(maximumSelectedKeys);
+    this.#seed = seed;
   }
 
   /** Returns current immutable state, choosing initial focus once usable evidence exists. */
@@ -304,9 +320,51 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
     if (this.#snapshot.revision !== 0 || this.#snapshot.focused.kind !== 'board-state') return;
     const scene = snapshotKanbanNavigationSnapshot(this.#environment.scene());
     this.#previousScene = scene;
-    const focused = resolveInitialKanbanFocus(scene);
-    if (focused.kind === 'board-state') return;
-    this.#snapshot = Object.freeze({ ...this.#snapshot, revision: 1, focused });
+    const seededCardKey = this.#seed?.focusedCardKey;
+    const seededCard =
+      seededCardKey === undefined
+        ? undefined
+        : scene.targets.find(
+            (entry) =>
+              entry.enabled &&
+              entry.target.kind === 'card' &&
+              typeof entry.target.cardKey === typeof seededCardKey &&
+              entry.target.cardKey === seededCardKey,
+          );
+    const seededColumn =
+      seededCard !== undefined || this.#seed?.focusedColumnId === undefined
+        ? undefined
+        : scene.targets.find(
+            (entry) =>
+              entry.enabled &&
+              entry.target.kind === 'column-header' &&
+              entry.target.columnId === this.#seed?.focusedColumnId,
+          );
+    const focused = seededCard?.target ?? seededColumn?.target ?? resolveInitialKanbanFocus(scene);
+    const seedOrder = new Map(
+      (this.#seed?.selectedCardKeys ?? []).map((key, index) => [JSON.stringify([typeof key, key]), index]),
+    );
+    const entityRevision = snapshotKanbanRevision(this.#environment.revisions().sessionRevision);
+    const selectedCandidates = scene.targets
+      .flatMap((entry) => {
+        const value = candidateFor(entry.target, scene, entityRevision);
+        return value === undefined ? [] : [value];
+      })
+      .filter((candidate) => seedOrder.has(JSON.stringify([typeof candidate.cardKey, candidate.cardKey])))
+      .sort(
+        (left, right) =>
+          (seedOrder.get(JSON.stringify([typeof left.cardKey, left.cardKey])) ?? Number.MAX_SAFE_INTEGER) -
+          (seedOrder.get(JSON.stringify([typeof right.cardKey, right.cardKey])) ?? Number.MAX_SAFE_INTEGER),
+      );
+    const seededSelection = this.#selection.selectLoadedVisibleMatching(selectedCandidates);
+    if (focused.kind === 'board-state' && seededSelection.selectedCardKeys.length === 0) return;
+    this.#snapshot = Object.freeze({
+      ...this.#snapshot,
+      revision: 1,
+      focused,
+      selectedCardKeys: seededSelection.selectedCardKeys,
+      ...(seededSelection.rangeAnchor === undefined ? {} : { rangeAnchor: seededSelection.rangeAnchor }),
+    });
   }
 
   /** Applies direct semantic focus or begins bounded acquisition for an absent card. */
@@ -640,4 +698,13 @@ export function createKanbanInteractionController(
   maximumSelectedKeys = KANBAN_LIMITS.selectedKeys.safe,
 ): KanbanInteractionController {
   return new DefaultKanbanInteractionController(environment, maximumSelectedKeys);
+}
+
+/** Creates the package default controller with one already-detached legacy compatibility seed. */
+export function createSeededKanbanInteractionController(
+  environment: KanbanInteractionEnvironment,
+  maximumSelectedKeys: number,
+  seed: KanbanDefaultInteractionSeed,
+): KanbanInteractionController {
+  return new DefaultKanbanInteractionController(environment, maximumSelectedKeys, seed);
 }

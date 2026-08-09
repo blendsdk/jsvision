@@ -3,6 +3,7 @@ import type { KanbanIdentityChangeBatch } from '../source/types.js';
 import type { KanbanIdentityInput } from './kanban-viewport.js';
 import { createKanbanCardKey, createKanbanColumnId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
+import type { KanbanDefaultInteractionSeed } from '../interaction/controller.js';
 
 /** Reads and snapshots application identity once, returning an empty value for malformed input. */
 export function readKanbanIdentityInput(getter: (() => KanbanIdentityInput) | undefined): KanbanIdentityInput {
@@ -29,6 +30,15 @@ export function readKanbanIdentityInput(getter: (() => KanbanIdentityInput) | un
   } catch {
     return Object.freeze({ selectedCardKeys: Object.freeze([]) });
   }
+}
+
+/** Converts one detached legacy identity value into a one-time default-controller seed. */
+export function createKanbanDefaultInteractionSeed(identity: KanbanIdentityInput): KanbanDefaultInteractionSeed {
+  return Object.freeze({
+    selectedCardKeys: Object.freeze([...(identity.selectedCardKeys ?? [])]),
+    ...(identity.focusedCardKey === undefined ? {} : { focusedCardKey: identity.focusedCardKey }),
+    ...(identity.focusedColumnId === undefined ? {} : { focusedColumnId: identity.focusedColumnId }),
+  });
 }
 
 /**

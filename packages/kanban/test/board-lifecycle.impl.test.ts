@@ -224,6 +224,42 @@ describe('board authority and lifecycle implementation', () => {
     render.unmount();
   });
 
+  it('uses legacy identity once and lets source deletion reconcile controller ownership', async () => {
+    const cards = signal<readonly Card[]>([
+      { id: 1, columnId: 'ready', title: 'First' },
+      { id: 2, columnId: 'ready', title: 'Seeded' },
+    ]);
+    const identity = signal({ selectedCardKeys: [2] as readonly number[], focusedCardKey: 2 });
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
+    const render = mount(board);
+
+    expect(board.interaction().snapshot()).toMatchObject({
+      focused: { kind: 'card', cardKey: 2 },
+      selectedCardKeys: [2],
+    });
+    identity.set({ selectedCardKeys: [1], focusedCardKey: 1 });
+    render.flush();
+    expect(board.interaction().snapshot()).toMatchObject({
+      focused: { kind: 'card', cardKey: 2 },
+      selectedCardKeys: [2],
+    });
+
+    cards.set(cards().filter((card) => card.id !== 2));
+    render.flush();
+    await vi.waitFor(() => {
+      expect(board.interaction().snapshot()).toMatchObject({
+        focused: { kind: 'card', cardKey: 1 },
+        selectedCardKeys: [],
+      });
+    });
+    render.unmount();
+  });
+
   it('relocates a focused anchor when a source reorder moves it outside the retained range', async () => {
     const cards = signal<readonly Card[]>(
       Array.from({ length: 40 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),

@@ -19,7 +19,6 @@ interface KanbanBoardBindingSnapshot {
   readonly density?: KanbanCardDensity;
   readonly theme?: KanbanTheme;
   readonly capabilities?: KanbanCapabilities;
-  readonly identity: KanbanIdentityInput;
 }
 
 /** Immutable state painted by the conditional focused-column navigator. */
@@ -46,7 +45,6 @@ export class KanbanBoardBindings<TCard> {
   readonly #options: KanbanViewportOptions<TCard>;
   readonly identity: Signal<KanbanIdentityInput>;
   #identityFingerprint: string;
-  #applicationIdentityFingerprint: string;
   #last: KanbanBoardBindingSnapshot | undefined;
 
   /** Reads and validates initial identity once so the viewport starts from a detached value. */
@@ -55,7 +53,11 @@ export class KanbanBoardBindings<TCard> {
     const identity = readKanbanIdentityInput(options.identity);
     this.identity = signal(identity);
     this.#identityFingerprint = identityFingerprint(identity);
-    this.#applicationIdentityFingerprint = this.#identityFingerprint;
+  }
+
+  /** Returns the detached construction-time identity without re-reading the deprecated getter. */
+  seed(): KanbanIdentityInput {
+    return this.identity.peek();
   }
 
   /** Reads every layout-affecting reactive getter and the viewport's structural version. */
@@ -68,18 +70,11 @@ export class KanbanBoardBindings<TCard> {
       ...(this.#options.density === undefined ? {} : { density: this.#options.density() }),
       ...(this.#options.theme === undefined ? {} : { theme: this.#options.theme() }),
       ...(this.#options.capabilities === undefined ? {} : { capabilities: this.#options.capabilities() }),
-      identity: readKanbanIdentityInput(this.#options.identity),
     });
   }
 
-  /** Applies detached identity and reports whether one semantic layout reflow should be counted. */
+  /** Applies reactive non-identity inputs and reports whether one semantic layout reflow should count. */
   apply(snapshot: KanbanBoardBindingSnapshot): boolean {
-    const nextIdentityFingerprint = identityFingerprint(snapshot.identity);
-    if (nextIdentityFingerprint !== this.#applicationIdentityFingerprint) {
-      this.#applicationIdentityFingerprint = nextIdentityFingerprint;
-      this.#identityFingerprint = nextIdentityFingerprint;
-      this.identity.set(snapshot.identity);
-    }
     const previous = this.#last;
     this.#last = snapshot;
     if (previous === undefined) return false;
@@ -88,8 +83,7 @@ export class KanbanBoardBindings<TCard> {
       previous.i18n !== snapshot.i18n ||
       previous.density !== snapshot.density ||
       previous.theme !== snapshot.theme ||
-      previous.capabilities !== snapshot.capabilities ||
-      identityFingerprint(previous.identity) !== nextIdentityFingerprint
+      previous.capabilities !== snapshot.capabilities
     );
   }
 

@@ -13,7 +13,10 @@ import type { CardKey } from '../contract/identity.js';
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
-import { createKanbanInteractionController } from '../interaction/controller.js';
+import {
+  createKanbanInteractionController,
+  createSeededKanbanInteractionController,
+} from '../interaction/controller.js';
 import type { KanbanInteractionControllerFactory, KanbanInteractionFacade } from '../interaction/facade.js';
 import { KanbanInteractionFacadeOwner } from '../interaction/facade.js';
 import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
@@ -29,6 +32,7 @@ import type {
 } from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
+import { createKanbanDefaultInteractionSeed } from './board-state.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
 import { KanbanViewport } from './kanban-viewport.js';
@@ -152,7 +156,7 @@ export class KanbanBoard<TCard> extends Group {
   readonly #authority: KanbanBoardAuthority;
   readonly #interactionFacade: KanbanInteractionFacadeOwner;
   readonly #interactionFactory: KanbanInteractionControllerFactory | undefined;
-  readonly #legacyIdentity: (() => KanbanIdentityInput) | undefined;
+  readonly #hasLegacyIdentity: boolean;
   readonly #navigatorVisible = signal(false);
   readonly #minimumReserveVisible = signal(false);
   readonly #navigator: KanbanFocusedNavigatorView;
@@ -177,7 +181,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#bindings = new KanbanBoardBindings(bindingOptions);
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
     this.#interactionFactory = options.interactionFactory;
-    this.#legacyIdentity = options.identity;
+    this.#hasLegacyIdentity = options.identity !== undefined;
     this.#interactionFacade = new KanbanInteractionFacadeOwner({
       snapshotEligibleSelection: () => this.#snapshotEligibleSelection(),
       invalidate: () => this.viewport.invalidate(),
@@ -211,6 +215,7 @@ export class KanbanBoard<TCard> extends Group {
             const snapshot = this.#bindings.read(this.viewport);
             const layoutChanged = this.#bindings.apply(snapshot);
             const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
+            if (identityChanged) void this.#interactionFacade.transition({ kind: 'reconcile', reason: 'deletion' });
             const minimumReserveVisible = this.viewport.focusedNavigator() !== undefined && this.bounds.height < 5;
             const navigatorVisible = this.viewport.metrics().mode === 'focused-column' && !minimumReserveVisible;
             const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
@@ -351,7 +356,13 @@ export class KanbanBoard<TCard> extends Group {
       const environment = this.#interactionEnvironment();
       const controller =
         this.#interactionFactory === undefined
-          ? createKanbanInteractionController(environment, validateKanbanLimitOptions(limits).selectedKeys)
+          ? this.#hasLegacyIdentity
+            ? createSeededKanbanInteractionController(
+                environment,
+                validateKanbanLimitOptions(limits).selectedKeys,
+                createKanbanDefaultInteractionSeed(this.#bindings.seed()),
+              )
+            : createKanbanInteractionController(environment, validateKanbanLimitOptions(limits).selectedKeys)
           : this.#interactionFactory(environment);
       this.#interactionFacade.attach(controller);
     } catch {
@@ -400,7 +411,6 @@ export class KanbanBoard<TCard> extends Group {
 
   /** Projects controller state into the legacy viewport identity carrier during migration. */
   #interactionIdentity(): KanbanIdentityInput {
-    if (this.#legacyIdentity !== undefined) return this.#bindings.identity();
     const snapshot = this.#interactionFacade.snapshot();
     if (snapshot.revision === 0) return this.#bindings.identity();
     const pendingColumnId =
