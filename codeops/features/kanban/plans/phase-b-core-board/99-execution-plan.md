@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 23:45 CEST
-> **Progress**: 76/106 tasks (72%)
+> **Last Updated**: 2026-08-09 23:48 CEST
+> **Progress**: 77/106 tasks (73%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -272,7 +272,12 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 5.1.1 `[spec-author]` Add the Phase 5-owned mounted card/structure/keyboard/down-up/double/right-click/intent assertion slices — `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts`, `packages/kanban/test/interaction.spec.test.ts` ✅ (completed: 2026-08-09 23:39 CEST)
 - [x] 5.1.2 `[spec-author]` Extend Phase B boundary/lifecycle specifications with host, active-input/pending-pointer disposal, deferred-Primary, and deferred-target-absence slices — `packages/kanban/test/phase-b-boundary.spec.test.ts` ✅ (completed: 2026-08-09 23:45 CEST)
-- [ ] 5.1.3 Run the Phase 5 specification suites and record expected red behavior
+- [x] 5.1.3 Run the Phase 5 specification suites and record expected red behavior ✅ (completed: 2026-08-09 23:48 CEST)
+
+> **Phase 5 expected-red evidence (2026-08-09 23:48 CEST):** The four Phase 5 specification
+> files execute 63 assertions: 52 pass and 11 fail only at the intentionally absent mounted-input,
+> semantic-intent, header/state-action, host-equivalence, pending-press, Ctrl-Primary, and stale-target
+> seams. Existing Phase 1–4 assertions remain green; production implementation has not begun.
 
 ### Step 5.2: Implementation and green phase
 
