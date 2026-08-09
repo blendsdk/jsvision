@@ -1,4 +1,5 @@
-import { Group, createRenderRoot, resolveCapabilities } from '@jsvision/ui';
+import { Group, Window, createApplication, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
+import type { Application, DispatchEvent, View } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT, KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
@@ -45,6 +46,83 @@ function source() {
     keyOf: (card) => card.id,
     columnOf: (card) => card.columnId,
   });
+}
+
+/** Creates a multi-card eager source for mounted input and host-equivalence scenarios. */
+function cardsSource(cards: () => readonly Card[]) {
+  return createEagerKanbanDataSource<Card>(cards, {
+    columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+    keyOf: (card) => card.id,
+    columnOf: (card) => card.columnId,
+  });
+}
+
+/** Waits for serialized mounted-input work and semantic intent delivery. */
+async function settleInput(): Promise<void> {
+  for (let index = 0; index < 8; index += 1) await Promise.resolve();
+}
+
+/** Delivers a local event directly to a mounted viewport and returns handled evidence. */
+function deliver(
+  board: KanbanBoard<Card>,
+  event: DispatchEvent['event'],
+  local?: { readonly x: number; readonly y: number },
+  clickCount?: number,
+): DispatchEvent {
+  const envelope: DispatchEvent = {
+    event,
+    handled: false,
+    ...(local === undefined ? {} : { local }),
+    ...(clickCount === undefined ? {} : { clickCount }),
+  };
+  board.viewport.onEvent(envelope);
+  return envelope;
+}
+
+/** Returns one card target or fails with a contract-focused fixture error. */
+function cardTarget(board: KanbanBoard<Card>, cardKey: number) {
+  const target = board
+    .inspection()
+    .actionTargets.find((candidate) => candidate.kind === 'card' && candidate.cardKey === cardKey);
+  if (target === undefined) throw new Error(`Expected mounted card target ${cardKey}.`);
+  return target;
+}
+
+/** Returns all descendants created under a board without walking into its application-owned parent. */
+function boardDescendants(board: KanbanBoard<Card>): readonly View[] {
+  const descendants: View[] = [];
+  const visit = (view: View): void => {
+    descendants.push(view);
+    if (view instanceof Group) view.children.forEach(visit);
+  };
+  board.children.forEach(visit);
+  return descendants;
+}
+
+/** Mounts the same board either directly or inside one explicitly application-owned window. */
+function mountApplicationHost(board: KanbanBoard<Card>, host: 'surface' | 'window'): Application {
+  board.setLayout({ position: 'fill' });
+  if (host === 'surface') {
+    return createApplication({ content: board, viewport: { width: 40, height: 12 }, caps: CAPS });
+  }
+  const app = createApplication({ viewport: { width: 48, height: 18 }, caps: CAPS });
+  const window = new Window('Application-owned Kanban host');
+  window.setLayout({ rect: { x: 3, y: 2, width: 42, height: 14 } });
+  window.add(board);
+  app.desktop.addWindow(window);
+  app.loop.renderRoot.flush();
+  return app;
+}
+
+/** Converts one viewport-local target point into its host's absolute terminal coordinates. */
+function absoluteTarget(
+  app: Application,
+  board: KanbanBoard<Card>,
+  target: { readonly x: number; readonly y: number },
+) {
+  const origin = app.loop.renderRoot.originOf(board.viewport);
+  if (origin === null) throw new Error('Expected the mounted viewport to have a host origin.');
+  return { x: origin.x + target.x, y: origin.y + target.y };
 }
 
 /** Builds a complete injected controller with overridable lifecycle behavior. */
@@ -298,6 +376,234 @@ describe('Kanban Phase B controller ownership boundary', () => {
     await Promise.all([first, second]);
 
     expect(order).toEqual(['start:board-end', 'finish:board-end', 'start:board-start', 'finish:board-start']);
+    render.unmount();
+  });
+});
+
+describe('Kanban Phase B mounted host and input boundary', () => {
+  it('should produce equivalent semantics on a surface and in an application-owned window', async () => {
+    // Hosting changes only parent geometry; the same semantic input sequence has identical board outcomes.
+    const outcomes: unknown[] = [];
+    for (const host of ['surface', 'window'] as const) {
+      const intents: unknown[] = [];
+      const records = Array.from({ length: 8 }, (_, index) => ({
+        id: index + 1,
+        columnId: 'ready',
+        title: `Card ${index + 1}`,
+      }));
+      const board = new KanbanBoard({
+        source: cardsSource(() => records),
+        query: () => QUERY,
+        card: CARD,
+        onInteraction: (intent: unknown) => intents.push(intent),
+      });
+      const app = mountApplicationHost(board, host);
+      app.loop.renderRoot.flush();
+      const target = absoluteTarget(app, board, cardTarget(board, 2));
+
+      app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...target });
+      app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...target });
+      await settleInput();
+      app.loop.dispatch({ type: 'key', key: 'up', ctrl: false, alt: false, shift: false });
+      app.loop.dispatch({ type: 'key', key: 'space', ctrl: false, alt: false, shift: false });
+      app.loop.dispatch({ type: 'key', key: 'enter', ctrl: false, alt: false, shift: false });
+      await settleInput();
+      board.scrollTo({ y: 3 });
+      app.loop.renderRoot.flush();
+
+      const inspection = board.inspection();
+      expect(board.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 1 });
+      expect(board.interaction().snapshot().selectedCardKeys).toEqual([2, 1]);
+      expect(board.viewport.metrics().offsets.y).toBeGreaterThan(0);
+      expect(intents).toHaveLength(1);
+      expect(intents[0]).toMatchObject({ kind: 'open-card', origin: 'keyboard' });
+      outcomes.push({
+        scene: {
+          columns: inspection.visibleColumns.map(({ columnId }) => columnId),
+          cards: inspection.visibleCards.map(({ cardKey }) => cardKey),
+          targets: inspection.actionTargets.map(({ kind, cardKey }) => ({ kind, cardKey })),
+        },
+        interaction: board.interaction().snapshot(),
+        scroll: board.viewport.metrics().offsets,
+        intents,
+      });
+      const ownedDescendants = boardDescendants(board);
+      expect(ownedDescendants.map((view) => view.constructor.name)).not.toEqual(
+        expect.arrayContaining(['Window', 'Dialog']),
+      );
+      expect(Reflect.has(board, 'shadow')).toBe(false);
+      app.loop.dispose();
+      board.dispose();
+    }
+
+    expect(outcomes).toHaveLength(2);
+    expect(outcomes[1]).toEqual(outcomes[0]);
+  });
+
+  it('should cancel a pending primary press before controller and source disposal and ignore late settlement', async () => {
+    // Disposal rejects input first, cancels the pending press, then releases controller and source ownership once.
+    const fixture = createWindowedKanbanFixture<Card>({
+      logicalCardCount: 20,
+      columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      materialize: ({ start, end }) =>
+        Array.from({ length: end - start }, (_, offset) => ({
+          id: start + offset,
+          columnId: 'ready',
+          title: `Card ${start + offset}`,
+        })),
+      keyOf: (card) => card.id,
+    });
+    let settleTransition: ((result: ReturnType<KanbanInteractionController['transition']>) => void) | undefined;
+    const transitions: KanbanInteractionTransition[] = [];
+    const intents: unknown[] = [];
+    let disposalUp: DispatchEvent | undefined;
+    const disposeController = vi.fn(() => {
+      expect(fixture.metrics().disposedSessions).toBe(0);
+      disposalUp = deliver(
+        board,
+        { type: 'mouse', kind: 'up', button: 0, x: targetPoint.x, y: targetPoint.y },
+        targetPoint,
+      );
+    });
+    const injected = controller({
+      transition: (command) => {
+        transitions.push(command);
+        if (command.kind !== 'focus') {
+          return { kind: 'unchanged', snapshot: KANBAN_NEUTRAL_INTERACTION_SNAPSHOT };
+        }
+        return new Promise((resolve) => {
+          settleTransition = resolve;
+        });
+      },
+      dispose: disposeController,
+    });
+    const board = new KanbanBoard({
+      source: fixture.source,
+      query: () => QUERY,
+      card: CARD,
+      interactionFactory: () => injected,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mount(board);
+    for (const pending of fixture.controller.pendingRanges()) fixture.controller.resolveRange(pending.requestId);
+    await settleInput();
+    render.flush();
+    const target = cardTarget(board, 0);
+    const targetPoint = { x: target.x, y: target.y };
+    const transitionsBeforeDown = transitions.length;
+    const down = deliver(board, { type: 'mouse', kind: 'down', button: 0, x: target.x, y: target.y }, targetPoint, 1);
+    expect(down.handled).toBe(true);
+    expect(transitions).toHaveLength(transitionsBeforeDown + 1);
+
+    board.dispose();
+    board.dispose();
+    expect(disposalUp?.handled).toBe(false);
+    expect(transitions).toHaveLength(transitionsBeforeDown + 1);
+    expect(disposeController).toHaveBeenCalledOnce();
+    expect(fixture.metrics().disposedSessions).toBe(1);
+    expect(fixture.metrics().disposedCursors).toBe(fixture.metrics().createdCursors);
+
+    settleTransition?.({
+      kind: 'changed',
+      snapshot: Object.freeze({
+        revision: 1,
+        focused: Object.freeze({ kind: 'card', cardKey: 0, address: Object.freeze({ columnId: 'ready' }) }),
+        selectedCardKeys: Object.freeze([0]),
+      }),
+    });
+    await settleInput();
+    const lateUp = deliver(board, { type: 'mouse', kind: 'up', button: 0, x: target.x, y: target.y }, targetPoint);
+    expect(lateUp.handled).toBe(false);
+    expect(board.interaction().snapshot()).toEqual(KANBAN_NEUTRAL_INTERACTION_SNAPSHOT);
+    expect(intents).toEqual([]);
+
+    render.unmount();
+    fixture.dispose();
+  });
+
+  it('should use Ctrl as the only mounted Primary transport while keeping the programmatic equivalent available', async () => {
+    // Current input carries Ctrl but no Meta field; synthetic Meta-only input remains deferred and unhandled.
+    const board = new KanbanBoard({
+      source: cardsSource(() => [
+        { id: 1, columnId: 'ready', title: 'One' },
+        { id: 2, columnId: 'ready', title: 'Two' },
+      ]),
+      query: () => QUERY,
+      card: CARD,
+    });
+    const render = mount(board);
+    const ctrlA = deliver(board, { type: 'key', key: 'a', ctrl: true, alt: false, shift: false });
+    await settleInput();
+    expect(ctrlA.handled).toBe(true);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([1, 2]);
+
+    await board.interaction().transition({ kind: 'selection', operation: 'clear-multiple' });
+    const metaOnlyEvent = {
+      type: 'key' as const,
+      key: 'a',
+      ctrl: false,
+      alt: false,
+      shift: false,
+      meta: true,
+    };
+    const metaA = deliver(board, metaOnlyEvent);
+    expect(metaA.handled).toBe(false);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([]);
+    expect(
+      'meta' in ({ type: 'key', key: 'a', ctrl: false, alt: false, shift: false } satisfies DispatchEvent['event']),
+    ).toBe(false);
+
+    const programmatic = await board
+      .interaction()
+      .transition({ kind: 'selection', operation: 'select-loaded-visible-matching' });
+    expect(programmatic).toMatchObject({ kind: 'changed' });
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([1, 2]);
+
+    render.unmount();
+  });
+
+  it('should reject a disappeared pending target and clipped or non-actionable coordinates without side effects', async () => {
+    // Matching up requires the original current target; stale, clipped, and gap coordinates stay inert.
+    const cards = signal<readonly Card[]>([
+      { id: 1, columnId: 'ready', title: 'One' },
+      { id: 2, columnId: 'ready', title: 'Deferred target' },
+    ]);
+    const intents: unknown[] = [];
+    const board = new KanbanBoard({
+      source: cardsSource(cards),
+      query: () => QUERY,
+      card: CARD,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mount(board);
+    const target = cardTarget(board, 2);
+    const point = { x: target.x, y: target.y };
+    const down = deliver(board, { type: 'mouse', kind: 'down', button: 0, x: point.x, y: point.y }, point, 1);
+    await settleInput();
+    expect(down.handled).toBe(true);
+
+    cards.set(cards().slice(0, 1));
+    render.flush();
+    await settleInput();
+    render.flush();
+    const beforeRejectedInput = board.interaction().snapshot();
+    const staleUp = deliver(board, { type: 'mouse', kind: 'up', button: 0, x: point.x, y: point.y }, point);
+    const clipped = deliver(board, { type: 'mouse', kind: 'down', button: 0, x: -1, y: -1 }, { x: -1, y: -1 }, 1);
+    const gap = board.inspection().regions.find((region) => region.kind === 'card-gap');
+    if (gap === undefined) throw new Error('Expected a mounted non-actionable card gap.');
+    const gapPoint = { x: gap.x, y: gap.y };
+    const nonActionable = deliver(
+      board,
+      { type: 'mouse', kind: 'down', button: 0, x: gapPoint.x, y: gapPoint.y },
+      gapPoint,
+      1,
+    );
+
+    expect([staleUp.handled, clipped.handled, nonActionable.handled]).toEqual([false, false, false]);
+    expect(board.interaction().snapshot()).toEqual(beforeRejectedInput);
+    expect(intents).toEqual([]);
+    expect(cards()).toEqual([{ id: 1, columnId: 'ready', title: 'One' }]);
+
     render.unmount();
   });
 });
