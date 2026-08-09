@@ -135,7 +135,7 @@ export function snapshotKanbanNavigationSnapshot(value: unknown): KanbanNavigati
         .map(snapshotNavigationTarget)
         .sort((left, right) => left.sceneIndex - right.sceneIndex),
     );
-    const semanticKeys = targets.map((entry) => focusKey(entry.target));
+    const semanticKeys = targets.map((entry) => canonicalizeKanbanFocusTarget(entry.target));
     if (
       new Set(targets.map((entry) => entry.sceneIndex)).size !== targets.length ||
       new Set(semanticKeys).size !== semanticKeys.length
@@ -154,7 +154,7 @@ export function snapshotKanbanNavigationSnapshot(value: unknown): KanbanNavigati
 }
 
 /** Creates a collision-safe identity key for one validated semantic focus target. */
-function focusKey(target: KanbanFocusTarget): string {
+export function canonicalizeKanbanFocusTarget(target: KanbanFocusTarget): string {
   if (target.kind === 'board-state') return JSON.stringify([target.kind]);
   if (target.kind === 'column-header') return JSON.stringify([target.kind, target.columnId]);
   if (target.kind === 'swimlane-header') return JSON.stringify([target.kind, target.swimlaneId]);
@@ -197,8 +197,8 @@ function eligibleIdentity(
   targets: readonly KanbanNavigationTarget[],
   target: KanbanFocusTarget,
 ): KanbanNavigationTarget | undefined {
-  const key = focusKey(target);
-  return targets.find((entry) => focusKey(entry.target) === key);
+  const key = canonicalizeKanbanFocusTarget(target);
+  return targets.find((entry) => canonicalizeKanbanFocusTarget(entry.target) === key);
 }
 
 /** Returns whether two card targets occupy the same semantic source cell. */
@@ -216,7 +216,9 @@ function survivingLocalNeighbor(
   previous: readonly KanbanNavigationTarget[],
   eligible: readonly KanbanNavigationTarget[],
 ): KanbanNavigationTarget | undefined {
-  const oldIndex = previous.findIndex((entry) => focusKey(entry.target) === focusKey(current));
+  const oldIndex = previous.findIndex(
+    (entry) => canonicalizeKanbanFocusTarget(entry.target) === canonicalizeKanbanFocusTarget(current),
+  );
   if (oldIndex < 0) return eligible.find((entry) => sameCell(entry.target, current));
   for (let index = oldIndex + 1; index < previous.length; index += 1) {
     const candidate = previous[index];
@@ -241,7 +243,9 @@ function survivingPeer(
   previous: readonly KanbanNavigationTarget[],
   eligible: readonly KanbanNavigationTarget[],
 ): KanbanNavigationTarget | undefined {
-  const oldIndex = previous.findIndex((entry) => focusKey(entry.target) === focusKey(current));
+  const oldIndex = previous.findIndex(
+    (entry) => canonicalizeKanbanFocusTarget(entry.target) === canonicalizeKanbanFocusTarget(current),
+  );
   if (oldIndex < 0) return eligible.find((entry) => entry.target.kind === current.kind);
   for (let index = oldIndex + 1; index < previous.length; index += 1) {
     const candidate = previous[index];
@@ -333,7 +337,10 @@ function priorCenterRow(
   preferredCenterRow: number | undefined,
 ): number {
   if (preferredCenterRow !== undefined) return coordinate(preferredCenterRow);
-  return previous.find((entry) => focusKey(entry.target) === focusKey(current))?.centerRow ?? 0;
+  return (
+    previous.find((entry) => canonicalizeKanbanFocusTarget(entry.target) === canonicalizeKanbanFocusTarget(current))
+      ?.centerRow ?? 0
+  );
 }
 
 /**
@@ -357,7 +364,10 @@ export function reconcileKanbanFocus(options: ReconcileKanbanFocusOptions): Kanb
   if (current.kind === 'card' && options.reason === 'cursor-unload') return result('acquire', current);
   if (current.kind === 'board-state') {
     const initial = resolveInitialKanbanFocus(scene);
-    return result(focusKey(initial) === focusKey(current) ? 'retained' : 'changed', initial);
+    return result(
+      canonicalizeKanbanFocusTarget(initial) === canonicalizeKanbanFocusTarget(current) ? 'retained' : 'changed',
+      initial,
+    );
   }
 
   if (current.kind === 'card') {

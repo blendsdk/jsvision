@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 19:35 CEST
-> **Progress**: 61/106 tasks (58%)
+> **Last Updated**: 2026-08-09 19:41 CEST
+> **Progress**: 62/106 tasks (58%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -234,7 +234,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 4.2.1 Complete public transition/result/environment/controller-factory/facade contracts around the stable Phase 1 target/snapshot types — `packages/kanban/src/interaction/types.ts`, `packages/kanban/src/interaction/facade.ts` ✅ (completed: 2026-08-09 19:22 CEST)
 - [x] 4.2.2 Implement ordered type-preserving selection, range, prune, atomic over-limit select-all rejection, opaque server-selection set/clear, and frozen eligible snapshots with session/query generation — `packages/kanban/src/interaction/selection.ts` ✅ (completed: 2026-08-09 19:29 CEST)
 - [x] 4.2.3 Implement pure initial-focus and local-to-global reconciliation — `packages/kanban/src/interaction/reconciliation.ts` ✅ (completed: 2026-08-09 19:35 CEST)
-- [ ] 4.2.4 Implement vertical/horizontal/header/home/end/page/focused-column navigation over scene geometry — `packages/kanban/src/interaction/navigation.ts`
+- [x] 4.2.4 Implement vertical/horizontal/header/home/end/page/focused-column navigation over scene geometry — `packages/kanban/src/interaction/navigation.ts` ✅ (completed: 2026-08-09 19:41 CEST)
 - [ ] 4.2.5 Implement generation-scoped bounded acquisition, cancellation, retry feedback, and late-result rejection — `packages/kanban/src/interaction/acquisition.ts`
 - [ ] 4.2.6 Implement default/factory controller validation, source→scene/cache→controller rollback registration, atomic fail-closed setup, state transitions, facade serialization, safe rejected-transition settlement, subscriptions, reuse rejection, and disposal — `packages/kanban/src/interaction/controller.ts`, `packages/kanban/src/interaction/facade.ts`, `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`
 - [ ] 4.2.7 Implement transient cancellation ownership and layered Escape selection behavior — `packages/kanban/src/interaction/transient.ts`, `packages/kanban/src/interaction/controller.ts`
