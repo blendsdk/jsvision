@@ -25,6 +25,7 @@ import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanActionTarget, KanbanLayoutRegion } from '../layout/hit-map.js';
 import { projectKanbanSceneHits } from '../layout/hit-map.js';
 import type { KanbanSceneGeometry, KanbanSceneGeometryVariant } from '../layout/swimlane-geometry.js';
+import type { KanbanSceneCellHeightProjection } from '../layout/swimlane-geometry.js';
 import { projectKanbanSceneGeometry } from '../layout/swimlane-geometry.js';
 import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
 import { buildKanbanScene } from './scene-builder.js';
@@ -142,6 +143,8 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly rendererRevision?: string | number;
   /** Requested scene presentation strategy. */
   readonly sceneVariant?: KanbanSceneGeometryVariant;
+  /** Optional bounded sparse-height evidence keyed by retained semantic cell. */
+  readonly heightProjections?: readonly KanbanSceneCellHeightProjection[];
   /** Resolved semantic Kanban theme. */
   readonly theme: KanbanTheme;
   /** Current localization service. */
@@ -461,9 +464,11 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     variant: options.sceneVariant ?? 'hybrid',
     offsets: { x: options.horizontalOffset, y: options.verticalOffset },
     minimumColumnWidth: 18,
+    columnWidths: options.source.widths.columns,
+    columnGap: options.source.widths.separatorWidth,
     cardGap: budget.cardGap,
     estimatedCardHeight: 2,
-    ...(options.identity?.focusedColumnId === undefined ? {} : { focusedColumnId: options.identity.focusedColumnId }),
+    ...(options.heightProjections === undefined ? {} : { heightProjections: options.heightProjections }),
   });
   const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: KANBAN_LIMITS.retainedDescriptors.safe });
   const columns = Object.freeze(
@@ -471,7 +476,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       Object.freeze({
         columnId: header.columnId,
         label: header.label,
-        contentOffset: 0,
+        contentOffset: header.contentOffset,
         rect: Object.freeze({ x: header.x, y: 0, width: header.width, height: options.height }),
       }),
     ),

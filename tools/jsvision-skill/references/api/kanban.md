@@ -2632,6 +2632,17 @@ interface KanbanSceneCellGeometry {
 }
 ```
 
+## KanbanSceneCellHeightProjection
+
+One semantic cell's bounded sparse descriptor-height evidence.
+
+```ts
+interface KanbanSceneCellHeightProjection {
+  address: KanbanCellAddress;   // Exact semantic source cell that owns the projection.
+  projection: KanbanVerticalHeightProjection;   // Descriptor-only rows and extent; scene geometry adds the active resting gap.
+}
+```
+
 ## KanbanSceneCustomChromeInput
 
 One application-produced, already semantic-scoped custom swimlane descriptor.
@@ -2827,6 +2838,7 @@ One sticky workflow-column header rectangle.
 interface KanbanSceneWorkflowHeaderGeometry {
   columnId: string;   // Stable workflow-column identity.
   label: string;   // Sanitized source label.
+  contentOffset: number;   // Header columns clipped from the left by horizontal scrolling.
   sticky: true;   // Workflow headers always remain vertically sticky.
 }
 ```
@@ -3927,8 +3939,11 @@ interface ProjectKanbanSceneGeometryOptions {
   offsets: { readonly x: number; readonly y: number };   // Independent requested horizontal and vertical content offsets.
   activeSwimlaneId?: string;   // Active swimlane whose visible chrome may pin beneath workflow headers.
   minimumColumnWidth: number;   // Effective minimum width of each visible card column.
+  columnWidths?: readonly { readonly columnId: string; readonly width: number }[];   // Optional exact solved widths for retained workflow columns.
+  columnGap?: number;   // Empty terminal cells separating adjacent solved workflow columns.
   cardGap?: number;   // Empty resting rows between adjacent cards; defaults to one.
   estimatedCardHeight?: number;   // Estimated descriptor rows used only for unloaded logical positions before retained cards.
+  heightProjections?: readonly KanbanSceneCellHeightProjection[];   // Optional revision-compatible sparse descriptor rows keyed by semantic source cell.
   railWidth?: number;   // Requested left rail width; defaults to ten terminal cells.
   customChrome?: readonly KanbanSceneCustomChromeInput[];   // Per-visible-swimlane descriptors required by the custom strategy.
   focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.

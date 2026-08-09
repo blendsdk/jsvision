@@ -5,6 +5,7 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanScene, KanbanSceneCard, KanbanSceneCell } from '../board/scene-model.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import type { KanbanVerticalHeightProjection } from './vertical-projector.js';
 import { resolveKanbanCustomSwimlaneGeometry } from './swimlane-custom.js';
 import type { KanbanResolvedCustomSwimlaneGeometry, KanbanSceneCustomChromeInput } from './swimlane-custom.js';
 import { resolveKanbanSwimlaneRail } from './swimlane-rail.js';
@@ -52,6 +53,8 @@ export interface KanbanSceneWorkflowHeaderGeometry extends Readonly<Rect> {
   readonly columnId: string;
   /** Sanitized source label. */
   readonly label: string;
+  /** Header columns clipped from the left by horizontal scrolling. */
+  readonly contentOffset: number;
   /** Workflow headers always remain vertically sticky. */
   readonly sticky: true;
 }
@@ -100,10 +103,16 @@ export interface ProjectKanbanSceneGeometryOptions {
   readonly activeSwimlaneId?: string;
   /** Effective minimum width of each visible card column. */
   readonly minimumColumnWidth: number;
+  /** Optional exact solved widths for retained workflow columns. */
+  readonly columnWidths?: readonly { readonly columnId: string; readonly width: number }[];
+  /** Empty terminal cells separating adjacent solved workflow columns. */
+  readonly columnGap?: number;
   /** Empty resting rows between adjacent cards; defaults to one. */
   readonly cardGap?: number;
   /** Estimated descriptor rows used only for unloaded logical positions before retained cards. */
   readonly estimatedCardHeight?: number;
+  /** Optional revision-compatible sparse descriptor rows keyed by semantic source cell. */
+  readonly heightProjections?: readonly KanbanSceneCellHeightProjection[];
   /** Requested left rail width; defaults to ten terminal cells. */
   readonly railWidth?: number;
   /** Per-visible-swimlane descriptors required by the custom strategy. */
@@ -112,6 +121,14 @@ export interface ProjectKanbanSceneGeometryOptions {
   readonly focusedColumnId?: string;
   /** Optional stable anchor preserved through responsive recomputation. */
   readonly anchor?: KanbanSceneGeometryAnchor;
+}
+
+/** One semantic cell's bounded sparse descriptor-height evidence. */
+export interface KanbanSceneCellHeightProjection {
+  /** Exact semantic source cell that owns the projection. */
+  readonly address: KanbanCellAddress;
+  /** Descriptor-only rows and extent; scene geometry adds the active resting gap. */
+  readonly projection: KanbanVerticalHeightProjection;
 }
 
 /** Complete immutable exact-cell projection of a canonical semantic scene. */
@@ -223,7 +240,27 @@ function sparseCardPlacements(
   cards: readonly KanbanSceneCard[],
   cardGap: number,
   estimatedCardHeight: number,
+  heightProjection?: KanbanVerticalHeightProjection,
 ): { readonly cards: readonly SparseCardPlacement[]; readonly extent: number } {
+  if (heightProjection !== undefined) {
+    const placements = cards.map((card) => {
+      const row = heightProjection.rows.find(
+        (candidate) => candidate.cardKey === card.cardKey && candidate.logicalIndex === card.logicalIndex,
+      );
+      return Object.freeze({
+        card,
+        top:
+          row === undefined
+            ? card.logicalIndex * add(estimatedCardHeight, cardGap)
+            : add(row.descriptorRow.value, card.logicalIndex * cardGap),
+      });
+    });
+    const gaps = heightProjection.logicalLength === 0 ? 0 : (heightProjection.logicalLength - 1) * cardGap;
+    return Object.freeze({
+      cards: Object.freeze(placements),
+      extent: add(heightProjection.descriptorExtent.value, gaps),
+    });
+  }
   const placements: SparseCardPlacement[] = [];
   let logicalIndex = 0;
   let top = 0;
@@ -239,6 +276,16 @@ function sparseCardPlacements(
     cards: Object.freeze(placements),
     extent: cards.length === 0 ? 0 : Math.max(0, top - cardGap),
   });
+}
+
+/** Returns sparse height evidence for one exact semantic cell address. */
+function heightProjectionFor(
+  projections: readonly KanbanSceneCellHeightProjection[] | undefined,
+  address: KanbanCellAddress,
+): KanbanVerticalHeightProjection | undefined {
+  return projections?.find(
+    (entry) => entry.address.columnId === address.columnId && entry.address.swimlaneId === address.swimlaneId,
+  )?.projection;
 }
 
 function region(
@@ -348,15 +395,33 @@ export function projectKanbanSceneGeometry(
         : Object.freeze({ resolvedVariant: options.variant, railWidth: 0, cardBounds: bounds });
   const resolvedVariant = rail.resolvedVariant;
   const cardBounds = rail.cardBounds;
-  const naturalColumnWidth = Math.max(minimumColumnWidth, Math.floor(cardBounds.width / visibleColumns.length));
-  const totalWidth = add(0, naturalColumnWidth * visibleColumns.length);
-  if (!Number.isSafeInteger(totalWidth)) throw new KanbanInvalidGeometryError();
+  const columnGap = options.columnGap === undefined ? 0 : integer(options.columnGap);
+  const solvedWidths = new Map(
+    (options.columnWidths ?? []).map((column) => {
+      if (typeof column.columnId !== 'string') throw new KanbanInvalidGeometryError();
+      return [column.columnId, integer(column.width, true)] as const;
+    }),
+  );
+  let totalWidth = 0;
+  for (const [index, column] of visibleColumns.entries()) {
+    const width =
+      solvedWidths.get(column.columnId) ??
+      Math.max(minimumColumnWidth, Math.floor(cardBounds.width / visibleColumns.length));
+    totalWidth = add(totalWidth, width);
+    if (index + 1 < visibleColumns.length) totalWidth = add(totalWidth, columnGap);
+  }
   const extentX = Math.max(0, totalWidth - cardBounds.width);
   const offsetX = Math.min(offsets.x, extentX);
+  let nextColumnX = cardBounds.x - offsetX;
   const placements: readonly ColumnPlacement[] = Object.freeze(
-    visibleColumns.map(({ columnId }, index) =>
-      Object.freeze({ columnId, x: cardBounds.x + index * naturalColumnWidth - offsetX, width: naturalColumnWidth }),
-    ),
+    visibleColumns.map(({ columnId }) => {
+      const width =
+        solvedWidths.get(columnId) ??
+        Math.max(minimumColumnWidth, Math.floor(cardBounds.width / visibleColumns.length));
+      const placement = Object.freeze({ columnId, x: nextColumnX, width });
+      nextColumnX = add(nextColumnX, add(width, columnGap));
+      return placement;
+    }),
   );
 
   const swimlanePlacements: SwimlanePlacement[] = [];
@@ -367,7 +432,13 @@ export function projectKanbanSceneGeometry(
     const cellHeight = Math.max(
       0,
       ...cellsForPlacement(scene, swimlane.swimlaneId).map(
-        ({ cards }) => sparseCardPlacements(cards, cardGap, estimatedCardHeight).extent,
+        (cell) =>
+          sparseCardPlacements(
+            cell.cards,
+            cardGap,
+            estimatedCardHeight,
+            heightProjectionFor(options.heightProjections, cell.address),
+          ).extent,
       ),
     );
     const customRows = swimlane.swimlaneId === undefined ? undefined : customBySwimlane.get(swimlane.swimlaneId)?.rows;
@@ -396,7 +467,15 @@ export function projectKanbanSceneGeometry(
     if (placement === undefined) continue;
     const clipped = clip({ x: placement.x, y: bounds.y, width: placement.width, height: 1 }, cardBounds);
     if (clipped === undefined) continue;
-    workflowHeaders.push(Object.freeze({ ...clipped, columnId: column.columnId, label: column.label, sticky: true }));
+    workflowHeaders.push(
+      Object.freeze({
+        ...clipped,
+        columnId: column.columnId,
+        label: column.label,
+        contentOffset: clipped.x - placement.x,
+        sticky: true,
+      }),
+    );
     regions.push(region('workflow-header', clipped, { columnId: column.columnId }));
   }
 
@@ -488,7 +567,12 @@ export function projectKanbanSceneGeometry(
         cells.push(Object.freeze({ ...cellRect, address: sourceCell.address }));
         regions.push(region('cell', cellRect, sourceCell.address));
       }
-      for (const sparse of sparseCardPlacements(sourceCell.cards, cardGap, estimatedCardHeight).cards) {
+      for (const sparse of sparseCardPlacements(
+        sourceCell.cards,
+        cardGap,
+        estimatedCardHeight,
+        heightProjectionFor(options.heightProjections, sourceCell.address),
+      ).cards) {
         const sourceCard = sparse.card;
         const cardTop = naturalY + cardRowOffset + sparse.top;
         const cardWidth = Math.min(sourceCard.descriptor.width, column.width);
@@ -538,7 +622,12 @@ export function projectKanbanSceneGeometry(
           cells.push(Object.freeze({ ...cellRect, address: sourceCell.address }));
           regions.push(region('cell', cellRect, sourceCell.address));
         }
-        for (const sparse of sparseCardPlacements(sourceCell.cards, cardGap, estimatedCardHeight).cards) {
+        for (const sparse of sparseCardPlacements(
+          sourceCell.cards,
+          cardGap,
+          estimatedCardHeight,
+          heightProjectionFor(options.heightProjections, sourceCell.address),
+        ).cards) {
           const sourceCard = sparse.card;
           const cardTop = naturalY + sparse.top;
           const descriptorRect = {

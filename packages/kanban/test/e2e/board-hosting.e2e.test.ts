@@ -161,7 +161,7 @@ function expectCellSafeFrame(app: Application): void {
 }
 
 describe('Kanban real host equivalence', () => {
-  it('should produce equal content, metrics, and Phase A hit behavior on a surface and in a window', () => {
+  it('should produce equal content, metrics, and bounded scene hits on a surface and in a window', () => {
     const direct = fixture();
     const framed = fixture();
     const surfaceApp = mountSurface(direct.board, 72, 16);
@@ -178,8 +178,12 @@ describe('Kanban real host equivalence', () => {
     windowApp.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 6, y: 5 });
     expect(direct.board.inspection().identity).toEqual(beforeDirect);
     expect(framed.board.inspection().identity).toEqual(beforeFramed);
-    expect(direct.board.inspection().actionTargets).toEqual([]);
-    expect(framed.board.inspection().actionTargets).toEqual([]);
+    const directTargets = direct.board.inspection().actionTargets;
+    expect(framed.board.inspection().actionTargets).toEqual(directTargets);
+    expect(directTargets.map(({ kind }) => kind)).toEqual(expect.arrayContaining(['card', 'workflow-header']));
+    expect(directTargets.map(({ kind }) => kind)).not.toEqual(
+      expect.arrayContaining(['insertion', 'drop', 'ghost', 'drag', 'drag-hover']),
+    );
   });
 });
 

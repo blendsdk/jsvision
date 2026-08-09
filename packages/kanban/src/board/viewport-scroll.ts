@@ -24,6 +24,50 @@ export interface KanbanRevealResult {
   readonly scrolled: boolean;
 }
 
+/** Inputs for aligning one measured or estimated card row within the card-content viewport. */
+export interface ResolveKanbanRevealOffsetOptions {
+  /** Logical card top in the complete unscrolled cell stack. */
+  readonly cardTop: number;
+  /** Measured or estimated occupied card rows. */
+  readonly cardHeight: number;
+  /** Current vertical content offset. */
+  readonly currentOffset: number;
+  /** Positive card-content viewport height. */
+  readonly viewportHeight: number;
+  /** Requested stable alignment policy. */
+  readonly alignment: KanbanRevealAlignment;
+}
+
+/**
+ * Resolves the unclamped vertical offset that reveals one bounded card extent.
+ *
+ * @example
+ * ```ts
+ * resolveKanbanRevealOffset({
+ *   cardTop: 40, cardHeight: 6, currentOffset: 0, viewportHeight: 20, alignment: 'center',
+ * });
+ * ```
+ */
+export function resolveKanbanRevealOffset(options: ResolveKanbanRevealOffsetOptions): number {
+  const { cardTop, cardHeight, currentOffset, viewportHeight, alignment } = options;
+  if (
+    ![cardTop, cardHeight, currentOffset, viewportHeight].every((value) => Number.isSafeInteger(value) && value >= 0) ||
+    cardHeight === 0 ||
+    viewportHeight === 0
+  ) {
+    throw new KanbanInvalidGeometryError();
+  }
+  if (alignment === 'start') return cardTop;
+  if (alignment === 'center') return Math.max(0, cardTop - Math.floor((viewportHeight - cardHeight) / 2));
+  if (alignment === 'end') return Math.max(0, cardTop - viewportHeight + cardHeight);
+  if (alignment !== 'nearest') throw new KanbanInvalidGeometryError();
+  if (cardTop < currentOffset) return cardTop;
+  if (cardTop + cardHeight > currentOffset + viewportHeight) {
+    return Math.max(0, cardTop - viewportHeight + cardHeight);
+  }
+  return currentOffset;
+}
+
 /** Reads one optional signed safe integer without invoking accessors. */
 function coordinate(target: KanbanScrollTarget, key: 'x' | 'y'): number | undefined {
   let descriptor: PropertyDescriptor | undefined;

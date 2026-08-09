@@ -121,6 +121,14 @@ function actionIdentifier(value: KanbanSemanticValue | undefined): string {
   return value;
 }
 
+/** Accepts one bounded descriptor-local region identity, including standard section namespaces. */
+function regionIdentifier(value: KanbanSemanticValue | undefined): string {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 256 || !/^[a-z][a-z0-9:-]*$/u.test(value)) {
+    throw new KanbanInvalidGeometryError();
+  }
+  return value;
+}
+
 /** Clips one candidate rectangle to a positive-area containing rectangle. */
 function clip(value: Readonly<Rect>, bounds: Readonly<Rect>): Readonly<Rect> | undefined {
   const x = Math.max(value.x, bounds.x);
@@ -176,7 +184,7 @@ function cardActionTargets(card: KanbanSceneCard, geometry: KanbanSceneCardGeome
   for (const rawRegion of rawRegions) {
     if (!semanticRecord(rawRegion) || rawRegion.actionId === undefined) continue;
     const actionId = actionIdentifier(rawRegion.actionId);
-    const regionId = actionIdentifier(rawRegion.regionId);
+    const regionId = regionIdentifier(rawRegion.regionId);
     const x = coordinate(rawRegion.x);
     const y = coordinate(rawRegion.y);
     const width = coordinate(rawRegion.width, true);

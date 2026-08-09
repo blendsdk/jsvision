@@ -85,6 +85,32 @@ interface CacheEntry {
   lastUsed: number;
 }
 
+/**
+ * Returns whether a cursor republication may safely retain one card-local descriptor computation.
+ *
+ * A declared card presentation revision is required. Without it, the cursor revision remains the
+ * only evidence that application content might have changed, so carry-forward would be unsafe.
+ */
+function canCarryDescriptorAcrossCursorRevision(previous: SnapshotKey, current: SnapshotKey): boolean {
+  return (
+    current.presentationRevision !== undefined &&
+    previous.generation === current.generation &&
+    canonicalizeKanbanCellAddress(previous.address) === canonicalizeKanbanCellAddress(current.address) &&
+    previous.cardKey === current.cardKey &&
+    previous.rendererRevision === current.rendererRevision &&
+    previous.presentationRevision === current.presentationRevision &&
+    previous.presentationPolicyRevision === current.presentationPolicyRevision &&
+    previous.presentationSelectionFingerprint === current.presentationSelectionFingerprint &&
+    previous.styleRevision === current.styleRevision &&
+    previous.width === current.width &&
+    previous.rowBudget === current.rowBudget &&
+    previous.density === current.density &&
+    previous.themeRevision === current.themeRevision &&
+    previous.capabilityRevision === current.capabilityRevision &&
+    previous.interactionRevision === current.interactionRevision
+  );
+}
+
 /** Optional owning validator for descriptor details that depend on the active render context. */
 type KanbanCachedDescriptorValidator = (descriptor: KanbanCardDescriptor) => void;
 
@@ -351,6 +377,13 @@ export class KanbanDescriptorCache {
     if (current !== undefined) {
       current.lastUsed = this.#tick();
       return current.readDescriptor();
+    }
+    for (const [canonical, candidate] of this.#entries) {
+      if (!canCarryDescriptorAcrossCursorRevision(candidate.key, snapshot)) continue;
+      this.#entries.delete(canonical);
+      const carried: CacheEntry = { ...candidate, key: snapshot, lastUsed: this.#tick() };
+      this.#entries.set(snapshot.canonical, carried);
+      return carried.readDescriptor();
     }
     const created = createScopedDescriptor(
       factory,
