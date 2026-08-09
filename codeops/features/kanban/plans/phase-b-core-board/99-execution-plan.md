@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 21:41 CEST
-> **Progress**: 69/106 tasks (65%)
+> **Last Updated**: 2026-08-09 21:43 CEST
+> **Progress**: 70/106 tasks (66%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -242,7 +242,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 4.2.9 Wire controller snapshot/revision and bounded sanitized focused-detail/help projection into scene cues, reveal, inspection, and conditional chrome — `packages/kanban/src/board/scene-builder.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/board/board-feedback.ts` ✅ (completed: 2026-08-09 21:00 CEST)
 - [x] 4.2.10 Expose the stable board facade before/after mount and a non-owning compatible standalone Viewport adapter — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-09 21:21 CEST)
 - [x] 4.2.11 Export controller factory/facade/contracts with JSDoc/examples, add first-use typed locale vocabulary, and deprecate identity semantics accurately — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/index.ts` ✅ (completed: 2026-08-09 21:41 CEST)
-- [ ] 4.2.12 Run the Phase 4-owned controller/programmatic ST-B-INT assertion slices from 07 and make every assertion authored so far green
+- [x] 4.2.12 Run the Phase 4-owned controller/programmatic ST-B-INT assertion slices from 07 and make every assertion authored so far green ✅ (completed: 2026-08-09 21:43 CEST)
 
 ### Step 4.3: Implementation tests and hardening
 
