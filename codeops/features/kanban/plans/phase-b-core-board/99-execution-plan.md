@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 01:42 CEST
-> **Progress**: 88/106 tasks (83%)
+> **Last Updated**: 2026-08-10 01:49 CEST
+> **Progress**: 89/106 tasks (84%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -295,7 +295,7 @@ implementation → green → implementation tests/hardening → verification.
 ### Step 5.3: Implementation tests and hardening
 
 - [x] 5.3.1 Add event normalization/handled/click-count/capability/handler-failure implementation tests — `packages/kanban/test/input-router.impl.test.ts` ✅ (completed: 2026-08-10 01:42 CEST)
-- [ ] 5.3.2 Add mount/dispose/leak/late-work/reactive-replacement tests — `packages/kanban/test/phase-b-lifecycle.impl.test.ts`
+- [x] 5.3.2 Add mount/dispose/leak/late-work/reactive-replacement tests — `packages/kanban/test/phase-b-lifecycle.impl.test.ts` ✅ (completed: 2026-08-10 01:49 CEST)
 - [ ] 5.3.3 Implement the exact 12-row base/pairwise real-loop matrix from 07 plus bounded one-axis locale/theme/capability edges — `packages/kanban/test/e2e/core-board.e2e.test.ts`, `packages/kanban/test/e2e/board-hosting.e2e.test.ts`
 - [ ] 5.3.4 Run Phase 5 build/typecheck/unit/E2E/JSDoc and `yarn verify:local`; resolve quality-loop critical/major findings
 
