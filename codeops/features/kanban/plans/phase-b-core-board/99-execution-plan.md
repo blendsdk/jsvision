@@ -187,7 +187,7 @@ implementation → green → implementation tests/hardening → verification.
 ### Step 3.3: Implementation tests and hardening
 
 - [x] 3.3.1 Add sparse-run split/merge/correction/saturation/property tests — `packages/kanban/test/sparse-height-index.impl.test.ts` ✅ (completed: 2026-08-09 16:20 CEST)
-- [ ] 3.3.2 Add scene retention/variant/hit/damage implementation tests — `packages/kanban/test/scene-projector.impl.test.ts`
+- [x] 3.3.2 Add scene retention/variant/hit/damage implementation tests — `packages/kanban/test/scene-projector.impl.test.ts` ✅ (completed: 2026-08-09 16:21 CEST)
 - [ ] 3.3.3 Extend 5,000 eager/100,000 logical mounted scale assertions with the exact limit-derived cursor/range/hint/descriptor/reactive/damage/address/run counters from 07 — `packages/kanban/test/viewport-scale.impl.test.ts`, `packages/kanban/src/testing.ts`
 - [ ] 3.3.4 Run Phase 3 build/typecheck/unit/E2E and `yarn verify:local`; resolve quality-loop critical/major findings
 
