@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 35 items resolved
-> **Last Updated**: 2026-08-09 15:31 CEST
+> **Status**: ✅ GATE PASSED — all 36 items resolved
+> **Last Updated**: 2026-08-09 15:43 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -43,6 +43,7 @@
 | PAR-B30 | Public API | Which exact public seam proves that per-card section selection can reorder/omit configured IDs without enlarging view maxima? | Pure bounded selection resolver / renderer-only implicit intersection / numeric per-card overrides | **Runtime delegated after independent challenge: add one pure `resolveKanbanCardPresentationSelection` contract over frozen configured ID universes and the resolved presentation budget; it intersects known IDs, caps field/summary cardinality, and never creates numeric overrides.** | ✅ Resolved |
 | PAR-B31 | Public API | What exact adapter, snapshot, composition, style, and cache-testing contracts let the rich-card oracle precede implementation without exposing private machinery? | Final-shaped public snapshot/composition plus testing-only cache harness / infer names in tests / expose production cache internals | **Runtime delegated after independent challenge: define discriminated public field/summary/checklist/style contracts, one detached snapshot boundary, one high-level composer, and a counter-only `@jsvision/kanban/testing` cache harness; retain `presentationRevisionOf` as the sole card revision authority.** | ✅ Resolved |
 | PAR-B35 | Geometry | How do the public vertical projector and viewport metrics consume sparse heights without coupling pure projection to mutable index lifetime or breaking Phase A callers? | Bounded immutable projection snapshot / pass the mutable sparse index directly / replace the legacy API | **Runtime delegated after independent challenge: create one bounded immutable, revision-bearing retained-row projection from the sparse index; projector and metrics consume it additively, keep density gaps separate by global logical position, retain the legacy path when absent, and never classify an estimate as a lower bound.** | ✅ Resolved |
+| PAR-B36 | Geometry | How can descriptor-local card action regions remain correct when the final scene card rectangle is clipped? | Carry descriptor crop offsets in card geometry / infer an unavailable original origin in the hit map / treat the clipped corner as descriptor origin | **Runtime delegated: add immutable descriptor row/column crop offsets to card geometry and translate action regions before final clipping; this is the minimum correction that preserves exact hit alignment.** | ✅ Resolved |
 | PAR-B32 | UX & presentation | Which exact numeric budgets, checklist defaults, degradation order, and export identity define the three named presets? | Modest scan-oriented budgets with dedicated defaults / reuse broad safety ceilings / undocumented literals | **Runtime delegated after independent challenge: publish canonical deeply frozen 6/12/18-row presets with 0/1/1 gaps, modest optional-section budgets, hidden checklist modes, and one complete deterministic degradation order sourced from dedicated centralized defaults.** | ✅ Resolved |
 | PAR-B33 | Execution ordering | Which implementation task owns the already-specified selection resolver and first public presentation-policy export? | Produce them with policy normalization / defer public behavior until the final Phase 1 barrel task | **Runtime delegated: task 1.2.2 owns the policy module, bounded selection resolver, error, and first barrel export so its public specification can turn green; task 1.2.12 remains the final aggregate export/i18n closure.** | ✅ Resolved |
 | PAR-B37 | Compatibility | How can Phase B add visible vocabulary without changing the immutable exact Phase A catalog contract? | Expand the original catalog / publish a typed Phase B overlay | **Runtime delegated: preserve the exact Phase A catalog and publish a separately typed immutable Phase B overlay; the isolated English service composes both, while authored non-English overlays remain ready for locale integration without changing the ten established catalog symbols.** | ✅ Resolved |
@@ -273,6 +274,31 @@ snapshot support.
 - **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T153100CEST`.
 - **Reopen triggers:** The sparse index becomes immutable and revision-atomic by construction, or a
   future source supplies an authoritative cumulative-offset projection that supersedes local rows.
+
+### PAR-B36 — descriptor crop offsets for exact hits (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal exact-cell geometry needed to satisfy the approved clipped card-action hit
+  behavior; it changes no product behavior, scope, or application authority.
+- **Objective:** Translate descriptor-local action rectangles correctly after viewport or sticky-chrome
+  clipping without reconstructing geometry from semantic data.
+- **Decision:** Carry non-negative `descriptorColumnOffset` and `descriptorRowOffset` values on each
+  visible scene card rectangle. Hit projection subtracts those offsets before intersecting the action
+  rectangle with the final card rectangle.
+- **Evidence:** The existing geometry retained only the already-clipped rectangle, so a hit projector
+  could not distinguish descriptor row zero from the first visible row after top clipping.
+- **Rejected alternatives:** Reconstructing the original card origin duplicates variant geometry and
+  drifts under sticky chrome. Treating the clipped corner as descriptor origin targets the wrong row.
+- **Strongest counterargument:** Two fields enlarge a public geometry record used primarily as an
+  intermediate projection.
+- **Confidence:** High — exact translation is impossible from the prior record, and the offsets are
+  computed at the sole clipping boundary.
+- **Hardening:** Contrarian review found no smaller correct representation; storing the original full
+  rectangle would expose more geometry than consumers need.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T153100CEST`.
+- **Reopen triggers:** Card geometry later retains an authoritative unclipped descriptor rectangle from
+  which the same offsets can be derived without duplicating state.
 
 ### PAR-B32 — exact named presentation presets (runtime)
 

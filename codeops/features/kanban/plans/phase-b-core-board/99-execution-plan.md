@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 15:38 CEST
-> **Progress**: 48/106 tasks (45%)
+> **Last Updated**: 2026-08-09 15:46 CEST
+> **Progress**: 49/106 tasks (46%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -174,7 +174,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 3.2.6 Implement rail geometry, sticky label behavior, and deterministic hybrid degradation — `packages/kanban/src/layout/swimlane-rail.ts`, `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-04 18:44 CEST)
 - [x] 3.2.7 Implement custom swimlane chrome geometry within validated budgets — `packages/kanban/src/layout/swimlane-custom.ts` ✅ (completed: 2026-08-04 18:49 CEST)
 - [x] 3.2.8 Replace fixed-stride card stacking/origin/extent assumptions with sparse height projections — `packages/kanban/src/layout/vertical-projector.ts`, `packages/kanban/src/board/viewport-metrics.ts` ✅ (completed: 2026-08-09 15:38 CEST)
-- [ ] 3.2.9 Extend clipped closed-scope card/header/state/retry inspection targets and z-order while keeping drag/insertion targets absent — `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/src/board/viewport-inspection.ts`
+- [x] 3.2.9 Extend clipped closed-scope card/header/state/retry inspection targets and z-order while keeping drag/insertion targets absent, carrying the descriptor crop offsets required for exact action hits — `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-09 15:46 CEST)
 - [ ] 3.2.10 Rebuild viewport projection/drawing around scene geometry, activate rich/custom renderer selection only now that sparse heights exist, add first-use locale vocabulary, and preserve targeted damage — `packages/kanban/src/board/viewport-projector.ts`, `packages/kanban/src/board/viewport-render.ts`, `packages/kanban/src/board/viewport-damage.ts`, `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`
 - [ ] 3.2.11 Integrate two-pass bounded correction with scroll/reveal/resize anchors and no unbounded reflow loop — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-scroll.ts`
 - [ ] 3.2.12 Run ST-B-GEO and make every immutable oracle green

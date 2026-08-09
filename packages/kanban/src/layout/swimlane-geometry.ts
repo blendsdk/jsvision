@@ -82,6 +82,10 @@ export interface KanbanSceneCardGeometry extends Readonly<Rect> {
   readonly address: KanbanCellAddress;
   /** Source cursor position. */
   readonly logicalIndex: number;
+  /** Descriptor columns clipped from the left edge. */
+  readonly descriptorColumnOffset: number;
+  /** Descriptor rows clipped from the top edge. */
+  readonly descriptorRowOffset: number;
 }
 
 /** Options for projecting one canonical scene into exact terminal cells. */
@@ -450,11 +454,13 @@ export function projectKanbanSceneGeometry(
       let cardTop = naturalY + cardRowOffset;
       for (const sourceCard of sourceCell.cards) {
         const cardWidth = Math.min(sourceCard.descriptor.width, column.width);
-        const cardRect = clip(
-          { x: column.x, y: cardTop, width: cardWidth, height: sourceCard.descriptor.measuredHeight },
-          bounds,
-          cardMinimumY,
-        );
+        const descriptorRect = {
+          x: column.x,
+          y: cardTop,
+          width: cardWidth,
+          height: sourceCard.descriptor.measuredHeight,
+        };
+        const cardRect = clip(descriptorRect, bounds, cardMinimumY);
         if (cardRect !== undefined) {
           cards.push(
             Object.freeze({
@@ -462,6 +468,8 @@ export function projectKanbanSceneGeometry(
               cardKey: sourceCard.cardKey,
               address: sourceCard.address,
               logicalIndex: sourceCard.logicalIndex,
+              descriptorColumnOffset: cardRect.x - descriptorRect.x,
+              descriptorRowOffset: cardRect.y - descriptorRect.y,
             }),
           );
           regions.push(

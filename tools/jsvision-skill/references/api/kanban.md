@@ -257,14 +257,40 @@ Package-owned deterministic interaction timings.
 const KANBAN_TIMING_DEFAULTS: KanbanTimingDefaults
 ```
 
+## KanbanActionScope
+
+Closed semantic owner carried by one bounded pointer target.
+
+```ts
+type KanbanActionScope = | { readonly kind: 'board' }
+  | { readonly kind: 'column'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'cell'; readonly address: KanbanCellAddress }
+  | { readonly kind: 'card'; readonly cardKey: CardKey; readonly address: KanbanCellAddress }
+  | {
+      readonly kind: 'state';
+      readonly state: KanbanStructureStateCode;
+      readonly address?: KanbanCellAddress;
+    }
+```
+
 ## KanbanActionTarget
 
-Future-proof actionable hit entry; Phase A viewport snapshots always expose an empty list.
+Bounded actionable entry recomputed from the final clipped scene geometry.
 
 ```ts
 interface KanbanActionTarget {
-  kind: 'retry';   // Stable allowlisted target kind.
-  address?: KanbanCellAddress;   // Source cell that owns the action.
+  kind: 'card-action' | 'card' | 'workflow-header' | 'swimlane-header' | 'state-action' | 'retry';   // Stable allowlisted target kind.
+  scope: KanbanActionScope;   // Closed semantic owner containing no application record.
+  zIndex: number;   // Deterministic overlap priority; larger values win.
+  address?: KanbanCellAddress;   // Source cell that owns a card, state, or retry action.
+  cardKey?: CardKey;   // Stable card identity for whole-card and descriptor-action targets.
+  columnId?: KanbanColumnId;   // Stable column identity for workflow-header targets.
+  swimlaneId?: KanbanSwimlaneId;   // Stable swimlane identity for swimlane-header targets.
+  logicalIndex?: number;   // Global source position for a resident card target.
+  actionId?: string;   // Bounded semantic action identity for descriptor and scoped action targets.
+  regionId?: string;   // Descriptor-local region identity for a card action.
+  state?: KanbanStructureStateCode;   // Structural state code for state and retry targets.
 }
 ```
 
@@ -2539,6 +2565,8 @@ interface KanbanSceneCardGeometry {
   cardKey: CardKey;   // Stable application-owned card identity.
   address: KanbanCellAddress;   // Owning semantic cell address.
   logicalIndex: number;   // Source cursor position.
+  descriptorColumnOffset: number;   // Descriptor columns clipped from the left edge.
+  descriptorRowOffset: number;   // Descriptor rows clipped from the top edge.
 }
 ```
 
@@ -2630,6 +2658,17 @@ Scene presentation layouts supported by the geometry projector.
 
 ```ts
 type KanbanSceneGeometryVariant = 'hybrid' | 'separator' | 'band' | 'rail' | 'custom'
+```
+
+## KanbanSceneHitProjection
+
+Immutable clipped target list tied to one scene revision.
+
+```ts
+interface KanbanSceneHitProjection {
+  revision: KanbanRevision;   // Scene revision represented by every target.
+  targets: readonly KanbanActionTarget[];   // Highest-priority-first bounded target list.
+}
 ```
 
 ## KanbanSceneLimitState
@@ -3671,16 +3710,16 @@ interface KanbanViewportExtentQuality {
 
 ## KanbanViewportInspection
 
-Detached non-actionable viewport evidence for tests and modeless diagnostics.
+Detached viewport evidence for tests and modeless diagnostics.
 
 ```ts
 interface KanbanViewportInspection {
   cells: readonly KanbanInspectedCell[];   // Retained source cells and their safe lifecycle states.
   visibleColumns: readonly KanbanInspectedColumn[];   // Complete sanitized source columns intersecting the viewport.
   visibleCards: readonly KanbanInspectedCard[];   // Resident cards projected in the viewport.
-  regions: readonly KanbanLayoutRegion[];   // Clipped semantic geometry that is explicitly non-actionable in Phase A.
+  regions: readonly KanbanLayoutRegion[];   // Clipped semantic geometry kept separate from active hit-test entries.
   damage: readonly KanbanDamageRegion[];   // Bounded changed rectangles from the latest completed projection.
-  actionTargets: readonly KanbanActionTarget[];   // Phase A exposes no card, insertion, drop, or card-action pointer targets.
+  actionTargets: readonly KanbanActionTarget[];   // Bounded closed-scope targets; deferred drag and insertion kinds are not representable.
 }
 ```
 
@@ -3846,6 +3885,16 @@ interface ProjectKanbanSceneGeometryOptions {
   customChrome?: readonly KanbanSceneCustomChromeInput[];   // Per-visible-swimlane descriptors required by the custom strategy.
   focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.
   anchor?: KanbanSceneGeometryAnchor;   // Optional stable anchor preserved through responsive recomputation.
+}
+```
+
+## ProjectKanbanSceneHitsOptions
+
+Options for one bounded scene hit projection.
+
+```ts
+interface ProjectKanbanSceneHitsOptions {
+  maximumTargets: number;   // Maximum highest-priority targets retained in the immutable result.
 }
 ```
 
@@ -4492,6 +4541,14 @@ Projects hybrid, separator, and band swimlane strategies from one canonical sema
 
 ```ts
 projectKanbanSceneGeometry(scene: KanbanScene, options: ProjectKanbanSceneGeometryOptions): KanbanSceneGeometry
+```
+
+## projectKanbanSceneHits
+
+Projects a bounded highest-priority-first hit map from final clipped scene geometry.
+
+```ts
+projectKanbanSceneHits(scene: KanbanScene, geometry: KanbanSceneGeometry, options: ProjectKanbanSceneHitsOptions): KanbanSceneHitProjection
 ```
 
 ## projectKanbanVerticalGeometry

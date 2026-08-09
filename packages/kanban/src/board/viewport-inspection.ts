@@ -10,7 +10,7 @@ import type { KanbanCellState } from '../source/states.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanViewportSourceSnapshot } from './viewport-source.js';
 
-/** Detached non-actionable viewport evidence for tests and modeless diagnostics. */
+/** Detached viewport evidence for tests and modeless diagnostics. */
 export interface KanbanViewportInspection {
   /** Retained source cells and their safe lifecycle states. */
   readonly cells: readonly KanbanInspectedCell[];
@@ -18,12 +18,37 @@ export interface KanbanViewportInspection {
   readonly visibleColumns: readonly KanbanInspectedColumn[];
   /** Resident cards projected in the viewport. */
   readonly visibleCards: readonly KanbanInspectedCard[];
-  /** Clipped semantic geometry that is explicitly non-actionable in Phase A. */
+  /** Clipped semantic geometry kept separate from active hit-test entries. */
   readonly regions: readonly KanbanLayoutRegion[];
   /** Bounded changed rectangles from the latest completed projection. */
   readonly damage: readonly KanbanDamageRegion[];
-  /** Phase A exposes no card, insertion, drop, or card-action pointer targets. */
+  /** Bounded closed-scope targets; deferred drag and insertion kinds are not representable. */
   readonly actionTargets: readonly KanbanActionTarget[];
+}
+
+/** Copies one closed action scope so inspection cannot retain active hit-map objects. */
+function detachedScope(scope: KanbanActionTarget['scope']): KanbanActionTarget['scope'] {
+  if (scope.kind === 'cell') return Object.freeze({ kind: scope.kind, address: Object.freeze({ ...scope.address }) });
+  if (scope.kind === 'card') {
+    return Object.freeze({ kind: scope.kind, cardKey: scope.cardKey, address: Object.freeze({ ...scope.address }) });
+  }
+  if (scope.kind === 'state') {
+    return Object.freeze({
+      kind: scope.kind,
+      state: scope.state,
+      ...(scope.address === undefined ? {} : { address: Object.freeze({ ...scope.address }) }),
+    });
+  }
+  return Object.freeze({ ...scope });
+}
+
+/** Detaches one clipped action target from the active hit-map collection. */
+function detachedActionTarget(target: KanbanActionTarget): KanbanActionTarget {
+  return Object.freeze({
+    ...target,
+    scope: detachedScope(target.scope),
+    ...(target.address === undefined ? {} : { address: Object.freeze({ ...target.address }) }),
+  });
 }
 
 /** Creates one immutable empty inspection snapshot before first projection. */
@@ -85,6 +110,6 @@ export function createKanbanViewportInspection<TCard>(
     visibleCards,
     regions: projection?.regions ?? Object.freeze([]),
     damage: Object.freeze([...damage]),
-    actionTargets: projection?.actionTargets ?? Object.freeze([]),
+    actionTargets: Object.freeze((projection?.actionTargets ?? []).map(detachedActionTarget)),
   });
 }
