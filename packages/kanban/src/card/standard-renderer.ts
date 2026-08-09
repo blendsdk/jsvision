@@ -1,6 +1,7 @@
 import { KanbanInvalidDescriptorError } from '../contract/error.js';
 import { createKanbanChecklistId, createKanbanFieldId } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
+import type { KanbanResolvedLimits } from '../contract/limits.js';
 import { KANBAN_PHASE_B_ENGLISH_MESSAGES } from '../i18n/catalog.js';
 import type { KanbanCardPresentationAdapter } from './adapter.js';
 import { snapshotKanbanChecklistGroups } from './checklist.js';
@@ -327,6 +328,52 @@ function readChecklistValues<TCard>(
   }
 }
 
+/** Inputs used to acquire one complete configured presentation snapshot without composing rows. */
+export interface KanbanConfiguredCardSnapshotContext extends Pick<
+  KanbanCardPresentationSnapshotContext,
+  'visualState' | 'formatting' | 'selection' | 'observe'
+> {
+  /** Resolved presentation budget controlling the selected optional identity universe. */
+  readonly budget: ResolvedKanbanPresentationBudget;
+  /** Active resource ceilings applied while detaching fields and checklist items. */
+  readonly limits: KanbanResolvedLimits;
+}
+
+/**
+ * Acquires one configured card snapshot while invoking the checklist adapter at most once.
+ *
+ * This package-internal integration seam lets cards and focused-detail surfaces share the exact same
+ * sanitization, formatting, callback isolation, and resource bounds before choosing different layouts.
+ */
+export function snapshotConfiguredKanbanCardPresentation<TCard>(
+  card: TCard,
+  adapter: KanbanCardPresentationAdapter<TCard>,
+  context: KanbanConfiguredCardSnapshotContext,
+): KanbanCardPresentationSnapshot {
+  const fields = configuredAdapterIds(adapter, 'fields', 'fieldId', context.limits.cardFields);
+  const summaries = configuredAdapterIds(adapter, 'summaries', 'summaryId', context.limits.summarySections);
+  const checklistValues = readChecklistValues(
+    card,
+    adapter,
+    context.limits.checklistGroups,
+    context.limits.checklistItemsPerGroup,
+  );
+  return snapshotKanbanCardPresentation(card, adapter, {
+    maximum: {
+      budget: context.budget,
+      limits: context.limits,
+      availableFieldIds: fields.map(createKanbanFieldId),
+      availableSummaryIds: summaries.map(createKanbanFieldId),
+      availableChecklistIds: checklistValues.map(({ checklistId }) => createKanbanChecklistId(checklistId)),
+    },
+    visualState: context.visualState,
+    formatting: context.formatting,
+    checklistValues,
+    ...(context.selection === undefined ? {} : { selection: context.selection }),
+    ...(context.observe === undefined ? {} : { observe: context.observe }),
+  });
+}
+
 /**
  * Snapshots and composes an application-owned card through the standard rich-card pipeline.
  *
@@ -348,18 +395,9 @@ export function renderStandardKanbanCard<TCard>(
   }
   const limits = validateKanbanLimitOptions({ class: 'standard' });
   const budget = resolveKanbanPresentation(context.density, limits);
-  const fields = configuredAdapterIds(adapter, 'fields', 'fieldId', limits.cardFields);
-  const summaries = configuredAdapterIds(adapter, 'summaries', 'summaryId', limits.summarySections);
-  const checklistValues = readChecklistValues(card, adapter, limits.checklistGroups, limits.checklistItemsPerGroup);
-  const maximum = {
+  const snapshot = snapshotConfiguredKanbanCardPresentation(card, adapter, {
     budget,
     limits,
-    availableFieldIds: fields.map(createKanbanFieldId),
-    availableSummaryIds: summaries.map(createKanbanFieldId),
-    availableChecklistIds: checklistValues.map(({ checklistId }) => createKanbanChecklistId(checklistId)),
-  };
-  const snapshot = snapshotKanbanCardPresentation(card, adapter, {
-    maximum,
     visualState: {
       focused: context.focused,
       selected: context.selected,
@@ -369,7 +407,6 @@ export function renderStandardKanbanCard<TCard>(
       operation: context.operation,
     },
     formatting: context.formatting,
-    checklistValues,
   });
   if (snapshot.cardKey !== context.cardKey || snapshot.presentationRevision !== context.presentationRevision) {
     throw new KanbanInvalidDescriptorError();
@@ -408,19 +445,10 @@ export function renderConfiguredStandardKanbanCard<TCard>(
     throw new KanbanInvalidDescriptorError();
   }
   const limits = validateKanbanLimitOptions({ class: 'standard' });
-  const fields = configuredAdapterIds(adapter, 'fields', 'fieldId', limits.cardFields);
-  const summaries = configuredAdapterIds(adapter, 'summaries', 'summaryId', limits.summarySections);
-  const checklistValues = readChecklistValues(card, adapter, limits.checklistGroups, limits.checklistItemsPerGroup);
-  const maximum = {
+  const presentation = configured.presentation;
+  const snapshot = snapshotConfiguredKanbanCardPresentation(card, adapter, {
     budget: configured.budget,
     limits,
-    availableFieldIds: fields.map(createKanbanFieldId),
-    availableSummaryIds: summaries.map(createKanbanFieldId),
-    availableChecklistIds: checklistValues.map(({ checklistId }) => createKanbanChecklistId(checklistId)),
-  };
-  const presentation = configured.presentation;
-  const snapshot = snapshotKanbanCardPresentation(card, adapter, {
-    maximum,
     visualState: presentation?.visualState ?? {
       focused: context.focused,
       selected: context.selected,
@@ -430,7 +458,6 @@ export function renderConfiguredStandardKanbanCard<TCard>(
       operation: context.operation,
     },
     formatting: context.formatting,
-    checklistValues,
     ...(presentation?.selection === undefined ? {} : { selection: presentation.selection }),
     ...(configured.observe === undefined ? {} : { observe: configured.observe }),
   });

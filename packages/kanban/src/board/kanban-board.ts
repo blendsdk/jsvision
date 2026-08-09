@@ -32,6 +32,8 @@ import type {
 } from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
+import { KanbanBoardFeedbackView, createKanbanBoardFeedbackState } from './board-feedback.js';
+import type { KanbanBoardFeedbackState } from './board-feedback.js';
 import { createKanbanDefaultInteractionSeed } from './board-state.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
@@ -92,6 +94,7 @@ function viewportOptions<TCard>(
   options: KanbanBoardOptions<TCard>,
   i18n: () => I18n,
   identity: () => KanbanIdentityInput,
+  interaction?: () => KanbanInteractionSnapshot,
 ): KanbanViewportOptions<TCard> {
   return {
     source: options.source,
@@ -99,6 +102,7 @@ function viewportOptions<TCard>(
     card: options.card,
     i18n,
     identity,
+    ...(interaction === undefined ? {} : { interaction }),
     ...(options.density === undefined ? {} : { density: options.density }),
     ...(options.presentation === undefined ? {} : { presentation: options.presentation }),
     ...(options.structure === undefined ? {} : { structure: options.structure }),
@@ -158,11 +162,14 @@ export class KanbanBoard<TCard> extends Group {
   readonly #interactionFactory: KanbanInteractionControllerFactory | undefined;
   readonly #hasLegacyIdentity: boolean;
   readonly #navigatorVisible = signal(false);
+  readonly #feedbackVisible = signal(false);
   readonly #minimumReserveVisible = signal(false);
   readonly #navigator: KanbanFocusedNavigatorView;
+  readonly #feedback: KanbanBoardFeedbackView;
   readonly #minimumReserve = spacer({ fixed: 1 });
   #layoutReflows = 0;
   #disposeBindings: (() => void) | undefined;
+  #disposeInteractionChrome: (() => void) | undefined;
   #disposed = false;
 
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
@@ -187,11 +194,26 @@ export class KanbanBoard<TCard> extends Group {
       invalidate: () => this.viewport.invalidate(),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
-    this.viewport = new KanbanViewport(viewportOptions(options, this.#i18n, () => this.#interactionIdentity()));
+    this.viewport = new KanbanViewport(
+      viewportOptions(
+        options,
+        this.#i18n,
+        () => this.#interactionIdentity(),
+        () => this.#interactionFacade.snapshot(),
+      ),
+    );
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
+    this.#feedback = new KanbanBoardFeedbackView(() => this.#feedbackState());
     this.setLayout({ direction: 'col' });
     this.add(grow(this.viewport));
+    fixed(this.#feedback, 1);
+    this.addDynamic(() =>
+      Show(
+        () => this.#feedbackVisible(),
+        () => this.#feedback,
+      ),
+    );
     fixed(this.#navigator, 1);
     this.addDynamic(() =>
       Show(
@@ -209,6 +231,7 @@ export class KanbanBoard<TCard> extends Group {
     this.viewport.onMount(() => this.#setupInteraction(options.limits));
 
     this.onMount(() => {
+      this.#disposeInteractionChrome = this.#interactionFacade.subscribe(() => this.#syncInteractionChrome());
       this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
         createRoot((dispose) => {
           effect(() => {
@@ -217,7 +240,10 @@ export class KanbanBoard<TCard> extends Group {
             const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
             if (identityChanged) void this.#interactionFacade.transition({ kind: 'reconcile', reason: 'deletion' });
             const minimumReserveVisible = this.viewport.focusedNavigator() !== undefined && this.bounds.height < 5;
-            const navigatorVisible = this.viewport.metrics().mode === 'focused-column' && !minimumReserveVisible;
+            const navigatorVisible =
+              this.viewport.metrics().mode === 'focused-column' &&
+              !minimumReserveVisible &&
+              !this.#feedbackVisible.peek();
             const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
             const reserveChanged = minimumReserveVisible !== this.#minimumReserveVisible.peek();
             if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
@@ -230,6 +256,8 @@ export class KanbanBoard<TCard> extends Group {
       );
       this.viewport.onCleanup(() => {
         this.#interactionFacade.dispose();
+        this.#disposeInteractionChrome?.();
+        this.#disposeInteractionChrome = undefined;
         this.#disposeBindings?.();
         this.#disposeBindings = undefined;
         this.#authority.dispose();
@@ -270,7 +298,10 @@ export class KanbanBoard<TCard> extends Group {
         y: 0,
         height: Math.max(
           0,
-          this.bounds.height - (this.#navigatorVisible.peek() || this.#minimumReserveVisible.peek() ? 1 : 0),
+          this.bounds.height -
+            (this.#navigatorVisible.peek() || this.#feedbackVisible.peek() || this.#minimumReserveVisible.peek()
+              ? 1
+              : 0),
         ),
       }),
       layoutReflows: this.#layoutReflows,
@@ -321,6 +352,8 @@ export class KanbanBoard<TCard> extends Group {
     if (this.#disposed) return;
     this.#disposed = true;
     this.#interactionFacade.dispose();
+    this.#disposeInteractionChrome?.();
+    this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
     this.#authority.dispose();
@@ -343,6 +376,27 @@ export class KanbanBoard<TCard> extends Group {
   #navigatorState(): KanbanNavigatorState | undefined {
     const navigator = this.viewport.focusedNavigator();
     return navigator === undefined ? undefined : Object.freeze({ i18n: this.#i18n(), navigator });
+  }
+
+  /** Resolves safe transient feedback content for the shared conditional chrome row. */
+  #feedbackState(): KanbanBoardFeedbackState | undefined {
+    return createKanbanBoardFeedbackState(this.#interactionFacade.snapshot(), this.#i18n());
+  }
+
+  /** Reconciles feedback precedence over focused-column navigation without reserving another row. */
+  #syncInteractionChrome(): void {
+    this.#feedback.invalidate();
+    const feedbackVisible = this.#feedbackState() !== undefined;
+    const feedbackChanged = feedbackVisible !== this.#feedbackVisible.peek();
+    if (feedbackChanged) this.#feedbackVisible.set(feedbackVisible);
+    const navigatorVisible =
+      this.viewport.metrics().mode === 'focused-column' && !this.#minimumReserveVisible.peek() && !feedbackVisible;
+    const navigatorChanged = navigatorVisible !== this.#navigatorVisible.peek();
+    if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
+    if (feedbackChanged || navigatorChanged) {
+      this.#layoutReflows += 1;
+      this.invalidateLayout();
+    }
   }
 
   /** Reconciles the latest source deletion facts at the board's public state boundary. */

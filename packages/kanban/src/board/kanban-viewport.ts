@@ -23,9 +23,11 @@ import type {
   KanbanFocusTarget,
   KanbanInteractionAcquisitionResult,
   KanbanInteractionRevisions,
+  KanbanInteractionSnapshot,
   KanbanNavigationSnapshot,
   KanbanNavigationTarget,
 } from '../interaction/types.js';
+import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
 import type { KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
@@ -48,6 +50,7 @@ import { readKanbanIdentityInput } from './board-state.js';
 import { calculateKanbanViewportDamage } from './viewport-damage.js';
 import { createKanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
+import { createKanbanFocusedDetailSnapshot } from './board-feedback.js';
 import { createKanbanViewportMetrics } from './viewport-metrics.js';
 import { projectKanbanViewport } from './viewport-projector.js';
 import type { KanbanViewportCardPresentation, KanbanViewportProjection } from './viewport-projector.js';
@@ -118,6 +121,8 @@ export interface KanbanViewportOptions<TCard> {
   readonly capabilities?: () => KanbanCapabilities;
   /** Optional reactive application-owned identity hints. */
   readonly identity?: () => KanbanIdentityInput;
+  /** Optional non-owning interaction publication adapter for scene cues and inspection. */
+  readonly interaction?: () => KanbanInteractionSnapshot;
   /** Optional reactive column-collapse projection applied before cursor acquisition. */
   readonly collapsedColumnIds?: () => readonly string[];
 }
@@ -234,6 +239,7 @@ export class KanbanViewport<TCard> extends View {
           const query = options.query();
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = readKanbanIdentityInput(options.identity);
+          void options.interaction?.();
           const density = options.density?.() ?? 'comfortable';
           const structure = options.structure?.();
           void options.i18n?.();
@@ -281,6 +287,7 @@ export class KanbanViewport<TCard> extends View {
   override draw(ctx: DrawContext): void {
     if (this.#source === undefined || this.#disposed) return;
     const identity = readKanbanIdentityInput(this.#options.identity);
+    const interaction = this.#options.interaction?.();
     const density = this.#options.density?.() ?? 'comfortable';
     const theme = this.#options.theme?.() ?? this.#defaultTheme;
     const i18n = this.#options.i18n?.() ?? this.#defaultI18n;
@@ -330,6 +337,7 @@ export class KanbanViewport<TCard> extends View {
         minimumRequiredHeight: 4 + readViewportHostChromeRows(this),
         cache: this.#descriptorCache,
         identity,
+        ...(interaction === undefined ? {} : { interaction }),
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
       });
     };
@@ -708,7 +716,19 @@ export class KanbanViewport<TCard> extends View {
 
   /** Returns detached source-state evidence without application records or actionable targets. */
   inspection(): KanbanViewportInspection {
-    return createKanbanViewportInspection(this.#snapshot, this.#projection, this.#damage);
+    const interaction = this.#options.interaction?.() ?? KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
+    const i18n = this.#options.i18n?.() ?? this.#defaultI18n;
+    const focusedDetail = createKanbanFocusedDetailSnapshot({
+      interaction,
+      ...(this.#snapshot === undefined ? {} : { source: this.#snapshot }),
+      ...(this.#projection === undefined ? {} : { projection: this.#projection }),
+      card: this.#options.card,
+      limits: this.#limits,
+      i18n,
+      ...(this.#options.formatting === undefined ? {} : { formatting: this.#options.formatting() }),
+      ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
+    });
+    return createKanbanViewportInspection(this.#snapshot, this.#projection, this.#damage, interaction, focusedDetail);
   }
 
   /** Releases the complete standalone source lifecycle idempotently. */

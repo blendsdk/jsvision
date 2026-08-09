@@ -6,10 +6,40 @@ import type {
   KanbanInspectedColumn,
   KanbanLayoutRegion,
 } from '../layout/hit-map.js';
+import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
+import { KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT, KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
+import type {
+  KanbanFocusedDetailSnapshot,
+  KanbanInteractionFeedback,
+  KanbanInteractionSnapshot,
+  KanbanRangeAnchor,
+} from '../interaction/types.js';
 import type { KanbanCellState } from '../source/states.js';
 import type { KanbanStructureState } from '../structure/model.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanViewportSourceSnapshot } from './viewport-source.js';
+
+/** Detached controller evidence exposed without application records or host handles. */
+export interface KanbanInteractionInspection {
+  /** Equality-only controller publication revision. */
+  readonly revision: number;
+  /** Current stable focus target. */
+  readonly focused: KanbanInteractionSnapshot['focused'];
+  /** Ordered type-preserving loaded selection identities. */
+  readonly selectedCardKeys: KanbanInteractionSnapshot['selectedCardKeys'];
+  /** Number of loaded selected identities. */
+  readonly selectedCount: number;
+  /** Honest active selection scope. */
+  readonly selectionScope: 'loaded' | 'server';
+  /** Explicit cell-local range anchor when range extension is active. */
+  readonly rangeAnchor?: KanbanRangeAnchor;
+  /** Current bounded acquisition kind without retaining its request target. */
+  readonly pendingNavigationKind?: 'reveal' | 'acquire';
+  /** Exact most recent prune count when prune feedback is active. */
+  readonly lastPruneCount?: number;
+  /** Safe localized payload-free interaction feedback. */
+  readonly feedback?: KanbanInteractionFeedback;
+}
 
 /** Detached viewport evidence for tests and modeless diagnostics. */
 export interface KanbanViewportInspection {
@@ -29,6 +59,41 @@ export interface KanbanViewportInspection {
   readonly mountedCardViews: 0;
   /** Board-level semantic structure state when one is active. */
   readonly structureState?: KanbanStructureState;
+  /** Detached current controller state and bounded selection evidence. */
+  readonly interaction: KanbanInteractionInspection;
+  /** Complete bounded safe values for the currently focused target. */
+  readonly focusedDetail: KanbanFocusedDetailSnapshot;
+}
+
+/** Copies one range anchor without retaining controller-owned address objects. */
+function detachedRangeAnchor(anchor: KanbanRangeAnchor): KanbanRangeAnchor {
+  return Object.freeze({ cardKey: anchor.cardKey, address: Object.freeze({ ...anchor.address }) });
+}
+
+/** Copies current controller state into the bounded modeless inspection contract. */
+function interactionInspection(snapshot: KanbanInteractionSnapshot): KanbanInteractionInspection {
+  const feedback =
+    snapshot.feedback === undefined
+      ? undefined
+      : Object.freeze({
+          code: snapshot.feedback.code,
+          label: snapshot.feedback.label,
+          ...(snapshot.feedback.count === undefined ? {} : { count: snapshot.feedback.count }),
+          ...(snapshot.feedback.retry === undefined ? {} : { retry: snapshot.feedback.retry }),
+        });
+  return Object.freeze({
+    revision: snapshot.revision,
+    focused: snapshotKanbanFocusTarget(snapshot.focused),
+    selectedCardKeys: Object.freeze([...snapshot.selectedCardKeys]),
+    selectedCount: snapshot.selectedCardKeys.length,
+    selectionScope: snapshot.serverSelection === undefined ? 'loaded' : 'server',
+    ...(snapshot.rangeAnchor === undefined ? {} : { rangeAnchor: detachedRangeAnchor(snapshot.rangeAnchor) }),
+    ...(snapshot.pendingNavigation === undefined ? {} : { pendingNavigationKind: snapshot.pendingNavigation.kind }),
+    ...(feedback?.code === 'selection-pruned' && feedback.count !== undefined
+      ? { lastPruneCount: feedback.count }
+      : {}),
+    ...(feedback === undefined ? {} : { feedback }),
+  });
 }
 
 /** Copies one closed action scope so inspection cannot retain active hit-map objects. */
@@ -66,6 +131,8 @@ export function createEmptyKanbanViewportInspection(): KanbanViewportInspection 
     damage: Object.freeze([]),
     actionTargets: Object.freeze([]),
     mountedCardViews: 0,
+    interaction: interactionInspection(KANBAN_NEUTRAL_INTERACTION_SNAPSHOT),
+    focusedDetail: KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT,
   });
 }
 
@@ -76,8 +143,16 @@ export function createKanbanViewportInspection<TCard>(
   source: KanbanViewportSourceSnapshot<TCard> | undefined,
   projection: KanbanViewportProjection | undefined,
   damage: readonly KanbanDamageRegion[],
+  interaction: KanbanInteractionSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT,
+  focusedDetail: KanbanFocusedDetailSnapshot = KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT,
 ): KanbanViewportInspection {
-  if (source === undefined) return createEmptyKanbanViewportInspection();
+  if (source === undefined) {
+    return Object.freeze({
+      ...createEmptyKanbanViewportInspection(),
+      interaction: interactionInspection(interaction),
+      focusedDetail,
+    });
+  }
   const cells = Object.freeze(
     source.cells.map((cell) => {
       const sourceState = cell.cursor.state();
@@ -123,6 +198,8 @@ export function createKanbanViewportInspection<TCard>(
     damage: Object.freeze([...damage]),
     actionTargets: Object.freeze((projection?.actionTargets ?? []).map(detachedActionTarget)),
     mountedCardViews: 0,
+    interaction: interactionInspection(interaction),
+    focusedDetail,
     ...(source.visibleColumns.length === 0
       ? {
           structureState: Object.freeze({

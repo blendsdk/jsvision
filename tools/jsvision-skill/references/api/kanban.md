@@ -4023,6 +4023,8 @@ interface KanbanViewportInspection {
   actionTargets: readonly KanbanActionTarget[];   // Bounded closed-scope targets; deferred drag and insertion kinds are not representable.
   mountedCardViews: 0;   // Resident card widgets; scene rendering deliberately keeps this at zero.
   structureState?: KanbanStructureState;   // Board-level semantic structure state when one is active.
+  interaction: KanbanInteractionInspection;   // Detached current controller state and bounded selection evidence.
+  focusedDetail: KanbanFocusedDetailSnapshot;   // Complete bounded safe values for the currently focused target.
 }
 ```
 
@@ -4077,6 +4079,7 @@ interface KanbanViewportOptions<TCard> {
   observe?: (observation: KanbanObservation) => void;   // Optional already-redacted observation sink.
   capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
   identity?: () => KanbanIdentityInput;   // Optional reactive application-owned identity hints.
+  interaction?: () => KanbanInteractionSnapshot;   // Optional non-owning interaction publication adapter for scene cues and inspection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
 }
 ```

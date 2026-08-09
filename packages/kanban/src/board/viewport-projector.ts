@@ -22,6 +22,7 @@ import type { KanbanTheme } from '../card/theme.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
+import type { KanbanInteractionSnapshot } from '../interaction/types.js';
 import type { KanbanActionTarget, KanbanLayoutRegion } from '../layout/hit-map.js';
 import { projectKanbanSceneHits } from '../layout/hit-map.js';
 import type { KanbanSceneGeometry, KanbanSceneGeometryVariant } from '../layout/swimlane-geometry.js';
@@ -164,6 +165,8 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly minimumRequiredHeight?: number;
   /** Optional application-owned identity cues. */
   readonly identity?: KanbanIdentityInput;
+  /** Optional controller publication that supersedes legacy focus and selection hints. */
+  readonly interaction?: KanbanInteractionSnapshot;
   /** Viewport-local descriptor cache. */
   readonly cache: KanbanDescriptorCache;
   /** Optional already-redacted diagnostic sink. */
@@ -239,13 +242,33 @@ function defaultVisualState<TCard>(
   options: ProjectKanbanViewportOptions<TCard>,
   cardKey: string | number,
 ): KanbanCardVisualState {
+  const interaction = options.interaction;
   return Object.freeze({
-    focused: cardKey === options.identity?.focusedCardKey,
-    selected: options.identity?.selectedCardKeys?.includes(cardKey) ?? false,
-    rangeAnchor: false,
+    focused:
+      interaction === undefined
+        ? cardKey === options.identity?.focusedCardKey
+        : interaction.focused.kind === 'card' && interaction.focused.cardKey === cardKey,
+    selected:
+      interaction?.selectedCardKeys.includes(cardKey) ?? options.identity?.selectedCardKeys?.includes(cardKey) ?? false,
+    rangeAnchor: interaction?.rangeAnchor?.cardKey === cardKey,
     readOnly: false,
     invalid: false,
     operation: 'idle',
+  });
+}
+
+/** Keeps application operation state while making the mounted controller authoritative for identity cues. */
+function mergeControllerVisualState(
+  configured: KanbanCardVisualState,
+  controller: KanbanCardVisualState,
+  hasController: boolean,
+): KanbanCardVisualState {
+  if (!hasController) return configured;
+  return Object.freeze({
+    ...configured,
+    focused: controller.focused,
+    selected: controller.selected,
+    rangeAnchor: controller.rangeAnchor,
   });
 }
 
@@ -370,7 +393,11 @@ function projectDescriptors<TCard>(
       });
       const descriptor = options.cache.getOrCreate(key, () => {
         const selected = options.cardPresentation?.(record);
-        const configuredVisualState = selected?.visualState ?? visualState;
+        const configuredVisualState = mergeControllerVisualState(
+          selected?.visualState ?? visualState,
+          visualState,
+          options.interaction !== undefined,
+        );
         const configuredContext = Object.freeze({
           ...context,
           focused: configuredVisualState.focused,
@@ -464,6 +491,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       options.source.structure.revision,
       budget.revision,
       options.rendererRevision ?? null,
+      options.interaction?.revision ?? null,
     ]),
     queryGeneration: options.source.generation,
     sessionRevision: options.source.publication.revision,

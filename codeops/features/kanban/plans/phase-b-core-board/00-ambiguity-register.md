@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 41 items resolved
-> **Last Updated**: 2026-08-09 18:38 CEST
+> **Status**: ✅ GATE PASSED — all 42 items resolved
+> **Last Updated**: 2026-08-09 20:46 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -52,6 +52,7 @@
 | PAR-B40 | Reactive failure | What happens when a retained descriptor's reactive rebuild throws or publishes invalid output? | Dispose immediately / retain the last valid descriptor / publish fallback | **Quality-loop delegated: validate every rebuild against cache-key invariants and the owning render context, retain the last valid descriptor on later failure, emit no rebuild/damage notification for rejected output, and permit a later valid dependency change to recover. Initial invalid output still rejects atomically.** | ✅ Resolved |
 | PAR-B34 | Snapshot semantics | Does hidden checklist selection prevent bounded checklist data from being detached into the safe presentation snapshot? | Retain configured safe groups but select/render none / skip checklist acquisition entirely | **Runtime delegated from immutable-oracle evidence: snapshot bounded configured groups once when the adapter provides them; hidden mode keeps resolved checklist IDs empty, so composition and interaction expose no checklist content.** | ✅ Resolved |
 | PAR-B41 | Phase 3 remediation | How should mounted structure, grouped variable-height acquisition, overflow, limits, repaint, and damage share revision-compatible bounded evidence? | One immutable mounted projection plan / independent local maps and fixed-stride fallback / defer to interaction work | **Runtime delegated after independent challenge: normalize structure before acquisition and derive one revision-bound bounded axis plan shared by retention, canonical scene, geometry, metrics, and damage. Carry explicit omitted demand, thread resolved limits, repaint reactive descriptor changes, and use whole-viewport damage when exact bounded old/new coverage is unavailable.** | ✅ Resolved |
+| PAR-B42 | Phase boundary | How do Phase 4 conditional interaction chrome and Phase 5 input-aware feedback/selection chrome divide ownership? | Phase 4 feedback projection plus an extensible one-row leaf / pull Phase 5 input and help state forward | **Runtime delegated: Phase 4 owns the bounded focused-detail/inspection model and a feedback-only conditional row; Phase 5 extends that same row with input-aware help and selection content without adding permanent chrome.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -571,6 +572,33 @@ snapshot support.
 - **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T163802Z`.
 - **Reopen triggers:** The source publishes an authoritative complete axis plan directly, or bounded
   revision-compatible projection cannot select tall-row card ranges without scanning unloaded cards.
+
+### PAR-B42 — Conditional interaction chrome phase boundary (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal implementation sequencing for already-approved conditional feedback, focused
+  detail, help, and selection surfaces; it changes neither visible feature scope nor application authority.
+- **Objective:** Make controller state inspectable and visibly useful in Phase 4 without inventing Phase 5
+  input state or reserving permanent terminal rows.
+- **Decision:** Phase 4 creates the shared bounded focused-detail and interaction-inspection projection,
+  wires controller cues and revisions into card scenes, and shows controller feedback through one
+  conditional DSL leaf. Phase 5 extends that same leaf with input-aware help and active-selection content.
+  Feedback temporarily replaces the focused-column navigator so package chrome remains at one row.
+- **Evidence:** Task 4.2.9 names conditional chrome while task 5.2.7 owns the input-integrated
+  feedback/selection row; the board already composes one conditional navigator row and reserves exactly
+  one package-owned chrome row.
+- **Rejected alternatives:** Pulling commands, key hints, and pending pointer state into Phase 4 violates
+  the phase boundary. Deferring every visible feedback surface to Phase 5 leaves Phase 4 navigation
+  failures without their required visible evidence.
+- **Strongest counterargument:** Reusing one row means feedback temporarily hides navigation position.
+  Feedback is transient and higher priority, while the navigator returns automatically after it clears.
+- **Confidence:** High.
+- **Hardening:** Grounded against the board's current DSL composition, the explicit Phase 4 and Phase 5
+  task ownership, and the no-permanent-toolbar requirement.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T204600Z`.
+- **Reopen triggers:** Phase 5 requires simultaneous persistent navigator and help rows, or a dedicated
+  overlay primitive becomes available without consuming board layout.
 
 ## Systematic discovery scan
 
