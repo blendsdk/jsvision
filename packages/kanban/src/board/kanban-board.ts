@@ -21,6 +21,7 @@ import {
 } from '../interaction/controller.js';
 import type { KanbanInteractionControllerFactory, KanbanInteractionFacade } from '../interaction/facade.js';
 import { KanbanInteractionFacadeOwner } from '../interaction/facade.js';
+import type { KanbanInteractionHandler } from '../interaction/intent.js';
 import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
 import type {
   KanbanFocusTarget,
@@ -73,6 +74,8 @@ export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TC
   readonly dispatcher?: KanbanRequestDispatcher;
   /** Optional mount factory replacing the package default interaction controller. */
   readonly interactionFactory?: KanbanInteractionControllerFactory;
+  /** Optional synchronous receiver for immutable, non-mutation semantic interaction intents. */
+  readonly onInteraction?: KanbanInteractionHandler;
 }
 
 /** Conditional focused-column navigator evidence. */

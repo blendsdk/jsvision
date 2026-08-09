@@ -390,6 +390,7 @@ interface KanbanBoardOptions<TCard> {
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
   interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
+  onInteraction?: KanbanInteractionHandler;   // Optional synchronous receiver for immutable, non-mutation semantic interaction intents.
 }
 ```
 
@@ -401,6 +402,14 @@ Localized board-wide state shown by the board shell.
 type KanbanBoardState = | { readonly kind: 'no-columns'; readonly label: string }
   | { readonly kind: 'minimum-size'; readonly label: string }
   | { readonly kind: KanbanSourceState['kind']; readonly label: string }
+```
+
+## KanbanBuiltInActionId
+
+Package-owned scoped actions with stable semantics across hosts.
+
+```ts
+type KanbanBuiltInActionId = 'collapse' | 'clear-filters' | 'configure' | 'add-card'
 ```
 
 ## KanbanCapabilities
@@ -1840,6 +1849,14 @@ type KanbanInteractionFeedbackCode = | 'navigation-pending'
   | 'interaction-unavailable'
 ```
 
+## KanbanInteractionHandler
+
+Optional synchronous application handler for immutable semantic interaction intents.
+
+```ts
+type KanbanInteractionHandler = (intent: KanbanInteractionIntent) => void
+```
+
 ## KanbanInteractionInspection
 
 Detached controller evidence exposed without application records or host handles.
@@ -1856,6 +1873,33 @@ interface KanbanInteractionInspection {
   lastPruneCount?: number;   // Exact most recent prune count when prune feedback is active.
   feedback?: KanbanInteractionFeedback;   // Safe localized payload-free interaction feedback.
 }
+```
+
+## KanbanInteractionIntent
+
+Complete non-mutation interaction boundary delivered to an application handler.
+
+```ts
+type KanbanInteractionIntent = KanbanOpenCardIntent | KanbanOpenContextIntent | KanbanScopedActionIntent
+```
+
+## KanbanInteractionIntentBase
+
+Shared immutable evidence captured for every application interaction intent.
+
+```ts
+interface KanbanInteractionIntentBase {
+  origin: KanbanInteractionOrigin;   // Input channel that initiated the interaction.
+  selection: KanbanSelectionSnapshot;   // Eligible ordered selection captured after the required interaction transition settles.
+}
+```
+
+## KanbanInteractionOrigin
+
+Input channel that initiated one semantic application interaction.
+
+```ts
+type KanbanInteractionOrigin = 'keyboard' | 'pointer' | 'programmatic'
 ```
 
 ## KanbanInteractionPendingResult
@@ -2336,6 +2380,30 @@ Runtime scope in which an isolated application or package failure occurred.
 
 ```ts
 type KanbanObservationScope = 'board' | 'query' | 'source' | 'cell' | 'card' | 'renderer' | 'request'
+```
+
+## KanbanOpenCardIntent
+
+Requests that the application open or otherwise activate one card.
+
+```ts
+interface KanbanOpenCardIntent {
+  kind: 'open-card';   // Stable intent discriminator.
+  cardKey: CardKey;   // Application-owned card identity without the application record payload.
+  address: KanbanCellAddress;   // Semantic cell containing the card when the intent was captured.
+  actionId?: KanbanExtensionId;   // Optional descriptor action that requested the activation.
+}
+```
+
+## KanbanOpenContextIntent
+
+Requests an application-owned context surface for one closed semantic scope.
+
+```ts
+interface KanbanOpenContextIntent {
+  kind: 'open-context';   // Stable intent discriminator.
+  scope: KanbanActionScope;   // Semantic owner targeted after focus and eligible selection have settled.
+}
 ```
 
 ## KanbanOperationId
@@ -3081,6 +3149,18 @@ interface KanbanSceneWorkflowHeaderGeometry {
   label: string;   // Sanitized source label.
   contentOffset: number;   // Header columns clipped from the left by horizontal scrolling.
   sticky: true;   // Workflow headers always remain vertically sticky.
+}
+```
+
+## KanbanScopedActionIntent
+
+Requests one application-owned action without mutating board data or policy locally.
+
+```ts
+interface KanbanScopedActionIntent {
+  kind: 'scoped-action';   // Stable intent discriminator.
+  actionId: KanbanBuiltInActionId | KanbanExtensionId;   // Package-owned or validated application-namespaced semantic action.
+  scope: KanbanActionScope;   // Closed semantic owner of the action.
 }
 ```
 

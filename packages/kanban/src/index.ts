@@ -33,6 +33,7 @@ export type {
   KanbanInteractionFacade,
 } from './interaction/facade.js';
 export { createKanbanInteractionController } from './interaction/controller.js';
+export * from './interaction/intent.js';
 export * from './interaction/types.js';
 export * from './layout/hit-map.js';
 export * from './layout/metrics.js';

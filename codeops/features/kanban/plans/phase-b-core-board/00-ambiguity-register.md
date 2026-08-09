@@ -600,6 +600,38 @@ snapshot support.
 - **Reopen triggers:** Phase 5 requires simultaneous persistent navigator and help rows, or a dedicated
   overlay primitive becomes available without consuming board layout.
 
+### PAR-B43 — Public semantic intent payload shape (API)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact additive type shape for the already-approved public non-mutation interaction
+  boundary; it does not add behavior, application authority, host access, or later-phase UI.
+- **Objective:** Give applications enough stable identity and selection evidence to adapt Phase B
+  activation into later dialogs, menus, and commands without exposing card records or inventing a
+  generic payload envelope.
+- **Decision:** Every intent carries its origin and a frozen eligible-selection snapshot. Card-open
+  intents carry the card key, semantic address, and optional validated descriptor action ID; context
+  intents carry one closed semantic scope; scoped-action intents carry that scope plus a package-owned
+  or validated application-namespaced action ID. The package-owned IDs are `collapse`,
+  `clear-filters`, `configure`, and `add-card`; expanding is the authoritative policy result of the
+  same collapse capability rather than a second command identity.
+- **Evidence:** The approved action hook requires identities plus selection but forbids application
+  records, dialogs, menus, commands, and mutation. Existing hit targets already carry closed scopes,
+  addresses, keys, and validated descriptor action IDs, so the contract introduces no second identity
+  model.
+- **Rejected alternatives:** A free-form payload would weaken validation and authorization boundaries.
+  A focus-target-only contract cannot identify descriptor actions or state/header scope. Separate
+  expand/collapse IDs would make the component predict authoritative application policy.
+- **Strongest counterargument:** Direct card identity fields and closed scopes create more public SDK
+  surface than a single opaque target. That additional shape is required for useful application
+  adapters and remains additive, bounded, payload-free, and covered by generated API evidence.
+- **Confidence:** High.
+- **Hardening:** Grounded against the approved intent specification, existing hit-map scope, selection
+  snapshot, identity validators, and strict Phase B application-authority boundary.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T235200Z`.
+- **Reopen triggers:** A later requirement adds a new semantic owner, permits context on a non-closed
+  scope, or changes collapse from application-owned policy republication.
+
 ## Systematic discovery scan
 
 | Category | Result |
