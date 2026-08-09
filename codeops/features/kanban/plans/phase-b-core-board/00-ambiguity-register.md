@@ -724,6 +724,35 @@ snapshot support.
 - **Reopen triggers:** The navigator gains multi-row content, header actions gain distinct visible
   controls, or a later accessibility requirement mandates a larger pointer target.
 
+### PAR-B47 — Conditional selection-row threshold (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal visibility threshold and localized content for the already-approved shared
+  one-row feedback/selection surface; it does not add selection behavior or permanent chrome.
+- **Objective:** Make non-obvious selection scope visible without reducing ordinary board height after
+  every single-card click.
+- **Decision:** Controller feedback retains highest precedence. In its absence, an active server-wide
+  selection shows its sanitized application label or a localized fallback; otherwise, a loaded
+  selection count appears only when more than one card is selected. Zero or one loaded selection uses
+  card-local markers alone. The shared row remains conditional and temporarily replaces the focused-
+  column navigator.
+- **Evidence:** Single-card focus/selection is already redundantly visible on the card, while multiple
+  or server-wide scope cannot be inferred reliably from one card marker. The board already owns one
+  conditional DSL leaf and feedback precedence.
+- **Rejected alternatives:** Showing a row for every selected card effectively creates persistent
+  chrome during normal use. Hiding all selection summaries leaves multi/server scope color- and
+  viewport-dependent. Adding a second row contradicts the one-row package-chrome budget.
+- **Strongest counterargument:** A user may value an explicit single-selection count. The card marker is
+  the more spatially direct cue, and the row remains available as soon as selection scope becomes
+  non-obvious.
+- **Confidence:** High.
+- **Hardening:** Grounded against the existing conditional DSL composition, semantic card cues,
+  server-selection model, localized feedback priority, and TUI space constraint.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260810T002500Z`.
+- **Reopen triggers:** Usability testing finds the single-card cue insufficient, or selection commands
+  require persistent shortcut help independent of selection scope.
+
 ## Systematic discovery scan
 
 | Category | Result |

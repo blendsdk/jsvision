@@ -213,7 +213,7 @@ const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
 Canonical English messages introduced by the Phase B board surface.
 
 ```ts
-const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.state.descriptor-limit': string; 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; 'kanban.interaction.navigation-pending': string; 'kanban.interaction.navigation-unavailable': string; 'kanban.interaction.navigation-error': string; 'kanban.interaction.selection-limit-exceeded': string; 'kanban.interaction.selection-pruned': string; 'kanban.interaction.unavailable': string; }>
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.state.descriptor-limit': string; 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; 'kanban.interaction.navigation-pending': string; 'kanban.interaction.navigation-unavailable': string; 'kanban.interaction.navigation-error': string; 'kanban.interaction.selection-limit-exceeded': string; 'kanban.interaction.selection-pruned': string; 'kanban.interaction.selected-count': string; 'kanban.interaction.server-selection-active': string; 'kanban.interaction.unavailable': string; }>
 ```
 
 ## KANBAN_PHASE_B_PLACEHOLDER_MANIFEST
@@ -2488,6 +2488,8 @@ interface KanbanPhaseBMessageMap {
   'kanban.interaction.navigation-error': Message;   // Payload-free feedback when navigation fails unexpectedly.
   'kanban.interaction.selection-limit-exceeded': Message;   // Feedback when a selection operation exceeds the configured finite limit.
   'kanban.interaction.selection-pruned': Message;   // Feedback after ineligible selected cards are pruned.
+  'kanban.interaction.selected-count': Message;   // Compact count shown while multiple loaded cards are selected.
+  'kanban.interaction.server-selection-active': Message;   // Fallback label for an application-owned server selection without its own label.
   'kanban.interaction.unavailable': Message;   // Payload-free feedback when the interaction owner is unavailable.
 }
 ```

@@ -43,5 +43,7 @@ export const kanbanPhaseBSv = createKanbanPhaseBTranslationCatalog('sv', {
   'kanban.interaction.navigation-error': 'Det gick inte att flytta fokus',
   'kanban.interaction.selection-limit-exceeded': 'Urvalsgränsen har nåtts',
   'kanban.interaction.selection-pruned': 'Urvalet har uppdaterats',
+  'kanban.interaction.selected-count': '${count} markerade',
+  'kanban.interaction.server-selection-active': 'Serverurval aktivt',
   'kanban.interaction.unavailable': 'Interaktion är inte tillgänglig',
 });

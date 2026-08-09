@@ -168,9 +168,23 @@ export function createKanbanBoardFeedbackState(
   i18n: I18n,
 ): KanbanBoardFeedbackState | undefined {
   const feedback = interaction.feedback;
-  if (feedback === undefined) return undefined;
-  const suffix = feedback.count === undefined ? '' : ` (${i18n.number(feedback.count)})`;
-  return Object.freeze({ label: `${feedback.label}${suffix}` });
+  if (feedback !== undefined) {
+    const suffix = feedback.count === undefined ? '' : ` (${i18n.number(feedback.count)})`;
+    return Object.freeze({ label: `${feedback.label}${suffix}` });
+  }
+  if (interaction.serverSelection !== undefined) {
+    return Object.freeze({
+      label: interaction.serverSelection.label ?? i18n.t('kanban.interaction.server-selection-active'),
+    });
+  }
+  if (interaction.selectedCardKeys.length > 1) {
+    return Object.freeze({
+      label: i18n.t('kanban.interaction.selected-count', {
+        params: { count: i18n.number(interaction.selectedCardKeys.length) },
+      }),
+    });
+  }
+  return undefined;
 }
 
 /** One-row leaf shown only while controller feedback must remain visible. */

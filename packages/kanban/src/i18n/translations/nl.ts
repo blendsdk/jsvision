@@ -43,5 +43,7 @@ export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
   'kanban.interaction.navigation-error': 'Focus kon niet worden verplaatst',
   'kanban.interaction.selection-limit-exceeded': 'Selectielimiet bereikt',
   'kanban.interaction.selection-pruned': 'Selectie bijgewerkt',
+  'kanban.interaction.selected-count': '${count} geselecteerd',
+  'kanban.interaction.server-selection-active': 'Serverselectie actief',
   'kanban.interaction.unavailable': 'Interactie niet beschikbaar',
 });

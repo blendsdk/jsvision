@@ -31,7 +31,7 @@ function primaryCue(state: KanbanCardVisualState): PrimaryCardCue {
   }
   if (state.operation === 'pending') return { role: 'operation.pending', ascii: '~', unicode: '…' };
   if (state.operation === 'grabbed') return { role: 'card.grabbed', ascii: '@', unicode: '◆' };
-  if (state.focused && state.selected) return { role: 'card.focused-selected', ascii: '%', unicode: '◈' };
+  if (state.focused && state.selected) return { role: 'card.focused-selected', ascii: '>', unicode: '◈' };
   if (state.focused) return { role: 'card.focused', ascii: '>', unicode: '▶' };
   if (state.selected || state.rangeAnchor) return { role: 'card.selected', ascii: '*', unicode: '●' };
   if (state.readOnly) return { role: 'card.read-only', ascii: '#', unicode: '◇' };

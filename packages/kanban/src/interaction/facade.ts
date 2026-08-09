@@ -329,6 +329,29 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     return true;
   }
 
+  /** Commits one selection transition and card activation without an intervening layout transaction. */
+  acceptSelectionActivate(command: KanbanInteractionTransition, options: KanbanActivateOptions): boolean {
+    const scope = options.scope ?? this.#scopeForFocus();
+    if (!this.#available() || scope?.kind !== 'card') return false;
+    void this.#schedule(async () => {
+      let delivered = false;
+      await this.#executeTransition(command, () => {
+        delivered = this.#intentRouter.deliver(
+          {
+            kind: 'open-card',
+            origin: options.origin ?? 'programmatic',
+            scope,
+            ...(options.actionId === undefined ? {} : { actionId: options.actionId }),
+          },
+          this.snapshotEligibleSelection(),
+        );
+      });
+      await Promise.resolve();
+      return delivered;
+    });
+    return true;
+  }
+
   /** Synchronously accepts context activation for mounted event routing. */
   acceptOpenContext(options: KanbanOpenContextOptions): boolean {
     const scope = options.scope ?? this.#scopeForFocus();
@@ -488,7 +511,10 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   }
 
   /** Invokes the controller synchronously, then validates asynchronous settlement behind the facade. */
-  #executeTransition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult> {
+  #executeTransition(
+    command: KanbanInteractionTransition,
+    afterPublish?: (result: KanbanInteractionResult) => void,
+  ): Promise<KanbanInteractionResult> {
     const controller = this.#controller;
     if (controller === undefined || this.#failed || this.#disposed) {
       return Promise.resolve(unavailable(this.#lastSnapshot));
@@ -516,6 +542,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
             throw new KanbanInvalidSourcePublicationError();
           }
           this.#publish(settled.snapshot);
+          afterPublish?.(settled);
           return settled;
         } catch {
           this.#observe('interaction-transition-failed');

@@ -129,6 +129,10 @@ export interface KanbanPhaseBMessageMap {
   readonly 'kanban.interaction.selection-limit-exceeded': Message;
   /** Feedback after ineligible selected cards are pruned. */
   readonly 'kanban.interaction.selection-pruned': Message;
+  /** Compact count shown while multiple loaded cards are selected. */
+  readonly 'kanban.interaction.selected-count': Message;
+  /** Fallback label for an application-owned server selection without its own label. */
+  readonly 'kanban.interaction.server-selection-active': Message;
   /** Payload-free feedback when the interaction owner is unavailable. */
   readonly 'kanban.interaction.unavailable': Message;
 }
@@ -154,6 +158,8 @@ export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.interaction.navigation-error': 'Could not move focus',
   'kanban.interaction.selection-limit-exceeded': 'Selection limit reached',
   'kanban.interaction.selection-pruned': 'Selection updated',
+  'kanban.interaction.selected-count': '${count} selected',
+  'kanban.interaction.server-selection-active': 'Server selection active',
   'kanban.interaction.unavailable': 'Interaction unavailable',
 } satisfies KanbanPhaseBMessageMap);
 

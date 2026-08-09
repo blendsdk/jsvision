@@ -43,5 +43,7 @@ export const kanbanPhaseBFr = createKanbanPhaseBTranslationCatalog('fr', {
   'kanban.interaction.navigation-error': 'Impossible de déplacer le focus',
   'kanban.interaction.selection-limit-exceeded': 'Limite de sélection atteinte',
   'kanban.interaction.selection-pruned': 'Sélection mise à jour',
+  'kanban.interaction.selected-count': '${count} sélectionnées',
+  'kanban.interaction.server-selection-active': 'Sélection serveur active',
   'kanban.interaction.unavailable': 'Interaction indisponible',
 });

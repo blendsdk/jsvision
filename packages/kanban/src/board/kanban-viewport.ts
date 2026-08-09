@@ -886,7 +886,14 @@ export class KanbanViewport<TCard> extends View {
   ): boolean {
     const input = this.#interactionBinding.input();
     if (input === undefined || target.scope.kind !== 'card') return false;
-    if (!input.accept({ kind: 'selection', operation: completion.toggle ? 'toggle' : 'replace' })) return false;
+    const transition = {
+      kind: 'selection' as const,
+      operation: completion.toggle ? ('toggle' as const) : ('replace' as const),
+    };
+    if (completion.activate && input.acceptSelectionActivate !== undefined) {
+      return input.acceptSelectionActivate(transition, { origin: 'pointer', scope: target.scope });
+    }
+    if (!input.accept(transition)) return false;
     return !completion.activate || input.acceptActivate({ origin: 'pointer', scope: target.scope });
   }
 

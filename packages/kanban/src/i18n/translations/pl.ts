@@ -43,5 +43,7 @@ export const kanbanPhaseBPl = createKanbanPhaseBTranslationCatalog('pl', {
   'kanban.interaction.navigation-error': 'Nie udało się przenieść fokusu',
   'kanban.interaction.selection-limit-exceeded': 'Osiągnięto limit zaznaczenia',
   'kanban.interaction.selection-pruned': 'Zaznaczenie zaktualizowane',
+  'kanban.interaction.selected-count': 'Wybrano: ${count}',
+  'kanban.interaction.server-selection-active': 'Wybór serwerowy aktywny',
   'kanban.interaction.unavailable': 'Interakcja niedostępna',
 });

@@ -42,6 +42,8 @@ interface CapturedKanbanViewportInteractionAdapter {
 export interface CapturedKanbanViewportInputAdapter {
   /** Synchronously queues one controller transition. */
   readonly accept: (command: KanbanInteractionTransition) => boolean;
+  /** Commits selection and activation in one ordered facade operation when supported. */
+  readonly acceptSelectionActivate?: (command: KanbanInteractionTransition, options: KanbanActivateOptions) => boolean;
   /** Synchronously queues card activation. */
   readonly acceptActivate: (options: KanbanActivateOptions) => boolean;
   /** Synchronously queues context activation. */
@@ -67,6 +69,7 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
       throw new KanbanInvalidSourcePublicationError();
     }
     const accept = Reflect.get(adapter, 'accept');
+    const acceptSelectionActivate = Reflect.get(adapter, 'acceptSelectionActivate');
     const acceptActivate = Reflect.get(adapter, 'acceptActivate');
     const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
     const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
@@ -82,6 +85,12 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
         ? {
             input: Object.freeze({
               accept: (command: KanbanInteractionTransition) => Reflect.apply(accept, adapter, [command]) === true,
+              ...(typeof acceptSelectionActivate === 'function'
+                ? {
+                    acceptSelectionActivate: (command: KanbanInteractionTransition, options: KanbanActivateOptions) =>
+                      Reflect.apply(acceptSelectionActivate, adapter, [command, options]) === true,
+                  }
+                : {}),
               acceptActivate: (options: KanbanActivateOptions) =>
                 Reflect.apply(acceptActivate, adapter, [options]) === true,
               acceptOpenContext: (options: KanbanOpenContextOptions) =>

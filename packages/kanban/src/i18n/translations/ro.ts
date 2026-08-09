@@ -43,5 +43,7 @@ export const kanbanPhaseBRo = createKanbanPhaseBTranslationCatalog('ro', {
   'kanban.interaction.navigation-error': 'Focalizarea nu a putut fi mutată',
   'kanban.interaction.selection-limit-exceeded': 'Limita de selecție a fost atinsă',
   'kanban.interaction.selection-pruned': 'Selecție actualizată',
+  'kanban.interaction.selected-count': '${count} selectate',
+  'kanban.interaction.server-selection-active': 'Selecția de pe server este activă',
   'kanban.interaction.unavailable': 'Interacțiune indisponibilă',
 });

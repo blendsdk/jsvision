@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 00:53 CEST
-> **Progress**: 83/106 tasks (78%)
+> **Last Updated**: 2026-08-10 01:10 CEST
+> **Progress**: 84/106 tasks (79%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -287,7 +287,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 5.2.4 Deliver application intents exactly once from the board facade after current committed settlement, wait for authoritative republication, and isolate handler failures — `packages/kanban/src/interaction/intent-router.ts`, `packages/kanban/src/interaction/facade.ts` ✅ (completed: 2026-08-10 00:13 CEST)
 - [x] 5.2.5 Wire viewport events to wheel-first interaction routing without capture/drag/insertion behavior — `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-10 00:32 CEST)
 - [x] 5.2.6 Make focused-column navigator and application-owned header/state actions use the same facade transitions and scoped intents — `packages/kanban/src/board/board-bindings.ts`, `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-source.ts`, `packages/kanban/src/board/viewport-projector.ts`, `packages/kanban/src/board/viewport-render.ts`, `packages/kanban/src/interaction/intent.ts`, `packages/kanban/src/interaction/intent-router.ts`, `packages/kanban/src/interaction/facade.ts` ✅ (completed: 2026-08-10 00:53 CEST)
-- [ ] 5.2.7 Add conditional DSL feedback/selection chrome without permanent clutter or raw placement — `packages/kanban/src/board/board-feedback.ts`, `packages/kanban/src/board/kanban-board.ts`
+- [x] 5.2.7 Add conditional DSL feedback/selection chrome without permanent clutter or raw placement — `packages/kanban/src/board/board-feedback.ts`, `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-interaction.ts`, `packages/kanban/src/card/style-resolver.ts`, `packages/kanban/src/interaction/facade.ts`, `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts` ✅ (completed: 2026-08-10 01:10 CEST)
 - [ ] 5.2.8 Extend the verified Phase 4 mount transaction with input and pending-pointer registration, then complete cancellation-first disposal ordering — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`
 - [ ] 5.2.9 Export intent/input-facing durable API and testing event harnesses with full JSDoc, plus first-use typed locale vocabulary — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts`
 - [ ] 5.2.10 Run the Phase 5-owned mounted ST-B-CARD/STRUCT/INT and ST-B-X-01..04 assertion slices from 07 and make them green
