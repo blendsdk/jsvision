@@ -1735,6 +1735,82 @@ interface KanbanInspectedColumn {
 }
 ```
 
+## KanbanInteractionAcquisitionRequest
+
+Bounded acquisition request for one semantic target.
+
+```ts
+interface KanbanInteractionAcquisitionRequest {
+  target: KanbanFocusTarget;   // Requested focus target retained across asynchronous settlement.
+  kind: 'reveal' | 'acquire';   // Operation requiring the bounded source work.
+}
+```
+
+## KanbanInteractionAcquisitionResult
+
+Payload-free bounded reveal or acquisition settlement.
+
+```ts
+type KanbanInteractionAcquisitionResult = { readonly kind: 'available' } | { readonly kind: 'unavailable'; readonly retry: 'available' | 'unavailable' }
+```
+
+## KanbanInteractionController
+
+Complete mount-owned state controller used behind the stable board facade.
+
+```ts
+interface KanbanInteractionController {
+  snapshot(): KanbanInteractionSnapshot;   // Returns the current detached immutable semantic state.
+  transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult> | KanbanInteractionResult;   // Applies one closed transition synchronously or through bounded asynchronous acquisition.
+  subscribe(invalidate: () => void): () => void;   // Subscribes to semantic publications and returns an idempotent unsubscribe function.
+  dispose(): void;   // Releases subscriptions, cancellation, and other controller-owned resources idempotently.
+}
+```
+
+## KanbanInteractionControllerFactory
+
+Sole injection seam for replacing the default interaction controller.
+
+```ts
+type KanbanInteractionControllerFactory = (
+  environment: KanbanInteractionEnvironment,
+) => KanbanInteractionController
+```
+
+## KanbanInteractionEnvironment
+
+Mount-scoped bounded services available to an interaction controller factory.
+
+```ts
+interface KanbanInteractionEnvironment {
+  scene: () => KanbanNavigationSnapshot;   // Reads current detached scene evidence.
+  revisions: () => KanbanInteractionRevisions;   // Reads current source/query revision evidence.
+  reveal: (
+    target: KanbanFocusTarget,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<KanbanInteractionAcquisitionResult> | KanbanInteractionAcquisitionResult;   // Minimally reveals an already-known eligible target.
+  acquire: (
+    request: KanbanInteractionAcquisitionRequest,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<KanbanInteractionAcquisitionResult> | KanbanInteractionAcquisitionResult;   // Requests one bounded missing-target acquisition.
+  feedback: (code: KanbanInteractionFeedbackCode, count?: number) => KanbanInteractionFeedback;   // Creates safe localized feedback without exposing source payloads.
+  invalidate: () => void;   // Schedules at most one mounted repaint for a published semantic change.
+}
+```
+
+## KanbanInteractionFacade
+
+Stable board-owned programmatic interaction surface available before and after mount.
+
+```ts
+interface KanbanInteractionFacade {
+  snapshot(): KanbanInteractionSnapshot;   // Returns the last valid detached immutable interaction snapshot.
+  transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;   // Serializes one closed transition behind settlement-generation checks.
+  snapshotEligibleSelection(): KanbanSelectionSnapshot;   // Captures current eligible ordered selection independently from later live changes.
+  subscribe(invalidate: () => void): () => void;   // Subscribes to facade publications and returns an idempotent unsubscribe function.
+}
+```
+
 ## KanbanInteractionFeedback
 
 Localized, bounded feedback that may be shown without exposing card values.
@@ -1761,6 +1837,45 @@ type KanbanInteractionFeedbackCode = | 'navigation-pending'
   | 'interaction-unavailable'
 ```
 
+## KanbanInteractionPendingResult
+
+Pending bounded acquisition settlement that leaves current focus in place.
+
+```ts
+interface KanbanInteractionPendingResult {
+  kind: 'pending';   // Stable result discriminator.
+  snapshot: KanbanInteractionSnapshot;   // Current immutable state while bounded source work is outstanding.
+}
+```
+
+## KanbanInteractionReconcileReason
+
+Reasons that require stable focus and selection to reconcile with current evidence.
+
+```ts
+type KanbanInteractionReconcileReason = 'query' | 'source-publication' | 'cursor-unload' | 'geometry' | 'visibility' | 'deletion'
+```
+
+## KanbanInteractionResult
+
+Complete typed settlement returned by a controller or facade transition.
+
+```ts
+type KanbanInteractionResult = KanbanInteractionSuccessResult | KanbanInteractionPendingResult | KanbanInteractionUnavailableResult
+```
+
+## KanbanInteractionRevisions
+
+Current session and view revisions exposed without source records or host handles.
+
+```ts
+interface KanbanInteractionRevisions {
+  sessionRevision: KanbanRevision;   // Active query-session revision.
+  queryGeneration: number;   // Active query generation.
+  viewRevision?: KanbanRevision;   // Optional application saved-view revision.
+}
+```
+
 ## KanbanInteractionSnapshot
 
 Complete immutable interaction state consumed by scene construction.
@@ -1775,6 +1890,51 @@ interface KanbanInteractionSnapshot {
   pendingNavigation?: KanbanPendingNavigation;   // Optional asynchronous navigation operation.
   feedback?: KanbanInteractionFeedback;   // Optional safe localized status feedback.
   serverSelection?: KanbanServerSelectionReference;   // Optional application-owned server-wide selection reference.
+}
+```
+
+## KanbanInteractionSuccessResult
+
+Successful interaction settlement with the controller's complete current snapshot.
+
+```ts
+type KanbanInteractionSuccessResult = | { readonly kind: 'changed'; readonly snapshot: KanbanInteractionSnapshot }
+  | { readonly kind: 'unchanged'; readonly snapshot: KanbanInteractionSnapshot }
+```
+
+## KanbanInteractionTransition
+
+Closed programmatic interaction transition accepted by a controller or facade.
+
+```ts
+type KanbanInteractionTransition = | { readonly kind: 'focus'; readonly target: KanbanFocusTarget }
+  | {
+      readonly kind: 'navigate';
+      readonly direction: KanbanNavigationDirection;
+      readonly extendSelection?: boolean;
+    }
+  | {
+      readonly kind: 'selection';
+      readonly operation: KanbanSelectionOperation;
+      readonly serverSelection?: KanbanServerSelectionReference;
+    }
+  | { readonly kind: 'reconcile'; readonly reason: KanbanInteractionReconcileReason }
+  | {
+      readonly kind: 'escape';
+      readonly transient?: { readonly kind: 'synthetic'; readonly cancel: () => void };
+    }
+```
+
+## KanbanInteractionUnavailableResult
+
+Typed unavailable settlement used instead of throwing across the public facade.
+
+```ts
+interface KanbanInteractionUnavailableResult {
+  kind: 'unavailable';   // Stable result discriminator.
+  code: KanbanInteractionFeedbackCode;   // Payload-free reason suitable for localization and diagnostics.
+  snapshot: KanbanInteractionSnapshot;   // Last valid immutable state retained after the rejected transition.
+  retry?: 'available' | 'unavailable';   // Whether the same semantic transition may be retried.
 }
 ```
 
@@ -2021,6 +2181,51 @@ interface KanbanMinimumMessage {
   text: string;   // Sanitized cell-safe visible text.
   width: number;   // Visible message width in terminal cells.
   height: number;   // Visible message height in terminal rows.
+}
+```
+
+## KanbanNavigationDirection
+
+Directions understood by programmatic spatial navigation.
+
+```ts
+type KanbanNavigationDirection = | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'home'
+  | 'end'
+  | 'page-up'
+  | 'page-down'
+  | 'board-start'
+  | 'board-end'
+  | 'previous-column'
+  | 'next-column'
+```
+
+## KanbanNavigationSnapshot
+
+Detached bounded scene evidence supplied to pure focus and navigation transitions.
+
+```ts
+interface KanbanNavigationSnapshot {
+  revision: KanbanRevision;   // Equality-only scene revision.
+  targets: readonly KanbanNavigationTarget[];   // Visible targets in deterministic scene order.
+  viewportContentHeight: number;   // Visible content height used by page navigation.
+}
+```
+
+## KanbanNavigationTarget
+
+One bounded scene target used by pure navigation without reading a live view.
+
+```ts
+interface KanbanNavigationTarget {
+  target: KanbanFocusTarget;   // Semantic focus target represented by this rectangle.
+  sceneIndex: number;   // Source scene order used as the deterministic final tie-breaker.
+  centerColumn: number;   // Viewport-local horizontal center in terminal cells.
+  centerRow: number;   // Viewport-local vertical center in terminal rows.
+  enabled: boolean;   // Whether the current policy permits focus.
 }
 ```
 
@@ -2864,6 +3069,45 @@ Partial two-axis terminal-cell target accepted by imperative scrolling.
 interface KanbanScrollTarget {
   x?: number;   // Optional horizontal cell offset.
   y?: number;   // Optional vertical cell offset.
+}
+```
+
+## KanbanSelectionEntry
+
+One eligible selected card detached from live cursor and application ownership.
+
+```ts
+interface KanbanSelectionEntry {
+  cardKey: CardKey;   // Stable type-preserving application card identity.
+  address: KanbanCellAddress;   // Semantic cell occupied when the snapshot was captured.
+  entityRevision: KanbanRevision;   // Equality-only entity revision captured with the selection.
+}
+```
+
+## KanbanSelectionOperation
+
+Selection operations owned by the interaction controller.
+
+```ts
+type KanbanSelectionOperation = | 'replace'
+  | 'toggle'
+  | 'range'
+  | 'select-loaded-visible-matching'
+  | 'clear-multiple'
+  | 'set-server-selection'
+  | 'clear-server-selection'
+```
+
+## KanbanSelectionSnapshot
+
+Immutable bounded selection captured for one later action or request.
+
+```ts
+interface KanbanSelectionSnapshot {
+  entries: readonly KanbanSelectionEntry[];   // Ordered eligible selected cards.
+  sessionRevision: KanbanRevision;   // Query-session revision that owns every entry.
+  queryGeneration: number;   // Query generation that owns every entry.
+  viewRevision?: KanbanRevision;   // Optional application saved-view revision.
 }
 ```
 

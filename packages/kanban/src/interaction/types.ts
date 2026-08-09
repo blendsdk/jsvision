@@ -84,6 +84,173 @@ export interface KanbanInteractionSnapshot {
   readonly serverSelection?: KanbanServerSelectionReference;
 }
 
+/** Directions understood by programmatic spatial navigation. */
+export type KanbanNavigationDirection =
+  | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'home'
+  | 'end'
+  | 'page-up'
+  | 'page-down'
+  | 'board-start'
+  | 'board-end'
+  | 'previous-column'
+  | 'next-column';
+
+/** Reasons that require stable focus and selection to reconcile with current evidence. */
+export type KanbanInteractionReconcileReason =
+  'query' | 'source-publication' | 'cursor-unload' | 'geometry' | 'visibility' | 'deletion';
+
+/** Selection operations owned by the interaction controller. */
+export type KanbanSelectionOperation =
+  | 'replace'
+  | 'toggle'
+  | 'range'
+  | 'select-loaded-visible-matching'
+  | 'clear-multiple'
+  | 'set-server-selection'
+  | 'clear-server-selection';
+
+/** Closed programmatic interaction transition accepted by a controller or facade. */
+export type KanbanInteractionTransition =
+  | { readonly kind: 'focus'; readonly target: KanbanFocusTarget }
+  | {
+      readonly kind: 'navigate';
+      readonly direction: KanbanNavigationDirection;
+      readonly extendSelection?: boolean;
+    }
+  | {
+      readonly kind: 'selection';
+      readonly operation: KanbanSelectionOperation;
+      readonly serverSelection?: KanbanServerSelectionReference;
+    }
+  | { readonly kind: 'reconcile'; readonly reason: KanbanInteractionReconcileReason }
+  | {
+      readonly kind: 'escape';
+      readonly transient?: { readonly kind: 'synthetic'; readonly cancel: () => void };
+    };
+
+/** Successful interaction settlement with the controller's complete current snapshot. */
+export type KanbanInteractionSuccessResult =
+  | { readonly kind: 'changed'; readonly snapshot: KanbanInteractionSnapshot }
+  | { readonly kind: 'unchanged'; readonly snapshot: KanbanInteractionSnapshot };
+
+/** Pending bounded acquisition settlement that leaves current focus in place. */
+export interface KanbanInteractionPendingResult {
+  /** Stable result discriminator. */
+  readonly kind: 'pending';
+  /** Current immutable state while bounded source work is outstanding. */
+  readonly snapshot: KanbanInteractionSnapshot;
+}
+
+/** Typed unavailable settlement used instead of throwing across the public facade. */
+export interface KanbanInteractionUnavailableResult {
+  /** Stable result discriminator. */
+  readonly kind: 'unavailable';
+  /** Payload-free reason suitable for localization and diagnostics. */
+  readonly code: KanbanInteractionFeedbackCode;
+  /** Last valid immutable state retained after the rejected transition. */
+  readonly snapshot: KanbanInteractionSnapshot;
+  /** Whether the same semantic transition may be retried. */
+  readonly retry?: 'available' | 'unavailable';
+}
+
+/** Complete typed settlement returned by a controller or facade transition. */
+export type KanbanInteractionResult =
+  KanbanInteractionSuccessResult | KanbanInteractionPendingResult | KanbanInteractionUnavailableResult;
+
+/** One eligible selected card detached from live cursor and application ownership. */
+export interface KanbanSelectionEntry {
+  /** Stable type-preserving application card identity. */
+  readonly cardKey: CardKey;
+  /** Semantic cell occupied when the snapshot was captured. */
+  readonly address: KanbanCellAddress;
+  /** Equality-only entity revision captured with the selection. */
+  readonly entityRevision: KanbanRevision;
+}
+
+/** Immutable bounded selection captured for one later action or request. */
+export interface KanbanSelectionSnapshot {
+  /** Ordered eligible selected cards. */
+  readonly entries: readonly KanbanSelectionEntry[];
+  /** Query-session revision that owns every entry. */
+  readonly sessionRevision: KanbanRevision;
+  /** Query generation that owns every entry. */
+  readonly queryGeneration: number;
+  /** Optional application saved-view revision. */
+  readonly viewRevision?: KanbanRevision;
+}
+
+/** One bounded scene target used by pure navigation without reading a live view. */
+export interface KanbanNavigationTarget {
+  /** Semantic focus target represented by this rectangle. */
+  readonly target: KanbanFocusTarget;
+  /** Source scene order used as the deterministic final tie-breaker. */
+  readonly sceneIndex: number;
+  /** Viewport-local horizontal center in terminal cells. */
+  readonly centerColumn: number;
+  /** Viewport-local vertical center in terminal rows. */
+  readonly centerRow: number;
+  /** Whether the current policy permits focus. */
+  readonly enabled: boolean;
+}
+
+/** Detached bounded scene evidence supplied to pure focus and navigation transitions. */
+export interface KanbanNavigationSnapshot {
+  /** Equality-only scene revision. */
+  readonly revision: KanbanRevision;
+  /** Visible targets in deterministic scene order. */
+  readonly targets: readonly KanbanNavigationTarget[];
+  /** Visible content height used by page navigation. */
+  readonly viewportContentHeight: number;
+}
+
+/** Current session and view revisions exposed without source records or host handles. */
+export interface KanbanInteractionRevisions {
+  /** Active query-session revision. */
+  readonly sessionRevision: KanbanRevision;
+  /** Active query generation. */
+  readonly queryGeneration: number;
+  /** Optional application saved-view revision. */
+  readonly viewRevision?: KanbanRevision;
+}
+
+/** Bounded acquisition request for one semantic target. */
+export interface KanbanInteractionAcquisitionRequest {
+  /** Requested focus target retained across asynchronous settlement. */
+  readonly target: KanbanFocusTarget;
+  /** Operation requiring the bounded source work. */
+  readonly kind: 'reveal' | 'acquire';
+}
+
+/** Payload-free bounded reveal or acquisition settlement. */
+export type KanbanInteractionAcquisitionResult =
+  { readonly kind: 'available' } | { readonly kind: 'unavailable'; readonly retry: 'available' | 'unavailable' };
+
+/** Mount-scoped bounded services available to an interaction controller factory. */
+export interface KanbanInteractionEnvironment {
+  /** Reads current detached scene evidence. */
+  readonly scene: () => KanbanNavigationSnapshot;
+  /** Reads current source/query revision evidence. */
+  readonly revisions: () => KanbanInteractionRevisions;
+  /** Minimally reveals an already-known eligible target. */
+  readonly reveal: (
+    target: KanbanFocusTarget,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<KanbanInteractionAcquisitionResult> | KanbanInteractionAcquisitionResult;
+  /** Requests one bounded missing-target acquisition. */
+  readonly acquire: (
+    request: KanbanInteractionAcquisitionRequest,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<KanbanInteractionAcquisitionResult> | KanbanInteractionAcquisitionResult;
+  /** Creates safe localized feedback without exposing source payloads. */
+  readonly feedback: (code: KanbanInteractionFeedbackCode, count?: number) => KanbanInteractionFeedback;
+  /** Schedules at most one mounted repaint for a published semantic change. */
+  readonly invalidate: () => void;
+}
+
 /** One complete safe field value available for focused-card inspection. */
 export interface KanbanFocusedDetailField {
   /** Stable configured field identity. */

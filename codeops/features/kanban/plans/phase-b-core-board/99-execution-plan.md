@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 19:19 CEST
-> **Progress**: 58/106 tasks (55%)
+> **Last Updated**: 2026-08-09 19:22 CEST
+> **Progress**: 59/106 tasks (56%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -231,7 +231,7 @@ implementation → green → implementation tests/hardening → verification.
 
 ### Step 4.2: Implementation and green phase
 
-- [ ] 4.2.1 Complete public transition/result/environment/controller-factory/facade contracts around the stable Phase 1 target/snapshot types — `packages/kanban/src/interaction/types.ts`, `packages/kanban/src/interaction/facade.ts`
+- [x] 4.2.1 Complete public transition/result/environment/controller-factory/facade contracts around the stable Phase 1 target/snapshot types — `packages/kanban/src/interaction/types.ts`, `packages/kanban/src/interaction/facade.ts` ✅ (completed: 2026-08-09 19:22 CEST)
 - [ ] 4.2.2 Implement ordered type-preserving selection, range, prune, atomic over-limit select-all rejection, opaque server-selection set/clear, and frozen eligible snapshots with session/query generation — `packages/kanban/src/interaction/selection.ts`
 - [ ] 4.2.3 Implement pure initial-focus and local-to-global reconciliation — `packages/kanban/src/interaction/reconciliation.ts`
 - [ ] 4.2.4 Implement vertical/horizontal/header/home/end/page/focused-column navigation over scene geometry — `packages/kanban/src/interaction/navigation.ts`
