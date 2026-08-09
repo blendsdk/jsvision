@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 20:27 CEST
-> **Progress**: 64/106 tasks (60%)
+> **Last Updated**: 2026-08-09 20:33 CEST
+> **Progress**: 65/106 tasks (61%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -237,7 +237,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 4.2.4 Implement vertical/horizontal/header/home/end/page/focused-column navigation over scene geometry — `packages/kanban/src/interaction/navigation.ts` ✅ (completed: 2026-08-09 19:41 CEST)
 - [x] 4.2.5 Implement generation-scoped bounded acquisition, cancellation, retry feedback, and late-result rejection — `packages/kanban/src/interaction/acquisition.ts` ✅ (completed: 2026-08-09 19:45 CEST)
 - [x] 4.2.6 Implement default/factory controller validation, source→scene/cache→controller rollback registration, atomic fail-closed setup, state transitions, facade serialization, safe rejected-transition settlement, subscriptions, reuse rejection, and disposal — `packages/kanban/src/interaction/controller.ts`, `packages/kanban/src/interaction/facade.ts`, `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-09 20:27 CEST)
-- [ ] 4.2.7 Implement transient cancellation ownership and layered Escape selection behavior — `packages/kanban/src/interaction/transient.ts`, `packages/kanban/src/interaction/controller.ts`
+- [x] 4.2.7 Implement transient cancellation ownership and layered Escape selection behavior — `packages/kanban/src/interaction/transient.ts`, `packages/kanban/src/interaction/controller.ts` ✅ (completed: 2026-08-09 20:33 CEST)
 - [ ] 4.2.8 Replace live legacy identity writes with default-controller seed-only behavior, preserve source deletion authority, and reject identity plus factory — `packages/kanban/src/board/board-bindings.ts`, `packages/kanban/src/board/board-state.ts`
 - [ ] 4.2.9 Wire controller snapshot/revision and bounded sanitized focused-detail/help projection into scene cues, reveal, inspection, and conditional chrome — `packages/kanban/src/board/scene-builder.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/board/board-feedback.ts`
 - [ ] 4.2.10 Expose the stable board facade before/after mount and a non-owning compatible standalone Viewport adapter — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`

@@ -22,6 +22,7 @@ import {
 } from './reconciliation.js';
 import { KanbanSelectionModel } from './selection.js';
 import type { KanbanEligibleSelectionCandidate } from './selection.js';
+import { KANBAN_SYNTHETIC_TRANSIENT_PRIORITY, KanbanTransientOwner } from './transient.js';
 import type {
   KanbanFocusTarget,
   KanbanInteractionEnvironment,
@@ -247,6 +248,7 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   readonly #environment: KanbanInteractionEnvironment;
   readonly #selection: KanbanSelectionModel;
   readonly #acquisition = new KanbanAcquisitionCoordinator();
+  readonly #transient = new KanbanTransientOwner();
   readonly #subscribers = new Set<() => void>();
   #snapshot: KanbanInteractionSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
   #previousScene = snapshotKanbanNavigationSnapshot({ revision: 0, targets: [], viewportContentHeight: 0 });
@@ -273,7 +275,7 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
     if (command.kind === 'navigate') return this.#navigate(command.direction, command.extendSelection === true);
     if (command.kind === 'selection') return this.#select(command);
     if (command.kind === 'reconcile') return this.#reconcile(command.reason);
-    return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    return this.#escape(command);
   }
 
   /** Registers one semantic-state listener. */
@@ -292,6 +294,7 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#transient.dispose();
     this.#acquisition.dispose();
     this.#subscribers.clear();
   }
@@ -507,6 +510,24 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
       selectedCardKeys: selected.selectedCardKeys,
       rangeAnchor: selected.rangeAnchor,
       serverSelection: this.#selection.serverSelection(),
+    });
+  }
+
+  /** Gives one registered transient first refusal, then clears only explicit multi-selection. */
+  #escape(command: Extract<KanbanInteractionTransition, { readonly kind: 'escape' }>): KanbanInteractionResult {
+    if (command.transient !== undefined) {
+      this.#transient.register({
+        kind: command.transient.kind,
+        priority: KANBAN_SYNTHETIC_TRANSIENT_PRIORITY,
+        cancel: command.transient.cancel,
+      });
+    }
+    if (this.#transient.cancel()) return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    const cleared = this.#selection.clearMultiple();
+    if (cleared.kind === 'unchanged') return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    return this.#publish({
+      selectedCardKeys: cleared.selectedCardKeys,
+      rangeAnchor: cleared.rangeAnchor,
     });
   }
 
