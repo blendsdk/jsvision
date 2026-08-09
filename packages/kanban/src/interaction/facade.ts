@@ -110,6 +110,16 @@ function unavailable(snapshot: KanbanInteractionSnapshot): KanbanInteractionResu
   return Object.freeze({ kind: 'unavailable', code: 'interaction-unavailable', snapshot, retry: 'unavailable' });
 }
 
+/**
+ * Compares canonical detached snapshots after validation has normalized key order and optional fields.
+ *
+ * JSON is safe here because the closed interaction contract contains only bounded JSON primitives,
+ * arrays, and objects; card identity deliberately remains either a number or a string.
+ */
+function interactionSnapshotsEqual(left: KanbanInteractionSnapshot, right: KanbanInteractionSnapshot): boolean {
+  return left === right || JSON.stringify(left) === JSON.stringify(right);
+}
+
 /** Validates the callable shape of a factory-owned controller without invoking property getters twice. */
 function controllerMethods(controller: unknown): {
   readonly owner: object;
@@ -167,7 +177,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     const controller = this.#controller;
     if (controller !== undefined && !this.#failed && !this.#disposed) {
       try {
-        this.#lastSnapshot = snapshotKanbanInteractionSnapshot(controller.snapshot());
+        this.#publish(snapshotKanbanInteractionSnapshot(controller.snapshot()));
       } catch {
         this.failSetup();
       }
@@ -287,6 +297,9 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     }
     return Promise.resolve(raw).then(
       (value) => {
+        if (this.#disposed || this.#failed || this.#controller !== controller) {
+          return unavailable(this.#lastSnapshot);
+        }
         try {
           const settled = snapshotKanbanInteractionResult(value);
           this.#publish(settled.snapshot);
@@ -297,6 +310,9 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
         }
       },
       () => {
+        if (this.#disposed || this.#failed || this.#controller !== controller) {
+          return unavailable(this.#lastSnapshot);
+        }
         this.#observe('interaction-transition-failed');
         return unavailable(this.#lastSnapshot);
       },
@@ -314,9 +330,16 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     }
   }
 
-  /** Publishes only when immutable semantic state actually differs by revision or reference. */
-  #publish(snapshot: KanbanInteractionSnapshot, force = false): void {
-    if (!force && snapshot === this.#lastSnapshot) return;
+  /** Publishes only monotonic evidence while optionally forwarding an explicit controller notification. */
+  #publish(snapshot: KanbanInteractionSnapshot, notifyDuplicate = false): void {
+    if (snapshot.revision < this.#lastSnapshot.revision) throw new KanbanInvalidSourcePublicationError();
+    if (snapshot.revision === this.#lastSnapshot.revision) {
+      if (interactionSnapshotsEqual(snapshot, this.#lastSnapshot)) {
+        if (notifyDuplicate) this.#notify();
+        return;
+      }
+      throw new KanbanInvalidSourcePublicationError();
+    }
     this.#lastSnapshot = snapshot;
     this.#notify();
   }

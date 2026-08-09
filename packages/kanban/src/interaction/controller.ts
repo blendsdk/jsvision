@@ -253,6 +253,25 @@ function candidateFor(
   });
 }
 
+/**
+ * Compares the complete selection state carried by a controller publication.
+ *
+ * The values are already validated canonical JSON data, so this comparison preserves number-versus-
+ * string card identity while detecting anchor and server-selection changes that membership alone misses.
+ */
+function publishedSelectionEqual(
+  snapshot: KanbanInteractionSnapshot,
+  selectedCardKeys: readonly CardKey[],
+  rangeAnchor: KanbanRangeAnchor | undefined,
+  serverSelection: KanbanServerSelectionReference | undefined,
+): boolean {
+  return (
+    JSON.stringify(snapshot.selectedCardKeys) === JSON.stringify(selectedCardKeys) &&
+    JSON.stringify(snapshot.rangeAnchor ?? null) === JSON.stringify(rangeAnchor ?? null) &&
+    JSON.stringify(snapshot.serverSelection ?? null) === JSON.stringify(serverSelection ?? null)
+  );
+}
+
 /** Default single-owner interaction state machine used when no factory is supplied. */
 class DefaultKanbanInteractionController implements KanbanInteractionController {
   readonly #environment: KanbanInteractionEnvironment;
@@ -376,6 +395,13 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
         entry.enabled && canonicalizeKanbanFocusTarget(entry.target) === canonicalizeKanbanFocusTarget(focused),
     );
     if (visible !== undefined) {
+      if (
+        canonicalizeKanbanFocusTarget(this.#snapshot.focused) === canonicalizeKanbanFocusTarget(focused) &&
+        (focused.kind !== 'card' || this.#snapshot.preferredCenterRow === visible.centerRow) &&
+        this.#snapshot.pendingNavigation === undefined
+      ) {
+        return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+      }
       return this.#publish({
         focused,
         ...(focused.kind === 'card' ? { preferredCenterRow: visible.centerRow } : {}),
@@ -564,10 +590,16 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
         snapshot: this.#withFeedback('selection-limit-exceeded'),
       });
     }
+    const activeServerSelection = this.#selection.serverSelection();
+    if (
+      publishedSelectionEqual(this.#snapshot, selected.selectedCardKeys, selected.rangeAnchor, activeServerSelection)
+    ) {
+      return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    }
     return this.#publish({
       selectedCardKeys: selected.selectedCardKeys,
       rangeAnchor: selected.rangeAnchor,
-      serverSelection: this.#selection.serverSelection(),
+      serverSelection: activeServerSelection,
     });
   }
 
