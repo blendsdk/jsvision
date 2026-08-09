@@ -157,4 +157,27 @@ describe('scene projector implementation', () => {
     });
     expect(whole).toEqual([{ kind: 'whole-viewport', ...bounds }]);
   });
+
+  it('falls back to complete damage when unchanged descriptors move geometrically', () => {
+    const scene = buildKanbanScene({ ...input(), descriptorLimit: 16 });
+    const before = geometry(scene);
+    const first = before.cards[0];
+    if (first === undefined) throw new Error('Expected a projected card.');
+    const after = Object.freeze({
+      ...before,
+      cards: Object.freeze([Object.freeze({ ...first, y: first.y + 2 }), ...before.cards.slice(1)]),
+    });
+    const bounds = { x: 0, y: 0, width: 80, height: 24 };
+
+    expect(
+      calculateKanbanSceneDamage({
+        previousScene: scene,
+        currentScene: scene,
+        previousGeometry: before,
+        currentGeometry: after,
+        bounds,
+        maximumRegions: 16,
+      }),
+    ).toEqual([{ kind: 'whole-viewport', ...bounds }]);
+  });
 });

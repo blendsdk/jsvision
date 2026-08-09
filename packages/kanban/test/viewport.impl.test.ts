@@ -15,6 +15,7 @@ import type {
   KanbanKnownLength,
   KanbanQuerySession,
 } from '../src/index.js';
+import { createEagerKanbanDataSource } from '../src/index.js';
 import { KanbanDescriptorCache } from '../src/board/descriptor-cache.js';
 import type { KanbanDescriptorCacheKey } from '../src/board/descriptor-cache.js';
 import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
@@ -130,6 +131,52 @@ describe('viewport descriptor cache and damage implementation', () => {
 });
 
 describe('viewport source metric and ownership implementation', () => {
+  it('rejects stale grouped card starts atomically after query replacement', () => {
+    const cards = Array.from({ length: 20 }, (_, id) => ({ id, columnId: 'ready', team: 'team-a' }));
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      swimlanes: () => [{ swimlaneId: 'team-a', label: 'Team A', revision: 1 }],
+      keyOf: (card: (typeof cards)[number]) => card.id,
+      columnOf: (card: (typeof cards)[number]) => card.columnId,
+      groupingFields: [{ id: 'team', swimlaneOf: (card: (typeof cards)[number]) => card.team }],
+    });
+    const adapter: KanbanCardAdapter<(typeof cards)[number]> = {
+      keyOf: (card) => card.id,
+      titleOf: (card) => String(card.id),
+      statusOf: () => 'Ready',
+    };
+    const viewportSource = new KanbanViewportSource({
+      source,
+      query: { filters: [], sort: [], groupBy: 'team', viewRevision: 1 },
+      card: adapter,
+    });
+    const first = viewportSource.refresh({
+      width: 40,
+      height: 12,
+      horizontalOffset: 0,
+      verticalOffset: 0,
+      cardStride: 3,
+    });
+    viewportSource.replaceQuery({ filters: [], sort: [], groupBy: 'team', viewRevision: 2 });
+    const current = viewportSource.refresh({
+      width: 40,
+      height: 12,
+      horizontalOffset: 0,
+      verticalOffset: 0,
+      cardStride: 3,
+      groupedAxisWindow: {
+        queryGeneration: first.generation,
+        sessionRevision: first.publication.revision,
+        requestedSwimlaneRange: { start: 0, end: 1 },
+        cardStarts: [{ address: { columnId: 'ready', swimlaneId: 'team-a' }, start: 10 }],
+      },
+    });
+
+    expect(current.generation).not.toBe(first.generation);
+    expect(current.cells[0]?.range.start).toBe(0);
+    viewportSource.dispose();
+  });
+
   it('reports mixed cursor knowledge as a lower bound and disposes each raw cursor once', () => {
     const unknownCount = Object.freeze({ quality: 'unknown' as const });
     const boardCounts: KanbanBoardCounts = Object.freeze({

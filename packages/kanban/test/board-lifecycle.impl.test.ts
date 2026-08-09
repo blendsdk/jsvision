@@ -2,12 +2,13 @@ import { classicTheme } from '@jsvision/core';
 import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
-import { KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
+import { KanbanBoard, createEagerKanbanDataSource, renderStandardKanbanCard } from '../src/index.js';
 import type {
   KanbanBoardCounts,
   KanbanCapabilities,
   KanbanCardAdapter,
   KanbanCardDensity,
+  KanbanCardRenderContext,
   KanbanCellCounts,
   KanbanCellCursor,
   KanbanDataSource,
@@ -363,6 +364,62 @@ describe('board authority and lifecycle implementation', () => {
     expect(board.inspection().identity.focusedCardKey).toBe(2);
     expect(board.inspection().layoutReflows).toBeGreaterThan(beforeReflows);
     expect(board.inspection().visibleCards).toContainEqual(expect.objectContaining({ cardKey: 2 }));
+    render.unmount();
+  });
+
+  it('forwards rich viewport options and repaints signal-only custom descriptor changes', () => {
+    const customTitle = signal('Custom alpha');
+    const cards = [{ id: 1, columnId: 'ready', title: 'Source title' }];
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card: Card) => card.id,
+      columnOf: (card: Card) => card.columnId,
+    });
+    const board = new KanbanBoard({
+      source,
+      query: () => QUERY,
+      card: ADAPTER,
+      presentation: () => ({
+        revision: 'board-presentation-v1',
+        cardRows: 4,
+        cardGap: 0,
+        metadataFields: 0,
+        labelRows: 0,
+        summarySections: 0,
+        checklistMode: 'hidden',
+        checklistPreviewItems: 0,
+      }),
+      formatting: () => ({ locale: 'board-locale', formatNumber: String, formatDate: () => undefined }),
+      cardPresentation: () => ({
+        visualState: {
+          focused: true,
+          selected: false,
+          rangeAnchor: false,
+          readOnly: false,
+          invalid: false,
+          operation: 'idle',
+        },
+      }),
+      rendererRevision: () => 'board-renderer-v1',
+      renderer: () => ({
+        render: (card: Card, context: KanbanCardRenderContext) =>
+          renderStandardKanbanCard(
+            {
+              ...card,
+              title: `${customTitle()}|${context.formatting.locale}|${context.focused}|${context.rowBudget}`,
+            },
+            ADAPTER,
+            context,
+          ),
+      }),
+    });
+    const render = mount(board);
+    const text = () => board.inspection().visibleCards[0]?.title;
+    expect(text()).toContain('Custom alpha');
+
+    customTitle.set('Custom beta');
+    render.flush();
+    expect(text()).toContain('Custom beta');
     render.unmount();
   });
 });

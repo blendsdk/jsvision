@@ -27,6 +27,7 @@ import { projectKanbanSceneHits } from '../layout/hit-map.js';
 import type { KanbanSceneGeometry, KanbanSceneGeometryVariant } from '../layout/swimlane-geometry.js';
 import type { KanbanSceneCellHeightProjection } from '../layout/swimlane-geometry.js';
 import { projectKanbanSceneGeometry } from '../layout/swimlane-geometry.js';
+import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
 import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
 import { buildKanbanScene } from './scene-builder.js';
 import type { KanbanScene } from './scene-model.js';
@@ -141,8 +142,16 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly renderer?: KanbanCardRenderer<TCard>;
   /** Equality-only custom renderer/configuration revision. */
   readonly rendererRevision?: string | number;
+  /** Maximum descriptors, hit targets, and resident card computations retained by this viewport. */
+  readonly descriptorLimit?: number;
   /** Requested scene presentation strategy. */
   readonly sceneVariant?: KanbanSceneGeometryVariant;
+  /** Optional rail width selected by the normalized swimlane presentation. */
+  readonly railWidth?: number;
+  /** Optional bounded custom chrome, one descriptor for every visible swimlane. */
+  readonly customChrome?: readonly KanbanSceneCustomChromeInput[];
+  /** Optional presentation-adjusted workflow widths after rail reservation. */
+  readonly presentationColumnWidths?: readonly { readonly columnId: string; readonly width: number }[];
   /** Optional bounded sparse-height evidence keyed by retained semantic cell. */
   readonly heightProjections?: readonly KanbanSceneCellHeightProjection[];
   /** Resolved semantic Kanban theme. */
@@ -166,6 +175,14 @@ interface ResidentDescriptor<TCard> {
   readonly cell: KanbanViewportSourceCell<TCard>;
   readonly index: number;
   readonly descriptor: KanbanCardDescriptor;
+}
+
+/** Exact bounded descriptor candidates omitted from one retained semantic cell. */
+interface OmittedDescriptorDemand<TCard> {
+  /** Retained cell whose loaded candidate descriptors exceeded the viewport ceiling. */
+  readonly cell: KanbanViewportSourceCell<TCard>;
+  /** Exact number of loaded candidates skipped before canonical scene construction. */
+  readonly count: number;
 }
 
 /** Returns the localized label for one lifecycle state. */
@@ -287,20 +304,24 @@ function projectDescriptors<TCard>(
 ): {
   readonly residents: readonly ResidentDescriptor<TCard>[];
   readonly retainedKeys: readonly KanbanDescriptorCacheKey[];
+  readonly omitted: readonly OmittedDescriptorDemand<TCard>[];
 } {
   const residents: ResidentDescriptor<TCard>[] = [];
   const retainedKeys: KanbanDescriptorCacheKey[] = [];
+  const omitted: OmittedDescriptorDemand<TCard>[] = [];
   const formatting = options.formatting ?? defaultFormatting(options.i18n);
+  const descriptorLimit = options.descriptorLimit ?? KANBAN_LIMITS.retainedDescriptors.safe;
   for (const cell of options.source.cells) {
     const width = columnWidth(options.source, cell.address.columnId);
     const maximum = Math.min(cell.range.end, cell.range.start + KANBAN_LIMITS.ensureRangeCards.safe);
-    for (
-      let index = cell.range.start;
-      index < maximum && retainedKeys.length < KANBAN_LIMITS.retainedDescriptors.safe;
-      index += 1
-    ) {
+    let omittedCount = 0;
+    for (let index = cell.range.start; index < maximum; index += 1) {
       const record = cell.cursor.cardAt(index);
       if (record === undefined) continue;
+      if (retainedKeys.length >= descriptorLimit) {
+        omittedCount += 1;
+        continue;
+      }
       let mandatory;
       try {
         mandatory = readKanbanCardAdapter(record, options.card);
@@ -379,8 +400,13 @@ function projectDescriptors<TCard>(
       retainedKeys.push(key);
       residents.push(Object.freeze({ cell, index, descriptor }));
     }
+    if (omittedCount > 0) omitted.push(Object.freeze({ cell, count: omittedCount }));
   }
-  return Object.freeze({ residents: Object.freeze(residents), retainedKeys: Object.freeze(retainedKeys) });
+  return Object.freeze({
+    residents: Object.freeze(residents),
+    retainedKeys: Object.freeze(retainedKeys),
+    omitted: Object.freeze(omitted),
+  });
 }
 
 /** Converts canonical geometry kinds to the shared inspection-region contract. */
@@ -420,9 +446,11 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
   }
 
   const budget = resolveKanbanPresentation(options.presentation ?? options.density);
+  const descriptorLimit = options.descriptorLimit ?? KANBAN_LIMITS.retainedDescriptors.safe;
   const projected = projectDescriptors(options, budget);
   options.cache.retain(projected.retainedKeys);
   const residentsByCell = new Map<KanbanViewportSourceCell<TCard>, readonly ResidentDescriptor<TCard>[]>();
+  const omittedByCell = new Map(projected.omitted.map(({ cell, count }) => [cell, count] as const));
   for (const cell of options.source.cells) {
     residentsByCell.set(
       cell,
@@ -433,6 +461,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     revision: JSON.stringify([
       options.source.publication.revision,
       options.source.generation,
+      options.source.structure.revision,
       budget.revision,
       options.rendererRevision ?? null,
     ]),
@@ -442,7 +471,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       const column = options.source.publication.columns.find((candidate) => candidate.columnId === solved.columnId);
       return column === undefined ? [] : [column];
     }),
-    swimlanes: options.source.publication.swimlanes,
+    swimlanes: options.source.visibleSwimlanes,
     cells: options.source.cells.map((cell) => ({
       address: cell.address,
       cursorRevision: cell.cursor.revision(),
@@ -455,22 +484,38 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
         interaction: { cues: descriptor.marker.cues },
         workflow: {},
       })),
+      ...(omittedByCell.has(cell) ? { omittedCount: omittedByCell.get(cell) } : {}),
     })),
-    detached: {},
-    descriptorLimit: KANBAN_LIMITS.retainedDescriptors.safe,
+    detached: {
+      columns: options.source.structure.detached.columns.map((column) => ({
+        columnId: column.columnId,
+        visibility: column.visibility,
+        collapse: column.collapse,
+      })),
+      swimlanes: options.source.publication.swimlanes.map((swimlane) => ({
+        swimlaneId: swimlane.swimlaneId,
+        visibility: options.source.visibleSwimlanes.some((candidate) => candidate.swimlaneId === swimlane.swimlaneId)
+          ? 'visible'
+          : 'hidden',
+        collapse: options.source.collapsedSwimlaneIds.includes(swimlane.swimlaneId) ? 'collapsed' : 'expanded',
+      })),
+    },
+    descriptorLimit,
   });
   const geometry = projectKanbanSceneGeometry(scene, {
     bounds: { x: 0, y: 0, width: options.width, height: options.height },
     variant: options.sceneVariant ?? 'hybrid',
     offsets: { x: options.horizontalOffset, y: options.verticalOffset },
     minimumColumnWidth: 18,
-    columnWidths: options.source.widths.columns,
+    columnWidths: options.presentationColumnWidths ?? options.source.widths.columns,
     columnGap: options.source.widths.separatorWidth,
     cardGap: budget.cardGap,
     estimatedCardHeight: 2,
     ...(options.heightProjections === undefined ? {} : { heightProjections: options.heightProjections }),
+    ...(options.railWidth === undefined ? {} : { railWidth: options.railWidth }),
+    ...(options.customChrome === undefined ? {} : { customChrome: options.customChrome }),
   });
-  const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: KANBAN_LIMITS.retainedDescriptors.safe });
+  const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: descriptorLimit });
   const columns = Object.freeze(
     geometry.workflowHeaders.map((header) =>
       Object.freeze({

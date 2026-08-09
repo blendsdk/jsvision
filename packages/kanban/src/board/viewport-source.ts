@@ -14,7 +14,7 @@ import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanViewportMode, KanbanVisibleCardRange } from '../layout/metrics.js';
 import { solveKanbanColumnWidths } from '../layout/width-solver.js';
 import type { KanbanColumnWidthSolution } from '../layout/width-solver.js';
-import { canonicalizeKanbanCellAddress } from '../source/address.js';
+import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from '../source/address.js';
 import { KanbanCursorCoordinator } from '../source/cursor-coordinator.js';
 import { KanbanSessionCoordinator } from '../source/session-coordinator.js';
 import type { KanbanCursorRetentionOwner } from '../source/session-coordinator.js';
@@ -25,8 +25,13 @@ import type {
   KanbanDataSource,
   KanbanQuery,
   KanbanSessionPublication,
+  KanbanSwimlaneMeta,
 } from '../source/types.js';
 import { snapshotKanbanQuery } from '../source/validation.js';
+import { resolveKanbanStructure } from '../structure/model.js';
+import type { ResolvedKanbanStructure } from '../structure/model.js';
+import { snapshotKanbanStructurePolicy } from '../structure/policy.js';
+import type { KanbanGroupingPolicy, KanbanStructurePolicy } from '../structure/policy.js';
 
 /** Finite projection retained around the visible terminal cells. */
 export interface KanbanOverscanOptions {
@@ -56,6 +61,18 @@ export interface KanbanSceneWindowLayoutHint {
   readonly sessionRevision: KanbanRevision;
   /** Source-ordered bounded aggregate row spans. */
   readonly rows: readonly KanbanSceneWindowLayoutRow[];
+}
+
+/** Revision-bound mounted row window plus per-cell card starts for one grouped refresh. */
+export interface KanbanGroupedAxisWindow {
+  /** Query generation that owns the learned row geometry. */
+  readonly queryGeneration: number;
+  /** Query-session revision that owns the learned row geometry. */
+  readonly sessionRevision: KanbanRevision;
+  /** Visible semantic swimlane range intersecting the viewport. */
+  readonly requestedSwimlaneRange: { readonly start: number; readonly end: number };
+  /** Bounded logical card starts for cells in the active partially scrolled swimlane. */
+  readonly cardStarts: readonly { readonly address: KanbanCellAddress; readonly start: number }[];
 }
 
 /** Preliminary column plus logical swimlane-index coordinate. */
@@ -116,6 +133,8 @@ const SCENE_WINDOW_OVERSCAN_KEYS = new Set(['rows', 'columns']);
 const SCENE_WINDOW_HINT_KEYS = new Set(['queryGeneration', 'sessionRevision', 'rows']);
 /** Exact aggregate row members. */
 const SCENE_WINDOW_ROW_KEYS = new Set(['start', 'end', 'extent', 'quality']);
+/** Exact mounted card-start members. */
+const GROUPED_CARD_START_KEYS = new Set(['address', 'start']);
 
 /** Validates one non-negative safe scene-window integer. */
 function sceneWindowInteger(value: unknown, maximum = Number.MAX_SAFE_INTEGER): number {
@@ -165,6 +184,28 @@ function sceneWindowHint(value: unknown): KanbanSceneWindowLayoutHint {
     queryGeneration: sceneWindowInteger(properties.queryGeneration),
     sessionRevision: snapshotKanbanRevision(properties.sessionRevision),
     rows: Object.freeze(rows),
+  });
+}
+
+/** Detaches the viewport-owned grouped-axis window before it affects cursor acquisition. */
+function groupedAxisWindow(value: KanbanGroupedAxisWindow | undefined): KanbanGroupedAxisWindow | undefined {
+  if (value === undefined) return undefined;
+  const cardStarts = snapshotKanbanDataArray(value.cardStarts, KANBAN_LIMITS.retainedCursors.safe).map((entry) => {
+    const properties = snapshotKanbanDataProperties(entry, GROUPED_CARD_START_KEYS.size);
+    validateKanbanDataKeys(properties, GROUPED_CARD_START_KEYS);
+    if (Object.keys(properties).length !== GROUPED_CARD_START_KEYS.size) throw new KanbanInvalidGeometryError();
+    return Object.freeze({
+      address: snapshotKanbanCellAddress(properties.address),
+      start: sceneWindowInteger(properties.start),
+    });
+  });
+  const keys = cardStarts.map(({ address }) => canonicalizeKanbanCellAddress(address));
+  if (new Set(keys).size !== keys.length) throw new KanbanInvalidGeometryError();
+  return Object.freeze({
+    queryGeneration: sceneWindowInteger(value.queryGeneration),
+    sessionRevision: snapshotKanbanRevision(value.sessionRevision),
+    requestedSwimlaneRange: sceneWindowRange(value.requestedSwimlaneRange),
+    cardStarts: Object.freeze(cardStarts),
   });
 }
 
@@ -264,7 +305,7 @@ export function resolveKanbanSceneWindow(options: ResolveKanbanSceneWindowOption
 }
 
 /** Exact geometry and semantic filters used to refresh one viewport source projection. */
-export interface KanbanViewportSourceRequest {
+export interface KanbanViewportSourceRequest<TCard> {
   /** Current parent-assigned width in terminal cells. */
   readonly width: number;
   /** Current parent-assigned height in terminal cells. */
@@ -279,8 +320,12 @@ export interface KanbanViewportSourceRequest {
   readonly focusedColumnId?: string;
   /** Workflow columns excluded before any sparse cursor is opened. */
   readonly collapsedColumnIds?: readonly string[];
+  /** Optional reactive structural policy normalized against the same source publication. */
+  readonly structure?: KanbanStructurePolicy<TCard>;
   /** Optional revision-bound aggregate row evidence for a grouped distant projection. */
   readonly sceneWindowLayoutHint?: KanbanSceneWindowLayoutHint;
+  /** Optional learned grouped-axis projection compatible with `sceneWindowLayoutHint`. */
+  readonly groupedAxisWindow?: KanbanGroupedAxisWindow;
 }
 
 /** Safe retained state for one sparse source cell. */
@@ -305,6 +350,14 @@ export interface KanbanViewportSourceSnapshot<TCard> {
   readonly widths: KanbanColumnWidthSolution;
   /** Columns that intersect the visible horizontal rectangle, excluding overscan-only columns. */
   readonly visibleColumns: readonly KanbanColumnMeta[];
+  /** Visible source swimlanes after query and structure-policy ordering. */
+  readonly visibleSwimlanes: readonly KanbanSwimlaneMeta[];
+  /** Normalized workflow structure from the same publication revision. */
+  readonly structure: ResolvedKanbanStructure;
+  /** Swimlanes whose chrome remains visible while ordinary card regions are suppressed. */
+  readonly collapsedSwimlaneIds: readonly string[];
+  /** Validated grouping policy used to select mounted swimlane presentation and behavior. */
+  readonly groupingPolicy?: KanbanGroupingPolicy<TCard>;
   /** Sparse cells retained for visible and finite horizontal overscan columns. */
   readonly cells: readonly KanbanViewportSourceCell<TCard>[];
   /** Current coordinator generation used to reject stale asynchronous work. */
@@ -365,6 +418,7 @@ function filteredColumns(
   publication: KanbanSessionPublication,
   query: KanbanQuery,
   collapsedColumnIds: readonly string[] | undefined,
+  structure: ResolvedKanbanStructure,
   limits: KanbanResolvedLimits,
 ): readonly KanbanColumnMeta[] {
   const queryVisible = query.visibleColumnIds === undefined ? undefined : new Set(query.visibleColumnIds);
@@ -374,10 +428,48 @@ function filteredColumns(
     collapsed.add(createKanbanColumnId(rawId));
   }
   return Object.freeze(
-    publication.columns.filter(
-      (column) => (queryVisible === undefined || queryVisible.has(column.columnId)) && !collapsed.has(column.columnId),
-    ),
+    publication.columns.filter((column) => {
+      const structural = structure.columns.find((candidate) => candidate.columnId === column.columnId);
+      return (
+        structural !== undefined &&
+        (queryVisible === undefined || queryVisible.has(column.columnId)) &&
+        !collapsed.has(column.columnId)
+      );
+    }),
   );
+}
+
+/** Applies query visibility plus validated structure order and collapse policy to source swimlanes. */
+function projectedSwimlanes<TCard>(
+  publication: KanbanSessionPublication,
+  query: KanbanQuery,
+  policy: KanbanStructurePolicy<TCard> | undefined,
+): { readonly visible: readonly KanbanSwimlaneMeta[]; readonly collapsedIds: readonly string[] } {
+  const queryVisible = query.visibleSwimlaneIds === undefined ? undefined : new Set(query.visibleSwimlaneIds);
+  const grouping = policy?.grouping;
+  if (grouping !== undefined && grouping.fieldId !== query.groupBy) throw new KanbanInvalidSourcePublicationError();
+  const policyVisible = grouping?.visibleSwimlaneIds === undefined ? undefined : new Set(grouping.visibleSwimlaneIds);
+  const admitted = publication.swimlanes.filter(
+    (swimlane) =>
+      (queryVisible === undefined || queryVisible.has(swimlane.swimlaneId)) &&
+      (policyVisible === undefined || policyVisible.has(swimlane.swimlaneId)),
+  );
+  const rank = new Map(grouping?.order?.map((id, index) => [id, index]) ?? []);
+  const visible = Object.freeze(
+    admitted
+      .map((swimlane, index) => ({ swimlane, index }))
+      .sort(
+        (left, right) =>
+          (rank.get(left.swimlane.swimlaneId) ?? Number.MAX_SAFE_INTEGER) -
+            (rank.get(right.swimlane.swimlaneId) ?? Number.MAX_SAFE_INTEGER) || left.index - right.index,
+      )
+      .map(({ swimlane }) => swimlane),
+  );
+  const visibleIds = new Set(visible.map((swimlane) => swimlane.swimlaneId));
+  const collapsedIds = Object.freeze(
+    (grouping?.collapsedSwimlaneIds ?? []).filter((swimlaneId) => visibleIds.has(swimlaneId)),
+  );
+  return Object.freeze({ visible, collapsedIds });
 }
 
 /** Computes visible and retained column indexes without enumerating card length. */
@@ -480,7 +572,7 @@ export class KanbanViewportSource<TCard> {
   /**
    * Refreshes the visible projection and starts only bounded current-generation range acquisitions.
    */
-  refresh(request: KanbanViewportSourceRequest): KanbanViewportSourceSnapshot<TCard> {
+  refresh(request: KanbanViewportSourceRequest<TCard>): KanbanViewportSourceSnapshot<TCard> {
     if (this.#disposed) throw new KanbanInvalidSourcePublicationError();
     const width = cellCount(request.width);
     const height = cellCount(request.height);
@@ -489,13 +581,29 @@ export class KanbanViewportSource<TCard> {
     const cardStride = cellCount(request.cardStride);
     if (cardStride === 0) throw new KanbanInvalidGeometryError();
     const publication = this.#session.snapshot();
-    const columns = filteredColumns(publication, this.#query, request.collapsedColumnIds, this.#limits);
+    const axisWindow = groupedAxisWindow(request.groupedAxisWindow);
+    const structurePolicy = snapshotKanbanStructurePolicy<TCard>(
+      request.structure ?? Object.freeze({ revision: publication.revision, columns: Object.freeze([]) }),
+    );
+    const structure = resolveKanbanStructure({
+      revision: structurePolicy.revision,
+      columns: publication.columns,
+      policy: structurePolicy,
+    });
+    const columns = filteredColumns(publication, this.#query, request.collapsedColumnIds, structure, this.#limits);
+    const swimlanes = projectedSwimlanes(publication, this.#query, structurePolicy);
     const focusedColumnId = columns.some((column) => column.columnId === request.focusedColumnId)
       ? request.focusedColumnId
       : undefined;
     const widths = solveKanbanColumnWidths({
       availableWidth: width,
-      columns: columns.map((column) => ({ columnId: column.columnId })),
+      columns: columns.map((column) => {
+        const preference = structure.columns.find((candidate) => candidate.columnId === column.columnId)?.width;
+        return {
+          columnId: column.columnId,
+          ...(preference === undefined ? {} : preference),
+        };
+      }),
       ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
     });
     if (width < 18 || height < 4) {
@@ -505,6 +613,10 @@ export class KanbanViewportSource<TCard> {
         mode: 'minimum-size',
         widths,
         visibleColumns: Object.freeze([]),
+        visibleSwimlanes: swimlanes.visible,
+        structure,
+        collapsedSwimlaneIds: swimlanes.collapsedIds,
+        ...(structurePolicy.grouping === undefined ? {} : { groupingPolicy: structurePolicy.grouping }),
         cells: Object.freeze([]),
         generation: this.#session.generation(),
       });
@@ -518,18 +630,31 @@ export class KanbanViewportSource<TCard> {
         return column === undefined ? [] : [column];
       }),
     );
+    const collapsedStructureColumns = new Set(
+      structure.columns.filter((column) => column.collapse === 'collapsed').map((column) => column.columnId),
+    );
     const retainedColumnIds = indexes.retained.flatMap((index) => {
       const solved = widths.columns[index];
-      return solved === undefined ? [] : [solved.columnId];
+      return solved === undefined || collapsedStructureColumns.has(solved.columnId) ? [] : [solved.columnId];
     });
     let sceneWindow: KanbanSceneWindowResult | undefined;
     let retainedAddresses: readonly KanbanCellAddress[];
-    if (this.#query.groupBy === undefined || publication.swimlanes.length === 0) {
+    const compatibleAxis =
+      axisWindow?.queryGeneration === this.#session.generation() && axisWindow.sessionRevision === publication.revision
+        ? axisWindow
+        : undefined;
+    if (this.#query.groupBy === undefined || swimlanes.visible.length === 0) {
       retainedAddresses = Object.freeze(retainedColumnIds.map((columnId) => Object.freeze({ columnId })));
     } else {
-      const firstRequestedRow = Math.min(publication.swimlanes.length, Math.floor(verticalOffset / cardStride));
+      const firstRequestedRow = Math.min(
+        swimlanes.visible.length,
+        compatibleAxis?.requestedSwimlaneRange.start ?? Math.floor(verticalOffset / cardStride),
+      );
       const requestedRows = Math.max(1, Math.ceil(Math.max(1, height - 1) / cardStride));
-      const lastRequestedRow = Math.min(publication.swimlanes.length, firstRequestedRow + requestedRows);
+      const lastRequestedRow = Math.min(
+        swimlanes.visible.length,
+        compatibleAxis?.requestedSwimlaneRange.end ?? firstRequestedRow + requestedRows,
+      );
       const addresses: KanbanCellAddress[] = [];
       sceneWindow = resolveKanbanSceneWindow({
         queryGeneration: this.#session.generation(),
@@ -539,8 +664,8 @@ export class KanbanViewportSource<TCard> {
         overscan: { rows: this.#verticalOverscan, columns: this.#horizontalOverscan },
         ...(request.sceneWindowLayoutHint === undefined ? {} : { layoutHint: request.sceneWindowLayoutHint }),
         openCell: ({ columnId, swimlaneIndex }) => {
-          const swimlane = publication.swimlanes[swimlaneIndex];
-          if (swimlane !== undefined) {
+          const swimlane = swimlanes.visible[swimlaneIndex];
+          if (swimlane !== undefined && !swimlanes.collapsedIds.includes(swimlane.swimlaneId)) {
             addresses.push(Object.freeze({ columnId, swimlaneId: swimlane.swimlaneId }));
           }
         },
@@ -561,11 +686,15 @@ export class KanbanViewportSource<TCard> {
       const retained = this.#cells.get(canonicalizeKanbanCellAddress(address));
       if (retained === undefined) continue;
       const knownLength = retained.cursor.length();
+      const groupedStart = compatibleAxis?.cardStarts.find(
+        (candidate) => canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(address),
+      )?.start;
+      const cellRangeStart = groupedStart === undefined ? rangeStart : Math.max(0, groupedStart - overscanCards);
       const rangeEnd =
         knownLength.kind === 'exact'
-          ? Math.min(knownLength.value, rangeStart + requestedCards)
-          : rangeStart + requestedCards;
-      const range = Object.freeze({ address, start: Math.min(rangeStart, rangeEnd), end: rangeEnd });
+          ? Math.min(knownLength.value, cellRangeStart + requestedCards)
+          : cellRangeStart + requestedCards;
+      const range = Object.freeze({ address, start: Math.min(cellRangeStart, rangeEnd), end: rangeEnd });
       const state = retained.cursor.state();
       if (state.kind !== 'error' && retained.cursor.needsRange(range.start, range.end)) {
         void retained.cursor.ensureRange(range.start, range.end).then(
@@ -586,6 +715,10 @@ export class KanbanViewportSource<TCard> {
       mode: widths.mode,
       widths,
       visibleColumns,
+      visibleSwimlanes: swimlanes.visible,
+      structure,
+      collapsedSwimlaneIds: swimlanes.collapsedIds,
+      ...(structurePolicy.grouping === undefined ? {} : { groupingPolicy: structurePolicy.grouping }),
       cells: Object.freeze(cells),
       generation,
       ...(sceneWindow === undefined ? {} : { sceneWindow }),

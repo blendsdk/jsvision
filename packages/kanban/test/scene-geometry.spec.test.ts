@@ -156,11 +156,7 @@ describe('Kanban canonical scene and variable-height geometry', () => {
     expect(scene.cells.map(({ address }: { readonly address: unknown }) => address)).toEqual(
       input.cells.map(({ address }) => address),
     );
-    expect(scene.cards.map(({ cardKey }: { readonly cardKey: string }) => cardKey)).toEqual([
-      'card-0',
-      'card-1',
-      'card-2',
-    ]);
+    expect(scene.cards.map(({ cardKey }) => cardKey)).toEqual(['card-0', 'card-1', 'card-2']);
     expect(scene.detached).toEqual(input.detached);
     expect(JSON.stringify(scene)).not.toMatch(/"rect"\s*:/u);
     expect(
@@ -186,6 +182,7 @@ describe('Kanban canonical scene and variable-height geometry', () => {
     });
 
     expect(hinted.kind).toBe('available');
+    if (hinted.kind !== 'available') throw new Error('Expected the compatible scene window to be available.');
     expect(opened.length).toBeLessThanOrEqual(10);
     expect(opened.length).toBe(hinted.requestedCells.length);
     const withoutHints = resolveKanbanSceneWindow({
@@ -206,11 +203,7 @@ describe('Kanban canonical scene and variable-height geometry', () => {
       descriptorLimit: limits.retainedDescriptors,
     });
 
-    expect(scene.cards.map(({ cardKey }: { readonly cardKey: string }) => cardKey)).toEqual([
-      'card-0',
-      'card-1',
-      'card-2',
-    ]);
+    expect(scene.cards.map(({ cardKey }) => cardKey)).toEqual(['card-0', 'card-1', 'card-2']);
     expect(scene.states).toContainEqual({
       code: 'descriptor-limit',
       scope: { kind: 'cell', address: { columnId: 'ready', swimlaneId: 'team-a' } },
@@ -224,7 +217,7 @@ describe('Kanban canonical scene and variable-height geometry', () => {
       minimumColumnWidth: 18,
     });
     const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: 32 });
-    expect(hits.targets.some(({ cardKey }: { readonly cardKey?: string }) => cardKey === 'card-3')).toBe(false);
+    expect(hits.targets.some(({ cardKey }) => cardKey === 'card-3')).toBe(false);
   });
 
   it('pins workflow and active swimlane chrome without allowing cards to paint over it', () => {

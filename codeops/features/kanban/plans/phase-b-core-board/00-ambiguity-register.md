@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase B Core Board
 
-> **Status**: ✅ GATE PASSED — all 36 items resolved
-> **Last Updated**: 2026-08-09 15:43 CEST
+> **Status**: ✅ GATE PASSED — all 41 items resolved
+> **Last Updated**: 2026-08-09 18:38 CEST
 > **Planning Target**: `kanban/PLAN-PHASE-B` — remaining independently executable RD-04, RD-05, and RD-06 behavior
 > **Context Artifacts**: approved Kanban requirements and ambiguity register, completed Phase A plan and implementation, JSVision UI/Data Grid precedents, technical architecture
 > **Modification Set**: this Phase B plan set, Kanban traceability, and the Kanban feature roadmap; later owning RDs and the user-modified portfolio roadmap are context-only
@@ -51,6 +51,7 @@
 | PAR-B39 | Minimum geometry | How can mandatory active feedback survive when only the two title/status rows fit? | Reject minimum geometry / compact feedback into the status row | **Quality-loop delegated: at the two-row minimum, append sanitized localized feedback to the mandatory status row and retain the operation marker/cue; at three or more rows, keep the dedicated feedback section. Empty or control-only application labels use the English-safe fallback.** | ✅ Resolved |
 | PAR-B40 | Reactive failure | What happens when a retained descriptor's reactive rebuild throws or publishes invalid output? | Dispose immediately / retain the last valid descriptor / publish fallback | **Quality-loop delegated: validate every rebuild against cache-key invariants and the owning render context, retain the last valid descriptor on later failure, emit no rebuild/damage notification for rejected output, and permit a later valid dependency change to recover. Initial invalid output still rejects atomically.** | ✅ Resolved |
 | PAR-B34 | Snapshot semantics | Does hidden checklist selection prevent bounded checklist data from being detached into the safe presentation snapshot? | Retain configured safe groups but select/render none / skip checklist acquisition entirely | **Runtime delegated from immutable-oracle evidence: snapshot bounded configured groups once when the adapter provides them; hidden mode keeps resolved checklist IDs empty, so composition and interaction expose no checklist content.** | ✅ Resolved |
+| PAR-B41 | Phase 3 remediation | How should mounted structure, grouped variable-height acquisition, overflow, limits, repaint, and damage share revision-compatible bounded evidence? | One immutable mounted projection plan / independent local maps and fixed-stride fallback / defer to interaction work | **Runtime delegated after independent challenge: normalize structure before acquisition and derive one revision-bound bounded axis plan shared by retention, canonical scene, geometry, metrics, and damage. Carry explicit omitted demand, thread resolved limits, repaint reactive descriptor changes, and use whole-viewport damage when exact bounded old/new coverage is unavailable.** | ✅ Resolved |
 
 ## Resolution notes
 
@@ -534,6 +535,42 @@ snapshot support.
 - **Root invocation ID:** `AD-EXEC-PHASE-B-20260809`.
 - **Reopen triggers:** The semantic scene gains an explicit package-owned ungrouped row node or zero-row
   scenes receive a different public geometry contract.
+
+### PAR-B41 — revision-bound mounted projection remediation (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal projection, acquisition, cache-invalidation, limit, and damage mechanisms
+  required to make already-approved mounted structure and variable-height behavior correct. No product
+  behavior, application authority, compatibility policy, or phase scope changes.
+- **Objective:** Keep the mounted board correct for tall and unequal swimlanes, lowered limits, reactive
+  card changes, and descriptor overflow without Cartesian cursor retention or logical-card-sized state.
+- **Decision:** Snapshot the reactive structure policy against the same authoritative publication used
+  for acquisition, then derive one immutable revision-bound mounted axis plan. The plan carries visible
+  and collapsed columns/swimlanes, solved presentation inputs, compatible sparse or source-hinted row
+  spans, offset-to-row mapping, and bounded within-row card ranges. Explicit per-cell candidate and
+  omitted counts reach the canonical scene before descriptor truncation. Resolved limits govern cache,
+  scene, hit, damage, and sparse-height retention. Reactive descriptor republication invalidates paint;
+  `KanbanBoard` forwards the complete viewport option surface. Damage uses bounded old/new geometry only
+  when coverage is exact and otherwise repaints the viewport.
+- **Evidence:** Independent Phase 3 review reproduced eight Major defects: fixed-stride grouped
+  acquisition, missing structure-policy consumption, silent mounted overflow, fixed safe limits,
+  missing reactive repaint, dropped board options, and stale movement/height damage. Existing source
+  hint, sparse-height, structure-policy, canonical-scene, and whole-viewport damage seams support one
+  shared plan without a new runtime dependency.
+- **Rejected alternatives:** Independent local maps retain competing revision authorities and the known
+  invalid fixed-stride fallback. Deferring grouped/structure correction would make Phase 4 navigation
+  depend on false row/address geometry and contradict the explicit phase dependency.
+- **Strongest counterargument:** The shared plan is a larger remediation and can create revision races or
+  cursor churn if policy, publication, hints, and measurement are not captured atomically. Revision
+  stamps, compatibility rejection, bounded two-pass work, and stale-hint tests close that risk.
+- **Confidence:** High — the independent challenger selected the same architecture with 0.94 confidence.
+- **Hardening:** A blind challenger strengthened the design from a monolithic pipeline to one immutable
+  projection contract with separated modules and converged on all correctness boundaries.
+  **Challenger: converged.**
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T163802Z`.
+- **Reopen triggers:** The source publishes an authoritative complete axis plan directly, or bounded
+  revision-compatible projection cannot select tall-row card ranges without scanning unloaded cards.
 
 ## Systematic discovery scan
 

@@ -125,4 +125,37 @@ describe('viewport scale implementation', () => {
     expect(scale.retainedDescriptors).toBeLessThan(cards.length);
     render.unmount();
   });
+
+  it('honors a lowered mounted descriptor ceiling and reports exact omitted demand', async () => {
+    const cards = Array.from({ length: 20 }, (_, id) => ({ id, columnId: 'column-0', title: `Card ${id}` }));
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => columns(1),
+      keyOf: (card: ScaleCard) => card.id,
+      columnOf: (card: ScaleCard) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => QUERY,
+      card: CARD,
+      limits: { values: { retainedDescriptors: 2 } },
+    });
+    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } });
+    const host = new Group();
+    host.add(viewport);
+    const render = createRenderRoot({ width: 40, height: 12 }, { caps: CAPS });
+    render.mount(host);
+    await vi.waitFor(() => {
+      render.flush();
+      expect(viewport.inspection().visibleCards).toHaveLength(2);
+    });
+
+    const range = viewport.metrics().visibleCardRanges[0];
+    if (range === undefined) throw new Error('Expected one retained card range.');
+    expect(inspectKanbanViewportScale(viewport)).toMatchObject({
+      retainedDescriptors: 2,
+      reactiveComputations: 2,
+      descriptorOmissions: range.end - range.start - 2,
+    });
+    render.unmount();
+  });
 });

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 15:46 CEST
-> **Progress**: 49/106 tasks (46%)
+> **Last Updated**: 2026-08-09 19:07 CEST
+> **Progress**: 56/106 tasks (53%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -189,7 +189,25 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 3.3.1 Add sparse-run split/merge/correction/saturation/property tests — `packages/kanban/test/sparse-height-index.impl.test.ts` ✅ (completed: 2026-08-09 16:20 CEST)
 - [x] 3.3.2 Add scene retention/variant/hit/damage implementation tests — `packages/kanban/test/scene-projector.impl.test.ts` ✅ (completed: 2026-08-09 16:21 CEST)
 - [x] 3.3.3 Extend 5,000 eager/100,000 logical mounted scale assertions with the exact limit-derived cursor/range/hint/descriptor/reactive/damage/address/run counters from 07 — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-scale-inspection.ts`, `packages/kanban/src/testing.ts`, `packages/kanban/test/viewport-scale.impl.test.ts` ✅ (completed: 2026-08-09 16:26 CEST)
-- [ ] 3.3.4 Run Phase 3 build/typecheck/unit/E2E and `yarn verify:local`; resolve quality-loop critical/major findings
+- [x] 3.3.4 Run Phase 3 build/typecheck/unit/E2E and `yarn verify:local`; resolve quality-loop critical/major findings ✅ (completed: 2026-08-09 19:07 CEST)
+
+> **Phase 3 quality loop (2026-08-09):** Build, typecheck, 393 unit assertions, nine authentic E2E
+> assertions, plugin parity, and `verify:local` reached green. Independent review found no critical
+> findings and eight major findings that must be resolved before this gate can close:
+>
+> - [x] honor lowered mounted descriptor limits and reactive descriptor repaint ownership;
+> - [x] forward every rich-card and structure option through `KanbanBoard`;
+> - [x] make descriptor and movement damage cover old/new/displaced geometry safely;
+> - [x] preserve a non-actionable mounted descriptor-overflow state;
+> - [x] replace grouped fixed-stride windowing with sparse/hinted variable-height row projection;
+> - [x] integrate reactive structure policy into mounted visibility, collapse, width, and swimlane presentation;
+> - [x] add focused mounted regression coverage for every remediation and re-run reviewer/auditor once.
+
+> **Phase 3 final gate (2026-08-09 19:07 CEST):** Build and typecheck passed; 44 unit files
+> passed 400 assertions; the authentic hosting E2E passed nine assertions; public JSDoc,
+> dependency inspection, plugin parity, and `yarn verify:local` passed. The independent fix-diff
+> reviewer/auditor found no Critical issues; their final stale-axis and collapsed-chrome findings
+> were resolved and covered before closure.
 
 **Verify**: `yarn workspace @jsvision/kanban build && yarn workspace @jsvision/kanban typecheck && yarn workspace @jsvision/kanban test && yarn workspace @jsvision/kanban test:e2e && yarn verify:local`
 

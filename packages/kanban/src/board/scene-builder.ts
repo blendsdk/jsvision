@@ -160,15 +160,20 @@ function snapshotCard(value: unknown, address: KanbanCellAddress): KanbanSceneCa
 /** Snapshots one occupied or explicitly retained cell and applies the global descriptor budget. */
 function snapshotCell(value: unknown, remaining: number): { readonly cell: KanbanSceneCell; readonly omitted: number } {
   try {
-    const properties = snapshotKanbanDataProperties(value, 4);
-    const allowed = new Set(['address', 'cursorRevision', 'state', 'cards']);
-    if (Object.keys(properties).length !== allowed.size || Object.keys(properties).some((key) => !allowed.has(key))) {
+    const properties = snapshotKanbanDataProperties(value, 5);
+    const allowed = new Set(['address', 'cursorRevision', 'state', 'cards', 'omittedCount']);
+    const required = ['address', 'cursorRevision', 'state', 'cards'];
+    if (required.some((key) => !(key in properties)) || Object.keys(properties).some((key) => !allowed.has(key))) {
       throw new KanbanInvalidGeometryError();
     }
     const address = snapshotKanbanCellAddress(properties.address);
     const rawCards = snapshotKanbanDataArray(properties.cards, KANBAN_LIMITS.ensureRangeCards.absolute);
     const retainedCount = Math.min(remaining, rawCards.length);
     const cards = Object.freeze(rawCards.slice(0, retainedCount).map((card) => snapshotCard(card, address)));
+    const declaredOmitted =
+      properties.omittedCount === undefined
+        ? 0
+        : boundedInteger(properties.omittedCount, KANBAN_LIMITS.ensureRangeCards.absolute);
     return Object.freeze({
       cell: Object.freeze({
         address,
@@ -176,7 +181,7 @@ function snapshotCell(value: unknown, remaining: number): { readonly cell: Kanba
         state: snapshotKanbanCellState(properties.state),
         cards,
       }),
-      omitted: rawCards.length - retainedCount,
+      omitted: rawCards.length - retainedCount + declaredOmitted,
     });
   } catch {
     throw new KanbanInvalidGeometryError();

@@ -126,16 +126,36 @@ export function calculateKanbanSceneDamage(options: CalculateKanbanSceneDamageOp
   for (const identity of new Set([...previous.keys(), ...current.keys()])) {
     const before = previous.get(identity);
     const after = current.get(identity);
+    const cardKey = after?.cardKey ?? before?.cardKey;
+    if (cardKey === undefined) continue;
+    const previousRect = sceneCardRect(options.previousGeometry, cardKey);
+    const currentRect = sceneCardRect(options.currentGeometry, cardKey);
+    const geometryUnchanged =
+      previousRect !== undefined &&
+      currentRect !== undefined &&
+      previousRect.x === currentRect.x &&
+      previousRect.y === currentRect.y &&
+      previousRect.width === currentRect.width &&
+      previousRect.height === currentRect.height;
     if (
       before !== undefined &&
       after !== undefined &&
-      JSON.stringify(before.descriptor.value) === JSON.stringify(after.descriptor.value)
+      JSON.stringify(before.descriptor.value) === JSON.stringify(after.descriptor.value) &&
+      geometryUnchanged
     ) {
       continue;
     }
-    const cardKey = after?.cardKey ?? before?.cardKey;
-    if (cardKey === undefined) continue;
-    const rect = sceneCardRect(options.currentGeometry, cardKey) ?? sceneCardRect(options.previousGeometry, cardKey);
+    if (
+      previousRect !== undefined &&
+      currentRect !== undefined &&
+      (previousRect.x !== currentRect.x ||
+        previousRect.y !== currentRect.y ||
+        previousRect.width !== currentRect.width ||
+        previousRect.height !== currentRect.height)
+    ) {
+      return whole(options.bounds);
+    }
+    const rect = currentRect ?? previousRect;
     if (rect === undefined) continue;
     const clipped = clip(rect, options.bounds, 'descriptor');
     if (clipped !== undefined) damage.push(Object.freeze({ ...clipped, cardKey }));

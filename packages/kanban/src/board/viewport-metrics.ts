@@ -119,9 +119,28 @@ function sparseVerticalContentExtent<TCard>(
     if (address.swimlaneId !== undefined) grouped = true;
     rowExtents.set(rowKey, Math.max(rowExtents.get(rowKey) ?? 0, extent.value));
   }
+  for (const cell of source.cells) {
+    const swimlaneId = cell.address.swimlaneId;
+    if (swimlaneId === undefined) continue;
+    const length = cell.cursor.length();
+    if (length.kind === 'unknown') continue;
+    const estimate = estimatedLengthExtent(length.value, density);
+    if (estimate > (rowExtents.get(swimlaneId) ?? 0)) {
+      rowExtents.set(swimlaneId, estimate);
+      allExact = false;
+    }
+  }
   let value = 0;
-  for (const rowExtent of rowExtents.values()) value = saturatedAdd(value, rowExtent);
-  return Object.freeze({ value, quality: allExact && !grouped ? 'exact' : 'unknown' });
+  if (grouped) {
+    for (const swimlane of source.visibleSwimlanes) {
+      const cards = rowExtents.get(swimlane.swimlaneId);
+      if (cards === undefined && !source.collapsedSwimlaneIds.includes(swimlane.swimlaneId)) allExact = false;
+      value = saturatedAdd(value, saturatedAdd(cards ?? 0, 1));
+    }
+  } else {
+    for (const rowExtent of rowExtents.values()) value = saturatedAdd(value, rowExtent);
+  }
+  return Object.freeze({ value, quality: allExact ? 'exact' : 'unknown' });
 }
 
 /** Returns a bounded logical row extent without scanning cursor contents. */
@@ -165,7 +184,11 @@ export function createKanbanViewportMetrics<TCard>(
   const content = verticalContentExtent(options.source, options.projection, options.density, options.heightProjections);
   const effectiveQuality =
     content.quality === 'unknown' && (options.minimumVerticalExtent ?? 0) > 0 ? 'lower-bound' : content.quality;
-  const projectedVerticalExtent = Math.max(0, content.value - cardViewportHeight);
+  const projectedVerticalExtent = Math.max(
+    0,
+    content.value - cardViewportHeight,
+    options.projection?.geometry?.extents.y ?? 0,
+  );
   const minimumSize = options.source.mode === 'minimum-size';
   const extents: KanbanViewportPoint = Object.freeze(
     minimumSize

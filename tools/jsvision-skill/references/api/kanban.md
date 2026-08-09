@@ -3816,6 +3816,7 @@ interface KanbanViewportOptions<TCard> {
   i18n?: () => I18n;   // Optional reactive localization service getter.
   density?: () => KanbanCardDensity;   // Optional reactive card-density getter.
   presentation?: () => KanbanPresentationInput;   // Optional reactive rich-card presentation policy getter.
+  structure?: () => KanbanStructurePolicy<TCard>;   // Optional reactive workflow-column and swimlane structure policy getter.
   formatting?: () => KanbanCardFormattingContext;   // Optional reactive application formatting context getter.
   cardPresentation?: (card: TCard) => KanbanViewportCardPresentation | undefined;   // Optional card-local selection and visual-state projection.
   renderer?: () => KanbanCardRenderer<TCard>;   // Optional reactive custom descriptor renderer getter.

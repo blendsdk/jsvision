@@ -13,19 +13,27 @@ import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
 import { KanbanDisposedResourceError } from '../contract/error.js';
 import type { CardKey } from '../contract/identity.js';
-import type { KanbanLimitOptions } from '../contract/limits.js';
+import { validateKanbanLimitOptions } from '../contract/limits.js';
+import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
+import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
 import { createKanbanSparseHeightIndex } from '../layout/sparse-height-index.js';
 import type { KanbanSparseHeightIndex } from '../layout/sparse-height-index.js';
-import { createKanbanVerticalHeightProjection } from '../layout/vertical-projector.js';
+import {
+  createKanbanVerticalHeightProjection,
+  resolveKanbanVerticalProjectionExtent,
+} from '../layout/vertical-projector.js';
 import type { KanbanFocusedColumnNavigator } from '../layout/width-solver.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanSourceState } from '../source/states.js';
 import type { KanbanCellAddress, KanbanDataSource, KanbanIdentityChangeBatch, KanbanQuery } from '../source/types.js';
 import { canonicalizeKanbanCellAddress } from '../source/address.js';
+import type { KanbanStructurePolicy } from '../structure/policy.js';
+import { createKanbanSwimlanePresentationResolver } from '../structure/swimlane-presentation.js';
+import type { KanbanSwimlanePresentationResolver } from '../structure/swimlane-presentation.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import { readKanbanIdentityInput } from './board-state.js';
 import { calculateKanbanViewportDamage } from './viewport-damage.js';
@@ -45,13 +53,15 @@ import {
 } from './viewport-scroll.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import { KanbanViewportSource } from './viewport-source.js';
-import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
+import type {
+  KanbanGroupedAxisWindow,
+  KanbanOverscanOptions,
+  KanbanSceneWindowLayoutHint,
+  KanbanViewportSourceSnapshot,
+} from './viewport-source.js';
 import { readViewportHostChromeRows } from './viewport-host-chrome.js';
 import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader } from './viewport-scale-inspection.js';
 import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
-
-/** Hard viewport-local descriptor ceiling independent of logical source length. */
-const KANBAN_VIEWPORT_DESCRIPTOR_LIMIT = 256;
 
 /** Application-owned identity hints projected by a read-only board. */
 export interface KanbanIdentityInput {
@@ -77,6 +87,8 @@ export interface KanbanViewportOptions<TCard> {
   readonly density?: () => KanbanCardDensity;
   /** Optional reactive rich-card presentation policy getter. */
   readonly presentation?: () => KanbanPresentationInput;
+  /** Optional reactive workflow-column and swimlane structure policy getter. */
+  readonly structure?: () => KanbanStructurePolicy<TCard>;
   /** Optional reactive application formatting context getter. */
   readonly formatting?: () => KanbanCardFormattingContext;
   /** Optional card-local selection and visual-state projection. */
@@ -126,13 +138,15 @@ function emptyMetrics(): KanbanViewportMetrics {
  */
 export class KanbanViewport<TCard> extends View {
   readonly #options: KanbanViewportOptions<TCard>;
+  readonly #limits: KanbanResolvedLimits;
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
   #projection: KanbanViewportProjection | undefined;
   #projectionOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
   #damage: readonly KanbanDamageRegion[] = Object.freeze([]);
   #metrics: KanbanViewportMetrics = emptyMetrics();
-  readonly #descriptorCache = new KanbanDescriptorCache(KANBAN_VIEWPORT_DESCRIPTOR_LIMIT);
+  readonly #descriptorCache: KanbanDescriptorCache;
+  readonly #swimlanePresentationResolver: KanbanSwimlanePresentationResolver;
   readonly #heightIndices = new Map<
     string,
     { readonly logicalLength: number; readonly index: KanbanSparseHeightIndex }
@@ -180,6 +194,13 @@ export class KanbanViewport<TCard> extends View {
   constructor(options: KanbanViewportOptions<TCard>) {
     super();
     this.#options = options;
+    this.#limits = validateKanbanLimitOptions(options.limits);
+    this.#descriptorCache = new KanbanDescriptorCache(Math.max(1, this.#limits.retainedDescriptors), {
+      onReactiveInvalidated: () => this.invalidate(),
+    });
+    this.#swimlanePresentationResolver = createKanbanSwimlanePresentationResolver({
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
+    });
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
     this.focusable = true;
     this.onMount(() => {
@@ -202,6 +223,7 @@ export class KanbanViewport<TCard> extends View {
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = readKanbanIdentityInput(options.identity);
           const density = options.density?.() ?? 'comfortable';
+          const structure = options.structure?.();
           void options.i18n?.();
           void options.theme?.();
           void options.capabilities?.();
@@ -210,7 +232,7 @@ export class KanbanViewport<TCard> extends View {
           void options.renderer?.();
           void options.rendererRevision?.();
           this.#source?.replaceQuery(query);
-          return this.#refresh(collapsedColumnIds, identity.focusedColumnId, density);
+          return this.#refresh(collapsedColumnIds, identity.focusedColumnId, density, structure);
         },
         (snapshot) => {
           this.#snapshot = snapshot;
@@ -239,9 +261,10 @@ export class KanbanViewport<TCard> extends View {
     const formatting = this.#options.formatting?.();
     const renderer = this.#options.renderer?.();
     const rendererRevision = this.#options.rendererRevision?.();
+    const structure = this.#options.structure?.();
     const layoutChanged = this.#restoreVerticalAnchor(density, i18n, theme, ctx.caps);
     const collapsedColumnIds = this.#options.collapsedColumnIds?.();
-    let snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density);
+    let snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure);
     this.#snapshot = snapshot;
     if (snapshot === undefined) return;
     const sourceChanged =
@@ -250,14 +273,15 @@ export class KanbanViewport<TCard> extends View {
         this.#anchorSourceGeneration !== snapshot.generation);
     const shouldRestoreIdentity = layoutChanged || sourceChanged;
     if (shouldRestoreIdentity && this.#restoreHorizontalAnchor(snapshot)) {
-      snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density) ?? snapshot;
+      snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
     }
     const project = (
       source: KanbanViewportSourceSnapshot<TCard>,
       heightProjections: readonly KanbanViewportCellHeightProjection[] = this.#heightProjections,
-    ): KanbanViewportProjection =>
-      projectKanbanViewport({
+    ): KanbanViewportProjection => {
+      const swimlanePresentation = this.#resolveSwimlanePresentation(source);
+      return projectKanbanViewport({
         source,
         width: this.bounds.width,
         height: this.bounds.height,
@@ -270,7 +294,9 @@ export class KanbanViewport<TCard> extends View {
         ...(this.#options.cardPresentation === undefined ? {} : { cardPresentation: this.#options.cardPresentation }),
         ...(renderer === undefined ? {} : { renderer }),
         ...(rendererRevision === undefined ? {} : { rendererRevision }),
+        descriptorLimit: this.#limits.retainedDescriptors,
         ...(heightProjections.length === 0 ? {} : { heightProjections }),
+        ...(swimlanePresentation === undefined ? {} : swimlanePresentation),
         theme,
         i18n,
         capabilities: ctx.caps,
@@ -279,6 +305,7 @@ export class KanbanViewport<TCard> extends View {
         identity,
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
       });
+    };
     let projection = project(snapshot);
     const measured = this.#measureSparseHeights(
       snapshot,
@@ -291,7 +318,7 @@ export class KanbanViewport<TCard> extends View {
       projection = project(snapshot, measured.projections);
     }
     if (shouldRestoreIdentity && this.#restoreVerticalIdentity(projection, density)) {
-      snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density) ?? snapshot;
+      snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
       projection = project(snapshot);
     }
@@ -368,8 +395,12 @@ export class KanbanViewport<TCard> extends View {
     const identity = readKanbanIdentityInput(this.#options.identity);
     const density = this.#options.density?.() ?? 'comfortable';
     return (
-      this.#refresh(this.#options.collapsedColumnIds?.(), identity.focusedColumnId, density)?.publication
-        .identityChanges ?? this.#snapshot?.publication.identityChanges
+      this.#refresh(
+        this.#options.collapsedColumnIds?.(),
+        identity.focusedColumnId,
+        density,
+        this.#options.structure?.(),
+      )?.publication.identityChanges ?? this.#snapshot?.publication.identityChanges
     );
   }
 
@@ -469,6 +500,7 @@ export class KanbanViewport<TCard> extends View {
     this.#anchorController = undefined;
     this.#source?.cancelPendingWork();
     this.#descriptorCache.dispose();
+    this.#swimlanePresentationResolver.dispose();
     for (const entry of this.#heightIndices.values()) entry.index.dispose();
     this.#heightIndices.clear();
     this.#heightProjections = Object.freeze([]);
@@ -486,6 +518,7 @@ export class KanbanViewport<TCard> extends View {
     collapsedColumnIds: readonly string[] | undefined,
     focusedColumnId: string | undefined,
     density: KanbanCardDensity,
+    structure: KanbanStructurePolicy<TCard> | undefined,
   ) {
     if (focusedColumnId !== this.#lastApplicationFocusedColumnId) {
       this.#lastApplicationFocusedColumnId = focusedColumnId;
@@ -493,15 +526,201 @@ export class KanbanViewport<TCard> extends View {
     }
     const effectiveFocusedColumnId =
       this.#imperativeFocusedColumnAnchor ?? focusedColumnId ?? this.#focusedColumnAnchor;
+    const groupedAxis = this.#groupedAxisProjection(density, structure);
     return this.#source?.refresh({
       width: this.bounds.width,
       height: this.bounds.height,
       horizontalOffset: this.#requestedOffsets.x,
       verticalOffset: this.#requestedOffsets.y,
       cardStride: density === 'compact' ? 2 : 3,
+      ...(groupedAxis === undefined
+        ? {}
+        : { sceneWindowLayoutHint: groupedAxis.hint, groupedAxisWindow: groupedAxis.window }),
+      ...(structure === undefined ? {} : { structure }),
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
       ...(effectiveFocusedColumnId === undefined ? {} : { focusedColumnId: effectiveFocusedColumnId }),
     });
+  }
+
+  /**
+   * Maps global grouped scrolling through revision-compatible learned row extents.
+   *
+   * Only a contiguous prefix is published. This keeps a distant row explicitly unavailable until
+   * every preceding row has either exact empty evidence or a bounded sparse height projection.
+   */
+  #groupedAxisProjection(
+    density: KanbanCardDensity,
+    structure: KanbanStructurePolicy<TCard> | undefined,
+  ): { readonly hint: KanbanSceneWindowLayoutHint; readonly window: KanbanGroupedAxisWindow } | undefined {
+    const snapshot = this.#snapshot;
+    if (snapshot === undefined || snapshot.visibleSwimlanes.length === 0) return undefined;
+    if ((structure?.revision ?? snapshot.publication.revision) !== snapshot.structure.revision) return undefined;
+    const collapsed = new Set(snapshot.collapsedSwimlaneIds);
+    const projectedColumnIds = new Set(snapshot.widths.columns.map((column) => column.columnId));
+    const projectedActiveColumnIds = new Set(
+      snapshot.structure.columns
+        .filter((column) => column.cardRegion === 'active' && projectedColumnIds.has(column.columnId))
+        .map((column) => column.columnId),
+    );
+    const activeColumnIds = Object.freeze([
+      ...new Set(
+        snapshot.cells
+          .map((cell) => cell.address.columnId)
+          .filter((columnId) => projectedActiveColumnIds.has(columnId)),
+      ),
+    ]);
+    if (activeColumnIds.length === 0 && projectedActiveColumnIds.size > 0) return undefined;
+    const rows: KanbanSceneWindowLayoutHint['rows'][number][] = [];
+    for (const [index, swimlane] of snapshot.visibleSwimlanes.entries()) {
+      if (collapsed.has(swimlane.swimlaneId) || activeColumnIds.length === 0) {
+        rows.push(Object.freeze({ start: index, end: index + 1, extent: 1, quality: 'exact' }));
+        continue;
+      }
+      let extent = 0;
+      let quality: 'exact' | 'unknown' = 'exact';
+      let complete = true;
+      for (const columnId of activeColumnIds) {
+        const address = Object.freeze({ columnId, swimlaneId: swimlane.swimlaneId });
+        const cell = snapshot.cells.find(
+          (candidate) => canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(address),
+        );
+        if (cell === undefined) {
+          complete = false;
+          break;
+        }
+        const projection = this.#heightProjections.find(
+          (candidate) => canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(address),
+        );
+        if (projection === undefined) {
+          const length = cell.cursor.length();
+          if (length.kind === 'exact' && length.value === 0) continue;
+          if (length.kind === 'unknown') {
+            complete = false;
+            break;
+          }
+          const stride = density === 'compact' ? 2 : 3;
+          const trailingGap = density === 'compact' ? 0 : 1;
+          const estimated =
+            length.value > Math.floor(Number.MAX_SAFE_INTEGER / stride)
+              ? Number.MAX_SAFE_INTEGER
+              : Math.max(0, length.value * stride - trailingGap);
+          extent = Math.max(extent, estimated);
+          quality = 'unknown';
+          continue;
+        }
+        const resolved = resolveKanbanVerticalProjectionExtent(projection.projection, density);
+        extent = Math.max(extent, resolved.value);
+        if (resolved.quality !== 'exact') quality = 'unknown';
+      }
+      if (!complete) break;
+      rows.push(Object.freeze({ start: index, end: index + 1, extent: extent + 1, quality }));
+    }
+    if (rows.length === 0) return undefined;
+    const offset = this.#requestedOffsets.y;
+    let rowTop = 0;
+    let activeIndex = 0;
+    for (const row of rows) {
+      if (offset < rowTop + row.extent) {
+        activeIndex = row.start;
+        break;
+      }
+      rowTop += row.extent;
+      activeIndex = Math.min(rows.length - 1, row.end);
+    }
+    const active = rows[activeIndex];
+    if (active === undefined) return undefined;
+    const withinRowOffset = Math.max(0, offset - rowTop);
+    let remainingRows = Math.max(1, this.bounds.height - 1);
+    let end = activeIndex;
+    for (let index = activeIndex; index < rows.length && remainingRows > 0; index += 1) {
+      const row = rows[index];
+      if (row === undefined) break;
+      remainingRows -= index === activeIndex ? Math.max(1, row.extent - withinRowOffset) : row.extent;
+      end = index + 1;
+    }
+    const activeSwimlane = snapshot.visibleSwimlanes[activeIndex];
+    if (activeSwimlane === undefined) return undefined;
+    const cardOffset = Math.max(0, withinRowOffset - 1);
+    const cardStarts = Object.freeze(
+      activeColumnIds.map((columnId) => {
+        const address = Object.freeze({ columnId, swimlaneId: activeSwimlane.swimlaneId });
+        const retained = this.#heightIndices.get(canonicalizeKanbanCellAddress(address));
+        let low = 0;
+        let high = retained?.logicalLength ?? 0;
+        while (low < high) {
+          const middle = Math.ceil((low + high) / 2);
+          if (this.#logicalCardRow(address, middle, density) <= cardOffset) low = middle;
+          else high = middle - 1;
+        }
+        return Object.freeze({ address, start: low });
+      }),
+    );
+    const hint = Object.freeze({
+      queryGeneration: snapshot.generation,
+      sessionRevision: snapshot.publication.revision,
+      rows: Object.freeze(rows),
+    });
+    return Object.freeze({
+      hint,
+      window: Object.freeze({
+        queryGeneration: snapshot.generation,
+        sessionRevision: snapshot.publication.revision,
+        requestedSwimlaneRange: Object.freeze({ start: activeIndex, end: Math.max(activeIndex + 1, end) }),
+        cardStarts,
+      }),
+    });
+  }
+
+  /** Resolves one revision-consistent built-in or custom swimlane chrome projection. */
+  #resolveSwimlanePresentation(snapshot: KanbanViewportSourceSnapshot<TCard>):
+    | {
+        readonly sceneVariant: 'hybrid' | 'separator' | 'band' | 'rail' | 'custom';
+        readonly railWidth?: number;
+        readonly customChrome?: readonly KanbanSceneCustomChromeInput[];
+        readonly presentationColumnWidths?: readonly { readonly columnId: string; readonly width: number }[];
+      }
+    | undefined {
+    const grouping = snapshot.groupingPolicy;
+    if (grouping?.presentation === undefined || snapshot.visibleSwimlanes.length === 0) return undefined;
+    const resolved = snapshot.visibleSwimlanes.map((swimlane) =>
+      this.#swimlanePresentationResolver.resolve({
+        presentation: grouping.presentation ?? 'hybrid',
+        swimlane,
+        availableWidth: Math.max(1, this.bounds.width),
+        columns: snapshot.widths.columns.map((column) => ({
+          columnId: column.columnId,
+          minimumWidth: column.minimumWidth,
+        })),
+        ...(grouping.railWidth === undefined ? {} : { railWidth: grouping.railWidth }),
+      }),
+    );
+    const first = resolved[0];
+    if (first === undefined) return undefined;
+    if (resolved.some((entry) => entry.resolvedVariant !== first.resolvedVariant)) {
+      return Object.freeze({ sceneVariant: 'hybrid' });
+    }
+    const presentationColumnWidths = Object.freeze(
+      first.columns.map((column) => Object.freeze({ columnId: column.columnId, width: column.availableWidth })),
+    );
+    if (first.resolvedVariant !== 'custom') {
+      const railWidth = first.chrome.kind === 'custom' ? 0 : first.chrome.railWidth;
+      return Object.freeze({
+        sceneVariant: first.resolvedVariant,
+        ...(railWidth === 0 ? {} : { railWidth, presentationColumnWidths }),
+      });
+    }
+    const customChrome = Object.freeze(
+      resolved.flatMap((entry) => {
+        if (entry.chrome.kind !== 'custom') return [];
+        return [
+          Object.freeze({
+            swimlaneId: entry.semantic.swimlaneId,
+            descriptor: entry.chrome.descriptor,
+          }),
+        ];
+      }),
+    );
+    return Object.freeze({ sceneVariant: 'custom', customChrome, presentationColumnWidths });
   }
 
   /** Reacquires once when live extents clamp offsets used by the first bounded refresh. */
@@ -509,15 +728,16 @@ export class KanbanViewport<TCard> extends View {
     collapsedColumnIds: readonly string[] | undefined,
     focusedColumnId: string | undefined,
     density: KanbanCardDensity,
+    structure: KanbanStructurePolicy<TCard> | undefined,
   ): KanbanViewportSourceSnapshot<TCard> | undefined {
     const acquisitionOffsets = this.#requestedOffsets;
-    let snapshot = this.#refresh(collapsedColumnIds, focusedColumnId, density);
+    let snapshot = this.#refresh(collapsedColumnIds, focusedColumnId, density, structure);
     this.#updateMetrics(snapshot);
     if (
       snapshot !== undefined &&
       (acquisitionOffsets.x !== this.#requestedOffsets.x || acquisitionOffsets.y !== this.#requestedOffsets.y)
     ) {
-      snapshot = this.#refresh(collapsedColumnIds, focusedColumnId, density);
+      snapshot = this.#refresh(collapsedColumnIds, focusedColumnId, density, structure);
       this.#updateMetrics(snapshot);
     }
     return snapshot;
@@ -747,6 +967,20 @@ export class KanbanViewport<TCard> extends View {
     projection?: KanbanViewportProjection,
   ): void {
     if (snapshot === undefined) return;
+    const priorProjectionCompatible =
+      projection === undefined &&
+      this.#snapshot?.generation === snapshot.generation &&
+      this.#snapshot.publication.revision === snapshot.publication.revision &&
+      this.#snapshot.structure.revision === snapshot.structure.revision &&
+      this.#projection?.scene?.cells.length === snapshot.cells.length &&
+      snapshot.cells.every((cell) => {
+        const previous = this.#projection?.scene?.cells.find(
+          (candidate) =>
+            canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(cell.address),
+        );
+        return previous?.cursorRevision === cell.cursor.revision();
+      });
+    const effectiveProjection = projection ?? (priorProjectionCompatible ? this.#projection : undefined);
     if (
       this.#locatedExtentGeneration !== snapshot.generation ||
       this.#locatedExtentRevision !== snapshot.publication.revision
@@ -758,7 +992,7 @@ export class KanbanViewport<TCard> extends View {
     const metrics = createKanbanViewportMetrics({
       bounds: this.bounds,
       source: snapshot,
-      ...(projection === undefined ? {} : { projection }),
+      ...(effectiveProjection === undefined ? {} : { projection: effectiveProjection }),
       ...(projection === undefined || this.#heightProjections.length === 0
         ? {}
         : { heightProjections: this.#heightProjections }),
@@ -824,8 +1058,8 @@ export class KanbanViewport<TCard> extends View {
           index: createKanbanSparseHeightIndex({
             logicalLength,
             estimatedHeight: 2,
-            maximumAnchors: KANBAN_VIEWPORT_DESCRIPTOR_LIMIT,
-            maximumRuns: KANBAN_VIEWPORT_DESCRIPTOR_LIMIT,
+            maximumAnchors: Math.max(1, this.#limits.retainedDescriptors),
+            maximumRuns: Math.max(1, this.#limits.retainedDescriptors),
             sourceRevision: snapshot.publication.revision,
             cursorRevision: cell.cursor.revision(),
             presentationRevision,
@@ -929,6 +1163,7 @@ export class KanbanViewport<TCard> extends View {
       heightAllocatedEntries,
       damageRegions: this.#damage.length,
       sceneWindowCells: sceneWindow?.kind === 'available' ? sceneWindow.requestedCells.length : 0,
+      descriptorOmissions: this.#projection?.scene?.states.reduce((total, state) => total + state.omittedCount, 0) ?? 0,
     });
   }
 }

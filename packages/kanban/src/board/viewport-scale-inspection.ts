@@ -20,6 +20,8 @@ export interface KanbanViewportScaleSnapshot {
   readonly damageRegions: number;
   /** Cells requested by the grouped preliminary layout window. */
   readonly sceneWindowCells: number;
+  /** Exact loaded descriptor candidates omitted by the active mounted ceiling. */
+  readonly descriptorOmissions: number;
 }
 
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
