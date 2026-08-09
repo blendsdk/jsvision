@@ -692,6 +692,38 @@ snapshot support.
 - **Reopen triggers:** Handlers become asynchronous, programmatic actions require typed authorization
   results, or later command routing adopts one shared action-result union.
 
+### PAR-B46 — Compact navigator and scoped-state hit targets (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Internal event geometry and routing for already-approved focused-column navigation,
+  capable header collapse, and filtered-empty actions; product behavior and application authority remain
+  unchanged.
+- **Objective:** Keep mouse interaction precise and uncluttered while routing every application-owned
+  action through the same facade ordering boundary.
+- **Decision:** The one-row focused-column navigator makes only its first and last cells clickable,
+  matching the visible previous/next glyphs; Left/Right use the same previous/next-column transitions.
+  Workflow-header presses always focus and consume their matching release, but emit an intent only when
+  the resolved header advertises the Phase B `collapse` capability. A filtered-empty cell draws its
+  localized clear-filter label on the first content row and exposes exactly that clipped row as one
+  `clear-filters` target. All semantic actions leave application query/policy data untouched until
+  republication.
+- **Evidence:** The navigator is a conditional one-row DSL child, final viewport cell/header rectangles
+  already define clipped mouse geometry, and the facade already validates and serializes scoped intents.
+  Exact glyph-cell targets avoid turning the entire status row into an ambiguous invisible control.
+- **Rejected alternatives:** Making the entire navigator row clickable creates an undisclosed midpoint
+  split. Activating every workflow-header capability from one undifferentiated header click is ambiguous.
+  Using the whole empty cell as the clear-filter target hides the action boundary and impairs precision.
+- **Strongest counterargument:** Single-cell arrow targets are small. Terminal mouse coordinates are
+  already cell-exact, keyboard Left/Right remains available, and later command/menu work can add larger
+  redundant affordances without changing this semantic route.
+- **Confidence:** High.
+- **Hardening:** Grounded against the final clipped geometry, current UI hit-test semantics, the
+  conditional DSL row, closed action IDs, and immutable Phase 5 structure specifications.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260810T002500Z`.
+- **Reopen triggers:** The navigator gains multi-row content, header actions gain distinct visible
+  controls, or a later accessibility requirement mandates a larger pointer target.
+
 ## Systematic discovery scan
 
 | Category | Result |

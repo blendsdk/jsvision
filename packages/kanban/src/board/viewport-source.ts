@@ -11,6 +11,7 @@ import type { KanbanObservation } from '../contract/observation.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardAdapter } from '../card/adapter.js';
+import type { KanbanCount } from '../source/counts.js';
 import type { KanbanViewportMode, KanbanVisibleCardRange } from '../layout/metrics.js';
 import { solveKanbanColumnWidths } from '../layout/width-solver.js';
 import type { KanbanColumnWidthSolution } from '../layout/width-solver.js';
@@ -354,6 +355,10 @@ export interface KanbanViewportSourceSnapshot<TCard> {
   readonly visibleSwimlanes: readonly KanbanSwimlaneMeta[];
   /** Normalized workflow structure from the same publication revision. */
   readonly structure: ResolvedKanbanStructure;
+  /** Whether search or field filters currently narrow the application query. */
+  readonly filtered: boolean;
+  /** Same-publication exact matching counts retained for collapsed ungrouped column headers. */
+  readonly knownColumnCounts: readonly { readonly columnId: string; readonly count: KanbanCount }[];
   /** Swimlanes whose chrome remains visible while ordinary card regions are suppressed. */
   readonly collapsedSwimlaneIds: readonly string[];
   /** Validated grouping policy used to select mounted swimlane presentation and behavior. */
@@ -364,6 +369,11 @@ export interface KanbanViewportSourceSnapshot<TCard> {
   readonly generation: number;
   /** Honest grouped row-window availability; omitted for an ungrouped query. */
   readonly sceneWindow?: KanbanSceneWindowResult;
+}
+
+/** Returns whether the validated query can turn an empty source result into a filtered-empty state. */
+function queryIsFiltered(query: KanbanQuery): boolean {
+  return (query.search !== undefined && query.search.length > 0) || (query.filters?.length ?? 0) > 0;
 }
 
 /** Construction input for the viewport-owned source boundary. */
@@ -526,8 +536,10 @@ export class KanbanViewportSource<TCard> {
   readonly #beforeCursorDispose: ((address: KanbanCellAddress) => void) | undefined;
   readonly #session: KanbanSessionCoordinator<TCard>;
   readonly #cells = new Map<string, RetainedCell<TCard>>();
+  readonly #knownColumnCounts = new Map<string, number>();
   #query: KanbanQuery;
   #queryKey: string;
+  #countRevision: KanbanRevision | undefined;
   #disposed = false;
 
   /** Validates configuration and synchronously opens exactly one initial query session. */
@@ -567,6 +579,8 @@ export class KanbanViewportSource<TCard> {
     this.#session.replaceQuery(snapshot);
     this.#query = snapshot;
     this.#queryKey = key;
+    this.#knownColumnCounts.clear();
+    this.#countRevision = undefined;
   }
 
   /**
@@ -581,6 +595,11 @@ export class KanbanViewportSource<TCard> {
     const cardStride = cellCount(request.cardStride);
     if (cardStride === 0) throw new KanbanInvalidGeometryError();
     const publication = this.#session.snapshot();
+    if (this.#countRevision !== publication.revision) {
+      this.#knownColumnCounts.clear();
+      this.#countRevision = publication.revision;
+    }
+    this.#rememberColumnCounts();
     const axisWindow = groupedAxisWindow(request.groupedAxisWindow);
     const structurePolicy = snapshotKanbanStructurePolicy<TCard>(
       request.structure ?? Object.freeze({ revision: publication.revision, columns: Object.freeze([]) }),
@@ -615,6 +634,8 @@ export class KanbanViewportSource<TCard> {
         visibleColumns: Object.freeze([]),
         visibleSwimlanes: swimlanes.visible,
         structure,
+        filtered: queryIsFiltered(this.#query),
+        knownColumnCounts: this.#columnCounts(),
         collapsedSwimlaneIds: swimlanes.collapsedIds,
         ...(structurePolicy.grouping === undefined ? {} : { groupingPolicy: structurePolicy.grouping }),
         cells: Object.freeze([]),
@@ -709,6 +730,7 @@ export class KanbanViewportSource<TCard> {
       }
       cells.push(Object.freeze({ address, state, range, cursor: retained.cursor }));
     }
+    this.#rememberColumnCounts();
 
     return Object.freeze({
       publication,
@@ -717,12 +739,33 @@ export class KanbanViewportSource<TCard> {
       visibleColumns,
       visibleSwimlanes: swimlanes.visible,
       structure,
+      filtered: queryIsFiltered(this.#query),
+      knownColumnCounts: this.#columnCounts(),
       collapsedSwimlaneIds: swimlanes.collapsedIds,
       ...(structurePolicy.grouping === undefined ? {} : { groupingPolicy: structurePolicy.grouping }),
       cells: Object.freeze(cells),
       generation,
       ...(sceneWindow === undefined ? {} : { sceneWindow }),
     });
+  }
+
+  /** Retains exact ungrouped matching counts only within the current query-session publication. */
+  #rememberColumnCounts(): void {
+    if (this.#query.groupBy !== undefined) return;
+    for (const retained of this.#cells.values()) {
+      if (retained.address.swimlaneId !== undefined) continue;
+      const matching = retained.cursor.counts().matching;
+      if (matching.quality === 'exact') this.#knownColumnCounts.set(retained.address.columnId, matching.value);
+    }
+  }
+
+  /** Returns bounded detached source-order count evidence for current workflow columns. */
+  #columnCounts(): readonly { readonly columnId: string; readonly count: KanbanCount }[] {
+    return Object.freeze(
+      [...this.#knownColumnCounts].map(([columnId, value]) =>
+        Object.freeze({ columnId, count: Object.freeze({ quality: 'exact' as const, value }) }),
+      ),
+    );
   }
 
   /** Delegates one bounded optional locator call to the current session generation. */

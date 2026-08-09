@@ -12,10 +12,10 @@ import type { KanbanActionScope } from '../layout/hit-map.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanStructureStateCode } from '../structure/model.js';
 import type {
-  KanbanBuiltInActionId,
   KanbanInteractionHandler,
   KanbanInteractionIntent,
   KanbanInteractionOrigin,
+  KanbanScopedActionId,
 } from './intent.js';
 import type { KanbanSelectionSnapshot } from './types.js';
 
@@ -35,7 +35,7 @@ export type KanbanIntentRequest =
   | {
       readonly kind: 'scoped-action';
       readonly origin: KanbanInteractionOrigin;
-      readonly actionId: KanbanExtensionId;
+      readonly actionId: KanbanScopedActionId;
       readonly scope: KanbanActionScope;
     };
 
@@ -62,7 +62,7 @@ function snapshotOrigin(origin: KanbanInteractionOrigin): KanbanInteractionOrigi
 }
 
 /** Accepts a package-owned action or validates an application-namespaced extension action. */
-function snapshotActionId(actionId: KanbanExtensionId): KanbanBuiltInActionId | KanbanExtensionId {
+function snapshotActionId(actionId: KanbanScopedActionId): KanbanScopedActionId {
   if (actionId === 'collapse' || actionId === 'clear-filters' || actionId === 'configure' || actionId === 'add-card') {
     return actionId;
   }

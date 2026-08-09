@@ -9,6 +9,9 @@ export type KanbanInteractionOrigin = 'keyboard' | 'pointer' | 'programmatic';
 /** Package-owned scoped actions with stable semantics across hosts. */
 export type KanbanBuiltInActionId = 'collapse' | 'clear-filters' | 'configure' | 'add-card';
 
+/** Complete action identity accepted by the application-owned scoped-action boundary. */
+export type KanbanScopedActionId = KanbanBuiltInActionId | KanbanExtensionId;
+
 /** Shared immutable evidence captured for every application interaction intent. */
 export interface KanbanInteractionIntentBase {
   /** Input channel that initiated the interaction. */
@@ -42,7 +45,7 @@ export interface KanbanScopedActionIntent extends KanbanInteractionIntentBase {
   /** Stable intent discriminator. */
   readonly kind: 'scoped-action';
   /** Package-owned or validated application-namespaced semantic action. */
-  readonly actionId: KanbanBuiltInActionId | KanbanExtensionId;
+  readonly actionId: KanbanScopedActionId;
   /** Closed semantic owner of the action. */
   readonly scope: KanbanActionScope;
 }

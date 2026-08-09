@@ -59,10 +59,11 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
     );
     if (column.rect.height > 0) {
       ctx.fillRect(column.rect.x, 0, column.rect.width, 1, ' ', style(theme, 'column.header'));
+      const count = column.count?.quality === 'unknown' || column.count === undefined ? '' : ` ${column.count.value}`;
       ctx.text(
         column.rect.x,
         0,
-        cropCellText(column.label, column.contentOffset, column.rect.width, ctx.caps.unicode.widthMode),
+        cropCellText(`${column.label}${count}`, column.contentOffset, column.rect.width, ctx.caps.unicode.widthMode),
         style(theme, 'column.header'),
       );
     }
@@ -126,7 +127,9 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
     const x = column?.rect.x ?? 0;
     const y = column === undefined ? 0 : Math.min(1, Math.max(0, ctx.size.height - 1));
     const role: KanbanThemeRole =
-      projectedState.kind === 'no-columns' || projectedState.kind === 'empty'
+      projectedState.kind === 'no-columns' ||
+      projectedState.kind === 'empty' ||
+      projectedState.kind === 'filtered-empty'
         ? 'state.empty'
         : projectedState.kind === 'error'
           ? 'state.error'

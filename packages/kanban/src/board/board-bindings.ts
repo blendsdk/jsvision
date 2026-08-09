@@ -1,6 +1,6 @@
 import type { I18n } from '@jsvision/i18n';
 import { View, signal } from '@jsvision/ui';
-import type { DrawContext, Signal } from '@jsvision/ui';
+import type { DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
 
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanTheme } from '../card/theme.js';
@@ -101,12 +101,18 @@ export class KanbanBoardBindings<TCard> {
 /** One-row leaf used only while responsive geometry is in focused-column mode. */
 export class KanbanFocusedNavigatorView extends View {
   readonly #state: () => KanbanNavigatorState | undefined;
+  readonly #navigate: (direction: 'previous-column' | 'next-column') => boolean;
+  #pending: 'previous-column' | 'next-column' | undefined;
 
   /** Stores a current-state accessor; the board owns reactive invalidation and lifecycle. */
-  constructor(state: () => KanbanNavigatorState | undefined) {
+  constructor(
+    state: () => KanbanNavigatorState | undefined,
+    navigate: (direction: 'previous-column' | 'next-column') => boolean,
+  ) {
     super();
     this.#state = state;
-    this.focusable = false;
+    this.#navigate = navigate;
+    this.focusable = true;
   }
 
   /** Reports one intentional row to the DSL layout engine. */
@@ -125,5 +131,48 @@ export class KanbanFocusedNavigatorView extends View {
     });
     ctx.fill(' ', ctx.color('statusBar'));
     ctx.text(0, 0, `${previous} ${state.navigator.columnId} — ${position} ${next}`, ctx.color('statusBar'));
+    if (this.bounds.width > 1) ctx.text(this.bounds.width - 1, 0, next, ctx.color('statusBar'));
+  }
+
+  /** Routes left/right keys and exact arrow-cell clicks through the board interaction facade. */
+  override onEvent(event: DispatchEvent): void {
+    const state = this.#state();
+    if (state === undefined) {
+      this.#pending = undefined;
+      return;
+    }
+    if (event.event.type === 'key') {
+      this.#pending = undefined;
+      const direction =
+        event.event.key === 'left' ? 'previous-column' : event.event.key === 'right' ? 'next-column' : undefined;
+      if (direction === undefined) return;
+      const enabled = direction === 'previous-column' ? state.navigator.previousEnabled : state.navigator.nextEnabled;
+      if (enabled) event.handled = this.#navigate(direction);
+      return;
+    }
+    if (event.event.type !== 'mouse' || event.event.button !== 0 || event.local === undefined) {
+      this.#pending = undefined;
+      return;
+    }
+    const direction =
+      event.local.x === 0 ? 'previous-column' : event.local.x === this.bounds.width - 1 ? 'next-column' : undefined;
+    const enabled =
+      direction === 'previous-column'
+        ? state.navigator.previousEnabled
+        : direction === 'next-column'
+          ? state.navigator.nextEnabled
+          : false;
+    if (event.event.kind === 'down') {
+      this.#pending = enabled ? direction : undefined;
+      event.handled = this.#pending !== undefined;
+      return;
+    }
+    if (event.event.kind === 'up') {
+      const pending = this.#pending;
+      this.#pending = undefined;
+      if (pending !== undefined && pending === direction && enabled) event.handled = this.#navigate(pending);
+      return;
+    }
+    this.#pending = undefined;
   }
 }

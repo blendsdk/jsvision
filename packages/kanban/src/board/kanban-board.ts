@@ -254,7 +254,10 @@ export class KanbanBoard<TCard> extends Group {
       this.#reconcileInteraction(this.viewport.identityChanges()),
     );
     setViewportHostChromeRows(this.viewport, 1);
-    this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
+    this.#navigator = new KanbanFocusedNavigatorView(
+      () => this.#navigatorState(),
+      (direction) => this.#interactionFacade.accept({ kind: 'navigate', direction }),
+    );
     this.#feedback = new KanbanBoardFeedbackView(() => this.#feedbackState());
     this.setLayout({ direction: 'col' });
     this.add(grow(this.viewport));

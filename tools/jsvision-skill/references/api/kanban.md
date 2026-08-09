@@ -1833,7 +1833,7 @@ interface KanbanInteractionFacade {
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;   // Serializes one closed transition behind settlement-generation checks.
   activate(options?: KanbanActivateOptions): Promise<boolean>;   // Opens the current or explicit card through the serialized semantic intent boundary.
   openContext(options?: KanbanOpenContextOptions): Promise<boolean>;   // Opens application-owned context for the current or explicit closed semantic scope.
-  invokeScopedAction(actionId: KanbanExtensionId, scope: KanbanActionScope, origin?: KanbanInteractionOrigin): Promise<boolean>;   // Invokes one application-owned scoped action without mutating board state locally.
+  invokeScopedAction(actionId: KanbanScopedActionId, scope: KanbanActionScope, origin?: KanbanInteractionOrigin): Promise<boolean>;   // Invokes one application-owned scoped action without mutating board state locally.
   snapshotEligibleSelection(): KanbanSelectionSnapshot;   // Captures current eligible ordered selection independently from later live changes.
   subscribe(invalidate: () => void): () => void;   // Subscribes to facade publications and returns an idempotent unsubscribe function.
 }
@@ -3179,6 +3179,14 @@ interface KanbanSceneWorkflowHeaderGeometry {
 }
 ```
 
+## KanbanScopedActionId
+
+Complete action identity accepted by the application-owned scoped-action boundary.
+
+```ts
+type KanbanScopedActionId = KanbanBuiltInActionId | KanbanExtensionId
+```
+
 ## KanbanScopedActionIntent
 
 Requests one application-owned action without mutating board data or policy locally.
@@ -3186,7 +3194,7 @@ Requests one application-owned action without mutating board data or policy loca
 ```ts
 interface KanbanScopedActionIntent {
   kind: 'scoped-action';   // Stable intent discriminator.
-  actionId: KanbanBuiltInActionId | KanbanExtensionId;   // Package-owned or validated application-namespaced semantic action.
+  actionId: KanbanScopedActionId;   // Package-owned or validated application-namespaced semantic action.
   scope: KanbanActionScope;   // Closed semantic owner of the action.
 }
 ```

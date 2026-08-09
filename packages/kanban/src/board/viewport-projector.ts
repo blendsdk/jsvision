@@ -30,6 +30,8 @@ import type { KanbanSceneCellHeightProjection } from '../layout/swimlane-geometr
 import { projectKanbanSceneGeometry } from '../layout/swimlane-geometry.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
 import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
+import type { KanbanCellAddress } from '../source/types.js';
+import type { KanbanCount } from '../source/counts.js';
 import { buildKanbanScene } from './scene-builder.js';
 import type { KanbanScene } from './scene-model.js';
 import type { KanbanIdentityInput } from './kanban-viewport.js';
@@ -54,11 +56,16 @@ function referenceRevision(value: object): number {
 /** Safe board-level or cell-level state projected into the card content rectangle. */
 export interface KanbanProjectedState {
   /** Stable state discriminator. */
-  readonly kind: 'loading' | 'refreshing' | 'partial' | 'empty' | 'error' | 'no-columns' | 'minimum-size';
+  readonly kind:
+    'loading' | 'refreshing' | 'partial' | 'empty' | 'filtered-empty' | 'error' | 'no-columns' | 'minimum-size';
   /** Localized terminal-safe label. */
   readonly label: string;
   /** Optional source cell that owns a scoped state. */
   readonly columnId?: string;
+  /** Optional complete source address for an actionable cell-local state. */
+  readonly address?: KanbanCellAddress;
+  /** Optional package-owned action shown by the state surface. */
+  readonly actionId?: 'clear-filters';
 }
 
 /** One clipped visible card descriptor and its semantic source identity. */
@@ -87,6 +94,8 @@ export interface KanbanProjectedColumn {
   readonly label: string;
   /** Header columns cropped from the left by horizontal scrolling. */
   readonly contentOffset: number;
+  /** Honest same-publication count retained while this workflow column is collapsed. */
+  readonly count?: KanbanCount;
   /** Clipped viewport-local column rectangle. */
   readonly rect: Readonly<{ x: number; y: number; width: number; height: number }>;
 }
@@ -193,10 +202,52 @@ function stateLabel(i18n: I18n, kind: KanbanProjectedState['kind']): string {
   const key =
     kind === 'no-columns'
       ? 'kanban.board.no-columns'
-      : kind === 'error'
-        ? 'kanban.state.error'
-        : `kanban.state.${kind}`;
+      : kind === 'filtered-empty'
+        ? 'kanban.action.clear-filters'
+        : kind === 'error'
+          ? 'kanban.state.error'
+          : `kanban.state.${kind}`;
   return i18n.t(key);
+}
+
+/** Adds current structure capabilities and filtered-empty controls to the final clipped target list. */
+function scopedActionTargets<TCard>(
+  source: KanbanViewportSourceSnapshot<TCard>,
+  geometry: KanbanSceneGeometry,
+  projected: readonly KanbanProjectedState[],
+  base: readonly KanbanActionTarget[],
+  maximum: number,
+): readonly KanbanActionTarget[] {
+  const headers = base.map((entry) => {
+    if (entry.kind !== 'workflow-header' || entry.columnId === undefined) return entry;
+    const column = source.structure.columns.find((candidate) => candidate.columnId === entry.columnId);
+    return column?.capabilities.includes('collapse') === true
+      ? Object.freeze({ ...entry, actionId: 'collapse' })
+      : entry;
+  });
+  const stateActions = projected.flatMap((state): readonly KanbanActionTarget[] => {
+    if (state.kind !== 'filtered-empty' || state.actionId === undefined || state.address === undefined) return [];
+    const column = geometry.workflowHeaders.find((candidate) => candidate.columnId === state.address?.columnId);
+    if (column === undefined || column.width < 1) return [];
+    const address = Object.freeze({ ...state.address });
+    return [
+      Object.freeze({
+        kind: 'state-action' as const,
+        x: column.x,
+        y: column.y + column.height,
+        width: column.width,
+        height: 1,
+        scope: Object.freeze({ kind: 'state' as const, state: state.kind, address }),
+        zIndex: 200,
+        address,
+        actionId: state.actionId,
+        state: state.kind,
+      }),
+    ];
+  });
+  return Object.freeze(
+    [...headers, ...stateActions].sort((left, right) => right.zIndex - left.zIndex).slice(0, maximum),
+  );
 }
 
 /** Creates bounded application formatting backed by the selected I18n service. */
@@ -545,14 +596,19 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
   });
   const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: descriptorLimit });
   const columns = Object.freeze(
-    geometry.workflowHeaders.map((header) =>
-      Object.freeze({
+    geometry.workflowHeaders.map((header) => {
+      const structureColumn = options.source.structure.columns.find(
+        (candidate) => candidate.columnId === header.columnId,
+      );
+      const count = options.source.knownColumnCounts.find((candidate) => candidate.columnId === header.columnId)?.count;
+      return Object.freeze({
         columnId: header.columnId,
         label: header.label,
         contentOffset: header.contentOffset,
+        ...(structureColumn?.collapse === 'collapsed' && count !== undefined ? { count } : {}),
         rect: Object.freeze({ x: header.x, y: 0, width: header.width, height: options.height }),
-      }),
-    ),
+      });
+    }),
   );
   const descriptorByIdentity = new Map(
     projected.residents.map((resident) => [
@@ -597,9 +653,19 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
           : state.kind === 'refreshing'
             ? 'refreshing'
             : !hasCards && state.kind === 'empty'
-              ? 'empty'
+              ? options.source.filtered
+                ? 'filtered-empty'
+                : 'empty'
               : 'partial';
-    states.push(Object.freeze({ kind, label: stateLabel(options.i18n, kind), columnId: cell.address.columnId }));
+    states.push(
+      Object.freeze({
+        kind,
+        label: stateLabel(options.i18n, kind),
+        columnId: cell.address.columnId,
+        address: Object.freeze({ ...cell.address }),
+        ...(kind === 'filtered-empty' ? { actionId: 'clear-filters' as const } : {}),
+      }),
+    );
   }
   for (const limit of scene.states) {
     states.push(
@@ -616,7 +682,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     columns,
     cards,
     regions: sceneRegions(geometry),
-    actionTargets: hits.targets,
+    actionTargets: scopedActionTargets(options.source, geometry, states, hits.targets, descriptorLimit),
     states: Object.freeze(states),
   });
 }

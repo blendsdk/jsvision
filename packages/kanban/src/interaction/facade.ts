@@ -6,7 +6,7 @@ import type { KanbanActionScope } from '../layout/hit-map.js';
 import { snapshotKanbanInteractionResult, snapshotKanbanInteractionSnapshot } from './controller.js';
 import { KanbanIntentRouter } from './intent-router.js';
 import type { KanbanIntentRequest } from './intent-router.js';
-import type { KanbanInteractionHandler, KanbanInteractionOrigin } from './intent.js';
+import type { KanbanInteractionHandler, KanbanInteractionOrigin, KanbanScopedActionId } from './intent.js';
 import type {
   KanbanInteractionEnvironment,
   KanbanInteractionResult,
@@ -90,7 +90,7 @@ export interface KanbanInteractionFacade {
   openContext(options?: KanbanOpenContextOptions): Promise<boolean>;
   /** Invokes one application-owned scoped action without mutating board state locally. */
   invokeScopedAction(
-    actionId: KanbanExtensionId,
+    actionId: KanbanScopedActionId,
     scope: KanbanActionScope,
     origin?: KanbanInteractionOrigin,
   ): Promise<boolean>;
@@ -314,7 +314,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
 
   /** Delivers one closed scoped action after every earlier accepted transition settles. */
   invokeScopedAction(
-    actionId: KanbanExtensionId,
+    actionId: KanbanScopedActionId,
     scope: KanbanActionScope,
     origin: KanbanInteractionOrigin = 'programmatic',
   ): Promise<boolean> {
@@ -338,7 +338,11 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   }
 
   /** Synchronously accepts one scoped action for mounted event routing. */
-  acceptScopedAction(actionId: KanbanExtensionId, scope: KanbanActionScope, origin: KanbanInteractionOrigin): boolean {
+  acceptScopedAction(
+    actionId: KanbanScopedActionId,
+    scope: KanbanActionScope,
+    origin: KanbanInteractionOrigin,
+  ): boolean {
     if (!this.#available()) return false;
     void this.invokeScopedAction(actionId, scope, origin);
     return true;

@@ -12,12 +12,14 @@ import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
 import { KanbanDisposedResourceError } from '../contract/error.js';
+import { createKanbanExtensionId } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { routeKanbanKeyInput } from '../interaction/input-router.js';
+import type { KanbanScopedActionId } from '../interaction/intent.js';
 import { KanbanPointerRouter } from '../interaction/pointer-router.js';
 import type { KanbanPointerInput } from '../interaction/pointer-router.js';
 import type { KanbanEligibleSelectionCandidate } from '../interaction/selection.js';
@@ -164,6 +166,12 @@ function emptyMetrics(): KanbanViewportMetrics {
   });
 }
 
+/** Preserves package-owned action IDs and validates every application-namespaced action. */
+function scopedActionId(value: string): KanbanScopedActionId {
+  if (value === 'collapse' || value === 'clear-filters' || value === 'configure' || value === 'add-card') return value;
+  return createKanbanExtensionId(value);
+}
+
 /**
  * Exact-cell read-only Kanban projection that owns one query/session/cursor coordinator.
  *
@@ -244,7 +252,7 @@ export class KanbanViewport<TCard> extends View {
       beginPrimary: (target) => this.#beginPrimary(target),
       completeCard: (target, completion) => this.#completeCard(target, completion),
       completeCardAction: (target) => this.#completeCardAction(target),
-      completeScopedAction: () => false,
+      completeScopedAction: (target) => this.#completeScopedAction(target),
       completeRetry: (target) => this.#completeRetry(target),
       openContext: (target) => this.#openContext(target),
     });
@@ -887,6 +895,16 @@ export class KanbanViewport<TCard> extends View {
     const input = this.#interactionBinding.input();
     if (input === undefined || target.scope.kind !== 'card' || target.actionId === undefined) return false;
     return input.acceptActivate({ origin: 'pointer', scope: target.scope, actionId: target.actionId });
+  }
+
+  /** Completes one capable header or state action while keeping focus-only headers consumable. */
+  #completeScopedAction(target: KanbanActionTarget): boolean {
+    const input = this.#interactionBinding.input();
+    if (input === undefined) return false;
+    if (target.actionId === undefined) {
+      return target.kind === 'workflow-header' || target.kind === 'swimlane-header';
+    }
+    return input.acceptScopedAction(scopedActionId(target.actionId), target.scope, 'pointer');
   }
 
   /** Focuses a right-clicked card, reconciles its eligible selection, then queues context exactly once. */

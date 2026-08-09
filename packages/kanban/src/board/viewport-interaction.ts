@@ -1,9 +1,8 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
-import type { KanbanExtensionId } from '../contract/identity.js';
 import type { KanbanActionScope } from '../layout/hit-map.js';
 import { snapshotKanbanInteractionSnapshot } from '../interaction/controller.js';
 import type { KanbanActivateOptions, KanbanOpenContextOptions } from '../interaction/facade.js';
-import type { KanbanInteractionOrigin } from '../interaction/intent.js';
+import type { KanbanInteractionOrigin, KanbanScopedActionId } from '../interaction/intent.js';
 import type {
   KanbanInteractionResult,
   KanbanInteractionSnapshot,
@@ -49,7 +48,7 @@ export interface CapturedKanbanViewportInputAdapter {
   readonly acceptOpenContext: (options: KanbanOpenContextOptions) => boolean;
   /** Synchronously queues one scoped action. */
   readonly acceptScopedAction: (
-    actionId: KanbanExtensionId,
+    actionId: KanbanScopedActionId,
     scope: KanbanActionScope,
     origin: KanbanInteractionOrigin,
   ) => boolean;
@@ -88,7 +87,7 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
               acceptOpenContext: (options: KanbanOpenContextOptions) =>
                 Reflect.apply(acceptOpenContext, adapter, [options]) === true,
               acceptScopedAction: (
-                actionId: KanbanExtensionId,
+                actionId: KanbanScopedActionId,
                 scope: KanbanActionScope,
                 origin: KanbanInteractionOrigin,
               ) => Reflect.apply(acceptScopedAction, adapter, [actionId, scope, origin]) === true,
