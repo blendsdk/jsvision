@@ -122,7 +122,7 @@ function absoluteTarget(
 ) {
   const origin = app.loop.renderRoot.originOf(board.viewport);
   if (origin === null) throw new Error('Expected the mounted viewport to have a host origin.');
-  return { x: origin.x + target.x, y: origin.y + target.y };
+  return { x: origin.x + target.x + 1, y: origin.y + target.y + 1 };
 }
 
 /** Builds a complete injected controller with overridable lifecycle behavior. */
@@ -578,6 +578,23 @@ describe('Kanban Phase B mounted host and input boundary', () => {
     const render = mount(board);
     const target = cardTarget(board, 2);
     const point = { x: target.x, y: target.y };
+    const mounted = board.inspection();
+    const firstCardRegion = mounted.regions.find((region) => region.kind === 'card' && region.cardKey === 1);
+    const secondCardRegion = mounted.regions.find((region) => region.kind === 'card' && region.cardKey === 2);
+    if (firstCardRegion === undefined || secondCardRegion === undefined) {
+      throw new Error('Expected both card regions around the mounted inter-card gap.');
+    }
+    const gapPoint = { x: firstCardRegion.x, y: firstCardRegion.y + firstCardRegion.height };
+    expect(secondCardRegion.y - gapPoint.y).toBeGreaterThan(0);
+    expect(
+      mounted.actionTargets.some(
+        (candidate) =>
+          gapPoint.x >= candidate.x &&
+          gapPoint.x < candidate.x + candidate.width &&
+          gapPoint.y >= candidate.y &&
+          gapPoint.y < candidate.y + candidate.height,
+      ),
+    ).toBe(false);
     const down = deliver(board, { type: 'mouse', kind: 'down', button: 0, x: point.x, y: point.y }, point, 1);
     await settleInput();
     expect(down.handled).toBe(true);
@@ -589,9 +606,6 @@ describe('Kanban Phase B mounted host and input boundary', () => {
     const beforeRejectedInput = board.interaction().snapshot();
     const staleUp = deliver(board, { type: 'mouse', kind: 'up', button: 0, x: point.x, y: point.y }, point);
     const clipped = deliver(board, { type: 'mouse', kind: 'down', button: 0, x: -1, y: -1 }, { x: -1, y: -1 }, 1);
-    const gap = board.inspection().regions.find((region) => region.kind === 'card-gap');
-    if (gap === undefined) throw new Error('Expected a mounted non-actionable card gap.');
-    const gapPoint = { x: gap.x, y: gap.y };
     const nonActionable = deliver(
       board,
       { type: 'mouse', kind: 'down', button: 0, x: gapPoint.x, y: gapPoint.y },

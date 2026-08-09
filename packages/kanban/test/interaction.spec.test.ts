@@ -494,7 +494,7 @@ describe('Kanban mounted keyboard and pointer interaction', () => {
     const range = dispatchInteractionKey(board, 'up', { shift: true });
     await settleMountedInput();
     expect(range.handled).toBe(true);
-    expect(board.interaction().snapshot().selectedCardKeys).toEqual([2, 1]);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([1, 2]);
 
     for (const key of ['home', 'end', 'pageup', 'pagedown', 'right', 'left', 'space']) {
       const routed = dispatchInteractionKey(board, key);

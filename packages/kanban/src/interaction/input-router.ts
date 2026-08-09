@@ -46,6 +46,10 @@ function navigationDirection(key: string): KanbanNavigationDirection | undefined
 function routeNavigation(input: KanbanKeyInput, sink: KanbanKeyInputSink): boolean | undefined {
   const direction = navigationDirection(input.key);
   if (direction === undefined) return undefined;
+  const snapshot = sink.snapshot();
+  if (input.shift && snapshot.focused.kind === 'card' && snapshot.rangeAnchor === undefined) {
+    if (!sink.accept({ kind: 'selection', operation: 'replace' })) return false;
+  }
   return sink.accept({
     kind: 'navigate',
     direction,

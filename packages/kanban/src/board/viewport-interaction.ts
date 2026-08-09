@@ -1,5 +1,9 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
+import type { KanbanExtensionId } from '../contract/identity.js';
+import type { KanbanActionScope } from '../layout/hit-map.js';
 import { snapshotKanbanInteractionSnapshot } from '../interaction/controller.js';
+import type { KanbanActivateOptions, KanbanOpenContextOptions } from '../interaction/facade.js';
+import type { KanbanInteractionOrigin } from '../interaction/intent.js';
 import type {
   KanbanInteractionResult,
   KanbanInteractionSnapshot,
@@ -32,6 +36,23 @@ export interface KanbanViewportInteractionAdapter {
 interface CapturedKanbanViewportInteractionAdapter {
   readonly snapshot: () => unknown;
   readonly subscribe: (invalidate: () => void) => unknown;
+  readonly input?: CapturedKanbanViewportInputAdapter;
+}
+
+/** Optional board-facade methods required for mounted keyboard and pointer input. */
+export interface CapturedKanbanViewportInputAdapter {
+  /** Synchronously queues one controller transition. */
+  readonly accept: (command: KanbanInteractionTransition) => boolean;
+  /** Synchronously queues card activation. */
+  readonly acceptActivate: (options: KanbanActivateOptions) => boolean;
+  /** Synchronously queues context activation. */
+  readonly acceptOpenContext: (options: KanbanOpenContextOptions) => boolean;
+  /** Synchronously queues one scoped action. */
+  readonly acceptScopedAction: (
+    actionId: KanbanExtensionId,
+    scope: KanbanActionScope,
+    origin: KanbanInteractionOrigin,
+  ) => boolean;
 }
 
 /** Validates and captures one non-owning adapter without depending on its mutable properties later. */
@@ -46,9 +67,34 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
     if (typeof snapshot !== 'function' || typeof transition !== 'function' || typeof subscribe !== 'function') {
       throw new KanbanInvalidSourcePublicationError();
     }
+    const accept = Reflect.get(adapter, 'accept');
+    const acceptActivate = Reflect.get(adapter, 'acceptActivate');
+    const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
+    const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
+    const inputAvailable =
+      typeof accept === 'function' &&
+      typeof acceptActivate === 'function' &&
+      typeof acceptOpenContext === 'function' &&
+      typeof acceptScopedAction === 'function';
     return Object.freeze({
       snapshot: () => Reflect.apply(snapshot, adapter, []),
       subscribe: (invalidate: () => void) => Reflect.apply(subscribe, adapter, [invalidate]),
+      ...(inputAvailable
+        ? {
+            input: Object.freeze({
+              accept: (command: KanbanInteractionTransition) => Reflect.apply(accept, adapter, [command]) === true,
+              acceptActivate: (options: KanbanActivateOptions) =>
+                Reflect.apply(acceptActivate, adapter, [options]) === true,
+              acceptOpenContext: (options: KanbanOpenContextOptions) =>
+                Reflect.apply(acceptOpenContext, adapter, [options]) === true,
+              acceptScopedAction: (
+                actionId: KanbanExtensionId,
+                scope: KanbanActionScope,
+                origin: KanbanInteractionOrigin,
+              ) => Reflect.apply(acceptScopedAction, adapter, [actionId, scope, origin]) === true,
+            }),
+          }
+        : {}),
     });
   } catch {
     throw new KanbanInvalidSourcePublicationError();
@@ -107,6 +153,11 @@ export class KanbanViewportInteractionBinding {
   snapshot(): KanbanInteractionSnapshot {
     if (this.#mounted) this.#refresh();
     return this.#snapshot;
+  }
+
+  /** Returns mounted synchronous input seams only when the supplied adapter provides the complete set. */
+  input(): CapturedKanbanViewportInputAdapter | undefined {
+    return this.#mounted && !this.#disposed ? this.#adapter?.input : undefined;
   }
 
   /** Releases only the viewport's subscription and never disposes the supplied adapter. */

@@ -17,6 +17,9 @@ import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import { routeKanbanKeyInput } from '../interaction/input-router.js';
+import { KanbanPointerRouter } from '../interaction/pointer-router.js';
+import type { KanbanPointerInput } from '../interaction/pointer-router.js';
 import type { KanbanEligibleSelectionCandidate } from '../interaction/selection.js';
 import type {
   KanbanFocusTarget,
@@ -24,9 +27,10 @@ import type {
   KanbanInteractionRevisions,
   KanbanNavigationSnapshot,
   KanbanNavigationTarget,
+  KanbanSelectionSnapshot,
 } from '../interaction/types.js';
 import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
-import type { KanbanDamageRegion } from '../layout/hit-map.js';
+import type { KanbanActionTarget, KanbanDamageRegion } from '../layout/hit-map.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
 import { createKanbanSparseHeightIndex } from '../layout/sparse-height-index.js';
@@ -178,6 +182,7 @@ export class KanbanViewport<TCard> extends View {
   #metrics: KanbanViewportMetrics = emptyMetrics();
   readonly #descriptorCache: KanbanDescriptorCache;
   readonly #interactionBinding: KanbanViewportInteractionBinding;
+  readonly #pointerRouter: KanbanPointerRouter;
   readonly #swimlanePresentationResolver: KanbanSwimlanePresentationResolver;
   readonly #heightIndices = new Map<
     string,
@@ -234,6 +239,15 @@ export class KanbanViewport<TCard> extends View {
       onReactiveInvalidated: () => this.invalidate(),
     });
     this.#interactionBinding = new KanbanViewportInteractionBinding(options.interaction);
+    this.#pointerRouter = new KanbanPointerRouter({
+      snapshotSelection: () => this.#snapshotInputSelection(),
+      beginPrimary: (target) => this.#beginPrimary(target),
+      completeCard: (target, completion) => this.#completeCard(target, completion),
+      completeCardAction: (target) => this.#completeCardAction(target),
+      completeScopedAction: () => false,
+      completeRetry: (target) => this.#completeRetry(target),
+      openContext: (target) => this.#openContext(target),
+    });
     this.#swimlanePresentationResolver = createKanbanSwimlanePresentationResolver({
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
@@ -431,14 +445,51 @@ export class KanbanViewport<TCard> extends View {
     return available;
   }
 
-  /** Maps independent terminal wheel directions to bounded three-cell scrolling. */
+  /** Routes wheel input first, then the fixed keyboard and bounded click-family interaction subsets. */
   override onEvent(event: DispatchEvent): void {
-    if (event.event.type !== 'wheel') return;
-    const direction = event.event.dir;
-    this.scrollBy(
-      direction === 'up' ? { y: -3 } : direction === 'down' ? { y: 3 } : direction === 'left' ? { x: -3 } : { x: 3 },
-    );
-    event.handled = true;
+    if (event.event.type === 'wheel') {
+      this.#pointerRouter.cancel();
+      const direction = event.event.dir;
+      this.scrollBy(
+        direction === 'up' ? { y: -3 } : direction === 'down' ? { y: 3 } : direction === 'left' ? { x: -3 } : { x: 3 },
+      );
+      event.handled = true;
+      return;
+    }
+    if (event.event.type === 'focus') {
+      if (!event.event.focused) this.#pointerRouter.cancel();
+      return;
+    }
+    if (event.event.type === 'key') {
+      this.#pointerRouter.cancel();
+      const input = this.#interactionBinding.input();
+      if (input === undefined || this.#metrics.mode === 'minimum-size') return;
+      event.handled = routeKanbanKeyInput(event.event, {
+        snapshot: () => this.#interactionBinding.snapshot(),
+        accept: (transition) => input.accept(transition),
+        activate: (origin) => input.acceptActivate({ origin }),
+      });
+      return;
+    }
+    if (event.event.type !== 'mouse') {
+      this.#pointerRouter.cancel();
+      return;
+    }
+    const local = event.local;
+    const input = this.#interactionBinding.input();
+    if (local === undefined || input === undefined || this.#metrics.mode === 'minimum-size') {
+      this.#pointerRouter.cancel();
+      return;
+    }
+    const pointer: KanbanPointerInput = {
+      kind: event.event.kind,
+      button: event.event.button,
+      ctrl: event.event.ctrl === true,
+      target: this.#actionTargetAt(local.x, local.y),
+      sceneRevision: this.#inputSceneRevision(),
+      ...(event.clickCount === undefined ? {} : { clickCount: event.clickCount }),
+    };
+    event.handled = this.#pointerRouter.route(pointer);
   }
 
   /** Returns an immutable exact-cell metric snapshot from the latest projection. */
@@ -761,6 +812,7 @@ export class KanbanViewport<TCard> extends View {
     this.#revealController = undefined;
     this.#anchorController?.abort();
     this.#anchorController = undefined;
+    this.#pointerRouter.dispose();
     this.#interactionBinding.dispose();
     this.#source?.cancelPendingWork();
     this.#descriptorCache.dispose();
@@ -775,6 +827,123 @@ export class KanbanViewport<TCard> extends View {
     this.#snapshot = undefined;
     this.#projection = undefined;
     this.#damage = Object.freeze([]);
+  }
+
+  /** Returns the highest-priority current target containing one viewport-local point. */
+  #actionTargetAt(x: number, y: number): KanbanActionTarget | undefined {
+    return this.#projection?.actionTargets.find(
+      (target) => x >= target.x && y >= target.y && x < target.x + target.width && y < target.y + target.height,
+    );
+  }
+
+  /** Identifies hit-map ownership without treating focus-only repaint as structural staleness. */
+  #inputSceneRevision(): KanbanRevision {
+    const revisions = this.interactionRevisions();
+    return JSON.stringify([
+      typeof revisions.sessionRevision,
+      revisions.sessionRevision,
+      revisions.queryGeneration,
+      typeof this.#interactionStructureRevision,
+      this.#interactionStructureRevision,
+      this.#metrics.offsets.x,
+      this.#metrics.offsets.y,
+      this.bounds.width,
+      this.bounds.height,
+    ]);
+  }
+
+  /** Focuses one card or header on primary down while admitting state/retry presses without focus. */
+  #beginPrimary(target: KanbanActionTarget): boolean {
+    const input = this.#interactionBinding.input();
+    if (input === undefined) return false;
+    if (target.scope.kind === 'card') {
+      return input.accept({
+        kind: 'focus',
+        target: { kind: 'card', cardKey: target.scope.cardKey, address: target.scope.address },
+      });
+    }
+    if (target.kind === 'workflow-header' && target.columnId !== undefined) {
+      return input.accept({ kind: 'focus', target: { kind: 'column-header', columnId: target.columnId } });
+    }
+    if (target.kind === 'swimlane-header' && target.swimlaneId !== undefined) {
+      return input.accept({ kind: 'focus', target: { kind: 'swimlane-header', swimlaneId: target.swimlaneId } });
+    }
+    return target.kind === 'state-action' || target.kind === 'retry';
+  }
+
+  /** Completes one matching card click and optionally queues activation behind selection settlement. */
+  #completeCard(
+    target: KanbanActionTarget,
+    completion: { readonly toggle: boolean; readonly activate: boolean },
+  ): boolean {
+    const input = this.#interactionBinding.input();
+    if (input === undefined || target.scope.kind !== 'card') return false;
+    if (!input.accept({ kind: 'selection', operation: completion.toggle ? 'toggle' : 'replace' })) return false;
+    return !completion.activate || input.acceptActivate({ origin: 'pointer', scope: target.scope });
+  }
+
+  /** Completes one descriptor action through focused-card activation without editing card data. */
+  #completeCardAction(target: KanbanActionTarget): boolean {
+    const input = this.#interactionBinding.input();
+    if (input === undefined || target.scope.kind !== 'card' || target.actionId === undefined) return false;
+    return input.acceptActivate({ origin: 'pointer', scope: target.scope, actionId: target.actionId });
+  }
+
+  /** Focuses a right-clicked card, reconciles its eligible selection, then queues context exactly once. */
+  #openContext(target: KanbanActionTarget): boolean {
+    const input = this.#interactionBinding.input();
+    if (input === undefined || target.scope.kind !== 'card') return false;
+    const scope = target.scope;
+    const selected = this.#snapshotInputSelection().entries.some(
+      (entry) => typeof entry.cardKey === typeof scope.cardKey && entry.cardKey === scope.cardKey,
+    );
+    if (
+      !input.accept({ kind: 'focus', target: { kind: 'card', cardKey: scope.cardKey, address: scope.address } }) ||
+      (!selected && !input.accept({ kind: 'selection', operation: 'replace' }))
+    ) {
+      return false;
+    }
+    return input.acceptOpenContext({ origin: 'pointer', scope });
+  }
+
+  /** Invokes only the owning cell cursor's retry seam and contains asynchronous failure. */
+  #completeRetry(target: KanbanActionTarget): boolean {
+    if (target.kind !== 'retry' || target.address === undefined) return false;
+    const cell = this.#snapshot?.cells.find(
+      (candidate) =>
+        candidate.address.columnId === target.address?.columnId &&
+        candidate.address.swimlaneId === target.address?.swimlaneId,
+    );
+    if (cell === undefined) return false;
+    try {
+      void Promise.resolve(cell.cursor.retry()).catch(() => undefined);
+    } catch {
+      // The source coordinator owns payload-free retry observations.
+    }
+    return true;
+  }
+
+  /** Captures ordered selected cards that remain eligible in the current visible scene. */
+  #snapshotInputSelection(): KanbanSelectionSnapshot {
+    const selected = this.#interactionBinding.snapshot().selectedCardKeys;
+    const eligible = new Map(
+      this.interactionEligibleSelection().map((entry) => [
+        JSON.stringify([typeof entry.cardKey, entry.cardKey]),
+        entry,
+      ]),
+    );
+    const revisions = this.interactionRevisions();
+    return Object.freeze({
+      entries: Object.freeze(
+        selected.flatMap((key) => {
+          const entry = eligible.get(JSON.stringify([typeof key, key]));
+          return entry === undefined ? [] : [entry];
+        }),
+      ),
+      sessionRevision: revisions.sessionRevision,
+      queryGeneration: revisions.queryGeneration,
+      ...(revisions.viewRevision === undefined ? {} : { viewRevision: revisions.viewRevision }),
+    });
   }
 
   /** Performs one bounded refresh using current assigned geometry. */
