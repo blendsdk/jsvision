@@ -110,14 +110,59 @@ function unavailable(snapshot: KanbanInteractionSnapshot): KanbanInteractionResu
   return Object.freeze({ kind: 'unavailable', code: 'interaction-unavailable', snapshot, retry: 'unavailable' });
 }
 
-/**
- * Compares canonical detached snapshots after validation has normalized key order and optional fields.
- *
- * JSON is safe here because the closed interaction contract contains only bounded JSON primitives,
- * arrays, and objects; card identity deliberately remains either a number or a string.
- */
+/** Compares two validated focus targets without serializing bounded selection arrays. */
+function focusTargetsEqual(
+  left: KanbanInteractionSnapshot['focused'],
+  right: KanbanInteractionSnapshot['focused'],
+): boolean {
+  if (left.kind !== right.kind) return false;
+  if (left.kind === 'board-state' && right.kind === 'board-state') return true;
+  if (left.kind === 'column-header' && right.kind === 'column-header') return left.columnId === right.columnId;
+  if (left.kind === 'swimlane-header' && right.kind === 'swimlane-header') return left.swimlaneId === right.swimlaneId;
+  return (
+    left.kind === 'card' &&
+    right.kind === 'card' &&
+    typeof left.cardKey === typeof right.cardKey &&
+    left.cardKey === right.cardKey &&
+    left.address.columnId === right.address.columnId &&
+    left.address.swimlaneId === right.address.swimlaneId
+  );
+}
+
+/** Compares optional validated values by their bounded primitive fields. */
+function optionalStateEqual(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (typeof left !== 'object' || left === null || typeof right !== 'object' || right === null) return false;
+  const leftRecord = Object.entries(left);
+  const rightRecord = Object.entries(right);
+  return (
+    leftRecord.length === rightRecord.length &&
+    leftRecord.every(
+      ([key, value]) =>
+        Object.prototype.hasOwnProperty.call(right, key) && optionalStateEqual(value, Reflect.get(right, key)),
+    )
+  );
+}
+
+/** Compares semantic snapshot state while deliberately ignoring the monotonic revision counter. */
+function interactionSnapshotStateEqual(left: KanbanInteractionSnapshot, right: KanbanInteractionSnapshot): boolean {
+  return (
+    focusTargetsEqual(left.focused, right.focused) &&
+    left.selectedCardKeys.length === right.selectedCardKeys.length &&
+    left.selectedCardKeys.every(
+      (key, index) => typeof key === typeof right.selectedCardKeys[index] && key === right.selectedCardKeys[index],
+    ) &&
+    left.preferredCenterRow === right.preferredCenterRow &&
+    optionalStateEqual(left.rangeAnchor, right.rangeAnchor) &&
+    optionalStateEqual(left.pendingNavigation, right.pendingNavigation) &&
+    optionalStateEqual(left.feedback, right.feedback) &&
+    optionalStateEqual(left.serverSelection, right.serverSelection)
+  );
+}
+
+/** Compares complete validated snapshots without allocating a serialized copy. */
 function interactionSnapshotsEqual(left: KanbanInteractionSnapshot, right: KanbanInteractionSnapshot): boolean {
-  return left === right || JSON.stringify(left) === JSON.stringify(right);
+  return left === right || (left.revision === right.revision && interactionSnapshotStateEqual(left, right));
 }
 
 /** Validates the callable shape of a factory-owned controller without invoking property getters twice. */
@@ -161,6 +206,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   readonly #subscribers = new Set<() => void>();
   #controller: OwnedController | undefined;
   #lastSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
+  #lastRawSnapshot: unknown;
   #queue: Promise<void> = Promise.resolve();
   #transitionActive = false;
   #failed = false;
@@ -177,7 +223,11 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     const controller = this.#controller;
     if (controller !== undefined && !this.#failed && !this.#disposed) {
       try {
-        this.#publish(snapshotKanbanInteractionSnapshot(controller.snapshot()));
+        const raw = controller.snapshot();
+        if (raw !== this.#lastRawSnapshot) {
+          this.#publish(snapshotKanbanInteractionSnapshot(raw));
+          this.#lastRawSnapshot = Object.isFrozen(raw) ? raw : undefined;
+        }
       } catch {
         this.failSetup();
       }
@@ -237,7 +287,8 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
       if (CLAIMED_CONTROLLERS.has(methods.owner)) throw new KanbanInvalidSourcePublicationError();
       CLAIMED_CONTROLLERS.add(methods.owner);
       claimed = true;
-      const initial = snapshotKanbanInteractionSnapshot(methods.snapshot());
+      const rawInitial = methods.snapshot();
+      const initial = snapshotKanbanInteractionSnapshot(rawInitial);
       const rawUnsubscribe = methods.subscribe(() => this.#controllerInvalidated());
       if (typeof rawUnsubscribe !== 'function') throw new KanbanInvalidSourcePublicationError();
       const captured = methods;
@@ -251,6 +302,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
         dispose: captured.dispose,
       });
       this.#lastSnapshot = initial;
+      this.#lastRawSnapshot = Object.isFrozen(rawInitial) ? rawInitial : undefined;
       this.#notify();
     } catch (error) {
       if (claimed && methods !== undefined) {
@@ -288,6 +340,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     if (controller === undefined || this.#failed || this.#disposed) {
       return Promise.resolve(unavailable(this.#lastSnapshot));
     }
+    const before = this.#lastSnapshot;
     let raw: unknown;
     try {
       raw = controller.transition(command);
@@ -302,6 +355,13 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
         }
         try {
           const settled = snapshotKanbanInteractionResult(value);
+          if (
+            (settled.kind === 'unchanged' && !interactionSnapshotsEqual(settled.snapshot, before)) ||
+            (settled.kind === 'changed' &&
+              (settled.snapshot.revision <= before.revision || interactionSnapshotStateEqual(settled.snapshot, before)))
+          ) {
+            throw new KanbanInvalidSourcePublicationError();
+          }
           this.#publish(settled.snapshot);
           return settled;
         } catch {
@@ -324,7 +384,13 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     const controller = this.#controller;
     if (controller === undefined || this.#failed || this.#disposed) return;
     try {
-      this.#publish(snapshotKanbanInteractionSnapshot(controller.snapshot()), true);
+      const raw = controller.snapshot();
+      if (raw === this.#lastRawSnapshot) {
+        this.#notify();
+        return;
+      }
+      this.#publish(snapshotKanbanInteractionSnapshot(raw), true);
+      this.#lastRawSnapshot = Object.isFrozen(raw) ? raw : undefined;
     } catch {
       this.failSetup();
     }
@@ -364,6 +430,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   #releaseController(): void {
     const controller = this.#controller;
     this.#controller = undefined;
+    this.#lastRawSnapshot = undefined;
     if (controller === undefined) return;
     try {
       controller.unsubscribe();

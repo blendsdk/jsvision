@@ -40,11 +40,11 @@ function source() {
 }
 
 /** Mounts one standalone viewport and flushes its first complete scene. */
-function mount(viewport: KanbanViewport<Card>) {
+function mount(viewport: KanbanViewport<Card>, height = 12) {
   viewport.setLayout({ position: 'fill' });
   const host = new Group();
   host.add(viewport);
-  const render = createRenderRoot({ width: 40, height: 12 }, { caps: CAPS });
+  const render = createRenderRoot({ width: 40, height }, { caps: CAPS });
   render.mount(host);
   render.flush();
   return render;
@@ -138,6 +138,23 @@ describe('standalone viewport interaction adapter', () => {
 
     expect(inspection.interaction).toMatchObject({ revision: 0, focused: { kind: 'board-state' } });
     expect(inspection.visibleCards.every((card) => card.marker.cues.length === 0)).toBe(true);
+    render.unmount();
+  });
+
+  it('derives interaction targets only from final clipped visible projection', () => {
+    const viewport = new KanbanViewport({ source: source(), query: () => QUERY, card: CARD });
+    const render = mount(viewport, 8);
+    const inspection = viewport.inspection();
+    const navigation = viewport.interactionScene();
+    const navigationCards = navigation.targets.flatMap((entry) =>
+      entry.target.kind === 'card' ? [entry.target.cardKey] : [],
+    );
+    const navigationColumns = navigation.targets.flatMap((entry) =>
+      entry.enabled && entry.target.kind === 'column-header' ? [entry.target.columnId] : [],
+    );
+
+    expect(navigationCards).toEqual(inspection.visibleCards.map((card) => card.cardKey));
+    expect(navigationColumns).toEqual(inspection.visibleColumns.map((column) => column.columnId));
     render.unmount();
   });
 

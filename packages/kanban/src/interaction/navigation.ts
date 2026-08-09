@@ -213,6 +213,7 @@ function horizontal(
   direction: 'left' | 'right' | 'previous-column' | 'next-column',
   current: KanbanNavigationTarget,
   eligible: readonly KanbanNavigationTarget[],
+  structural: readonly KanbanNavigationTarget[],
   row: number,
 ): KanbanNavigationResolution {
   const offset = direction === 'left' || direction === 'previous-column' ? -1 : 1;
@@ -223,10 +224,12 @@ function horizontal(
         ? current.target.columnId
         : undefined;
   if (currentColumn === undefined) return resolution(current.target, current, row, direction);
-  const adjacentColumn = adjacentId(columnIds(eligible), currentColumn, offset);
+  const focusedColumnCommand = direction === 'previous-column' || direction === 'next-column';
+  const columnTargets = focusedColumnCommand ? structural : eligible;
+  const adjacentColumn = adjacentId(columnIds(columnTargets), currentColumn, offset);
   if (adjacentColumn === undefined) return resolution(current.target, current, row, direction);
   if (current.target.kind === 'column-header') {
-    const header = columnHeader(eligible, adjacentColumn);
+    const header = columnHeader(columnTargets, adjacentColumn);
     return resolution(current.target, header ?? current, row, header === undefined ? direction : undefined);
   }
 
@@ -240,7 +243,7 @@ function horizontal(
   );
   const card = closestRow(sameCellCards, row);
   if (card !== undefined) return resolution(current.target, card, row);
-  const header = columnHeader(eligible, adjacentColumn);
+  const header = columnHeader(columnTargets, adjacentColumn);
   return resolution(current.target, header ?? current, row, header === undefined ? direction : undefined);
 }
 
@@ -330,7 +333,7 @@ export function resolveKanbanNavigation(options: ResolveKanbanNavigationOptions)
     options.direction === 'previous-column' ||
     options.direction === 'next-column'
   ) {
-    return horizontal(options.direction, current, eligible, row);
+    return horizontal(options.direction, current, eligible, scene.targets, row);
   }
   if (options.direction === 'home' || options.direction === 'end') {
     return cellEdge(options.direction, current, eligible, row);

@@ -292,6 +292,36 @@ describe('board authority and lifecycle implementation', () => {
     render.unmount();
   });
 
+  it('automatically reconciles a focused card address after a source move', async () => {
+    const cards = signal<readonly Card[]>([{ id: 1, columnId: 'ready', title: 'Moving card' }]);
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [
+        { columnId: 'ready', label: 'Ready', revision: 1 },
+        { columnId: 'doing', label: 'Doing', revision: 1 },
+      ],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER });
+    const render = mount(board);
+    await board.interaction().transition({
+      kind: 'focus',
+      target: { kind: 'card', cardKey: 1, address: { columnId: 'ready' } },
+    });
+
+    cards.set([{ id: 1, columnId: 'doing', title: 'Moving card' }]);
+    for (let index = 0; index < 20; index += 1) {
+      render.flush();
+      await Promise.resolve();
+    }
+    expect(board.interaction().snapshot().focused).toEqual({
+      kind: 'card',
+      cardKey: 1,
+      address: { columnId: 'doing' },
+    });
+    render.unmount();
+  });
+
   it('does not let a pending reorder locator overwrite newer imperative scrolling', async () => {
     const cards = signal<readonly Card[]>(
       Array.from({ length: 40 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),

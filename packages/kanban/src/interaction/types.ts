@@ -126,7 +126,16 @@ export type KanbanInteractionTransition =
       readonly operation: KanbanSelectionOperation;
       readonly serverSelection?: KanbanServerSelectionReference;
     }
-  | { readonly kind: 'reconcile'; readonly reason: KanbanInteractionReconcileReason }
+  | {
+      readonly kind: 'reconcile';
+      readonly reason: KanbanInteractionReconcileReason;
+      /** Exact authoritative card deletions, kept separate from unloaded or merely hidden identities. */
+      readonly deletedCardKeys?: readonly CardKey[];
+      /** Exact authoritative workflow-column deletions. */
+      readonly deletedColumnIds?: readonly KanbanColumnId[];
+      /** Exact authoritative swimlane deletions. */
+      readonly deletedSwimlaneIds?: readonly KanbanSwimlaneId[];
+    }
   | {
       readonly kind: 'escape';
       readonly transient?: { readonly kind: 'synthetic'; readonly cancel: () => void };

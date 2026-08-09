@@ -12,6 +12,7 @@ import type {
 import type { CardKey } from '../contract/identity.js';
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
+import type { KanbanRevision } from '../contract/revision.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanPhaseBMessageMap } from '../i18n/catalog.js';
 import {
@@ -28,17 +29,19 @@ import type {
   KanbanInteractionEnvironment,
   KanbanInteractionFeedback,
   KanbanInteractionFeedbackCode,
+  KanbanInteractionRevisions,
   KanbanInteractionSnapshot,
   KanbanSelectionSnapshot,
 } from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
+import type { KanbanIdentityChangeBatch } from '../source/types.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
 import { KanbanBoardFeedbackView, createKanbanBoardFeedbackState } from './board-feedback.js';
 import type { KanbanBoardFeedbackState } from './board-feedback.js';
 import { createKanbanDefaultInteractionSeed } from './board-state.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
-import { KanbanViewport } from './kanban-viewport.js';
+import { KanbanViewport, setKanbanViewportInteractionEvidenceListener } from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
@@ -167,6 +170,25 @@ function boardState(
   return Object.freeze({ kind, label: i18n.t(key) });
 }
 
+/** Last viewport evidence used to classify one automatic interaction reconciliation. */
+interface KanbanInteractionReconcileEvidence {
+  /** Source and query generation owning the scene. */
+  readonly revisions: KanbanInteractionRevisions;
+  /** Structure policy revision controlling grouping, collapse, and visibility. */
+  readonly structureRevision: KanbanRevision;
+  /** Exact assigned geometry and responsive-mode revision used for resize reconciliation. */
+  readonly geometryRevision: KanbanRevision;
+  /** Exact authoritative deletion batch fingerprint already consumed. */
+  readonly deletionFingerprint: string;
+  /** Revision of the source identity batch, including empty non-deletion publications. */
+  readonly identityRevision?: KanbanRevision;
+}
+
+/** Creates a type-preserving equality key for one bounded revision value. */
+function revisionKey(value: KanbanRevision | undefined): string {
+  return JSON.stringify([typeof value, value ?? null]);
+}
+
 /**
  * Responsive DSL-composed Kanban shell that owns exactly one public viewport.
  *
@@ -191,6 +213,8 @@ export class KanbanBoard<TCard> extends Group {
   #layoutReflows = 0;
   #disposeBindings: (() => void) | undefined;
   #disposeInteractionChrome: (() => void) | undefined;
+  #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
+  #automaticReconcileReady: boolean;
   #disposed = false;
 
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
@@ -212,6 +236,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#bindings = new KanbanBoardBindings(bindingOptions);
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
     this.#interactionFactory = options.interactionFactory;
+    this.#automaticReconcileReady = options.interactionFactory === undefined;
     this.#hasLegacyIdentity = options.identity !== undefined;
     this.#interactionFacade = new KanbanInteractionFacadeOwner({
       snapshotEligibleSelection: () => this.#snapshotEligibleSelection(),
@@ -220,6 +245,9 @@ export class KanbanBoard<TCard> extends Group {
     });
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
+    );
+    setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
+      this.#reconcileInteraction(this.viewport.identityChanges()),
     );
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());
@@ -256,8 +284,8 @@ export class KanbanBoard<TCard> extends Group {
           effect(() => {
             const snapshot = this.#bindings.read(this.viewport);
             const layoutChanged = this.#bindings.apply(snapshot);
-            const identityChanged = this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges());
-            if (identityChanged) void this.#interactionFacade.transition({ kind: 'reconcile', reason: 'deletion' });
+            const identityChanges = this.viewport.identityChanges();
+            const identityChanged = this.#bindings.reconcileIdentityChanges(identityChanges);
             const minimumReserveVisible = this.viewport.focusedNavigator() !== undefined && this.bounds.height < 5;
             const navigatorVisible =
               this.viewport.metrics().mode === 'focused-column' &&
@@ -349,11 +377,13 @@ export class KanbanBoard<TCard> extends Group {
 
   /** Delegates absolute terminal-cell scrolling to the board's single viewport. */
   scrollTo(target: KanbanScrollTarget): void {
+    this.#cancelPendingNavigationForScroll();
     this.viewport.scrollTo(target);
   }
 
   /** Delegates relative terminal-cell scrolling to the board's single viewport. */
   scrollBy(delta: KanbanScrollTarget): void {
+    this.#cancelPendingNavigationForScroll();
     this.viewport.scrollBy(delta);
   }
 
@@ -376,6 +406,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
     this.#authority.dispose();
+    setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     this.viewport.dispose();
   }
 
@@ -423,6 +454,83 @@ export class KanbanBoard<TCard> extends Group {
     if (this.#bindings.reconcileIdentityChanges(this.viewport.identityChanges())) this.#layoutReflows += 1;
   }
 
+  /** Schedules one classified reconciliation whenever authoritative or visible evidence changes. */
+  #reconcileInteraction(identityChanges: KanbanIdentityChangeBatch | undefined): void {
+    const revisions = this.viewport.interactionRevisions();
+    const structureRevision = this.viewport.interactionStructureRevision();
+    const metrics = this.viewport.metrics();
+    const geometryRevision = JSON.stringify([metrics.assignedRect.width, metrics.assignedRect.height, metrics.mode]);
+    const deletionFingerprint =
+      identityChanges === undefined
+        ? 'none'
+        : JSON.stringify([
+            identityChanges.changes.map((change) =>
+              change.kind === 'deleted-card'
+                ? [change.kind, typeof change.cardKey, change.cardKey]
+                : change.kind === 'deleted-column'
+                  ? [change.kind, change.columnId]
+                  : [change.kind, change.swimlaneId],
+            ),
+          ]);
+    const current = Object.freeze({
+      revisions,
+      structureRevision,
+      geometryRevision,
+      deletionFingerprint,
+      ...(identityChanges === undefined ? {} : { identityRevision: identityChanges.revision }),
+    });
+    const previous = this.#interactionReconcileEvidence;
+    if (!this.#automaticReconcileReady) {
+      this.#interactionReconcileEvidence = current;
+      return;
+    }
+    if (previous === undefined) {
+      this.#interactionReconcileEvidence = current;
+      return;
+    }
+
+    const queryChanged = previous.revisions.queryGeneration !== revisions.queryGeneration;
+    const structureChanged = revisionKey(previous.structureRevision) !== revisionKey(structureRevision);
+    const sourceChanged =
+      revisionKey(previous.revisions.sessionRevision) !== revisionKey(revisions.sessionRevision) ||
+      revisionKey(previous.identityRevision) !== revisionKey(current.identityRevision);
+    const geometryChanged = revisionKey(previous.geometryRevision) !== revisionKey(geometryRevision);
+    const deletionsChanged = previous.deletionFingerprint !== deletionFingerprint;
+    if (this.#interactionFacade.snapshot().pendingNavigation !== undefined) return;
+    this.#interactionReconcileEvidence = current;
+    if (!queryChanged && !structureChanged && !sourceChanged && !geometryChanged && !deletionsChanged) return;
+    const changes = deletionsChanged ? (identityChanges?.changes ?? []) : [];
+    const deletedCardKeys = changes.flatMap((change) => (change.kind === 'deleted-card' ? [change.cardKey] : []));
+    const deletedColumnIds = changes.flatMap((change) => (change.kind === 'deleted-column' ? [change.columnId] : []));
+    const deletedSwimlaneIds = changes.flatMap((change) =>
+      change.kind === 'deleted-swimlane' ? [change.swimlaneId] : [],
+    );
+    const reason = queryChanged
+      ? 'query'
+      : structureChanged
+        ? 'visibility'
+        : deletionsChanged
+          ? 'deletion'
+          : sourceChanged
+            ? 'source-publication'
+            : 'geometry';
+    void this.#interactionFacade.transition({
+      kind: 'reconcile',
+      reason,
+      ...(deletedCardKeys.length === 0 ? {} : { deletedCardKeys }),
+      ...(deletedColumnIds.length === 0 ? {} : { deletedColumnIds }),
+      ...(deletedSwimlaneIds.length === 0 ? {} : { deletedSwimlaneIds }),
+    });
+  }
+
+  /** Lets explicit application scrolling supersede automatic reveal without changing selection. */
+  #cancelPendingNavigationForScroll(): void {
+    void this.#interactionFacade.transition({
+      kind: 'escape',
+      transient: { kind: 'synthetic', cancel: () => undefined },
+    });
+  }
+
   /** Attaches one controller only after the viewport has acquired its source/session resources. */
   #setupInteraction(limits: KanbanBoardOptions<TCard>['limits']): void {
     try {
@@ -438,6 +546,13 @@ export class KanbanBoard<TCard> extends Group {
             : createKanbanInteractionController(environment, validateKanbanLimitOptions(limits).selectedKeys)
           : this.#interactionFactory(environment);
       this.#interactionFacade.attach(controller);
+      this.#interactionReconcileEvidence = undefined;
+      this.#reconcileInteraction(this.viewport.identityChanges());
+      if (this.#interactionFactory !== undefined) {
+        void Promise.resolve().then(() => {
+          if (!this.#disposed) this.#automaticReconcileReady = true;
+        });
+      }
     } catch {
       this.#interactionFacade.failSetup();
       this.#disposeBindings?.();

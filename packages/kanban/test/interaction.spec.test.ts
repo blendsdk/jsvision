@@ -138,12 +138,14 @@ describe('Kanban programmatic focus and navigation', () => {
     });
     query.set({ search: 'Survivor', filters: [], sort: [] });
     render.flush();
-    await transition(interaction, { kind: 'reconcile', reason: 'query' });
+    render.flush();
+    for (let index = 0; index < 20; index += 1) await Promise.resolve();
     expect(interaction.snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
 
     query.set(QUERY);
     render.flush();
-    await transition(interaction, { kind: 'reconcile', reason: 'query' });
+    render.flush();
+    for (let index = 0; index < 20; index += 1) await Promise.resolve();
     expect(interaction.snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
     render.unmount();
   });
@@ -162,7 +164,8 @@ describe('Kanban programmatic focus and navigation', () => {
     });
     cards.set(cards().slice(1));
     eagerRender.flush();
-    await transition(eager.interaction(), { kind: 'reconcile', reason: 'source-publication' });
+    eagerRender.flush();
+    for (let index = 0; index < 20; index += 1) await Promise.resolve();
     expect(eager.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
     eagerRender.unmount();
 
@@ -179,12 +182,13 @@ describe('Kanban programmatic focus and navigation', () => {
     });
     const lazy = new KanbanBoard({ source: windowed.source, query: () => QUERY, card: CARD });
     const lazyRender = mount(lazy, 24, 10);
+    const retainedFocus = lazy.interaction().snapshot().focused;
     await transition(lazy.interaction(), {
       kind: 'focus',
       target: { kind: 'card', cardKey: 25, address: { columnId: 'ready' } },
     });
     expect(lazy.interaction().snapshot()).toMatchObject({
-      focused: { kind: 'card', cardKey: 25 },
+      focused: retainedFocus,
       pendingNavigation: { kind: 'acquire' },
     });
     expect(windowed.controller.pendingRanges().length).toBeGreaterThan(0);

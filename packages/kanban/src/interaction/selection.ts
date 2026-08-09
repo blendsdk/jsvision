@@ -4,7 +4,12 @@ import {
   validateKanbanDataKeys,
 } from '../contract/data-snapshot.js';
 import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
-import { createKanbanCardKey, createPlacementToken } from '../contract/identity.js';
+import {
+  createKanbanCardKey,
+  createKanbanColumnId,
+  createKanbanSwimlaneId,
+  createPlacementToken,
+} from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
@@ -67,6 +72,16 @@ function cardKey(value: unknown): CardKey {
   if (typeof value !== 'string' && typeof value !== 'number') return invalidPublication();
   try {
     return createKanbanCardKey(value);
+  } catch {
+    return invalidPublication();
+  }
+}
+
+/** Validates one deleted structural identity without exposing rejected input. */
+function structuralId(value: unknown, kind: 'column' | 'swimlane'): string {
+  if (typeof value !== 'string') return invalidPublication();
+  try {
+    return kind === 'column' ? createKanbanColumnId(value) : createKanbanSwimlaneId(value);
   } catch {
     return invalidPublication();
   }
@@ -324,6 +339,50 @@ export class KanbanSelectionModel {
     if (removedCount === 0) return update('unchanged', this.#selected, this.#rangeAnchor, 0);
     this.#commit(replacement);
     if (this.#rangeAnchor !== undefined && !visible.has(membershipKey(this.#rangeAnchor.cardKey))) {
+      this.#rangeAnchor = undefined;
+    }
+    return update('changed', this.#selected, this.#rangeAnchor, removedCount);
+  }
+
+  /** Removes only cards or containing structures named by authoritative source deletion evidence. */
+  pruneDeleted(deletions: {
+    readonly cardKeys: readonly CardKey[];
+    readonly columnIds: readonly string[];
+    readonly swimlaneIds: readonly string[];
+  }): KanbanSelectionUpdate {
+    const deleted = new Set(
+      snapshotKanbanDataArray(deletions.cardKeys, KANBAN_LIMITS.selectedKeys.absolute).map((key) =>
+        membershipKey(cardKey(key)),
+      ),
+    );
+    const deletedColumns = new Set(
+      snapshotKanbanDataArray(deletions.columnIds, KANBAN_LIMITS.columns.absolute).map((id) =>
+        structuralId(id, 'column'),
+      ),
+    );
+    const deletedSwimlanes = new Set(
+      snapshotKanbanDataArray(deletions.swimlaneIds, KANBAN_LIMITS.swimlanes.absolute).map((id) =>
+        structuralId(id, 'swimlane'),
+      ),
+    );
+    if (deleted.size === 0 && deletedColumns.size === 0 && deletedSwimlanes.size === 0) {
+      return update('unchanged', this.#selected, this.#rangeAnchor, 0);
+    }
+    const isDeleted = (entry: KanbanEligibleSelectionCandidate): boolean =>
+      deleted.has(membershipKey(entry.cardKey)) ||
+      deletedColumns.has(entry.address.columnId) ||
+      (entry.address.swimlaneId !== undefined && deletedSwimlanes.has(entry.address.swimlaneId));
+    const replacement = Object.freeze(this.#selected.filter((entry) => !isDeleted(entry)));
+    const removedCount = this.#selected.length - replacement.length;
+    if (removedCount === 0) return update('unchanged', this.#selected, this.#rangeAnchor, 0);
+    this.#commit(replacement);
+    if (
+      this.#rangeAnchor !== undefined &&
+      (deleted.has(membershipKey(this.#rangeAnchor.cardKey)) ||
+        deletedColumns.has(this.#rangeAnchor.address.columnId) ||
+        (this.#rangeAnchor.address.swimlaneId !== undefined &&
+          deletedSwimlanes.has(this.#rangeAnchor.address.swimlaneId)))
+    ) {
       this.#rangeAnchor = undefined;
     }
     return update('changed', this.#selected, this.#rangeAnchor, removedCount);

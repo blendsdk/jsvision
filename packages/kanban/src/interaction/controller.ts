@@ -7,10 +7,10 @@ import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from
 import { createKanbanCardKey, createPlacementToken } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
-import { snapshotKanbanRevision } from '../contract/revision.js';
+import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
-import { KanbanAcquisitionCoordinator } from './acquisition.js';
+import { KanbanAcquisitionCoordinator, snapshotKanbanInteractionRevisions } from './acquisition.js';
 import type { KanbanInteractionController } from './facade.js';
 import { resolveKanbanNavigation } from './navigation.js';
 import {
@@ -272,6 +272,22 @@ function publishedSelectionEqual(
   );
 }
 
+/** Compares one captured interaction revision envelope without coercing revision types. */
+function interactionRevisionsEqual(
+  left: ReturnType<typeof snapshotKanbanInteractionRevisions>,
+  right: ReturnType<typeof snapshotKanbanInteractionRevisions>,
+): boolean {
+  const viewEqual =
+    left.viewRevision === undefined
+      ? right.viewRevision === undefined
+      : right.viewRevision !== undefined && kanbanRevisionsEqual(left.viewRevision, right.viewRevision);
+  return (
+    kanbanRevisionsEqual(left.sessionRevision, right.sessionRevision) &&
+    left.queryGeneration === right.queryGeneration &&
+    viewEqual
+  );
+}
+
 /** Default single-owner interaction state machine used when no factory is supplied. */
 class DefaultKanbanInteractionController implements KanbanInteractionController {
   readonly #environment: KanbanInteractionEnvironment;
@@ -282,6 +298,7 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   readonly #subscribers = new Set<() => void>();
   #snapshot: KanbanInteractionSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
   #previousScene = snapshotKanbanNavigationSnapshot({ revision: 0, targets: [], viewportContentHeight: 0 });
+  #supersededPending: KanbanInteractionSnapshot['pendingNavigation'];
   #disposed = false;
 
   /** Creates an empty controller and defers initial focus until usable scene evidence exists. */
@@ -305,12 +322,21 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   transition(command: KanbanInteractionTransition): ReturnType<KanbanInteractionController['transition']> {
     if (this.#disposed) throw new KanbanDisposedResourceError();
     this.#ensureInitialFocus();
+    this.#supersededPending = this.#snapshot.pendingNavigation;
     this.#acquisition.cancel();
-    if (command.kind === 'focus') return this.#focus(command.target);
-    if (command.kind === 'navigate') return this.#navigate(command.direction, command.extendSelection === true);
-    if (command.kind === 'selection') return this.#select(command);
-    if (command.kind === 'reconcile') return this.#reconcile(command.reason);
-    return this.#escape(command);
+    const result =
+      command.kind === 'focus'
+        ? this.#focus(command.target)
+        : command.kind === 'navigate'
+          ? this.#navigate(command.direction, command.extendSelection === true)
+          : command.kind === 'selection'
+            ? this.#select(command)
+            : command.kind === 'reconcile'
+              ? this.#reconcile(command)
+              : this.#escape(command);
+    return result instanceof Promise
+      ? result.then((settled) => this.#finishSupersession(settled))
+      : this.#finishSupersession(result);
   }
 
   /** Registers one semantic-state listener. */
@@ -408,31 +434,82 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
       });
     }
     if (focused.kind !== 'card') return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
-    const prior = this.#snapshot.focused;
+    return this.#acquireFocus(focused);
+  }
+
+  /** Retains current focus while one absent card is acquired and confirmed visible. */
+  #acquireFocus(
+    focused: KanbanFocusTarget & { readonly kind: 'card' },
+    announcePending = true,
+  ): KanbanInteractionResult {
     const pending = Object.freeze({ kind: 'acquire' as const, target: focused });
+    const revisions = snapshotKanbanInteractionRevisions(this.#environment.revisions());
     const pendingResult = this.#publish({
-      focused,
       pendingNavigation: pending,
-      feedback: this.#safeFeedback('navigation-pending'),
+      ...(announcePending ? { feedback: this.#safeFeedback('navigation-pending') } : { feedback: undefined }),
     });
     const handle = this.#acquisition.start({
       request: pending,
-      revisions: this.#environment.revisions(),
+      revisions,
       currentRevisions: this.#environment.revisions,
       execute: ({ signal }) => this.#environment.acquire(pending, { signal }),
     });
-    void handle.settlement.then((settlement) => {
-      if (this.#disposed || this.#snapshot.pendingNavigation?.target !== focused) return;
-      if (settlement.kind === 'available')
-        this.#publish({ focused, pendingNavigation: undefined, feedback: undefined });
-      else if (settlement.kind === 'unavailable') {
+    void handle.settlement
+      .then(async (settlement) => {
+        if (this.#disposed || this.#snapshot.pendingNavigation !== pending) return;
+        if (settlement.kind === 'stale') {
+          this.#publish({ pendingNavigation: undefined, feedback: undefined });
+          return;
+        }
+        if (settlement.kind === 'unavailable') {
+          this.#publish({
+            pendingNavigation: undefined,
+            feedback: this.#safeFeedback(settlement.code, undefined, settlement.retry),
+          });
+          return;
+        }
+        await Promise.resolve();
+        await Promise.resolve();
+        const ownershipAfterRefresh = this.#pendingOwnership(pending, revisions);
+        if (ownershipAfterRefresh !== 'owned') {
+          if (ownershipAfterRefresh === 'stale') this.#publish({ pendingNavigation: undefined, feedback: undefined });
+          return;
+        }
+        const scene = snapshotKanbanNavigationSnapshot(this.#environment.scene());
+        const visible = scene.targets.find(
+          (entry) =>
+            entry.enabled &&
+            entry.target.kind === 'card' &&
+            typeof entry.target.cardKey === typeof focused.cardKey &&
+            entry.target.cardKey === focused.cardKey,
+        );
+        if (visible === undefined) {
+          this.#publish({
+            pendingNavigation: undefined,
+            feedback: this.#safeFeedback('navigation-unavailable', undefined, 'available'),
+          });
+          return;
+        }
+        const ownershipBeforePublish = this.#pendingOwnership(pending, revisions);
+        if (ownershipBeforePublish !== 'owned') {
+          if (ownershipBeforePublish === 'stale') this.#publish({ pendingNavigation: undefined, feedback: undefined });
+          return;
+        }
+        this.#previousScene = scene;
         this.#publish({
-          focused: prior,
+          focused: visible.target,
+          preferredCenterRow: visible.centerRow,
           pendingNavigation: undefined,
-          feedback: this.#safeFeedback(settlement.code, undefined, settlement.retry),
+          feedback: undefined,
         });
-      }
-    });
+      })
+      .catch(() => {
+        if (this.#disposed || this.#snapshot.pendingNavigation !== pending) return;
+        this.#publish({
+          pendingNavigation: undefined,
+          feedback: this.#safeFeedback('navigation-error', undefined, 'available'),
+        });
+      });
     return Object.freeze({ kind: 'pending', snapshot: pendingResult.snapshot });
   }
 
@@ -450,10 +527,13 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
         ? {}
         : { preferredCenterRow: this.#snapshot.preferredCenterRow }),
     });
+    const resolvedTarget = scene.targets.find(
+      (entry) => canonicalizeKanbanFocusTarget(entry.target) === canonicalizeKanbanFocusTarget(resolved.focused),
+    );
     if (
       (direction === 'previous-column' || direction === 'next-column') &&
-      this.#snapshot.focused.kind === 'card' &&
-      resolved.focused.kind === 'column-header'
+      resolved.focused.kind === 'column-header' &&
+      resolvedTarget?.enabled === false
     ) {
       return this.#revealColumnNavigation(direction, resolved.focused, scene);
     }
@@ -504,16 +584,21 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   ): Promise<KanbanInteractionResult> {
     const priorFocus = this.#snapshot.focused;
     const pending = Object.freeze({ kind: 'reveal' as const, target });
+    const revisions = snapshotKanbanInteractionRevisions(this.#environment.revisions());
     this.#publish({ pendingNavigation: pending, feedback: this.#safeFeedback('navigation-pending') });
     const handle = this.#acquisition.start({
       request: pending,
-      revisions: this.#environment.revisions(),
+      revisions,
       currentRevisions: this.#environment.revisions,
       execute: ({ signal }) => this.#environment.reveal(target, { signal }),
     });
     const settlement = await handle.settlement;
-    if (this.#disposed || (settlement.kind === 'stale' && settlement.reason !== 'revision-changed')) {
-      return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    if (this.#disposed) return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    if (settlement.kind === 'stale') {
+      if (this.#snapshot.pendingNavigation !== pending) {
+        return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+      }
+      return this.#publish({ pendingNavigation: undefined, feedback: undefined });
     }
     if (settlement.kind === 'unavailable') {
       const published = this.#publish({
@@ -529,6 +614,11 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
     }
     await Promise.resolve();
     await Promise.resolve();
+    const ownershipAfterRefresh = this.#pendingOwnership(pending, revisions);
+    if (ownershipAfterRefresh !== 'owned') {
+      if (ownershipAfterRefresh === 'stale') this.#publish({ pendingNavigation: undefined, feedback: undefined });
+      return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    }
     const scene = snapshotKanbanNavigationSnapshot(this.#environment.scene());
     // A reveal may itself refresh an eager publication. Re-resolving against the new detached scene
     // is safe only while the requested structural destination still exists and remains enabled.
@@ -537,6 +627,11 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
     );
     if (!destinationStillExists) {
       return this.#publish({ pendingNavigation: undefined, feedback: undefined });
+    }
+    const ownershipBeforePublish = this.#pendingOwnership(pending, revisions);
+    if (ownershipBeforePublish !== 'owned') {
+      if (ownershipBeforePublish === 'stale') this.#publish({ pendingNavigation: undefined, feedback: undefined });
+      return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
     }
     const resolved = resolveKanbanNavigation({
       current: priorFocus,
@@ -622,32 +717,101 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   }
 
   /** Reconciles focus and selection from current geometry and source authority. */
-  #reconcile(
-    reason: Extract<KanbanInteractionTransition, { readonly kind: 'reconcile' }>['reason'],
-  ): KanbanInteractionResult {
+  #reconcile(command: Extract<KanbanInteractionTransition, { readonly kind: 'reconcile' }>): KanbanInteractionResult {
+    const { reason } = command;
     const scene = snapshotKanbanNavigationSnapshot(this.#environment.scene());
+    const focused = this.#snapshot.focused;
+    const focusedDeleted =
+      focused.kind === 'card' &&
+      ((command.deletedCardKeys ?? []).some(
+        (key) => typeof key === typeof focused.cardKey && key === focused.cardKey,
+      ) ||
+        (command.deletedColumnIds ?? []).includes(focused.address.columnId) ||
+        (focused.address.swimlaneId !== undefined &&
+          (command.deletedSwimlaneIds ?? []).includes(focused.address.swimlaneId)));
+    const focusReason =
+      reason === 'source-publication' && focused.kind === 'card' && !focusedDeleted ? 'cursor-unload' : reason;
     const reconciled = reconcileKanbanFocus({
-      current: this.#snapshot.focused,
+      current: focused,
       scene,
       previousScene: this.#previousScene,
-      reason,
+      reason: focusReason,
       ...(this.#snapshot.preferredCenterRow === undefined
         ? {}
         : { preferredCenterRow: this.#snapshot.preferredCenterRow }),
     });
-    const visibleKeys = scene.targets.flatMap((entry) =>
-      entry.enabled && entry.target.kind === 'card' ? [entry.target.cardKey] : [],
-    );
-    const pruned = this.#selection.prune(visibleKeys, reason === 'cursor-unload' ? 'cursor-unload' : 'visibility');
+    let removedCount = 0;
+    if (
+      command.deletedCardKeys !== undefined ||
+      command.deletedColumnIds !== undefined ||
+      command.deletedSwimlaneIds !== undefined
+    ) {
+      removedCount +=
+        this.#selection.pruneDeleted({
+          cardKeys: command.deletedCardKeys ?? [],
+          columnIds: command.deletedColumnIds ?? [],
+          swimlaneIds: command.deletedSwimlaneIds ?? [],
+        }).removedCount ?? 0;
+    }
+    if (reason === 'query' || reason === 'visibility') {
+      const currentVisibleKeys = new Set(
+        scene.targets.flatMap((entry) =>
+          entry.enabled && entry.target.kind === 'card'
+            ? [JSON.stringify([typeof entry.target.cardKey, entry.target.cardKey])]
+            : [],
+        ),
+      );
+      const selectedKeys = new Set(this.#selection.selectedCardKeys().map((key) => JSON.stringify([typeof key, key])));
+      const provenHiddenKeys = this.#previousScene.targets.flatMap((entry) => {
+        if (!entry.enabled || entry.target.kind !== 'card') return [];
+        const key = JSON.stringify([typeof entry.target.cardKey, entry.target.cardKey]);
+        return selectedKeys.has(key) && !currentVisibleKeys.has(key) ? [entry.target.cardKey] : [];
+      });
+      removedCount +=
+        this.#selection.pruneDeleted({ cardKeys: provenHiddenKeys, columnIds: [], swimlaneIds: [] }).removedCount ?? 0;
+    }
     this.#previousScene = scene;
+    if (reconciled.kind === 'acquire' && reconciled.focused.kind === 'card') {
+      return this.#acquireFocus(reconciled.focused, reason !== 'source-publication');
+    }
+    const selectedCardKeys = this.#selection.selectedCardKeys();
+    const activeRangeAnchor = this.#selection.rangeAnchor();
+    if (
+      reconciled.kind === 'retained' &&
+      removedCount === 0 &&
+      publishedSelectionEqual(this.#snapshot, selectedCardKeys, activeRangeAnchor, this.#selection.serverSelection())
+    ) {
+      return Object.freeze({ kind: 'unchanged', snapshot: this.#snapshot });
+    }
     return this.#publish({
       focused: reconciled.focused,
-      selectedCardKeys: pruned.selectedCardKeys,
-      rangeAnchor: pruned.rangeAnchor,
-      ...(pruned.removedCount === undefined || pruned.removedCount === 0
-        ? {}
-        : { feedback: this.#safeFeedback('selection-pruned', pruned.removedCount) }),
+      selectedCardKeys,
+      rangeAnchor: activeRangeAnchor,
+      ...(removedCount === 0 ? {} : { feedback: this.#safeFeedback('selection-pruned', removedCount) }),
     });
+  }
+
+  /** Classifies whether delayed work still owns its pending marker and source/query revisions. */
+  #pendingOwnership(
+    pending: NonNullable<KanbanInteractionSnapshot['pendingNavigation']>,
+    revisions: ReturnType<typeof snapshotKanbanInteractionRevisions>,
+  ): 'owned' | 'stale' | 'superseded' {
+    if (this.#disposed || this.#snapshot.pendingNavigation !== pending) return 'superseded';
+    return interactionRevisionsEqual(revisions, snapshotKanbanInteractionRevisions(this.#environment.revisions()))
+      ? 'owned'
+      : 'stale';
+  }
+
+  /** Clears one superseded pending marker when the replacing command made no other publication. */
+  #finishSupersession(result: KanbanInteractionResult): KanbanInteractionResult {
+    const superseded = this.#supersededPending;
+    if (superseded === undefined || this.#snapshot.pendingNavigation !== superseded) {
+      this.#supersededPending = undefined;
+      return result;
+    }
+    const cleared = this.#publish({ pendingNavigation: undefined, feedback: undefined });
+    if (result.kind !== 'unavailable') return cleared;
+    return Object.freeze({ ...result, snapshot: cleared.snapshot });
   }
 
   /** Builds safe localized feedback through the bounded environment seam. */
@@ -694,8 +858,14 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
     const preferredCenterRow = owns('preferredCenterRow')
       ? patch.preferredCenterRow
       : this.#snapshot.preferredCenterRow;
-    const pendingNavigation = owns('pendingNavigation') ? patch.pendingNavigation : this.#snapshot.pendingNavigation;
-    const currentFeedback = owns('feedback') ? patch.feedback : this.#snapshot.feedback;
+    const clearsSuperseded =
+      this.#supersededPending !== undefined && this.#snapshot.pendingNavigation === this.#supersededPending;
+    const pendingNavigation = owns('pendingNavigation')
+      ? patch.pendingNavigation
+      : clearsSuperseded
+        ? undefined
+        : this.#snapshot.pendingNavigation;
+    const currentFeedback = owns('feedback') ? patch.feedback : clearsSuperseded ? undefined : this.#snapshot.feedback;
     const serverSelection = owns('serverSelection') ? patch.serverSelection : this.#snapshot.serverSelection;
     const next = Object.freeze({
       revision: this.#snapshot.revision + 1,
@@ -708,6 +878,7 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
       ...(serverSelection === undefined ? {} : { serverSelection }),
     });
     this.#snapshot = next;
+    this.#supersededPending = undefined;
     this.#notify();
     return Object.freeze({ kind: 'changed', snapshot: next });
   }

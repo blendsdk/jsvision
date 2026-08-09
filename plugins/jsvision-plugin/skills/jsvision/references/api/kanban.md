@@ -1939,7 +1939,16 @@ type KanbanInteractionTransition = | { readonly kind: 'focus'; readonly target: 
       readonly operation: KanbanSelectionOperation;
       readonly serverSelection?: KanbanServerSelectionReference;
     }
-  | { readonly kind: 'reconcile'; readonly reason: KanbanInteractionReconcileReason }
+  | {
+      readonly kind: 'reconcile';
+      readonly reason: KanbanInteractionReconcileReason;
+      /** Exact authoritative card deletions, kept separate from unloaded or merely hidden identities. */
+      readonly deletedCardKeys?: readonly CardKey[];
+      /** Exact authoritative workflow-column deletions. */
+      readonly deletedColumnIds?: readonly KanbanColumnId[];
+      /** Exact authoritative swimlane deletions. */
+      readonly deletedSwimlaneIds?: readonly KanbanSwimlaneId[];
+    }
   | {
       readonly kind: 'escape';
       readonly transient?: { readonly kind: 'synthetic'; readonly cancel: () => void };
@@ -4014,6 +4023,7 @@ identityChanges(): KanbanIdentityChangeBatch | undefined
 focusedNavigator(): KanbanFocusedColumnNavigator | undefined
 interactionScene(): KanbanNavigationSnapshot
 interactionRevisions(): KanbanInteractionRevisions
+interactionStructureRevision(): KanbanRevision
 interactionEligibleSelection(): readonly KanbanEligibleSelectionCandidate[]
 revealInteractionTarget(target: KanbanFocusTarget, options?: { readonly signal?: AbortSignal }): Promise<KanbanInteractionAcquisitionResult>
 scrollTo(target: KanbanScrollTarget): void
@@ -5047,6 +5057,14 @@ Adds density-owned global resting gaps to a detached sparse descriptor extent.
 
 ```ts
 resolveKanbanVerticalProjectionExtent(projection: KanbanVerticalHeightProjection, density: KanbanCardDensity): KanbanVerticalProjectionExtent
+```
+
+## setKanbanViewportInteractionEvidenceListener
+
+Registers or clears one owning board listener without widening consumer construction options.
+
+```ts
+setKanbanViewportInteractionEvidenceListener<TCard>(viewport: KanbanViewport<TCard>, listener: (() => void) | undefined): void
 ```
 
 ## snapshotKanbanBoardCounts

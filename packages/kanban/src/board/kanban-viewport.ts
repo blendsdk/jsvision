@@ -4,7 +4,6 @@ import { View, signal } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext, Signal, Size2D } from '@jsvision/ui';
 
 import type { KanbanCardPresentationAdapter } from '../card/adapter.js';
-import { readKanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity, KanbanCardRenderer } from '../card/descriptor.js';
 import type { KanbanCardFormattingContext } from '../card/formatting.js';
 import type { KanbanPresentationInput } from '../card/presentation-policy.js';
@@ -75,6 +74,18 @@ import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader 
 import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
 import { KanbanViewportInteractionBinding } from './viewport-interaction.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
+
+/** Board-owned listeners notified after viewport evidence changes semantically. */
+const INTERACTION_EVIDENCE_LISTENERS = new WeakMap<object, () => void>();
+
+/** Registers or clears one owning board listener without widening consumer construction options. */
+export function setKanbanViewportInteractionEvidenceListener<TCard>(
+  viewport: KanbanViewport<TCard>,
+  listener: (() => void) | undefined,
+): void {
+  if (listener === undefined) INTERACTION_EVIDENCE_LISTENERS.delete(viewport);
+  else INTERACTION_EVIDENCE_LISTENERS.set(viewport, listener);
+}
 
 /** Application-owned identity hints projected by a read-only board. */
 export interface KanbanIdentityInput {
@@ -196,6 +207,7 @@ export class KanbanViewport<TCard> extends View {
   #horizontalAnchorOffset = 0;
   #anchorSourceRevision: KanbanRevision | undefined;
   #anchorSourceGeneration: number | undefined;
+  #interactionStructureRevision: KanbanRevision = 'default';
   #anchorInputs:
     | {
         readonly width: number;
@@ -309,6 +321,7 @@ export class KanbanViewport<TCard> extends View {
     const renderer = this.#options.renderer?.();
     const rendererRevision = this.#options.rendererRevision?.();
     const structure = this.#options.structure?.();
+    this.#interactionStructureRevision = structure?.revision ?? 'default';
     const layoutChanged = this.#restoreVerticalAnchor(density, i18n, theme, ctx.caps);
     const collapsedColumnIds = this.#options.collapsedColumnIds?.();
     let snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure);
@@ -401,10 +414,16 @@ export class KanbanViewport<TCard> extends View {
     this.#projectionOffsets = this.#metrics.offsets;
     this.#anchorSourceRevision = snapshot.publication.revision;
     this.#anchorSourceGeneration = snapshot.generation;
-    if (!relocatingAnchor) this.#rememberVerticalAnchor(projection, identity, density);
+    const anchorRelocationPending = this.#anchorController !== undefined && !this.#anchorController.signal.aborted;
+    if (!relocatingAnchor && !anchorRelocationPending) this.#rememberVerticalAnchor(projection, identity, density);
     this.#rememberHorizontalAnchor(snapshot);
     drawKanbanViewport(ctx, projection, theme);
     this.#updateMetrics(snapshot, projection);
+    try {
+      INTERACTION_EVIDENCE_LISTENERS.get(this)?.();
+    } catch {
+      // Reconciliation failure cannot corrupt viewport projection or source ownership.
+    }
   }
 
   /** Reports the exact parent-assigned space consumed by this exact-cell projection leaf. */
@@ -467,7 +486,10 @@ export class KanbanViewport<TCard> extends View {
         : JSON.stringify([
             this.#snapshot.publication.revision,
             this.#snapshot.generation,
+            this.#snapshot.structure.revision,
             this.#snapshot.widths.columns.map((column) => column.columnId),
+            this.bounds.width,
+            this.bounds.height,
           ]);
     if (geometry === undefined) {
       return Object.freeze({
@@ -486,16 +508,16 @@ export class KanbanViewport<TCard> extends View {
     }
     const targets: KanbanNavigationTarget[] = [];
     let sceneIndex = 0;
-    const workflowColumns = this.#snapshot?.publication.columns ?? [];
-    for (const [columnIndex, column] of workflowColumns.entries()) {
-      const header = geometry.workflowHeaders.find((candidate) => candidate.columnId === column.columnId);
+    const visibleColumns = new Map((projection?.columns ?? []).map((column) => [column.columnId, column]));
+    for (const [columnIndex, column] of (this.#snapshot?.publication.columns ?? []).entries()) {
+      const visible = visibleColumns.get(column.columnId);
       targets.push(
         Object.freeze({
           target: Object.freeze({ kind: 'column-header' as const, columnId: column.columnId }),
           sceneIndex,
-          centerColumn: header === undefined ? columnIndex * 18 + 8.5 : header.x + (header.width - 1) / 2,
-          centerRow: header === undefined ? 0 : header.y + (header.height - 1) / 2,
-          enabled: true,
+          centerColumn: visible === undefined ? columnIndex * 18 + 8.5 : visible.rect.x + (visible.rect.width - 1) / 2,
+          centerRow: visible === undefined ? 0 : visible.rect.y + (visible.rect.height - 1) / 2,
+          enabled: visible !== undefined,
         }),
       );
       sceneIndex += 1;
@@ -512,59 +534,17 @@ export class KanbanViewport<TCard> extends View {
       );
       sceneIndex += 1;
     }
-    const activeColumnIds = new Set(this.#snapshot?.widths.columns.map((column) => column.columnId) ?? []);
-    const snapshotCards: Array<{
-      readonly cardKey: CardKey;
-      readonly address: KanbanCellAddress;
-      readonly visibleIndex: number;
-    }> = [];
-    for (const cell of this.#snapshot?.cells ?? []) {
-      for (let index = cell.range.start; index < cell.range.end; index += 1) {
-        const record = cell.cursor.cardAt(index);
-        if (record === undefined) continue;
-        try {
-          snapshotCards.push(
-            Object.freeze({
-              cardKey: readKanbanCardAdapter(record, this.#options.card).cardKey,
-              address: cell.address,
-              visibleIndex: index - cell.range.start,
-            }),
-          );
-        } catch {
-          // A malformed card is excluded from navigation without affecting neighboring targets.
-        }
-      }
-    }
-    const residentCardKeys = new Set(snapshotCards.map((card) => JSON.stringify([typeof card.cardKey, card.cardKey])));
-    const retainedCardKeys = new Set<string>();
-    for (const card of geometry.cards.filter(
-      (candidate) =>
-        activeColumnIds.has(candidate.address.columnId) &&
-        residentCardKeys.has(JSON.stringify([typeof candidate.cardKey, candidate.cardKey])),
-    )) {
-      retainedCardKeys.add(JSON.stringify([typeof card.cardKey, card.cardKey]));
+    for (const card of projection?.cards ?? []) {
+      const address = Object.freeze({
+        columnId: card.columnId,
+        ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+      });
       targets.push(
         Object.freeze({
-          target: Object.freeze({ kind: 'card' as const, cardKey: card.cardKey, address: card.address }),
+          target: Object.freeze({ kind: 'card' as const, cardKey: card.descriptor.cardKey, address }),
           sceneIndex,
-          centerColumn: card.x + (card.width - 1) / 2,
-          centerRow: card.y + (card.height - 1) / 2,
-          enabled: true,
-        }),
-      );
-      sceneIndex += 1;
-    }
-    for (const card of snapshotCards) {
-      const encoded = JSON.stringify([typeof card.cardKey, card.cardKey]);
-      if (retainedCardKeys.has(encoded)) continue;
-      retainedCardKeys.add(encoded);
-      const columnIndex = workflowColumns.findIndex((column) => column.columnId === card.address.columnId);
-      targets.push(
-        Object.freeze({
-          target: Object.freeze({ kind: 'card' as const, cardKey: card.cardKey, address: card.address }),
-          sceneIndex,
-          centerColumn: Math.max(0, columnIndex) * 18 + 8.5,
-          centerRow: 1.5 + Math.max(0, card.visibleIndex) * 3,
+          centerColumn: card.rect.x + (card.rect.width - 1) / 2,
+          centerRow: card.rect.y + (card.rect.height - 1) / 2,
           enabled: true,
         }),
       );
@@ -582,7 +562,23 @@ export class KanbanViewport<TCard> extends View {
       );
     }
     return Object.freeze({
-      revision,
+      revision: JSON.stringify([
+        revision,
+        targets.map((entry) => {
+          const target = entry.target;
+          if (target.kind === 'board-state') return [target.kind, entry.enabled];
+          if (target.kind === 'column-header') return [target.kind, target.columnId, entry.enabled];
+          if (target.kind === 'swimlane-header') return [target.kind, target.swimlaneId, entry.enabled];
+          return [
+            target.kind,
+            typeof target.cardKey,
+            target.cardKey,
+            target.address.columnId,
+            target.address.swimlaneId ?? null,
+            entry.enabled,
+          ];
+        }),
+      ]),
       targets: Object.freeze(targets),
       viewportContentHeight: Math.max(0, this.bounds.height - geometry.contentOrigin.y),
     });
@@ -594,6 +590,11 @@ export class KanbanViewport<TCard> extends View {
       sessionRevision: this.#snapshot?.publication.revision ?? 0,
       queryGeneration: this.#snapshot?.generation ?? 0,
     });
+  }
+
+  /** Returns the current structure-policy revision used to classify visibility reconciliation. */
+  interactionStructureRevision(): KanbanRevision {
+    return this.#interactionStructureRevision;
   }
 
   /** Returns visible eligible cards with exact current entity revisions. */
@@ -677,7 +678,11 @@ export class KanbanViewport<TCard> extends View {
     if (source === undefined || this.#disposed) throw new KanbanDisposedResourceError();
     const cardKey = snapshotKanbanRevealKey(key);
     const resolvedAlignment = snapshotKanbanRevealAlignment(alignment);
-    this.#cancelAnchorRelocation();
+    const anchorOwnsRelocation =
+      this.#anchorController !== undefined &&
+      !this.#anchorController.signal.aborted &&
+      this.#verticalAnchor?.cardKey === cardKey;
+    if (!anchorOwnsRelocation) this.#cancelAnchorRelocation();
     this.#revealController?.abort();
     const controller = new AbortController();
     this.#revealController = controller;
@@ -688,6 +693,7 @@ export class KanbanViewport<TCard> extends View {
       const before = this.#requestedOffsets;
       const beforeColumn = this.#focusedColumnAnchor;
       const location = await source.locateCard(cardKey, controller.signal);
+      if (anchorOwnsRelocation) return Object.freeze({ location, scrolled: false });
       if ((location.kind === 'found' || location.kind === 'unloaded') && location.index !== undefined) {
         const density = this.#options.density?.() ?? 'comfortable';
         const top = this.#logicalCardRow(location.address, location.index, density);
@@ -1099,8 +1105,10 @@ export class KanbanViewport<TCard> extends View {
           (location.kind !== 'found' && location.kind !== 'unloaded') ||
           location.index === undefined
         ) {
+          if (this.#anchorController === controller) this.#anchorController = undefined;
           return;
         }
+        this.#anchorController = undefined;
         const y = Math.max(0, this.#logicalCardRow(location.address, location.index, density) - anchor.relativeRow);
         this.#recordLocatedExtent(y);
         this.#focusedColumnAnchor = location.address.columnId;
@@ -1111,6 +1119,7 @@ export class KanbanViewport<TCard> extends View {
         this.invalidate();
       },
       () => {
+        if (this.#anchorController === controller) this.#anchorController = undefined;
         // Cancellation and unsupported locators leave the last bounded projection intact.
       },
     );
@@ -1272,6 +1281,7 @@ export class KanbanViewport<TCard> extends View {
       metrics.generation,
       typeof metrics.sourceRevision,
       metrics.sourceRevision ?? null,
+      snapshot.structure.revision,
     ]);
     if (fingerprint !== this.#metricsFingerprint) {
       this.#metricsFingerprint = fingerprint;
