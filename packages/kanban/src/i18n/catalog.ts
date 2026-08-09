@@ -62,6 +62,11 @@ export const KANBAN_ACCELERATOR_MANIFEST: AcceleratorManifest = Object.freeze({
   scopes: Object.freeze([]),
 });
 
+/** Exact placeholders accepted by first-use Phase B messages. */
+export const KANBAN_PHASE_B_PLACEHOLDER_MANIFEST: PlaceholderManifest = Object.freeze({
+  'kanban.state.descriptor-limit': Object.freeze(['count']),
+});
+
 /** Canonical English messages used by the package catalog and safe application defaults. */
 export const KANBAN_ENGLISH_MESSAGES = Object.freeze({
   'kanban.board.label': 'Kanban board',
@@ -86,6 +91,8 @@ export const KANBAN_ENGLISH_MESSAGES = Object.freeze({
 
 /** Exact first-use Phase B message inventory required from every Kanban translation overlay. */
 export interface KanbanPhaseBMessageMap {
+  /** Partial-state evidence that names the number of descriptors omitted by the finite viewport budget. */
+  readonly 'kanban.state.descriptor-limit': Message;
   /** Read-only card action that asks the application to open its card editor. */
   readonly 'kanban.action.open-card-editor': Message;
   /** Compact feedback shown while a card operation is pending. */
@@ -116,6 +123,7 @@ export interface KanbanPhaseBMessageMap {
 
 /** Canonical English messages introduced by the Phase B board surface. */
 export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
+  'kanban.state.descriptor-limit': '${count} cards are outside the display limit',
   'kanban.action.open-card-editor': 'Open card editor',
   'kanban.card.feedback.pending': 'Pending',
   'kanban.card.feedback.invalid': 'Invalid',
@@ -161,7 +169,7 @@ export const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog = defineCatalog(
     messages: KANBAN_PHASE_B_ENGLISH_MESSAGES,
   },
   {
-    placeholderManifest: Object.freeze({}),
+    placeholderManifest: KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
     acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
   },
 );

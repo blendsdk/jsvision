@@ -14,8 +14,9 @@ import type {
   KanbanCardTerminalCapabilities,
 } from './descriptor.js';
 import { snapshotKanbanCardPresentation } from './presentation-snapshot.js';
-import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
+import type { KanbanCardPresentationSnapshot, KanbanCardPresentationSnapshotContext } from './presentation-snapshot.js';
 import { resolveKanbanPresentation } from './presentation-policy.js';
+import type { ResolvedKanbanPresentationBudget } from './presentation-policy.js';
 import { resolveKanbanCardStyle } from './style-resolver.js';
 import { createStandardKanbanSectionCandidates } from './standard-sections.js';
 import type { KanbanStandardSectionCandidate } from './standard-sections.js';
@@ -376,6 +377,69 @@ export function renderStandardKanbanCard<TCard>(
   return composeStandardKanbanCard(snapshot, {
     width: context.width,
     rowBudget: Math.min(context.rowBudget, budget.cardRows),
+    theme: context.theme,
+    capabilities: context.capabilities,
+  });
+}
+
+/** Inputs used by the mounted board when a resolved rich-card policy differs from the density preset. */
+export interface KanbanConfiguredStandardCardContext {
+  /** Resolved bounded presentation policy shared by the scene and descriptor composer. */
+  readonly budget: ResolvedKanbanPresentationBudget;
+  /** Optional card-local selection and visual-state overrides owned by the board interaction layer. */
+  readonly presentation?: Pick<KanbanCardPresentationSnapshotContext, 'selection' | 'visualState'>;
+  /** Optional payload-free observation sink for section-local rich-card failures. */
+  readonly observe?: KanbanCardPresentationSnapshotContext['observe'];
+}
+
+/**
+ * Renders the standard rich card with an already-resolved board presentation policy.
+ *
+ * This internal integration helper keeps custom row/checklist budgets consistent between descriptor
+ * composition and scene spacing while retaining the original convenience renderer unchanged.
+ */
+export function renderConfiguredStandardKanbanCard<TCard>(
+  card: TCard,
+  adapter: KanbanCardPresentationAdapter<TCard>,
+  context: KanbanCardRenderContext,
+  configured: KanbanConfiguredStandardCardContext,
+): KanbanCardDescriptor {
+  if (!Number.isSafeInteger(context.width) || context.width < 2 || context.rowBudget < 2) {
+    throw new KanbanInvalidDescriptorError();
+  }
+  const limits = validateKanbanLimitOptions({ class: 'standard' });
+  const fields = configuredAdapterIds(adapter, 'fields', 'fieldId', limits.cardFields);
+  const summaries = configuredAdapterIds(adapter, 'summaries', 'summaryId', limits.summarySections);
+  const checklistValues = readChecklistValues(card, adapter, limits.checklistGroups, limits.checklistItemsPerGroup);
+  const maximum = {
+    budget: configured.budget,
+    limits,
+    availableFieldIds: fields.map(createKanbanFieldId),
+    availableSummaryIds: summaries.map(createKanbanFieldId),
+    availableChecklistIds: checklistValues.map(({ checklistId }) => createKanbanChecklistId(checklistId)),
+  };
+  const presentation = configured.presentation;
+  const snapshot = snapshotKanbanCardPresentation(card, adapter, {
+    maximum,
+    visualState: presentation?.visualState ?? {
+      focused: context.focused,
+      selected: context.selected,
+      rangeAnchor: false,
+      readOnly: context.readOnly,
+      invalid: context.operation === 'rejected',
+      operation: context.operation,
+    },
+    formatting: context.formatting,
+    checklistValues,
+    ...(presentation?.selection === undefined ? {} : { selection: presentation.selection }),
+    ...(configured.observe === undefined ? {} : { observe: configured.observe }),
+  });
+  if (snapshot.cardKey !== context.cardKey || snapshot.presentationRevision !== context.presentationRevision) {
+    throw new KanbanInvalidDescriptorError();
+  }
+  return composeStandardKanbanCard(snapshot, {
+    width: context.width,
+    rowBudget: Math.min(context.rowBudget, configured.budget.cardRows),
     theme: context.theme,
     capabilities: context.capabilities,
   });

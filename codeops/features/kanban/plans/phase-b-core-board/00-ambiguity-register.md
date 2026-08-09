@@ -510,6 +510,31 @@ snapshot support.
 - **Reopen triggers:** Grouping policy becomes directly available to the eager source, cache ownership
   moves to the scene layer, or scheduler failures gain a public diagnostic state.
 
+### PAR-B40 — Ungrouped canonical scene geometry (runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact internal geometry representation for the already-approved backwards-compatible
+  ungrouped board; it adds no grouping semantics, application authority, or visible chrome.
+- **Decision:** Represent an ungrouped board as one implicit chrome-free geometry row over sparse cells
+  whose addresses omit `swimlaneId`. Do not synthesize a public swimlane identity or header. Use the
+  resolved presentation policy's card gap for both grouped and ungrouped stacking.
+- **Evidence:** The canonical scene correctly permits zero swimlanes and cells with an omitted
+  `swimlaneId`, while the initial geometry implementation iterated only explicit swimlanes and therefore
+  could not project the required Phase A-compatible board.
+- **Rejected alternatives:** A reserved public swimlane ID can collide with application identity and
+  leaks a false semantic group. Keeping a second legacy projector would violate the approved single
+  canonical scene/drawing pipeline and make hit/damage behavior diverge.
+- **Strongest counterargument:** An implicit row adds a small geometry branch. Keeping it chrome-free and
+  keyed only by omitted `swimlaneId` preserves the public semantic model while sharing all later card
+  geometry, hit, and damage stages.
+- **Confidence:** High.
+- **Hardening:** Grounded against scene-model optional addresses, scene-builder validation, Phase A
+  compatibility, and the one-canonical-scene requirement.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809`.
+- **Reopen triggers:** The semantic scene gains an explicit package-owned ungrouped row node or zero-row
+  scenes receive a different public geometry contract.
+
 ## Systematic discovery scan
 
 | Category | Result |

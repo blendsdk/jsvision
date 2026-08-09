@@ -7,6 +7,7 @@ import type {
   KanbanLayoutRegion,
 } from '../layout/hit-map.js';
 import type { KanbanCellState } from '../source/states.js';
+import type { KanbanStructureState } from '../structure/model.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanViewportSourceSnapshot } from './viewport-source.js';
 
@@ -24,6 +25,10 @@ export interface KanbanViewportInspection {
   readonly damage: readonly KanbanDamageRegion[];
   /** Bounded closed-scope targets; deferred drag and insertion kinds are not representable. */
   readonly actionTargets: readonly KanbanActionTarget[];
+  /** Resident card widgets; scene rendering deliberately keeps this at zero. */
+  readonly mountedCardViews: 0;
+  /** Board-level semantic structure state when one is active. */
+  readonly structureState?: KanbanStructureState;
 }
 
 /** Copies one closed action scope so inspection cannot retain active hit-map objects. */
@@ -60,6 +65,7 @@ export function createEmptyKanbanViewportInspection(): KanbanViewportInspection 
     regions: Object.freeze([]),
     damage: Object.freeze([]),
     actionTargets: Object.freeze([]),
+    mountedCardViews: 0,
   });
 }
 
@@ -99,6 +105,11 @@ export function createKanbanViewportInspection<TCard>(
       return Object.freeze({
         cardKey: card.descriptor.cardKey,
         columnId: card.columnId,
+        address: Object.freeze({
+          columnId: card.columnId,
+          ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+        }),
+        descriptor: card.descriptor,
         title,
         marker: Object.freeze({ cues: Object.freeze([...card.descriptor.marker.cues]) }),
       });
@@ -111,5 +122,15 @@ export function createKanbanViewportInspection<TCard>(
     regions: projection?.regions ?? Object.freeze([]),
     damage: Object.freeze([...damage]),
     actionTargets: Object.freeze((projection?.actionTargets ?? []).map(detachedActionTarget)),
+    mountedCardViews: 0,
+    ...(source.visibleColumns.length === 0
+      ? {
+          structureState: Object.freeze({
+            code: 'no-columns' as const,
+            scope: Object.freeze({ kind: 'board' as const }),
+            actions: Object.freeze([]),
+          }),
+        }
+      : {}),
   });
 }

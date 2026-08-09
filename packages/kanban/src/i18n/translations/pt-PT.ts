@@ -24,6 +24,7 @@ export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
 
 /** Official reviewed European Portuguese Phase B Kanban overlay. */
 export const kanbanPhaseBPtPT = createKanbanPhaseBTranslationCatalog('pt-PT', {
+  'kanban.state.descriptor-limit': '${count} cartões estão fora do limite de visualização',
   'kanban.action.open-card-editor': 'Abrir editor de cartões',
   'kanban.card.feedback.pending': 'Pendente',
   'kanban.card.feedback.invalid': 'Inválido',

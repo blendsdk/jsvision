@@ -2,28 +2,43 @@ import type { CapabilityProfile } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
 
 import { readKanbanCardAdapter } from '../card/adapter.js';
-import type { KanbanCardAdapter } from '../card/adapter.js';
-import { validateKanbanCardDescriptor } from '../card/descriptor.js';
-import type { KanbanCardDensity, KanbanCardDescriptor, KanbanCardRenderContext } from '../card/descriptor.js';
+import type { KanbanCardPresentationAdapter, KanbanCardVisualState } from '../card/adapter.js';
+import type {
+  KanbanCardDensity,
+  KanbanCardDescriptor,
+  KanbanCardRenderContext,
+  KanbanCardRenderer,
+} from '../card/descriptor.js';
 import type { KanbanCardFormattingContext } from '../card/formatting.js';
+import type {
+  KanbanCardPresentationSelection,
+  KanbanPresentationInput,
+  ResolvedKanbanPresentationBudget,
+} from '../card/presentation-policy.js';
+import { resolveKanbanPresentation } from '../card/presentation-policy.js';
 import { renderKanbanCardSafely } from '../card/renderer.js';
-import { renderStandardKanbanCard } from '../card/standard-renderer.js';
+import { renderConfiguredStandardKanbanCard } from '../card/standard-renderer.js';
 import type { KanbanTheme } from '../card/theme.js';
-import type { KanbanIdentityInput } from './kanban-viewport.js';
-import type { KanbanObservation } from '../contract/observation.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
+import type { KanbanObservation } from '../contract/observation.js';
+import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanActionTarget, KanbanLayoutRegion } from '../layout/hit-map.js';
-import { projectKanbanVerticalGeometry } from '../layout/vertical-projector.js';
+import { projectKanbanSceneHits } from '../layout/hit-map.js';
+import type { KanbanSceneGeometry, KanbanSceneGeometryVariant } from '../layout/swimlane-geometry.js';
+import { projectKanbanSceneGeometry } from '../layout/swimlane-geometry.js';
 import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
-import type { KanbanViewportSourceCell, KanbanViewportSourceSnapshot } from './viewport-source.js';
+import { buildKanbanScene } from './scene-builder.js';
+import type { KanbanScene } from './scene-model.js';
+import type { KanbanIdentityInput } from './kanban-viewport.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import type { KanbanDescriptorCacheKey } from './descriptor-cache.js';
+import type { KanbanViewportSourceCell, KanbanViewportSourceSnapshot } from './viewport-source.js';
 
 /** Weak identity revisions keep reactive service/theme replacement cache-safe without retaining them. */
 const REFERENCE_REVISIONS = new WeakMap<object, number>();
 let nextReferenceRevision = 1;
 
-/** Returns a process-local equality revision for one immutable service or theme object. */
+/** Returns a process-local equality revision for one immutable service, renderer, or theme object. */
 function referenceRevision(value: object): number {
   const current = REFERENCE_REVISIONS.get(value);
   if (current !== undefined) return current;
@@ -47,13 +62,15 @@ export interface KanbanProjectedState {
 export interface KanbanProjectedCard {
   /** Workflow column containing the card. */
   readonly columnId: string;
+  /** Optional semantic swimlane containing the card. */
+  readonly swimlaneId?: string;
   /** Logical index in the retained source cursor. */
   readonly index: number;
   /** Validated immutable descriptor. */
   readonly descriptor: KanbanCardDescriptor;
-  /** Descriptor columns cropped from the left by horizontal scrolling. */
+  /** Descriptor columns cropped from the left by viewport clipping. */
   readonly descriptorColumnOffset: number;
-  /** Descriptor rows cropped from the top by vertical scrolling. */
+  /** Descriptor rows cropped from the top by viewport clipping. */
   readonly descriptorRowOffset: number;
   /** Clipped viewport-local card rectangle. */
   readonly rect: Readonly<{ x: number; y: number; width: number; height: number }>;
@@ -71,21 +88,33 @@ export interface KanbanProjectedColumn {
   readonly rect: Readonly<{ x: number; y: number; width: number; height: number }>;
 }
 
-/** Immutable descriptor and state projection consumed by drawing and inspection. */
+/** Immutable descriptor, semantic scene, and exact geometry consumed by drawing and inspection. */
 export interface KanbanViewportProjection {
+  /** Canonical geometry-free scene, absent for minimum-size and no-column states. */
+  readonly scene?: KanbanScene;
+  /** Exact final scene geometry, absent when no scene can be projected. */
+  readonly geometry?: KanbanSceneGeometry;
   /** Visible source-ordered columns. */
   readonly columns: readonly KanbanProjectedColumn[];
   /** Visible resident card descriptors. */
   readonly cards: readonly KanbanProjectedCard[];
   /** Clipped inspection-only semantic geometry. */
   readonly regions: readonly KanbanLayoutRegion[];
-  /** Phase A has no actionable card, insertion, or card-action targets. */
+  /** Bounded active targets derived from final clipped geometry. */
   readonly actionTargets: readonly KanbanActionTarget[];
   /** Board-wide and scoped source states requiring explicit non-color feedback. */
   readonly states: readonly KanbanProjectedState[];
 }
 
-/** Inputs needed for one bounded pure-enough viewport projection pass. */
+/** Card-local presentation overrides supplied by the application or interaction facade. */
+export interface KanbanViewportCardPresentation {
+  /** Optional bounded field, summary, and checklist subset. */
+  readonly selection?: KanbanCardPresentationSelection;
+  /** Optional complete interaction state used by semantic styling. */
+  readonly visualState?: KanbanCardVisualState;
+}
+
+/** Inputs needed for one bounded scene-based viewport projection pass. */
 export interface ProjectKanbanViewportOptions<TCard> {
   /** Current retained source snapshot. */
   readonly source: KanbanViewportSourceSnapshot<TCard>;
@@ -95,12 +124,24 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly height: number;
   /** Current horizontal content offset. */
   readonly horizontalOffset: number;
-  /** Current vertical card-content offset. */
+  /** Current vertical content offset. */
   readonly verticalOffset: number;
-  /** Generic application-record adapter. */
-  readonly card: KanbanCardAdapter<TCard>;
-  /** Requested resting gap policy. */
+  /** Generic application-record presentation adapter. */
+  readonly card: KanbanCardPresentationAdapter<TCard>;
+  /** Compatibility density used by custom renderer contexts. */
   readonly density: KanbanCardDensity;
+  /** Resolved card presentation policy; defaults to the requested density preset. */
+  readonly presentation?: KanbanPresentationInput;
+  /** Optional application formatting context; defaults to the active I18n service. */
+  readonly formatting?: KanbanCardFormattingContext;
+  /** Optional card-local presentation selector. */
+  readonly cardPresentation?: (card: TCard) => KanbanViewportCardPresentation | undefined;
+  /** Optional custom descriptor renderer. */
+  readonly renderer?: KanbanCardRenderer<TCard>;
+  /** Equality-only custom renderer/configuration revision. */
+  readonly rendererRevision?: string | number;
+  /** Requested scene presentation strategy. */
+  readonly sceneVariant?: KanbanSceneGeometryVariant;
   /** Resolved semantic Kanban theme. */
   readonly theme: KanbanTheme;
   /** Current localization service. */
@@ -117,6 +158,13 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly observe?: (observation: KanbanObservation) => void;
 }
 
+/** One descriptor plus its cursor identity before canonical scene construction. */
+interface ResidentDescriptor<TCard> {
+  readonly cell: KanbanViewportSourceCell<TCard>;
+  readonly index: number;
+  readonly descriptor: KanbanCardDescriptor;
+}
+
 /** Returns the localized label for one lifecycle state. */
 function stateLabel(i18n: I18n, kind: KanbanProjectedState['kind']): string {
   const key =
@@ -129,7 +177,7 @@ function stateLabel(i18n: I18n, kind: KanbanProjectedState['kind']): string {
 }
 
 /** Creates bounded application formatting backed by the selected I18n service. */
-function formatting(i18n: I18n): KanbanCardFormattingContext {
+function defaultFormatting(i18n: I18n): KanbanCardFormattingContext {
   return Object.freeze({
     locale: i18n.locale,
     formatNumber: (value: number | bigint) => i18n.number(value),
@@ -139,13 +187,6 @@ function formatting(i18n: I18n): KanbanCardFormattingContext {
       return undefined;
     },
   });
-}
-
-/** Returns the descriptor row ceiling owned by one density. */
-function rowBudget(density: KanbanCardDensity): number {
-  if (density === 'compact') return KANBAN_LIMITS.cardRowsCompact.safe;
-  if (density === 'comfortable') return KANBAN_LIMITS.cardRowsComfortable.safe;
-  return KANBAN_LIMITS.cardRowsSpacious.safe;
 }
 
 /** Computes a stable capability revision without retaining the host profile. */
@@ -168,216 +209,336 @@ function cardCapabilities(capabilities: CapabilityProfile): KanbanCardRenderCont
   });
 }
 
-/** Returns the cell retained for one visible workflow column. */
-function cellForColumn<TCard>(
-  cells: readonly KanbanViewportSourceCell<TCard>[],
-  columnId: string,
-): KanbanViewportSourceCell<TCard> | undefined {
-  return cells.find((cell) => cell.address.columnId === columnId && cell.address.swimlaneId === undefined);
+/** Returns a descriptor width for one retained cell's workflow column. */
+function columnWidth<TCard>(source: KanbanViewportSourceSnapshot<TCard>, columnId: string): number {
+  return source.widths.columns.find((column) => column.columnId === columnId)?.width ?? 18;
 }
 
-/** Projects bounded resident descriptors from one retained cell. */
-function projectCellCards<TCard>(
+/** Creates the default visual state before an optional card-local override is validated by snapshotting. */
+function defaultVisualState<TCard>(
   options: ProjectKanbanViewportOptions<TCard>,
-  cell: KanbanViewportSourceCell<TCard>,
-  columnWidth: number,
-  retainedKeys: KanbanDescriptorCacheKey[],
-): readonly { readonly index: number; readonly descriptor: KanbanCardDescriptor }[] {
-  const projected: { readonly index: number; readonly descriptor: KanbanCardDescriptor }[] = [];
-  const maximum = Math.min(cell.range.end, cell.range.start + KANBAN_LIMITS.ensureRangeCards.safe);
-  for (
-    let index = cell.range.start;
-    index < maximum && retainedKeys.length < KANBAN_LIMITS.ensureRangeCards.safe;
-    index += 1
-  ) {
-    const card = cell.cursor.cardAt(index);
-    if (card === undefined) continue;
-    let adapterSnapshot;
-    try {
-      adapterSnapshot = readKanbanCardAdapter(card, options.card);
-    } catch {
-      continue;
-    }
-    const focused = adapterSnapshot.cardKey === options.identity?.focusedCardKey;
-    const selected = options.identity?.selectedCardKeys?.includes(adapterSnapshot.cardKey) ?? false;
-    const context: KanbanCardRenderContext = Object.freeze({
-      cardKey: adapterSnapshot.cardKey,
-      ...(adapterSnapshot.presentationRevision === undefined
-        ? {}
-        : { presentationRevision: adapterSnapshot.presentationRevision }),
-      width: columnWidth,
-      rowBudget: rowBudget(options.density),
-      density: options.density,
-      focused,
-      selected,
-      readOnly: false,
-      operation: 'idle',
-      theme: options.theme,
-      capabilities: cardCapabilities(options.capabilities),
-      formatting: formatting(options.i18n),
-    });
-    const key: KanbanDescriptorCacheKey = Object.freeze({
-      generation: options.source.generation,
-      address: cell.address,
-      cursorRevision: cell.cursor.revision(),
-      cardKey: adapterSnapshot.cardKey,
-      rendererRevision: `standard-v1:${String(referenceRevision(options.i18n))}`,
-      ...(adapterSnapshot.presentationRevision === undefined
-        ? {}
-        : { presentationRevision: adapterSnapshot.presentationRevision }),
-      presentationPolicyRevision: 'phase-a-mandatory-only-v1',
-      presentationSelectionFingerprint: 'mandatory-only',
-      width: columnWidth,
-      rowBudget: context.rowBudget,
-      density: options.density,
-      themeRevision: referenceRevision(options.theme),
-      capabilityRevision: capabilityRevision(options.capabilities),
-      interactionRevision: JSON.stringify([focused, selected, false, 'idle']),
-    });
-    const descriptor = options.cache.getOrCreate(
-      key,
-      () =>
-        renderKanbanCardSafely(
-          card,
-          { render: (record, renderContext) => renderStandardKanbanCard(record, options.card, renderContext) },
-          context,
-          {
-            labels: {
-              invalidCardTitle: options.i18n.t('kanban.card.invalid-title'),
-              unknownStatus: options.i18n.t('kanban.card.unknown-status'),
-            },
-            observe: options.observe,
+  cardKey: string | number,
+): KanbanCardVisualState {
+  return Object.freeze({
+    focused: cardKey === options.identity?.focusedCardKey,
+    selected: options.identity?.selectedCardKeys?.includes(cardKey) ?? false,
+    rangeAnchor: false,
+    readOnly: false,
+    invalid: false,
+    operation: 'idle',
+  });
+}
+
+/** Converts a validated descriptor into plain semantic data accepted by the canonical scene boundary. */
+function semanticDescriptor(descriptor: KanbanCardDescriptor): KanbanSemanticValue {
+  return {
+    cardKey: descriptor.cardKey,
+    width: descriptor.width,
+    measuredHeight: descriptor.measuredHeight,
+    ...(descriptor.presentationRevision === undefined ? {} : { presentationRevision: descriptor.presentationRevision }),
+    surfaceRole: descriptor.surfaceRole,
+    borderRole: descriptor.borderRole,
+    marker: {
+      row: descriptor.marker.row,
+      column: descriptor.marker.column,
+      glyph: descriptor.marker.glyph,
+      role: descriptor.marker.role,
+      cues: descriptor.marker.cues,
+    },
+    rows: descriptor.rows.map((row) => ({
+      section: row.section,
+      spans: row.spans.map((span) => ({ column: span.column, text: span.text, role: span.role })),
+    })),
+    sections: descriptor.sections.map((section) => ({
+      id: section.id,
+      kind: section.kind,
+      startRow: section.startRow,
+      rowCount: section.rowCount,
+      priority: section.priority,
+    })),
+    actions: descriptor.actions.map((action) => ({
+      actionId: action.actionId,
+      label: action.label,
+      enabled: action.enabled,
+    })),
+    regions: descriptor.regions.map((region) => ({
+      regionId: region.regionId,
+      kind: region.kind,
+      x: region.x,
+      y: region.y,
+      width: region.width,
+      height: region.height,
+      ...(region.actionId === undefined ? {} : { actionId: region.actionId }),
+    })),
+    degradation: {
+      level: descriptor.degradation.level,
+      omittedSections: descriptor.degradation.omittedSections,
+    },
+  };
+}
+
+/** Projects bounded resident descriptors for every retained sparse source cell. */
+function projectDescriptors<TCard>(
+  options: ProjectKanbanViewportOptions<TCard>,
+  budget: ResolvedKanbanPresentationBudget,
+): {
+  readonly residents: readonly ResidentDescriptor<TCard>[];
+  readonly retainedKeys: readonly KanbanDescriptorCacheKey[];
+} {
+  const residents: ResidentDescriptor<TCard>[] = [];
+  const retainedKeys: KanbanDescriptorCacheKey[] = [];
+  const formatting = options.formatting ?? defaultFormatting(options.i18n);
+  for (const cell of options.source.cells) {
+    const width = columnWidth(options.source, cell.address.columnId);
+    const maximum = Math.min(cell.range.end, cell.range.start + KANBAN_LIMITS.ensureRangeCards.safe);
+    for (
+      let index = cell.range.start;
+      index < maximum && retainedKeys.length < KANBAN_LIMITS.retainedDescriptors.safe;
+      index += 1
+    ) {
+      const record = cell.cursor.cardAt(index);
+      if (record === undefined) continue;
+      let mandatory;
+      try {
+        mandatory = readKanbanCardAdapter(record, options.card);
+      } catch {
+        continue;
+      }
+      const visualState = defaultVisualState(options, mandatory.cardKey);
+      const context: KanbanCardRenderContext = Object.freeze({
+        cardKey: mandatory.cardKey,
+        ...(mandatory.presentationRevision === undefined
+          ? {}
+          : { presentationRevision: mandatory.presentationRevision }),
+        width,
+        rowBudget: budget.cardRows,
+        density: options.density,
+        focused: visualState.focused,
+        selected: visualState.selected,
+        readOnly: visualState.readOnly,
+        operation: visualState.operation,
+        theme: options.theme,
+        capabilities: cardCapabilities(options.capabilities),
+        formatting,
+      });
+      const rendererRevision =
+        options.rendererRevision ??
+        (options.renderer === undefined
+          ? `standard-rich-v1:${String(referenceRevision(options.i18n))}`
+          : referenceRevision(options.renderer));
+      const key: KanbanDescriptorCacheKey = Object.freeze({
+        generation: options.source.generation,
+        address: cell.address,
+        cursorRevision: cell.cursor.revision(),
+        cardKey: mandatory.cardKey,
+        rendererRevision,
+        ...(mandatory.presentationRevision === undefined
+          ? {}
+          : { presentationRevision: mandatory.presentationRevision }),
+        presentationPolicyRevision: budget.revision,
+        presentationSelectionFingerprint: `card:${typeof mandatory.cardKey}:${String(mandatory.cardKey)}`,
+        width,
+        rowBudget: budget.cardRows,
+        density: options.density,
+        themeRevision: referenceRevision(options.theme),
+        capabilityRevision: capabilityRevision(options.capabilities),
+        interactionRevision: JSON.stringify(visualState),
+      });
+      const descriptor = options.cache.getOrCreate(key, () => {
+        const selected = options.cardPresentation?.(record);
+        const configuredVisualState = selected?.visualState ?? visualState;
+        const configuredContext = Object.freeze({
+          ...context,
+          focused: configuredVisualState.focused,
+          selected: configuredVisualState.selected,
+          readOnly: configuredVisualState.readOnly,
+          operation: configuredVisualState.operation,
+        });
+        const renderer = options.renderer ?? {
+          render: (card: TCard, renderContext: KanbanCardRenderContext) =>
+            renderConfiguredStandardKanbanCard(card, options.card, renderContext, {
+              budget,
+              presentation: {
+                visualState: configuredVisualState,
+                ...(selected?.selection === undefined ? {} : { selection: selected.selection }),
+              },
+              ...(options.observe === undefined ? {} : { observe: options.observe }),
+            }),
+        };
+        return renderKanbanCardSafely(record, renderer, configuredContext, {
+          labels: {
+            invalidCardTitle: options.i18n.t('kanban.card.invalid-title'),
+            unknownStatus: options.i18n.t('kanban.card.unknown-status'),
           },
-        ),
-      (candidate) => validateKanbanCardDescriptor(candidate, context),
-    );
-    retainedKeys.push(key);
-    projected.push(Object.freeze({ index, descriptor }));
+          observe: options.observe,
+        });
+      });
+      retainedKeys.push(key);
+      residents.push(Object.freeze({ cell, index, descriptor }));
+    }
   }
-  return Object.freeze(projected);
+  return Object.freeze({ residents: Object.freeze(residents), retainedKeys: Object.freeze(retainedKeys) });
+}
+
+/** Converts canonical geometry kinds to the shared inspection-region contract. */
+function sceneRegions(geometry: KanbanSceneGeometry): readonly KanbanLayoutRegion[] {
+  return Object.freeze(geometry.regions.map((region) => Object.freeze({ ...region, actionable: false })));
+}
+
+/** Creates a state-only projection without a canonical scene. */
+function stateOnly(kind: KanbanProjectedState['kind'], label: string): KanbanViewportProjection {
+  return Object.freeze({
+    columns: Object.freeze([]),
+    cards: Object.freeze([]),
+    regions: Object.freeze([]),
+    actionTargets: Object.freeze([]),
+    states: Object.freeze([Object.freeze({ kind, label })]),
+  });
 }
 
 /**
- * Projects only visible resident cards and finite retained descriptors into clipped terminal cells.
+ * Builds one canonical semantic scene and projects it into bounded exact terminal geometry.
  */
 export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptions<TCard>): KanbanViewportProjection {
-  const columns: KanbanProjectedColumn[] = [];
-  const cards: KanbanProjectedCard[] = [];
-  const regions: KanbanLayoutRegion[] = [];
-  const states: KanbanProjectedState[] = [];
-  const retainedKeys: KanbanDescriptorCacheKey[] = [];
   if (options.source.mode === 'minimum-size') {
     options.cache.retain([]);
+    const requiredHeight = options.minimumRequiredHeight ?? 4;
     const minimum = projectKanbanMinimumGeometry({
       bounds: { x: 0, y: 0, width: options.width, height: options.height },
       requiredWidth: 18,
-      requiredHeight: options.minimumRequiredHeight ?? 4,
-      message: options.i18n.t('kanban.layout.minimum-size', {
-        params: { width: 18, height: options.minimumRequiredHeight ?? 4 },
-      }),
+      requiredHeight,
+      message: options.i18n.t('kanban.layout.minimum-size', { params: { width: 18, height: requiredHeight } }),
     });
-    return Object.freeze({
-      columns: Object.freeze([]),
-      cards: Object.freeze([]),
-      regions: Object.freeze([]),
-      actionTargets: Object.freeze([]),
-      states: Object.freeze([Object.freeze({ kind: 'minimum-size', label: minimum.message.text })]),
-    });
+    return stateOnly('minimum-size', minimum.message.text);
   }
   if (options.source.visibleColumns.length === 0) {
     options.cache.retain([]);
-    return Object.freeze({
-      columns: Object.freeze([]),
-      cards: Object.freeze([]),
-      regions: Object.freeze([]),
-      actionTargets: Object.freeze([]),
-      states: Object.freeze([Object.freeze({ kind: 'no-columns', label: stateLabel(options.i18n, 'no-columns') })]),
-    });
+    return stateOnly('no-columns', stateLabel(options.i18n, 'no-columns'));
   }
 
-  let logicalX = 0;
-  for (const solved of options.source.widths.columns) {
-    const sourceColumn = options.source.visibleColumns.find((column) => column.columnId === solved.columnId);
-    const rawX = logicalX - options.horizontalOffset;
-    logicalX += solved.width + options.source.widths.separatorWidth;
-    if (sourceColumn === undefined) continue;
-    const clippedX = Math.max(0, rawX);
-    const clippedRight = Math.min(options.width, rawX + solved.width);
-    if (clippedRight <= clippedX) continue;
-    const rect = Object.freeze({ x: clippedX, y: 0, width: clippedRight - clippedX, height: options.height });
-    const contentOffset = clippedX - rawX;
-    columns.push(Object.freeze({ columnId: sourceColumn.columnId, label: sourceColumn.label, contentOffset, rect }));
-    const cell = cellForColumn(options.source.cells, sourceColumn.columnId);
-    if (cell === undefined || rect.width < 2 || rect.height === 0) continue;
-    const projectedCards = projectCellCards(options, cell, solved.width, retainedKeys);
-    const vertical = projectKanbanVerticalGeometry({
-      bounds: rect,
-      stickyHeaderHeight: 1,
-      scrollOffset: options.verticalOffset,
-      contentOrigin: cell.range.start * (options.density === 'compact' ? 2 : 3),
-      density: options.density,
-      cards: projectedCards.map((entry) => ({
-        cardKey: entry.descriptor.cardKey,
-        height: entry.descriptor.measuredHeight,
-      })),
-      verticalOverscan: 0,
-    });
-    regions.push(...vertical.regions);
-    for (const entry of projectedCards) {
-      const anchor = vertical.anchors.find((candidate) => candidate.cardKey === entry.descriptor.cardKey);
-      const cardRegion = vertical.regions.find(
-        (region) => region.kind === 'card' && region.cardKey === entry.descriptor.cardKey,
-      );
-      if (cardRegion === undefined || anchor === undefined) continue;
-      cards.push(
-        Object.freeze({
-          columnId: sourceColumn.columnId,
-          index: entry.index,
-          descriptor: entry.descriptor,
-          descriptorColumnOffset: contentOffset,
-          descriptorRowOffset: Math.max(0, vertical.scrollOffset - anchor.logicalRow),
-          rect: Object.freeze({
-            x: cardRegion.x,
-            y: cardRegion.y,
-            width: cardRegion.width,
-            height: cardRegion.height,
-          }),
-        }),
-      );
-    }
-    const sourceState = cell.cursor.state();
-    if (projectedCards.length === 0 || sourceState.kind !== 'ready') {
-      const kind: KanbanProjectedState['kind'] =
-        sourceState.kind === 'error'
-          ? 'error'
-          : sourceState.kind === 'loading'
-            ? 'loading'
-            : sourceState.kind === 'refreshing'
-              ? 'refreshing'
-              : projectedCards.length === 0 && sourceState.kind === 'empty'
-                ? 'empty'
-                : 'partial';
-      states.push(Object.freeze({ kind, label: stateLabel(options.i18n, kind), columnId: sourceColumn.columnId }));
-      if (rect.height > 1) {
-        regions.push(
-          Object.freeze({
-            kind: 'state',
-            x: rect.x,
-            y: 1,
-            width: rect.width,
-            height: rect.height - 1,
-            actionable: false,
-          }),
-        );
-      }
-    }
+  const budget = resolveKanbanPresentation(options.presentation ?? options.density);
+  const projected = projectDescriptors(options, budget);
+  options.cache.retain(projected.retainedKeys);
+  const residentsByCell = new Map<KanbanViewportSourceCell<TCard>, readonly ResidentDescriptor<TCard>[]>();
+  for (const cell of options.source.cells) {
+    residentsByCell.set(
+      cell,
+      projected.residents.filter((resident) => resident.cell === cell),
+    );
   }
-  options.cache.retain(retainedKeys);
+  const scene = buildKanbanScene({
+    revision: JSON.stringify([
+      options.source.publication.revision,
+      options.source.generation,
+      budget.revision,
+      options.rendererRevision ?? null,
+    ]),
+    queryGeneration: options.source.generation,
+    sessionRevision: options.source.publication.revision,
+    columns: options.source.widths.columns.flatMap((solved) => {
+      const column = options.source.publication.columns.find((candidate) => candidate.columnId === solved.columnId);
+      return column === undefined ? [] : [column];
+    }),
+    swimlanes: options.source.publication.swimlanes,
+    cells: options.source.cells.map((cell) => ({
+      address: cell.address,
+      cursorRevision: cell.cursor.revision(),
+      state: cell.cursor.state(),
+      cards: (residentsByCell.get(cell) ?? []).map(({ index, descriptor }) => ({
+        cardKey: descriptor.cardKey,
+        logicalIndex: index,
+        entityRevision: descriptor.presentationRevision ?? cell.cursor.revision(),
+        descriptor: semanticDescriptor(descriptor),
+        interaction: { cues: descriptor.marker.cues },
+        workflow: {},
+      })),
+    })),
+    detached: {},
+    descriptorLimit: KANBAN_LIMITS.retainedDescriptors.safe,
+  });
+  const geometry = projectKanbanSceneGeometry(scene, {
+    bounds: { x: 0, y: 0, width: options.width, height: options.height },
+    variant: options.sceneVariant ?? 'hybrid',
+    offsets: { x: options.horizontalOffset, y: options.verticalOffset },
+    minimumColumnWidth: 18,
+    cardGap: budget.cardGap,
+    estimatedCardHeight: 2,
+    ...(options.identity?.focusedColumnId === undefined ? {} : { focusedColumnId: options.identity.focusedColumnId }),
+  });
+  const hits = projectKanbanSceneHits(scene, geometry, { maximumTargets: KANBAN_LIMITS.retainedDescriptors.safe });
+  const columns = Object.freeze(
+    geometry.workflowHeaders.map((header) =>
+      Object.freeze({
+        columnId: header.columnId,
+        label: header.label,
+        contentOffset: 0,
+        rect: Object.freeze({ x: header.x, y: 0, width: header.width, height: options.height }),
+      }),
+    ),
+  );
+  const descriptorByIdentity = new Map(
+    projected.residents.map((resident) => [
+      JSON.stringify([
+        resident.descriptor.cardKey,
+        resident.cell.address.columnId,
+        resident.cell.address.swimlaneId ?? null,
+        resident.index,
+      ]),
+      resident.descriptor,
+    ]),
+  );
+  const cards = Object.freeze(
+    geometry.cards.flatMap((card) => {
+      const descriptor = descriptorByIdentity.get(
+        JSON.stringify([card.cardKey, card.address.columnId, card.address.swimlaneId ?? null, card.logicalIndex]),
+      );
+      if (descriptor === undefined) return [];
+      return [
+        Object.freeze({
+          columnId: card.address.columnId,
+          ...(card.address.swimlaneId === undefined ? {} : { swimlaneId: card.address.swimlaneId }),
+          index: card.logicalIndex,
+          descriptor,
+          descriptorColumnOffset: card.descriptorColumnOffset,
+          descriptorRowOffset: card.descriptorRowOffset,
+          rect: Object.freeze({ x: card.x, y: card.y, width: card.width, height: card.height }),
+        }),
+      ];
+    }),
+  );
+  const states: KanbanProjectedState[] = [];
+  for (const cell of options.source.cells) {
+    const state = cell.cursor.state();
+    const hasCards = (residentsByCell.get(cell)?.length ?? 0) > 0;
+    if (state.kind === 'ready' && hasCards) continue;
+    const kind: KanbanProjectedState['kind'] =
+      state.kind === 'error'
+        ? 'error'
+        : state.kind === 'loading'
+          ? 'loading'
+          : state.kind === 'refreshing'
+            ? 'refreshing'
+            : !hasCards && state.kind === 'empty'
+              ? 'empty'
+              : 'partial';
+    states.push(Object.freeze({ kind, label: stateLabel(options.i18n, kind), columnId: cell.address.columnId }));
+  }
+  for (const limit of scene.states) {
+    states.push(
+      Object.freeze({
+        kind: 'partial',
+        label: options.i18n.t('kanban.state.descriptor-limit', { params: { count: limit.omittedCount } }),
+        columnId: limit.scope.address.columnId,
+      }),
+    );
+  }
   return Object.freeze({
-    columns: Object.freeze(columns),
-    cards: Object.freeze(cards),
-    regions: Object.freeze(regions),
-    actionTargets: Object.freeze([]),
+    scene,
+    geometry,
+    columns,
+    cards,
+    regions: sceneRegions(geometry),
+    actionTargets: hits.targets,
     states: Object.freeze(states),
   });
 }

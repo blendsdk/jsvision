@@ -71,6 +71,21 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
       ctx.fillRect(separatorX, 0, 1, column.rect.height, ' ', style(theme, 'column.separator'));
     }
   }
+  for (const chrome of projection.geometry?.swimlaneChrome ?? []) {
+    const surfaceRole: KanbanThemeRole =
+      chrome.variant === 'separator'
+        ? 'swimlane.separator'
+        : chrome.variant === 'hybrid'
+          ? 'swimlane.header'
+          : 'swimlane.surface';
+    ctx.fillRect(chrome.x, chrome.y, chrome.width, chrome.height, ' ', style(theme, surfaceRole));
+    ctx.text(
+      chrome.x,
+      chrome.y,
+      cropCellText(chrome.label, 0, chrome.width, ctx.caps.unicode.widthMode),
+      style(theme, chrome.sticky ? 'swimlane.header.focused' : 'swimlane.header'),
+    );
+  }
   for (const card of projection.cards) {
     const descriptor = card.descriptor;
     ctx.fillRect(

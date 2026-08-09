@@ -41,6 +41,8 @@ export * from './board/kanban-viewport.js';
 export * from './board/kanban-board.js';
 export * from './board/scene-builder.js';
 export * from './board/scene-model.js';
+export { calculateKanbanSceneDamage } from './board/viewport-damage.js';
+export type { CalculateKanbanSceneDamageOptions } from './board/viewport-damage.js';
 export type { KanbanViewportInspection } from './board/viewport-inspection.js';
 export {
   resolveKanbanSceneWindow,

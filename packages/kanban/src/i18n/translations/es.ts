@@ -24,6 +24,7 @@ export const kanbanEs = createKanbanTranslationCatalog('es', {
 
 /** Official reviewed Spanish Phase B Kanban overlay. */
 export const kanbanPhaseBEs = createKanbanPhaseBTranslationCatalog('es', {
+  'kanban.state.descriptor-limit': '${count} tarjetas están fuera del límite de visualización',
   'kanban.action.open-card-editor': 'Abrir editor de tarjetas',
   'kanban.card.feedback.pending': 'Pendiente',
   'kanban.card.feedback.invalid': 'No válida',

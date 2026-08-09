@@ -3,8 +3,10 @@ import type { I18n } from '@jsvision/i18n';
 import { View, signal } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext, Signal, Size2D } from '@jsvision/ui';
 
-import type { KanbanCardAdapter } from '../card/adapter.js';
-import type { KanbanCardDensity } from '../card/descriptor.js';
+import type { KanbanCardPresentationAdapter } from '../card/adapter.js';
+import type { KanbanCardDensity, KanbanCardRenderer } from '../card/descriptor.js';
+import type { KanbanCardFormattingContext } from '../card/formatting.js';
+import type { KanbanPresentationInput } from '../card/presentation-policy.js';
 import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
@@ -26,7 +28,7 @@ import { createKanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
 import { createKanbanViewportMetrics } from './viewport-metrics.js';
 import { projectKanbanViewport } from './viewport-projector.js';
-import type { KanbanViewportProjection } from './viewport-projector.js';
+import type { KanbanViewportCardPresentation, KanbanViewportProjection } from './viewport-projector.js';
 import { drawKanbanViewport } from './viewport-render.js';
 import {
   resolveKanbanScrollBy,
@@ -59,11 +61,21 @@ export interface KanbanViewportOptions<TCard> {
   /** Reactive semantic query getter. */
   readonly query: () => KanbanQuery;
   /** Generic application-record adapter. */
-  readonly card: KanbanCardAdapter<TCard>;
+  readonly card: KanbanCardPresentationAdapter<TCard>;
   /** Optional reactive localization service getter. */
   readonly i18n?: () => I18n;
   /** Optional reactive card-density getter. */
   readonly density?: () => KanbanCardDensity;
+  /** Optional reactive rich-card presentation policy getter. */
+  readonly presentation?: () => KanbanPresentationInput;
+  /** Optional reactive application formatting context getter. */
+  readonly formatting?: () => KanbanCardFormattingContext;
+  /** Optional card-local selection and visual-state projection. */
+  readonly cardPresentation?: (card: TCard) => KanbanViewportCardPresentation | undefined;
+  /** Optional reactive custom descriptor renderer getter. */
+  readonly renderer?: () => KanbanCardRenderer<TCard>;
+  /** Optional reactive custom renderer/configuration revision getter. */
+  readonly rendererRevision?: () => KanbanRevision;
   /** Optional reactive semantic theme getter. */
   readonly theme?: () => KanbanTheme;
   /** Optional lower resource limits. */
@@ -171,6 +183,10 @@ export class KanbanViewport<TCard> extends View {
           void options.i18n?.();
           void options.theme?.();
           void options.capabilities?.();
+          void options.presentation?.();
+          void options.formatting?.();
+          void options.renderer?.();
+          void options.rendererRevision?.();
           this.#source?.replaceQuery(query);
           return this.#refresh(collapsedColumnIds, identity.focusedColumnId, density);
         },
@@ -197,6 +213,10 @@ export class KanbanViewport<TCard> extends View {
     const density = this.#options.density?.() ?? 'comfortable';
     const theme = this.#options.theme?.() ?? this.#defaultTheme;
     const i18n = this.#options.i18n?.() ?? this.#defaultI18n;
+    const presentation = this.#options.presentation?.();
+    const formatting = this.#options.formatting?.();
+    const renderer = this.#options.renderer?.();
+    const rendererRevision = this.#options.rendererRevision?.();
     const layoutChanged = this.#restoreVerticalAnchor(density, i18n, theme, ctx.caps);
     const collapsedColumnIds = this.#options.collapsedColumnIds?.();
     let snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density);
@@ -220,6 +240,11 @@ export class KanbanViewport<TCard> extends View {
         verticalOffset: this.#metrics.offsets.y,
         card: this.#options.card,
         density,
+        ...(presentation === undefined ? {} : { presentation }),
+        ...(formatting === undefined ? {} : { formatting }),
+        ...(this.#options.cardPresentation === undefined ? {} : { cardPresentation: this.#options.cardPresentation }),
+        ...(renderer === undefined ? {} : { renderer }),
+        ...(rendererRevision === undefined ? {} : { rendererRevision }),
         theme,
         i18n,
         capabilities: ctx.caps,

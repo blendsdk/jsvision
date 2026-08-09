@@ -24,6 +24,7 @@ export const kanbanSv = createKanbanTranslationCatalog('sv', {
 
 /** Official reviewed Swedish Phase B Kanban overlay. */
 export const kanbanPhaseBSv = createKanbanPhaseBTranslationCatalog('sv', {
+  'kanban.state.descriptor-limit': '${count} kort ligger utanför visningsgränsen',
   'kanban.action.open-card-editor': 'Öppna kortredigeraren',
   'kanban.card.feedback.pending': 'Väntar',
   'kanban.card.feedback.invalid': 'Ogiltigt',

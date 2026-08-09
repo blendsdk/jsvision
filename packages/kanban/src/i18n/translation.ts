@@ -4,6 +4,7 @@ import type { Catalog } from '@jsvision/i18n';
 import {
   KANBAN_ACCELERATOR_MANIFEST,
   KANBAN_PLACEHOLDER_MANIFEST,
+  KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
   type KanbanMessageMap,
   type KanbanPhaseBMessageMap,
 } from './catalog.js';
@@ -29,7 +30,7 @@ export function createKanbanPhaseBTranslationCatalog(locale: string, messages: K
   return defineCatalog(
     { schema: 1, locale, messages },
     {
-      placeholderManifest: Object.freeze({}),
+      placeholderManifest: KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
       acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
     },
   );

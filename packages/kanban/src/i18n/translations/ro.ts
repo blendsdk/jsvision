@@ -24,6 +24,7 @@ export const kanbanRo = createKanbanTranslationCatalog('ro', {
 
 /** Official reviewed Romanian Phase B Kanban overlay. */
 export const kanbanPhaseBRo = createKanbanPhaseBTranslationCatalog('ro', {
+  'kanban.state.descriptor-limit': '${count} carduri depășesc limita de afișare',
   'kanban.action.open-card-editor': 'Deschide editorul de carduri',
   'kanban.card.feedback.pending': 'În așteptare',
   'kanban.card.feedback.invalid': 'Nevalid',

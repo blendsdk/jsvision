@@ -17,7 +17,11 @@ import type { KanbanChecklistGroup } from './checklist.js';
 import { formatKanbanCardDate, formatKanbanCardNumber, validateKanbanCardFormattingContext } from './formatting.js';
 import type { KanbanCardFormattingContext } from './formatting.js';
 import { resolveKanbanCardPresentationSelection } from './presentation-policy.js';
-import type { KanbanCardPresentationMaximum, ResolvedKanbanCardPresentationSelection } from './presentation-policy.js';
+import type {
+  KanbanCardPresentationMaximum,
+  KanbanCardPresentationSelection,
+  ResolvedKanbanCardPresentationSelection,
+} from './presentation-policy.js';
 import {
   snapshotPresentationArray,
   snapshotPresentationProperties,
@@ -42,6 +46,8 @@ export interface KanbanCardPresentationSnapshotContext {
   readonly observe?: (observation: KanbanObservation) => void;
   /** Optional already-acquired checklist values used by convenience renderers to avoid a second getter call. */
   readonly checklistValues?: unknown;
+  /** Optional board-owned selection that takes precedence over the adapter's card-local selection getter. */
+  readonly selection?: KanbanCardPresentationSelection;
 }
 
 /** Detached safe display values for one selected metadata field. */
@@ -315,6 +321,9 @@ export function snapshotKanbanCardPresentation<TCard>(
   );
   const selection = callbackOrFallback(
     () => {
+      if (context.selection !== undefined) {
+        return resolveKanbanCardPresentationSelection(context.selection, context.maximum);
+      }
       const callback = optionalAdapterMember(adapter, 'selectionOf');
       if (callback === undefined) return defaultSelection;
       if (typeof callback !== 'function') throw new KanbanInvalidDescriptorError();

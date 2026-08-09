@@ -1,6 +1,9 @@
 import type { Rect } from '@jsvision/ui';
 
 import type { KanbanDamageRegion } from '../layout/hit-map.js';
+import type { CardKey } from '../contract/identity.js';
+import type { KanbanScene } from './scene-model.js';
+import type { KanbanSceneGeometry } from '../layout/swimlane-geometry.js';
 import type { KanbanViewportPoint } from '../layout/metrics.js';
 import type { KanbanProjectedCard, KanbanViewportProjection } from './viewport-projector.js';
 
@@ -73,6 +76,88 @@ function whole(bounds: Readonly<Rect>): readonly KanbanDamageRegion[] {
   return region === undefined ? Object.freeze([]) : Object.freeze([region]);
 }
 
+/** Inputs for one bounded canonical-scene damage comparison. */
+export interface CalculateKanbanSceneDamageOptions {
+  /** Previous immutable semantic scene. */
+  readonly previousScene: KanbanScene;
+  /** Current immutable semantic scene. */
+  readonly currentScene: KanbanScene;
+  /** Previous exact scene geometry. */
+  readonly previousGeometry: KanbanSceneGeometry;
+  /** Current exact scene geometry. */
+  readonly currentGeometry: KanbanSceneGeometry;
+  /** Viewport-local clipping rectangle. */
+  readonly bounds: Readonly<Rect>;
+  /** Finite retained region ceiling. */
+  readonly maximumRegions: number;
+}
+
+/** Returns a collision-safe type-preserving card identity. */
+function sceneCardIdentity(cardKey: CardKey): string {
+  return JSON.stringify([typeof cardKey, cardKey]);
+}
+
+/** Returns one card's visible rectangle from a scene geometry snapshot. */
+function sceneCardRect(geometry: KanbanSceneGeometry, cardKey: CardKey): Readonly<Rect> | undefined {
+  return geometry.cards.find((card) => card.cardKey === cardKey);
+}
+
+/**
+ * Computes bounded semantic-scene damage and preserves card-local descriptor invalidation.
+ *
+ * Structural projectors may supply exact changed rectangles. Once that evidence exceeds the caller's
+ * finite ceiling, whole-viewport damage is safer than retaining or silently truncating rectangles.
+ *
+ * @example
+ * ```ts
+ * const damage = calculateKanbanSceneDamage({
+ *   previousScene, currentScene, previousGeometry, currentGeometry,
+ *   bounds: { x: 0, y: 0, width: 80, height: 24 }, maximumRegions: 256,
+ * });
+ * ```
+ */
+export function calculateKanbanSceneDamage(options: CalculateKanbanSceneDamageOptions): readonly KanbanDamageRegion[] {
+  if (!Number.isSafeInteger(options.maximumRegions) || options.maximumRegions <= 0) return whole(options.bounds);
+  if (options.currentGeometry.changedRegions.length > options.maximumRegions) return whole(options.bounds);
+
+  const previous = new Map(options.previousScene.cards.map((card) => [sceneCardIdentity(card.cardKey), card] as const));
+  const current = new Map(options.currentScene.cards.map((card) => [sceneCardIdentity(card.cardKey), card] as const));
+  const damage: KanbanDamageRegion[] = [];
+  for (const identity of new Set([...previous.keys(), ...current.keys()])) {
+    const before = previous.get(identity);
+    const after = current.get(identity);
+    if (
+      before !== undefined &&
+      after !== undefined &&
+      JSON.stringify(before.descriptor.value) === JSON.stringify(after.descriptor.value)
+    ) {
+      continue;
+    }
+    const cardKey = after?.cardKey ?? before?.cardKey;
+    if (cardKey === undefined) continue;
+    const rect = sceneCardRect(options.currentGeometry, cardKey) ?? sceneCardRect(options.previousGeometry, cardKey);
+    if (rect === undefined) continue;
+    const clipped = clip(rect, options.bounds, 'descriptor');
+    if (clipped !== undefined) damage.push(Object.freeze({ ...clipped, cardKey }));
+    if (damage.length > options.maximumRegions) return whole(options.bounds);
+  }
+  if (damage.length > 0) return Object.freeze(damage);
+
+  if (
+    options.previousScene.revision !== options.currentScene.revision ||
+    options.previousGeometry.revision !== options.currentGeometry.revision
+  ) {
+    const structural: KanbanDamageRegion[] = [];
+    for (const changed of options.currentGeometry.changedRegions) {
+      const clipped = clip(changed, options.bounds, 'sticky');
+      if (clipped !== undefined) structural.push(clipped);
+      if (structural.length > options.maximumRegions) return whole(options.bounds);
+    }
+    return structural.length === 0 ? whole(options.bounds) : Object.freeze(structural);
+  }
+  return Object.freeze([]);
+}
+
 /**
  * Computes bounded detached damage evidence without exposing an actionable pointer map.
  */
@@ -87,6 +172,22 @@ export function calculateKanbanViewportDamage(
   ) {
     const region = clip(options.bounds, options.bounds, 'scroll-exposed');
     return region === undefined ? Object.freeze([]) : Object.freeze([region]);
+  }
+
+  if (
+    previous.scene !== undefined &&
+    previous.geometry !== undefined &&
+    options.current.scene !== undefined &&
+    options.current.geometry !== undefined
+  ) {
+    return calculateKanbanSceneDamage({
+      previousScene: previous.scene,
+      currentScene: options.current.scene,
+      previousGeometry: previous.geometry,
+      currentGeometry: options.current.geometry,
+      bounds: options.bounds,
+      maximumRegions: MAXIMUM_DAMAGE_REGIONS,
+    });
   }
 
   const damage: KanbanDamageRegion[] = [];

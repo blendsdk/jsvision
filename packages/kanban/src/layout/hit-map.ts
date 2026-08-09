@@ -15,7 +15,18 @@ import type { KanbanStructureStateCode } from '../structure/model.js';
 export interface KanbanLayoutRegion extends Readonly<Rect> {
   /** Region meaning; Phase A keeps every emitted region non-actionable. */
   readonly kind:
-    'workflow-header' | 'swimlane-header' | 'insertion-gutter' | 'card' | 'card-gap' | 'state' | 'minimum-size';
+    | 'workflow-header'
+    | 'swimlane-header'
+    | 'swimlane-band'
+    | 'swimlane-separator'
+    | 'swimlane-rail'
+    | 'swimlane-custom'
+    | 'cell'
+    | 'insertion-gutter'
+    | 'card'
+    | 'card-gap'
+    | 'state'
+    | 'minimum-size';
   /** Whether current input may target this region. */
   readonly actionable: boolean;
   /** Stable card identity for card rectangles. */
@@ -281,6 +292,8 @@ export function projectKanbanSceneHits(
 export interface KanbanDamageRegion extends Readonly<Rect> {
   /** Stable source of the damage request. */
   readonly kind: 'descriptor' | 'sticky' | 'state' | 'scroll-exposed' | 'whole-viewport';
+  /** Stable card identity when descriptor-local damage is known. */
+  readonly cardKey?: CardKey;
 }
 
 /** Detached inspection state for one retained source cell. */
@@ -297,6 +310,10 @@ export interface KanbanInspectedCard {
   readonly cardKey: CardKey;
   /** Containing workflow column identity. */
   readonly columnId: string;
+  /** Complete semantic cell address containing the card. */
+  readonly address: KanbanCellAddress;
+  /** Validated immutable descriptor retained for modeless diagnostics and specification evidence. */
+  readonly descriptor: import('../card/descriptor.js').KanbanCardDescriptor;
   /** Sanitized visible title projection. */
   readonly title: string;
   /** Non-color marker projected with the visible descriptor. */

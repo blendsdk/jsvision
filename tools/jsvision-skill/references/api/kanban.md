@@ -23,6 +23,21 @@ interface BuildKanbanSceneOptions {
 }
 ```
 
+## CalculateKanbanSceneDamageOptions
+
+Inputs for one bounded canonical-scene damage comparison.
+
+```ts
+interface CalculateKanbanSceneDamageOptions {
+  previousScene: KanbanScene;   // Previous immutable semantic scene.
+  currentScene: KanbanScene;   // Current immutable semantic scene.
+  previousGeometry: KanbanSceneGeometry;   // Previous exact scene geometry.
+  currentGeometry: KanbanSceneGeometry;   // Current exact scene geometry.
+  bounds: Readonly<Rect>;   // Viewport-local clipping rectangle.
+  maximumRegions: number;   // Finite retained region ceiling.
+}
+```
+
 ## CardKey
 
 A stable application-owned card identity.
@@ -198,7 +213,15 @@ const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
 Canonical English messages introduced by the Phase B board surface.
 
 ```ts
-const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; }>
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.state.descriptor-limit': string; 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; }>
+```
+
+## KANBAN_PHASE_B_PLACEHOLDER_MANIFEST
+
+Exact placeholders accepted by first-use Phase B messages.
+
+```ts
+const KANBAN_PHASE_B_PLACEHOLDER_MANIFEST: PlaceholderManifest
 ```
 
 ## KANBAN_PLACEHOLDER_MANIFEST
@@ -699,6 +722,7 @@ interface KanbanCardPresentationSnapshotContext {
   formatting: KanbanCardFormattingContext;   // Application-owned locale formatting callbacks.
   observe?: (observation: KanbanObservation) => void;   // Optional payload-free observation sink.
   checklistValues?: unknown;   // Optional already-acquired checklist values used by convenience renderers to avoid a second getter call.
+  selection?: KanbanCardPresentationSelection;   // Optional board-owned selection that takes precedence over the adapter's card-local selection getter.
 }
 ```
 
@@ -1237,6 +1261,7 @@ Bounded changed rectangle returned by viewport damage calculation.
 ```ts
 interface KanbanDamageRegion {
   kind: 'descriptor' | 'sticky' | 'state' | 'scroll-exposed' | 'whole-viewport';   // Stable source of the damage request.
+  cardKey?: CardKey;   // Stable card identity when descriptor-local damage is known.
 }
 ```
 
@@ -1681,6 +1706,8 @@ Detached visible-card evidence suitable for tests and modeless inspectors.
 interface KanbanInspectedCard {
   cardKey: CardKey;   // Stable application-owned card identity.
   columnId: string;   // Containing workflow column identity.
+  address: KanbanCellAddress;   // Complete semantic cell address containing the card.
+  descriptor: import('../card/descriptor.js').KanbanCardDescriptor;   // Validated immutable descriptor retained for modeless diagnostics and specification evidence.
   title: string;   // Sanitized visible title projection.
   marker: { readonly cues: readonly string[] };   // Non-color marker projected with the visible descriptor.
 }
@@ -1858,7 +1885,18 @@ Semantic rectangle emitted by pure layout projection for inspection or future in
 
 ```ts
 interface KanbanLayoutRegion {
-  kind: 'workflow-header' | 'swimlane-header' | 'insertion-gutter' | 'card' | 'card-gap' | 'state' | 'minimum-size';   // Region meaning; Phase A keeps every emitted region non-actionable.
+  kind: | 'workflow-header'
+    | 'swimlane-header'
+    | 'swimlane-band'
+    | 'swimlane-separator'
+    | 'swimlane-rail'
+    | 'swimlane-custom'
+    | 'cell'
+    | 'insertion-gutter'
+    | 'card'
+    | 'card-gap'
+    | 'state'
+    | 'minimum-size';   // Region meaning; Phase A keeps every emitted region non-actionable.
   actionable: boolean;   // Whether current input may target this region.
   cardKey?: CardKey;   // Stable card identity for card rectangles.
 }
@@ -2101,6 +2139,7 @@ Exact first-use Phase B message inventory required from every Kanban translation
 
 ```ts
 interface KanbanPhaseBMessageMap {
+  'kanban.state.descriptor-limit': Message;   // Partial-state evidence that names the number of descriptors omitted by the finite viewport budget.
   'kanban.action.open-card-editor': Message;   // Read-only card action that asks the application to open its card editor.
   'kanban.card.feedback.pending': Message;   // Compact feedback shown while a card operation is pending.
   'kanban.card.feedback.invalid': Message;   // Compact feedback shown when card validation is invalid.
@@ -3720,6 +3759,8 @@ interface KanbanViewportInspection {
   regions: readonly KanbanLayoutRegion[];   // Clipped semantic geometry kept separate from active hit-test entries.
   damage: readonly KanbanDamageRegion[];   // Bounded changed rectangles from the latest completed projection.
   actionTargets: readonly KanbanActionTarget[];   // Bounded closed-scope targets; deferred drag and insertion kinds are not representable.
+  mountedCardViews: 0;   // Resident card widgets; scene rendering deliberately keeps this at zero.
+  structureState?: KanbanStructureState;   // Board-level semantic structure state when one is active.
 }
 ```
 
@@ -3759,9 +3800,14 @@ Construction options shared by standalone viewports and the board shell.
 interface KanbanViewportOptions<TCard> {
   source: KanbanDataSource<TCard>;   // Application-owned sparse or eager source.
   query: () => KanbanQuery;   // Reactive semantic query getter.
-  card: KanbanCardAdapter<TCard>;   // Generic application-record adapter.
+  card: KanbanCardPresentationAdapter<TCard>;   // Generic application-record adapter.
   i18n?: () => I18n;   // Optional reactive localization service getter.
   density?: () => KanbanCardDensity;   // Optional reactive card-density getter.
+  presentation?: () => KanbanPresentationInput;   // Optional reactive rich-card presentation policy getter.
+  formatting?: () => KanbanCardFormattingContext;   // Optional reactive application formatting context getter.
+  cardPresentation?: (card: TCard) => KanbanViewportCardPresentation | undefined;   // Optional card-local selection and visual-state projection.
+  renderer?: () => KanbanCardRenderer<TCard>;   // Optional reactive custom descriptor renderer getter.
+  rendererRevision?: () => KanbanRevision;   // Optional reactive custom renderer/configuration revision getter.
   theme?: () => KanbanTheme;   // Optional reactive semantic theme getter.
   limits?: KanbanLimitOptions;   // Optional lower resource limits.
   overscan?: KanbanOverscanOptions;   // Optional finite visible-projection expansion.
@@ -3881,6 +3927,8 @@ interface ProjectKanbanSceneGeometryOptions {
   offsets: { readonly x: number; readonly y: number };   // Independent requested horizontal and vertical content offsets.
   activeSwimlaneId?: string;   // Active swimlane whose visible chrome may pin beneath workflow headers.
   minimumColumnWidth: number;   // Effective minimum width of each visible card column.
+  cardGap?: number;   // Empty resting rows between adjacent cards; defaults to one.
+  estimatedCardHeight?: number;   // Estimated descriptor rows used only for unloaded logical positions before retained cards.
   railWidth?: number;   // Requested left rail width; defaults to ten terminal cells.
   customChrome?: readonly KanbanSceneCustomChromeInput[];   // Per-visible-swimlane descriptors required by the custom strategy.
   focusedColumnId?: string;   // Optional focused workflow column; exactly this column remains visible.
@@ -4285,6 +4333,14 @@ Builds one immutable geometry-free semantic scene from bounded resident source d
 
 ```ts
 buildKanbanScene(options: BuildKanbanSceneOptions): KanbanScene
+```
+
+## calculateKanbanSceneDamage
+
+Computes bounded semantic-scene damage and preserves card-local descriptor invalidation.
+
+```ts
+calculateKanbanSceneDamage(options: CalculateKanbanSceneDamageOptions): readonly KanbanDamageRegion[]
 ```
 
 ## canonicalizeKanbanCellAddress

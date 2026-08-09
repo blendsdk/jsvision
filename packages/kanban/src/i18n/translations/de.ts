@@ -24,6 +24,7 @@ export const kanbanDe = createKanbanTranslationCatalog('de', {
 
 /** Official reviewed German Phase B Kanban overlay. */
 export const kanbanPhaseBDe = createKanbanPhaseBTranslationCatalog('de', {
+  'kanban.state.descriptor-limit': '${count} Karten liegen außerhalb des Anzeigelimits',
   'kanban.action.open-card-editor': 'Karteneditor öffnen',
   'kanban.card.feedback.pending': 'Ausstehend',
   'kanban.card.feedback.invalid': 'Ungültig',

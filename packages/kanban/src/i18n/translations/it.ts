@@ -24,6 +24,7 @@ export const kanbanIt = createKanbanTranslationCatalog('it', {
 
 /** Official reviewed Italian Phase B Kanban overlay. */
 export const kanbanPhaseBIt = createKanbanPhaseBTranslationCatalog('it', {
+  'kanban.state.descriptor-limit': '${count} schede superano il limite di visualizzazione',
   'kanban.action.open-card-editor': 'Apri editor scheda',
   'kanban.card.feedback.pending': 'In attesa',
   'kanban.card.feedback.invalid': 'Non valida',

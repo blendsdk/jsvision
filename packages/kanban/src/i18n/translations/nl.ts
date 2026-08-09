@@ -24,6 +24,7 @@ export const kanbanNl = createKanbanTranslationCatalog('nl', {
 
 /** Official reviewed Dutch Phase B Kanban overlay. */
 export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
+  'kanban.state.descriptor-limit': '${count} kaarten vallen buiten de weergavelimiet',
   'kanban.action.open-card-editor': 'Kaarteditor openen',
   'kanban.card.feedback.pending': 'In behandeling',
   'kanban.card.feedback.invalid': 'Ongeldig',
