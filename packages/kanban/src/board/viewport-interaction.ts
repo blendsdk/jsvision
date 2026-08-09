@@ -120,6 +120,7 @@ export class KanbanViewportInteractionBinding {
   #snapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
   #unsubscribe: (() => void) | undefined;
   #mounted = false;
+  #inputEnabled = false;
   #disposed = false;
 
   /** Captures the optional adapter method surface without subscribing before mount. */
@@ -165,13 +166,24 @@ export class KanbanViewportInteractionBinding {
 
   /** Returns mounted synchronous input seams only when the supplied adapter provides the complete set. */
   input(): CapturedKanbanViewportInputAdapter | undefined {
-    return this.#mounted && !this.#disposed ? this.#adapter?.input : undefined;
+    return this.#mounted && this.#inputEnabled && !this.#disposed ? this.#adapter?.input : undefined;
+  }
+
+  /** Enables mounted input only after the owning mount transaction has completed. */
+  enableInput(): void {
+    if (this.#mounted && !this.#disposed) this.#inputEnabled = true;
+  }
+
+  /** Rejects new mounted input immediately without releasing the state subscription yet. */
+  disableInput(): void {
+    this.#inputEnabled = false;
   }
 
   /** Releases only the viewport's subscription and never disposes the supplied adapter. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.disableInput();
     try {
       this.#unsubscribe?.();
     } catch {

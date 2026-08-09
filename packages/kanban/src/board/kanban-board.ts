@@ -42,7 +42,13 @@ import type { KanbanBoardFeedbackState } from './board-feedback.js';
 import { createKanbanDefaultInteractionSeed } from './board-state.js';
 import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
-import { KanbanViewport, setKanbanViewportInteractionEvidenceListener } from './kanban-viewport.js';
+import {
+  activateKanbanViewportBoardInput,
+  KanbanViewport,
+  prepareKanbanViewportBoardInput,
+  quiesceKanbanViewportInput,
+  setKanbanViewportInteractionEvidenceListener,
+} from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
@@ -250,6 +256,7 @@ export class KanbanBoard<TCard> extends Group {
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
     );
+    prepareKanbanViewportBoardInput(this.viewport);
     setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
       this.#reconcileInteraction(this.viewport.identityChanges()),
     );
@@ -407,6 +414,7 @@ export class KanbanBoard<TCard> extends Group {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    quiesceKanbanViewportInput(this.viewport);
     this.#interactionFacade.dispose();
     this.#disposeInteractionChrome?.();
     this.#disposeInteractionChrome = undefined;
@@ -555,6 +563,7 @@ export class KanbanBoard<TCard> extends Group {
       this.#interactionFacade.attach(controller);
       this.#interactionReconcileEvidence = undefined;
       this.#reconcileInteraction(this.viewport.identityChanges());
+      activateKanbanViewportBoardInput(this.viewport);
       if (this.#interactionFactory !== undefined) {
         void Promise.resolve().then(() => {
           if (!this.#disposed) this.#automaticReconcileReady = true;

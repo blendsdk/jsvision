@@ -172,6 +172,54 @@ function scopedActionId(value: string): KanbanScopedActionId {
   return createKanbanExtensionId(value);
 }
 
+/** Mount-lifetime input controls kept outside the public viewport API surface. */
+interface KanbanViewportInputLifecycle {
+  /** Whether a board mount transaction, rather than the standalone viewport, enables input. */
+  managed: boolean;
+  /** Subscription/input gate owned by the viewport. */
+  readonly binding: KanbanViewportInteractionBinding;
+  /** Pending-press owner that must cancel before facade/controller disposal. */
+  readonly pointer: KanbanPointerRouter;
+}
+
+/** Internal input controls keyed weakly so released viewports are never retained. */
+const VIEWPORT_INPUT_LIFECYCLES = new WeakMap<object, KanbanViewportInputLifecycle>();
+
+/**
+ * Defers input until the owning board finishes its controller mount transaction.
+ *
+ * @internal
+ */
+export function prepareKanbanViewportBoardInput<TCard>(viewport: KanbanViewport<TCard>): void {
+  const lifecycle = VIEWPORT_INPUT_LIFECYCLES.get(viewport);
+  if (lifecycle === undefined) throw new KanbanDisposedResourceError();
+  lifecycle.managed = true;
+  lifecycle.binding.disableInput();
+  lifecycle.pointer.cancel();
+}
+
+/**
+ * Enables input after the board controller and its subscriptions are fully attached.
+ *
+ * @internal
+ */
+export function activateKanbanViewportBoardInput<TCard>(viewport: KanbanViewport<TCard>): void {
+  const lifecycle = VIEWPORT_INPUT_LIFECYCLES.get(viewport);
+  if (lifecycle?.managed === true) lifecycle.binding.enableInput();
+}
+
+/**
+ * Rejects input and cancels pending press state before board-owned resources are released.
+ *
+ * @internal
+ */
+export function quiesceKanbanViewportInput<TCard>(viewport: KanbanViewport<TCard>): void {
+  const lifecycle = VIEWPORT_INPUT_LIFECYCLES.get(viewport);
+  if (lifecycle === undefined) return;
+  lifecycle.binding.disableInput();
+  lifecycle.pointer.dispose();
+}
+
 /**
  * Exact-cell read-only Kanban projection that owns one query/session/cursor coordinator.
  *
@@ -256,6 +304,11 @@ export class KanbanViewport<TCard> extends View {
       completeRetry: (target) => this.#completeRetry(target),
       openContext: (target) => this.#openContext(target),
     });
+    VIEWPORT_INPUT_LIFECYCLES.set(this, {
+      managed: false,
+      binding: this.#interactionBinding,
+      pointer: this.#pointerRouter,
+    });
     this.#swimlanePresentationResolver = createKanbanSwimlanePresentationResolver({
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
@@ -278,6 +331,7 @@ export class KanbanViewport<TCard> extends View {
       });
       try {
         this.#interactionBinding.mount(() => this.invalidate());
+        if (VIEWPORT_INPUT_LIFECYCLES.get(this)?.managed !== true) this.#interactionBinding.enableInput();
       } catch (error) {
         this.dispose();
         throw error;
@@ -816,11 +870,11 @@ export class KanbanViewport<TCard> extends View {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    quiesceKanbanViewportInput(this);
     this.#revealController?.abort();
     this.#revealController = undefined;
     this.#anchorController?.abort();
     this.#anchorController = undefined;
-    this.#pointerRouter.dispose();
     this.#interactionBinding.dispose();
     this.#source?.cancelPendingWork();
     this.#descriptorCache.dispose();
