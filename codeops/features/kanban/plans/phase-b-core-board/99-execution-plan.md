@@ -177,7 +177,12 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 3.2.9 Extend clipped closed-scope card/header/state/retry inspection targets and z-order while keeping drag/insertion targets absent, carrying the descriptor crop offsets required for exact action hits — `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/layout/swimlane-geometry.ts` ✅ (completed: 2026-08-09 15:46 CEST)
 - [x] 3.2.10 Rebuild viewport projection/drawing around scene geometry, activate rich/custom renderer selection only now that sparse heights exist, add first-use locale vocabulary, and preserve targeted damage — `packages/kanban/src/board/viewport-projector.ts`, `packages/kanban/src/board/viewport-render.ts`, `packages/kanban/src/board/viewport-damage.ts`, `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/card/presentation-snapshot.ts`, `packages/kanban/src/card/standard-renderer.ts`, `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/src/layout/swimlane-geometry.ts`, `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translation.ts`, `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/index.ts` ✅ (completed: 2026-08-09 16:04 CEST)
 - [x] 3.2.11 Integrate two-pass bounded correction with scroll/reveal/resize anchors and no unbounded reflow loop, retain unchanged card-local descriptor computations across cursor republication, and preserve exact solved column cropping — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-scroll.ts`, `packages/kanban/src/board/viewport-projector.ts`, `packages/kanban/src/board/descriptor-cache.ts`, `packages/kanban/src/layout/swimlane-geometry.ts`, `packages/kanban/src/layout/hit-map.ts`, `packages/kanban/test/e2e/board-hosting.e2e.test.ts` ✅ (completed: 2026-08-09 16:16 CEST)
-- [ ] 3.2.12 Run ST-B-GEO and make every immutable oracle green
+- [x] 3.2.12 Run ST-B-GEO and make every immutable oracle green ✅ (completed: 2026-08-09 16:18 CEST)
+
+> **Phase 3 green evidence (2026-08-09 16:18 CEST):** The exact combined canonical-scene,
+> rich-card, and structure specification command passed all 42 immutable assertions across three
+> specification files. The complete Kanban unit suite also passed 383 assertions, and the authentic
+> hosting E2E suite passed all nine assertions after the bounded scene integration.
 
 ### Step 3.3: Implementation tests and hardening
 
