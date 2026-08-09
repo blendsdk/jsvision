@@ -1,4 +1,5 @@
 import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
+import type { DispatchEvent } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -11,6 +12,7 @@ import {
   resolveKanbanStructure,
   resolveKanbanStructureState,
   snapshotKanbanDefinitionOfDone,
+  KanbanBoard,
   KanbanViewport,
 } from '../src/index.js';
 import type {
@@ -95,6 +97,53 @@ function mountStructureViewport(viewport: KanbanViewport<WorkItem>, width = 80, 
   render.mount(host);
   render.flush();
   return render;
+}
+
+/** Mounts a complete board so structure actions pass through the application intent boundary. */
+function mountStructureBoard(board: KanbanBoard<WorkItem>, width = 80, height = 24) {
+  board.setLayout({ position: 'fill' });
+  const host = new Group();
+  host.add(board);
+  const render = createRenderRoot(
+    { width, height },
+    { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
+  );
+  render.mount(host);
+  render.flush();
+  return render;
+}
+
+/** Delivers one complete primary click to a final clipped structure target. */
+function clickStructureTarget(
+  board: KanbanBoard<WorkItem>,
+  target: { readonly x: number; readonly y: number },
+): readonly DispatchEvent[] {
+  const events: DispatchEvent[] = [];
+  for (const kind of ['down', 'up'] as const) {
+    const event: DispatchEvent = {
+      event: { type: 'mouse', kind, button: 0, x: target.x, y: target.y },
+      handled: false,
+      local: { x: target.x, y: target.y },
+      ...(kind === 'down' ? { clickCount: 1 } : {}),
+    };
+    board.viewport.onEvent(event);
+    events.push(event);
+  }
+  return events;
+}
+
+/** Waits for serialized focus and semantic-intent settlement. */
+async function settleStructureInteraction(): Promise<void> {
+  for (let index = 0; index < 8; index += 1) await Promise.resolve();
+}
+
+/** Reads a mounted terminal frame without preserving style or color data. */
+function structureFrameText(render: ReturnType<typeof createRenderRoot>): string {
+  return render
+    .buffer()
+    .rows()
+    .map((row) => row.map((cell) => cell.char).join(''))
+    .join('\n');
 }
 
 describe('Kanban structure and workflow contract', () => {
@@ -761,6 +810,129 @@ describe('Kanban structure and workflow contract', () => {
         .sort((left, right) => String(left.cardKey).localeCompare(String(right.cardKey))),
     );
     expect(after.mountedCardViews).toBe(0);
+
+    render.unmount();
+  });
+
+  it('focuses capable headers before emitting scoped actions and keeps incapable headers inert', async () => {
+    // Header capabilities advertise only legal actions, and activation waits for application republication.
+    const cards = signal<readonly WorkItem[]>([
+      { id: 1, columnId: 'ready', title: 'First' },
+      { id: 2, columnId: 'doing', title: 'Second' },
+    ]);
+    const policy = signal<KanbanStructurePolicy<WorkItem>>({
+      revision: 'header-actions-v1',
+      columns: [
+        { columnId: 'ready', capabilities: ['collapse'] },
+        { columnId: 'doing', capabilities: [] },
+      ],
+    });
+    const intents: unknown[] = [];
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => COLUMNS.slice(0, 2),
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const board = new KanbanBoard({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: { keyOf: (card) => card.id, titleOf: (card) => card.title, statusOf: () => 'Ready' },
+      structure: policy,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mountStructureBoard(board, 48, 16);
+    const before = JSON.stringify({ cards: cards(), policy: policy() });
+    const headers = board.inspection().actionTargets.filter((target) => target.kind === 'workflow-header');
+    const capable = headers.find((target) => target.columnId === 'ready');
+    const incapable = headers.find((target) => target.columnId === 'doing');
+    if (capable === undefined || incapable === undefined) throw new Error('Expected both mounted workflow headers.');
+
+    const capableEvents = clickStructureTarget(board, capable);
+    await settleStructureInteraction();
+    expect(capableEvents.map(({ handled }) => handled)).toEqual([true, true]);
+    expect(board.interaction().snapshot().focused).toEqual({ kind: 'column-header', columnId: 'ready' });
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({
+      kind: 'scoped-action',
+      origin: 'pointer',
+      scope: { kind: 'column', columnId: 'ready' },
+    });
+    expect(JSON.stringify(intents[0])).toContain('collapse');
+    expect(Object.isFrozen(intents[0])).toBe(true);
+    expect(policy().columns[0]?.collapsed).not.toBe(true);
+
+    const incapableEvents = clickStructureTarget(board, incapable);
+    await settleStructureInteraction();
+    expect(incapableEvents.map(({ handled }) => handled)).toEqual([true, true]);
+    expect(board.interaction().snapshot().focused).toEqual({ kind: 'column-header', columnId: 'doing' });
+    expect(intents).toHaveLength(1);
+    expect(JSON.stringify({ cards: cards(), policy: policy() })).toBe(before);
+
+    const cardsBeforeRepublication = JSON.stringify(cards());
+    policy.set({
+      revision: 'header-actions-v2',
+      columns: [
+        { columnId: 'ready', collapsed: true, capabilities: ['collapse'] },
+        { columnId: 'doing', capabilities: [] },
+      ],
+    });
+    render.flush();
+    await settleStructureInteraction();
+    render.flush();
+    const collapsed = board.inspection();
+    const collapsedHeaderActions = collapsed.actionTargets.filter(
+      (target) => target.kind === 'workflow-header' && target.columnId === 'ready',
+    );
+    const headerRow = structureFrameText(render).split('\n')[0] ?? '';
+
+    expect(collapsed.regions.some((region) => region.kind === 'workflow-header')).toBe(true);
+    expect(collapsedHeaderActions.length).toBeGreaterThan(0);
+    expect(JSON.stringify(collapsedHeaderActions)).toContain('collapse');
+    expect(headerRow).toContain('Ready');
+    expect(headerRow).toMatch(/\b1\b/u);
+    expect(collapsed.visibleCards.some(({ cardKey }) => cardKey === 1)).toBe(false);
+    expect(collapsed.regions.some((region) => region.kind === 'card' && region.cardKey === 1)).toBe(false);
+    expect(collapsed.actionTargets.map(({ kind }) => kind)).not.toContain('drop');
+    expect(JSON.stringify(cards())).toBe(cardsBeforeRepublication);
+    expect(intents).toHaveLength(1);
+
+    render.unmount();
+  });
+
+  it('exposes only the localized clear-filter action on a filtered-empty state without changing the query', async () => {
+    // A filtered-empty state emits one scoped clear-filter intent; it never clears application state itself.
+    const query = signal({ search: 'no matching title', filters: [], sort: [] });
+    const intents: unknown[] = [];
+    const source = createEagerKanbanDataSource(() => [{ id: 1, columnId: 'ready', title: 'Visible before filter' }], {
+      columns: () => COLUMNS.slice(0, 1),
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+      search: (card, term) => card.title.toLocaleLowerCase().includes(term.toLocaleLowerCase()),
+    });
+    const board = new KanbanBoard({
+      source,
+      query,
+      card: { keyOf: (card) => card.id, titleOf: (card) => card.title, statusOf: () => 'Ready' },
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mountStructureBoard(board, 40, 12);
+    const actions = board.inspection().actionTargets.filter((target) => target.kind === 'state-action');
+
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toMatchObject({ actionId: 'clear-filters', state: 'filtered-empty' });
+    expect(structureFrameText(render)).toContain('Clear filters');
+    const before = query();
+    const events = clickStructureTarget(board, actions[0]!);
+    await settleStructureInteraction();
+    expect(events.map(({ handled }) => handled)).toEqual([true, true]);
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({
+      kind: 'scoped-action',
+      origin: 'pointer',
+      scope: { kind: 'state', state: 'filtered-empty', address: { columnId: 'ready' } },
+    });
+    expect(JSON.stringify(intents[0])).toContain('clear-filters');
+    expect(query()).toBe(before);
 
     render.unmount();
   });

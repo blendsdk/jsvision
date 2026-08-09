@@ -1,4 +1,5 @@
 import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
+import type { DispatchEvent } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
@@ -73,6 +74,55 @@ async function transition(
 ): Promise<void> {
   await facade.transition(command);
   await Promise.resolve();
+}
+
+/** Delivers one key to the mounted viewport with explicit terminal modifiers. */
+function dispatchInteractionKey(
+  board: KanbanBoard<Card>,
+  key: string,
+  modifiers: { readonly ctrl?: boolean; readonly shift?: boolean; readonly alt?: boolean } = {},
+): DispatchEvent {
+  const event: DispatchEvent = {
+    event: {
+      type: 'key',
+      key,
+      ctrl: modifiers.ctrl ?? false,
+      shift: modifiers.shift ?? false,
+      alt: modifiers.alt ?? false,
+    },
+    handled: false,
+  };
+  board.viewport.onEvent(event);
+  return event;
+}
+
+/** Delivers one mouse phase directly to a final clipped viewport target. */
+function dispatchInteractionPointer(
+  board: KanbanBoard<Card>,
+  target: { readonly x: number; readonly y: number },
+  kind: 'down' | 'up',
+  options: { readonly button?: number; readonly ctrl?: boolean; readonly clickCount?: number } = {},
+): DispatchEvent {
+  const event: DispatchEvent = {
+    event: {
+      type: 'mouse',
+      kind,
+      button: options.button ?? 0,
+      x: target.x,
+      y: target.y,
+      ...(options.ctrl === undefined ? {} : { ctrl: options.ctrl }),
+    },
+    handled: false,
+    local: { x: target.x, y: target.y },
+    ...(options.clickCount === undefined ? {} : { clickCount: options.clickCount }),
+  };
+  board.viewport.onEvent(event);
+  return event;
+}
+
+/** Waits for serialized mounted-input transitions and exactly-once intent delivery. */
+async function settleMountedInput(): Promise<void> {
+  for (let index = 0; index < 8; index += 1) await Promise.resolve();
 }
 
 describe('Kanban programmatic focus and navigation', () => {
@@ -408,6 +458,200 @@ describe('Kanban programmatic ordered selection', () => {
     await transition(interaction, { kind: 'escape' });
     expect(interaction.snapshot().selectedCardKeys).toEqual([]);
     expect(interaction.snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
+    render.unmount();
+  });
+});
+
+describe('Kanban mounted keyboard and pointer interaction', () => {
+  it('should route the closed keyboard subset while leaving unknown and Meta-only gestures unhandled', async () => {
+    // Mounted keys expose only the approved navigation, selection, activation, and escape gestures.
+    const intents: unknown[] = [];
+    const source = createEagerKanbanDataSource(
+      () => [
+        { id: 1, columnId: 'ready', title: 'One' },
+        { id: 2, columnId: 'ready', title: 'Two' },
+        { id: 3, columnId: 'doing', title: 'Three' },
+      ],
+      {
+        columns: () => columns('ready', 'doing'),
+        keyOf: (card) => card.id,
+        columnOf: (card) => card.columnId,
+      },
+    );
+    const board = new KanbanBoard({
+      source,
+      query: () => QUERY,
+      card: CARD,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mount(board, 48, 16);
+
+    const down = dispatchInteractionKey(board, 'down');
+    await settleMountedInput();
+    expect(down.handled).toBe(true);
+    expect(board.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
+
+    const range = dispatchInteractionKey(board, 'up', { shift: true });
+    await settleMountedInput();
+    expect(range.handled).toBe(true);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([2, 1]);
+
+    for (const key of ['home', 'end', 'pageup', 'pagedown', 'right', 'left', 'space']) {
+      const routed = dispatchInteractionKey(board, key);
+      await settleMountedInput();
+      expect(routed.handled, `${key} should be handled`).toBe(true);
+    }
+
+    const selectAll = dispatchInteractionKey(board, 'a', { ctrl: true });
+    await settleMountedInput();
+    expect(selectAll.handled).toBe(true);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([1, 2, 3]);
+
+    const enter = dispatchInteractionKey(board, 'enter');
+    await settleMountedInput();
+    expect(enter.handled).toBe(true);
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({ kind: 'open-card', origin: 'keyboard' });
+
+    const escape = dispatchInteractionKey(board, 'escape');
+    await settleMountedInput();
+    expect(escape.handled).toBe(true);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([]);
+
+    const unknown = dispatchInteractionKey(board, 'f12');
+    const metaTransportAbsent = dispatchInteractionKey(board, 'a', { alt: true });
+    expect([unknown.handled, metaTransportAbsent.handled]).toEqual([false, false]);
+    expect(Object.keys(metaTransportAbsent.event)).not.toContain('meta');
+
+    render.unmount();
+  });
+
+  it('should focus on down, select on matching up, toggle on Ctrl-click, and activate once on double-click', async () => {
+    // A pending press has no drag semantics: only a matching up commits selection or double-click activation.
+    const intents: unknown[] = [];
+    const boardWithHandler = new KanbanBoard({
+      source: createEagerKanbanDataSource(
+        () => [
+          { id: 1, columnId: 'ready', title: 'One' },
+          { id: 2, columnId: 'ready', title: 'Two' },
+        ],
+        {
+          columns: () => columns('ready'),
+          keyOf: (card) => card.id,
+          columnOf: (card) => card.columnId,
+        },
+      ),
+      query: () => QUERY,
+      card: CARD,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mount(boardWithHandler, 40, 14);
+    const targets = boardWithHandler.inspection().actionTargets.filter((target) => target.kind === 'card');
+    const first = targets.find((target) => target.cardKey === 1);
+    const second = targets.find((target) => target.cardKey === 2);
+    if (first === undefined || second === undefined) throw new Error('Expected two mounted card targets.');
+
+    const down = dispatchInteractionPointer(boardWithHandler, second, 'down', { clickCount: 1 });
+    await settleMountedInput();
+    expect(down.handled).toBe(true);
+    expect(boardWithHandler.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
+    expect(boardWithHandler.interaction().snapshot().selectedCardKeys).toEqual([]);
+
+    const up = dispatchInteractionPointer(boardWithHandler, second, 'up');
+    await settleMountedInput();
+    expect(up.handled).toBe(true);
+    expect(boardWithHandler.interaction().snapshot().selectedCardKeys).toEqual([2]);
+
+    dispatchInteractionPointer(boardWithHandler, first, 'down', { clickCount: 1, ctrl: true });
+    dispatchInteractionPointer(boardWithHandler, first, 'up', { ctrl: true });
+    await settleMountedInput();
+    expect(boardWithHandler.interaction().snapshot().selectedCardKeys).toEqual([2, 1]);
+
+    dispatchInteractionPointer(boardWithHandler, first, 'down', { clickCount: 2 });
+    dispatchInteractionPointer(boardWithHandler, first, 'up');
+    await settleMountedInput();
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({ kind: 'open-card', origin: 'pointer' });
+
+    dispatchInteractionKey(boardWithHandler, 'enter');
+    await settleMountedInput();
+    expect(intents).toHaveLength(2);
+    expect(intents[1]).toMatchObject({ kind: 'open-card', origin: 'keyboard' });
+    expect(intents.every(Object.isFrozen)).toBe(true);
+    expect(
+      intents.every(
+        (intent) => typeof intent === 'object' && intent !== null && Object.isFrozen(Reflect.get(intent, 'selection')),
+      ),
+    ).toBe(true);
+
+    render.unmount();
+  });
+
+  it('should focus a right-clicked card before capturing its eligible context selection', async () => {
+    // Context activation replaces prior focus and captures the new card rather than a stale selection.
+    const intents: unknown[] = [];
+    const source = createEagerKanbanDataSource(
+      () => [
+        { id: 1, columnId: 'ready', title: 'Prior' },
+        { id: 2, columnId: 'ready', title: 'Context target' },
+      ],
+      {
+        columns: () => columns('ready'),
+        keyOf: (card) => card.id,
+        columnOf: (card) => card.columnId,
+      },
+    );
+    const board = new KanbanBoard({
+      source,
+      query: () => QUERY,
+      card: CARD,
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    const render = mount(board, 40, 14);
+    await transition(board.interaction(), { kind: 'selection', operation: 'replace' });
+    const target = board
+      .inspection()
+      .actionTargets.find((candidate) => candidate.kind === 'card' && candidate.cardKey === 2);
+    if (target === undefined) throw new Error('Expected the context target to be mounted.');
+
+    const right = dispatchInteractionPointer(board, target, 'down', { button: 2, clickCount: 1 });
+    await settleMountedInput();
+    expect(right.handled).toBe(true);
+    expect(board.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({
+      kind: 'open-context',
+      origin: 'pointer',
+      selection: { entries: [{ cardKey: 2, address: { columnId: 'ready' } }] },
+    });
+    expect(JSON.stringify(intents[0])).not.toContain('"cardKey":1');
+
+    render.unmount();
+  });
+
+  it('should preserve focused-selected precedence with ASCII monochrome cues', async () => {
+    // Monochrome rendering retains both semantic cues while the focused marker wins visual precedence.
+    const board = eagerBoard(() => [{ id: 1, columnId: 'ready', title: 'Mono card' }], ['ready']);
+    board.setLayout({ position: 'fill' });
+    const host = new Group();
+    host.add(board);
+    const mono = resolveCapabilities({
+      env: { NO_COLOR: '1' },
+      platform: 'linux',
+      override: { colorDepth: 'mono', unicode: { utf8: false }, glyphs: { boxDrawing: false } },
+    }).profile;
+    const render = createRenderRoot({ width: 32, height: 10 }, { caps: mono });
+    render.mount(host);
+    render.flush();
+    const space = dispatchInteractionKey(board, 'space');
+    await settleMountedInput();
+    render.flush();
+    const card = board.inspection().visibleCards.find((candidate) => candidate.cardKey === 1);
+
+    expect(space.handled).toBe(true);
+    expect(card?.marker.cues).toEqual(expect.arrayContaining(['focused', 'selected']));
+    expect(card?.descriptor.marker.glyph).toBe('>');
+
     render.unmount();
   });
 });

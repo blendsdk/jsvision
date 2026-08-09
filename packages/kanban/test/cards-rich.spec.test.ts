@@ -1,11 +1,13 @@
 import { classicTheme } from '@jsvision/core';
 import { Group, createRenderRoot, resolveCapabilities, signal, stringWidth } from '@jsvision/ui';
+import type { DispatchEvent } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   composeStandardKanbanCard,
   createEagerKanbanDataSource,
   createKanbanTheme,
+  KanbanBoard,
   KanbanViewport,
   resolveKanbanPresentation,
   renderStandardKanbanCard,
@@ -187,6 +189,38 @@ function cacheKey(cardKey: CardKey, styleRevision: string): KanbanDescriptorCach
 function cachedDescriptor(cardKey: CardKey, label: string): KanbanCardDescriptor {
   const value = compose(snapshot(ticket({ ticketNumber: cardKey, caption: label })), 24, 8);
   return value;
+}
+
+/** Delivers one key through the mounted viewport and exposes synchronous handled propagation. */
+function dispatchCardKey(board: KanbanBoard<Ticket>, key: string): DispatchEvent {
+  const event: DispatchEvent = {
+    event: { type: 'key', key, ctrl: false, alt: false, shift: false },
+    handled: false,
+  };
+  board.viewport.onEvent(event);
+  return event;
+}
+
+/** Delivers one pointer phase at a published semantic target. */
+function dispatchCardPointer(
+  board: KanbanBoard<Ticket>,
+  target: { readonly x: number; readonly y: number },
+  kind: 'down' | 'up',
+  clickCount?: number,
+): DispatchEvent {
+  const event: DispatchEvent = {
+    event: { type: 'mouse', kind, button: 0, x: target.x, y: target.y },
+    handled: false,
+    local: { x: target.x, y: target.y },
+    ...(clickCount === undefined ? {} : { clickCount }),
+  };
+  board.viewport.onEvent(event);
+  return event;
+}
+
+/** Waits for the facade's serialized transition and intent delivery queue. */
+async function settleCardInteraction(): Promise<void> {
+  for (let index = 0; index < 8; index += 1) await Promise.resolve();
 }
 
 describe('rich Kanban card presentation', () => {
@@ -466,6 +500,72 @@ describe('rich Kanban card presentation', () => {
     expect(JSON.stringify(inspection)).not.toMatch(/field-secret|style-secret|\u001b/u);
     expect(JSON.stringify(observations)).not.toMatch(/field-secret|style-secret|\u001b/u);
     expect(inspection.visibleCards).toHaveLength(2);
+
+    render.unmount();
+  });
+
+  it('opens a read-only checklist through Enter, double-click, and its explicit action while Space only selects', async () => {
+    // Checklist activation emits one editor intent per gesture and never edits application-owned task state.
+    const cards = signal<readonly Ticket[]>([ticket({ ticketNumber: 1, caption: 'Checklist card' })]);
+    const before = JSON.stringify(cards());
+    const intents: unknown[] = [];
+    const source = createEagerKanbanDataSource(cards, {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 'ready-v1' }],
+      keyOf: (card: Ticket) => card.ticketNumber,
+      columnOf: (card: Ticket) => card.columnId,
+    });
+    const board = new KanbanBoard({
+      source,
+      query: () => ({ filters: [], sort: [] }),
+      card: adapter(),
+      presentation: () => custom('preview', 12),
+      formatting: () => formatting,
+      cardPresentation: () => ({ selection: { checklistIds: ['tasks'] }, visualState: visualState() }),
+      onInteraction: (intent: unknown) => intents.push(intent),
+    });
+    board.setLayout({ position: 'fill' });
+    const host = new Group();
+    host.add(board);
+    const render = createRenderRoot(
+      { width: 40, height: 18 },
+      { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
+    );
+    render.mount(host);
+    render.flush();
+
+    const space = dispatchCardKey(board, 'space');
+    await settleCardInteraction();
+    expect(space.handled).toBe(true);
+    expect(board.interaction().snapshot().selectedCardKeys).toEqual([1]);
+    expect(intents).toEqual([]);
+
+    const enter = dispatchCardKey(board, 'enter');
+    await settleCardInteraction();
+    expect(enter.handled).toBe(true);
+    expect(intents).toHaveLength(1);
+    expect(intents[0]).toMatchObject({ kind: 'open-card', origin: 'keyboard' });
+
+    const action = board
+      .inspection()
+      .actionTargets.find((target) => target.kind === 'card-action' && target.actionId === 'kanban.card.open-editor');
+    if (action === undefined) throw new Error('Expected one mounted checklist editor action target.');
+    const actionDown = dispatchCardPointer(board, action, 'down', 1);
+    const actionUp = dispatchCardPointer(board, action, 'up');
+    await settleCardInteraction();
+    expect([actionDown.handled, actionUp.handled]).toEqual([true, true]);
+    expect(intents).toHaveLength(2);
+    expect(intents[1]).toMatchObject({ kind: 'open-card', origin: 'pointer', actionId: 'kanban.card.open-editor' });
+
+    const card = board.inspection().actionTargets.find((target) => target.kind === 'card');
+    if (card === undefined) throw new Error('Expected one mounted card target.');
+    dispatchCardPointer(board, card, 'down', 2);
+    dispatchCardPointer(board, card, 'up');
+    await settleCardInteraction();
+    expect(intents).toHaveLength(3);
+    expect(intents[2]).toMatchObject({ kind: 'open-card', origin: 'pointer' });
+    expect(intents.every(Object.isFrozen)).toBe(true);
+    expect(JSON.stringify(cards())).toBe(before);
+    expect(cards()[0]?.tasks.map(({ completed }) => completed)).toEqual([true, false, false]);
 
     render.unmount();
   });

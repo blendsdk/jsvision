@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 23:24 CEST
-> **Progress**: 74/106 tasks (70%)
+> **Last Updated**: 2026-08-09 23:39 CEST
+> **Progress**: 75/106 tasks (71%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -263,14 +263,14 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 5: Mounted keyboard/pointer interaction
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 5 task
+> **Phase baseline tree**: `4aa7199dbf25ff7d19353595b3feaab7c33a8861`
 > **Lenses**: modern pointer UX, key/event propagation, responsive hosting, lifecycle
 
 ### Step 5.1: Specification tests
 
 **Reference**: 03-06; SPEC-B-ACTION-HOOK; SPEC-B-TRANSIENT-CANCEL; ST-B-INT-05..13; ST-B-X-01..04
 
-- [ ] 5.1.1 `[spec-author]` Add the Phase 5-owned mounted card/structure/keyboard/down-up/double/right-click/intent assertion slices — `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts`, `packages/kanban/test/interaction.spec.test.ts`
+- [x] 5.1.1 `[spec-author]` Add the Phase 5-owned mounted card/structure/keyboard/down-up/double/right-click/intent assertion slices — `packages/kanban/test/cards-rich.spec.test.ts`, `packages/kanban/test/structure-workflow.spec.test.ts`, `packages/kanban/test/interaction.spec.test.ts` ✅ (completed: 2026-08-09 23:39 CEST)
 - [ ] 5.1.2 `[spec-author]` Extend Phase B boundary/lifecycle specifications with host, active-input/pending-pointer disposal, deferred-Primary, and deferred-target-absence slices — `packages/kanban/test/phase-b-boundary.spec.test.ts`
 - [ ] 5.1.3 Run the Phase 5 specification suites and record expected red behavior
 
