@@ -188,7 +188,7 @@ implementation → green → implementation tests/hardening → verification.
 
 - [x] 3.3.1 Add sparse-run split/merge/correction/saturation/property tests — `packages/kanban/test/sparse-height-index.impl.test.ts` ✅ (completed: 2026-08-09 16:20 CEST)
 - [x] 3.3.2 Add scene retention/variant/hit/damage implementation tests — `packages/kanban/test/scene-projector.impl.test.ts` ✅ (completed: 2026-08-09 16:21 CEST)
-- [ ] 3.3.3 Extend 5,000 eager/100,000 logical mounted scale assertions with the exact limit-derived cursor/range/hint/descriptor/reactive/damage/address/run counters from 07 — `packages/kanban/test/viewport-scale.impl.test.ts`, `packages/kanban/src/testing.ts`
+- [x] 3.3.3 Extend 5,000 eager/100,000 logical mounted scale assertions with the exact limit-derived cursor/range/hint/descriptor/reactive/damage/address/run counters from 07 — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-scale-inspection.ts`, `packages/kanban/src/testing.ts`, `packages/kanban/test/viewport-scale.impl.test.ts` ✅ (completed: 2026-08-09 16:26 CEST)
 - [ ] 3.3.4 Run Phase 3 build/typecheck/unit/E2E and `yarn verify:local`; resolve quality-loop critical/major findings
 
 **Verify**: `yarn workspace @jsvision/kanban build && yarn workspace @jsvision/kanban typecheck && yarn workspace @jsvision/kanban test && yarn workspace @jsvision/kanban test:e2e && yarn verify:local`

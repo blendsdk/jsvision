@@ -10,3 +10,7 @@ export * from './testing/eager-fixture.js';
 export * from './testing/instrumentation.js';
 export * from './testing/query-harness.js';
 export * from './testing/windowed-fixture.js';
+export {
+  readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,
+  type KanbanViewportScaleSnapshot,
+} from './board/viewport-scale-inspection.js';

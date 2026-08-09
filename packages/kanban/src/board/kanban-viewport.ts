@@ -47,6 +47,8 @@ import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } fr
 import { KanbanViewportSource } from './viewport-source.js';
 import type { KanbanOverscanOptions, KanbanViewportSourceSnapshot } from './viewport-source.js';
 import { readViewportHostChromeRows } from './viewport-host-chrome.js';
+import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader } from './viewport-scale-inspection.js';
+import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
 
 /** Hard viewport-local descriptor ceiling independent of logical source length. */
 const KANBAN_VIEWPORT_DESCRIPTOR_LIMIT = 256;
@@ -178,6 +180,7 @@ export class KanbanViewport<TCard> extends View {
   constructor(options: KanbanViewportOptions<TCard>) {
     super();
     this.#options = options;
+    registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
     this.focusable = true;
     this.onMount(() => {
       if (this.#disposed) return;
@@ -469,6 +472,7 @@ export class KanbanViewport<TCard> extends View {
     for (const entry of this.#heightIndices.values()) entry.index.dispose();
     this.#heightIndices.clear();
     this.#heightProjections = Object.freeze([]);
+    unregisterKanbanViewportScaleReader(this);
     this.#descriptorCacheDisposed = true;
     this.#source?.dispose();
     this.#source = undefined;
@@ -899,5 +903,32 @@ export class KanbanViewport<TCard> extends View {
       }
     }
     return Object.freeze({ projections: Object.freeze(projections), corrected });
+  }
+
+  /** Creates a detached counter-only scale snapshot without card values or retained internal objects. */
+  #scaleSnapshot(): KanbanViewportScaleSnapshot {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    let heightAnchors = 0;
+    let heightRuns = 0;
+    let heightAllocatedEntries = 0;
+    for (const entry of this.#heightIndices.values()) {
+      const snapshot = entry.index.snapshot();
+      heightAnchors += snapshot.retainedAnchors;
+      heightRuns += snapshot.retainedRuns;
+      heightAllocatedEntries += snapshot.allocatedEntries;
+    }
+    const cells = this.#snapshot?.cells ?? [];
+    const sceneWindow = this.#snapshot?.sceneWindow;
+    return Object.freeze({
+      retainedCursors: cells.length,
+      retainedAddresses: new Set(cells.map((cell) => canonicalizeKanbanCellAddress(cell.address))).size,
+      retainedDescriptors: this.#descriptorCache.size,
+      reactiveComputations: this.#descriptorCache.size,
+      heightAnchors,
+      heightRuns,
+      heightAllocatedEntries,
+      damageRegions: this.#damage.length,
+      sceneWindowCells: sceneWindow?.kind === 'available' ? sceneWindow.requestedCells.length : 0,
+    });
   }
 }
