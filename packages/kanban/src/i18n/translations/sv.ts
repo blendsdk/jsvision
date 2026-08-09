@@ -38,4 +38,10 @@ export const kanbanPhaseBSv = createKanbanPhaseBTranslationCatalog('sv', {
   'kanban.workflow.wip-count-unavailable': 'Antal pågående arbeten är inte tillgängligt',
   'kanban.reason.transition-unavailable': 'Övergång inte tillgänglig',
   'kanban.swimlane.unavailable': 'Inte tillgänglig',
+  'kanban.interaction.navigation-pending': 'Flyttar fokus…',
+  'kanban.interaction.navigation-unavailable': 'Målet är inte tillgängligt',
+  'kanban.interaction.navigation-error': 'Det gick inte att flytta fokus',
+  'kanban.interaction.selection-limit-exceeded': 'Urvalsgränsen har nåtts',
+  'kanban.interaction.selection-pruned': 'Urvalet har uppdaterats',
+  'kanban.interaction.unavailable': 'Interaktion är inte tillgänglig',
 });

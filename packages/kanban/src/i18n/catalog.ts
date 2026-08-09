@@ -119,6 +119,18 @@ export interface KanbanPhaseBMessageMap {
   readonly 'kanban.reason.transition-unavailable': Message;
   /** Safe package-owned label for a derived-group resolver failure. */
   readonly 'kanban.swimlane.unavailable': Message;
+  /** Feedback while bounded navigation is awaiting source work. */
+  readonly 'kanban.interaction.navigation-pending': Message;
+  /** Feedback when a navigation destination cannot be acquired. */
+  readonly 'kanban.interaction.navigation-unavailable': Message;
+  /** Payload-free feedback when navigation fails unexpectedly. */
+  readonly 'kanban.interaction.navigation-error': Message;
+  /** Feedback when a selection operation exceeds the configured finite limit. */
+  readonly 'kanban.interaction.selection-limit-exceeded': Message;
+  /** Feedback after ineligible selected cards are pruned. */
+  readonly 'kanban.interaction.selection-pruned': Message;
+  /** Payload-free feedback when the interaction owner is unavailable. */
+  readonly 'kanban.interaction.unavailable': Message;
 }
 
 /** Canonical English messages introduced by the Phase B board surface. */
@@ -137,6 +149,12 @@ export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.workflow.wip-count-unavailable': 'WIP count unavailable',
   'kanban.reason.transition-unavailable': 'Transition unavailable',
   'kanban.swimlane.unavailable': 'Unavailable',
+  'kanban.interaction.navigation-pending': 'Moving focus…',
+  'kanban.interaction.navigation-unavailable': 'Destination unavailable',
+  'kanban.interaction.navigation-error': 'Could not move focus',
+  'kanban.interaction.selection-limit-exceeded': 'Selection limit reached',
+  'kanban.interaction.selection-pruned': 'Selection updated',
+  'kanban.interaction.unavailable': 'Interaction unavailable',
 } satisfies KanbanPhaseBMessageMap);
 
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */

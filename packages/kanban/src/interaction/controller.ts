@@ -692,7 +692,24 @@ class DefaultKanbanInteractionController implements KanbanInteractionController 
   }
 }
 
-/** Creates the package default interaction controller. */
+/**
+ * Creates the package default bounded interaction controller.
+ *
+ * Applications normally use this inside `interactionFactory` only when they want to wrap or observe
+ * the standard controller without replacing its navigation and selection behavior.
+ *
+ * @example
+ * ```ts
+ * const interactionFactory: KanbanInteractionControllerFactory = (environment) =>
+ *   createKanbanInteractionController(environment);
+ * ```
+ *
+ * @param environment Mount-scoped bounded scene, reveal, acquisition, feedback, and invalidation services.
+ * @param maximumSelectedKeys Finite selection ceiling from zero through
+ * `KANBAN_LIMITS.selectedKeys.absolute`; defaults to `KANBAN_LIMITS.selectedKeys.safe`.
+ * @throws {KanbanInvalidSourcePublicationError} When the selection ceiling is not a safe integer or
+ * falls outside the supported range.
+ */
 export function createKanbanInteractionController(
   environment: KanbanInteractionEnvironment,
   maximumSelectedKeys = KANBAN_LIMITS.selectedKeys.safe,

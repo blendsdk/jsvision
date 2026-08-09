@@ -38,4 +38,10 @@ export const kanbanPhaseBRo = createKanbanPhaseBTranslationCatalog('ro', {
   'kanban.workflow.wip-count-unavailable': 'Numărul lucrărilor în curs nu este disponibil',
   'kanban.reason.transition-unavailable': 'Tranziție indisponibilă',
   'kanban.swimlane.unavailable': 'Indisponibil',
+  'kanban.interaction.navigation-pending': 'Se mută focalizarea…',
+  'kanban.interaction.navigation-unavailable': 'Destinație indisponibilă',
+  'kanban.interaction.navigation-error': 'Focalizarea nu a putut fi mutată',
+  'kanban.interaction.selection-limit-exceeded': 'Limita de selecție a fost atinsă',
+  'kanban.interaction.selection-pruned': 'Selecție actualizată',
+  'kanban.interaction.unavailable': 'Interacțiune indisponibilă',
 });

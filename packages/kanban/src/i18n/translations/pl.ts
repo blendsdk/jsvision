@@ -38,4 +38,10 @@ export const kanbanPhaseBPl = createKanbanPhaseBTranslationCatalog('pl', {
   'kanban.workflow.wip-count-unavailable': 'Liczba WIP jest niedostępna',
   'kanban.reason.transition-unavailable': 'Przejście niedostępne',
   'kanban.swimlane.unavailable': 'Niedostępne',
+  'kanban.interaction.navigation-pending': 'Przenoszenie fokusu…',
+  'kanban.interaction.navigation-unavailable': 'Miejsce docelowe niedostępne',
+  'kanban.interaction.navigation-error': 'Nie udało się przenieść fokusu',
+  'kanban.interaction.selection-limit-exceeded': 'Osiągnięto limit zaznaczenia',
+  'kanban.interaction.selection-pruned': 'Zaznaczenie zaktualizowane',
+  'kanban.interaction.unavailable': 'Interakcja niedostępna',
 });

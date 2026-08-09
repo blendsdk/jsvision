@@ -120,7 +120,12 @@ export interface KanbanViewportOptions<TCard> {
   readonly observe?: (observation: KanbanObservation) => void;
   /** Optional reactive UX capability descriptions. */
   readonly capabilities?: () => KanbanCapabilities;
-  /** Optional reactive application-owned identity hints. */
+  /**
+   * Optional reactive compatibility identity projection for a standalone viewport.
+   *
+   * @deprecated Supply `interaction` for validated focus and selection state. A board treats its
+   * separately documented `identity` option as a one-time default-controller seed.
+   */
   readonly identity?: () => KanbanIdentityInput;
   /** Optional non-owning interaction publication adapter for scene cues and inspection. */
   readonly interaction?: KanbanViewportInteractionAdapter;

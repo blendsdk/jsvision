@@ -38,4 +38,10 @@ export const kanbanPhaseBIt = createKanbanPhaseBTranslationCatalog('it', {
   'kanban.workflow.wip-count-unavailable': 'Conteggio del lavoro in corso non disponibile',
   'kanban.reason.transition-unavailable': 'Transizione non disponibile',
   'kanban.swimlane.unavailable': 'Non disponibile',
+  'kanban.interaction.navigation-pending': 'Spostamento del focus…',
+  'kanban.interaction.navigation-unavailable': 'Destinazione non disponibile',
+  'kanban.interaction.navigation-error': 'Impossibile spostare il focus',
+  'kanban.interaction.selection-limit-exceeded': 'Limite di selezione raggiunto',
+  'kanban.interaction.selection-pruned': 'Selezione aggiornata',
+  'kanban.interaction.unavailable': 'Interazione non disponibile',
 });

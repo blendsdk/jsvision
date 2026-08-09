@@ -101,7 +101,10 @@ describe('board interaction projection implementation', () => {
     await value.interaction().transition({ kind: 'selection', operation: 'toggle' });
     render.flush();
     const feedback = value.inspection();
-    expect(feedback.interaction.feedback).toMatchObject({ code: 'selection-limit-exceeded' });
+    expect(feedback.interaction.feedback).toMatchObject({
+      code: 'selection-limit-exceeded',
+      label: 'Selection limit reached',
+    });
     expect(feedback.viewportRect.height).toBe(11);
     expect(feedback.navigator.visible).toBe(false);
     render.unmount();

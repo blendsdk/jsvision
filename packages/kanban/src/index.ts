@@ -32,6 +32,7 @@ export type {
   KanbanInteractionControllerFactory,
   KanbanInteractionFacade,
 } from './interaction/facade.js';
+export { createKanbanInteractionController } from './interaction/controller.js';
 export * from './interaction/types.js';
 export * from './layout/hit-map.js';
 export * from './layout/metrics.js';
@@ -49,6 +50,8 @@ export * from './board/scene-model.js';
 export { calculateKanbanSceneDamage } from './board/viewport-damage.js';
 export type { CalculateKanbanSceneDamageOptions } from './board/viewport-damage.js';
 export type { KanbanViewportInspection } from './board/viewport-inspection.js';
+export type { KanbanInteractionInspection } from './board/viewport-inspection.js';
+export type { KanbanViewportInteractionAdapter } from './board/viewport-interaction.js';
 export {
   resolveKanbanSceneWindow,
   type KanbanOverscanOptions,

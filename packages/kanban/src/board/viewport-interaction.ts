@@ -10,12 +10,13 @@ import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
 /**
  * Non-owning state and transition adapter accepted by a standalone Kanban viewport.
  *
- * The viewport subscribes while mounted but never disposes the adapter. A board facade can therefore be
- * shared with its board-owned viewport without transferring controller ownership.
+ * The viewport subscribes while mounted but never disposes or transitions the adapter. A board facade
+ * may therefore drive a read-only mirror without transferring controller ownership; application code
+ * still sends transitions through the facade that owns the original board environment.
  *
  * @example
  * ```ts
- * const viewport = new KanbanViewport({ ...options, interaction: board.interaction() });
+ * const mirror = new KanbanViewport({ ...options, interaction: board.interaction() });
  * ```
  */
 export interface KanbanViewportInteractionAdapter {

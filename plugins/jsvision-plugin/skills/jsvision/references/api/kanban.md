@@ -213,7 +213,7 @@ const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog
 Canonical English messages introduced by the Phase B board surface.
 
 ```ts
-const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.state.descriptor-limit': string; 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; }>
+const KANBAN_PHASE_B_ENGLISH_MESSAGES: Readonly<{ 'kanban.state.descriptor-limit': string; 'kanban.action.open-card-editor': string; 'kanban.card.feedback.pending': string; 'kanban.card.feedback.invalid': string; 'kanban.card.feedback.rejected': string; 'kanban.state.filtered-empty': string; 'kanban.state.collapsed': string; 'kanban.action.clear-filters': string; 'kanban.workflow.definition-of-done': string; 'kanban.workflow.wip-minimum-not-met': string; 'kanban.workflow.wip-maximum-exceeded': string; 'kanban.workflow.wip-count-unavailable': string; 'kanban.reason.transition-unavailable': string; 'kanban.swimlane.unavailable': string; 'kanban.interaction.navigation-pending': string; 'kanban.interaction.navigation-unavailable': string; 'kanban.interaction.navigation-error': string; 'kanban.interaction.selection-limit-exceeded': string; 'kanban.interaction.selection-pruned': string; 'kanban.interaction.unavailable': string; }>
 ```
 
 ## KANBAN_PHASE_B_PLACEHOLDER_MANIFEST
@@ -387,6 +387,7 @@ Construction options for the responsive board shell and application authority se
 
 ```ts
 interface KanbanBoardOptions<TCard> {
+  identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
   interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
 }
@@ -1839,6 +1840,24 @@ type KanbanInteractionFeedbackCode = | 'navigation-pending'
   | 'interaction-unavailable'
 ```
 
+## KanbanInteractionInspection
+
+Detached controller evidence exposed without application records or host handles.
+
+```ts
+interface KanbanInteractionInspection {
+  revision: number;   // Equality-only controller publication revision.
+  focused: KanbanInteractionSnapshot['focused'];   // Current stable focus target.
+  selectedCardKeys: KanbanInteractionSnapshot['selectedCardKeys'];   // Ordered type-preserving loaded selection identities.
+  selectedCount: number;   // Number of loaded selected identities.
+  selectionScope: 'loaded' | 'server';   // Honest active selection scope.
+  rangeAnchor?: KanbanRangeAnchor;   // Explicit cell-local range anchor when range extension is active.
+  pendingNavigationKind?: 'reveal' | 'acquire';   // Current bounded acquisition kind without retaining its request target.
+  lastPruneCount?: number;   // Exact most recent prune count when prune feedback is active.
+  feedback?: KanbanInteractionFeedback;   // Safe localized payload-free interaction feedback.
+}
+```
+
 ## KanbanInteractionPendingResult
 
 Pending bounded acquisition settlement that leaves current focus in place.
@@ -2360,6 +2379,12 @@ interface KanbanPhaseBMessageMap {
   'kanban.workflow.wip-count-unavailable': Message;   // Feedback when blocking WIP authority is unavailable.
   'kanban.reason.transition-unavailable': Message;   // Payload-free feedback when the application transition resolver fails.
   'kanban.swimlane.unavailable': Message;   // Safe package-owned label for a derived-group resolver failure.
+  'kanban.interaction.navigation-pending': Message;   // Feedback while bounded navigation is awaiting source work.
+  'kanban.interaction.navigation-unavailable': Message;   // Feedback when a navigation destination cannot be acquired.
+  'kanban.interaction.navigation-error': Message;   // Payload-free feedback when navigation fails unexpectedly.
+  'kanban.interaction.selection-limit-exceeded': Message;   // Feedback when a selection operation exceeds the configured finite limit.
+  'kanban.interaction.selection-pruned': Message;   // Feedback after ineligible selected cards are pruned.
+  'kanban.interaction.unavailable': Message;   // Payload-free feedback when the interaction owner is unavailable.
 }
 ```
 
@@ -4028,6 +4053,18 @@ interface KanbanViewportInspection {
 }
 ```
 
+## KanbanViewportInteractionAdapter
+
+Non-owning state and transition adapter accepted by a standalone Kanban viewport.
+
+```ts
+interface KanbanViewportInteractionAdapter {
+  snapshot(): KanbanInteractionSnapshot;   // Returns the latest detached immutable interaction publication.
+  transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult> | KanbanInteractionResult;   // Applies one closed semantic transition through the adapter's existing owner.
+  subscribe(invalidate: () => void): () => void;   // Subscribes to semantic publications and returns an idempotent unsubscribe function.
+}
+```
+
 ## KanbanViewportMetrics
 
 Read-only exact-cell projection metrics exposed by a mounted viewport.
@@ -4078,7 +4115,7 @@ interface KanbanViewportOptions<TCard> {
   overscan?: KanbanOverscanOptions;   // Optional finite visible-projection expansion.
   observe?: (observation: KanbanObservation) => void;   // Optional already-redacted observation sink.
   capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
-  identity?: () => KanbanIdentityInput;   // Optional reactive application-owned identity hints.
+  identity?: () => KanbanIdentityInput;   // Optional reactive compatibility identity projection for a standalone viewport.
   interaction?: KanbanViewportInteractionAdapter;   // Optional non-owning interaction publication adapter for scene cues and inspection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
 }
@@ -4714,6 +4751,14 @@ Creates a validated application field identity.
 
 ```ts
 createKanbanFieldId(value: string): KanbanFieldId
+```
+
+## createKanbanInteractionController
+
+Creates the package default bounded interaction controller.
+
+```ts
+createKanbanInteractionController(environment: KanbanInteractionEnvironment, maximumSelectedKeys = KANBAN_LIMITS.selectedKeys.safe): KanbanInteractionController
 ```
 
 ## createKanbanObservation

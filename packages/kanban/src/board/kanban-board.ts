@@ -13,6 +13,7 @@ import type { CardKey } from '../contract/identity.js';
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
+import type { KanbanPhaseBMessageMap } from '../i18n/catalog.js';
 import {
   createKanbanInteractionController,
   createSeededKanbanInteractionController,
@@ -44,8 +45,27 @@ import type { KanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import { setViewportHostChromeRows } from './viewport-host-chrome.js';
 
+/** Typed locale key assigned to each closed interaction feedback category. */
+const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
+  'navigation-pending': 'kanban.interaction.navigation-pending',
+  'navigation-unavailable': 'kanban.interaction.navigation-unavailable',
+  'navigation-error': 'kanban.interaction.navigation-error',
+  'selection-limit-exceeded': 'kanban.interaction.selection-limit-exceeded',
+  'selection-pruned': 'kanban.interaction.selection-pruned',
+  'interaction-unavailable': 'kanban.interaction.unavailable',
+}) satisfies Readonly<
+  Record<KanbanInteractionFeedbackCode, Extract<keyof KanbanPhaseBMessageMap, `kanban.interaction.${string}`>>
+>;
+
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction'> {
+  /**
+   * Optional compatibility seed captured once during construction for the default controller's mount.
+   *
+   * @deprecated Use {@link KanbanBoard.interaction} after construction. This seed cannot be combined
+   * with `interactionFactory` and later getter changes do not control interaction state.
+   */
+  readonly identity?: () => KanbanIdentityInput;
   /** Optional application-owned request dispatcher; read projection never depends on it. */
   readonly dispatcher?: KanbanRequestDispatcher;
   /** Optional mount factory replacing the package default interaction controller. */
@@ -452,13 +472,10 @@ export class KanbanBoard<TCard> extends Group {
     return this.viewport.revealInteractionTarget(snapshotKanbanFocusTarget(request.target), options);
   }
 
-  /** Creates bounded payload-free feedback pending dedicated locale vocabulary. */
+  /** Creates bounded payload-free feedback from the complete typed locale vocabulary. */
   #interactionFeedback(code: KanbanInteractionFeedbackCode, count?: number): KanbanInteractionFeedback {
     const safeCount = count !== undefined && Number.isSafeInteger(count) && count >= 0 ? count : undefined;
-    const label =
-      code === 'navigation-error' || code === 'navigation-unavailable'
-        ? this.#i18n().t('kanban.reason.source-unavailable')
-        : code.replaceAll('-', ' ');
+    const label = this.#i18n().t(INTERACTION_FEEDBACK_MESSAGE_KEYS[code]);
     return Object.freeze({ code, label, ...(safeCount === undefined ? {} : { count: safeCount }) });
   }
 

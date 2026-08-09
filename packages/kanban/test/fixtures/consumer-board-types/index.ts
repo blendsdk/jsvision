@@ -1,5 +1,17 @@
-import { KanbanBoard, createKanbanColumnId, solveKanbanColumnWidths } from '@jsvision/kanban';
-import type { KanbanCardAdapter, KanbanQuery } from '@jsvision/kanban';
+import {
+  KanbanBoard,
+  createKanbanColumnId,
+  createKanbanInteractionController,
+  solveKanbanColumnWidths,
+} from '@jsvision/kanban';
+import type {
+  KanbanCardAdapter,
+  KanbanInteractionControllerFactory,
+  KanbanInteractionFacade,
+  KanbanInteractionInspection,
+  KanbanQuery,
+  KanbanViewportInteractionAdapter,
+} from '@jsvision/kanban';
 import { createWindowedKanbanFixture } from '@jsvision/kanban/testing';
 
 interface DomainRecord {
@@ -29,10 +41,20 @@ const card: KanbanCardAdapter<DomainRecord> = {
   statusOf: (record) => record.stateLabel,
 };
 
-const board = new KanbanBoard<DomainRecord>({ source: fixture.source, query: () => query, card });
+const interactionFactory: KanbanInteractionControllerFactory = (environment) =>
+  createKanbanInteractionController(environment);
+const board = new KanbanBoard<DomainRecord>({ source: fixture.source, query: () => query, card, interactionFactory });
+const facade: KanbanInteractionFacade = board.interaction();
+const adapter: KanbanViewportInteractionAdapter = facade;
+const interactionInspection: KanbanInteractionInspection = board.inspection().interaction;
 const widths = solveKanbanColumnWidths({ availableWidth: 24, columns, focusedColumnId: 'ready' });
 
-if (board.viewport === undefined || widths.columns[0]?.columnId !== 'ready') {
+if (
+  board.viewport === undefined ||
+  adapter.snapshot().revision !== facade.snapshot().revision ||
+  interactionInspection.revision < 0 ||
+  widths.columns[0]?.columnId !== 'ready'
+) {
   throw new Error('the public Kanban board contract is unavailable');
 }
 

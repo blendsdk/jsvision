@@ -38,4 +38,10 @@ export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
   'kanban.workflow.wip-count-unavailable': 'WIP-aantal niet beschikbaar',
   'kanban.reason.transition-unavailable': 'Overgang niet beschikbaar',
   'kanban.swimlane.unavailable': 'Niet beschikbaar',
+  'kanban.interaction.navigation-pending': 'Focus wordt verplaatst…',
+  'kanban.interaction.navigation-unavailable': 'Bestemming niet beschikbaar',
+  'kanban.interaction.navigation-error': 'Focus kon niet worden verplaatst',
+  'kanban.interaction.selection-limit-exceeded': 'Selectielimiet bereikt',
+  'kanban.interaction.selection-pruned': 'Selectie bijgewerkt',
+  'kanban.interaction.unavailable': 'Interactie niet beschikbaar',
 });

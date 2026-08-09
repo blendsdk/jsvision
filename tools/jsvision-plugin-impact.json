@@ -163,13 +163,13 @@
     "ui-layout-and-views": "44e8b2f97a7c2c8b898e62d89b5499943961283b9e266496ef89fca194858fd6",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
     "ui-application-shell": "ddb9b3d0dc8a6d5411ededb41fb765446472c8fa50c65bbeeb2d1ca7c848cc31",
-    "internationalization": "0612c2b6f7c7d16d8e65745eeb97186c655a4d9fbbeead347508d499e1f3d3dc",
+    "internationalization": "c1525de6e816fc166ea384a160b1c8620b0beedee746ceab053fa0ac3e70ec9a",
     "forms": "028366f0307468207cae41ebe4be54eaa66a1e533883bd4d42c50c159ec7729a",
     "datagrid": "0da1693fde29dd5c332e571c9560f0b53640041a5e5746aecc1803c5d3af7800",
     "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
     "web": "f905feec01e08072e640a5fe2e590032cb76b397520026a6e0301018c9a836b6",
     "code-editor": "708252d08848b5f438e9fd0d2f8b6d3ca95890dc1a28a964e2cd769cf3bf076f",
-    "kanban": "e52bcc60e3b1d01d0edc1df4e4eb892acb49d3ecfc038118c06e01aa1975a9c6",
+    "kanban": "dbf05054a152f82e6bb6ad4bede78be956acd03b662adb812c9189d5ad68c9ef",
     "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
   }
 }
