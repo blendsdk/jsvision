@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 22:07 CEST
-> **Progress**: 71/106 tasks (67%)
+> **Last Updated**: 2026-08-09 22:17 CEST
+> **Progress**: 72/106 tasks (68%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -247,7 +247,7 @@ implementation → green → implementation tests/hardening → verification.
 ### Step 4.3: Implementation tests and hardening
 
 - [x] 4.3.1 Add transition serialization/revision/subscription/disposal/cancellation implementation tests — `packages/kanban/test/interaction-controller.impl.test.ts` ✅ (completed: 2026-08-09 22:07 CEST)
-- [ ] 4.3.2 Add ordered membership/range/prune/snapshot property tests and key collision security cases — `packages/kanban/test/interaction-selection.impl.test.ts`
+- [x] 4.3.2 Add ordered membership/range/prune/snapshot property tests and key collision security cases — `packages/kanban/test/interaction-selection.impl.test.ts` ✅ (completed: 2026-08-09 22:17 CEST)
 - [ ] 4.3.3 Add navigation geometry/reconciliation/acquisition edge and fake-async tests — `packages/kanban/test/interaction-navigation.impl.test.ts`
 - [ ] 4.3.4 Run Phase 4 build/typecheck/unit/E2E and `yarn verify:local`; resolve quality-loop critical/major findings
 
