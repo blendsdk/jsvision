@@ -1817,6 +1817,7 @@ Stable board-owned programmatic interaction surface available before and after m
 ```ts
 interface KanbanInteractionFacade {
   snapshot(): KanbanInteractionSnapshot;   // Returns the last valid detached immutable interaction snapshot.
+  accept(command: KanbanInteractionTransition): boolean;   // Synchronously queues one enabled event-loop transition when a controller is available.
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;   // Serializes one closed transition behind settlement-generation checks.
   snapshotEligibleSelection(): KanbanSelectionSnapshot;   // Captures current eligible ordered selection independently from later live changes.
   subscribe(invalidate: () => void): () => void;   // Subscribes to facade publications and returns an idempotent unsubscribe function.

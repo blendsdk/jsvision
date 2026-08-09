@@ -75,6 +75,8 @@ export type KanbanInteractionControllerFactory = (
 export interface KanbanInteractionFacade {
   /** Returns the last valid detached immutable interaction snapshot. */
   snapshot(): KanbanInteractionSnapshot;
+  /** Synchronously queues one enabled event-loop transition when a controller is available. */
+  accept(command: KanbanInteractionTransition): boolean;
   /** Serializes one closed transition behind settlement-generation checks. */
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;
   /** Captures current eligible ordered selection independently from later live changes. */
@@ -233,6 +235,13 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
       }
     }
     return this.#lastSnapshot;
+  }
+
+  /** Accepts one event-loop transition synchronously while settlement remains serialized. */
+  accept(command: KanbanInteractionTransition): boolean {
+    if (this.#controller === undefined || this.#failed || this.#disposed) return false;
+    void this.transition(command);
+    return true;
   }
 
   /** Serializes controller transitions and converts every rejected settlement to typed unavailability. */

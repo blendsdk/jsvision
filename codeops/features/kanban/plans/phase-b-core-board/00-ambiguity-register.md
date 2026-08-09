@@ -632,6 +632,36 @@ snapshot support.
 - **Reopen triggers:** A later requirement adds a new semantic owner, permits context on a non-closed
   scope, or changes collapse from application-owned policy republication.
 
+### PAR-B44 — Synchronous event acceptance over serialized transitions (API/runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact implementation of the preflight-approved synchronous acceptance boundary for
+  the already-closed Phase B key subset; it does not add bindings, commands, or host transport fields.
+- **Objective:** Let terminal event dispatch mark a recognized gesture handled immediately while the
+  existing facade preserves ordered asynchronous controller settlement.
+- **Decision:** Add `KanbanInteractionFacade.accept(transition): boolean`. It returns `false` before
+  controller attachment and after failure/disposal; otherwise it queues through the same serialized
+  `transition` path and returns `true` without predicting eventual acquisition success. A package-private
+  pure key router maps lowercase decoder keys to navigation, Space, Enter, Escape, and Ctrl+A; Shift is
+  admitted only for navigation range extension, Alt and unsupported Ctrl combinations are rejected,
+  and Meta/Command remains absent rather than inferred.
+- **Evidence:** UI `onEvent` is synchronous, the current facade already serializes transitions and owns
+  failure containment, and Core key events expose only Ctrl/Alt/Shift. A boolean acceptance method avoids
+  a second queue or optimistic controller state.
+- **Rejected alternatives:** Awaiting `transition` cannot drive synchronous handled propagation. Marking
+  every known key handled before mount violates fail-closed input. Duplicating a queue in the viewport
+  would create a second ordering authority. Treating Alt as Meta would misrepresent host input.
+- **Strongest counterargument:** A public `accept` method is easy to confuse with successful settlement.
+  Its boolean and documentation therefore state only immediate queue admission; callers needing outcomes
+  continue to use `transition`.
+- **Confidence:** High.
+- **Hardening:** Grounded against facade mount/failure/disposal state, current transition serialization,
+  Core event types, the mounted-input specification, and the preflight PF-B-017 ruling.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260809T235900Z`.
+- **Reopen triggers:** UI event dispatch becomes awaitable, Meta/Command enters the normalized event model,
+  or configurable command routing replaces the fixed Phase B bindings.
+
 ## Systematic discovery scan
 
 | Category | Result |
