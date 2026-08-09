@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 19:18 CEST
-> **Progress**: 57/106 tasks (54%)
+> **Last Updated**: 2026-08-09 19:19 CEST
+> **Progress**: 58/106 tasks (55%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -221,7 +221,13 @@ implementation → green → implementation tests/hardening → verification.
 **Reference**: 03-01 §Single-owner interaction; 03-05; ST-B-INT-01..16; PAR-B06/PAR-B13/PAR-B14
 
 - [x] 4.1.1 `[spec-author]` Write the Phase 4-owned controller/programmatic focus/navigation/selection and atomic setup/rollback assertion slices — `packages/kanban/test/interaction.spec.test.ts`, `packages/kanban/test/phase-b-boundary.spec.test.ts` ✅ (completed: 2026-08-09 19:18 CEST)
-- [ ] 4.1.2 Run the Phase 4 specification suite and record expected red behavior
+- [x] 4.1.2 Run the Phase 4 specification suite and record expected red behavior ✅ (completed: 2026-08-09 19:19 CEST)
+
+> **Phase 4 red evidence (2026-08-09 19:19 CEST):** The two Phase 4 specification files ran
+> 20 assertions and all 20 failed at the intended missing interaction seams: the stable board facade,
+> controller/factory contracts, programmatic focus/navigation/selection, serialization, and atomic
+> rollback. The zero-column initial-focus case also reached the existing source-publication rejection
+> that Phase 4 must normalize to board-state focus. No Phase 5 input or intent assertion was included.
 
 ### Step 4.2: Implementation and green phase
 
