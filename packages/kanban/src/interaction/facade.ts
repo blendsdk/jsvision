@@ -1,7 +1,12 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
+import type { KanbanExtensionId } from '../contract/identity.js';
+import type { KanbanActionScope } from '../layout/hit-map.js';
 import { snapshotKanbanInteractionResult, snapshotKanbanInteractionSnapshot } from './controller.js';
+import { KanbanIntentRouter } from './intent-router.js';
+import type { KanbanIntentRequest } from './intent-router.js';
+import type { KanbanInteractionHandler, KanbanInteractionOrigin } from './intent.js';
 import type {
   KanbanInteractionEnvironment,
   KanbanInteractionResult,
@@ -79,10 +84,38 @@ export interface KanbanInteractionFacade {
   accept(command: KanbanInteractionTransition): boolean;
   /** Serializes one closed transition behind settlement-generation checks. */
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;
+  /** Opens the current or explicit card through the serialized semantic intent boundary. */
+  activate(options?: KanbanActivateOptions): Promise<boolean>;
+  /** Opens application-owned context for the current or explicit closed semantic scope. */
+  openContext(options?: KanbanOpenContextOptions): Promise<boolean>;
+  /** Invokes one application-owned scoped action without mutating board state locally. */
+  invokeScopedAction(
+    actionId: KanbanExtensionId,
+    scope: KanbanActionScope,
+    origin?: KanbanInteractionOrigin,
+  ): Promise<boolean>;
   /** Captures current eligible ordered selection independently from later live changes. */
   snapshotEligibleSelection(): KanbanSelectionSnapshot;
   /** Subscribes to facade publications and returns an idempotent unsubscribe function. */
   subscribe(invalidate: () => void): () => void;
+}
+
+/** Options for programmatic or mounted focused-card activation. */
+export interface KanbanActivateOptions {
+  /** Input channel; programmatic is used when omitted. */
+  readonly origin?: KanbanInteractionOrigin;
+  /** Explicit card scope; omission resolves the focused card after earlier queued work settles. */
+  readonly scope?: Extract<KanbanActionScope, { readonly kind: 'card' }>;
+  /** Optional descriptor action responsible for activation. */
+  readonly actionId?: KanbanExtensionId;
+}
+
+/** Options for programmatic or mounted context activation. */
+export interface KanbanOpenContextOptions {
+  /** Input channel; programmatic is used when omitted. */
+  readonly origin?: KanbanInteractionOrigin;
+  /** Explicit scope; omission resolves current semantic focus after earlier queued work settles. */
+  readonly scope?: KanbanActionScope;
 }
 
 /** Board-owned services used by the concrete stable facade implementation. */
@@ -93,6 +126,8 @@ interface KanbanInteractionFacadeOwnerOptions {
   readonly invalidate: () => void;
   /** Optional already-redacted observation sink. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Optional synchronous application interaction handler. */
+  readonly onInteraction?: KanbanInteractionHandler;
 }
 
 /** Captured methods from one claimed controller, immune to later property replacement. */
@@ -205,6 +240,7 @@ function controllerMethods(controller: unknown): {
  */
 export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   readonly #options: KanbanInteractionFacadeOwnerOptions;
+  readonly #intentRouter: KanbanIntentRouter;
   readonly #subscribers = new Set<() => void>();
   #controller: OwnedController | undefined;
   #lastSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
@@ -218,6 +254,10 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   /** Stores board-owned bounded services without creating an interaction controller. */
   constructor(options: KanbanInteractionFacadeOwnerOptions) {
     this.#options = options;
+    this.#intentRouter = new KanbanIntentRouter({
+      ...(options.onInteraction === undefined ? {} : { handler: options.onInteraction }),
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
+    });
   }
 
   /** Returns the last valid detached snapshot before, during, or after mount. */
@@ -246,19 +286,62 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
 
   /** Serializes controller transitions and converts every rejected settlement to typed unavailability. */
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult> {
-    const result = this.#transitionActive
-      ? this.#queue.then(() => this.#executeTransition(command))
-      : this.#executeTransition(command);
-    this.#transitionActive = true;
-    const tail = result.then(
-      () => undefined,
-      () => undefined,
-    );
-    this.#queue = tail;
-    void tail.then(() => {
-      if (this.#queue === tail) this.#transitionActive = false;
+    return this.#schedule(() => this.#executeTransition(command));
+  }
+
+  /** Delivers focused-card activation after every earlier accepted transition settles. */
+  activate(options: KanbanActivateOptions = {}): Promise<boolean> {
+    return this.#scheduleIntent(() => {
+      const scope = options.scope ?? this.#scopeForFocus();
+      if (scope?.kind !== 'card') return undefined;
+      return {
+        kind: 'open-card',
+        origin: options.origin ?? 'programmatic',
+        scope,
+        ...(options.actionId === undefined ? {} : { actionId: options.actionId }),
+      };
     });
-    return result;
+  }
+
+  /** Delivers application-owned context after every earlier accepted transition settles. */
+  openContext(options: KanbanOpenContextOptions = {}): Promise<boolean> {
+    return this.#scheduleIntent(() => {
+      const scope = options.scope ?? this.#scopeForFocus();
+      if (scope === undefined) return undefined;
+      return { kind: 'open-context', origin: options.origin ?? 'programmatic', scope };
+    });
+  }
+
+  /** Delivers one closed scoped action after every earlier accepted transition settles. */
+  invokeScopedAction(
+    actionId: KanbanExtensionId,
+    scope: KanbanActionScope,
+    origin: KanbanInteractionOrigin = 'programmatic',
+  ): Promise<boolean> {
+    return this.#scheduleIntent(() => ({ kind: 'scoped-action', origin, actionId, scope }));
+  }
+
+  /** Synchronously accepts focused-card activation for mounted event routing. */
+  acceptActivate(options: KanbanActivateOptions): boolean {
+    const scope = options.scope ?? this.#scopeForFocus();
+    if (!this.#available() || scope?.kind !== 'card') return false;
+    void this.activate({ ...options, scope });
+    return true;
+  }
+
+  /** Synchronously accepts context activation for mounted event routing. */
+  acceptOpenContext(options: KanbanOpenContextOptions): boolean {
+    const scope = options.scope ?? this.#scopeForFocus();
+    if (!this.#available() || scope === undefined) return false;
+    void this.openContext({ ...options, scope });
+    return true;
+  }
+
+  /** Synchronously accepts one scoped action for mounted event routing. */
+  acceptScopedAction(actionId: KanbanExtensionId, scope: KanbanActionScope, origin: KanbanInteractionOrigin): boolean {
+    if (!this.#available()) return false;
+    void this.invokeScopedAction(actionId, scope, origin);
+    return true;
   }
 
   /** Captures current eligible selection or a frozen empty fallback when unavailable. */
@@ -339,8 +422,65 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#intentRouter.dispose();
     this.#releaseController();
     this.#subscribers.clear();
+  }
+
+  /** Queues one operation behind the same ordering authority used by controller transitions. */
+  #schedule<TResult>(operation: () => Promise<TResult>): Promise<TResult> {
+    const result = this.#transitionActive ? this.#queue.then(operation) : operation();
+    this.#transitionActive = true;
+    const tail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.#queue = tail;
+    void tail.then(() => {
+      if (this.#queue === tail) this.#transitionActive = false;
+    });
+    return result;
+  }
+
+  /** Delivers a validated intent, then yields once for synchronous application republication effects. */
+  #scheduleIntent(request: () => KanbanIntentRequest | undefined): Promise<boolean> {
+    return this.#schedule(async () => {
+      if (!this.#available()) return false;
+      try {
+        const resolved = request();
+        if (resolved === undefined) return false;
+        const delivered = this.#intentRouter.deliver(resolved, this.snapshotEligibleSelection());
+        await Promise.resolve();
+        return delivered;
+      } catch {
+        this.#observe('interaction-intent-failed');
+        return false;
+      }
+    });
+  }
+
+  /** Returns whether mounted facade work may still be accepted. */
+  #available(): boolean {
+    return this.#controller !== undefined && !this.#failed && !this.#disposed;
+  }
+
+  /** Converts current focus to the matching closed semantic scope without source records. */
+  #scopeForFocus(): KanbanActionScope | undefined {
+    const focused = this.snapshot().focused;
+    switch (focused.kind) {
+      case 'board-state':
+        return Object.freeze({ kind: 'board' });
+      case 'column-header':
+        return Object.freeze({ kind: 'column', columnId: focused.columnId });
+      case 'swimlane-header':
+        return Object.freeze({ kind: 'swimlane', swimlaneId: focused.swimlaneId });
+      case 'card':
+        return Object.freeze({
+          kind: 'card',
+          cardKey: focused.cardKey,
+          address: Object.freeze({ ...focused.address }),
+        });
+    }
   }
 
   /** Invokes the controller synchronously, then validates asynchronous settlement behind the facade. */

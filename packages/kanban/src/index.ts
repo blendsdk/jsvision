@@ -28,9 +28,11 @@ export * from './card/theme.js';
 export * from './card/theme-resolver.js';
 export * from './i18n/catalog.js';
 export type {
+  KanbanActivateOptions,
   KanbanInteractionController,
   KanbanInteractionControllerFactory,
   KanbanInteractionFacade,
+  KanbanOpenContextOptions,
 } from './interaction/facade.js';
 export { createKanbanInteractionController } from './interaction/controller.js';
 export * from './interaction/intent.js';

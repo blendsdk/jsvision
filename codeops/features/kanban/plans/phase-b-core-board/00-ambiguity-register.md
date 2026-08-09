@@ -662,6 +662,36 @@ snapshot support.
 - **Reopen triggers:** UI event dispatch becomes awaitable, Meta/Command enters the normalized event model,
   or configurable command routing replaces the fixed Phase B bindings.
 
+### PAR-B45 — Programmatic intent settlement result (API/runtime)
+
+- **Authority:** AI — delegated by the active `--auto-design` execution mode.
+- **Eligibility:** Exact additive return contract and scheduling detail for the already-approved
+  `activate`, `openContext`, and `invokeScopedAction` facade methods; no new behavior or authority.
+- **Objective:** Give programmatic callers an honest result that distinguishes a valid queued/delivered
+  semantic request from an unavailable or invalid target without claiming application mutation success.
+- **Decision:** Programmatic intent methods return `Promise<boolean>`. `true` means the request passed
+  validation and reached the optional handler boundary; it does not mean the application authorized or
+  persisted a change. All methods share the facade transition queue, snapshot selection only after prior
+  state settlement, isolate handler failure, and yield one microtask after delivery so synchronous
+  application signal republication is observable before the next queued operation. Mounted input uses
+  synchronous acceptors over the same methods.
+- **Evidence:** `KanbanInteractionResult` describes controller state transitions and would falsely imply
+  an action mutates controller state. The application handler is synchronous and authoritative data is
+  republished through reactive getters, while the facade already owns one serialized queue.
+- **Rejected alternatives:** Returning a fabricated unchanged transition result conflates intent and
+  controller state. `void` hides unavailable/invalid programmatic targets. Awaiting an arbitrary future
+  application revision can deadlock when an action intentionally produces no publication.
+- **Strongest counterargument:** A boolean cannot report why delivery was rejected. Phase B already uses
+  payload-free observations and keeps richer command/action result modeling with later command and dialog
+  integration; adding a second public error union now would exceed the approved boundary.
+- **Confidence:** High.
+- **Hardening:** Grounded against application authority, synchronous handler semantics, the facade queue,
+  transition result meaning, lifecycle fail-closed behavior, and the no-mutation intent contract.
+- **Policy version:** 1.
+- **Root invocation ID:** `AD-EXEC-PHASE-B-20260810T001300Z`.
+- **Reopen triggers:** Handlers become asynchronous, programmatic actions require typed authorization
+  results, or later command routing adopts one shared action-result union.
+
 ## Systematic discovery scan
 
 | Category | Result |

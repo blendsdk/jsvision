@@ -245,6 +245,7 @@ export class KanbanBoard<TCard> extends Group {
       snapshotEligibleSelection: () => this.#snapshotEligibleSelection(),
       invalidate: () => this.viewport.invalidate(),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
+      ...(options.onInteraction === undefined ? {} : { onInteraction: options.onInteraction }),
     });
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),

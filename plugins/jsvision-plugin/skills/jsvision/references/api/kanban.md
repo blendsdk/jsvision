@@ -317,6 +317,18 @@ interface KanbanActionTarget {
 }
 ```
 
+## KanbanActivateOptions
+
+Options for programmatic or mounted focused-card activation.
+
+```ts
+interface KanbanActivateOptions {
+  origin?: KanbanInteractionOrigin;   // Input channel; programmatic is used when omitted.
+  scope?: Extract<KanbanActionScope, { readonly kind: 'card' }>;   // Explicit card scope; omission resolves the focused card after earlier queued work settles.
+  actionId?: KanbanExtensionId;   // Optional descriptor action responsible for activation.
+}
+```
+
 ## KanbanBoard
 
 Responsive DSL-composed Kanban shell that owns exactly one public viewport.
@@ -1819,6 +1831,9 @@ interface KanbanInteractionFacade {
   snapshot(): KanbanInteractionSnapshot;   // Returns the last valid detached immutable interaction snapshot.
   accept(command: KanbanInteractionTransition): boolean;   // Synchronously queues one enabled event-loop transition when a controller is available.
   transition(command: KanbanInteractionTransition): Promise<KanbanInteractionResult>;   // Serializes one closed transition behind settlement-generation checks.
+  activate(options?: KanbanActivateOptions): Promise<boolean>;   // Opens the current or explicit card through the serialized semantic intent boundary.
+  openContext(options?: KanbanOpenContextOptions): Promise<boolean>;   // Opens application-owned context for the current or explicit closed semantic scope.
+  invokeScopedAction(actionId: KanbanExtensionId, scope: KanbanActionScope, origin?: KanbanInteractionOrigin): Promise<boolean>;   // Invokes one application-owned scoped action without mutating board state locally.
   snapshotEligibleSelection(): KanbanSelectionSnapshot;   // Captures current eligible ordered selection independently from later live changes.
   subscribe(invalidate: () => void): () => void;   // Subscribes to facade publications and returns an idempotent unsubscribe function.
 }
@@ -2404,6 +2419,17 @@ Requests an application-owned context surface for one closed semantic scope.
 interface KanbanOpenContextIntent {
   kind: 'open-context';   // Stable intent discriminator.
   scope: KanbanActionScope;   // Semantic owner targeted after focus and eligible selection have settled.
+}
+```
+
+## KanbanOpenContextOptions
+
+Options for programmatic or mounted context activation.
+
+```ts
+interface KanbanOpenContextOptions {
+  origin?: KanbanInteractionOrigin;   // Input channel; programmatic is used when omitted.
+  scope?: KanbanActionScope;   // Explicit scope; omission resolves current semantic focus after earlier queued work settles.
 }
 ```
 
