@@ -241,6 +241,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
         dispose: captured.dispose,
       });
       this.#lastSnapshot = initial;
+      this.#notify();
     } catch (error) {
       if (claimed && methods !== undefined) {
         try {

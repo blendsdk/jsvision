@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 21:00 CEST
-> **Progress**: 67/106 tasks (63%)
+> **Last Updated**: 2026-08-09 21:21 CEST
+> **Progress**: 68/106 tasks (64%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -240,7 +240,7 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 4.2.7 Implement transient cancellation ownership and layered Escape selection behavior — `packages/kanban/src/interaction/transient.ts`, `packages/kanban/src/interaction/controller.ts` ✅ (completed: 2026-08-09 20:33 CEST)
 - [x] 4.2.8 Replace live legacy identity writes with default-controller seed-only behavior, preserve source deletion authority, and reject identity plus factory — `packages/kanban/src/board/board-bindings.ts`, `packages/kanban/src/board/board-state.ts` ✅ (completed: 2026-08-09 20:41 CEST)
 - [x] 4.2.9 Wire controller snapshot/revision and bounded sanitized focused-detail/help projection into scene cues, reveal, inspection, and conditional chrome — `packages/kanban/src/board/scene-builder.ts`, `packages/kanban/src/board/viewport-inspection.ts`, `packages/kanban/src/board/board-feedback.ts` ✅ (completed: 2026-08-09 21:00 CEST)
-- [ ] 4.2.10 Expose the stable board facade before/after mount and a non-owning compatible standalone Viewport adapter — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`
+- [x] 4.2.10 Expose the stable board facade before/after mount and a non-owning compatible standalone Viewport adapter — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-09 21:21 CEST)
 - [ ] 4.2.11 Export controller factory/facade/contracts with JSDoc/examples, add first-use typed locale vocabulary, and deprecate identity semantics accurately — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/index.ts`
 - [ ] 4.2.12 Run the Phase 4-owned controller/programmatic ST-B-INT assertion slices from 07 and make every assertion authored so far green
 

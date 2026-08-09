@@ -39,12 +39,13 @@ import { KanbanBoardAuthority } from './board-authority.js';
 import type { KanbanNavigatorState } from './board-bindings.js';
 import { KanbanViewport } from './kanban-viewport.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
+import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import { setViewportHostChromeRows } from './viewport-host-chrome.js';
 
 /** Construction options for the responsive board shell and application authority seam. */
-export interface KanbanBoardOptions<TCard> extends KanbanViewportOptions<TCard> {
+export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction'> {
   /** Optional application-owned request dispatcher; read projection never depends on it. */
   readonly dispatcher?: KanbanRequestDispatcher;
   /** Optional mount factory replacing the package default interaction controller. */
@@ -94,7 +95,7 @@ function viewportOptions<TCard>(
   options: KanbanBoardOptions<TCard>,
   i18n: () => I18n,
   identity: () => KanbanIdentityInput,
-  interaction?: () => KanbanInteractionSnapshot,
+  interaction?: KanbanViewportInteractionAdapter,
 ): KanbanViewportOptions<TCard> {
   return {
     source: options.source,
@@ -175,7 +176,10 @@ export class KanbanBoard<TCard> extends Group {
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
   constructor(options: KanbanBoardOptions<TCard>) {
     super();
-    if (options.identity !== undefined && options.interactionFactory !== undefined) {
+    if (
+      Reflect.has(options, 'interaction') ||
+      (options.identity !== undefined && options.interactionFactory !== undefined)
+    ) {
       throw new KanbanInvalidSourcePublicationError();
     }
     this.focusable = true;
@@ -195,12 +199,7 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
     this.viewport = new KanbanViewport(
-      viewportOptions(
-        options,
-        this.#i18n,
-        () => this.#interactionIdentity(),
-        () => this.#interactionFacade.snapshot(),
-      ),
+      viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
     );
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(() => this.#navigatorState());

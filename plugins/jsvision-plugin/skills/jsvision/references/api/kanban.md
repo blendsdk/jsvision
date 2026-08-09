@@ -4079,7 +4079,7 @@ interface KanbanViewportOptions<TCard> {
   observe?: (observation: KanbanObservation) => void;   // Optional already-redacted observation sink.
   capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
   identity?: () => KanbanIdentityInput;   // Optional reactive application-owned identity hints.
-  interaction?: () => KanbanInteractionSnapshot;   // Optional non-owning interaction publication adapter for scene cues and inspection.
+  interaction?: KanbanViewportInteractionAdapter;   // Optional non-owning interaction publication adapter for scene cues and inspection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
 }
 ```

@@ -23,7 +23,6 @@ import type {
   KanbanFocusTarget,
   KanbanInteractionAcquisitionResult,
   KanbanInteractionRevisions,
-  KanbanInteractionSnapshot,
   KanbanNavigationSnapshot,
   KanbanNavigationTarget,
 } from '../interaction/types.js';
@@ -74,6 +73,8 @@ import type {
 import { readViewportHostChromeRows } from './viewport-host-chrome.js';
 import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader } from './viewport-scale-inspection.js';
 import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
+import { KanbanViewportInteractionBinding } from './viewport-interaction.js';
+import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 
 /** Application-owned identity hints projected by a read-only board. */
 export interface KanbanIdentityInput {
@@ -122,7 +123,7 @@ export interface KanbanViewportOptions<TCard> {
   /** Optional reactive application-owned identity hints. */
   readonly identity?: () => KanbanIdentityInput;
   /** Optional non-owning interaction publication adapter for scene cues and inspection. */
-  readonly interaction?: () => KanbanInteractionSnapshot;
+  readonly interaction?: KanbanViewportInteractionAdapter;
   /** Optional reactive column-collapse projection applied before cursor acquisition. */
   readonly collapsedColumnIds?: () => readonly string[];
 }
@@ -160,6 +161,7 @@ export class KanbanViewport<TCard> extends View {
   #damage: readonly KanbanDamageRegion[] = Object.freeze([]);
   #metrics: KanbanViewportMetrics = emptyMetrics();
   readonly #descriptorCache: KanbanDescriptorCache;
+  readonly #interactionBinding: KanbanViewportInteractionBinding;
   readonly #swimlanePresentationResolver: KanbanSwimlanePresentationResolver;
   readonly #heightIndices = new Map<
     string,
@@ -214,6 +216,7 @@ export class KanbanViewport<TCard> extends View {
     this.#descriptorCache = new KanbanDescriptorCache(Math.max(1, this.#limits.retainedDescriptors), {
       onReactiveInvalidated: () => this.invalidate(),
     });
+    this.#interactionBinding = new KanbanViewportInteractionBinding(options.interaction);
     this.#swimlanePresentationResolver = createKanbanSwimlanePresentationResolver({
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
@@ -234,12 +237,17 @@ export class KanbanViewport<TCard> extends View {
           if (!this.#descriptorCacheDisposed) this.#descriptorCache.invalidate({ address });
         },
       });
+      try {
+        this.#interactionBinding.mount(() => this.invalidate());
+      } catch (error) {
+        this.dispose();
+        throw error;
+      }
       this.bind(
         () => {
           const query = options.query();
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = readKanbanIdentityInput(options.identity);
-          void options.interaction?.();
           const density = options.density?.() ?? 'comfortable';
           const structure = options.structure?.();
           void options.i18n?.();
@@ -287,7 +295,7 @@ export class KanbanViewport<TCard> extends View {
   override draw(ctx: DrawContext): void {
     if (this.#source === undefined || this.#disposed) return;
     const identity = readKanbanIdentityInput(this.#options.identity);
-    const interaction = this.#options.interaction?.();
+    const interaction = this.#options.interaction === undefined ? undefined : this.#interactionBinding.snapshot();
     const density = this.#options.density?.() ?? 'comfortable';
     const theme = this.#options.theme?.() ?? this.#defaultTheme;
     const i18n = this.#options.i18n?.() ?? this.#defaultI18n;
@@ -716,7 +724,10 @@ export class KanbanViewport<TCard> extends View {
 
   /** Returns detached source-state evidence without application records or actionable targets. */
   inspection(): KanbanViewportInspection {
-    const interaction = this.#options.interaction?.() ?? KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
+    const interaction =
+      this.#options.interaction === undefined
+        ? KANBAN_NEUTRAL_INTERACTION_SNAPSHOT
+        : this.#interactionBinding.snapshot();
     const i18n = this.#options.i18n?.() ?? this.#defaultI18n;
     const focusedDetail = createKanbanFocusedDetailSnapshot({
       interaction,
@@ -739,6 +750,7 @@ export class KanbanViewport<TCard> extends View {
     this.#revealController = undefined;
     this.#anchorController?.abort();
     this.#anchorController = undefined;
+    this.#interactionBinding.dispose();
     this.#source?.cancelPendingWork();
     this.#descriptorCache.dispose();
     this.#swimlanePresentationResolver.dispose();
