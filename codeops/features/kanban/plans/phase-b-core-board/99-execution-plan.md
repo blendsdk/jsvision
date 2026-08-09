@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-09 19:07 CEST
-> **Progress**: 56/106 tasks (53%)
+> **Last Updated**: 2026-08-09 19:18 CEST
+> **Progress**: 57/106 tasks (54%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -213,14 +213,14 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 4: Focus, navigation, and selection controller
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 4 task
+> **Phase baseline tree**: `54ffd6bc61a1d6be7f6dbaddc4c6ab6b13e420d5`
 > **Lenses**: state-machine correctness, async cancellation, selection safety, stable identity
 
 ### Step 4.1: Specification tests
 
 **Reference**: 03-01 §Single-owner interaction; 03-05; ST-B-INT-01..16; PAR-B06/PAR-B13/PAR-B14
 
-- [ ] 4.1.1 `[spec-author]` Write the Phase 4-owned controller/programmatic focus/navigation/selection and atomic setup/rollback assertion slices — `packages/kanban/test/interaction.spec.test.ts`, `packages/kanban/test/phase-b-boundary.spec.test.ts`
+- [x] 4.1.1 `[spec-author]` Write the Phase 4-owned controller/programmatic focus/navigation/selection and atomic setup/rollback assertion slices — `packages/kanban/test/interaction.spec.test.ts`, `packages/kanban/test/phase-b-boundary.spec.test.ts` ✅ (completed: 2026-08-09 19:18 CEST)
 - [ ] 4.1.2 Run the Phase 4 specification suite and record expected red behavior
 
 ### Step 4.2: Implementation and green phase
