@@ -77,10 +77,15 @@ does not allocate by logical card count (PAR-B26).
 
 ## Plan-local acceptance criteria
 
-1. [ ] Every in-scope RD-04–06 criterion maps to at least one immutable specification test.
-2. [ ] Cross-phase hooks satisfy SPEC-B-ACTION-HOOK, SPEC-B-HOVER-HOOK, and
+1. [x] Every in-scope RD-04–06 criterion maps to at least one immutable specification test.
+2. [x] Cross-phase hooks satisfy SPEC-B-ACTION-HOOK, SPEC-B-HOVER-HOOK, and
    SPEC-B-TRANSIENT-CANCEL without advertising the deferred producer/integration as complete.
-3. [ ] SPEC-B-HEIGHT-INDEX keeps projection, reveal, navigation, and anchors correct for variable
+3. [x] SPEC-B-HEIGHT-INDEX keeps projection, reveal, navigation, and anchors correct for variable
    heights without logical-length allocation.
-4. [ ] Roadmap and traceability advance only criteria proven by the Phase B execution evidence.
-5. [ ] The focused package, docs, i18n, plugin, packed-consumer, and changed-file gates in PAR-B24 pass.
+4. [x] Roadmap and traceability advance only criteria proven by the Phase B execution evidence.
+5. [x] The focused package, docs, i18n, plugin, packed-consumer, and changed-file gates in PAR-B24 pass.
+
+The immutable oracle matrix in [07](07-testing-strategy.md), the completed task evidence in
+[99](99-execution-plan.md), and the independent phase quality reports jointly prove these plan-local
+criteria. RD-04–06 remain `Executing` in the feature roadmap because their explicitly named later-phase
+integration criteria are not claimed by this completed Phase B plan.

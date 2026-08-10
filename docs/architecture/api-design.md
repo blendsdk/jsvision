@@ -87,6 +87,10 @@ intents after required selection/focus work. The default controller comes from
 `createKanbanInteractionController`; an injected factory transfers one controller exclusively to the
 mounted board.
 
+A standalone `KanbanViewport` may subscribe to `board.interaction()` as a read-only projection mirror.
+That adapter transfers neither controller ownership nor keyboard/pointer input authority; only the
+owning `KanbanBoard` attaches the facade's synchronous input seam during its mount transaction.
+
 Keyboard and pointer routing operate on final semantic scene targets. The routers are public only
 from `@jsvision/kanban/testing`; production hosts use the mounted board path. Unknown gestures remain
 unhandled. Click completion requires matching target/revision evidence, and drag reports cancel the

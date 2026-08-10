@@ -1,7 +1,7 @@
 # Kanban Phase B Core Board Implementation Plan
 
 > **Feature**: Complete the visually rich, structured, keyboard-and-pointer-navigable Kanban core
-> **Status**: Executing
+> **Status**: Phase B Complete
 > **Created**: 2026-08-04
 > **Implements**: kanban/RD-04, kanban/RD-05, kanban/RD-06
 > **CodeOps Artifact Schema**: 1

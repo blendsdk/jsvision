@@ -125,6 +125,11 @@ controller owns immutable focus, bounded selection, range anchor, pending naviga
 reference, and feedback state. It receives bounded scene/source services rather than records, host
 objects, or application handlers.
 
+Standalone viewports can mirror the facade's immutable publications, but their non-owning adapter is
+read-only. The owning board attaches synchronous keyboard/pointer authority through a separate
+internal mount seam, so passing `board.interaction()` to another viewport cannot create a second input
+owner.
+
 ```mermaid
 sequenceDiagram
     participant H as Keyboard and pointer host
