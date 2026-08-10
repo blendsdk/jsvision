@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:35 CEST
-> **Progress**: 101/106 tasks (95%)
+> **Last Updated**: 2026-08-10 03:39 CEST
+> **Progress**: 102/106 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -391,7 +391,14 @@ implementation → green → implementation tests/hardening → verification.
 > `yarn plugin:update` synchronized the distributed skill and source-impact fingerprint; inspection
 > found only the expected three skill-reference copies plus fingerprint change, and `yarn plugin:check`
 > passes all integrity gates.
-- [ ] 6.2.9 Run ST-B-X-05..07 package/docs/i18n/plugin oracles and make every immutable oracle green
+- [x] 6.2.9 Run ST-B-X-05..07 package/docs/i18n/plugin oracles and make every immutable oracle green ✅ (completed: 2026-08-10 03:39 CEST)
+
+> **Phase 6 green-gate evidence (2026-08-10 03:39 CEST):** The packed export/private-path suite
+> passes 2 assertions, API/docs/plugin-impact suite passes all 10 assertions, and i18n registration
+> suite passes all 4 assertions. The first green attempt correctly exposed stale review digests after
+> public locale composition; the nine unchanged, previously reviewed foundation-plus-Phase-B message
+> sets were rebound to their current complete-catalog digests and review date. The repository review
+> gate now verifies all 54 approvals. No oracle was weakened.
 
 ### Step 6.3: Closure and hardening
 
