@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:09 CEST
-> **Progress**: 97/106 tasks (92%)
+> **Last Updated**: 2026-08-10 03:31 CEST
+> **Progress**: 98/106 tasks (92%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -366,7 +366,15 @@ implementation → green → implementation tests/hardening → verification.
 > prove that every established locale symbol carries foundation and Phase B vocabulary and that an
 > unmounted interaction facade fails closed. Exact export-map and representative private Phase B path
 > rejection remain enforced. The two packed suites pass 3 assertions from real tarballs.
-- [ ] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md`
+- [x] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md` ✅ (completed: 2026-08-10 03:31 CEST)
+
+> **Technical architecture evidence (2026-08-10 03:31 CEST):** Architecture, data model, API,
+> security, techdocs entry, and ADR navigation now cover the canonical sparse scene,
+> `KanbanInteractionFacade`/controller ownership, bounded focus and selection, mounted keyboard and
+> pointer routing, semantic intents, failure containment, and cancellation-first teardown. Comparison
+> against accepted ADR-006 through ADR-013 found no design-intent divergence and required no new ADR.
+> `yarn docs:build` completes successfully; generated API output remains deterministic, with only the
+> repository's existing TypeDoc/Rollup warnings.
 - [ ] 6.2.6 Regenerate/verify Kanban API coverage and docs links/build without adding component labs, kitchen sink, or showcase — `packages/docs-site/api/kanban/`, `packages/docs-site/src/api/packages.mjs`
 - [ ] 6.2.7 Review mapped canonical JSVision skill/API/impact references and update authored guidance for Phase B — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`
 - [ ] 6.2.8 Run `yarn plugin:update`, inspect generated API/recipe/impact/plugin changes, and make plugin parity green — `plugins/jsvision-plugin/skills/jsvision/`

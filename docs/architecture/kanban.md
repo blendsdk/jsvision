@@ -1,19 +1,20 @@
 # Kanban architecture
 
-> **Last Updated**: 2026-08-04
-> **Status**: Phase A foundation and Phase B workflow structure implemented; canonical scene, interaction, and editing phases planned
+> **Last Updated**: 2026-08-10
+> **Status**: Phase B core board implemented; drag/drop, editors, commands, and product documentation planned
 
 ## Boundary and ownership
 
 `@jsvision/kanban` is a specialist JSVision package for presenting application-owned work records.
-It owns bounded query, projection, layout, viewport, localization, and transient board-session state.
-It does not own durable records, persistence, authorization, workflow policy, saved-view storage, or
-window management.
+It owns bounded query, projection, scene geometry, layout, viewport, localization, and transient
+interaction state. It does not own durable records, persistence, authorization, workflow policy,
+saved-view storage, or window management.
 
-Applications provide a `KanbanDataSource<TCard>`, a `KanbanCardAdapter<TCard>`, and a request
-dispatcher. The optional `StandardCard` model is a convenience, not a required storage schema. A
-board may be placed directly on an application surface or inside an application-owned window; both
-hosts use the same board projection and lifecycle.
+Applications provide a `KanbanDataSource<TCard>` and `KanbanCardAdapter<TCard>`. They may also provide
+a request dispatcher, semantic interaction handler, or replacement interaction-controller factory.
+The optional `StandardCard` model is a convenience, not a required storage schema. A board may be
+placed directly on an application surface or inside an application-owned window; both hosts use the
+same projection, input, and lifecycle path.
 
 ## Package topology
 
@@ -28,11 +29,11 @@ graph LR
     Host --> Kanban
 ```
 
-| Public entry point                  | Purpose                                                      |
-| ----------------------------------- | ------------------------------------------------------------ |
-| `@jsvision/kanban`                  | Production contracts, sources, presentation, board, viewport |
-| `@jsvision/kanban/testing`          | Deterministic fixtures and contract harnesses                |
-| `@jsvision/kanban/locales/{locale}` | One reviewed locale catalog per explicit locale subpath      |
+| Public entry point                  | Purpose                                                               |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| `@jsvision/kanban`                  | Production sources, presentation, scene, interaction, board, viewport |
+| `@jsvision/kanban/testing`          | Deterministic source, scene, input, and contract fixtures             |
+| `@jsvision/kanban/locales/{locale}` | One complete reviewed locale catalog per explicit locale subpath      |
 
 The package depends only on the public Core, I18n, and UI packages. Testing helpers are isolated from
 the production module graph, and undeclared private subpaths are not part of the SDK surface.
@@ -83,9 +84,11 @@ is bounded, keyed by complete presentation semantics, and evicts work that loses
 overscan ownership. Invalid or throwing application projections degrade to sanitized, non-color-only
 fallbacks rather than leaking record content.
 
-Phase A pointer inspection deliberately exposes no actionable card, insertion, or custom-action
-targets. That keeps the read-only foundation honest while reserving exact geometry for the later
-mouse interaction engine.
+The canonical scene contains clipped column/swimlane headers, variable-height cards, state surfaces,
+and final semantic action targets. A sparse height index and immutable retained-row projection keep
+vertical work bounded. Action regions are translated through card crop offsets before clipping, so
+pointer targets agree with the final cells even when a descriptor is partially visible. Scene damage
+is computed from semantic identity and geometry changes instead of repainting the complete board.
 
 ## Workflow structure and grouping
 
@@ -109,27 +112,69 @@ restores the underlying projection.
 
 ## Request authority
 
-All future mutation paths—pointer, keyboard, dialogs, commands, and programmatic calls—share the
-same discriminated request dispatcher. Capability metadata may hide or disable controls, but only the
+The board's request dispatcher carries application-authorized data-operation requests and tracks
+bounded publication expectations. Capability metadata may hide or disable controls, but only the
 application authorizes and applies a request. The component never mutates an application record
 optimistically and reconciles only from dispatcher results and authoritative source publication.
 
+## Interaction and input lifecycle
+
+Each `KanbanBoard` owns one stable `KanbanInteractionFacade`. On mount, the board creates or receives
+one `KanbanInteractionController`, then transfers exclusive lifecycle ownership to the facade. The
+controller owns immutable focus, bounded selection, range anchor, pending navigation, server-selection
+reference, and feedback state. It receives bounded scene/source services rather than records, host
+objects, or application handlers.
+
+```mermaid
+sequenceDiagram
+    participant H as Keyboard and pointer host
+    participant V as Viewport input router
+    participant F as KanbanInteractionFacade
+    participant C as Interaction controller
+    participant A as Application handler
+
+    H->>V: Normalized key, click, context, or wheel report
+    V->>F: Accept semantic transition
+    F->>C: Serialize and validate transition
+    C-->>F: Immutable snapshot or bounded unavailable result
+    opt Activation, context, or scoped action
+        F->>A: Immutable semantic intent and selection snapshot
+    end
+    F-->>V: Invalidate from published semantic state
+```
+
+Arrow/Home/End/Page navigation, Shift range extension, Space toggle, Ctrl+A loaded selection, Enter
+activation, Escape cancellation, click/Ctrl-click/double-click/right-click, descriptor actions, retry,
+and wheel scrolling share this mounted path. Unknown and Alt-modified keys propagate to the containing
+application. Pointer release commits only when button, semantic target, and scene revision still match;
+move or drag input cancels the pending click because drag/drop is not implemented in this phase.
+
+`open-card`, `open-context`, and `scoped-action` intents cross a synchronous application handler only
+after required focus/selection work settles. They carry identities and closed scopes, never record
+payloads or mutation authority. The stable facade also exposes the same operations programmatically.
+Setup, transition, handler, and late-settlement failures retain the last valid detached snapshot and
+degrade to bounded unavailable feedback.
+
+Teardown first quiesces mounted input, then releases facade/controller subscriptions and cancellation,
+viewport scene/session ownership, and finally board request authority. Disposal is idempotent, and a
+released board cannot remount.
+
 ## Phase boundary
 
-| Implemented through Phase B workflow structure              | Deliberately deferred                                   |
-| ----------------------------------------------------------- | ------------------------------------------------------- |
-| Public contracts, validation, limits, and semantic defaults | Drag ghosts, insertion targets, and card movement       |
-| Eager and sparse revisioned read sources                    | Keyboard command/keymap completion and selection policy |
-| Generic card adapters and bounded descriptors               | Rich checklist/summary rendering and custom card labs   |
-| Theme roles, English fallback, and ten locale entry points  | Card editors and lane-configuration dialogs             |
-| Responsive board/viewport, scrolling, and host parity       | Application authorization and persistence               |
-| Workflow structure, WIP/DoD eligibility, and grouping       | Canonical scene geometry and mounted rich cards         |
-| Bounded swimlane chrome and temporary hover leases          | Pointer drag/drop and keyboard interaction controllers  |
-| Request and reconciliation contracts                        | Component teaching page, live labs, and kitchen sink    |
+| Implemented Phase B core board                                      | Deliberately deferred                                      |
+| ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Public contracts, validation, limits, and semantic defaults         | Drag ghosts, insertion targets, and card movement          |
+| Eager and sparse revisioned read sources                            | Command registry and user-remappable keymap                |
+| Configurable rich cards with bounded checklist/summary sections     | Card and lane-configuration dialogs                        |
+| Theme roles, English fallback, and ten complete locale entry points | Application authorization, persistence, and saved-view UI  |
+| Responsive board/viewport, sparse scene, scrolling, and host parity | Component teaching page, live labs, kitchen sink, showcase |
+| Workflow structure, WIP/DoD eligibility, and one swimlane axis      | Nested grouping                                            |
+| Focus, bounded selection, mounted keyboard and pointer clicks       | Pointer drag/drop                                          |
+| Semantic interaction intents and request reconciliation             | Package-owned record mutation                              |
 
 This boundary is intentionally publishable and testable, but it is not presented as a complete
-Kanban application. Later phases add interaction and package-owned input UI while retaining the
-application authority, query lifecycle, bounded rendering, localization, and responsive-layout
+Kanban application. Later phases add drag/drop, commands, and package-owned input UI while retaining
+the application authority, query lifecycle, bounded rendering, localization, and responsive-layout
 decisions documented here.
 
 ## Related architecture
