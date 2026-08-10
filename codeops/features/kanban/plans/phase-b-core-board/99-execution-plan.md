@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 02:38 CEST
-> **Progress**: 91/106 tasks (86%)
+> **Last Updated**: 2026-08-10 02:46 CEST
+> **Progress**: 92/106 tasks (87%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -311,14 +311,17 @@ implementation → green → implementation tests/hardening → verification.
 
 ## Phase 6: i18n, package, docs, plugin, and closure
 
-> **Phase baseline tree**: recorded by `exec-plan` before the first Phase 6 task
+> **Phase baseline tree**: `715f7efa5d841cf92f73ae1b13d33f0f841cc2ef`
 > **Lenses**: public SDK compatibility, localization, documentation truth, distribution integrity
+> **Expected modification set**: Phase 6 package/public-consumer tests and fixtures, Kanban locale
+> catalogs/review evidence, package and architecture documentation, generated API coverage, canonical
+> JSVision skill references, plugin impact snapshots, and the execution/review artifacts named below.
 
 ### Step 6.1: Specification tests
 
 **Reference**: 03-06 §i18n/Public integration/Documentation; ST-B-X-05..07; PAR-B20–24
 
-- [ ] 6.1.1 `[spec-author]` Extend packed consumer, public API, locale review, docs/API, and plugin-impact oracles for the complete Phase B surface — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts`
+- [x] 6.1.1 `[spec-author]` Extend packed consumer, public API, locale review, docs/API, and plugin-impact oracles for the complete Phase B surface — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts` ✅ (completed: 2026-08-10 02:46 CEST)
 - [ ] 6.1.2 Run the Phase 6 integration oracles and record expected red/drift behavior before registry/documentation generation changes
 
 ### Step 6.2: Implementation and green phase

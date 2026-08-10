@@ -145,10 +145,49 @@ function typeConsumerSource(): string {
     ([locale, symbol]) => `import { ${symbol} } from '@jsvision/kanban/locales/${locale}';`,
   ).join('\n');
   const localeSymbols = LOCALES.map(([, symbol]) => symbol).join(', ');
-  return `import { createKanbanColumnId } from '@jsvision/kanban';
-import { createKanbanDeferred } from '@jsvision/kanban/testing';
+  return `import {
+  KanbanBoard,
+  createEagerKanbanDataSource,
+  createKanbanColumnId,
+  createKanbanInteractionController,
+  resolveKanbanPresentation,
+  type KanbanCardAdapter,
+  type KanbanInteractionControllerFactory,
+  type KanbanQuery,
+} from '@jsvision/kanban';
+import {
+  KanbanPointerRouter,
+  createKanbanDeferred,
+  createWindowedKanbanFixture,
+  routeKanbanKeyInput,
+} from '@jsvision/kanban/testing';
 ${localeImports}
-void [createKanbanColumnId, createKanbanDeferred, ${localeSymbols}];
+interface Card { readonly id: number; readonly columnId: string; readonly title: string }
+const cards: readonly Card[] = [{ id: 1, columnId: 'ready', title: 'Packed card' }];
+const query: KanbanQuery = { filters: [], sort: [] };
+const adapter: KanbanCardAdapter<Card> = {
+  keyOf: (card) => card.id,
+  titleOf: (card) => card.title,
+  statusOf: () => 'Ready',
+};
+const source = createEagerKanbanDataSource(() => cards, {
+  columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+  keyOf: adapter.keyOf,
+  columnOf: (card) => card.columnId,
+});
+const board = new KanbanBoard({ source, query: () => query, card: adapter });
+const factory: KanbanInteractionControllerFactory = createKanbanInteractionController;
+void [
+  board,
+  factory,
+  resolveKanbanPresentation('comfortable'),
+  createKanbanColumnId,
+  createKanbanDeferred,
+  createWindowedKanbanFixture,
+  routeKanbanKeyInput,
+  KanbanPointerRouter,
+  ${localeSymbols},
+];
 `;
 }
 
@@ -161,7 +200,13 @@ function runtimeConsumerSource(): string {
   return `const main = await import('@jsvision/kanban');
 const testing = await import('@jsvision/kanban/testing');
 if (typeof main.createKanbanColumnId !== 'function') throw new Error('main entry missing');
+if (typeof main.KanbanBoard !== 'function') throw new Error('board entry missing');
+if (typeof main.createKanbanInteractionController !== 'function') throw new Error('interaction entry missing');
+if (typeof main.resolveKanbanPresentation !== 'function') throw new Error('presentation entry missing');
 if (typeof testing.createKanbanDeferred !== 'function') throw new Error('testing entry missing');
+if (typeof testing.createWindowedKanbanFixture !== 'function') throw new Error('windowed fixture missing');
+if (typeof testing.routeKanbanKeyInput !== 'function') throw new Error('key router missing');
+if (typeof testing.KanbanPointerRouter !== 'function') throw new Error('pointer router missing');
 ${localeChecks}
 console.log('kanban-complete-exports-ok');
 `;
@@ -215,19 +260,21 @@ describe('complete packed Kanban export-map contract', () => {
       const work = mkdtempSync(join(tmpdir(), 'jsvision-kanban-private-consumer-'));
       try {
         const consumer = prepareConsumer(work, packInto(work));
-        const result = spawnSync(
-          process.execPath,
-          ['--input-type=module', '--eval', "await import('@jsvision/kanban/contract/identity')"],
-          {
-            cwd: consumer,
-            encoding: 'utf8',
-            maxBuffer: MAX_COMMAND_OUTPUT_BYTES,
-            timeout: COMMAND_TIMEOUT_MS,
-            windowsHide: true,
-          },
-        );
-        expect(result.status).not.toBe(0);
-        expect(`${result.stdout}${result.stderr}`).toMatch(/ERR_PACKAGE_PATH_NOT_EXPORTED/u);
+        for (const privatePath of ['contract/identity', 'interaction/controller', 'board/scene-model']) {
+          const result = spawnSync(
+            process.execPath,
+            ['--input-type=module', '--eval', `await import('@jsvision/kanban/${privatePath}')`],
+            {
+              cwd: consumer,
+              encoding: 'utf8',
+              maxBuffer: MAX_COMMAND_OUTPUT_BYTES,
+              timeout: COMMAND_TIMEOUT_MS,
+              windowsHide: true,
+            },
+          );
+          expect(result.status, privatePath).not.toBe(0);
+          expect(`${result.stdout}${result.stderr}`, privatePath).toMatch(/ERR_PACKAGE_PATH_NOT_EXPORTED/u);
+        }
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

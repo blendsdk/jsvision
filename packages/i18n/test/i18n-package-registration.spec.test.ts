@@ -1,8 +1,39 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, test } from 'vitest';
+import type { Catalog } from '../src/index.js';
+
+import {
+  kanbanDe,
+  kanbanEs,
+  kanbanFr,
+  kanbanIt,
+  kanbanNl,
+  kanbanPl,
+  kanbanPtPT,
+  kanbanRo,
+  kanbanSv,
+} from '../../kanban/src/i18n/locales.js';
 
 const repoRoot = join(import.meta.dirname, '..', '..', '..');
+
+interface ReviewEntry {
+  readonly package: string;
+  readonly locale: string;
+  readonly digest: string;
+  readonly reviewer: string;
+  readonly reviewMethod: string;
+  readonly reviewedAt: string;
+  readonly status: string;
+}
+
+interface ReviewVerifier {
+  verifyTranslationReviews(input: {
+    readonly catalogs: readonly { readonly packageName: string; readonly catalog: Catalog }[];
+    readonly manifest: { readonly schema: number; readonly reviews: readonly ReviewEntry[] };
+  }): readonly { readonly code: string; readonly packageName: string; readonly locale: string }[];
+}
 
 describe('configuration-driven i18n package registration', () => {
   test('registers exactly six safe package definitions including Kanban', () => {
@@ -50,5 +81,24 @@ describe('configuration-driven i18n package registration', () => {
     expect(reviews.reviews.every((review) => review.reviewer.trim().length > 0)).toBe(true);
     expect(reviews.reviews.every((review) => /^\d{4}-\d{2}-\d{2}$/u.test(review.reviewedAt))).toBe(true);
     expect(reviews.reviews.every((review) => review.status === 'approved')).toBe(true);
+  });
+
+  test('binds every authored Kanban translation approval to the current complete catalog', async () => {
+    const verifier = (await import(
+      pathToFileURL(join(repoRoot, 'scripts', 'check-i18n-reviews.mjs')).href
+    )) as ReviewVerifier;
+    const manifest = JSON.parse(readFileSync(join(repoRoot, 'tools/i18n-translation-reviews.json'), 'utf8')) as {
+      readonly schema: number;
+      readonly reviews: readonly ReviewEntry[];
+    };
+    const catalogs = [kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv].map(
+      (catalog) => ({ packageName: 'kanban', catalog }),
+    );
+
+    const kanbanManifest = {
+      ...manifest,
+      reviews: manifest.reviews.filter((review) => review.package === 'kanban'),
+    };
+    expect(verifier.verifyTranslationReviews({ catalogs, manifest: kanbanManifest })).toEqual([]);
   });
 });

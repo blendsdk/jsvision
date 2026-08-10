@@ -6,6 +6,8 @@
 // generation (no drift), generation is deterministic, and the pages carry real signatures.
 // Immutable oracle: if a generated page disagrees, the generator is wrong — never this test.
 
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { basename, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
@@ -29,6 +31,10 @@ const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
 const KANBAN = entry('../../kanban/src/index.ts');
+const REPOSITORY_ROOT = entry('../../../');
+
+/** Reads one UTF-8 repository artifact through a path fixed by this specification. */
+const artifact = (...segments: readonly string[]): string => readFileSync(join(REPOSITORY_ROOT, ...segments), 'utf8');
 
 // Generate once (each generation runs the TypeScript compiler over every registered barrel) and reuse.
 const generated = generateApiDocs();
@@ -124,4 +130,65 @@ test('ST-A8: the canonical API generator registers the complete Kanban package c
     blurb: 'Board and viewport composition, generic sources, cards, themes, localization, and application authority.',
     importPath: '@jsvision/kanban',
   });
+});
+
+// The complete Phase B public surface must remain represented on the dedicated generated lookup page.
+test('ST-B-X-06: generated Kanban API and plugin impact mapping cover the current SDK surface', () => {
+  const page = generated.files['kanban.md'] ?? '';
+  for (const symbol of [
+    'KanbanCardPresentationAdapter',
+    'KanbanInteractionFacade',
+    'KanbanStructurePolicy',
+    'createKanbanInteractionController',
+    'resolveKanbanPresentation',
+  ]) {
+    expect(page, symbol).toContain(symbol);
+  }
+
+  const impact = JSON.parse(artifact('tools', 'jsvision-plugin-impact.json')) as {
+    readonly areas: readonly {
+      readonly name: string;
+      readonly paths: readonly string[];
+      readonly references: readonly string[];
+    }[];
+  };
+  expect(impact.areas.find(({ name }) => name === 'kanban')).toEqual({
+    name: 'kanban',
+    paths: [
+      'packages/kanban/src',
+      'packages/kanban/package.json',
+      'packages/kanban/README.md',
+      'packages/docs-site/api/kanban',
+      'docs/architecture/kanban.md',
+    ],
+    references: ['references/architecture.md', 'references/component-catalog.md', 'references/api/kanban.md'],
+  });
+});
+
+// Phase B owns truthful package/technical/skill documentation but deliberately defers teaching and showcase surfaces.
+test('ST-B-X-07: closure docs describe mounted interaction without registering deferred Kanban examples', () => {
+  const readme = artifact('packages', 'kanban', 'README.md');
+  const architecture = artifact('docs', 'architecture', 'kanban.md');
+  const skillArchitecture = artifact('tools', 'jsvision-skill', 'references', 'architecture.md');
+  const componentCatalog = artifact('tools', 'jsvision-skill', 'references', 'component-catalog.md');
+
+  expect(readme).toContain('## Interaction and intents');
+  expect(readme).toContain('createKanbanInteractionController');
+  expect(readme).not.toContain('This release is the publishable read-only foundation.');
+  expect(architecture).toContain('KanbanInteractionFacade');
+  expect(architecture).toContain('keyboard and pointer');
+  expect(skillArchitecture).toContain('selection');
+  expect(skillArchitecture).toContain('application intent');
+  expect(skillArchitecture).not.toContain('Phase A provides read-only projection');
+  expect(componentCatalog).not.toContain('responsive read-only task-board foundation');
+
+  const componentRoot = join(REPOSITORY_ROOT, 'packages', 'docs-site', 'components');
+  const componentKanbanFiles = readdirSync(componentRoot, { recursive: true })
+    .filter((path): path is string => typeof path === 'string')
+    .map((path) => relative(componentRoot, join(componentRoot, path)))
+    .filter((path) => basename(path).toLocaleLowerCase().includes('kanban'));
+  expect(componentKanbanFiles).toEqual([]);
+  expect(artifact('packages', 'docs-site', 'examples', 'index.ts')).not.toMatch(/['"][^'"]*kanban[^'"]*['"]/iu);
+  expect(existsSync(join(REPOSITORY_ROOT, 'packages', 'examples', 'kanban-showcase'))).toBe(false);
+  expect(artifact('packages', 'examples', 'package.json')).not.toContain('demo:kanban');
 });
