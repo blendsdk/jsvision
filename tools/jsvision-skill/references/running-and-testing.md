@@ -63,4 +63,5 @@ or a bound signal. The recipe modules in `packages/examples/recipes/` and their
 
 - Start a new app with the repository generator; in the JSVision monorepo this creates `packages/<name>/` with a smoke test.
 - Run it: `yarn workspace @jsvision/<name> start` (needs a real terminal).
+- Explore the incremental Kanban kitchen sink: `yarn workspace @jsvision/examples demo:kanban`.
 - Verify it: `yarn verify` (typecheck + tests, including the app's smoke test).

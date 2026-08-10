@@ -15,6 +15,7 @@ import type { KanbanCount } from '../source/counts.js';
 import type { KanbanViewportMode, KanbanVisibleCardRange } from '../layout/metrics.js';
 import { solveKanbanColumnWidths } from '../layout/width-solver.js';
 import type { KanbanColumnWidthSolution } from '../layout/width-solver.js';
+import { KANBAN_MINIMUM_VIEWPORT_ROWS, KANBAN_WORKFLOW_HEADER_ROWS } from '../layout/workflow-geometry.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from '../source/address.js';
 import { KanbanCursorCoordinator } from '../source/cursor-coordinator.js';
 import { KanbanSessionCoordinator } from '../source/session-coordinator.js';
@@ -625,7 +626,7 @@ export class KanbanViewportSource<TCard> {
       }),
       ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
     });
-    if (width < 18 || height < 4) {
+    if (width < 18 || height < KANBAN_MINIMUM_VIEWPORT_ROWS) {
       this.#reconcileCells([], new Set());
       return Object.freeze({
         publication,
@@ -671,7 +672,7 @@ export class KanbanViewportSource<TCard> {
         swimlanes.visible.length,
         compatibleAxis?.requestedSwimlaneRange.start ?? Math.floor(verticalOffset / cardStride),
       );
-      const requestedRows = Math.max(1, Math.ceil(Math.max(1, height - 1) / cardStride));
+      const requestedRows = Math.max(1, Math.ceil(Math.max(1, height - KANBAN_WORKFLOW_HEADER_ROWS) / cardStride));
       const lastRequestedRow = Math.min(
         swimlanes.visible.length,
         compatibleAxis?.requestedSwimlaneRange.end ?? firstRequestedRow + requestedRows,
@@ -695,7 +696,7 @@ export class KanbanViewportSource<TCard> {
     }
     this.#reconcileCells(retainedAddresses, new Set(indexes.visible.map((index) => widths.columns[index]?.columnId)));
 
-    const visibleRows = Math.max(1, height - 1);
+    const visibleRows = Math.max(1, height - KANBAN_WORKFLOW_HEADER_ROWS);
     const cardsPerViewport = Math.max(1, Math.ceil(visibleRows / cardStride));
     const firstVisibleCard = this.#query.groupBy === undefined ? Math.floor(verticalOffset / cardStride) : 0;
     const overscanCards = cardsPerViewport * this.#verticalOverscan;

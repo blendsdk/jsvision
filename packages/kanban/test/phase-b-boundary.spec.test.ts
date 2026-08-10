@@ -107,7 +107,7 @@ function mountApplicationHost(board: KanbanBoard<Card>, host: 'surface' | 'windo
   }
   const app = createApplication({ viewport: { width: 48, height: 18 }, caps: CAPS });
   const window = new Window('Application-owned Kanban host');
-  window.setLayout({ rect: { x: 3, y: 2, width: 42, height: 14 } });
+  window.setLayout({ rect: { x: 3, y: 2, width: 42, height: 15 } });
   window.add(board);
   app.desktop.addWindow(window);
   app.loop.renderRoot.flush();

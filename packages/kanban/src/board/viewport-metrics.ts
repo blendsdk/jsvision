@@ -3,6 +3,7 @@ import type { Rect } from '@jsvision/ui';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import { KanbanInvalidGeometryError } from '../contract/error.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
+import { framedKanbanCardHeight } from '../layout/card-geometry.js';
 import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
 import { clampKanbanScroll } from '../layout/scroll-model.js';
 import type { KanbanVerticalHeightProjection } from '../layout/vertical-projector.js';
@@ -10,6 +11,7 @@ import {
   resolveKanbanVerticalProjectionExtent,
   snapshotKanbanVerticalHeightProjection,
 } from '../layout/vertical-projector.js';
+import { KANBAN_WORKFLOW_HEADER_ROWS, KANBAN_WORKFLOW_TRAILING_BOUNDARY_COLUMNS } from '../layout/workflow-geometry.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from '../source/address.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
@@ -51,15 +53,15 @@ function saturatedMultiply(left: number, right: number): number {
 }
 
 /** Returns the default row stride used before every card has a measured descriptor. */
-function estimatedStride(density: KanbanCardDensity): number {
-  return density === 'compact' ? 2 : 3;
+function estimatedStride(_density: KanbanCardDensity): number {
+  return framedKanbanCardHeight(2) + 1;
 }
 
 /** Estimates a complete uniform card stack without inventing a trailing resting gap. */
 function estimatedLengthExtent(length: number, density: KanbanCardDensity): number {
   if (length === 0) return 0;
   const stride = estimatedStride(density);
-  const trailingGap = density === 'compact' ? 0 : 1;
+  const trailingGap = 1;
   return Math.max(0, saturatedMultiply(length, stride) - trailingGap);
 }
 
@@ -165,7 +167,10 @@ function verticalContentExtent<TCard>(
   }
   for (const card of projection?.cards ?? []) {
     hasBound = true;
-    maximum = Math.max(maximum, saturatedMultiply(card.index, stride) + card.descriptor.measuredHeight);
+    maximum = Math.max(
+      maximum,
+      saturatedMultiply(card.index, stride) + framedKanbanCardHeight(card.descriptor.measuredHeight),
+    );
   }
   return Object.freeze({
     value: maximum,
@@ -179,7 +184,7 @@ function verticalContentExtent<TCard>(
 export function createKanbanViewportMetrics<TCard>(
   options: CreateKanbanViewportMetricsOptions<TCard>,
 ): KanbanViewportMetrics {
-  const stickyRows = options.source.visibleColumns.length === 0 ? 0 : 1;
+  const stickyRows = options.source.visibleColumns.length === 0 ? 0 : KANBAN_WORKFLOW_HEADER_ROWS;
   const cardViewportHeight = Math.max(0, options.bounds.height - stickyRows);
   const content = verticalContentExtent(options.source, options.projection, options.density, options.heightProjections);
   const effectiveQuality =
@@ -194,7 +199,10 @@ export function createKanbanViewportMetrics<TCard>(
     minimumSize
       ? { x: 0, y: 0 }
       : {
-          x: Math.max(0, options.source.widths.contentWidth - options.bounds.width),
+          x: Math.max(
+            0,
+            options.source.widths.contentWidth + KANBAN_WORKFLOW_TRAILING_BOUNDARY_COLUMNS - options.bounds.width,
+          ),
           y:
             effectiveQuality === 'exact'
               ? projectedVerticalExtent

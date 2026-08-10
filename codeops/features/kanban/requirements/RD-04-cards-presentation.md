@@ -107,7 +107,8 @@ Default order:
 When height/width is constrained, sections degrade from the bottom according to configured priority:
 checklist item rows → checklist progress → optional summaries → optional metadata. Title, status,
 focus/selection, and active operation state remain. Long values ellipsize by display cells and never
-split a wide glyph.
+split a wide glyph. Standard rows reserve the marker gutter on the left and one trailing blank cell on
+the right whenever minimum geometry permits, so text and omission markers do not touch either frame.
 
 ### Checklist model and display — Complexity M
 
@@ -129,7 +130,8 @@ current card and state. Reads participate in JSVision reactivity and repaint onl
 descriptors. The package validates package-local `KanbanThemeRole` names and applies RD-13's deterministic
 contrast/fallback resolver for truecolor,
 256, 16, monochrome, `NO_COLOR`, and ASCII profiles. Color never carries the only status, selection,
-pending, invalid, or WIP meaning.
+pending, invalid, or WIP meaning. Focus makes the standard card title bold while preserving its
+resolved semantic foreground and card-surface background.
 
 ---
 
@@ -175,7 +177,8 @@ pending, invalid, or WIP meaning.
 1. [ ] A record whose properties have application-specific names renders through adapters without
    conversion to `StandardCard`.
 2. [ ] The standard renderer always shows a non-empty sanitized title, status, and non-color focused
-   marker at widths from 18 through 32 cells.
+   marker at widths from 18 through 32 cells; focus also makes the title bold without replacing its
+   resolved semantic foreground or card-surface background.
 3. [ ] Changing a reactive status/style signal repaints the visible card's semantic roles without
    replacing authoritative card data or rebuilding unrelated descriptors.
 4. [ ] Invalid/custom renderer output outside its width/height budget is rejected and the card displays
@@ -199,3 +202,5 @@ pending, invalid, or WIP meaning.
     not an unmounted board or leaked card payload.
 15. [ ] Date presentation uses the injected formatter; the component performs no timezone conversion
     detectable by comparing the adapter input before and after rendering.
+16. [ ] A long standard-card title ellipsizes before one blank trailing cell rather than touching the
+    right frame; the emergency minimum width may surrender that padding to preserve mandatory text.

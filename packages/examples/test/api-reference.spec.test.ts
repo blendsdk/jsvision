@@ -165,8 +165,8 @@ test('ST-B-X-06: generated Kanban API and plugin impact mapping cover the curren
   });
 });
 
-// Phase B owns truthful package/technical/skill documentation but deliberately defers teaching and showcase surfaces.
-test('ST-B-X-07: closure docs describe mounted interaction without registering deferred Kanban examples', () => {
+// The permanent standalone showcase begins with shipped Phase B behavior, while docs-site teaching remains deferred.
+test('ST-B-X-07: closure docs describe mounted interaction and register the incremental Kanban showcase', () => {
   const readme = artifact('packages', 'kanban', 'README.md');
   const architecture = artifact('docs', 'architecture', 'kanban.md');
   const skillArchitecture = artifact('tools', 'jsvision-skill', 'references', 'architecture.md');
@@ -189,6 +189,6 @@ test('ST-B-X-07: closure docs describe mounted interaction without registering d
     .filter((path) => basename(path).toLocaleLowerCase().includes('kanban'));
   expect(componentKanbanFiles).toEqual([]);
   expect(artifact('packages', 'docs-site', 'examples', 'index.ts')).not.toMatch(/['"][^'"]*kanban[^'"]*['"]/iu);
-  expect(existsSync(join(REPOSITORY_ROOT, 'packages', 'examples', 'kanban-showcase'))).toBe(false);
-  expect(artifact('packages', 'examples', 'package.json')).not.toContain('demo:kanban');
+  expect(existsSync(join(REPOSITORY_ROOT, 'packages', 'examples', 'kanban-showcase'))).toBe(true);
+  expect(artifact('packages', 'examples', 'package.json')).toContain('demo:kanban');
 });

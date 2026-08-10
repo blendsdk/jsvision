@@ -40,6 +40,9 @@ export interface KanbanColumnWidthPreference {
   readonly maximumWidth: number;
 }
 
+/** Horizontal alignment available for one workflow-column header label. */
+export type KanbanColumnHeaderAlignment = 'start' | 'center';
+
 /** View-owned presentation policy for one stable workflow column. */
 export interface KanbanColumnPolicy {
   /** Stable application-owned column identity. */
@@ -50,6 +53,8 @@ export interface KanbanColumnPolicy {
   readonly collapsed?: boolean;
   /** Optional responsive width preference. */
   readonly width?: KanbanColumnWidthPreference;
+  /** Optional header-label alignment; defaults to `start`. */
+  readonly headerAlignment?: KanbanColumnHeaderAlignment;
   /** Optional workflow count policy used by pure eligibility evaluation. */
   readonly wip?: KanbanWipPolicy;
   /** Optional compact and complete definition-of-done text. */
@@ -146,6 +151,7 @@ const COLUMN_KEYS = new Set([
   'visible',
   'collapsed',
   'width',
+  'headerAlignment',
   'wip',
   'definitionOfDone',
   'capabilities',
@@ -199,6 +205,12 @@ function boundedInteger(value: unknown, maximum: number): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0 || value > maximum) {
     return invalidPolicy();
   }
+  return value;
+}
+
+/** Validates one closed workflow-header alignment value. */
+function headerAlignment(value: unknown): KanbanColumnHeaderAlignment {
+  if (value !== 'start' && value !== 'center') return invalidPolicy();
   return value;
 }
 
@@ -325,6 +337,9 @@ function columnPolicy(value: unknown): KanbanColumnPolicy {
       ...(properties.visible === undefined ? {} : { visible: properties.visible }),
       ...(properties.collapsed === undefined ? {} : { collapsed: properties.collapsed }),
       ...(properties.width === undefined ? {} : { width: columnWidth(properties.width) }),
+      ...(properties.headerAlignment === undefined
+        ? {}
+        : { headerAlignment: headerAlignment(properties.headerAlignment) }),
       ...(properties.wip === undefined ? {} : { wip: wipPolicy(properties.wip) }),
       ...(properties.definitionOfDone === undefined
         ? {}

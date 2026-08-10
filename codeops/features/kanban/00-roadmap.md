@@ -30,3 +30,5 @@
 | RD-13 | Internationalization, theming, and accessibility | [RD-13](requirements/RD-13-i18n-theme-accessibility.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-03, RD-04, RD-10, RD-12 |
 | RD-14 | Quality, scale, security, and resilience | [RD-14](requirements/RD-14-quality-scale-security.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-01–RD-13 |
 | RD-15 | Documentation, examples, and distribution | [RD-15](requirements/RD-15-docs-examples-distribution.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-01–RD-14 |
+| T-01 | Permanent Kanban kitchen-sink foundation | — | [Execution plan](plans/kanban-kitchen-sink-foundation/99-execution-plan.md) | Done | ✅ | 2026-08-10 | incrementally demonstrates shipped behavior, including dense localized content; does not advance RD-15 |
+| T-02 | Kanban visual grouping correction | — | [Execution plan](plans/kanban-visual-grouping/99-execution-plan.md) | Done | ✅ | framed compact alignable headers, framed focus, symmetric content padding, shadows, standard card gaps, and coherent surfaces |

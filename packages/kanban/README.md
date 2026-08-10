@@ -101,6 +101,19 @@ optional transition, WIP, and definition-of-done policies. WIP evaluation report
 block outcomes without silently changing card placement. Transition resolution likewise returns a
 proposal for application authorization.
 
+Header labels default to start alignment. Set `headerAlignment: 'center'` on an individual column
+policy when its lane name should be centered; the setting participates in the reactive structure
+revision and does not change card alignment.
+
+```ts
+const structure = () => ({
+  revision: 'centered-ready-v1',
+  columns: [{ columnId: 'ready', headerAlignment: 'center' as const }, { columnId: 'doing' }],
+});
+
+const board = new KanbanBoard({ source, query, card, structure });
+```
+
 One optional horizontal swimlane grouping level can partition cards by team, project, epic, sprint,
 or another registered field. Swimlanes support application-owned ordering, visibility, collapse,
 summary, separator, background-role, and rail presentation. Nested grouping is deliberately absent:
@@ -116,7 +129,7 @@ The board uses JSVision layout composition and responds to its assigned terminal
 - wheel and imperative scrolling operate in both axes while stable card and column identities
   preserve the visible anchor through resize and source reordering.
 
-The usable board minimum is 18 × 4 cells, or 18 × 5 when the focused-column navigator is present.
+The usable board minimum is 18 × 5 cells, or 18 × 6 when the focused-column navigator is present.
 Cards have a non-color focus cue and remain clipped to their assigned cells, including wide Unicode
 glyphs.
 
@@ -226,18 +239,47 @@ import { createKanbanDeferred, createWindowedKanbanFixture } from '@jsvision/kan
 The package verifies its public entry points through a real packed, offline NodeNext consumer. Private
 source paths are deliberately not exported.
 
+## Standalone kitchen sink
+
+The permanent Kanban showcase starts with the shipped core-board capabilities and grows alongside
+the package. From a repository checkout, run it in a real terminal:
+
+```sh
+yarn workspace @jsvision/examples demo:kanban
+```
+
+The initial stories cover rich status-driven cards, bounded metadata and checklist previews, dense
+Dutch and German card content, horizontal team swimlanes, responsive density, scrolling, keyboard
+selection and activation, and mouse targeting. The localized density story deliberately combines
+long titles, several labels, multiple summaries, and more checklist items than fit, making wrapping,
+ellipsis, omitted-item evidence, degradation, and vertical scrolling visible. Each story uses the
+public package entry point and is mounted inside a disposable reactive owner, so future drag, editor,
+configuration, filtering, and persistence stories can be added without replacing the shell or
+leaking prior story state.
+
 ## Current boundary
 
 The core board now includes configurable card presentation, workflow/swimlane structure, sparse scene
 geometry, focus and bounded selection, mounted keyboard and click-family pointer interaction, and
-application-owned semantic intents. Checklist content is a bounded card presentation; checklist-item
-editing remains application-owned.
+application-owned semantic intents. Workflow lanes use a compact three-row sticky header: a joined top
+border, a horizontally padded and optionally centered label, and a joined lower separator. Continuous
+vertical boundaries use terminal-safe junction glyphs. Cards use the same one-cell horizontal padding,
+a single resting frame, and a double focused frame, with an ASCII-safe distinction when box drawing is
+unavailable. A focused card casts a contained drop shadow into the lane gutter and resting gap without
+changing its action target, and its title becomes bold without replacing semantic status styling. All
+named presentation presets reserve one blank row between adjacent cards so shadows and insertion
+targets remain legible; a bounded custom presentation policy may explicitly choose zero gap. Card text
+keeps its semantic foreground and attributes over the card's resolved surface background, so
+status-driven surfaces remain visually coherent. Standard-card rows reserve the marker gutter on the
+left and one matching blank cell before the right frame; ellipsis never occupies that trailing padding.
+Checklist content is a bounded card presentation; checklist-item editing remains application-owned.
 
 Drag-and-drop with insertion targets and ghost feedback, packaged card/lane editor dialogs, the
-command/keymap layer, full component documentation and live examples, the separate kitchen sink, and
-the polished showcase remain later phases. Move/drag pointer reports currently cancel click tracking;
-they do not start a card move. Applications should not infer later editing or drag behavior from the
-present structural and intent APIs.
+command/keymap layer, full component documentation and docs-site live examples remain later phases.
+The standalone kitchen sink now exists, but it deliberately demonstrates only shipped behavior and
+will gain those scenarios with their owning phases. Move/drag pointer reports currently cancel click
+tracking; they do not start a card move. Applications should not infer later editing or drag behavior
+from the present structural and intent APIs.
 
 ## License
 

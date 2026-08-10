@@ -39,9 +39,10 @@ Receive `open-card`, `open-context`, and `scoped-action` through `onInteraction`
 `board.interaction()` facade programmatically. Each application intent contains semantic identities,
 origin, closed scope, and a detached eligible selection snapshot; it never contains records or grants
 mutation authority. Keep data changes behind the application-owned `KanbanRequest` dispatcher and
-publish the authoritative result through the source. Drag/drop, commands, card editors,
-lane-configuration UI, component labs, kitchen sink, and showcase remain later surfaces. See the exact
-current API in [api/kanban.md](api/kanban.md).
+publish the authoritative result through the source. A standalone incremental kitchen sink now
+demonstrates shipped board, card, swimlane, responsive, keyboard, and pointer behavior. Drag/drop,
+commands, card editors, lane-configuration UI, and docs-site component labs remain later surfaces.
+See the exact current API in [api/kanban.md](api/kanban.md).
 
 ## Clipboard boundary
 

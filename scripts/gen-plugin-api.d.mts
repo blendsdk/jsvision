@@ -10,6 +10,17 @@ export interface ApiCategory {
   readonly blurb: string;
 }
 
+/** One registered public package consumed by the API reference generator. */
+export interface ApiPackage {
+  /** Workspace package suffix such as `ui` or `kanban`. */
+  readonly pkg: string;
+  /** Repository-relative public barrel path. */
+  readonly entry: string;
+}
+
+/** Ordered package inventory covered by generated API documentation. */
+export declare const PACKAGES: readonly ApiPackage[];
+
 /** Category order + titles; the slug doubles as each generated page's file name (sans `.md`). */
 export declare const CATEGORIES: readonly ApiCategory[];
 

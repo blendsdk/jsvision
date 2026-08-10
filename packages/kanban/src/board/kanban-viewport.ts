@@ -49,6 +49,8 @@ import { canonicalizeKanbanCellAddress } from '../source/address.js';
 import type { KanbanStructurePolicy } from '../structure/policy.js';
 import { createKanbanSwimlanePresentationResolver } from '../structure/swimlane-presentation.js';
 import type { KanbanSwimlanePresentationResolver } from '../structure/swimlane-presentation.js';
+import { framedKanbanCardHeight } from '../layout/card-geometry.js';
+import { KANBAN_MINIMUM_VIEWPORT_ROWS, KANBAN_WORKFLOW_HEADER_ROWS } from '../layout/workflow-geometry.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import { readKanbanIdentityInput } from './board-state.js';
 import { calculateKanbanViewportDamage } from './viewport-damage.js';
@@ -229,7 +231,8 @@ export function quiesceKanbanViewportInput<TCard>(viewport: KanbanViewport<TCard
  *
  * The viewport opens its source only after mount and releases it on unmount. The instance owns one
  * terminal mount lifecycle; create a new viewport after unmount instead of remounting disposed
- * resources. It does not create host windows, dialogs, shadows, or application mutations.
+ * resources. It does not create host windows, dialogs, host-surface shadows, or application
+ * mutations; focused-card chrome remains inside the assigned viewport.
  */
 export class KanbanViewport<TCard> extends View {
   readonly #options: KanbanViewportOptions<TCard>;
@@ -440,7 +443,7 @@ export class KanbanViewport<TCard> extends View {
         theme,
         i18n,
         capabilities: ctx.caps,
-        minimumRequiredHeight: 4 + readViewportHostChromeRows(this),
+        minimumRequiredHeight: KANBAN_MINIMUM_VIEWPORT_ROWS + readViewportHostChromeRows(this),
         cache: this.#descriptorCache,
         identity,
         ...(interaction === undefined ? {} : { interaction }),
@@ -1049,7 +1052,7 @@ export class KanbanViewport<TCard> extends View {
       height: this.bounds.height,
       horizontalOffset: this.#requestedOffsets.x,
       verticalOffset: this.#requestedOffsets.y,
-      cardStride: density === 'compact' ? 2 : 3,
+      cardStride: framedKanbanCardHeight(2) + 1,
       ...(groupedAxis === undefined
         ? {}
         : { sceneWindowLayoutHint: groupedAxis.hint, groupedAxisWindow: groupedAxis.window }),
@@ -1115,8 +1118,8 @@ export class KanbanViewport<TCard> extends View {
             complete = false;
             break;
           }
-          const stride = density === 'compact' ? 2 : 3;
-          const trailingGap = density === 'compact' ? 0 : 1;
+          const stride = framedKanbanCardHeight(2) + 1;
+          const trailingGap = 1;
           const estimated =
             length.value > Math.floor(Number.MAX_SAFE_INTEGER / stride)
               ? Number.MAX_SAFE_INTEGER
@@ -1147,7 +1150,7 @@ export class KanbanViewport<TCard> extends View {
     const active = rows[activeIndex];
     if (active === undefined) return undefined;
     const withinRowOffset = Math.max(0, offset - rowTop);
-    let remainingRows = Math.max(1, this.bounds.height - 1);
+    let remainingRows = Math.max(1, this.bounds.height - KANBAN_WORKFLOW_HEADER_ROWS);
     let end = activeIndex;
     for (let index = activeIndex; index < rows.length && remainingRows > 0; index += 1) {
       const row = rows[index];
@@ -1411,7 +1414,7 @@ export class KanbanViewport<TCard> extends View {
             : logicalIndex * presentation.cardGap;
       return descriptorRow > Number.MAX_SAFE_INTEGER - gaps ? Number.MAX_SAFE_INTEGER : descriptorRow + gaps;
     }
-    const stride = 2 + presentation.cardGap;
+    const stride = framedKanbanCardHeight(2) + presentation.cardGap;
     return logicalIndex > Math.floor(Number.MAX_SAFE_INTEGER / stride)
       ? Number.MAX_SAFE_INTEGER
       : logicalIndex * stride;
@@ -1578,7 +1581,7 @@ export class KanbanViewport<TCard> extends View {
           logicalLength,
           index: createKanbanSparseHeightIndex({
             logicalLength,
-            estimatedHeight: 2,
+            estimatedHeight: framedKanbanCardHeight(2),
             maximumAnchors: Math.max(1, this.#limits.retainedDescriptors),
             maximumRuns: Math.max(1, this.#limits.retainedDescriptors),
             sourceRevision: snapshot.publication.revision,
@@ -1604,7 +1607,7 @@ export class KanbanViewport<TCard> extends View {
         retained.index.measure({
           cardKey: card.descriptor.cardKey,
           logicalIndex: card.index,
-          height: card.descriptor.measuredHeight,
+          height: framedKanbanCardHeight(card.descriptor.measuredHeight),
           ...(stable
             ? {
                 anchor: {
@@ -1616,8 +1619,11 @@ export class KanbanViewport<TCard> extends View {
             : {}),
         });
         if (
-          (before === undefined && card.descriptor.measuredHeight !== 2) ||
-          (before !== undefined && before.quality === 'exact' && before.height !== card.descriptor.measuredHeight)
+          (before === undefined &&
+            framedKanbanCardHeight(card.descriptor.measuredHeight) !== framedKanbanCardHeight(2)) ||
+          (before !== undefined &&
+            before.quality === 'exact' &&
+            before.height !== framedKanbanCardHeight(card.descriptor.measuredHeight))
         ) {
           corrected = true;
         }

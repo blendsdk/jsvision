@@ -12,6 +12,7 @@ import type { KanbanRevision } from '../contract/revision.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
+import { KANBAN_CARD_FRAME_ROWS } from '../layout/card-geometry.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from '../source/address.js';
 import { snapshotKanbanCellState } from '../source/states.js';
 import { snapshotKanbanColumnMeta } from '../source/validation.js';
@@ -115,7 +116,10 @@ function snapshotDescriptor(value: unknown, expectedCardKey: CardKey): KanbanSce
     const cardKey = createKanbanCardKey(properties.cardKey);
     if (cardKey !== expectedCardKey) throw new KanbanInvalidGeometryError();
     const width = boundedInteger(properties.width, 512);
-    const measuredHeight = boundedInteger(properties.measuredHeight, KANBAN_LIMITS.descriptorRows.absolute);
+    const measuredHeight = boundedInteger(
+      properties.measuredHeight,
+      KANBAN_LIMITS.descriptorRows.absolute + KANBAN_CARD_FRAME_ROWS,
+    );
     if (width === 0 || measuredHeight === 0) throw new KanbanInvalidGeometryError();
     const rawRevision = properties.presentationRevision;
     const presentationRevision = rawRevision === undefined ? undefined : snapshotKanbanRevision(rawRevision);

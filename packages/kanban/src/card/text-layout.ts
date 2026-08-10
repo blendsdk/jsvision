@@ -26,6 +26,17 @@ export function measureKanbanCardText(value: string, widthMode: WidthMode): numb
   return width;
 }
 
+/**
+ * Returns the standard-card text capacity after its marker gutter and trailing padding are reserved.
+ *
+ * Extremely narrow emergency descriptors retain one text cell so mandatory title/status fallback
+ * remains valid even when symmetric padding cannot fit.
+ */
+export function standardKanbanCardTextWidth(cardWidth: number): number {
+  if (!Number.isSafeInteger(cardWidth) || cardWidth < 2) throw new KanbanInvalidDescriptorError();
+  return Math.max(1, cardWidth - 2);
+}
+
 /** Returns the longest complete-code-point prefix that fits the requested terminal-cell budget. */
 function fittingPrefix(value: string, maximumCells: number, widthMode: WidthMode): string {
   let result = '';

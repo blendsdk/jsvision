@@ -214,13 +214,13 @@ describe('Kanban scrolled cell cropping', () => {
     const liveColumns = signal(columns(['ready', 'ABCDEFGHIJKLMN'], 'doing', 'done'));
     const { board } = fixture({ liveColumns });
     const app = mountSurface(board, 40, 10);
-    const before = frameText(app).split('\n')[0] ?? '';
-    expect(before.startsWith('ABCDEFGHI')).toBe(true);
+    const before = frameText(app).split('\n')[1] ?? '';
+    expect(before.startsWith('| ABCDEFGHI')).toBe(true);
 
     board.scrollTo({ x: 5 });
     app.loop.renderRoot.flush();
-    const after = frameText(app).split('\n')[0] ?? '';
-    expect(after.startsWith('FGHIJKLMN')).toBe(true);
+    const after = frameText(app).split('\n')[1] ?? '';
+    expect(after.startsWith('DEFGHIJKLMN')).toBe(true);
     expect(after.startsWith('ABCDEFGHI')).toBe(false);
   });
 
@@ -229,9 +229,9 @@ describe('Kanban scrolled cell cropping', () => {
     const { board } = fixture({ liveColumns });
     const app = mountSurface(board, 40, 10);
 
-    board.scrollTo({ x: 1 });
+    board.scrollTo({ x: 3 });
     app.loop.renderRoot.flush();
-    expect((frameText(app).split('\n')[0] ?? '').startsWith(' A')).toBe(true);
+    expect((frameText(app).split('\n')[1] ?? '').startsWith(' A')).toBe(true);
   });
 
   it('preserves the viewport-origin column when authoritative column order changes', () => {
@@ -257,11 +257,11 @@ describe('Kanban scrolled cell cropping', () => {
     ]);
     const { board } = fixture({ liveColumns, liveCards });
     const app = mountSurface(board, 24, 8);
-    expect(frameText(app).split('\n')[1]).toContain('TITLE ROW');
+    expect(frameText(app).split('\n')[4]).toContain('TITLE ROW');
 
-    board.scrollTo({ y: 1 });
+    board.scrollTo({ y: 2 });
     app.loop.renderRoot.flush();
-    const clippedTop = frameText(app).split('\n')[1] ?? '';
+    const clippedTop = frameText(app).split('\n')[3] ?? '';
     expect(clippedTop).toContain('STATUS ROW');
     expect(clippedTop).not.toContain('TITLE ROW');
   });

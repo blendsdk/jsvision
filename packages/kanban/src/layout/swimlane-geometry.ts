@@ -5,7 +5,13 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanScene, KanbanSceneCard, KanbanSceneCell } from '../board/scene-model.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import { KANBAN_LANE_HORIZONTAL_PADDING } from './card-geometry.js';
 import type { KanbanVerticalHeightProjection } from './vertical-projector.js';
+import {
+  KANBAN_WORKFLOW_HEADER_LABEL_ROW,
+  KANBAN_WORKFLOW_HEADER_ROWS,
+  KANBAN_WORKFLOW_TRAILING_BOUNDARY_COLUMNS,
+} from './workflow-geometry.js';
 import { resolveKanbanCustomSwimlaneGeometry } from './swimlane-custom.js';
 import type { KanbanResolvedCustomSwimlaneGeometry, KanbanSceneCustomChromeInput } from './swimlane-custom.js';
 import { resolveKanbanSwimlaneRail } from './swimlane-rail.js';
@@ -55,6 +61,8 @@ export interface KanbanSceneWorkflowHeaderGeometry extends Readonly<Rect> {
   readonly label: string;
   /** Header columns clipped from the left by horizontal scrolling. */
   readonly contentOffset: number;
+  /** Complete unclipped workflow-column width. */
+  readonly contentWidth: number;
   /** Workflow headers always remain vertically sticky. */
   readonly sticky: true;
 }
@@ -174,6 +182,23 @@ interface SwimlanePlacement {
   readonly top: number;
   readonly height: number;
   readonly cardHeight: number;
+}
+
+/** Places one framed card inside the fixed horizontal padding and optional leading board boundary. */
+function laneCardRect(
+  card: KanbanSceneCard,
+  column: ColumnPlacement,
+  top: number,
+  leadingBoardBoundary: boolean,
+): Readonly<Rect> {
+  const leadingInset = KANBAN_LANE_HORIZONTAL_PADDING + (leadingBoardBoundary ? 1 : 0);
+  const availableWidth = Math.max(1, column.width - leadingInset - KANBAN_LANE_HORIZONTAL_PADDING);
+  return Object.freeze({
+    x: column.x + leadingInset,
+    y: top,
+    width: Math.min(card.descriptor.width, availableWidth),
+    height: card.descriptor.measuredHeight,
+  });
 }
 
 function integer(value: unknown, positive = false): number {
@@ -410,7 +435,7 @@ export function projectKanbanSceneGeometry(
     totalWidth = add(totalWidth, width);
     if (index + 1 < visibleColumns.length) totalWidth = add(totalWidth, columnGap);
   }
-  const extentX = Math.max(0, totalWidth - cardBounds.width);
+  const extentX = Math.max(0, add(totalWidth, KANBAN_WORKFLOW_TRAILING_BOUNDARY_COLUMNS) - cardBounds.width);
   const offsetX = Math.min(offsets.x, extentX);
   let nextColumnX = cardBounds.x - offsetX;
   const placements: readonly ColumnPlacement[] = Object.freeze(
@@ -450,8 +475,8 @@ export function projectKanbanSceneGeometry(
     logicalTop = add(logicalTop, height);
   }
   const contentHeight = logicalTop;
-  const contentOriginY = add(bounds.y, 1);
-  const viewportContentHeight = Math.max(0, bounds.height - 1);
+  const contentOriginY = add(bounds.y, KANBAN_WORKFLOW_HEADER_ROWS);
+  const viewportContentHeight = Math.max(0, bounds.height - KANBAN_WORKFLOW_HEADER_ROWS);
   const extentY = Math.max(0, contentHeight - viewportContentHeight);
   const offsetY = Math.min(offsets.y, extentY);
   const contentOrigin = Object.freeze({ x: cardBounds.x, y: contentOriginY });
@@ -465,7 +490,10 @@ export function projectKanbanSceneGeometry(
   for (const column of visibleColumns) {
     const placement = placements.find(({ columnId }) => columnId === column.columnId);
     if (placement === undefined) continue;
-    const clipped = clip({ x: placement.x, y: bounds.y, width: placement.width, height: 1 }, cardBounds);
+    const clipped = clip(
+      { x: placement.x, y: bounds.y + KANBAN_WORKFLOW_HEADER_LABEL_ROW, width: placement.width, height: 1 },
+      cardBounds,
+    );
     if (clipped === undefined) continue;
     workflowHeaders.push(
       Object.freeze({
@@ -473,6 +501,7 @@ export function projectKanbanSceneGeometry(
         columnId: column.columnId,
         label: column.label,
         contentOffset: clipped.x - placement.x,
+        contentWidth: placement.width,
         sticky: true,
       }),
     );
@@ -575,13 +604,12 @@ export function projectKanbanSceneGeometry(
       ).cards) {
         const sourceCard = sparse.card;
         const cardTop = naturalY + cardRowOffset + sparse.top;
-        const cardWidth = Math.min(sourceCard.descriptor.width, column.width);
-        const descriptorRect = {
-          x: column.x,
-          y: cardTop,
-          width: cardWidth,
-          height: sourceCard.descriptor.measuredHeight,
-        };
+        const descriptorRect = laneCardRect(
+          sourceCard,
+          column,
+          cardTop,
+          sourceCard.address.columnId === scene.columns[0]?.columnId,
+        );
         const cardRect = clip(descriptorRect, bounds, cardMinimumY);
         if (cardRect !== undefined) {
           cards.push(
@@ -630,12 +658,12 @@ export function projectKanbanSceneGeometry(
         ).cards) {
           const sourceCard = sparse.card;
           const cardTop = naturalY + sparse.top;
-          const descriptorRect = {
-            x: column.x,
-            y: cardTop,
-            width: Math.min(sourceCard.descriptor.width, column.width),
-            height: sourceCard.descriptor.measuredHeight,
-          };
+          const descriptorRect = laneCardRect(
+            sourceCard,
+            column,
+            cardTop,
+            sourceCard.address.columnId === scene.columns[0]?.columnId,
+          );
           const cardRect = clip(descriptorRect, bounds, contentOriginY);
           if (cardRect !== undefined) {
             cards.push(

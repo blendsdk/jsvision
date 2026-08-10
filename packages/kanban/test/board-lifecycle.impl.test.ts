@@ -54,12 +54,15 @@ function request(operationId: string): KanbanRequest {
   };
 }
 
-/** Mounts a board as ordinary responsive fill content. */
-function mount(board: KanbanBoard<Card>) {
+/** Mounts a board as ordinary responsive fill content at one explicit test viewport size. */
+function mount(
+  board: KanbanBoard<Card>,
+  size: { readonly width: number; readonly height: number } = { width: 24, height: 8 },
+) {
   board.setLayout({ position: 'fill' });
   const host = new Group();
   host.add(board);
-  const render = createRenderRoot({ width: 24, height: 8 }, { caps: CAPS });
+  const render = createRenderRoot(size, { caps: CAPS });
   render.mount(host);
   render.flush();
   return render;
@@ -160,7 +163,7 @@ describe('board authority and lifecycle implementation', () => {
 
     expect(board.viewport.metrics().mode).toBe('minimum-size');
     expect(board.inspection().state.kind).toBe('minimum-size');
-    expect(board.inspection().state.label).toContain('18 × 5');
+    expect(board.inspection().state.label).toContain('18 × 6');
     expect(board.inspection().navigator.visible).toBe(false);
     expect(board.inspection().layoutReflows).toBe(reflows);
     render.unmount();
@@ -200,7 +203,7 @@ describe('board authority and lifecycle implementation', () => {
     render.unmount();
   });
 
-  it('preserves a focused card row when source insertion and resize change geometry', () => {
+  it('preserves a focused card row when source insertion and resize change geometry', async () => {
     const cards = signal<readonly Card[]>(
       Array.from({ length: 8 }, (_, id) => ({ id, columnId: 'ready', title: `Card ${id}` })),
     );
@@ -211,16 +214,20 @@ describe('board authority and lifecycle implementation', () => {
       columnOf: (card) => card.columnId,
     });
     const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
-    const render = mount(board);
-    board.scrollTo({ y: 3 });
+    const render = mount(board, { width: 24, height: 18 });
+    board.scrollTo({ y: 7 });
     render.flush();
     const before = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+    expect(before).toBeDefined();
 
     cards.set([{ id: 99, columnId: 'ready', title: 'Inserted' }, ...cards()]);
     render.resize({ width: 30, height: 9 });
     render.flush();
-    const after = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
-    expect(after).toBe(before);
+    await vi.waitFor(() => {
+      render.flush();
+      const after = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
+      expect(after).toBe(before);
+    });
     render.unmount();
   });
 
@@ -236,7 +243,7 @@ describe('board authority and lifecycle implementation', () => {
       columnOf: (card) => card.columnId,
     });
     const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
-    const render = mount(board);
+    const render = mount(board, { width: 24, height: 13 });
 
     expect(board.interaction().snapshot()).toMatchObject({
       focused: { kind: 'card', cardKey: 2 },
@@ -271,8 +278,8 @@ describe('board authority and lifecycle implementation', () => {
       columnOf: (card) => card.columnId,
     });
     const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
-    const render = mount(board);
-    board.scrollTo({ y: 3 });
+    const render = mount(board, { width: 24, height: 18 });
+    board.scrollTo({ y: 7 });
     render.flush();
     const before = board.inspection().regions.find((region) => region.kind === 'card' && region.cardKey === 2)?.y;
 
@@ -333,7 +340,7 @@ describe('board authority and lifecycle implementation', () => {
       columnOf: (card) => card.columnId,
     });
     const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, identity });
-    const render = mount(board);
+    const render = mount(board, { width: 24, height: 18 });
     board.scrollTo({ y: 3 });
     render.flush();
     const reordered = [...cards()];
@@ -387,7 +394,7 @@ describe('board authority and lifecycle implementation', () => {
     await board.revealCard(1, 'start');
     render.flush();
     expect(board.viewport.metrics()).toMatchObject({
-      offsets: { y: 90 },
+      offsets: { y: 150 },
       extentQuality: { y: 'lower-bound' },
     });
 
@@ -417,7 +424,7 @@ describe('board authority and lifecycle implementation', () => {
       capabilities,
       identity,
     });
-    const render = mount(board);
+    const render = mount(board, { width: 24, height: 18 });
     board.scrollTo({ y: 3 });
     render.flush();
     const beforeReflows = board.inspection().layoutReflows;

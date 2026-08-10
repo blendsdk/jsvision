@@ -231,10 +231,9 @@ function clipRegion(region: KanbanLayoutRegion, clip: Readonly<Rect>): KanbanLay
   return Object.freeze({ ...region, x, y, width: right - x, height: bottom - y });
 }
 
-/** Returns the one-row resting gap owned by a density policy. */
+/** Returns the standard one-row resting gap owned by every named density policy. */
 function densityGap(density: unknown): number {
-  if (density === 'compact') return 0;
-  if (density === 'comfortable' || density === 'spacious') return 1;
+  if (density === 'compact' || density === 'comfortable' || density === 'spacious') return 1;
   throw new KanbanInvalidGeometryError();
 }
 

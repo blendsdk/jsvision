@@ -15,6 +15,7 @@ import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanPhaseBMessageMap } from '../i18n/catalog.js';
+import { KANBAN_MINIMUM_VIEWPORT_ROWS } from '../layout/workflow-geometry.js';
 import {
   createKanbanInteractionController,
   createSeededKanbanInteractionController,
@@ -342,7 +343,7 @@ export class KanbanBoard<TCard> extends Group {
         this.viewport.sourceState(),
         viewport.visibleColumns.length === 0,
         this.viewport.metrics().mode === 'minimum-size',
-        this.viewport.focusedNavigator() === undefined ? 4 : 5,
+        KANBAN_MINIMUM_VIEWPORT_ROWS + (navigator === undefined ? 0 : 1),
       ),
       navigator: Object.freeze({
         visible: this.#navigatorVisible.peek(),

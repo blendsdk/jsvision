@@ -316,7 +316,7 @@ function createPresetBudget(
 ): ResolvedKanbanPresentationBudget {
   return Object.freeze({
     preset,
-    revision: `jsvision-kanban-presentation-${preset}-v1`,
+    revision: `jsvision-kanban-presentation-${preset}-${preset === 'compact' ? 'v2' : 'v1'}`,
     ...defaults,
     degradationOrder: DEFAULT_DEGRADATION_ORDER,
   });

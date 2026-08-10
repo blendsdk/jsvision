@@ -23,7 +23,8 @@ collapse, summaries, presentation variants, and structural empty/error behavior 
 ### Must Have — Complexity L
 
 - [ ] Support zero or more application-owned ordered workflow columns with stable IDs, localized names,
-  width preferences, visibility, collapse, definition of done, and min/max WIP policy.
+  per-lane start/center header alignment, width preferences, visibility, collapse, definition of done,
+  and min/max WIP policy.
 - [ ] Support no grouping or exactly one active swimlane grouping dimension per view.
 - [ ] Support explicit and derived swimlane groups with stable IDs, names, order, visibility, collapse,
   styling, counts, summaries, and application capabilities.
@@ -53,10 +54,12 @@ collapse, summaries, presentation variants, and structural empty/error behavior 
 
 ### Column model — Complexity M
 
-Every column carries a bounded string ID, display name, order, optional width bounds, visible/collapsed
-view state, optional definition-of-done summary/details, WIP policy, and capability metadata. IDs remain
-stable across rename and must not be inferred from labels. The board accepts zero columns and renders a
-valid no-columns state; standard UI policy for deleting the final empty column is application configured.
+Every column carries a bounded string ID, display name, order, optional start/center header alignment,
+optional width bounds, visible/collapsed view state, optional definition-of-done summary/details, WIP
+policy, and capability metadata. Header alignment defaults to start and changes only the label's
+horizontal placement, not card geometry. IDs remain stable across rename and must not be inferred from
+labels. The board accepts zero columns and renders a valid no-columns state; standard UI policy for
+deleting the final empty column is application configured.
 
 ### WIP policy — Complexity L
 
@@ -184,3 +187,5 @@ empty. Retry is scoped and bounded.
 18. [ ] A populated fixture renders three non-empty workflow columns in source order with stable header
     IDs and cards in their authoritative cells; changing only the published column order reorders the
     columns without changing card identity or mounting one view per logical card.
+19. [ ] A column defaults to start-aligned header text, accepts centered header text through its reactive
+    structure policy, and rejects unsupported alignment strings without corrupting neighboring lanes.

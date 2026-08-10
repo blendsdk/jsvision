@@ -56,6 +56,10 @@ const ALLOWED_UNCHECKED: Record<string, readonly string[]> = {
   // resolves at run time under vitest, but a cross-package source file falls outside this package's
   // rootDir, which tsc rejects outright. They stay covered by vitest.
   datagrid: ['test/golden-screen.spec.test.ts', 'test/a11y-golden.spec.test.ts'],
+  // These are standalone consumer projects, not package test modules. Dedicated Kanban tests copy
+  // or pack the built package into each fixture and invoke its own compiler so exports and NodeNext
+  // resolution are checked exactly as an external application sees them.
+  kanban: ['test/fixtures/consumer-board-types/index.ts', 'test/fixtures/packed-consumer/index.ts'],
 };
 
 /** Compare paths the way the compiler reports them: absolute, forward slashes. */

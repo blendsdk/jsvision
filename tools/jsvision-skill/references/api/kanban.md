@@ -1132,6 +1132,14 @@ interface KanbanColumnHeader {
 }
 ```
 
+## KanbanColumnHeaderAlignment
+
+Horizontal alignment available for one workflow-column header label.
+
+```ts
+type KanbanColumnHeaderAlignment = 'start' | 'center'
+```
+
 ## KanbanColumnId
 
 A validated workflow-column identity.
@@ -1162,6 +1170,7 @@ interface KanbanColumnPolicy {
   visible?: boolean;   // Whether the column participates in the visible scene.
   collapsed?: boolean;   // Whether the header remains visible while the card region is suppressed.
   width?: KanbanColumnWidthPreference;   // Optional responsive width preference.
+  headerAlignment?: KanbanColumnHeaderAlignment;   // Optional header-label alignment; defaults to `start`.
   wip?: KanbanWipPolicy;   // Optional workflow count policy used by pure eligibility evaluation.
   definitionOfDone?: KanbanDefinitionOfDone;   // Optional compact and complete definition-of-done text.
   capabilities?: readonly KanbanStructureCapability[];   // Package-understood presentation capabilities.
@@ -3177,6 +3186,7 @@ interface KanbanSceneWorkflowHeaderGeometry {
   columnId: string;   // Stable workflow-column identity.
   label: string;   // Sanitized source label.
   contentOffset: number;   // Header columns clipped from the left by horizontal scrolling.
+  contentWidth: number;   // Complete unclipped workflow-column width.
   sticky: true;   // Workflow headers always remain vertically sticky.
 }
 ```
@@ -4495,6 +4505,7 @@ interface ResolvedKanbanColumn {
   collapse: 'expanded' | 'collapsed';   // Whether card regions are available below retained chrome.
   cardRegion: 'active' | 'suppressed';   // Whether ordinary card scene nodes may be projected.
   width?: KanbanColumnWidthPreference;   // Optional complete responsive width preference.
+  headerAlignment: KanbanColumnHeaderAlignment;   // Horizontal alignment of the sanitized header label.
   wip?: KanbanWipPolicy;   // Optional pure WIP evaluation policy.
   definitionOfDone?: KanbanDefinitionOfDone;   // Optional compact/full definition-of-done evidence.
   capabilities: readonly KanbanStructureCapability[];   // Package-understood presentation capabilities.

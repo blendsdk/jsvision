@@ -3,7 +3,7 @@ import type { KanbanExtensionId } from '../contract/identity.js';
 import type { KanbanChecklistGroup } from './checklist.js';
 import type { KanbanCardRow } from './descriptor.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
-import { clipKanbanCardText } from './text-layout.js';
+import { clipKanbanCardText, standardKanbanCardTextWidth } from './text-layout.js';
 import type { KanbanThemeRole } from './theme.js';
 
 /** Stable package action emitted by read-only checklist regions to request the card editor. */
@@ -53,7 +53,7 @@ function checklistRow(
   role: KanbanThemeRole,
   context: KanbanChecklistCompositionContext,
 ): KanbanCardRow {
-  const clipped = clipKanbanCardText(text, context.width - 1, context.widthMode).text;
+  const clipped = clipKanbanCardText(text, standardKanbanCardTextWidth(context.width), context.widthMode).text;
   return Object.freeze({ section: kind, spans: Object.freeze([Object.freeze({ column: 1, text: clipped, role })]) });
 }
 

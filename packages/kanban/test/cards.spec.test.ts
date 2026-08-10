@@ -195,7 +195,7 @@ describe('standard Kanban card Phase A presentation', () => {
     };
     const adapter = createStandardKanbanCardAdapter();
     const observations: KanbanObservation[] = [];
-    const context = renderContext(card.key, 24, true);
+    const context = renderContext(card.key, 32, true);
     const renderer: KanbanCardRenderer<StandardCard> = {
       render: (receivedCard: StandardCard, receivedContext: KanbanCardRenderContext) =>
         renderStandardKanbanCard(receivedCard, adapter, receivedContext),
@@ -226,7 +226,7 @@ describe('standard Kanban card Phase A presentation', () => {
       custom: { secret: 'DO-NOT-OBSERVE-THIS' },
     };
     const adapter = createStandardKanbanCardAdapter();
-    const context = renderContext(invalidCard.key, 18, true);
+    const context = renderContext(invalidCard.key, 20, true);
     const observations: KanbanObservation[] = [];
     const renderer: KanbanCardRenderer<StandardCard> = {
       render: (card: StandardCard, receivedContext: KanbanCardRenderContext) =>

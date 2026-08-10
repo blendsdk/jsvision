@@ -2,7 +2,7 @@ import type { KanbanCardRow, KanbanCardSectionKind } from './descriptor.js';
 import { createKanbanChecklistSectionCandidates } from './checklist-renderer.js';
 import type { KanbanChecklistCandidateMetadata } from './checklist-renderer.js';
 import type { KanbanCardPresentationSnapshot } from './presentation-snapshot.js';
-import { clipKanbanCardText, wrapKanbanCardText } from './text-layout.js';
+import { clipKanbanCardText, standardKanbanCardTextWidth, wrapKanbanCardText } from './text-layout.js';
 import type { KanbanThemeRole } from './theme.js';
 
 /** One immutable candidate section before the card row budget is applied. */
@@ -40,7 +40,7 @@ function row(
   role: KanbanThemeRole,
   context: KanbanStandardSectionContext,
 ): KanbanCardRow {
-  const text = clipKanbanCardText(value, context.width - 1, context.widthMode).text;
+  const text = clipKanbanCardText(value, standardKanbanCardTextWidth(context.width), context.widthMode).text;
   return Object.freeze({ section: kind, spans: Object.freeze([Object.freeze({ column: 1, text, role })]) });
 }
 
@@ -87,7 +87,7 @@ export function createStandardKanbanSectionCandidates(
       kind === 'labels'
         ? wrapKanbanCardText(
             fieldText(field.label, field.values),
-            context.width - 1,
+            standardKanbanCardTextWidth(context.width),
             snapshot.selection.budget.labelRows,
             context.widthMode,
           ).map((value) => row(kind, value, role, context))

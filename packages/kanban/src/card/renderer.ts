@@ -13,7 +13,7 @@ import type {
   KanbanCardSection,
 } from './descriptor.js';
 import { validateKanbanCardDescriptor } from './descriptor.js';
-import { clipKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
+import { clipKanbanCardText, normalizeKanbanCardText, standardKanbanCardTextWidth } from './text-layout.js';
 
 /** Localized bounded labels used when a renderer cannot produce a safe descriptor. */
 export interface KanbanCardFallbackLabels {
@@ -171,12 +171,12 @@ export function createFallbackKanbanCardDescriptor(
   if (!Number.isSafeInteger(context.rowBudget) || context.rowBudget < 1) throw new KanbanInvalidDescriptorError();
   const title = visibleFallbackText(
     readFallbackLabel(labels, 'invalidCardTitle', 'Invalid card'),
-    context.width - 1,
+    standardKanbanCardTextWidth(context.width),
     context.capabilities.widthMode,
   );
   const status = visibleFallbackText(
     readFallbackLabel(labels, 'unknownStatus', 'Unknown status'),
-    context.width - 1,
+    standardKanbanCardTextWidth(context.width),
     context.capabilities.widthMode,
   );
   const includeStatus = context.rowBudget >= 2;

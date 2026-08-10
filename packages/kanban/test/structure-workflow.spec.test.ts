@@ -11,6 +11,7 @@ import {
   resolveKanbanGrouping,
   resolveKanbanStructure,
   resolveKanbanStructureState,
+  snapshotKanbanStructurePolicy,
   snapshotKanbanDefinitionOfDone,
   KanbanBoard,
   KanbanViewport,
@@ -147,6 +148,21 @@ function structureFrameText(render: ReturnType<typeof createRenderRoot>): string
 }
 
 describe('Kanban structure and workflow contract', () => {
+  it('supports start or centered lane headers and rejects unsupported alignments', () => {
+    const centered = snapshotKanbanStructurePolicy<WorkItem>({
+      revision: 'centered-headers-v1',
+      columns: [{ columnId: 'ready', headerAlignment: 'center' }],
+    });
+
+    expect(centered.columns[0]).toMatchObject({ columnId: 'ready', headerAlignment: 'center' });
+    expect(() =>
+      snapshotKanbanStructurePolicy({
+        revision: 'invalid-headers-v1',
+        columns: [{ columnId: 'ready', headerAlignment: 'right' }],
+      }),
+    ).toThrow();
+  });
+
   it('keeps stable column identity across labels and authoritative source order', () => {
     const original = resolveKanbanStructure({
       revision: 'structure-v1',
@@ -883,7 +899,7 @@ describe('Kanban structure and workflow contract', () => {
     const collapsedHeaderActions = collapsed.actionTargets.filter(
       (target) => target.kind === 'workflow-header' && target.columnId === 'ready',
     );
-    const headerRow = structureFrameText(render).split('\n')[0] ?? '';
+    const headerRow = structureFrameText(render).split('\n')[1] ?? '';
 
     expect(collapsed.regions.some((region) => region.kind === 'workflow-header')).toBe(true);
     expect(collapsedHeaderActions.length).toBeGreaterThan(0);

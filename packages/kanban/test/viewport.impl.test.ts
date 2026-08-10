@@ -253,14 +253,14 @@ describe('viewport source metric and ownership implementation', () => {
     });
     const snapshot = viewportSource.refresh({
       width: 80,
-      height: 4,
+      height: 6,
       horizontalOffset: 0,
       verticalOffset: 0,
       cardStride: 3,
     });
 
     const metrics = createKanbanViewportMetrics({
-      bounds: { x: 0, y: 0, width: 80, height: 4 },
+      bounds: { x: 0, y: 0, width: 80, height: 6 },
       source: snapshot,
       offsets: { x: 0, y: 0 },
       density: 'comfortable',
@@ -274,7 +274,7 @@ describe('viewport source metric and ownership implementation', () => {
       cells: Object.freeze(snapshot.cells.filter((cell) => cell.address.columnId === 'unknown')),
     });
     const locatorBoundMetrics = createKanbanViewportMetrics({
-      bounds: { x: 0, y: 0, width: 80, height: 4 },
+      bounds: { x: 0, y: 0, width: 80, height: 6 },
       source: unknownOnlySnapshot,
       offsets: { x: 0, y: 0 },
       density: 'comfortable',

@@ -203,11 +203,11 @@ describe('Kanban vertical geometry', () => {
   });
 
   it.each([
-    [0, 'compact'],
+    [1, 'compact'],
     [1, 'comfortable'],
     [1, 'spacious'],
   ] as const)('should reserve exactly %i resting gap row for %s density', (expectedGapHeight, density) => {
-    // Resting card separation is density-owned; compact's future active insertion gap stays collapsed.
+    // Every named density reserves the standard shadow and insertion-target row between cards.
     const geometry = projectDensity(density);
     const gaps = geometry.regions.filter((region: KanbanLayoutRegion) => region.kind === 'card-gap');
 

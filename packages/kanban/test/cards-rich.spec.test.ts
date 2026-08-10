@@ -373,11 +373,11 @@ describe('rich Kanban card presentation', () => {
         visualState: visualState({ focused: card.ticketNumber === 1 }),
       }),
     });
-    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 18 } });
+    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 22 } });
     const host = new Group();
     host.add(viewport);
     const render = createRenderRoot(
-      { width: 40, height: 18 },
+      { width: 40, height: 22 },
       { caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile },
     );
     render.mount(host);

@@ -184,7 +184,7 @@ function presentationPreset(
  * ```
  */
 export const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaultManifest = Object.freeze({
-  compact: presentationPreset(6, 0, 2, 0, 0),
+  compact: presentationPreset(6, 1, 2, 0, 0),
   comfortable: presentationPreset(12, 1, 4, 1, 1),
   spacious: presentationPreset(18, 1, 6, 2, 2),
 });

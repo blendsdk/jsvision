@@ -230,7 +230,7 @@ describe('Kanban canonical scene and variable-height geometry', () => {
         activeSwimlaneId: 'team-a',
         minimumColumnWidth: 18,
       });
-      expect(geometry.workflowHeaders.every(({ y }: { readonly y: number }) => y === 0)).toBe(true);
+      expect(geometry.workflowHeaders.every(({ y }: { readonly y: number }) => y === 1)).toBe(true);
       expect(
         geometry.swimlaneChrome.find(({ swimlaneId }: { readonly swimlaneId: string }) => swimlaneId === 'team-a')
           ?.sticky,

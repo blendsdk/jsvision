@@ -29,9 +29,16 @@ import type { KanbanSceneGeometry, KanbanSceneGeometryVariant } from '../layout/
 import type { KanbanSceneCellHeightProjection } from '../layout/swimlane-geometry.js';
 import { projectKanbanSceneGeometry } from '../layout/swimlane-geometry.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
+import type { KanbanColumnHeaderAlignment } from '../structure/policy.js';
 import { projectKanbanMinimumGeometry } from '../layout/vertical-projector.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanCount } from '../source/counts.js';
+import {
+  KANBAN_CARD_FRAME_INSET,
+  framedKanbanCardHeight,
+  framedKanbanCardWidth,
+  kanbanCardContentWidth,
+} from '../layout/card-geometry.js';
 import { buildKanbanScene } from './scene-builder.js';
 import type { KanbanScene } from './scene-model.js';
 import type { KanbanIdentityInput } from './kanban-viewport.js';
@@ -94,6 +101,10 @@ export interface KanbanProjectedColumn {
   readonly label: string;
   /** Header columns cropped from the left by horizontal scrolling. */
   readonly contentOffset: number;
+  /** Complete unclipped workflow-column width. */
+  readonly contentWidth: number;
+  /** Validated horizontal header-label alignment. */
+  readonly headerAlignment: KanbanColumnHeaderAlignment;
   /** Honest same-publication count retained while this workflow column is collapsed. */
   readonly count?: KanbanCount;
   /** Clipped viewport-local column rectangle. */
@@ -327,14 +338,14 @@ function mergeControllerVisualState(
 function semanticDescriptor(descriptor: KanbanCardDescriptor): KanbanSemanticValue {
   return {
     cardKey: descriptor.cardKey,
-    width: descriptor.width,
-    measuredHeight: descriptor.measuredHeight,
+    width: framedKanbanCardWidth(descriptor.width),
+    measuredHeight: framedKanbanCardHeight(descriptor.measuredHeight),
     ...(descriptor.presentationRevision === undefined ? {} : { presentationRevision: descriptor.presentationRevision }),
     surfaceRole: descriptor.surfaceRole,
     borderRole: descriptor.borderRole,
     marker: {
-      row: descriptor.marker.row,
-      column: descriptor.marker.column,
+      row: descriptor.marker.row + KANBAN_CARD_FRAME_INSET,
+      column: descriptor.marker.column + KANBAN_CARD_FRAME_INSET,
       glyph: descriptor.marker.glyph,
       role: descriptor.marker.role,
       cues: descriptor.marker.cues,
@@ -358,8 +369,8 @@ function semanticDescriptor(descriptor: KanbanCardDescriptor): KanbanSemanticVal
     regions: descriptor.regions.map((region) => ({
       regionId: region.regionId,
       kind: region.kind,
-      x: region.x,
-      y: region.y,
+      x: region.x + KANBAN_CARD_FRAME_INSET,
+      y: region.y + KANBAN_CARD_FRAME_INSET,
       width: region.width,
       height: region.height,
       ...(region.actionId === undefined ? {} : { actionId: region.actionId }),
@@ -385,8 +396,12 @@ function projectDescriptors<TCard>(
   const omitted: OmittedDescriptorDemand<TCard>[] = [];
   const formatting = options.formatting ?? defaultFormatting(options.i18n);
   const descriptorLimit = options.descriptorLimit ?? KANBAN_LIMITS.retainedDescriptors.safe;
+  const firstColumnId = options.source.widths.columns[0]?.columnId;
   for (const cell of options.source.cells) {
-    const width = columnWidth(options.source, cell.address.columnId);
+    const width = kanbanCardContentWidth(
+      columnWidth(options.source, cell.address.columnId),
+      cell.address.columnId === firstColumnId,
+    );
     const maximum = Math.min(cell.range.end, cell.range.start + KANBAN_LIMITS.ensureRangeCards.safe);
     let omittedCount = 0;
     for (let index = cell.range.start; index < maximum; index += 1) {
@@ -589,7 +604,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     columnWidths: options.presentationColumnWidths ?? options.source.widths.columns,
     columnGap: options.source.widths.separatorWidth,
     cardGap: budget.cardGap,
-    estimatedCardHeight: 2,
+    estimatedCardHeight: framedKanbanCardHeight(2),
     ...(options.heightProjections === undefined ? {} : { heightProjections: options.heightProjections }),
     ...(options.railWidth === undefined ? {} : { railWidth: options.railWidth }),
     ...(options.customChrome === undefined ? {} : { customChrome: options.customChrome }),
@@ -605,6 +620,8 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
         columnId: header.columnId,
         label: header.label,
         contentOffset: header.contentOffset,
+        contentWidth: header.contentWidth,
+        headerAlignment: structureColumn?.headerAlignment ?? 'start',
         ...(structureColumn?.collapse === 'collapsed' && count !== undefined ? { count } : {}),
         rect: Object.freeze({ x: header.x, y: 0, width: header.width, height: options.height }),
       });

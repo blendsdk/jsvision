@@ -192,11 +192,11 @@ describe('Kanban Phase B 12-row real-loop matrix', () => {
     const i18n = signal(createI18n({ locale: 'de', catalogs: [kanbanDe] }));
     const instance = board({
       i18n,
-      cards: () => [{ id: 1, columnId: 'ready', title: 'Überprüfung 界界界 mit sehr langem Titel' }],
+      cards: () => [{ id: 1, columnId: 'ready', title: '界 Prüfung mit sehr langem Titel' }],
     });
     const { app } = mount(instance, 40, 12, 'surface');
     expect(instance.inspection().label).toBe('Kanban-Board');
-    expect(instance.inspection().visibleCards[0]?.title).toContain('Überprüfung');
+    expect(instance.inspection().visibleCards[0]?.title).toContain('Prüfung');
     const cells = app.loop.renderRoot.buffer().rows().flat();
     expect(cells.some((cell) => cell.width === 2)).toBe(true);
   });

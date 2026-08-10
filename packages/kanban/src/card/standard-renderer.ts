@@ -21,7 +21,7 @@ import type { ResolvedKanbanPresentationBudget } from './presentation-policy.js'
 import { resolveKanbanCardStyle } from './style-resolver.js';
 import { createStandardKanbanSectionCandidates } from './standard-sections.js';
 import type { KanbanStandardSectionCandidate } from './standard-sections.js';
-import { measureKanbanCardText, normalizeKanbanCardText } from './text-layout.js';
+import { measureKanbanCardText, normalizeKanbanCardText, standardKanbanCardTextWidth } from './text-layout.js';
 import type { KanbanTheme } from './theme.js';
 
 /** Geometry/theme inputs used to compose one detached rich card snapshot. */
@@ -266,7 +266,7 @@ export function composeStandardKanbanCard(
             kind: 'action' as const,
             x: 1,
             y: checklistStart,
-            width: context.width - 1,
+            width: standardKanbanCardTextWidth(context.width),
             height: checklistEnd - checklistStart,
             actionId: KANBAN_OPEN_CARD_EDITOR_ACTION_ID,
           }),

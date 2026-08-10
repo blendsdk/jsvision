@@ -47,8 +47,14 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - `KanbanBoard<TCard>` (`@jsvision/kanban`) — a responsive application-owned task board over eager or
   sparse revisioned data. It composes one bounded, two-axis scrolling viewport with configurable
   cards, workflow columns, one optional swimlane axis, focus/selection, mounted keyboard and
-  click-family pointer input, and semantic application intents. Drag/drop, commands, and package-owned
-  editing/configuration dialogs remain later surfaces. See [api/kanban.md](api/kanban.md).
+  click-family pointer input, and semantic application intents. Workflow lanes have horizontally
+  padded compact three-row framed sticky headers, per-lane start/center label alignment, and joined
+  horizontal and vertical separators; cards have matching horizontal padding, coherent surfaces,
+  single resting and double focused frames, bold focused titles, contained focused shadows, one-row
+  gaps in every named density, symmetric standard-card text padding, and distinct ASCII fallbacks.
+  Drag/drop, commands, and package-owned
+  editing/configuration dialogs remain later surfaces. The monorepo's incremental kitchen sink runs with
+  `yarn workspace @jsvision/examples demo:kanban`. See [api/kanban.md](api/kanban.md).
 
 ## Feedback
 

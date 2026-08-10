@@ -11,7 +11,12 @@ import type {
   KanbanWipPolicy,
 } from '../source/types.js';
 import { snapshotKanbanStructurePolicy } from './policy.js';
-import type { KanbanColumnPolicy, KanbanColumnWidthPreference, KanbanStructurePolicy } from './policy.js';
+import type {
+  KanbanColumnHeaderAlignment,
+  KanbanColumnPolicy,
+  KanbanColumnWidthPreference,
+  KanbanStructurePolicy,
+} from './policy.js';
 
 /** Semantic scope owned by one normalized structure state. */
 export type KanbanStructureScope =
@@ -100,6 +105,8 @@ export interface ResolvedKanbanColumn {
   readonly cardRegion: 'active' | 'suppressed';
   /** Optional complete responsive width preference. */
   readonly width?: KanbanColumnWidthPreference;
+  /** Horizontal alignment of the sanitized header label. */
+  readonly headerAlignment: KanbanColumnHeaderAlignment;
   /** Optional pure WIP evaluation policy. */
   readonly wip?: KanbanWipPolicy;
   /** Optional compact/full definition-of-done evidence. */
@@ -203,6 +210,7 @@ function resolveColumn(meta: KanbanColumnMeta, policy: KanbanColumnPolicy | unde
     collapse,
     cardRegion: visibility === 'hidden' || collapse === 'collapsed' ? 'suppressed' : 'active',
     ...(policy?.width === undefined ? {} : { width: policy.width }),
+    headerAlignment: policy?.headerAlignment ?? 'start',
     ...(policy?.wip === undefined ? {} : { wip: policy.wip }),
     ...(policy?.definitionOfDone === undefined ? {} : { definitionOfDone: policy.definitionOfDone }),
     capabilities: policy?.capabilities ?? Object.freeze([]),

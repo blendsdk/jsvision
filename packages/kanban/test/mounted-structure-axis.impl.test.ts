@@ -128,7 +128,7 @@ describe('mounted structure and grouped-axis implementation', () => {
       ).toBe(true);
     });
 
-    viewport.scrollTo({ y: 44 });
+    viewport.scrollTo({ y: 80 });
     await vi.waitFor(() => {
       render.flush();
       expect(
@@ -169,7 +169,7 @@ describe('mounted structure and grouped-axis implementation', () => {
     const render = mount(viewport, 40, 12);
     render.flush();
 
-    expect(viewport.metrics().extents.y).toBe(9);
+    expect(viewport.metrics().extents.y).toBe(11);
     viewport.scrollTo({ y: 8 });
     render.flush();
     expect(viewport.metrics().offsets.y).toBe(8);

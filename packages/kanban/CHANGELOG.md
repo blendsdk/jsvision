@@ -39,6 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exact original symbols while completing vocabulary on the existing ten locale subpaths.
 - Added public production, testing, and ten locale entry points plus real packed-consumer,
   dependency, native-dependency, JSDoc, unit, and real-host E2E verification.
+- Added a permanent standalone Kanban kitchen sink with an extensible story registry and initial
+  rich-card, dense Dutch/German content, swimlane, responsive-layout, keyboard, pointer, and scale
+  scenarios.
+- Added padded workflow lanes with compact three-row framed sticky headers, per-lane start/center label
+  alignment, and continuous joined separators, plus coherent card surfaces with single resting frames,
+  double focused frames, bold focused titles, contained focused-card shadows, one-row gaps in every
+  named density, symmetric standard-card text padding, and distinct ASCII fallbacks.
 
 ### Security
 

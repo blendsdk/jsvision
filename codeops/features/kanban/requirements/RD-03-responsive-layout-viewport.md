@@ -97,15 +97,18 @@ they do not force unbounded width. The solver first satisfies
 minimums, then preferred widths, then distributes remaining cells up to maxima. Overflow creates
 horizontal scroll; it never shrinks below effective minimum.
 
-If two effective-minimum columns plus one separator cannot fit, the board uses focused-column mode. Its
-single header row contains previous affordance, ellipsized name, position/count, and next affordance;
-unavailable ends remain visibly disabled. It introduces no permanent side rail.
+If two effective-minimum columns plus one separator cannot fit, the board uses focused-column mode.
+Its conditional navigator row contains previous affordance, ellipsized name, position/count, and next
+affordance; unavailable ends remain visibly disabled. The workflow header remains a compact three-row
+sticky block with a joined top border, its horizontally padded label, and the joined lower separator
+row. The navigator introduces no permanent side rail.
 
 ### Vertical geometry and cards — Complexity L
 
-- Comfortable/spacious card stacks reserve one full-width blank row between cards.
-- Compact stacks may remove resting gutters; the geometry model defines a bounded one-row insertion-gap
-  region that RD-07 may activate without changing resting layout.
+- Compact, comfortable, and spacious card stacks reserve one full-width blank row between cards. This
+  keeps focused shadows clear of adjacent cards and provides a stable insertion target.
+- Bounded custom presentation policies may explicitly choose a zero-row gap; RD-07 owns any temporary
+  expansion required to expose an active insertion target in that configuration.
 - Card heights derive from bounded renderer descriptors and density degradation rules, never
   unrestricted record text.
 - Swimlane headers/separators are distinct from the first insertion gutter.
@@ -177,12 +180,14 @@ reachable Cancel/close route owned by the host. Do not draw partial action targe
    horizontally visible containing column.
 4. [ ] A surface-hosted and window-hosted fixture produce equivalent board content/hit behavior inside
    equal content rectangles; only host frame/shadow differs.
-5. [ ] Workflow headers remain visible while vertically scrolling cards and consume no card drop target.
+5. [ ] The horizontally padded, fully framed three-row workflow headers remain visible while vertically
+   scrolling cards and consume no card drop target.
 6. [ ] The pure geometry model classifies a projected swimlane header separately from the first
    insertion gutter below it; the header is never classified as an insertion position. RD-05 and RD-07
    own activation of swimlane presentation and pointer/drag hit behavior.
-7. [ ] Comfortable and spacious fixtures show exactly one blank row between adjacent cards, while
-   compact shows no resting row. RD-07 owns expansion of the compact active insertion gap.
+7. [ ] Compact, comfortable, and spacious fixtures show exactly one blank row between adjacent cards.
+   A bounded custom zero-gap policy remains valid, and RD-07 owns expansion of its active insertion
+   gap.
 8. [ ] Horizontal wheel/scroll commands and vertical wheel input clamp to live extents and never create
    negative or beyond-end offsets after columns/cards disappear.
 9. [ ] A longest-locale header is clipped by display cells without splitting a wide glyph, while its
