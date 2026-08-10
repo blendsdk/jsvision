@@ -127,9 +127,9 @@ function typescriptCompiler(): string {
   return path;
 }
 
-describe('packed Kanban main-entry contract', () => {
+describe('packed Kanban public-entry contract', () => {
   it(
-    'should typecheck and execute one pure public contract from the real tarball',
+    'should typecheck and execute the complete public contract from the real tarball',
     () => {
       const work = mkdtempSync(join(tmpdir(), 'jsvision-kanban-consumer-'));
       try {

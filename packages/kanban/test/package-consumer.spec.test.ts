@@ -195,7 +195,10 @@ void [
 function runtimeConsumerSource(): string {
   const localeChecks = LOCALES.map(
     ([locale, symbol]) =>
-      `const ${symbol}Module = await import('@jsvision/kanban/locales/${locale}');\nif (typeof ${symbol}Module.${symbol} !== 'object') throw new Error('${locale} locale missing');`,
+      `const ${symbol}Module = await import('@jsvision/kanban/locales/${locale}');
+if (typeof ${symbol}Module.${symbol} !== 'object') throw new Error('${locale} locale missing');
+if (typeof ${symbol}Module.${symbol}.messages['kanban.board.label'] !== 'string') throw new Error('${locale} foundation vocabulary missing');
+if (typeof ${symbol}Module.${symbol}.messages['kanban.interaction.unavailable'] !== 'string') throw new Error('${locale} Phase B vocabulary missing');`,
   ).join('\n');
   return `const main = await import('@jsvision/kanban');
 const testing = await import('@jsvision/kanban/testing');
@@ -207,6 +210,26 @@ if (typeof testing.createKanbanDeferred !== 'function') throw new Error('testing
 if (typeof testing.createWindowedKanbanFixture !== 'function') throw new Error('windowed fixture missing');
 if (typeof testing.routeKanbanKeyInput !== 'function') throw new Error('key router missing');
 if (typeof testing.KanbanPointerRouter !== 'function') throw new Error('pointer router missing');
+const source = main.createEagerKanbanDataSource(
+  () => [{ id: 1, columnId: 'ready', title: 'Packed card' }],
+  {
+    columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+    keyOf: (card) => card.id,
+    columnOf: (card) => card.columnId,
+  },
+);
+const board = new main.KanbanBoard({
+  source,
+  query: () => ({ filters: [], sort: [] }),
+  card: {
+    keyOf: (card) => card.id,
+    titleOf: (card) => card.title,
+    statusOf: () => 'Ready',
+  },
+});
+const preMount = await board.interaction().transition({ kind: 'escape' });
+if (preMount.kind !== 'unavailable') throw new Error('pre-mount interaction must fail closed');
+board.dispose();
 ${localeChecks}
 console.log('kanban-complete-exports-ok');
 `;

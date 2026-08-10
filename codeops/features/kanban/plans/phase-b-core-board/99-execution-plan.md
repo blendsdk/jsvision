@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:04 CEST
-> **Progress**: 96/106 tasks (91%)
+> **Last Updated**: 2026-08-10 03:09 CEST
+> **Progress**: 97/106 tasks (92%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -359,7 +359,13 @@ implementation → green → implementation tests/hardening → verification.
 > complete locale catalogs. They explicitly retain drag/drop, packaged editors, commands, component
 > labs, kitchen sink, and showcase as later boundaries. ST-B-X-07 advances to its expected technical
 > architecture failure; the package README assertions are green.
-- [ ] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts`
+- [x] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts` ✅ (completed: 2026-08-10 03:09 CEST)
+
+> **Packed-consumer evidence (2026-08-10 03:09 CEST):** Both authentic offline consumers now
+> typecheck and execute Phase B root/testing APIs plus all ten explicit locale subpaths. Runtime checks
+> prove that every established locale symbol carries foundation and Phase B vocabulary and that an
+> unmounted interaction facade fails closed. Exact export-map and representative private Phase B path
+> rejection remain enforced. The two packed suites pass 3 assertions from real tarballs.
 - [ ] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md`
 - [ ] 6.2.6 Regenerate/verify Kanban API coverage and docs links/build without adding component labs, kitchen sink, or showcase — `packages/docs-site/api/kanban/`, `packages/docs-site/src/api/packages.mjs`
 - [ ] 6.2.7 Review mapped canonical JSVision skill/API/impact references and update authored guidance for Phase B — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`
