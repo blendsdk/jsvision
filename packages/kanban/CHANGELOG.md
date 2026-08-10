@@ -35,8 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added mounted keyboard, click, double-click, Ctrl-click, right-click, wheel, card-action, retry, and
   scoped-action routing. Application handlers receive immutable open-card, open-context, and
   scoped-action intents without record payloads or implicit mutation authority.
-- Expanded every established public locale symbol to include the complete reviewed Phase B vocabulary
-  while preserving the existing ten locale subpaths and catalog names.
+- Added a reviewed `kanbanPhaseB*` overlay beside every established foundation catalog, preserving the
+  exact original symbols while completing vocabulary on the existing ten locale subpaths.
 - Added public production, testing, and ten locale entry points plus real packed-consumer,
   dependency, native-dependency, JSDoc, unit, and real-host E2E verification.
 

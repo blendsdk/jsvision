@@ -23,18 +23,18 @@ const TYPE_DEPENDENCIES = Object.freeze([
   { source: ['@types', 'node'], destination: ['@types', 'node'] },
   { source: ['undici-types'], destination: ['undici-types'] },
 ]);
-/** Exact locale subpaths and the public catalog symbol each one must expose. */
+/** Exact locale subpaths and the stable foundation plus additive overlay symbols each must expose. */
 const LOCALES = Object.freeze([
-  ['en', 'kanbanEn'],
-  ['nl', 'kanbanNl'],
-  ['de', 'kanbanDe'],
-  ['fr', 'kanbanFr'],
-  ['es', 'kanbanEs'],
-  ['it', 'kanbanIt'],
-  ['pt-PT', 'kanbanPtPT'],
-  ['pl', 'kanbanPl'],
-  ['ro', 'kanbanRo'],
-  ['sv', 'kanbanSv'],
+  ['en', 'kanbanEn', 'kanbanPhaseBEn'],
+  ['nl', 'kanbanNl', 'kanbanPhaseBNl'],
+  ['de', 'kanbanDe', 'kanbanPhaseBDe'],
+  ['fr', 'kanbanFr', 'kanbanPhaseBFr'],
+  ['es', 'kanbanEs', 'kanbanPhaseBEs'],
+  ['it', 'kanbanIt', 'kanbanPhaseBIt'],
+  ['pt-PT', 'kanbanPtPT', 'kanbanPhaseBPtPT'],
+  ['pl', 'kanbanPl', 'kanbanPhaseBPl'],
+  ['ro', 'kanbanRo', 'kanbanPhaseBRo'],
+  ['sv', 'kanbanSv', 'kanbanPhaseBSv'],
 ] as const);
 
 /** Defensively narrowed subset of one `npm pack --json` result. */
@@ -142,9 +142,10 @@ function prepareConsumer(work: string, pack: PackResult): string {
 /** Builds a NodeNext type consumer that imports every declared public entry. */
 function typeConsumerSource(): string {
   const localeImports = LOCALES.map(
-    ([locale, symbol]) => `import { ${symbol} } from '@jsvision/kanban/locales/${locale}';`,
+    ([locale, foundation, overlay]) =>
+      `import { ${foundation}, ${overlay} } from '@jsvision/kanban/locales/${locale}';`,
   ).join('\n');
-  const localeSymbols = LOCALES.map(([, symbol]) => symbol).join(', ');
+  const localeSymbols = LOCALES.flatMap(([, foundation, overlay]) => [foundation, overlay]).join(', ');
   return `import {
   KanbanBoard,
   createEagerKanbanDataSource,
@@ -194,11 +195,12 @@ void [
 /** Builds an ESM consumer that loads and inspects every declared public entry. */
 function runtimeConsumerSource(): string {
   const localeChecks = LOCALES.map(
-    ([locale, symbol]) =>
-      `const ${symbol}Module = await import('@jsvision/kanban/locales/${locale}');
-if (typeof ${symbol}Module.${symbol} !== 'object') throw new Error('${locale} locale missing');
-if (typeof ${symbol}Module.${symbol}.messages['kanban.board.label'] !== 'string') throw new Error('${locale} foundation vocabulary missing');
-if (typeof ${symbol}Module.${symbol}.messages['kanban.interaction.unavailable'] !== 'string') throw new Error('${locale} Phase B vocabulary missing');`,
+    ([locale, foundation, overlay]) =>
+      `const ${foundation}Module = await import('@jsvision/kanban/locales/${locale}');
+if (typeof ${foundation}Module.${foundation} !== 'object') throw new Error('${locale} foundation locale missing');
+if (typeof ${foundation}Module.${overlay} !== 'object') throw new Error('${locale} Phase B overlay missing');
+if (typeof ${foundation}Module.${foundation}.messages['kanban.board.label'] !== 'string') throw new Error('${locale} foundation vocabulary missing');
+if (typeof ${foundation}Module.${overlay}.messages['kanban.interaction.unavailable'] !== 'string') throw new Error('${locale} Phase B vocabulary missing');`,
   ).join('\n');
   return `const main = await import('@jsvision/kanban');
 const testing = await import('@jsvision/kanban/testing');

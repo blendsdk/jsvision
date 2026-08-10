@@ -18,7 +18,7 @@ components, web hosting, and examples so applications can depend only on the sur
 The `@jsvision/kanban` core board provides application-owned contracts, revisioned eager and windowed
 data sources, bounded configurable cards, workflow-column/swimlane policy, sparse canonical scene
 geometry, focus and selection, mounted keyboard/pointer interaction, semantic application intents,
-and ten complete locale subpaths. Drag/drop, commands, packaged editors, component teaching labs,
+and ten locale subpaths with additive Phase B overlays. Drag/drop, commands, packaged editors, component teaching labs,
 kitchen sink, and showcase documentation remain staged work.
 
 ## Architecture at a glance

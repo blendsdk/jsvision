@@ -10,6 +10,15 @@ import {
   kanbanFr,
   kanbanIt,
   kanbanNl,
+  kanbanPhaseBDe,
+  kanbanPhaseBEs,
+  kanbanPhaseBFr,
+  kanbanPhaseBIt,
+  kanbanPhaseBNl,
+  kanbanPhaseBPl,
+  kanbanPhaseBPtPT,
+  kanbanPhaseBRo,
+  kanbanPhaseBSv,
   kanbanPl,
   kanbanPtPT,
   kanbanRo,
@@ -38,11 +47,19 @@ interface ReviewVerifier {
 describe('configuration-driven i18n package registration', () => {
   test('registers exactly six safe package definitions including Kanban', () => {
     const config = JSON.parse(readFileSync(join(repoRoot, 'tools/i18n-locale-exports.json'), 'utf8')) as {
-      readonly packages: readonly { readonly name: string; readonly symbolPrefix: string }[];
+      readonly packages: readonly {
+        readonly name: string;
+        readonly symbolPrefix: string;
+        readonly overlaySymbolPrefix?: string;
+      }[];
       readonly locales: readonly string[];
     };
     expect(config.packages).toContainEqual({ name: 'code-editor', symbolPrefix: 'codeEditor' });
-    expect(config.packages).toContainEqual({ name: 'kanban', symbolPrefix: 'kanban' });
+    expect(config.packages).toContainEqual({
+      name: 'kanban',
+      symbolPrefix: 'kanban',
+      overlaySymbolPrefix: 'kanbanPhaseB',
+    });
     expect(config.packages).toHaveLength(6);
     expect(config.locales).toHaveLength(10);
   });
@@ -91,9 +108,26 @@ describe('configuration-driven i18n package registration', () => {
       readonly schema: number;
       readonly reviews: readonly ReviewEntry[];
     };
-    const catalogs = [kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv].map(
-      (catalog) => ({ packageName: 'kanban', catalog }),
-    );
+    const foundations = [kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv];
+    const overlays = [
+      kanbanPhaseBNl,
+      kanbanPhaseBDe,
+      kanbanPhaseBFr,
+      kanbanPhaseBEs,
+      kanbanPhaseBIt,
+      kanbanPhaseBPtPT,
+      kanbanPhaseBPl,
+      kanbanPhaseBRo,
+      kanbanPhaseBSv,
+    ];
+    const catalogs = foundations.map((foundation, index) => ({
+      packageName: 'kanban',
+      catalog: {
+        schema: foundation.schema,
+        locale: foundation.locale,
+        messages: { ...foundation.messages, ...overlays[index].messages },
+      },
+    }));
 
     const kanbanManifest = {
       ...manifest,

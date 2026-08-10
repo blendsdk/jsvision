@@ -119,7 +119,8 @@ erDiagram
 
 ## Compatibility and migration
 
-Public TypeScript contracts and the ten complete locale catalogs follow package semantic versioning.
+Public TypeScript contracts, ten stable foundation catalogs, and ten additive Phase B overlays follow
+package semantic versioning.
 Saved-view codecs remain a later phase governed by the accepted application-owned semantic storage
 decision; transient scene, focus, selection, press, and pending-navigation state is not a durable
 saved-view model.

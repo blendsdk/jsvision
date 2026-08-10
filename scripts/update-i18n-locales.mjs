@@ -37,14 +37,17 @@ async function loadConfig() {
       typeof entry?.name !== 'string' ||
       !SAFE_NAME.test(entry.name) ||
       typeof entry.symbolPrefix !== 'string' ||
-      !SAFE_SYMBOL.test(entry.symbolPrefix)
+      !SAFE_SYMBOL.test(entry.symbolPrefix) ||
+      (entry.overlaySymbolPrefix !== undefined &&
+        (typeof entry.overlaySymbolPrefix !== 'string' || !SAFE_SYMBOL.test(entry.overlaySymbolPrefix)))
     ) {
       throw new Error('Invalid i18n package export configuration.');
     }
   }
   if (
     new Set(value.packages.map((entry) => entry.name)).size !== value.packages.length ||
-    new Set(value.packages.map((entry) => entry.symbolPrefix)).size !== value.packages.length
+    new Set(value.packages.flatMap((entry) => [entry.symbolPrefix, entry.overlaySymbolPrefix].filter(Boolean))).size !==
+      value.packages.reduce((count, entry) => count + (entry.overlaySymbolPrefix === undefined ? 1 : 2), 0)
   ) {
     throw new Error('Duplicate i18n package export configuration.');
   }
@@ -52,9 +55,12 @@ async function loadConfig() {
 }
 
 /** Canonical checked source for one explicit locale subpath. */
-function localeModule(packageName, symbolPrefix, locale) {
-  const symbol = `${symbolPrefix}${localeSuffix(locale)}`;
-  return `/** Official ${locale} catalog for the @jsvision/${packageName} locale subpath. */\nexport { ${symbol} } from '../i18n/locales.js';\n`;
+function localeModule(packageName, symbolPrefix, overlaySymbolPrefix, locale) {
+  const symbols = [symbolPrefix, overlaySymbolPrefix]
+    .filter((prefix) => prefix !== undefined)
+    .map((prefix) => `${prefix}${localeSuffix(locale)}`);
+  const noun = overlaySymbolPrefix === undefined ? 'catalog' : 'catalogs';
+  return `/** Official ${locale} ${noun} for the @jsvision/${packageName} locale subpath. */\nexport { ${symbols.join(', ')} } from '../i18n/locales.js';\n`;
 }
 
 /** Return a package manifest with exactly the configured explicit locale exports. */
@@ -115,7 +121,7 @@ async function main() {
     for (const locale of config.locales) {
       await publish(
         join(localeRoot, `${locale}.ts`),
-        localeModule(entry.name, entry.symbolPrefix, locale),
+        localeModule(entry.name, entry.symbolPrefix, entry.overlaySymbolPrefix, locale),
         check,
         drift,
       );

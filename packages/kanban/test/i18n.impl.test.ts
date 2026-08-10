@@ -3,20 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   KANBAN_ACCELERATOR_MANIFEST,
+  KANBAN_ENGLISH_CATALOG,
   KANBAN_PHASE_B_ENGLISH_CATALOG,
   KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
   KANBAN_PLACEHOLDER_MANIFEST,
 } from '../src/index.js';
 import * as locales from '../src/i18n/locales.js';
-import { kanbanPhaseBDe } from '../src/i18n/translations/de.js';
-import { kanbanPhaseBEs } from '../src/i18n/translations/es.js';
-import { kanbanPhaseBFr } from '../src/i18n/translations/fr.js';
-import { kanbanPhaseBIt } from '../src/i18n/translations/it.js';
-import { kanbanPhaseBNl } from '../src/i18n/translations/nl.js';
-import { kanbanPhaseBPl } from '../src/i18n/translations/pl.js';
-import { kanbanPhaseBPtPT } from '../src/i18n/translations/pt-PT.js';
-import { kanbanPhaseBRo } from '../src/i18n/translations/ro.js';
-import { kanbanPhaseBSv } from '../src/i18n/translations/sv.js';
 
 const ALL_CATALOGS = Object.freeze([
   locales.kanbanEn,
@@ -31,38 +23,29 @@ const ALL_CATALOGS = Object.freeze([
   locales.kanbanSv,
 ]);
 
-/** Exact compatibility overlays kept ready for later public locale integration. */
+/** Public compatibility overlays containing Phase B vocabulary. */
 const ALL_PHASE_B_CATALOGS = Object.freeze([
-  KANBAN_PHASE_B_ENGLISH_CATALOG,
-  kanbanPhaseBNl,
-  kanbanPhaseBDe,
-  kanbanPhaseBFr,
-  kanbanPhaseBEs,
-  kanbanPhaseBIt,
-  kanbanPhaseBPtPT,
-  kanbanPhaseBPl,
-  kanbanPhaseBRo,
-  kanbanPhaseBSv,
+  locales.kanbanPhaseBEn,
+  locales.kanbanPhaseBNl,
+  locales.kanbanPhaseBDe,
+  locales.kanbanPhaseBFr,
+  locales.kanbanPhaseBEs,
+  locales.kanbanPhaseBIt,
+  locales.kanbanPhaseBPtPT,
+  locales.kanbanPhaseBPl,
+  locales.kanbanPhaseBRo,
+  locales.kanbanPhaseBSv,
 ]);
 
-/** Complete English reference used by the ten public locale entry points. */
-const COMPLETE_ENGLISH_REFERENCE = locales.kanbanEn;
-
-/** Placeholder contract shared by the complete public locale catalogs. */
-const COMPLETE_PLACEHOLDER_MANIFEST = Object.freeze({
-  ...KANBAN_PLACEHOLDER_MANIFEST,
-  ...KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
-});
-
 describe('Kanban authored catalog implementation', () => {
-  it('keeps every complete official catalog deeply immutable and strict-reference valid', () => {
+  it('keeps every foundation catalog deeply immutable and strict-reference valid', () => {
     for (const catalog of ALL_CATALOGS) {
       expect(
         validateCatalog(catalog, {
           mode: 'strict',
           official: true,
-          referenceCatalog: COMPLETE_ENGLISH_REFERENCE,
-          placeholderManifest: COMPLETE_PLACEHOLDER_MANIFEST,
+          referenceCatalog: KANBAN_ENGLISH_CATALOG,
+          placeholderManifest: KANBAN_PLACEHOLDER_MANIFEST,
           acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
         }),
       ).toEqual([]);
@@ -77,19 +60,17 @@ describe('Kanban authored catalog implementation', () => {
       const size = i18n.t('kanban.layout.minimum-size', { params: { width: 18, height: 8 } });
       const count = i18n.t('kanban.count.truncated', { params: { count: 42 } });
       const position = i18n.t('kanban.focused-column.position', { params: { current: 2, total: 5 } });
-      const descriptorLimit = i18n.t('kanban.state.descriptor-limit', { params: { count: 7 } });
 
       expect(size).toContain('18');
       expect(size).toContain('8');
       expect(count).toContain('42');
       expect(position).toContain('2');
       expect(position).toContain('5');
-      expect(descriptorLimit).toContain('7');
-      expect(`${size}${count}${position}${descriptorLimit}`).not.toContain('${');
+      expect(`${size}${count}${position}`).not.toContain('${');
     }
   });
 
-  it('exports exactly the ten approved named locale values', () => {
+  it('exports the ten stable foundation catalogs and ten additive Phase B overlays', () => {
     expect(Object.keys(locales).sort()).toEqual([
       'kanbanDe',
       'kanbanEn',
@@ -97,6 +78,16 @@ describe('Kanban authored catalog implementation', () => {
       'kanbanFr',
       'kanbanIt',
       'kanbanNl',
+      'kanbanPhaseBDe',
+      'kanbanPhaseBEn',
+      'kanbanPhaseBEs',
+      'kanbanPhaseBFr',
+      'kanbanPhaseBIt',
+      'kanbanPhaseBNl',
+      'kanbanPhaseBPl',
+      'kanbanPhaseBPtPT',
+      'kanbanPhaseBRo',
+      'kanbanPhaseBSv',
       'kanbanPl',
       'kanbanPtPT',
       'kanbanRo',
@@ -119,7 +110,7 @@ describe('Kanban authored catalog implementation', () => {
       expect(Object.isFrozen(catalog.messages)).toBe(true);
     }
 
-    const german = createI18n({ locale: 'de', catalogs: [kanbanPhaseBDe] });
+    const german = createI18n({ locale: 'de', catalogs: [locales.kanbanPhaseBDe] });
     expect(german.t('kanban.interaction.selection-limit-exceeded')).toBe('Auswahllimit erreicht');
   });
 });

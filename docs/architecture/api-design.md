@@ -142,8 +142,8 @@ being silently reported as zero.
 - Semantic Kanban theme roles resolve through mapped Core roles, family fallbacks, and emergency
   styles while retaining non-color cues.
 - The main entry exports the typed foundation and Phase B inventories plus isolated English fallback
-  service. Each of the ten explicit locale subpaths exports one complete reviewed catalog containing
-  both inventories.
+  service. Each explicit locale subpath preserves its exact foundation symbol and adds a reviewed
+  `kanbanPhaseB*` overlay; applications pass both catalogs for the complete vocabulary.
 
 ## Error conventions
 

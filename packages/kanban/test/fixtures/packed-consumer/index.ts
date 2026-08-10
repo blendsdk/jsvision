@@ -6,16 +6,16 @@ import type {
   KanbanViewportInteractionAdapter,
 } from '@jsvision/kanban';
 import { KanbanPointerRouter, createWindowedKanbanFixture, routeKanbanKeyInput } from '@jsvision/kanban/testing';
-import { kanbanDe } from '@jsvision/kanban/locales/de';
-import { kanbanEn } from '@jsvision/kanban/locales/en';
-import { kanbanEs } from '@jsvision/kanban/locales/es';
-import { kanbanFr } from '@jsvision/kanban/locales/fr';
-import { kanbanIt } from '@jsvision/kanban/locales/it';
-import { kanbanNl } from '@jsvision/kanban/locales/nl';
-import { kanbanPl } from '@jsvision/kanban/locales/pl';
-import { kanbanPtPT } from '@jsvision/kanban/locales/pt-PT';
-import { kanbanRo } from '@jsvision/kanban/locales/ro';
-import { kanbanSv } from '@jsvision/kanban/locales/sv';
+import { kanbanDe, kanbanPhaseBDe } from '@jsvision/kanban/locales/de';
+import { kanbanEn, kanbanPhaseBEn } from '@jsvision/kanban/locales/en';
+import { kanbanEs, kanbanPhaseBEs } from '@jsvision/kanban/locales/es';
+import { kanbanFr, kanbanPhaseBFr } from '@jsvision/kanban/locales/fr';
+import { kanbanIt, kanbanPhaseBIt } from '@jsvision/kanban/locales/it';
+import { kanbanNl, kanbanPhaseBNl } from '@jsvision/kanban/locales/nl';
+import { kanbanPhaseBPl, kanbanPl } from '@jsvision/kanban/locales/pl';
+import { kanbanPhaseBPtPT, kanbanPtPT } from '@jsvision/kanban/locales/pt-PT';
+import { kanbanPhaseBRo, kanbanRo } from '@jsvision/kanban/locales/ro';
+import { kanbanPhaseBSv, kanbanSv } from '@jsvision/kanban/locales/sv';
 
 const defaultFactory: KanbanInteractionControllerFactory = createKanbanInteractionController;
 type PublicInteractionSurface = KanbanInteractionFacade & KanbanViewportInteractionAdapter;
@@ -31,10 +31,21 @@ acceptPublicInteractionTypes();
 
 const columnId = createKanbanColumnId('ready-for-review');
 const catalogs = [kanbanEn, kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv];
-const incompleteCatalog = catalogs.find(
-  (catalog) =>
-    typeof catalog.messages['kanban.board.label'] !== 'string' ||
-    typeof catalog.messages['kanban.interaction.unavailable'] !== 'string',
+const overlays = [
+  kanbanPhaseBEn,
+  kanbanPhaseBNl,
+  kanbanPhaseBDe,
+  kanbanPhaseBFr,
+  kanbanPhaseBEs,
+  kanbanPhaseBIt,
+  kanbanPhaseBPtPT,
+  kanbanPhaseBPl,
+  kanbanPhaseBRo,
+  kanbanPhaseBSv,
+];
+const incompleteCatalog = catalogs.find((catalog) => typeof catalog.messages['kanban.board.label'] !== 'string');
+const incompleteOverlay = overlays.find(
+  (catalog) => typeof catalog.messages['kanban.interaction.unavailable'] !== 'string',
 );
 if (
   columnId !== 'ready-for-review' ||
@@ -43,7 +54,8 @@ if (
   typeof createWindowedKanbanFixture !== 'function' ||
   typeof routeKanbanKeyInput !== 'function' ||
   typeof KanbanPointerRouter !== 'function' ||
-  incompleteCatalog !== undefined
+  incompleteCatalog !== undefined ||
+  incompleteOverlay !== undefined
 ) {
   throw new Error('the packed Kanban identity contract returned an unexpected value');
 }

@@ -1,2 +1,2 @@
-/** Official es catalog for the @jsvision/kanban locale subpath. */
-export { kanbanEs } from '../i18n/locales.js';
+/** Official es catalogs for the @jsvision/kanban locale subpath. */
+export { kanbanEs, kanbanPhaseBEs } from '../i18n/locales.js';

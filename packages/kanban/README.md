@@ -188,13 +188,15 @@ can import only the catalogs they use:
 
 ```ts
 import { createI18n } from '@jsvision/i18n';
-import { kanbanNl } from '@jsvision/kanban/locales/nl';
+import { kanbanNl, kanbanPhaseBNl } from '@jsvision/kanban/locales/nl';
 
-const i18n = createI18n({ locale: 'nl', catalogs: [kanbanNl] });
+const i18n = createI18n({ locale: 'nl', catalogs: [kanbanNl, kanbanPhaseBNl] });
 const board = new KanbanBoard({ source, query, card, i18n: () => i18n });
 ```
 
-Available locale tags are `en`, `nl`, `de`, `fr`, `es`, `it`, `pt-PT`, `pl`, `ro`, and `sv`.
+Available locale tags are `en`, `nl`, `de`, `fr`, `es`, `it`, `pt-PT`, `pl`, `ro`, and `sv`. Each
+subpath exports the stable foundation catalog plus an additive `kanbanPhaseB*` overlay. Passing both
+preserves the original exact catalog contract while enabling the complete core-board vocabulary.
 Applications may replace the `I18n` service reactively.
 
 ## Themes and terminal capabilities

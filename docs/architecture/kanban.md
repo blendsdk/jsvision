@@ -33,7 +33,7 @@ graph LR
 | ----------------------------------- | --------------------------------------------------------------------- |
 | `@jsvision/kanban`                  | Production sources, presentation, scene, interaction, board, viewport |
 | `@jsvision/kanban/testing`          | Deterministic source, scene, input, and contract fixtures             |
-| `@jsvision/kanban/locales/{locale}` | One complete reviewed locale catalog per explicit locale subpath      |
+| `@jsvision/kanban/locales/{locale}` | Stable foundation catalog plus reviewed Phase B overlay per subpath   |
 
 The package depends only on the public Core, I18n, and UI packages. Testing helpers are isolated from
 the production module graph, and undeclared private subpaths are not part of the SDK surface.
@@ -161,16 +161,16 @@ released board cannot remount.
 
 ## Phase boundary
 
-| Implemented Phase B core board                                      | Deliberately deferred                                      |
-| ------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Public contracts, validation, limits, and semantic defaults         | Drag ghosts, insertion targets, and card movement          |
-| Eager and sparse revisioned read sources                            | Command registry and user-remappable keymap                |
-| Configurable rich cards with bounded checklist/summary sections     | Card and lane-configuration dialogs                        |
-| Theme roles, English fallback, and ten complete locale entry points | Application authorization, persistence, and saved-view UI  |
-| Responsive board/viewport, sparse scene, scrolling, and host parity | Component teaching page, live labs, kitchen sink, showcase |
-| Workflow structure, WIP/DoD eligibility, and one swimlane axis      | Nested grouping                                            |
-| Focus, bounded selection, mounted keyboard and pointer clicks       | Pointer drag/drop                                          |
-| Semantic interaction intents and request reconciliation             | Package-owned record mutation                              |
+| Implemented Phase B core board                                           | Deliberately deferred                                      |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Public contracts, validation, limits, and semantic defaults              | Drag ghosts, insertion targets, and card movement          |
+| Eager and sparse revisioned read sources                                 | Command registry and user-remappable keymap                |
+| Configurable rich cards with bounded checklist/summary sections          | Card and lane-configuration dialogs                        |
+| Theme roles, English fallback, and ten locale entry points with overlays | Application authorization, persistence, and saved-view UI  |
+| Responsive board/viewport, sparse scene, scrolling, and host parity      | Component teaching page, live labs, kitchen sink, showcase |
+| Workflow structure, WIP/DoD eligibility, and one swimlane axis           | Nested grouping                                            |
+| Focus, bounded selection, mounted keyboard and pointer clicks            | Pointer drag/drop                                          |
+| Semantic interaction intents and request reconciliation                  | Package-owned record mutation                              |
 
 This boundary is intentionally publishable and testable, but it is not presented as a complete
 Kanban application. Later phases add drag/drop, commands, and package-owned input UI while retaining

@@ -24,7 +24,8 @@
     },
     {
       "name": "kanban",
-      "symbolPrefix": "kanban"
+      "symbolPrefix": "kanban",
+      "overlaySymbolPrefix": "kanbanPhaseB"
     }
   ]
 }

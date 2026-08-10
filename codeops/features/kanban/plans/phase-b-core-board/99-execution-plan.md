@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:39 CEST
-> **Progress**: 102/106 tasks (96%)
+> **Last Updated**: 2026-08-10 03:54 CEST
+> **Progress**: 103/106 tasks (97%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -345,25 +345,27 @@ implementation → green → implementation tests/hardening → verification.
 - [x] 6.2.2 Run locale generation/literal/review checks and inspect generated locale wrappers atomically — `packages/kanban/src/locales/*.ts` ✅ (completed: 2026-08-10 02:57 CEST)
 
 > **Locale integration evidence (2026-08-10 02:57 CEST):** Regeneration leaves all ten public
-> locale wrappers deterministic. Their established named symbols now compose the separately validated
-> foundation and Phase B overlays into one deeply immutable public catalog, so consumers can translate
-> the complete package-owned vocabulary without importing private translation modules. Strict-reference
-> validation and interpolation pass for every locale; locale generation, literal ownership, digest
-> reviews, plugin parity, focused typecheck/unit coverage, and local verification are green.
+> locale wrappers deterministic. Their established named symbols retain the exact foundation catalogs,
+> while additive `kanbanPhaseB*` symbols expose the separately validated overlays on the same subpaths.
+> Consumers pass both catalogs for complete vocabulary without importing private translation modules.
+> Strict-reference validation and interpolation pass for every locale; locale generation, literal
+> ownership, digest reviews, plugin parity, focused typecheck/unit coverage, and local verification are
+> green.
 - [x] 6.2.3 Complete public JSDoc/examples, package README, and changelog with honest Phase B/later boundaries — `packages/kanban/src/**/*.ts`, `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md` ✅ (completed: 2026-08-10 03:04 CEST)
 
 > **Public documentation evidence (2026-08-10 03:04 CEST):** The package JSDoc gate covers 118
 > source files with no banned references or missing public examples. README and changelog now describe
 > implemented card presentation, workflow/swimlane structure, sparse scene behavior, focus/selection,
 > mounted keyboard and pointer input, the `KanbanInteractionFacade`, semantic application intents, and
-> complete locale catalogs. They explicitly retain drag/drop, packaged editors, commands, component
-> labs, kitchen sink, and showcase as later boundaries. ST-B-X-07 advances to its expected technical
+> complete locale vocabulary and compatibility overlays. They explicitly retain drag/drop, packaged
+> editors, commands, component labs, kitchen sink, and showcase as later boundaries. ST-B-X-07 advances
+> to its expected technical
 > architecture failure; the package README assertions are green.
 - [x] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts` ✅ (completed: 2026-08-10 03:09 CEST)
 
 > **Packed-consumer evidence (2026-08-10 03:09 CEST):** Both authentic offline consumers now
 > typecheck and execute Phase B root/testing APIs plus all ten explicit locale subpaths. Runtime checks
-> prove that every established locale symbol carries foundation and Phase B vocabulary and that an
+> prove that every locale subpath carries its stable foundation symbol and additive Phase B overlay and that an
 > unmounted interaction facade fails closed. Exact export-map and representative private Phase B path
 > rejection remain enforced. The two packed suites pass 3 assertions from real tarballs.
 - [x] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md` ✅ (completed: 2026-08-10 03:31 CEST)
@@ -393,16 +395,23 @@ implementation → green → implementation tests/hardening → verification.
 > passes all integrity gates.
 - [x] 6.2.9 Run ST-B-X-05..07 package/docs/i18n/plugin oracles and make every immutable oracle green ✅ (completed: 2026-08-10 03:39 CEST)
 
-> **Phase 6 green-gate evidence (2026-08-10 03:39 CEST):** The packed export/private-path suite
+> **Phase 6 green-gate evidence (updated 2026-08-10 03:54 CEST):** The packed export/private-path suite
 > passes 2 assertions, API/docs/plugin-impact suite passes all 10 assertions, and i18n registration
-> suite passes all 4 assertions. The first green attempt correctly exposed stale review digests after
-> public locale composition; the nine unchanged, previously reviewed foundation-plus-Phase-B message
-> sets were rebound to their current complete-catalog digests and review date. The repository review
-> gate now verifies all 54 approvals. No oracle was weakened.
+> suite passes all 4 assertions. The first green attempt exposed stale review digests after locale
+> integration. The full unit gate then proved that expanding the ten established symbols contradicted
+> the immutable exact Phase A catalog contract. Integration and its new oracle were corrected to
+> additive public `kanbanPhaseB*` overlays; review tooling attests to each composed locale experience
+> while the old symbols remain exact. The repository review gate verifies all 54 approvals.
 
 ### Step 6.3: Closure and hardening
 
-- [ ] 6.3.1 Run `yarn workspace @jsvision/kanban build`, `typecheck`, `test`, `test:e2e`, `check:deps`, and `check:docs`, then `yarn workspace @jsvision/kanban vitest run --project unit test/package-consumer.spec.test.ts`
+- [x] 6.3.1 Run `yarn workspace @jsvision/kanban build`, `typecheck`, `test`, `test:e2e`, `check:deps`, and `check:docs`, then `yarn workspace @jsvision/kanban vitest run --project unit test/package-consumer.spec.test.ts` ✅ (completed: 2026-08-10 03:54 CEST)
+
+> **Package closure evidence (2026-08-10 03:54 CEST):** Build and typecheck pass; 55 unit files pass
+> 483 assertions; 4 real-host E2E files pass 23 assertions; dependency and JSDoc checks pass with no
+> native runtime dependencies, banned references, or missing public examples; and both packed-consumer
+> suites pass 3 assertions from authentic offline tarballs. The closure run detected and corrected the
+> locale-symbol compatibility issue above before this task was marked complete.
 - [ ] 6.3.2 Run the exact i18n/docs/API/plugin commands listed in 07, including the focused examples/i18n specification invocations, then `yarn verify:local`
 - [ ] 6.3.3 Resolve final reviewer/auditor critical/major findings, re-review fixes once, and preserve the strict deferred-feature boundary
 - [ ] 6.3.4 Synchronize traceability and Kanban feature roadmap criterion-honestly; cascade portfolio only on the integration branch and do not overwrite the existing user modification

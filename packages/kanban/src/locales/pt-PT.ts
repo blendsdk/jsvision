@@ -1,2 +1,2 @@
-/** Official pt-PT catalog for the @jsvision/kanban locale subpath. */
-export { kanbanPtPT } from '../i18n/locales.js';
+/** Official pt-PT catalogs for the @jsvision/kanban locale subpath. */
+export { kanbanPtPT, kanbanPhaseBPtPT } from '../i18n/locales.js';
