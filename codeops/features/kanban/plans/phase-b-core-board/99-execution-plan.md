@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 02:50 CEST
-> **Progress**: 93/106 tasks (88%)
+> **Last Updated**: 2026-08-10 02:52 CEST
+> **Progress**: 94/106 tasks (89%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -334,7 +334,14 @@ implementation → green → implementation tests/hardening → verification.
 
 ### Step 6.2: Implementation and green phase
 
-- [ ] 6.2.1 Reconcile all phase-owned typed English vocabulary and nine authored translations, fill any closure-only terms, and record current digest-bound review evidence — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `tools/i18n-translation-reviews.json`
+- [x] 6.2.1 Reconcile all phase-owned typed English vocabulary and nine authored translations, fill any closure-only terms, and record current digest-bound review evidence — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/i18n/translations/*.ts`, `tools/i18n-translation-reviews.json` ✅ (completed: 2026-08-10 02:52 CEST)
+
+> **Vocabulary reconciliation evidence (2026-08-10 02:52 CEST):** The typed 22-message Phase B
+> English overlay accounts for every package-owned Phase B label and feedback state consumed by the
+> implementation. Each of the nine authored translations satisfies that exact map, and the existing
+> digest-bound review evidence is current. No closure-only user-visible term was found, so no unused
+> vocabulary or translation churn was introduced. Locale entry-point, literal-ownership, and review
+> checks all pass.
 - [ ] 6.2.2 Run locale generation/literal/review checks and inspect generated locale wrappers atomically — `packages/kanban/src/locales/*.ts`
 - [ ] 6.2.3 Complete public JSDoc/examples, package README, and changelog with honest Phase B/later boundaries — `packages/kanban/src/**/*.ts`, `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md`
 - [ ] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts`
