@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:31 CEST
-> **Progress**: 98/106 tasks (92%)
+> **Last Updated**: 2026-08-10 03:32 CEST
+> **Progress**: 99/106 tasks (93%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -375,7 +375,12 @@ implementation → green → implementation tests/hardening → verification.
 > against accepted ADR-006 through ADR-013 found no design-intent divergence and required no new ADR.
 > `yarn docs:build` completes successfully; generated API output remains deterministic, with only the
 > repository's existing TypeDoc/Rollup warnings.
-- [ ] 6.2.6 Regenerate/verify Kanban API coverage and docs links/build without adding component labs, kitchen sink, or showcase — `packages/docs-site/api/kanban/`, `packages/docs-site/src/api/packages.mjs`
+- [x] 6.2.6 Regenerate/verify Kanban API coverage and docs links/build without adding component labs, kitchen sink, or showcase — `packages/docs-site/api/kanban/`, `packages/docs-site/src/api/packages.mjs` ✅ (completed: 2026-08-10 03:32 CEST)
+
+> **Generated documentation evidence (2026-08-10 03:32 CEST):** `yarn docs:build` regenerated the
+> Kanban API and completed VitePress link/page validation with no tracked diff. The public package
+> registry includes Kanban, generated pages contain the Phase B controller/facade/intent surface, and
+> no Kanban component page, live-example registration, showcase package, or demo script was introduced.
 - [ ] 6.2.7 Review mapped canonical JSVision skill/API/impact references and update authored guidance for Phase B — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`
 - [ ] 6.2.8 Run `yarn plugin:update`, inspect generated API/recipe/impact/plugin changes, and make plugin parity green — `plugins/jsvision-plugin/skills/jsvision/`
 - [ ] 6.2.9 Run ST-B-X-05..07 package/docs/i18n/plugin oracles and make every immutable oracle green
