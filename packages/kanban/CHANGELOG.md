@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   viewport projection.
 - Added application-owned request dispatch and publication reconciliation without optimistic record
   mutation.
+- Added configurable standard card composition with compact, comfortable, and detailed presentation
+  policies; bounded metadata, badges, feedback, definition-of-done, and checklist sections; semantic
+  status styling; deterministic degradation; and custom renderer/action-region seams.
+- Added ordered workflow structures, transition proposals, WIP evaluation, definition-of-done
+  presentation, and one-level horizontal swimlanes with visibility, collapse, summary, separator,
+  background-role, rail, derived-grouping, and unassigned-card policies.
+- Added a bounded sparse scene model with variable-height cards, semantic hit maps, windowed overscan,
+  focused-column geometry, stable anchors, targeted damage, and reactive descriptor rebuilding.
+- Added a mount-owned interaction controller and stable programmatic facade with spatial navigation,
+  bounded range/toggle/select-all selection, server-selection references, focus reconciliation,
+  pending-navigation cancellation, and localized feedback.
+- Added mounted keyboard, click, double-click, Ctrl-click, right-click, wheel, card-action, retry, and
+  scoped-action routing. Application handlers receive immutable open-card, open-context, and
+  scoped-action intents without record payloads or implicit mutation authority.
+- Expanded every established public locale symbol to include the complete reviewed Phase B vocabulary
+  while preserving the existing ten locale subpaths and catalog names.
 - Added public production, testing, and ten locale entry points plus real packed-consumer,
   dependency, native-dependency, JSDoc, unit, and real-host E2E verification.
 
@@ -30,3 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source paths outside the initial public package boundary.
 - Bounded source reads, viewport work, retained descriptors, diagnostics, text, identities, and
   application request metadata.
+- Required matching semantic targets and scene revisions before pointer release can commit an action;
+  move/drag reports and lifecycle teardown cancel incomplete presses.
+- Kept card/lane editing, drag-and-drop mutation, and application authorization outside the component;
+  the board emits bounded semantic intents and accepts authoritative source publication instead.

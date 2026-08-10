@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 02:57 CEST
-> **Progress**: 95/106 tasks (90%)
+> **Last Updated**: 2026-08-10 03:04 CEST
+> **Progress**: 96/106 tasks (91%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -350,7 +350,15 @@ implementation → green → implementation tests/hardening → verification.
 > the complete package-owned vocabulary without importing private translation modules. Strict-reference
 > validation and interpolation pass for every locale; locale generation, literal ownership, digest
 > reviews, plugin parity, focused typecheck/unit coverage, and local verification are green.
-- [ ] 6.2.3 Complete public JSDoc/examples, package README, and changelog with honest Phase B/later boundaries — `packages/kanban/src/**/*.ts`, `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md`
+- [x] 6.2.3 Complete public JSDoc/examples, package README, and changelog with honest Phase B/later boundaries — `packages/kanban/src/**/*.ts`, `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md` ✅ (completed: 2026-08-10 03:04 CEST)
+
+> **Public documentation evidence (2026-08-10 03:04 CEST):** The package JSDoc gate covers 118
+> source files with no banned references or missing public examples. README and changelog now describe
+> implemented card presentation, workflow/swimlane structure, sparse scene behavior, focus/selection,
+> mounted keyboard and pointer input, the `KanbanInteractionFacade`, semantic application intents, and
+> complete locale catalogs. They explicitly retain drag/drop, packaged editors, commands, component
+> labs, kitchen sink, and showcase as later boundaries. ST-B-X-07 advances to its expected technical
+> architecture failure; the package README assertions are green.
 - [ ] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts`
 - [ ] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md`
 - [ ] 6.2.6 Regenerate/verify Kanban API coverage and docs links/build without adding component labs, kitchen sink, or showcase — `packages/docs-site/api/kanban/`, `packages/docs-site/src/api/packages.mjs`
