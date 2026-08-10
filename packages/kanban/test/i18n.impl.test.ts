@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   KANBAN_ACCELERATOR_MANIFEST,
-  KANBAN_ENGLISH_CATALOG,
   KANBAN_PHASE_B_ENGLISH_CATALOG,
   KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
   KANBAN_PLACEHOLDER_MANIFEST,
@@ -46,15 +45,24 @@ const ALL_PHASE_B_CATALOGS = Object.freeze([
   kanbanPhaseBSv,
 ]);
 
+/** Complete English reference used by the ten public locale entry points. */
+const COMPLETE_ENGLISH_REFERENCE = locales.kanbanEn;
+
+/** Placeholder contract shared by the complete public locale catalogs. */
+const COMPLETE_PLACEHOLDER_MANIFEST = Object.freeze({
+  ...KANBAN_PLACEHOLDER_MANIFEST,
+  ...KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
+});
+
 describe('Kanban authored catalog implementation', () => {
-  it('keeps every official catalog deeply immutable and strict-reference valid', () => {
+  it('keeps every complete official catalog deeply immutable and strict-reference valid', () => {
     for (const catalog of ALL_CATALOGS) {
       expect(
         validateCatalog(catalog, {
           mode: 'strict',
           official: true,
-          referenceCatalog: KANBAN_ENGLISH_CATALOG,
-          placeholderManifest: KANBAN_PLACEHOLDER_MANIFEST,
+          referenceCatalog: COMPLETE_ENGLISH_REFERENCE,
+          placeholderManifest: COMPLETE_PLACEHOLDER_MANIFEST,
           acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
         }),
       ).toEqual([]);
@@ -69,13 +77,15 @@ describe('Kanban authored catalog implementation', () => {
       const size = i18n.t('kanban.layout.minimum-size', { params: { width: 18, height: 8 } });
       const count = i18n.t('kanban.count.truncated', { params: { count: 42 } });
       const position = i18n.t('kanban.focused-column.position', { params: { current: 2, total: 5 } });
+      const descriptorLimit = i18n.t('kanban.state.descriptor-limit', { params: { count: 7 } });
 
       expect(size).toContain('18');
       expect(size).toContain('8');
       expect(count).toContain('42');
       expect(position).toContain('2');
       expect(position).toContain('5');
-      expect(`${size}${count}${position}`).not.toContain('${');
+      expect(descriptorLimit).toContain('7');
+      expect(`${size}${count}${position}${descriptorLimit}`).not.toContain('${');
     }
   });
 

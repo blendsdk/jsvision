@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 02:52 CEST
-> **Progress**: 94/106 tasks (89%)
+> **Last Updated**: 2026-08-10 02:57 CEST
+> **Progress**: 95/106 tasks (90%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -342,7 +342,14 @@ implementation → green → implementation tests/hardening → verification.
 > digest-bound review evidence is current. No closure-only user-visible term was found, so no unused
 > vocabulary or translation churn was introduced. Locale entry-point, literal-ownership, and review
 > checks all pass.
-- [ ] 6.2.2 Run locale generation/literal/review checks and inspect generated locale wrappers atomically — `packages/kanban/src/locales/*.ts`
+- [x] 6.2.2 Run locale generation/literal/review checks and inspect generated locale wrappers atomically — `packages/kanban/src/locales/*.ts` ✅ (completed: 2026-08-10 02:57 CEST)
+
+> **Locale integration evidence (2026-08-10 02:57 CEST):** Regeneration leaves all ten public
+> locale wrappers deterministic. Their established named symbols now compose the separately validated
+> foundation and Phase B overlays into one deeply immutable public catalog, so consumers can translate
+> the complete package-owned vocabulary without importing private translation modules. Strict-reference
+> validation and interpolation pass for every locale; locale generation, literal ownership, digest
+> reviews, plugin parity, focused typecheck/unit coverage, and local verification are green.
 - [ ] 6.2.3 Complete public JSDoc/examples, package README, and changelog with honest Phase B/later boundaries — `packages/kanban/src/**/*.ts`, `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md`
 - [ ] 6.2.4 Extend offline packed main/testing/ten-locale runtime/type/export/private-path fixtures for Phase B — `packages/kanban/test/fixtures/packed-consumer/index.ts`, `packages/kanban/test/package-consumer.spec.test.ts`
 - [ ] 6.2.5 Update Kanban architecture/data-model/API/security docs and decision/index navigation for implemented core-board semantics — `docs/architecture/kanban.md`, `docs/architecture/data-model.md`, `docs/architecture/api-design.md`, `docs/architecture/security.md`, `docs/index.md`
