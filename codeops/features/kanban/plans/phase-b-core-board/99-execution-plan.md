@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 03:32 CEST
-> **Progress**: 99/106 tasks (93%)
+> **Last Updated**: 2026-08-10 03:35 CEST
+> **Progress**: 101/106 tasks (95%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -381,8 +381,16 @@ implementation → green → implementation tests/hardening → verification.
 > Kanban API and completed VitePress link/page validation with no tracked diff. The public package
 > registry includes Kanban, generated pages contain the Phase B controller/facade/intent surface, and
 > no Kanban component page, live-example registration, showcase package, or demo script was introduced.
-- [ ] 6.2.7 Review mapped canonical JSVision skill/API/impact references and update authored guidance for Phase B — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`
-- [ ] 6.2.8 Run `yarn plugin:update`, inspect generated API/recipe/impact/plugin changes, and make plugin parity green — `plugins/jsvision-plugin/skills/jsvision/`
+- [x] 6.2.7 Review mapped canonical JSVision skill/API/impact references and update authored guidance for Phase B — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json` ✅ (completed: 2026-08-10 03:35 CEST)
+- [x] 6.2.8 Run `yarn plugin:update`, inspect generated API/recipe/impact/plugin changes, and make plugin parity green — `plugins/jsvision-plugin/skills/jsvision/` ✅ (completed: 2026-08-10 03:35 CEST)
+
+> **Canonical skill/plugin evidence (2026-08-10 03:35 CEST):** The agent-neutral package chooser,
+> architecture guidance, and component catalog now teach the core board's sparse scene, focus and
+> selection, mounted input, stable interaction facade, identity-only application intents, authority
+> boundary, and honest deferred features. Generated API pages required no authored correction.
+> `yarn plugin:update` synchronized the distributed skill and source-impact fingerprint; inspection
+> found only the expected three skill-reference copies plus fingerprint change, and `yarn plugin:check`
+> passes all integrity gates.
 - [ ] 6.2.9 Run ST-B-X-05..07 package/docs/i18n/plugin oracles and make every immutable oracle green
 
 ### Step 6.3: Closure and hardening

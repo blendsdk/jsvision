@@ -24,9 +24,10 @@ Treat JSVision as a retained terminal application framework, not printed output.
   validation, and one service injected into the application.
 - Use `@jsvision/forms` for headless form state, Zod validation, bindings, and form dialogs.
 - Use `@jsvision/datagrid` for editable, typed, windowed enterprise grids. Use UI `DataGrid` for read-oriented tables.
-- Use `@jsvision/kanban` for application-owned, responsive task-board projection over eager or
-  sparse revisioned sources. Its current stable foundation is read-only; drag/drop and package-owned
-  editing/configuration dialogs are later-phase surfaces.
+- Use `@jsvision/kanban` for application-owned, responsive task boards over eager or sparse revisioned
+  sources. The core board includes configurable card presentation, workflow/swimlane structure,
+  bounded focus and selection, mounted keyboard/pointer clicks, and semantic application intents.
+  Drag/drop, commands, and package-owned editing/configuration dialogs are later-phase surfaces.
 - Use `@jsvision/files` for filesystem abstractions, dialogs, navigation, and editing.
 - Use `@jsvision/web` for browser hosting, virtual filesystems, clipboard, and key reclaim only when
   working inside this repository; it is not part of the current public npm release.

@@ -44,10 +44,11 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - **GridHeader** — the non-scrolling sticky header: column titles in `tableHeader`, a sort
   indicator, and click-to-sort; the low-level header `DataGrid` composes.
 - **Tree** — a collapsible outline/tree of nodes with expand/collapse, keyboard nav, and type-ahead.
-- `KanbanBoard<TCard>` (`@jsvision/kanban`) — a responsive read-only task-board foundation over
-  application-owned eager or sparse revisioned data. It composes one bounded, two-axis scrolling
-  viewport and supports direct-surface or application-window hosting. Phase A does not yet provide
-  drag/drop or package-owned editing/configuration dialogs. See [api/kanban.md](api/kanban.md).
+- `KanbanBoard<TCard>` (`@jsvision/kanban`) — a responsive application-owned task board over eager or
+  sparse revisioned data. It composes one bounded, two-axis scrolling viewport with configurable
+  cards, workflow columns, one optional swimlane axis, focus/selection, mounted keyboard and
+  click-family pointer input, and semantic application intents. Drag/drop, commands, and package-owned
+  editing/configuration dialogs remain later surfaces. See [api/kanban.md](api/kanban.md).
 
 ## Feedback
 

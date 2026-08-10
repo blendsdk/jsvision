@@ -21,17 +21,27 @@ responsive, bounded terminal board. Provide a `KanbanDataSource<TCard>` and card
 persistence, authorization, workflow policy, and mutation in the application. The optional
 `StandardCard` model is a convenience rather than a required record schema.
 
-One mounted board owns one viewport and one read coordinator. A revisioned query session exposes
-sparse cursors for visible and overscan column/swimlane cells. Replace or dispose the board through
-its lifecycle so generation invalidation and cancellation can prevent stale range completion. Do not
-treat a loaded window as a logical edge or materialize a large logical board merely to simplify the
-view.
+One mounted board owns one viewport, read coordinator, and interaction controller. A revisioned query
+session exposes sparse cursors for visible and overscan column/swimlane cells. The controller owns
+bounded semantic focus, selection, range anchor, pending navigation, and feedback—not application
+records or authorization. Replace or dispose the board through its lifecycle so generation
+invalidation and cancellation can prevent stale range/navigation completion. Do not treat a loaded
+window as a logical edge or materialize a large logical board merely to simplify the view.
 
 The board uses JSVision's layout DSL around one exact-cell viewport leaf and can be hosted directly
-on a surface or inside an application-owned window. Phase A provides read-only projection,
-scrolling, themes, localization, source/session contracts, and request/reconciliation contracts.
-Drag/drop, selection commands, rich checklist rendering, card editors, and lane-configuration UI are
-not yet production surfaces. See the exact current API in [api/kanban.md](api/kanban.md).
+on a surface or inside an application-owned window. Its canonical sparse scene drives scrolling,
+clipped variable-height cards, damage, and semantic hit targets. Mounted keyboard and pointer input
+supports spatial navigation, bounded selection, activation, context, descriptor actions, retry, and
+wheel scrolling. Unknown and Alt-modified keys remain available to the containing application;
+move/drag reports cancel click tracking because drag/drop is not active yet.
+
+Receive `open-card`, `open-context`, and `scoped-action` through `onInteraction`, or use the stable
+`board.interaction()` facade programmatically. Each application intent contains semantic identities,
+origin, closed scope, and a detached eligible selection snapshot; it never contains records or grants
+mutation authority. Keep data changes behind the application-owned `KanbanRequest` dispatcher and
+publish the authoritative result through the source. Drag/drop, commands, card editors,
+lane-configuration UI, component labs, kitchen sink, and showcase remain later surfaces. See the exact
+current API in [api/kanban.md](api/kanban.md).
 
 ## Clipboard boundary
 
