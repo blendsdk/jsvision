@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-10 02:46 CEST
-> **Progress**: 92/106 tasks (87%)
+> **Last Updated**: 2026-08-10 02:50 CEST
+> **Progress**: 93/106 tasks (88%)
 > **CodeOps Artifact Schema**: 1
 > **Scope Mode**: strict
 > **Design Mode**: auto-design authorized for eligible technical decisions
@@ -322,7 +322,15 @@ implementation → green → implementation tests/hardening → verification.
 **Reference**: 03-06 §i18n/Public integration/Documentation; ST-B-X-05..07; PAR-B20–24
 
 - [x] 6.1.1 `[spec-author]` Extend packed consumer, public API, locale review, docs/API, and plugin-impact oracles for the complete Phase B surface — `packages/kanban/test/package-consumer.spec.test.ts`, `packages/examples/test/api-reference.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts` ✅ (completed: 2026-08-10 02:46 CEST)
-- [ ] 6.1.2 Run the Phase 6 integration oracles and record expected red/drift behavior before registry/documentation generation changes
+- [x] 6.1.2 Run the Phase 6 integration oracles and record expected red/drift behavior before registry/documentation generation changes ✅ (completed: 2026-08-10 02:50 CEST)
+
+> **Phase 6 expected-red evidence (2026-08-10 02:50 CEST):** The authentic packed consumer
+> passes 2 assertions across the expanded main/testing/ten-locale surface and private paths; the i18n
+> registration/review suite passes 4 assertions; and the API/integration suite passes 9 of 10
+> assertions. Its sole expected failure is ST-B-X-07, which first detects the stale Phase A/read-only
+> package README at the missing `Interaction and intents` section. Generated API coverage and plugin
+> impact registration are already green. No production, locale, documentation, registry, or generated
+> artifact was changed while establishing this red gate.
 
 ### Step 6.2: Implementation and green phase
 
