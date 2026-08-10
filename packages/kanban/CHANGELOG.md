@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   viewport projection.
 - Added application-owned request dispatch and publication reconciliation without optimistic record
   mutation.
-- Added configurable standard card composition with compact, comfortable, and detailed presentation
+- Added configurable standard card composition with compact, comfortable, and spacious presentation
   policies; bounded metadata, badges, feedback, definition-of-done, and checklist sections; semantic
   status styling; deterministic degradation; and custom renderer/action-region seams.
 - Added ordered workflow structures, transition proposals, WIP evaluation, definition-of-done

@@ -160,13 +160,15 @@ function writeI18nEntryPointIndex() {
     '- [`@jsvision/i18n/node`](/api/i18n-node/) — Node JSON-file catalog source.',
     '',
   ];
-  for (const { name, symbolPrefix } of localeConfig.packages) {
+  for (const { name, symbolPrefix, overlaySymbolPrefix } of localeConfig.packages) {
     lines.push(`## @jsvision/${name}`, '');
     for (const locale of localeConfig.locales) {
-      const symbol = `${symbolPrefix}${localeSuffix(locale)}`;
-      lines.push(
-        `- [\`@jsvision/${name}/locales/${locale}\`](/api/${name}-locales/variables/${symbol}) — \`${symbol}\``,
-      );
+      for (const prefix of [symbolPrefix, ...(overlaySymbolPrefix === undefined ? [] : [overlaySymbolPrefix])]) {
+        const symbol = `${prefix}${localeSuffix(locale)}`;
+        lines.push(
+          `- [\`@jsvision/${name}/locales/${locale}\`](/api/${name}-locales/variables/${symbol}) — \`${symbol}\``,
+        );
+      }
     }
     lines.push('');
   }

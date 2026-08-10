@@ -65,6 +65,7 @@ export const KANBAN_ACCELERATOR_MANIFEST: AcceleratorManifest = Object.freeze({
 /** Exact placeholders accepted by first-use Phase B messages. */
 export const KANBAN_PHASE_B_PLACEHOLDER_MANIFEST: PlaceholderManifest = Object.freeze({
   'kanban.state.descriptor-limit': Object.freeze(['count']),
+  'kanban.interaction.selected-count': Object.freeze(['count']),
 });
 
 /** Canonical English messages used by the package catalog and safe application defaults. */

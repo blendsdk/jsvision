@@ -79,7 +79,7 @@ import { readViewportHostChromeRows } from './viewport-host-chrome.js';
 import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader } from './viewport-scale-inspection.js';
 import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
 import { KanbanViewportInteractionBinding } from './viewport-interaction.js';
-import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
+import type { KanbanViewportInputAdapter, KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 
 /** Board-owned listeners notified after viewport evidence changes semantically. */
 const INTERACTION_EVIDENCE_LISTENERS = new WeakMap<object, () => void>();
@@ -190,9 +190,13 @@ const VIEWPORT_INPUT_LIFECYCLES = new WeakMap<object, KanbanViewportInputLifecyc
  *
  * @internal
  */
-export function prepareKanbanViewportBoardInput<TCard>(viewport: KanbanViewport<TCard>): void {
+export function prepareKanbanViewportBoardInput<TCard>(
+  viewport: KanbanViewport<TCard>,
+  input: KanbanViewportInputAdapter,
+): void {
   const lifecycle = VIEWPORT_INPUT_LIFECYCLES.get(viewport);
   if (lifecycle === undefined) throw new KanbanDisposedResourceError();
+  lifecycle.binding.attachInput(input);
   lifecycle.managed = true;
   lifecycle.binding.disableInput();
   lifecycle.pointer.cancel();

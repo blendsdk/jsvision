@@ -9,12 +9,7 @@ import {
   createEagerKanbanDataSource,
   createEnglishKanbanI18n,
 } from '../src/index.js';
-import type {
-  KanbanCardAdapter,
-  KanbanInteractionController,
-  KanbanInteractionSnapshot,
-  KanbanQuery,
-} from '../src/index.js';
+import type { KanbanCardAdapter, KanbanInteractionController, KanbanQuery } from '../src/index.js';
 import { createWindowedKanbanFixture } from '../src/testing.js';
 
 interface Card {
@@ -77,46 +72,26 @@ function controller(
 }
 
 describe('Phase B mounted lifecycle implementation', () => {
-  it('enables standalone input only while mounted and detaches late adapter notifications', () => {
-    const accept = vi.fn(() => true);
-    const unsubscribe = vi.fn();
-    let notify: (() => void) | undefined;
-    const snapshot: KanbanInteractionSnapshot = Object.freeze({
-      revision: 1,
-      focused: Object.freeze({
-        kind: 'card',
-        cardKey: 1,
-        address: Object.freeze({ columnId: 'ready' }),
-      }),
-      selectedCardKeys: Object.freeze([]),
+  it('keeps a standalone mirror read-only when supplied with a board facade', () => {
+    const owner = new KanbanBoard({
+      source: eagerSource(),
+      query: () => QUERY,
+      card: CARD,
     });
-    const adapter = {
-      snapshot: () => snapshot,
-      transition: () => ({ kind: 'unchanged' as const, snapshot }),
-      subscribe: (invalidate: () => void) => {
-        notify = invalidate;
-        return unsubscribe;
-      },
-      accept,
-      acceptActivate: () => true,
-      acceptOpenContext: () => true,
-      acceptScopedAction: () => true,
-    };
     const viewport = new KanbanViewport({
       source: eagerSource(),
       query: () => QUERY,
       card: CARD,
-      interaction: adapter,
+      interaction: owner.interaction(),
     });
 
     expect(key(viewport, 'down').handled).toBe(false);
     const render = mount(viewport);
-    expect(key(viewport, 'down').handled).toBe(true);
-    expect(accept).toHaveBeenCalledWith({ kind: 'navigate', direction: 'down' });
+    const before = owner.interaction().snapshot();
+    expect(key(viewport, 'down').handled).toBe(false);
+    expect(owner.interaction().snapshot()).toEqual(before);
 
     render.unmount();
-    expect(unsubscribe).toHaveBeenCalledOnce();
-    expect(() => notify?.()).not.toThrow();
     expect(key(viewport, 'down').handled).toBe(false);
   });
 

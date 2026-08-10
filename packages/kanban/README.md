@@ -80,7 +80,7 @@ lower-bound, or unknown extents and load only bounded visible and overscan range
 ## Cards and presentation
 
 The standard renderer always preserves a readable title and status. A presentation policy chooses
-one of the built-in `compact`, `comfortable`, or `detailed` presets and may enable bounded metadata,
+one of the built-in `compact`, `comfortable`, or `spacious` presets and may enable bounded metadata,
 badges, feedback, definition-of-done text, and checklist summaries. Optional sections degrade in a
 deterministic order when the assigned cells are too small. Long and untrusted display text is
 sanitized, clipped, and ellipsized at the package boundary.

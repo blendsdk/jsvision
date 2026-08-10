@@ -258,7 +258,7 @@ export class KanbanBoard<TCard> extends Group {
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
     );
-    prepareKanbanViewportBoardInput(this.viewport);
+    prepareKanbanViewportBoardInput(this.viewport, this.#interactionFacade);
     setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
       this.#reconcileInteraction(this.viewport.identityChanges()),
     );

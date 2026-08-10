@@ -73,12 +73,22 @@
 ## @jsvision/kanban
 
 - [`@jsvision/kanban/locales/en`](/api/kanban-locales/variables/kanbanEn) — `kanbanEn`
+- [`@jsvision/kanban/locales/en`](/api/kanban-locales/variables/kanbanPhaseBEn) — `kanbanPhaseBEn`
 - [`@jsvision/kanban/locales/nl`](/api/kanban-locales/variables/kanbanNl) — `kanbanNl`
+- [`@jsvision/kanban/locales/nl`](/api/kanban-locales/variables/kanbanPhaseBNl) — `kanbanPhaseBNl`
 - [`@jsvision/kanban/locales/de`](/api/kanban-locales/variables/kanbanDe) — `kanbanDe`
+- [`@jsvision/kanban/locales/de`](/api/kanban-locales/variables/kanbanPhaseBDe) — `kanbanPhaseBDe`
 - [`@jsvision/kanban/locales/fr`](/api/kanban-locales/variables/kanbanFr) — `kanbanFr`
+- [`@jsvision/kanban/locales/fr`](/api/kanban-locales/variables/kanbanPhaseBFr) — `kanbanPhaseBFr`
 - [`@jsvision/kanban/locales/es`](/api/kanban-locales/variables/kanbanEs) — `kanbanEs`
+- [`@jsvision/kanban/locales/es`](/api/kanban-locales/variables/kanbanPhaseBEs) — `kanbanPhaseBEs`
 - [`@jsvision/kanban/locales/it`](/api/kanban-locales/variables/kanbanIt) — `kanbanIt`
+- [`@jsvision/kanban/locales/it`](/api/kanban-locales/variables/kanbanPhaseBIt) — `kanbanPhaseBIt`
 - [`@jsvision/kanban/locales/pt-PT`](/api/kanban-locales/variables/kanbanPtPT) — `kanbanPtPT`
+- [`@jsvision/kanban/locales/pt-PT`](/api/kanban-locales/variables/kanbanPhaseBPtPT) — `kanbanPhaseBPtPT`
 - [`@jsvision/kanban/locales/pl`](/api/kanban-locales/variables/kanbanPl) — `kanbanPl`
+- [`@jsvision/kanban/locales/pl`](/api/kanban-locales/variables/kanbanPhaseBPl) — `kanbanPhaseBPl`
 - [`@jsvision/kanban/locales/ro`](/api/kanban-locales/variables/kanbanRo) — `kanbanRo`
+- [`@jsvision/kanban/locales/ro`](/api/kanban-locales/variables/kanbanPhaseBRo) — `kanbanPhaseBRo`
 - [`@jsvision/kanban/locales/sv`](/api/kanban-locales/variables/kanbanSv) — `kanbanSv`
+- [`@jsvision/kanban/locales/sv`](/api/kanban-locales/variables/kanbanPhaseBSv) — `kanbanPhaseBSv`

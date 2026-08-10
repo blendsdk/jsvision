@@ -96,6 +96,10 @@ describe('Kanban authored catalog implementation', () => {
   });
 
   it('keeps all ten Phase B overlays strict-reference valid and translated', () => {
+    expect(KANBAN_PHASE_B_PLACEHOLDER_MANIFEST).toEqual({
+      'kanban.state.descriptor-limit': ['count'],
+      'kanban.interaction.selected-count': ['count'],
+    });
     for (const catalog of ALL_PHASE_B_CATALOGS) {
       expect(
         validateCatalog(catalog, {
@@ -112,5 +116,30 @@ describe('Kanban authored catalog implementation', () => {
 
     const german = createI18n({ locale: 'de', catalogs: [locales.kanbanPhaseBDe] });
     expect(german.t('kanban.interaction.selection-limit-exceeded')).toBe('Auswahllimit erreicht');
+  });
+
+  it('enforces selected-count parameters from the public manifest without reference fallback', () => {
+    const malformed = {
+      schema: 1 as const,
+      locale: 'en',
+      messages: {
+        ...KANBAN_PHASE_B_ENGLISH_CATALOG.messages,
+        'kanban.interaction.selected-count': 'Selected',
+      },
+    };
+    const issues = validateCatalog(malformed, {
+      mode: 'strict',
+      referenceKeys: Object.keys(KANBAN_PHASE_B_ENGLISH_CATALOG.messages),
+      placeholderManifest: KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
+    });
+
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'INVALID_PARAMETER',
+          path: ['messages', 'kanban.interaction.selected-count', 'placeholders'],
+        }),
+      ]),
+    );
   });
 });

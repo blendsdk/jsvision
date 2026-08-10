@@ -14,8 +14,9 @@ import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
  * Non-owning state and transition adapter accepted by a standalone Kanban viewport.
  *
  * The viewport subscribes while mounted but never disposes or transitions the adapter. A board facade
- * may therefore drive a read-only mirror without transferring controller ownership; application code
- * still sends transitions through the facade that owns the original board environment.
+ * may therefore drive a read-only mirror without transferring controller or input authority;
+ * application code still sends transitions through the facade that owns the original board
+ * environment.
  *
  * @example
  * ```ts
@@ -35,11 +36,10 @@ export interface KanbanViewportInteractionAdapter {
 interface CapturedKanbanViewportInteractionAdapter {
   readonly snapshot: () => unknown;
   readonly subscribe: (invalidate: () => void) => unknown;
-  readonly input?: CapturedKanbanViewportInputAdapter;
 }
 
-/** Optional board-facade methods required for mounted keyboard and pointer input. */
-export interface CapturedKanbanViewportInputAdapter {
+/** Board-owned facade methods required for mounted keyboard and pointer input. */
+export interface KanbanViewportInputAdapter {
   /** Synchronously queues one controller transition. */
   readonly accept: (command: KanbanInteractionTransition) => boolean;
   /** Commits selection and activation in one ordered facade operation when supported. */
@@ -56,6 +56,44 @@ export interface CapturedKanbanViewportInputAdapter {
   ) => boolean;
 }
 
+/** Captured input methods that cannot be replaced after board construction. */
+type CapturedKanbanViewportInputAdapter = KanbanViewportInputAdapter;
+
+/** Validates and captures the explicit board-owned input surface. */
+function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanbanViewportInputAdapter {
+  try {
+    const accept = Reflect.get(adapter, 'accept');
+    const acceptSelectionActivate = Reflect.get(adapter, 'acceptSelectionActivate');
+    const acceptActivate = Reflect.get(adapter, 'acceptActivate');
+    const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
+    const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
+    if (
+      typeof accept !== 'function' ||
+      typeof acceptActivate !== 'function' ||
+      typeof acceptOpenContext !== 'function' ||
+      typeof acceptScopedAction !== 'function'
+    ) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
+    return Object.freeze({
+      accept: (command: KanbanInteractionTransition) => Reflect.apply(accept, adapter, [command]) === true,
+      ...(typeof acceptSelectionActivate === 'function'
+        ? {
+            acceptSelectionActivate: (command: KanbanInteractionTransition, options: KanbanActivateOptions) =>
+              Reflect.apply(acceptSelectionActivate, adapter, [command, options]) === true,
+          }
+        : {}),
+      acceptActivate: (options: KanbanActivateOptions) => Reflect.apply(acceptActivate, adapter, [options]) === true,
+      acceptOpenContext: (options: KanbanOpenContextOptions) =>
+        Reflect.apply(acceptOpenContext, adapter, [options]) === true,
+      acceptScopedAction: (actionId: KanbanScopedActionId, scope: KanbanActionScope, origin: KanbanInteractionOrigin) =>
+        Reflect.apply(acceptScopedAction, adapter, [actionId, scope, origin]) === true,
+    });
+  } catch {
+    throw new KanbanInvalidSourcePublicationError();
+  }
+}
+
 /** Validates and captures one non-owning adapter without depending on its mutable properties later. */
 function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanbanViewportInteractionAdapter {
   try {
@@ -68,41 +106,9 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
     if (typeof snapshot !== 'function' || typeof transition !== 'function' || typeof subscribe !== 'function') {
       throw new KanbanInvalidSourcePublicationError();
     }
-    const accept = Reflect.get(adapter, 'accept');
-    const acceptSelectionActivate = Reflect.get(adapter, 'acceptSelectionActivate');
-    const acceptActivate = Reflect.get(adapter, 'acceptActivate');
-    const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
-    const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
-    const inputAvailable =
-      typeof accept === 'function' &&
-      typeof acceptActivate === 'function' &&
-      typeof acceptOpenContext === 'function' &&
-      typeof acceptScopedAction === 'function';
     return Object.freeze({
       snapshot: () => Reflect.apply(snapshot, adapter, []),
       subscribe: (invalidate: () => void) => Reflect.apply(subscribe, adapter, [invalidate]),
-      ...(inputAvailable
-        ? {
-            input: Object.freeze({
-              accept: (command: KanbanInteractionTransition) => Reflect.apply(accept, adapter, [command]) === true,
-              ...(typeof acceptSelectionActivate === 'function'
-                ? {
-                    acceptSelectionActivate: (command: KanbanInteractionTransition, options: KanbanActivateOptions) =>
-                      Reflect.apply(acceptSelectionActivate, adapter, [command, options]) === true,
-                  }
-                : {}),
-              acceptActivate: (options: KanbanActivateOptions) =>
-                Reflect.apply(acceptActivate, adapter, [options]) === true,
-              acceptOpenContext: (options: KanbanOpenContextOptions) =>
-                Reflect.apply(acceptOpenContext, adapter, [options]) === true,
-              acceptScopedAction: (
-                actionId: KanbanScopedActionId,
-                scope: KanbanActionScope,
-                origin: KanbanInteractionOrigin,
-              ) => Reflect.apply(acceptScopedAction, adapter, [actionId, scope, origin]) === true,
-            }),
-          }
-        : {}),
     });
   } catch {
     throw new KanbanInvalidSourcePublicationError();
@@ -117,6 +123,7 @@ function captureAdapter(adapter: KanbanViewportInteractionAdapter): CapturedKanb
  */
 export class KanbanViewportInteractionBinding {
   readonly #adapter: CapturedKanbanViewportInteractionAdapter | undefined;
+  #input: CapturedKanbanViewportInputAdapter | undefined;
   #snapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
   #unsubscribe: (() => void) | undefined;
   #mounted = false;
@@ -164,9 +171,15 @@ export class KanbanViewportInteractionBinding {
     return this.#snapshot;
   }
 
-  /** Returns mounted synchronous input seams only when the supplied adapter provides the complete set. */
+  /** Returns mounted synchronous input seams only for the explicitly attached owning board. */
   input(): CapturedKanbanViewportInputAdapter | undefined {
-    return this.#mounted && this.#inputEnabled && !this.#disposed ? this.#adapter?.input : undefined;
+    return this.#mounted && this.#inputEnabled && !this.#disposed ? this.#input : undefined;
+  }
+
+  /** Attaches explicit board-owned input authority before the viewport mounts. */
+  attachInput(adapter: KanbanViewportInputAdapter): void {
+    if (this.#mounted || this.#disposed || this.#input !== undefined) throw new KanbanDisposedResourceError();
+    this.#input = captureInputAdapter(adapter);
   }
 
   /** Enables mounted input only after the owning mount transaction has completed. */
