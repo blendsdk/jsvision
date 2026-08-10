@@ -511,6 +511,7 @@ export class KanbanViewport<TCard> extends View {
   override onEvent(event: DispatchEvent): void {
     if (event.event.type === 'wheel') {
       this.#pointerRouter.cancel();
+      if (this.#disposed || this.#metrics.mode === 'minimum-size') return;
       const direction = event.event.dir;
       this.scrollBy(
         direction === 'up' ? { y: -3 } : direction === 'down' ? { y: 3 } : direction === 'left' ? { x: -3 } : { x: 3 },

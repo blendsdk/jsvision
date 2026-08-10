@@ -225,6 +225,8 @@ export class KanbanBoard<TCard> extends Group {
   #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
   #automaticReconcileReady: boolean;
   #disposed = false;
+  #everMounted = false;
+  #releasedLifecycle = false;
 
   /** Builds direct conditional navigator + growing viewport composition without opening a session. */
   constructor(options: KanbanBoardOptions<TCard>) {
@@ -292,6 +294,7 @@ export class KanbanBoard<TCard> extends Group {
     this.viewport.onMount(() => this.#setupInteraction(options.limits));
 
     this.onMount(() => {
+      this.#everMounted = true;
       this.#disposeInteractionChrome = this.#interactionFacade.subscribe(() => this.#syncInteractionChrome());
       this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
         createRoot((dispose) => {
@@ -315,20 +318,13 @@ export class KanbanBoard<TCard> extends Group {
           return dispose;
         }),
       );
-      this.viewport.onCleanup(() => {
-        this.#interactionFacade.dispose();
-        this.#disposeInteractionChrome?.();
-        this.#disposeInteractionChrome = undefined;
-        this.#disposeBindings?.();
-        this.#disposeBindings = undefined;
-        this.#authority.dispose();
-      });
+      this.viewport.onCleanup(() => this.dispose());
     });
   }
 
   /** Rejects remount after the board's terminal owned-resource lifecycle has been released. */
   override runPendingMounts(): void {
-    if (this.#disposed) throw new KanbanDisposedResourceError();
+    if (this.#disposed && (!this.#everMounted || this.#releasedLifecycle)) throw new KanbanDisposedResourceError();
     super.runPendingMounts();
   }
 
@@ -420,9 +416,9 @@ export class KanbanBoard<TCard> extends Group {
     this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
-    this.#authority.dispose();
     setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     this.viewport.dispose();
+    this.#authority.dispose();
   }
 
   /** Mounts this board only while its single owned-resource lifecycle remains available. */
@@ -433,8 +429,10 @@ export class KanbanBoard<TCard> extends Group {
 
   /** Unmounts board-owned authority before descendant scopes tear down the viewport. */
   override unmount(): void {
+    const wasMounted = this.mounted;
     this.dispose();
     super.unmount();
+    if (wasMounted && this.#disposed) this.#releasedLifecycle = true;
   }
 
   /** Resolves current localized navigator content without retaining a service replacement. */
@@ -571,10 +569,7 @@ export class KanbanBoard<TCard> extends Group {
       }
     } catch {
       this.#interactionFacade.failSetup();
-      this.#disposeBindings?.();
-      this.#disposeBindings = undefined;
-      this.#authority.dispose();
-      this.viewport.dispose();
+      this.dispose();
     }
   }
 

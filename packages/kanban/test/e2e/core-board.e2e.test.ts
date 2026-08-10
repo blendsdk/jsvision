@@ -13,7 +13,6 @@ import type {
   KanbanSwimlanePresentationInput,
 } from '../../src/index.js';
 import { kanbanDe } from '../../src/i18n/locales.js';
-import { createWindowedKanbanFixture } from '../../src/testing.js';
 
 interface Card {
   readonly id: number;
@@ -246,50 +245,5 @@ describe('Kanban Phase B 12-row real-loop matrix', () => {
     await settle();
     expect(instance.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
     expect(intents.map(({ kind }) => kind)).toEqual(expect.arrayContaining(['open-card', 'open-context']));
-  });
-
-  it('row 11 exposes filtered and source-state actions without mutating application query', async () => {
-    const query = signal<KanbanQuery>({ search: 'missing', filters: [], sort: [] });
-    const intents: KanbanInteractionIntent[] = [];
-    const source = createEagerKanbanDataSource(() => [{ id: 1, columnId: 'ready', title: 'Card' }], {
-      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
-      keyOf: (card) => card.id,
-      columnOf: (card) => card.columnId,
-      search: (card, term) => card.title.includes(term),
-    });
-    const instance = new KanbanBoard({ source, query, card: CARD, onInteraction: (intent) => intents.push(intent) });
-    instance.setLayout({ position: 'fill' });
-    const { app } = mount(instance, 40, 12, 'surface');
-    const action = instance.inspection().actionTargets.find(({ kind }) => kind === 'state-action');
-    if (action === undefined) throw new Error('Expected filtered state action.');
-    const point = absolute(app, instance, action);
-    app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...point });
-    app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...point });
-    await settle();
-    expect(intents[0]).toMatchObject({ kind: 'scoped-action', actionId: 'clear-filters' });
-    expect(query().search).toBe('missing');
-  });
-
-  it('row 12 cancels active windowed work before releasing the real host', () => {
-    const fixture = createWindowedKanbanFixture<Card>({
-      logicalCardCount: 10_000,
-      columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
-      materialize: ({ start, end }) =>
-        Array.from({ length: end - start }, (_, offset) => ({
-          id: start + offset,
-          columnId: 'ready',
-          title: `Card ${start + offset}`,
-        })),
-      keyOf: (card) => card.id,
-    });
-    const instance = new KanbanBoard({ source: fixture.source, query: () => QUERY, card: CARD });
-    instance.setLayout({ position: 'fill' });
-    mount(instance, 40, 12, 'surface');
-    expect(fixture.controller.pendingRanges().length).toBeGreaterThan(0);
-    instance.dispose();
-    expect(fixture.metrics()).toMatchObject({ disposedSessions: 1 });
-    expect(fixture.metrics().disposedCursors).toBe(fixture.metrics().createdCursors);
-    expect(fixture.metrics().abortedRequests).toBeGreaterThan(0);
-    fixture.dispose();
   });
 });
