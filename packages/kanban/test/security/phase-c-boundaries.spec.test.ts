@@ -4,7 +4,7 @@
  * These cases keep application records and executable object behavior outside package-owned state,
  * enforce atomic bounds, and ensure opaque placement evidence never becomes diagnostic text.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   KANBAN_LIMITS,
@@ -15,6 +15,13 @@ import {
   evaluateKanbanMoveEligibility,
   snapshotKanbanRequestProposal,
 } from '../../src/index.js';
+
+beforeEach(() => {
+  expect(snapshotKanbanRequestProposal).toBeTypeOf('function');
+  expect(createKanbanRequestEnvelope).toBeTypeOf('function');
+  expect(evaluateKanbanMoveEligibility).toBeTypeOf('function');
+  expect(createKanbanOperationIdRegistry).toBeTypeOf('function');
+});
 
 /** One valid semantic move proposal used as a safe baseline for hostile variations. */
 function moveProposal() {

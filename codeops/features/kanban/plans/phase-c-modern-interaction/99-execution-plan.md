@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 12:02 CEST
-> **Progress**: 17/124 tasks (14%)
+> **Last Updated**: 2026-08-11 12:03 CEST
+> **Progress**: 18/124 tasks (15%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -125,7 +125,10 @@ contracts before production expansion.
 - [x] 2.1.1 `[spec-author]` Write exact standard proposal/internal-envelope/new-extension and legacy-extension-overload plus semantic move cases — `packages/kanban/test/requests-placement.spec.test.ts` ✅ (completed: 2026-08-11 11:56)
 - [x] 2.1.2 `[spec-author]` Add complete/unknown edge, anchor/token, sorted/filtered, no-op, WIP/DoD/transition, warning, and stale-revision eligibility cases — `packages/kanban/test/requests-placement.spec.test.ts` ✅ (completed: 2026-08-11 12:00)
 - [x] 2.1.3 `[spec-author]` Add duplicate ID/selection, partial atomic result, hostile getter/proxy/thenable, bounds, controls, and token-redaction cases — `packages/kanban/test/security/phase-c-boundaries.spec.test.ts` ✅ (completed: 2026-08-11 12:02)
-- [ ] 2.1.4 Run focused request/security specifications and record expected red behavior
+- [x] 2.1.4 Run focused request/security specifications and record expected red behavior ✅ (completed: 2026-08-11 12:03)
+  - Red evidence: both focused files collected successfully and all 24 specification cases failed
+    because the standard proposal/envelope, eligibility, and operation-ID registry APIs are absent;
+    no requirement case passed accidentally through an unrelated legacy implementation.
 
 ### Step 2.2: Implementation
 

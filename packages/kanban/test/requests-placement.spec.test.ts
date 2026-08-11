@@ -5,7 +5,7 @@
  * creates the dispatch envelope, while the legacy extension envelope remains an accepted input for
  * existing applications.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   createKanbanRequestEnvelope,
@@ -13,6 +13,12 @@ import {
   evaluateKanbanMoveEligibility,
   snapshotKanbanRequestProposal,
 } from '../src/index.js';
+
+beforeEach(() => {
+  expect(snapshotKanbanRequestProposal).toBeTypeOf('function');
+  expect(createKanbanRequestEnvelope).toBeTypeOf('function');
+  expect(evaluateKanbanMoveEligibility).toBeTypeOf('function');
+});
 
 /** Lifecycle values captured by the package immediately before application dispatch. */
 function lifecycle() {
