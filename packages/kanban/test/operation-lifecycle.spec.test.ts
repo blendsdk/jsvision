@@ -5,9 +5,9 @@
  * Pending and accepted operations retain their semantic projection until an exact result or correlated
  * publication makes the operation terminal.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createKanbanOperationId } from '../src/index.js';
+import { KANBAN_LIMITS, createKanbanOperationId, createKanbanRequestEnvelope } from '../src/index.js';
 import { KanbanBoardAuthority } from '../src/board/board-authority.js';
 import type {
   KanbanOperationId,
@@ -46,6 +46,18 @@ function request(operationId: KanbanOperationId): KanbanRequest {
   };
 }
 
+/** Final standard request for one card subject, used to prove conflict isolation. */
+function cardDeleteRequest(operationId: KanbanOperationId, cardKey: number): KanbanRequest {
+  return createKanbanRequestEnvelope(
+    { kind: 'card-delete', cardKey },
+    {
+      operationId,
+      expected: { entities: [{ kind: 'card', cardKey, revision: `card-${cardKey}-r1` }] },
+      signal: new AbortController().signal,
+    },
+  );
+}
+
 /** Exact card publication correlated with one accepted operation. */
 function publication(operationId: KanbanOperationId) {
   const subjects: readonly KanbanPublicationSubject[] = Object.freeze([
@@ -67,6 +79,15 @@ function observe(authority: KanbanBoardAuthority, operationId: KanbanOperationId
   });
   return Object.freeze({ snapshots, unsubscribe });
 }
+
+beforeEach(() => {
+  const authority = new KanbanBoardAuthority(undefined, undefined);
+  expect(authority.subscribe).toBeTypeOf('function');
+  expect(authority.snapshot).toBeTypeOf('function');
+  expect(authority.cancel).toBeTypeOf('function');
+  expect(authority.undo).toBeTypeOf('function');
+  authority.dispose();
+});
 
 describe('operation lifecycle transitions', () => {
   it('should publish proposed, pending, accepted, and committed around exact publication', async () => {
@@ -200,5 +221,115 @@ describe('operation publication settlement', () => {
     deferred.resolve({ kind: 'rejected', operationId, code: 'test-complete' });
     await completion;
     observed.unsubscribe();
+  });
+});
+
+describe('operation concurrency and resource lifecycle', () => {
+  it('should run unrelated subjects concurrently and reject an overlapping request before dispatch', async () => {
+    const firstId = createKanbanOperationId('operation-card-4-first');
+    const secondId = createKanbanOperationId('operation-card-5');
+    const overlappingId = createKanbanOperationId('operation-card-4-overlap');
+    const deferred = new Map<KanbanOperationId, ReturnType<typeof deferredResult>>();
+    const dispatcher = vi.fn((submitted: KanbanRequest) => {
+      const completion = deferredResult();
+      deferred.set(submitted.operationId, completion);
+      return completion.promise;
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+
+    const first = authority.request(cardDeleteRequest(firstId, 4));
+    const second = authority.request(cardDeleteRequest(secondId, 5));
+    await expect(authority.request(cardDeleteRequest(overlappingId, 4))).resolves.toMatchObject({
+      kind: 'rejected',
+      operationId: overlappingId,
+      code: 'operation-conflict',
+    });
+    expect(dispatcher).toHaveBeenCalledTimes(2);
+    expect(authority.snapshot().map(({ operationId }) => operationId)).toEqual([firstId, secondId]);
+
+    deferred.get(firstId)?.resolve({ kind: 'rejected', operationId: firstId, code: 'test-complete' });
+    deferred.get(secondId)?.resolve({ kind: 'rejected', operationId: secondId, code: 'test-complete' });
+    await Promise.all([first, second]);
+  });
+
+  it('should reject above the pending ceiling without evicting or dispatching a live operation', async () => {
+    const pending: ReturnType<typeof deferredResult>[] = [];
+    const dispatcher = vi.fn(() => {
+      const completion = deferredResult();
+      pending.push(completion);
+      return completion.promise;
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const completions = Array.from({ length: KANBAN_LIMITS.pendingOperations.safe }, (_value, index) => {
+      const operationId = createKanbanOperationId(`operation-pending-${index}`);
+      return Object.freeze({ operationId, completion: authority.request(cardDeleteRequest(operationId, index)) });
+    });
+    const excessId = createKanbanOperationId('operation-pending-excess');
+
+    await expect(authority.request(cardDeleteRequest(excessId, 10_001))).resolves.toMatchObject({
+      kind: 'rejected',
+      operationId: excessId,
+      code: 'pending-limit-exceeded',
+    });
+    expect(dispatcher).toHaveBeenCalledTimes(KANBAN_LIMITS.pendingOperations.safe);
+    expect(authority.snapshot()).toHaveLength(KANBAN_LIMITS.pendingOperations.safe);
+
+    pending.forEach((completion, index) => {
+      const operationId = completions[index]!.operationId;
+      completion.resolve({ kind: 'rejected', operationId, code: 'test-complete' });
+    });
+    await Promise.all(completions.map(({ completion }) => completion));
+  });
+
+  it('should abort and clear active operations on disposal while late settlement remains inert', async () => {
+    const operationId = createKanbanOperationId('operation-disposed-1');
+    const deferred = deferredResult();
+    let dispatchedSignal: AbortSignal | undefined;
+    const authority = new KanbanBoardAuthority(
+      (submitted) => {
+        dispatchedSignal = submitted.signal;
+        return deferred.promise;
+      },
+      () => ({}),
+    );
+    const observed = observe(authority, operationId);
+    const completion = authority.request(request(operationId));
+
+    authority.dispose();
+    expect(dispatchedSignal?.aborted).toBe(true);
+    expect(authority.snapshot()).toEqual([]);
+    deferred.resolve({ kind: 'accepted', operationId });
+    await completion;
+    expect(observed.snapshots.map(({ state }) => state)).toEqual(['proposed', 'pending', 'cancelled']);
+  });
+
+  it('should turn a committed inverse descriptor into a fresh validated operation', async () => {
+    const operationId = createKanbanOperationId('operation-with-undo-1');
+    const expectation = publication(operationId);
+    const submitted: KanbanRequest[] = [];
+    const inverse = vi.fn(() => ({ kind: 'card-update', cardKey: 4, patch: { title: 'Prior title' } }) as const);
+    const authority = new KanbanBoardAuthority(
+      (current) => {
+        submitted.push(current);
+        return submitted.length === 1
+          ? {
+              kind: 'accepted',
+              operationId,
+              publication: expectation,
+              undo: { kind: 'inverse-builder', build: inverse },
+            }
+          : { kind: 'accepted', operationId: current.operationId };
+      },
+      () => ({}),
+    );
+
+    await authority.request(request(operationId));
+    authority.reconcilePublication({ kind: 'matching', ...expectation });
+    await expect(authority.undo(operationId)).resolves.toMatchObject({ kind: 'accepted' });
+
+    expect(inverse).toHaveBeenCalledOnce();
+    expect(submitted).toHaveLength(2);
+    expect(submitted[1]).toMatchObject({ kind: 'card-update', cardKey: 4, patch: { title: 'Prior title' } });
+    expect(submitted[1]?.operationId).not.toBe(operationId);
   });
 });
