@@ -18,6 +18,7 @@ import {
   createKanbanRequestEnvelope,
   snapshotKanbanRequestExpectedRevisions,
   snapshotKanbanRequestProposal,
+  snapshotKanbanRequest,
 } from '../contract/request-validation.js';
 import { fingerprintKanbanSemanticValue } from '../contract/semantic-query.js';
 import { createKanbanInverseRequestContext, settleKanbanConfirmation } from './confirmation.js';
@@ -39,6 +40,7 @@ import type {
   KanbanInverseRequestBuilder,
   KanbanOperationSnapshot,
   KanbanOperationState,
+  KanbanOperationSubject,
   KanbanOperationSubscriber,
   KanbanPendingProjection,
   KanbanUndoDescriptor,
@@ -90,6 +92,7 @@ interface ActiveKanbanOperation {
   state: 'proposed' | 'pending' | 'accepted';
   publication?: KanbanPublicationExpectation;
   undo?: KanbanUndoDescriptor;
+  releaseExternalSignal?: () => void;
 }
 
 /** Whole committed entry retained for a future application-authorized inverse operation. */
@@ -364,16 +367,43 @@ export class KanbanOperationCoordinator {
     expected: KanbanRequestExpectedRevisions = {},
     eligibility: KanbanEligibility = Object.freeze({ kind: 'allowed' }),
   ): KanbanOperationSubmission {
+    return this.#admit(snapshotKanbanRequestProposal(value), expected, eligibility);
+  }
+
+  /** Adopt one validated caller envelope while preserving its operation identity and live signal. */
+  request(
+    value: KanbanRequest,
+    eligibility: KanbanEligibility = Object.freeze({ kind: 'allowed' }),
+  ): KanbanOperationSubmission {
+    const request = snapshotKanbanRequest(value);
+    const { operationId: _operationId, expected: _expected, signal: _signal, ...proposalValue } = request;
+    const proposal = snapshotKanbanRequestProposal(proposalValue);
+    // Historical complete standard envelopes may omit entity revisions. They still use the common
+    // lifecycle, but cannot truthfully claim entity-level conflict authority from board/source-only
+    // evidence. New lifecycle-free proposals always derive their complete semantic conflict set.
+    const compatibilityAffected =
+      request.kind !== 'extension' && request.expected.entities === undefined ? Object.freeze([]) : undefined;
+    return this.#admit(proposal, request.expected, eligibility, request, compatibilityAffected);
+  }
+
+  /** Reserve all operation resources before exposing proposed state or application callbacks. */
+  #admit(
+    proposal: KanbanRequestProposal,
+    expected: KanbanRequestExpectedRevisions,
+    eligibility: KanbanEligibility,
+    adoptedRequest?: KanbanRequest,
+    affectedOverride?: readonly KanbanOperationSubject[],
+  ): KanbanOperationSubmission {
     if (this.#disposed || this.#operations.size >= this.#limits.pendingOperations) {
       throw new KanbanInvalidLimitError();
     }
-    const proposal = snapshotKanbanRequestProposal(value);
     const capturedExpected = snapshotKanbanRequestExpectedRevisions(expected);
     const capturedEligibility = snapshotKanbanEligibility(eligibility);
-    const id = this.#ids.acquire();
+    const id = adoptedRequest === undefined ? this.#ids.acquire() : this.#ids.adopt(adoptedRequest.operationId);
     let subjects: KanbanOperationSubjectLease | undefined;
+    let operation: ActiveKanbanOperation | undefined;
     try {
-      subjects = this.#subjects.reserve(id.operationId, deriveKanbanOperationSubjects(proposal));
+      subjects = this.#subjects.reserve(id.operationId, affectedOverride ?? deriveKanbanOperationSubjects(proposal));
       const controller = new AbortController();
       const request = createKanbanRequestEnvelope(proposal, {
         operationId: id.operationId,
@@ -382,7 +412,7 @@ export class KanbanOperationCoordinator {
       });
       const projection = createKanbanPendingProjection(proposal);
       const coordinatorGeneration = this.#generation.capture();
-      const operation: ActiveKanbanOperation = {
+      operation = {
         request,
         id,
         subjects,
@@ -400,9 +430,30 @@ export class KanbanOperationCoordinator {
           affected: subjects.affected,
         }),
       );
+      if (adoptedRequest !== undefined) {
+        const cancelFromSignal = (): void => {
+          this.cancel(id.operationId);
+        };
+        adoptedRequest.signal.addEventListener('abort', cancelFromSignal, { once: true });
+        operation.releaseExternalSignal = (): void => {
+          adoptedRequest.signal.removeEventListener('abort', cancelFromSignal);
+        };
+        if (adoptedRequest.signal.aborted) cancelFromSignal();
+      }
+      if (!this.#isCurrent(operation)) {
+        return Object.freeze({
+          operationId: id.operationId,
+          completion: Promise.resolve(
+            Object.freeze({ kind: 'cancelled', operationId: id.operationId, code: 'operation-cancelled' }),
+          ),
+        });
+      }
       const completion = this.#confirmAndDispatch(operation, proposal, capturedExpected, capturedEligibility);
       return Object.freeze({ operationId: id.operationId, completion });
     } catch (error) {
+      if (operation !== undefined) this.#operations.delete(id.operationId);
+      operation?.releaseExternalSignal?.();
+      operation?.controller.abort();
       subjects?.release();
       id.release();
       throw error;
@@ -416,7 +467,10 @@ export class KanbanOperationCoordinator {
     expected: KanbanRequestExpectedRevisions,
     eligibility: KanbanEligibility,
   ): Promise<KanbanRequestResult> {
-    const classification = classifyKanbanRequestConfirmation(proposal, eligibility);
+    const classification =
+      this.#confirm === undefined
+        ? Object.freeze({ kind: 'not-required' as const })
+        : classifyKanbanRequestConfirmation(proposal, eligibility);
     if (classification.kind !== 'not-required') {
       const settlement = await settleKanbanConfirmation(this.#confirm, {
         operationId: operation.id.operationId,
@@ -424,7 +478,7 @@ export class KanbanOperationCoordinator {
         affected: operation.subjects.affected,
         expected,
         eligibility: classification,
-        signal: operation.controller.signal,
+        signal: operation.request.signal,
       });
       if (settlement !== 'approved') {
         return this.#finishBeforeDispatch(operation, {
@@ -500,6 +554,11 @@ export class KanbanOperationCoordinator {
   /** Apply one exact dispatcher result only while its operation generation remains current. */
   #settleDispatcher(operation: ActiveKanbanOperation, result: KanbanRequestResult): KanbanRequestResult {
     if (!this.#isCurrent(operation)) {
+      // Disposal has already published cancellation and released every resource. Returning the
+      // validated application result preserves historical in-flight request completion without
+      // allowing that late result to mutate lifecycle state. Explicit per-operation cancellation
+      // still reports cancellation to its caller.
+      if (this.#disposed) return result;
       return Object.freeze({
         kind: 'cancelled',
         operationId: operation.id.operationId,
@@ -539,6 +598,7 @@ export class KanbanOperationCoordinator {
       ...(code === undefined ? {} : { code }),
     });
     this.#operations.delete(operation.id.operationId);
+    operation.releaseExternalSignal?.();
     operation.controller.abort();
     operation.subjects.release();
     operation.id.retain();
@@ -624,7 +684,11 @@ export class KanbanOperationCoordinator {
       if (settlement.kind === 'invalid') return unavailable('undo-invalid');
       try {
         const proposal = snapshotKanbanRequestProposal(settlement.proposal);
-        return await this.commitProposal(proposal, capturedExpected, capturedEligibility).completion;
+        const currentEligibility =
+          this.#revalidate === undefined
+            ? capturedEligibility
+            : snapshotKanbanEligibility(this.#revalidate(proposal, capturedExpected));
+        return await this.commitProposal(proposal, capturedExpected, currentEligibility).completion;
       } catch {
         return unavailable('undo-invalid');
       }
@@ -641,7 +705,17 @@ export class KanbanOperationCoordinator {
       this.#generation.isCurrent(operation.coordinatorGeneration) &&
       this.#operations.get(operation.id.operationId) === operation &&
       this.#subjects.isCurrent(operation.subjects) &&
-      !operation.controller.signal.aborted
+      !operation.controller.signal.aborted &&
+      !operation.request.signal.aborted
+    );
+  }
+
+  /** Returns validated publication expectations for accepted operations in admission order. */
+  pendingPublications(): readonly KanbanPublicationExpectation[] {
+    return Object.freeze(
+      [...this.#operations.values()].flatMap((operation) =>
+        operation.state === 'accepted' && operation.publication !== undefined ? [operation.publication] : [],
+      ),
     );
   }
 
@@ -664,6 +738,7 @@ export class KanbanOperationCoordinator {
     this.#inverseControllers.clear();
     for (const operation of [...this.#operations.values()]) {
       this.#operations.delete(operation.id.operationId);
+      operation.releaseExternalSignal?.();
       operation.controller.abort();
       operation.subjects.release();
       operation.id.retain();

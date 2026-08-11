@@ -7,9 +7,10 @@ import type {
   KanbanPublicationNotice,
   KanbanRequest,
   KanbanRequestDispatcher,
+  KanbanRequestProposal,
   KanbanRequestResult,
 } from '../contract/request.js';
-import type { CardKey } from '../contract/identity.js';
+import type { CardKey, KanbanOperationId } from '../contract/identity.js';
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
@@ -37,6 +38,14 @@ import type {
 } from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
 import type { KanbanIdentityChangeBatch } from '../source/types.js';
+import type { KanbanEligibility } from '../operation/eligibility.js';
+import type { KanbanOperationIdFactory } from '../operation/operation-id.js';
+import type {
+  KanbanConfirmer,
+  KanbanInverseRequestBuilder,
+  KanbanOperationSnapshot,
+  KanbanOperationSubscriber,
+} from '../operation/types.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
 import { KanbanBoardFeedbackView, createKanbanBoardFeedbackState } from './board-feedback.js';
 import type { KanbanBoardFeedbackState } from './board-feedback.js';
@@ -79,6 +88,14 @@ export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TC
   readonly identity?: () => KanbanIdentityInput;
   /** Optional application-owned request dispatcher; read projection never depends on it. */
   readonly dispatcher?: KanbanRequestDispatcher;
+  /** Optional confirmation callback for warning and destructive operation proposals. */
+  readonly confirmOperation?: KanbanConfirmer;
+  /** Optional resolver that turns an opaque committed undo token into a fresh proposal. */
+  readonly resolveUndo?: KanbanInverseRequestBuilder;
+  /** Optional application operation-ID factory for lifecycle-free standard proposals. */
+  readonly operationId?: KanbanOperationIdFactory;
+  /** Optional pure current-policy evaluator shared by programmatic proposal and confirmation paths. */
+  readonly operationEligibility?: (proposal: KanbanRequestProposal) => KanbanEligibility;
   /** Optional mount factory replacing the package default interaction controller. */
   readonly interactionFactory?: KanbanInteractionControllerFactory;
   /** Optional synchronous receiver for immutable, non-mutation semantic interaction intents. */
@@ -246,7 +263,24 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.identity === undefined ? {} : { identity: options.identity }),
     };
     this.#bindings = new KanbanBoardBindings(bindingOptions);
-    this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities);
+    const operationEligibility = options.operationEligibility;
+    this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities, {
+      expected: () => {
+        const revisions = this.viewport.interactionRevisions();
+        return Object.freeze({ source: revisions.sessionRevision, query: revisions.queryGeneration });
+      },
+      ...(operationEligibility === undefined
+        ? {}
+        : {
+            eligibility: operationEligibility,
+            revalidate: (proposal: KanbanRequestProposal) => operationEligibility(proposal),
+          }),
+      ...(options.confirmOperation === undefined ? {} : { confirm: options.confirmOperation }),
+      ...(options.resolveUndo === undefined ? {} : { resolveUndo: options.resolveUndo }),
+      ...(options.operationId === undefined ? {} : { operationId: options.operationId }),
+      ...(options.limits === undefined ? {} : { limits: options.limits }),
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
+    });
     this.#interactionFactory = options.interactionFactory;
     this.#automaticReconcileReady = options.interactionFactory === undefined;
     this.#hasLegacyIdentity = options.identity !== undefined;
@@ -376,14 +410,34 @@ export class KanbanBoard<TCard> extends Group {
     return this.#interactionFacade;
   }
 
-  /** Dispatches one raw application-owned request without applying optimistic record changes. */
-  request(request: KanbanRequest): Promise<KanbanRequestResult> {
+  /** Dispatches one standard proposal or complete compatibility request without mutating records. */
+  request(request: KanbanRequest | KanbanRequestProposal): Promise<KanbanRequestResult> {
     return this.#authority.request(request);
   }
 
   /** Clears pending metadata when matching or contradictory authoritative data is published. */
   reconcilePublication(notice: KanbanPublicationNotice): void {
     this.#authority.reconcilePublication(notice);
+  }
+
+  /** Returns detached active operation projections in admission order. */
+  operationSnapshot(): readonly KanbanOperationSnapshot[] {
+    return this.#authority.snapshot();
+  }
+
+  /** Subscribes to immutable payload-free operation transitions. */
+  subscribeOperations(subscriber: KanbanOperationSubscriber): () => void {
+    return this.#authority.subscribe(subscriber);
+  }
+
+  /** Cancels one active application operation. */
+  cancelOperation(operationId: KanbanOperationId): boolean {
+    return this.#authority.cancel(operationId);
+  }
+
+  /** Requests a fresh inverse operation from one committed undo descriptor. */
+  undo(operationId: KanbanOperationId): Promise<KanbanRequestResult> {
+    return this.#authority.undo(operationId);
   }
 
   /** Delegates absolute terminal-cell scrolling to the board's single viewport. */

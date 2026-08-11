@@ -359,8 +359,12 @@ viewport: KanbanViewport<TCard>
 runPendingMounts(): void
 inspection(): KanbanBoardInspection
 interaction(): KanbanInteractionFacade
-request(request: KanbanRequest): Promise<KanbanRequestResult>
+request(request: KanbanRequest | KanbanRequestProposal): Promise<KanbanRequestResult>
 reconcilePublication(notice: KanbanPublicationNotice): void
+operationSnapshot(): readonly KanbanOperationSnapshot[]
+subscribeOperations(subscriber: KanbanOperationSubscriber): () => void
+cancelOperation(operationId: KanbanOperationId): boolean
+undo(operationId: KanbanOperationId): Promise<KanbanRequestResult>
 scrollTo(target: KanbanScrollTarget): void
 scrollBy(delta: KanbanScrollTarget): void
 revealCard(key: CardKey, alignment?: KanbanRevealAlignment, options?: { readonly signal?: AbortSignal }): Promise<KanbanRevealResult>
@@ -420,6 +424,10 @@ Construction options for the responsive board shell and application authority se
 interface KanbanBoardOptions<TCard> {
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
+  confirmOperation?: KanbanConfirmer;   // Optional confirmation callback for warning and destructive operation proposals.
+  resolveUndo?: KanbanInverseRequestBuilder;   // Optional resolver that turns an opaque committed undo token into a fresh proposal.
+  operationId?: KanbanOperationIdFactory;   // Optional application operation-ID factory for lifecycle-free standard proposals.
+  operationEligibility?: (proposal: KanbanRequestProposal) => KanbanEligibility;   // Optional pure current-policy evaluator shared by programmatic proposal and confirmation paths.
   interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
   onInteraction?: KanbanInteractionHandler;   // Optional synchronous receiver for immutable, non-mutation semantic interaction intents.
 }
