@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 23:07 CEST
-> **Progress**: 55/124 tasks (44%)
+> **Last Updated**: 2026-08-11 23:09 CEST
+> **Progress**: 56/124 tasks (45%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -277,7 +277,7 @@ coordinator.
 - [x] 4.2.6 Implement one-cell semantic hysteresis across reflow/scroll geometry generations — `packages/kanban/src/interaction/drop-hysteresis.ts` ✅ (completed: 2026-08-11 23:02)
 - [x] 4.2.7 Implement fake-clock-friendly four-edge autoscroll with two speeds, corner steps, clamps, and stop rules — `packages/kanban/src/interaction/drag-autoscroll.ts` ✅ (completed: 2026-08-11 23:04)
 - [x] 4.2.8 Integrate bounded unknown-edge prefetch and collapsed-swimlane hover expansion ownership — `packages/kanban/src/interaction/drag-prefetch.ts`, `packages/kanban/src/structure/collapsed-hover.ts` ✅ (completed: 2026-08-11 23:07)
-- [ ] 4.2.9 Implement atomic valid-release `commitProposal` handoff and no-request invalid cancellation — `packages/kanban/src/interaction/drag-controller.ts`, `packages/kanban/src/operation/coordinator.ts`
+- [x] 4.2.9 Implement atomic valid-release `commitProposal` handoff and no-request invalid cancellation — `packages/kanban/src/interaction/drag-controller.ts`, `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 23:09)
 - [ ] 4.2.10 Wire viewport event normalization, post-scroll geometry recomputation, Escape/resize/source/dispose cancellation, and overlay invalidation — `packages/kanban/src/board/viewport-input.ts`, `packages/kanban/src/board/kanban-viewport.ts`
 - [ ] 4.2.11 Run focused card-drag specifications and make them green
 
