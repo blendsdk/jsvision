@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 12:03 CEST
-> **Progress**: 18/124 tasks (15%)
+> **Last Updated**: 2026-08-11 12:06 CEST
+> **Progress**: 19/124 tasks (15%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -135,7 +135,7 @@ contracts before production expansion.
 **Reference**: 03-02 §Standard request union/Semantic move/Synchronous eligibility/Operation ID · AR-C06/C10/C11/C14
 **Objective**: Produce detached final-shaped request and placement authority for every Phase C producer.
 
-- [ ] 2.2.1 Define caller-facing standard proposals, coordinator-owned dispatch envelopes, generic card variants, and move snapshots while retaining validated legacy extension envelope adoption — `packages/kanban/src/contract/request.ts`
+- [x] 2.2.1 Define caller-facing standard proposals, coordinator-owned dispatch envelopes, generic card variants, and move snapshots while retaining validated legacy extension envelope adoption — `packages/kanban/src/contract/request.ts` ✅ (completed: 2026-08-11 12:06)
 - [ ] 2.2.2 Add column/swimlane and saved-view standard variants while retaining extension compatibility — `packages/kanban/src/contract/request.ts`
 - [ ] 2.2.3 Extract exact request/result validation from the existing authority helper into variant-focused modules below the public boundary — `packages/kanban/src/contract/request-validation.ts`, `packages/kanban/src/contract/authority.ts`
 - [ ] 2.2.4 Implement semantic move/source snapshot validation and current placement/token checks without numeric authority — `packages/kanban/src/operation/placement.ts`, `packages/kanban/src/source/placement.ts`
