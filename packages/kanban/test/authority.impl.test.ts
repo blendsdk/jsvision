@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { KanbanInvalidSemanticValueError, dispatchKanbanRequest, reconcileKanbanPublication } from '../src/index.js';
+import { KanbanBoardAuthority } from '../src/board/board-authority.js';
 import type {
   KanbanExtensionRequest,
   KanbanPublicationExpectation,
@@ -302,5 +303,63 @@ describe('publication reconciliation implementation', () => {
 
     expect(() => reconcileKanbanPublication([expectation()], notice)).toThrow();
     expect(getter).not.toHaveBeenCalled();
+  });
+});
+
+describe('board authority coordinator compatibility', () => {
+  it('adopts a legacy identity and cancellation signal while owning the dispatched abort signal', async () => {
+    const controller = new AbortController();
+    let settle: ((result: KanbanRequestResult) => void) | undefined;
+    const deferred = new Promise<KanbanRequestResult>((resolve) => {
+      settle = resolve;
+    });
+    let dispatchedSignal: AbortSignal | undefined;
+    const dispatcher: KanbanRequestDispatcher = vi.fn((received) => {
+      dispatchedSignal = received.signal;
+      return deferred;
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const legacy = { ...request('legacy-operation-1'), signal: controller.signal };
+
+    const completion = authority.request(legacy);
+    controller.abort();
+    settle?.({ kind: 'accepted', operationId: legacy.operationId });
+
+    await expect(completion).resolves.toEqual({
+      kind: 'cancelled',
+      operationId: legacy.operationId,
+      code: 'operation-cancelled',
+    });
+    expect(dispatchedSignal).not.toBe(controller.signal);
+    expect(dispatchedSignal?.aborted).toBe(true);
+    expect(authority.snapshot()).toEqual([]);
+  });
+
+  it('captures current revisions for a standard proposal and rejects requests after disposal', async () => {
+    let submittedOperationId = '';
+    const dispatcher: KanbanRequestDispatcher = vi.fn((received) => {
+      submittedOperationId = received.operationId;
+      expect(received.expected).toEqual({ source: 'source-current', query: 7 });
+      return { kind: 'rejected', operationId: received.operationId, code: 'test-complete' };
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      operationId: () => 'generated-operation-1',
+      expected: () => ({ source: 'source-current', query: 7 }),
+    });
+
+    await expect(authority.request({ kind: 'card-update', cardKey: 4, patch: { title: 'Updated' } })).resolves.toEqual({
+      kind: 'rejected',
+      operationId: 'generated-operation-1',
+      code: 'test-complete',
+    });
+    expect(submittedOperationId).toBe('generated-operation-1');
+
+    authority.dispose();
+    await expect(authority.request(request('after-authority-dispose'))).resolves.toEqual({
+      kind: 'rejected',
+      operationId: 'after-authority-dispose',
+      code: 'dispatcher-unavailable',
+    });
+    expect(dispatcher).toHaveBeenCalledOnce();
   });
 });

@@ -15,6 +15,7 @@ import type {
   KanbanQuery,
   KanbanQuerySession,
   KanbanRequest,
+  KanbanRequestResult,
 } from '../src/index.js';
 import { createKanbanTheme } from '../src/index.js';
 
@@ -69,7 +70,7 @@ function mount(
 }
 
 describe('board authority and lifecycle implementation', () => {
-  it('keeps pending authority metadata bounded and replaces duplicate operation identities', async () => {
+  it('keeps live pending authority bounded without eviction or retained-ID reuse', async () => {
     const dispatcher = vi.fn((value: KanbanRequest) => ({
       kind: 'accepted' as const,
       operationId: value.operationId,
@@ -85,18 +86,62 @@ describe('board authority and lifecycle implementation', () => {
     });
     const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, dispatcher });
     const render = mount(board);
-    for (let index = 0; index < 40; index += 1) await board.request(request(`operation-${index}`));
-    await board.request(request('operation-39'));
+    const results: KanbanRequestResult[] = [];
+    for (let index = 0; index < 40; index += 1) {
+      results.push(await board.request(request(`operation-${index}`)));
+    }
+    const duplicate = await board.request(request('operation-0'));
 
     const pending = board.inspection().pendingOperations;
-    expect(dispatcher).toHaveBeenCalledTimes(41);
+    expect(dispatcher).toHaveBeenCalledTimes(32);
+    expect(results.slice(0, 32).every(({ kind }) => kind === 'accepted')).toBe(true);
+    expect(results.slice(32)).toEqual(
+      Array.from({ length: 8 }, (_value, index) => ({
+        kind: 'rejected',
+        operationId: `operation-${index + 32}`,
+        code: 'pending-limit-exceeded',
+      })),
+    );
+    expect(duplicate).toEqual({
+      kind: 'rejected',
+      operationId: 'operation-0',
+      code: 'pending-limit-exceeded',
+    });
     expect(pending).toHaveLength(32);
     expect(new Set(pending.map((entry) => entry.operationId)).size).toBe(32);
     render.unmount();
     const afterUnmount = await board.request(request('after-unmount'));
     expect(afterUnmount).toMatchObject({ kind: 'rejected', code: 'dispatcher-unavailable' });
-    expect(dispatcher).toHaveBeenCalledTimes(41);
+    expect(dispatcher).toHaveBeenCalledTimes(32);
     expect(board.inspection().pendingOperations).toEqual([]);
+  });
+
+  it('accepts requests before and after mount but rejects them after terminal disposal', async () => {
+    const source = createEagerKanbanDataSource<Card>(() => [], {
+      columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+    });
+    const dispatcher = vi.fn((value: KanbanRequest) => ({
+      kind: 'rejected' as const,
+      operationId: value.operationId,
+      code: 'test-complete',
+    }));
+    const board = new KanbanBoard({ source, query: () => QUERY, card: ADAPTER, dispatcher });
+
+    await expect(board.request(request('before-mount'))).resolves.toMatchObject({ code: 'test-complete' });
+    const render = mount(board);
+    await expect(
+      board.request({ kind: 'card-update', cardKey: 4, patch: { title: 'Mounted proposal' } }),
+    ).resolves.toMatchObject({ code: 'test-complete' });
+
+    render.unmount();
+    await expect(board.request(request('after-dispose'))).resolves.toEqual({
+      kind: 'rejected',
+      operationId: 'after-dispose',
+      code: 'dispatcher-unavailable',
+    });
+    expect(dispatcher).toHaveBeenCalledTimes(2);
   });
 
   it('delegates scrolling to its sole viewport and leaves disposal idempotent', () => {
