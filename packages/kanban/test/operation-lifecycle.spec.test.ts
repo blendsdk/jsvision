@@ -235,7 +235,10 @@ describe('operation concurrency and resource lifecycle', () => {
       deferred.set(submitted.operationId, completion);
       return completion.promise;
     });
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => true,
+      revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+    });
 
     const first = authority.request(cardDeleteRequest(firstId, 4));
     const second = authority.request(cardDeleteRequest(secondId, 5));
@@ -259,7 +262,10 @@ describe('operation concurrency and resource lifecycle', () => {
       pending.push(completion);
       return completion.promise;
     });
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => true,
+      revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+    });
     const completions = Array.from({ length: KANBAN_LIMITS.pendingOperations.safe }, (_value, index) => {
       const operationId = createKanbanOperationId(`operation-pending-${index}`);
       return Object.freeze({ operationId, completion: authority.request(cardDeleteRequest(operationId, index)) });
@@ -383,6 +389,10 @@ describe('operation producer convergence', () => {
         return { kind: 'accepted', operationId: submitted.operationId };
       },
       () => ({}),
+      {
+        confirm: () => true,
+        revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+      },
     );
 
     const results: KanbanRequestResult[] = [];

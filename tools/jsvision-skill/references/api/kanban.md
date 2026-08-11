@@ -2885,11 +2885,7 @@ type KanbanObservationCounts = Readonly<Record<string, number>>
 Coarse monotonic elapsed-time band that avoids exposing precise timing data.
 
 ```ts
-type KanbanObservationDurationBucket = | 'under-10ms'
-  | 'under-100ms'
-  | 'under-1s'
-  | 'under-10s'
-  | '10s-or-more'
+type KanbanObservationDurationBucket = 'under-10ms' | 'under-100ms' | 'under-1s' | 'under-10s' | '10s-or-more'
 ```
 
 ## KanbanObservationInput

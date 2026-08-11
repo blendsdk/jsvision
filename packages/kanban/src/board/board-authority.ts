@@ -147,7 +147,9 @@ export class KanbanBoardAuthority {
     }
     if (adopted !== undefined) {
       try {
-        return await this.#coordinator.request(adopted).completion;
+        const { operationId: _operationId, expected: _expected, signal: _signal, ...proposalValue } = adopted;
+        const proposal = snapshotKanbanRequestProposal(proposalValue);
+        return await this.#coordinator.request(adopted, currentEligibility(this.#eligibility, proposal)).completion;
       } catch {
         const code =
           this.#coordinator.snapshot().length >= this.#pendingLimit ? 'pending-limit-exceeded' : 'operation-conflict';

@@ -226,6 +226,9 @@ late-work behavior before introducing the coordinator.
   - Gate evidence: Kanban build/typecheck; 8 focused files / 114 tests; `check:deps`;
     `check:docs`; plugin update/check; and `yarn verify:local` all passed.
 
+**Quality review**: [PASS](10-phase-3-quality-review.md) — independent general and security reviews
+closed eleven distinct Major findings and one Minor; the final gate passed 9 focused files / 128 tests.
+
 **Deliverables**: one semantic coordinator; exactly-once dispatch; honest pending publication; bounded
 conflicts/IDs; fresh-request undo; late work inert.
 

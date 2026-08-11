@@ -233,7 +233,7 @@ export class KanbanOperationCoordinator {
       eligibility,
       request,
       request.kind === 'extension' ? Object.freeze([]) : undefined,
-      this.#confirm === undefined,
+      request.kind === 'extension',
     );
   }
 

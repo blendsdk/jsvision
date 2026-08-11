@@ -67,6 +67,35 @@ describe('Phase C lifecycle quality remediation', () => {
     expect(dispatcher).not.toHaveBeenCalled();
   });
 
+  it('does not treat lifecycle fields as confirmation for a complete standard request', async () => {
+    const dispatcher = vi.fn();
+    const authority = new KanbanBoardAuthority(dispatcher, undefined);
+    const request = createKanbanRequestEnvelope(
+      { kind: 'card-delete', cardKey: 4 },
+      { operationId: 'complete-destructive-1', expected: {}, signal: new AbortController().signal },
+    );
+
+    await expect(authority.request(request)).resolves.toMatchObject({
+      kind: 'cancelled',
+      code: 'confirmation-declined',
+    });
+    expect(dispatcher).not.toHaveBeenCalled();
+  });
+
+  it('applies current policy to a complete standard request', async () => {
+    const dispatcher = vi.fn();
+    const authority = new KanbanBoardAuthority(dispatcher, undefined, {
+      eligibility: () => ({ kind: 'blocked', code: 'policy-blocked' }),
+    });
+    const request = createKanbanRequestEnvelope(
+      { kind: 'card-update', cardKey: 4, patch: {} },
+      { operationId: 'complete-blocked-1', expected: {}, signal: new AbortController().signal },
+    );
+
+    await expect(authority.request(request)).resolves.toMatchObject({ kind: 'cancelled', code: 'policy-blocked' });
+    expect(dispatcher).not.toHaveBeenCalled();
+  });
+
   it('does not dispatch after a pending subscriber cancels reentrantly', async () => {
     const dispatcher = vi.fn();
     const authority = new KanbanBoardAuthority(dispatcher, undefined);

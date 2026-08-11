@@ -412,7 +412,10 @@ describe('hostile operation callbacks and observations', () => {
       holder.authority?.cancel(operationId);
       return { kind: 'accepted', operationId } as const;
     });
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => true,
+      revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+    });
     holder.authority = authority;
 
     await expect(authority.request(destructiveRequest(operationId))).resolves.toEqual({
@@ -477,7 +480,10 @@ describe('hostile operation callbacks and observations', () => {
           undo: { kind: 'inverse-builder', build: builder },
         }) as const,
     );
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => true,
+      revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+    });
 
     await authority.request(destructiveRequest(operationId));
     authority.reconcilePublication({ kind: 'matching', ...expectation });
@@ -507,7 +513,10 @@ describe('hostile operation callbacks and observations', () => {
           undo: { kind: 'inverse-builder', build: () => inverse },
         }) as const,
     );
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => true,
+      revalidate: (_proposal, expected) => ({ expected, eligibility: { kind: 'allowed' } }),
+    });
 
     await authority.request(destructiveRequest(operationId));
     authority.reconcilePublication({ kind: 'matching', ...expectation });
