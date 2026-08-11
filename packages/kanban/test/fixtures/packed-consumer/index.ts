@@ -1,5 +1,13 @@
-import { createKanbanColumnId, createKanbanInteractionController, resolveKanbanPresentation } from '@jsvision/kanban';
+import {
+  createKanbanColumnId,
+  createKanbanInteractionController,
+  createKanbanOperationIdRegistry,
+  createKanbanRequestEnvelope,
+  resolveKanbanPresentation,
+  snapshotKanbanRequestProposal,
+} from '@jsvision/kanban';
 import type {
+  KanbanExtensionRequest,
   KanbanInteractionControllerFactory,
   KanbanInteractionFacade,
   KanbanInteractionInspection,
@@ -30,6 +38,23 @@ function acceptPublicInteractionTypes(
 acceptPublicInteractionTypes();
 
 const columnId = createKanbanColumnId('ready-for-review');
+const standardProposal = snapshotKanbanRequestProposal({ kind: 'card-delete', cardKey: 42 });
+const standardRequest = createKanbanRequestEnvelope(standardProposal, {
+  operationId: 'packed-standard-1',
+  expected: { source: 'source-r8' },
+  signal: new AbortController().signal,
+});
+const legacyRequest: KanbanExtensionRequest<'example.review', { readonly cardKey: number }> = {
+  kind: 'extension',
+  extensionId: 'example.review',
+  operationId: 'packed-legacy-1',
+  expected: {},
+  payload: { cardKey: 42 },
+  signal: new AbortController().signal,
+};
+const adoptedLegacy = createKanbanRequestEnvelope(legacyRequest);
+const operationIds = createKanbanOperationIdRegistry({ factory: () => 'packed-operation-1' });
+const operationLease = operationIds.acquire();
 const catalogs = [kanbanEn, kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv];
 const overlays = [
   kanbanPhaseBEn,
@@ -49,6 +74,12 @@ const incompleteOverlay = overlays.find(
 );
 if (
   columnId !== 'ready-for-review' ||
+  standardRequest.kind !== 'card-delete' ||
+  standardRequest.operationId !== 'packed-standard-1' ||
+  adoptedLegacy.operationId !== legacyRequest.operationId ||
+  adoptedLegacy.signal !== legacyRequest.signal ||
+  operationLease.operationId !== 'packed-operation-1' ||
+  !operationLease.active() ||
   typeof createKanbanInteractionController !== 'function' ||
   typeof resolveKanbanPresentation !== 'function' ||
   typeof createWindowedKanbanFixture !== 'function' ||
@@ -59,5 +90,8 @@ if (
 ) {
   throw new Error('the packed Kanban identity contract returned an unexpected value');
 }
+
+operationLease.retain();
+if (operationLease.active()) throw new Error('the packed operation ID lease did not complete');
 
 console.log('kanban-contract-ok');

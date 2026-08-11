@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { dispatchKanbanRequest, reconcileKanbanPublication } from '../src/index.js';
+import {
+  createKanbanRequestEnvelope,
+  dispatchKanbanRequest,
+  reconcileKanbanPublication,
+  snapshotKanbanRequestProposal,
+} from '../src/index.js';
 import type {
   CardKey,
   KanbanCapabilities,
@@ -44,6 +49,34 @@ function createPublicationExpectation(operationId: string, cardKey: CardKey): Ka
 }
 
 describe('Kanban public authority contracts', () => {
+  it('should construct and dispatch a standard proposal through the public package surface', async () => {
+    const proposal = snapshotKanbanRequestProposal({ kind: 'card-delete', cardKey: 7 });
+    const signal = new AbortController().signal;
+    const request = createKanbanRequestEnvelope(proposal, {
+      operationId: 'delete-card-7',
+      expected: { source: 'source-r8', entities: [{ kind: 'card', cardKey: 7, revision: 'card-r3' }] },
+      signal,
+    });
+    const dispatcher = vi.fn((received) => ({ kind: 'accepted' as const, operationId: received.operationId }));
+
+    await expect(dispatchKanbanRequest(request, dispatcher, { capabilities: {} })).resolves.toEqual({
+      kind: 'accepted',
+      operationId: 'delete-card-7',
+    });
+    expect(dispatcher).toHaveBeenCalledOnce();
+    expect(dispatcher.mock.calls[0]?.[0]).toMatchObject({ kind: 'card-delete', cardKey: 7, signal });
+  });
+
+  it('should adopt the historical extension envelope without replacing its lifecycle values', () => {
+    const legacy = createReviewRequest(7, new AbortController().signal);
+
+    const adopted = createKanbanRequestEnvelope(legacy);
+
+    expect(adopted).toEqual(legacy);
+    expect(adopted.operationId).toBe(legacy.operationId);
+    expect(adopted.signal).toBe(legacy.signal);
+  });
+
   it('should leave authoritative application records unchanged when a raw request is accepted', async () => {
     // Accepted means queued for application handling; only a later source publication commits data.
     const card = Object.freeze({ id: 7, title: 'Awaiting review', status: 'ready' });
