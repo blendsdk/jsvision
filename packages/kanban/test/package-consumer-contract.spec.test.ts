@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -152,6 +152,44 @@ describe('packed Kanban public-entry contract', () => {
         const tar = process.platform === 'win32' ? 'tar.exe' : 'tar';
         run(tar, ['-xzf', join(work, pack.filename), '-C', installedPackage, '--strip-components=1'], work);
         expect(relative(consumer, installedPackage).split(sep)).toEqual(['node_modules', '@jsvision', 'kanban']);
+
+        // The packed root keeps old request APIs while exposing Phase C board/facade state without importing test code.
+        const packageJson: unknown = JSON.parse(readFileSync(join(installedPackage, 'package.json'), 'utf8'));
+        expect(packageJson).toMatchObject({
+          exports: {
+            '.': { types: './dist/index.d.ts', import: './dist/index.js' },
+            './testing': { types: './dist/testing.d.ts', import: './dist/testing.js' },
+          },
+        });
+        const productionEntry = readFileSync(join(installedPackage, 'dist', 'index.js'), 'utf8');
+        const boardDeclarations = readFileSync(join(installedPackage, 'dist', 'board', 'kanban-board.d.ts'), 'utf8');
+        const facadeDeclarations = readFileSync(join(installedPackage, 'dist', 'interaction', 'facade.d.ts'), 'utf8');
+        const operationDeclarations = readFileSync(join(installedPackage, 'dist', 'operation', 'types.d.ts'), 'utf8');
+        const testingEntry = readFileSync(join(installedPackage, 'dist', 'testing.js'), 'utf8');
+
+        expect(productionEntry).not.toMatch(/(?:from|export)\s+["'][^"']*testing/u);
+        expect(testingEntry).toContain('./testing/');
+        expect(boardDeclarations).toMatch(/readonly operationId\?: KanbanOperationIdFactory/u);
+        expect(boardDeclarations).toMatch(/readonly confirmOperation\?: KanbanConfirmer/u);
+        expect(boardDeclarations).toMatch(/readonly drag\?: KanbanDragConfiguration/u);
+        expect(boardDeclarations).not.toMatch(/moveCallback|onMove/u);
+        for (const method of [
+          'moveCard',
+          'moveSelectedBlock',
+          'reorderColumn',
+          'reorderSwimlane',
+          'cancel',
+          'undo',
+          'redo',
+        ]) {
+          expect(facadeDeclarations, `missing packed facade method ${method}`).toMatch(
+            new RegExp(`\\b${method}\\(`, 'u'),
+          );
+        }
+        expect(facadeDeclarations).toContain('Promise<KanbanRequestResult>');
+        for (const state of ['proposed', 'pending', 'accepted', 'committed', 'rejected', 'cancelled', 'superseded']) {
+          expect(operationDeclarations, `missing packed operation state ${state}`).toContain(`'${state}'`);
+        }
 
         for (const packageName of KANBAN_WORKSPACE_DEPENDENCIES) {
           installPackedDependency(work, consumer, packageName);

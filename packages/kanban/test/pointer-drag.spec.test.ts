@@ -51,6 +51,29 @@ function cardTarget(cardKey: number): KanbanActionTarget {
   });
 }
 
+/** Creates one structural header target with explicit reorder authority evidence. */
+function structureTarget(
+  kind: 'workflow-header' | 'swimlane-header',
+  identity: string,
+  reorder: 'allowed' | 'blocked-derived' = 'allowed',
+) {
+  const columnId = kind === 'workflow-header' ? identity : 'ready';
+  return Object.freeze({
+    kind,
+    scope:
+      kind === 'workflow-header'
+        ? Object.freeze({ kind: 'column' as const, columnId })
+        : Object.freeze({ kind: 'swimlane' as const, swimlaneId: identity }),
+    x: kind === 'workflow-header' ? 1 : 0,
+    y: kind === 'workflow-header' ? 0 : 2,
+    width: 18,
+    height: 1,
+    zIndex: 300,
+    ...(kind === 'workflow-header' ? { columnId } : { swimlaneId: identity }),
+    reorder,
+  });
+}
+
 /** Controllable generation-bound capture returned by a normalized pointer report. */
 function captureHarness(generation: number) {
   let active = true;
@@ -404,6 +427,136 @@ describe('card drag generation and dragged-set contract', () => {
 
     start(1, 32);
     expect(sink.beginCardDrag.mock.calls[1]?.[0].dragged).toEqual(selected.entries);
+  });
+});
+
+describe('structural header drag contract', () => {
+  it.each([
+    ['workflow-header', 'doing', 'column-reorder'],
+    ['swimlane-header', 'team-b', 'swimlane-reorder'],
+  ] as const)(
+    'uses the same captured threshold, bounded structural cues, two-axis autoscroll, and one release for %s',
+    (kind, identity, requestKind) => {
+      // Eligible column and explicit-swimlane headers use one gesture contract and one atomic release handoff.
+      const target = structureTarget(kind, identity);
+      const capture = captureHarness(kind === 'workflow-header' ? 71 : 72);
+      const request = vi.fn((_proposal: unknown) => true);
+      const autoscroll = vi.fn((_step: Readonly<{ x: number; y: number }>) => ({ x: 2, y: 2 }));
+      const beginStructureDrag = vi.fn(() => true);
+      const updateStructureDrag = vi.fn((_generation: number, point: Readonly<{ x: number; y: number }>) => {
+        autoscroll({ x: point.x >= 19 ? 2 : 0, y: point.y >= 9 ? 2 : 0 });
+        return true;
+      });
+      const releaseStructureDrag = vi.fn((_generation: number) =>
+        request({
+          kind: requestKind,
+          ...(kind === 'workflow-header' ? { columnId: identity } : { swimlaneId: identity }),
+          position: { kind: 'end' },
+        }),
+      );
+      const sink = {
+        ...gestureSink(selection()),
+        beginStructureDrag,
+        updateStructureDrag,
+        releaseStructureDrag,
+        cancelStructureDrag: vi.fn(),
+      };
+      const router = new KanbanPointerRouter(sink);
+
+      router.route({
+        kind: 'down',
+        button: 0,
+        ctrl: false,
+        point: { x: 2, y: 1 },
+        target,
+        sceneRevision: 'structure-scene-r1',
+        acquireCapture: capture.acquire,
+      });
+      expect(
+        router.route({
+          kind: 'move',
+          button: 0,
+          ctrl: false,
+          point: { x: 3, y: 1 },
+          target,
+          sceneRevision: 'structure-scene-r1',
+          acquireCapture: capture.acquire,
+        }),
+      ).toBe(true);
+      expect(beginStructureDrag).toHaveBeenCalledOnce();
+      expect(beginStructureDrag).toHaveBeenCalledWith(
+        expect.objectContaining({
+          structure:
+            kind === 'workflow-header'
+              ? { kind: 'column', columnId: identity }
+              : { kind: 'swimlane', swimlaneId: identity },
+          capture: capture.lease,
+          cues: {
+            ghost: 'bounded-header',
+            placeholder: 'source-slot',
+            marker: 'sibling-insertion',
+          },
+        }),
+      );
+
+      router.route({
+        kind: 'drag',
+        button: 0,
+        ctrl: false,
+        point: { x: 19, y: 9 },
+        target,
+        sceneRevision: 'structure-scene-r1',
+      });
+      expect(autoscroll).toHaveBeenLastCalledWith({ x: 2, y: 2 });
+      expect(
+        router.route({
+          kind: 'up',
+          button: 0,
+          ctrl: false,
+          point: { x: 19, y: 9 },
+          target,
+          sceneRevision: 'structure-scene-r1',
+        }),
+      ).toBe(true);
+      expect(releaseStructureDrag).toHaveBeenCalledOnce();
+      expect(request).toHaveBeenCalledOnce();
+      expect(request).toHaveBeenCalledWith(expect.objectContaining({ kind: requestKind, position: { kind: 'end' } }));
+    },
+  );
+
+  it('blocks a derived swimlane before capture and never treats any header as a card slot', () => {
+    // Derived groups without explicit reorder capability are inert mutation targets.
+    const derived = structureTarget('swimlane-header', 'derived-team', 'blocked-derived');
+    const capture = captureHarness(73);
+    const beginStructureDrag = vi.fn(() => true);
+    const sink = { ...gestureSink(selection()), beginStructureDrag, releaseStructureDrag: vi.fn() };
+    const router = new KanbanPointerRouter(sink);
+
+    router.route({
+      kind: 'down',
+      button: 0,
+      ctrl: false,
+      point: { x: 2, y: 2 },
+      target: derived,
+      sceneRevision: 'derived-scene-r1',
+      acquireCapture: capture.acquire,
+    });
+    expect(
+      router.route({
+        kind: 'move',
+        button: 0,
+        ctrl: false,
+        point: { x: 3, y: 2 },
+        target: derived,
+        sceneRevision: 'derived-scene-r1',
+        acquireCapture: capture.acquire,
+      }),
+    ).toBe(false);
+
+    expect(beginStructureDrag).not.toHaveBeenCalled();
+    expect(sink.beginCardDrag).not.toHaveBeenCalled();
+    expect(capture.lease.active()).toBe(true);
+    expect(sink.releaseStructureDrag).not.toHaveBeenCalled();
   });
 });
 

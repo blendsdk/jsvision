@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-12 01:01 CEST
-> **Progress**: 87/124 tasks (70%)
+> **Last Updated**: 2026-08-12 01:15 CEST
+> **Progress**: 92/124 tasks (74%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -362,17 +362,30 @@ corrections passed focused and complete local gates without a prohibited second 
 
 ## Phase 6: Structural drag, parity, and board integration
 
+> **Phase baseline tree**: `10e5984c5439bfa481f2a916e47d142014538e62`
+> **Scope mode**: strict
+> **Confirmed scope baseline**: RD-07/RD-08 Phase C structural pointer operations,
+> keyboard/programmatic parity, stable facade, and cancellation-first board integration without
+> importing later RD-09–12 command, menu, dialog, or history UI.
+> **Expected modification set**: `packages/kanban/src/{interaction,board,operation}/**`,
+> `packages/kanban/src/{index,testing}.ts`, focused files under `packages/kanban/test/`, generated
+> plugin/API/skill outputs reported by repository impact tooling, and this execution plan.
+
 ### Step 6.1: Specification tests
 
 **Reference**: 03-04 §Structural/Parity; 03-06 §Board/Facade/Lifecycle · ST-C-DRAG-13/15; ST-C-INT-05..07 · AR-C02/C04/C14/C15
 **Objective**: Freeze column/swimlane equivalence, keyboard/programmatic parity, standalone behavior, public
 facade, and lifecycle rollback before final wiring.
 
-- [ ] 6.1.1 `[spec-author]` Add column/explicit-swimlane reorder, derived-capability block, structural autoscroll, and one-request cases — `packages/kanban/test/pointer-drag.spec.test.ts`
-- [ ] 6.1.2 `[spec-author]` Add keyboard/programmatic/card/bulk/structure semantic parity and Escape priority cases — `packages/kanban/test/phase-c-integration.spec.test.ts`
-- [ ] 6.1.3 `[spec-author]` Add standalone-no-dispatcher, setup-failure-at-each-stage, dispose-twice, late-work, and remount-rejection cases — `packages/kanban/test/phase-c-integration.spec.test.ts`
-- [ ] 6.1.4 `[spec-author]` Extend packed public API compatibility for board options, facade methods, request state, and testing separation — `packages/kanban/test/package-consumer-contract.spec.test.ts`
-- [ ] 6.1.5 Run focused integration/package specifications and record expected red behavior
+- [x] 6.1.1 `[spec-author]` Add column/explicit-swimlane reorder, derived-capability block, structural autoscroll, and one-request cases — `packages/kanban/test/pointer-drag.spec.test.ts` ✅ (completed: 2026-08-12 01:15)
+- [x] 6.1.2 `[spec-author]` Add keyboard/programmatic/card/bulk/structure semantic parity and Escape priority cases — `packages/kanban/test/phase-c-integration.spec.test.ts` ✅ (completed: 2026-08-12 01:15)
+- [x] 6.1.3 `[spec-author]` Add standalone-no-dispatcher, setup-failure-at-each-stage, dispose-twice, late-work, and remount-rejection cases — `packages/kanban/test/phase-c-integration.spec.test.ts` ✅ (completed: 2026-08-12 01:15)
+- [x] 6.1.4 `[spec-author]` Extend packed public API compatibility for board options, facade methods, request state, and testing separation — `packages/kanban/test/package-consumer-contract.spec.test.ts` ✅ (completed: 2026-08-12 01:15)
+- [x] 6.1.5 Run focused integration/package specifications and record expected red behavior ✅ (completed: 2026-08-12 01:15)
+  - Red evidence: Kanban typecheck passed; the three focused specification files produced 12
+    expected failures and 17 passing compatibility cases. Failures isolate absent structural drag,
+    facade move/parity, layered Escape, standalone mutation evidence, rollback harness, and packed
+    Phase C declarations.
 
 ### Step 6.2: Implementation
 
