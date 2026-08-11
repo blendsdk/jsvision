@@ -88,7 +88,7 @@ function structuralId(value: unknown, kind: 'column' | 'swimlane'): string {
 }
 
 /** Validates one candidate without retaining application-owned objects or invoking accessors. */
-function candidate(value: unknown): KanbanEligibleSelectionCandidate {
+export function snapshotKanbanSelectionEntry(value: unknown): KanbanEligibleSelectionCandidate {
   try {
     const properties = snapshotKanbanDataProperties(value, CANDIDATE_KEYS.size);
     validateKanbanDataKeys(properties, CANDIDATE_KEYS);
@@ -149,7 +149,9 @@ function captureRevisions(value: unknown): KanbanSelectionCaptureRevisions {
 
 /** Detaches a bounded candidate sequence and rejects duplicate identities. */
 function candidates(values: readonly KanbanEligibleSelectionCandidate[]): readonly KanbanEligibleSelectionCandidate[] {
-  const snapshot = snapshotKanbanDataArray(values, KANBAN_LIMITS.selectedKeys.absolute).map(candidate);
+  const snapshot = snapshotKanbanDataArray(values, KANBAN_LIMITS.selectedKeys.absolute).map(
+    snapshotKanbanSelectionEntry,
+  );
   const keys = snapshot.map((entry) => membershipKey(entry.cardKey));
   if (new Set(keys).size !== keys.length) throw new KanbanInvalidSourcePublicationError();
   return Object.freeze(snapshot);
@@ -236,7 +238,7 @@ export class KanbanSelectionModel {
   /** Replaces ordered selection with exactly one eligible candidate. */
   replace(value: KanbanEligibleSelectionCandidate): KanbanSelectionUpdate {
     if (this.#maximumSelectedKeys === 0) return update('limit-exceeded', this.#selected, this.#rangeAnchor);
-    const entry = candidate(value);
+    const entry = snapshotKanbanSelectionEntry(value);
     const unchanged =
       this.#selected.length === 1 && membershipKey(this.#selected[0]!.cardKey) === membershipKey(entry.cardKey);
     this.#commit(Object.freeze([entry]));
@@ -246,7 +248,7 @@ export class KanbanSelectionModel {
 
   /** Toggles one eligible candidate without changing the relative order of other members. */
   toggle(value: KanbanEligibleSelectionCandidate): KanbanSelectionUpdate {
-    const entry = candidate(value);
+    const entry = snapshotKanbanSelectionEntry(value);
     const key = membershipKey(entry.cardKey);
     if (this.#membership.has(key)) {
       this.#commit(Object.freeze(this.#selected.filter((selected) => membershipKey(selected.cardKey) !== key)));

@@ -13,6 +13,7 @@ import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
 import type { KanbanCardDropTarget, KanbanDragCancellationReason, KanbanDragOverlayEvidence } from './drag-types.js';
+import { createKanbanDragGhostEvidence } from './drag-selection.js';
 
 /** Exact members accepted when beginning one captured card drag. */
 const BEGIN_KEYS = new Set(['generation', 'capture', 'dragged', 'originPoint', 'sceneRevision', 'geometryGeneration']);
@@ -164,11 +165,10 @@ function placeholders(dragged: readonly KanbanMovedCardSnapshot[]) {
 
 /** Create initial render-neutral ghost and source-placeholder evidence. */
 function initialOverlay(begin: KanbanCardDragBegin): KanbanDragOverlayEvidence {
-  const origin = begin.dragged[0]!;
   return Object.freeze({
     generation: begin.generation,
     geometryGeneration: begin.geometryGeneration,
-    ghost: Object.freeze({ cardKey: origin.cardKey, point: begin.originPoint, count: begin.dragged.length }),
+    ghost: createKanbanDragGhostEvidence(begin.dragged, begin.originPoint),
     placeholders: placeholders(begin.dragged),
   });
 }

@@ -3,6 +3,7 @@ import type { Point, PointerCaptureLease, PointerCaptureLossReason, PointerCaptu
 import type { KanbanActionScope, KanbanActionTarget } from '../layout/hit-map.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanSelectionEntry, KanbanSelectionSnapshot } from './types.js';
+import { resolveKanbanDraggedSelection } from './drag-selection.js';
 
 /** Validated threshold configuration for one pointer-router instance. */
 export interface KanbanPointerRouterOptions {
@@ -110,11 +111,6 @@ function validPoint(value: Readonly<Point> | undefined): value is Readonly<Point
     Number.isSafeInteger(value.y) &&
     value.y >= 0
   );
-}
-
-/** Preserve numeric/string card identity when resolving a selected dragged set. */
-function cardKeyEqual(left: string | number, right: string | number): boolean {
-  return typeof left === typeof right && left === right;
 }
 
 /** Compares type-preserving optional identities without string coercion. */
@@ -288,11 +284,8 @@ export class KanbanPointerRouter {
     ) {
       return false;
     }
-    const originCardKey = pending.target.cardKey;
-    const origin = this.#sink.snapshotCard(pending.target);
-    if (origin === undefined) return false;
-    const selected = pending.priorSelection.entries.some(({ cardKey }) => cardKeyEqual(cardKey, originCardKey));
-    const dragged = Object.freeze(selected ? [...pending.priorSelection.entries] : [origin]);
+    const dragged = resolveKanbanDraggedSelection(pending.target, pending.priorSelection, this.#sink.snapshotCard);
+    if (dragged === undefined) return false;
     let lost: PointerCaptureLossReason | undefined;
     let capture: PointerCaptureLease;
     try {
