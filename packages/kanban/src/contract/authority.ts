@@ -8,7 +8,6 @@ import type {
   KanbanPublicationNotice,
   KanbanPublicationReconciliation,
   KanbanRequest,
-  KanbanRequestDispatcher,
   KanbanRequestResult,
 } from './request.js';
 import {
@@ -82,7 +81,7 @@ function settleExactNativePromise(value: Promise<KanbanRequestResult>): Promise<
  */
 export async function dispatchKanbanRequest(
   request: KanbanRequest,
-  dispatcher: KanbanRequestDispatcher,
+  dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown,
   context: KanbanRequestContext,
 ): Promise<KanbanRequestResult> {
   const snapshot = snapshotKanbanRequest(request);

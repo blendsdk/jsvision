@@ -90,6 +90,25 @@ interface EagerKanbanSourceOptions<TCard> {
 }
 ```
 
+## EvaluateKanbanMoveEligibilityInput
+
+Complete input contract for the pure move-eligibility pipeline.
+
+```ts
+interface EvaluateKanbanMoveEligibilityInput {
+  proposal: KanbanCardMoveProposal;
+  current: KanbanMoveCurrentAuthority;
+  expected: unknown;
+  capability: KanbanMoveCapability;
+  selection: KanbanMoveSelection;
+  ordering: unknown;
+  transition: unknown;
+  definitionOfDone: unknown;
+  wip: unknown;
+  unchanged: boolean;
+}
+```
+
 ## EvaluateKanbanWipInput
 
 Complete immutable input to one pure WIP policy evaluation.
@@ -492,6 +511,29 @@ interface KanbanCardAdapterSnapshot {
 }
 ```
 
+## KanbanCardArchiveProposal
+
+Archive one card through application-owned persistence.
+
+```ts
+interface KanbanCardArchiveProposal {
+  kind: 'card-archive';
+  cardKey: CardKey;
+}
+```
+
+## KanbanCardCreateProposal
+
+Add one application-schema card to a semantic cell.
+
+```ts
+interface KanbanCardCreateProposal {
+  kind: 'card-create';
+  target: KanbanCellAddress;
+  draft: KanbanSemanticValue;
+}
+```
+
 ## KanbanCardCue
 
 Non-color card state represented by a marker or equivalent visual cue.
@@ -508,6 +550,17 @@ Inspectable record of content omitted to fit available geometry.
 interface KanbanCardDegradation {
   level: 'none' | 'reduced' | 'minimum' | 'fallback';   // Overall amount of presentation reduction.
   omittedSections: readonly KanbanCardSectionKind[];   // Semantic sections intentionally left out of this projection.
+}
+```
+
+## KanbanCardDeleteProposal
+
+Permanently delete one card through application-owned persistence.
+
+```ts
+interface KanbanCardDeleteProposal {
+  kind: 'card-delete';
+  cardKey: CardKey;
 }
 ```
 
@@ -537,6 +590,19 @@ interface KanbanCardDescriptor {
   actions: readonly KanbanCardAction[];   // Declarative card actions.
   regions: readonly KanbanCardRegion[];   // Mouse hit-test regions.
   degradation: KanbanCardDegradation;   // Content omitted because of available geometry.
+}
+```
+
+## KanbanCardDuplicateProposal
+
+Duplicate one card into an exact semantic destination.
+
+```ts
+interface KanbanCardDuplicateProposal {
+  kind: 'card-duplicate';
+  cardKey: CardKey;
+  target: KanbanCellAddress;
+  position: KanbanMovePosition;
 }
 ```
 
@@ -665,6 +731,20 @@ interface KanbanCardMarker {
   glyph: string;   // Sanitized glyph occupying exactly one terminal cell.
   role: KanbanThemeRole;   // Semantic theme role used to draw the marker.
   cues: readonly KanbanCardCue[];   // State distinctions redundantly conveyed by the marker.
+}
+```
+
+## KanbanCardMoveProposal
+
+Move one ordered, non-empty atomic card set to one semantic destination.
+
+```ts
+interface KanbanCardMoveProposal {
+  kind: 'card-move';
+  moved: readonly KanbanMovedCardSnapshot[];
+  target: KanbanCellAddress;
+  position: KanbanMovePosition;
+  viewRevision?: KanbanRevision;
 }
 ```
 
@@ -810,6 +890,19 @@ interface KanbanCardRenderer<TCard> {
 }
 ```
 
+## KanbanCardRequestProposal
+
+Card and extension proposals implemented independently of structural editing.
+
+```ts
+type KanbanCardRequestProposal = | KanbanCardCreateProposal
+  | KanbanCardUpdateProposal
+  | KanbanCardDuplicateProposal
+  | KanbanCardArchiveProposal
+  | KanbanCardDeleteProposal
+  | KanbanCardMoveProposal
+```
+
 ## KanbanCardRow
 
 One terminal row belonging to a semantic card section.
@@ -942,6 +1035,18 @@ interface KanbanCardTerminalCapabilities {
   widthMode: WidthMode;   // Width algorithm used for Unicode code points.
   boxDrawing: boolean;   // Whether box-drawing glyphs are safe to use.
   ambiguousWide: boolean;   // Whether ambiguous-width code points occupy two cells.
+}
+```
+
+## KanbanCardUpdateProposal
+
+Patch one application-schema card without exposing its record to the component.
+
+```ts
+interface KanbanCardUpdateProposal {
+  kind: 'card-update';
+  cardKey: CardKey;
+  patch: KanbanSemanticValue;
 }
 ```
 
@@ -1121,6 +1226,42 @@ interface KanbanCollapsedHoverTarget {
 }
 ```
 
+## KanbanColumnAddProposal
+
+Add one workflow column at a semantic structural position.
+
+```ts
+interface KanbanColumnAddProposal {
+  kind: 'column-add';
+  draft: KanbanColumnDraft;
+  position: KanbanColumnPosition;
+}
+```
+
+## KanbanColumnDeleteProposal
+
+Delete one workflow column with an optional application-authorized card reassignment target.
+
+```ts
+interface KanbanColumnDeleteProposal {
+  kind: 'column-delete';
+  columnId: KanbanColumnId;
+  reassignTo?: KanbanColumnId;
+}
+```
+
+## KanbanColumnDraft
+
+Generic application-owned workflow-column draft with package-validated identity and label.
+
+```ts
+interface KanbanColumnDraft {
+  columnId: KanbanColumnId;
+  label: string;
+  data?: KanbanSemanticValue;
+}
+```
+
 ## KanbanColumnHeader
 
 Detached column header publication.
@@ -1178,6 +1319,20 @@ interface KanbanColumnPolicy {
 }
 ```
 
+## KanbanColumnPosition
+
+Semantic placement of one workflow column among stable neighboring column identities.
+
+```ts
+type KanbanColumnPosition = | { readonly kind: 'start' }
+  | { readonly kind: 'end' }
+  | {
+      readonly kind: 'between';
+      readonly beforeColumnId: KanbanColumnId | null;
+      readonly afterColumnId: KanbanColumnId | null;
+    }
+```
+
 ## KanbanColumnPublicationSubject
 
 Workflow-column publication expected after an accepted application request.
@@ -1191,6 +1346,18 @@ interface KanbanColumnPublicationSubject {
 }
 ```
 
+## KanbanColumnReorderProposal
+
+Reorder one workflow column without a numeric index or generated rank.
+
+```ts
+interface KanbanColumnReorderProposal {
+  kind: 'column-reorder';
+  columnId: KanbanColumnId;
+  position: KanbanColumnPosition;
+}
+```
+
 ## KanbanColumnSemanticReference
 
 Stable semantic reference retained across display-label changes.
@@ -1199,6 +1366,18 @@ Stable semantic reference retained across display-label changes.
 interface KanbanColumnSemanticReference {
   kind: 'column';   // Structural discriminator.
   columnId: string;   // Stable source-owned column identity.
+}
+```
+
+## KanbanColumnUpdateProposal
+
+Patch one workflow column through application-owned policy.
+
+```ts
+interface KanbanColumnUpdateProposal {
+  kind: 'column-update';
+  columnId: KanbanColumnId;
+  patch: KanbanSemanticValue;
 }
 ```
 
@@ -1255,6 +1434,39 @@ type KanbanCount = | { readonly quality: 'unknown' }
       readonly quality: 'exact' | 'estimated' | 'truncated';
       readonly value: number;
     }
+```
+
+## KanbanCurrentCard
+
+Current revision of one card used by move eligibility.
+
+```ts
+interface KanbanCurrentCard {
+  cardKey: CardKey;
+  revision: KanbanRevision;
+}
+```
+
+## KanbanCurrentColumn
+
+Current revision of one structural column used by move eligibility.
+
+```ts
+interface KanbanCurrentColumn {
+  columnId: KanbanColumnId;
+  revision: KanbanRevision;
+}
+```
+
+## KanbanCurrentSwimlane
+
+Current revision of one structural swimlane used by move eligibility.
+
+```ts
+interface KanbanCurrentSwimlane {
+  swimlaneId: KanbanSwimlaneId;
+  revision: KanbanRevision;
+}
 ```
 
 ## KanbanCustomPresentation
@@ -1337,6 +1549,17 @@ Raised when a caller uses a source, cursor, or viewport after disposal.
 new KanbanDisposedResourceError()   // extends KanbanError
 // methods & signals:
 code
+```
+
+## KanbanEligibility
+
+Pure synchronous result shared by pointer, keyboard, programmatic, menu, and dialog producers.
+
+```ts
+type KanbanEligibility = | { readonly kind: 'allowed' }
+  | { readonly kind: 'warning'; readonly code: string; readonly params?: KanbanSemanticValue }
+  | { readonly kind: 'blocked'; readonly code: string; readonly params?: KanbanSemanticValue }
+  | { readonly kind: 'unavailable'; readonly code: string; readonly params?: KanbanSemanticValue }
 ```
 
 ## KanbanError
@@ -1452,6 +1675,18 @@ interface KanbanExtensionRequest<TType extends KanbanExtensionId = KanbanExtensi
   expected: KanbanRequestExpectedRevisions;
   payload: TPayload;
   signal: AbortSignal;
+}
+```
+
+## KanbanExtensionRequestProposal
+
+Caller-facing namespaced extension proposal without coordinator-owned lifecycle fields.
+
+```ts
+interface KanbanExtensionRequestProposal<TType extends KanbanExtensionId = KanbanExtensionId, TPayload extends KanbanSemanticValue = KanbanSemanticValue> {
+  kind: 'extension';
+  extensionId: TType;
+  payload: TPayload;
 }
 ```
 
@@ -2229,6 +2464,18 @@ interface KanbanLimitRow {
 }
 ```
 
+## KanbanLoadedMoveSelection
+
+Bounded loaded selection represented by one atomic move proposal.
+
+```ts
+interface KanbanLoadedMoveSelection {
+  kind: 'loaded';
+  orderedCardKeys: readonly CardKey[];
+  maximum: number;
+}
+```
+
 ## KanbanMessageMap
 
 Exact Phase A message inventory required from every Kanban locale.
@@ -2280,6 +2527,102 @@ interface KanbanMinimumMessage {
   text: string;   // Sanitized cell-safe visible text.
   width: number;   // Visible message width in terminal cells.
   height: number;   // Visible message height in terminal rows.
+}
+```
+
+## KanbanMoveCapability
+
+Presentation-only capability state for one proposed move.
+
+```ts
+interface KanbanMoveCapability {
+  state: 'allowed' | 'disabled' | 'hidden';
+  reasonCode?: string;
+}
+```
+
+## KanbanMoveCurrentAuthority
+
+Complete current semantic authority required before workflow policy is evaluated.
+
+```ts
+interface KanbanMoveCurrentAuthority {
+  boardRevision?: KanbanRevision;
+  sourceRevision: KanbanRevision;
+  queryRevision: KanbanRevision;
+  viewRevision?: KanbanRevision;
+  columns: readonly KanbanCurrentColumn[];
+  swimlanes: readonly KanbanCurrentSwimlane[];
+  cards: readonly KanbanCurrentCard[];
+  targetCursorRevision: KanbanRevision;
+  targetEdges: Readonly<{ readonly start: 'complete' | 'unknown'; readonly end: 'complete' | 'unknown' }>;
+  targetCardKeys: readonly CardKey[];
+  placementTokens: readonly PlacementToken[];
+}
+```
+
+## KanbanMovePosition
+
+Dispatchable semantic destination that never treats a visual index or generated rank as authority.
+
+```ts
+type KanbanMovePosition = | { readonly kind: 'start'; readonly cursorRevision: KanbanRevision }
+  | { readonly kind: 'end'; readonly cursorRevision: KanbanRevision }
+  | {
+      readonly kind: 'between';
+      readonly beforeCardKey: CardKey | null;
+      readonly afterCardKey: CardKey | null;
+      readonly cursorRevision: KanbanRevision;
+    }
+  | {
+      readonly kind: 'window-edge';
+      readonly edge: 'before' | 'after';
+      readonly neighborCardKey: CardKey;
+      readonly token: PlacementToken;
+      readonly cursorRevision: KanbanRevision;
+    }
+```
+
+## KanbanMovePositionCurrency
+
+Pure result of checking semantic placement against current source evidence.
+
+```ts
+type KanbanMovePositionCurrency = { readonly kind: 'current' } | { readonly kind: 'unavailable'; readonly code: string }
+```
+
+## KanbanMovePositionEvidence
+
+Evidence proving that one semantic target position still belongs to the current cursor.
+
+```ts
+interface KanbanMovePositionEvidence {
+  cursorRevision: KanbanRevision;   // Current equality-only target cursor revision.
+  edges: Readonly<{ readonly start: 'complete' | 'unknown'; readonly end: 'complete' | 'unknown' }>;   // Whether the source has proven each logical edge complete.
+  cardKeys: readonly CardKey[];   // Stable card identities currently available as target anchors.
+  placementTokens: readonly PlacementToken[];   // Opaque source-issued tokens that are current for this cursor revision.
+}
+```
+
+## KanbanMoveSelection
+
+Selection authority accepted by the synchronous move pipeline.
+
+```ts
+type KanbanMoveSelection = KanbanLoadedMoveSelection | KanbanServerMoveSelection
+```
+
+## KanbanMovedCardSnapshot
+
+Source placement and revision evidence captured for one card in an atomic move.
+
+```ts
+interface KanbanMovedCardSnapshot {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  source: KanbanCellAddress;   // Semantic source cell before the move.
+  sourcePlacement: KanbanMovePosition;   // Source-issued semantic placement at capture time.
+  sourceRevision: KanbanRevision;   // Equality-only source-cell revision captured with the placement.
+  entityRevision: KanbanRevision;   // Equality-only card revision captured with the placement.
 }
 ```
 
@@ -2448,6 +2791,51 @@ A validated identity that correlates one application request and result.
 
 ```ts
 type KanbanOperationId = string
+```
+
+## KanbanOperationIdFactory
+
+Trusted synchronous factory used to propose one operation identity.
+
+```ts
+type KanbanOperationIdFactory = () => string
+```
+
+## KanbanOperationIdLease
+
+Generation-bound active operation identity owned by one coordinator admission.
+
+```ts
+interface KanbanOperationIdLease {
+  operationId: KanbanOperationId;   // Validated identity reserved by this lease.
+  active(): boolean;   // Whether this exact lease still owns an active reservation.
+  retain(): void;   // Complete the reservation and retain its identity in bounded collision history.
+  release(): void;   // Abandon an undispatched reservation without retaining its identity.
+}
+```
+
+## KanbanOperationIdRegistry
+
+Active and retained collision protection for one board operation coordinator.
+
+```ts
+interface KanbanOperationIdRegistry {
+  acquire(): KanbanOperationIdLease;   // Allocate a factory identity and reserve it as active.
+  adopt(operationId: KanbanOperationId): KanbanOperationIdLease;   // Adopt a validated legacy caller identity and reserve it as active.
+  dispose(): void;   // Release every active and retained identity; idempotent.
+}
+```
+
+## KanbanOperationIdRegistryOptions
+
+Options for one bounded operation-ID registry.
+
+```ts
+interface KanbanOperationIdRegistryOptions {
+  factory?: KanbanOperationIdFactory;   // Optional application factory; the package validates every returned identity.
+  activeLimit?: number;   // Maximum active identities before a new acquisition fails closed.
+  retainedLimit?: number;   // Number of completed identities retained to prevent delayed-result collision.
+}
 ```
 
 ## KanbanOverscanOptions
@@ -2670,10 +3058,10 @@ interface KanbanRangeAnchor {
 
 ## KanbanRequest
 
-Current package-owned request union, designed to accept later standard variants.
+Final request union accepted by the application dispatcher.
 
 ```ts
-type KanbanRequest = KanbanExtensionRequest
+type KanbanRequest = KanbanStandardRequest | KanbanExtensionRequest
 ```
 
 ## KanbanRequestAccepted
@@ -2733,6 +3121,29 @@ interface KanbanRequestExpectedRevisions {
   query?: KanbanRevision;
   entities?: readonly KanbanExpectedEntityRevision[];
 }
+```
+
+## KanbanRequestLifecycle
+
+Package-owned lifecycle values added to a validated proposal immediately before dispatch.
+
+```ts
+interface KanbanRequestLifecycle {
+  operationId: KanbanOperationId;   // Unique operation identity allocated or adopted for this dispatch.
+  expected: KanbanRequestExpectedRevisions;   // Equality-only authority snapshot captured before application code runs.
+  signal: AbortSignal;   // Live cancellation signal owned by the operation coordinator.
+}
+```
+
+## KanbanRequestProposal
+
+Complete caller-facing standard and namespaced-extension proposal union.
+
+```ts
+type KanbanRequestProposal = | KanbanCardRequestProposal
+  | KanbanStructureRequestProposal
+  | KanbanSavedViewRequestProposal
+  | KanbanExtensionRequestProposal
 ```
 
 ## KanbanRequestRejected
@@ -2891,6 +3302,49 @@ Options for isolated renderer execution and redacted diagnostics.
 interface KanbanSafeRenderOptions {
   labels: KanbanCardFallbackLabels;   // Localized fallback labels supplied by the board locale resolver.
   observe?: (observation: KanbanObservation) => void;   // Optional sink for already-redacted package observations.
+}
+```
+
+## KanbanSavedViewDeleteProposal
+
+Delete one application-owned saved view.
+
+```ts
+interface KanbanSavedViewDeleteProposal {
+  kind: 'saved-view-delete';
+  viewId: KanbanViewId;
+}
+```
+
+## KanbanSavedViewRenameProposal
+
+Rename one application-owned saved view.
+
+```ts
+interface KanbanSavedViewRenameProposal {
+  kind: 'saved-view-rename';
+  viewId: KanbanViewId;
+  label: string;
+}
+```
+
+## KanbanSavedViewRequestProposal
+
+Saved-view standard proposals defined for later package-owned view UI.
+
+```ts
+type KanbanSavedViewRequestProposal = KanbanSavedViewSaveProposal | KanbanSavedViewRenameProposal | KanbanSavedViewDeleteProposal
+```
+
+## KanbanSavedViewSaveProposal
+
+Save or replace one application-owned semantic view definition.
+
+```ts
+interface KanbanSavedViewSaveProposal {
+  kind: 'saved-view-save';
+  viewId: KanbanViewId;
+  data: KanbanSemanticValue;
 }
 ```
 
@@ -3282,6 +3736,16 @@ Recursive immutable value domain used by queries and application extension paylo
 type KanbanSemanticValue = null | boolean | number | string | readonly KanbanSemanticValue[] | { readonly [key: string]: KanbanSemanticValue }
 ```
 
+## KanbanServerMoveSelection
+
+Server-side selection that cannot be expanded into an ordered atomic move locally.
+
+```ts
+interface KanbanServerMoveSelection {
+  kind: 'server';
+}
+```
+
 ## KanbanServerSelectionReference
 
 Opaque application reference for a server-wide selection not expanded into resident card keys.
@@ -3524,6 +3988,17 @@ interface KanbanStandardCardCompositionContext {
 }
 ```
 
+## KanbanStandardRequest
+
+Final package-owned standard dispatch envelope.
+
+```ts
+type KanbanStandardRequest = (
+  KanbanCardRequestProposal | KanbanStructureRequestProposal | KanbanSavedViewRequestProposal
+) &
+  KanbanRequestLifecycle
+```
+
 ## KanbanStructureCapability
 
 Package-understood structural capability labels used for presentation only.
@@ -3558,6 +4033,21 @@ interface KanbanStructurePresentationLimits {
   descriptorRegions: 64;   // Maximum bounded regions returned by one custom swimlane chrome descriptor.
   descriptorActions: 32;   // Maximum bounded header actions returned by one custom swimlane chrome descriptor.
 }
+```
+
+## KanbanStructureRequestProposal
+
+Structural standard proposals for columns and explicit swimlanes.
+
+```ts
+type KanbanStructureRequestProposal = | KanbanColumnAddProposal
+  | KanbanColumnUpdateProposal
+  | KanbanColumnReorderProposal
+  | KanbanColumnDeleteProposal
+  | KanbanSwimlaneAddProposal
+  | KanbanSwimlaneUpdateProposal
+  | KanbanSwimlaneReorderProposal
+  | KanbanSwimlaneDeleteProposal
 ```
 
 ## KanbanStructureScope
@@ -3677,6 +4167,18 @@ Authority scope declared by one application numeric summary.
 type KanbanSummaryScope = 'authoritative' | 'loaded-only'
 ```
 
+## KanbanSwimlaneAddProposal
+
+Add one explicit swimlane at a semantic structural position.
+
+```ts
+interface KanbanSwimlaneAddProposal {
+  kind: 'swimlane-add';
+  draft: KanbanSwimlaneDraft;
+  position: KanbanSwimlanePosition;
+}
+```
+
 ## KanbanSwimlaneChromeAction
 
 One validated application header action.
@@ -3712,6 +4214,30 @@ interface KanbanSwimlaneChromeRegion {
   y: number;   // Top row relative to the swimlane chrome.
   width: number;   // Positive region width.
   height: number;   // Positive region height.
+}
+```
+
+## KanbanSwimlaneDeleteProposal
+
+Delete one explicit swimlane with an optional application-authorized reassignment target.
+
+```ts
+interface KanbanSwimlaneDeleteProposal {
+  kind: 'swimlane-delete';
+  swimlaneId: KanbanSwimlaneId;
+  reassignTo?: KanbanSwimlaneId;
+}
+```
+
+## KanbanSwimlaneDraft
+
+Generic application-owned swimlane draft with package-validated identity and label.
+
+```ts
+interface KanbanSwimlaneDraft {
+  swimlaneId: KanbanSwimlaneId;
+  label: string;
+  data?: KanbanSemanticValue;
 }
 ```
 
@@ -3767,6 +4293,17 @@ interface KanbanSwimlaneMeta {
   label: string;   // Human-readable label rendered after terminal sanitization.
   revision: KanbanRevision;   // Equality-only presentation revision for this metadata.
 }
+```
+
+## KanbanSwimlanePosition
+
+Semantic placement of one swimlane relative to a stable neighboring swimlane identity.
+
+```ts
+type KanbanSwimlanePosition = | { readonly kind: 'start' }
+  | { readonly kind: 'end' }
+  | { readonly kind: 'before'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'after'; readonly swimlaneId: KanbanSwimlaneId }
 ```
 
 ## KanbanSwimlanePresentationColumn
@@ -3881,6 +4418,18 @@ interface KanbanSwimlaneRailResolution {
 }
 ```
 
+## KanbanSwimlaneReorderProposal
+
+Reorder one explicit swimlane without a numeric index or generated rank.
+
+```ts
+interface KanbanSwimlaneReorderProposal {
+  kind: 'swimlane-reorder';
+  swimlaneId: KanbanSwimlaneId;
+  position: KanbanSwimlanePosition;
+}
+```
+
 ## KanbanSwimlaneRowLayoutHint
 
 Payload-free aggregate layout hint for one semantic swimlane row.
@@ -3890,6 +4439,18 @@ interface KanbanSwimlaneRowLayoutHint {
   swimlaneId: KanbanSwimlaneId;   // Stable semantic swimlane identity.
   extent: KanbanRowExtent;   // Aggregate terminal-row extent with explicit completeness.
   count: KanbanCount;   // Aggregate card count with explicit authority/completeness.
+}
+```
+
+## KanbanSwimlaneUpdateProposal
+
+Patch one explicit swimlane through application-owned policy.
+
+```ts
+interface KanbanSwimlaneUpdateProposal {
+  kind: 'swimlane-update';
+  swimlaneId: KanbanSwimlaneId;
+  patch: KanbanSemanticValue;
 }
 ```
 
@@ -4915,6 +5476,22 @@ Creates a validated request operation identity.
 createKanbanOperationId(value: string): KanbanOperationId
 ```
 
+## createKanbanOperationIdRegistry
+
+Create a bounded registry that rejects active and recently completed operation-ID collisions.
+
+```ts
+createKanbanOperationIdRegistry(options: KanbanOperationIdRegistryOptions = {}): KanbanOperationIdRegistry
+```
+
+## createKanbanRequestEnvelope
+
+Create a coordinator-owned envelope or adopt one validated legacy extension envelope.
+
+```ts
+createKanbanRequestEnvelope(proposal: unknown, lifecycle?: unknown): KanbanRequest
+```
+
 ## createKanbanScrollAnchor
 
 Creates one detached immutable semantic scroll anchor.
@@ -4989,10 +5566,26 @@ createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(options: Sta
 
 ## dispatchKanbanRequest
 
-Validates and dispatches one raw request without consulting UX capabilities or mutating records.
+Validate and dispatch one raw request without consulting UX capabilities or mutating records.
 
 ```ts
-dispatchKanbanRequest(request: KanbanRequest, dispatcher: KanbanRequestDispatcher, context: KanbanRequestContext): Promise<KanbanRequestResult>
+dispatchKanbanRequest(request: KanbanRequest, dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown, context: KanbanRequestContext): Promise<KanbanRequestResult>
+```
+
+## evaluateKanbanMoveEligibility
+
+Evaluate immutable move facts in fixed fail-closed order without dispatching or authorizing.
+
+```ts
+evaluateKanbanMoveEligibility(input: unknown): KanbanEligibility
+```
+
+## evaluateKanbanMovePositionCurrency
+
+Check one validated semantic position against current source-owned placement evidence.
+
+```ts
+evaluateKanbanMovePositionCurrency(position: KanbanMovePosition, evidence: KanbanMovePositionEvidence): KanbanMovePositionCurrency
 ```
 
 ## evaluateKanbanTransition
@@ -5017,6 +5610,14 @@ Derives a stable browser-safe 64-bit fingerprint from the canonical semantic sna
 
 ```ts
 fingerprintKanbanSemanticValue(value: unknown): string
+```
+
+## isKanbanPlacementTokenCurrent
+
+Check opaque token membership only after validating the complete current source-owned set.
+
+```ts
+isKanbanPlacementTokenCurrent(token: PlacementToken, current: unknown): boolean
 ```
 
 ## isKanbanSourceReasonCode
@@ -5077,7 +5678,7 @@ readKanbanCardAdapter<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>): Ka
 
 ## reconcileKanbanPublication
 
-Clears publication metadata after either matching or contradictory authoritative data arrives.
+Clear publication metadata after matching or contradictory authoritative data arrives.
 
 ```ts
 reconcileKanbanPublication(pending: readonly KanbanPublicationExpectation[], notice: KanbanPublicationNotice): KanbanPublicationReconciliation
@@ -5219,6 +5820,14 @@ Validates and freezes one bounded, revision-bound card-location result.
 snapshotKanbanCardLocation(value: unknown): KanbanCardLocation
 ```
 
+## snapshotKanbanCardMoveProposal
+
+Validate, detach, and freeze one ordered atomic card-move proposal.
+
+```ts
+snapshotKanbanCardMoveProposal(value: unknown): KanbanCardMoveProposal
+```
+
 ## snapshotKanbanCardPresentation
 
 Detaches one application card into bounded, display-safe, deeply frozen presentation values.
@@ -5315,6 +5924,22 @@ Copies one sanitized bounded UX label.
 snapshotKanbanLabel(value: unknown): string | undefined
 ```
 
+## snapshotKanbanMovePosition
+
+Validate, detach, and freeze one dispatchable semantic move position.
+
+```ts
+snapshotKanbanMovePosition(value: unknown): KanbanMovePosition
+```
+
+## snapshotKanbanMovedCard
+
+Validate, detach, and freeze source evidence for one moved card.
+
+```ts
+snapshotKanbanMovedCard(value: unknown): KanbanMovedCardSnapshot
+```
+
 ## snapshotKanbanNumericSummary
 
 Validates one numeric summary with explicit authority and quality.
@@ -5331,6 +5956,14 @@ Validates, detaches, and freezes one revision-bound semantic placement.
 snapshotKanbanPlacement(value: unknown): KanbanPlacement
 ```
 
+## snapshotKanbanPlacementTokens
+
+Validate a bounded set of current opaque placement tokens without interpreting their contents.
+
+```ts
+snapshotKanbanPlacementTokens(value: unknown): readonly PlacementToken[]
+```
+
 ## snapshotKanbanQuery
 
 Validates and deeply snapshots one immutable semantic query before a source sees it.
@@ -5345,6 +5978,14 @@ Copies one bounded reason code or returns no value when it is unsafe.
 
 ```ts
 snapshotKanbanReasonCode(value: unknown): string | undefined
+```
+
+## snapshotKanbanRequestProposal
+
+Validate, deeply detach, and freeze one caller-facing request proposal.
+
+```ts
+snapshotKanbanRequestProposal<const T>(value: T): T & KanbanRequestProposal
 ```
 
 ## snapshotKanbanRevision

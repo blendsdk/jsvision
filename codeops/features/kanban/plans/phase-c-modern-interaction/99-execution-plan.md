@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 12:25 CEST
-> **Progress**: 25/124 tasks (20%)
+> **Last Updated**: 2026-08-11 12:32 CEST
+> **Progress**: 26/124 tasks (21%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -142,7 +142,7 @@ contracts before production expansion.
 - [x] 2.2.5 Implement eligibility result/reason contracts and structural/revision/capability/selection pipeline stages — `packages/kanban/src/operation/eligibility.ts` ✅ (completed: 2026-08-11 12:20)
 - [x] 2.2.6 Integrate sorted/filtered placement, transition, WIP, DoD, and semantic no-op stages through existing pure workflow helpers — `packages/kanban/src/operation/eligibility.ts` ✅ (completed: 2026-08-11 12:22)
 - [x] 2.2.7 Add validated injected/default operation-ID factory with active/retained collision protection primitives — `packages/kanban/src/operation/operation-id.ts` ✅ (completed: 2026-08-11 12:25)
-- [ ] 2.2.8 Export/document new contracts and examples only after their specification cases exist — `packages/kanban/src/index.ts`, `packages/kanban/src/contract/*.ts`, `packages/kanban/src/operation/*.ts`
+- [x] 2.2.8 Export/document new contracts and examples only after their specification cases exist — `packages/kanban/src/index.ts`, `packages/kanban/src/contract/*.ts`, `packages/kanban/src/operation/*.ts` ✅ (completed: 2026-08-11 12:32)
 - [ ] 2.2.9 Run focused request/placement/eligibility/security specifications and make them green
 
 ### Step 2.3: Implementation tests and hardening

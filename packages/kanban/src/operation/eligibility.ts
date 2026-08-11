@@ -403,6 +403,12 @@ function unchangedStage(value: unknown): KanbanEligibility {
  *
  * Later workflow stages are composed after structural, revision, capability, and selection facts so
  * stale or unrepresentable requests cannot be presented as policy warnings.
+ *
+ * @example
+ * ```ts
+ * const eligibility = evaluateKanbanMoveEligibility(currentMoveFacts);
+ * if (eligibility.kind === 'allowed') submitMove();
+ * ```
  */
 export function evaluateKanbanMoveEligibility(input: unknown): KanbanEligibility {
   const properties = snapshotKanbanDataProperties(input, INPUT_KEYS.size);
