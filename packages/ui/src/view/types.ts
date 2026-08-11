@@ -129,13 +129,25 @@ export type AppEvent = InputEvent | CommandEvent;
  * Why an event-loop pointer capture ended.
  *
  * The value is intentionally bounded so a gesture can choose deterministic cleanup behavior without
- * receiving host errors, view records, or other untrusted payloads.
+ * receiving host errors, view records, or other untrusted payloads:
+ *
+ * - `replaced`: another view acquired capture;
+ * - `released`: the current lease or the legacy release API released capture;
+ * - `modal`: a modal view opened or closed;
+ * - `unmounted`: the target or one of its ancestors left the mounted tree;
+ * - `host-lost`: the host reported focus or pointer-ownership loss;
+ * - `stopped`: the event loop was stopped directly; and
+ * - `disposed`: the event loop was disposed without first being stopped.
  */
 export type PointerCaptureLossReason =
   'replaced' | 'released' | 'modal' | 'unmounted' | 'host-lost' | 'stopped' | 'disposed';
 
 /**
  * Called synchronously and at most once when an owned pointer capture ends.
+ *
+ * Exceptions from this callback are contained and reported without interrupting the ownership
+ * transition. Keep the callback synchronous: invalidate the gesture and stop timers or overlays,
+ * then perform any asynchronous follow-up separately.
  *
  * @param reason The bounded cause of capture loss.
  */
@@ -145,12 +157,18 @@ export type PointerCaptureLostHandler = (reason: PointerCaptureLossReason) => vo
  * Generation-bound ownership of one event-loop pointer capture.
  *
  * A stale lease is safe to retain: {@link active} becomes false and {@link release} cannot release
- * a newer owner's capture.
+ * a newer owner's capture. Generations are positive safe integers and are not reused by one event
+ * loop. Consumers should compare them for identity, not derive ordering or application data from
+ * them.
  *
  * @example
- * const lease = ev.acquireCapture?.(this, () => this.cancelDrag());
- * if (lease?.active()) this.updateDrag();
- * lease?.release();
+ * const lease = ev.acquireCapture?.(this, () => {
+ *   stopAutoscroll();
+ *   clearDragOverlay();
+ * });
+ *
+ * if (lease?.active()) updateDrag(ev.local);
+ * lease?.release(); // Safe even after replacement, unmount, or host focus loss.
  */
 export interface PointerCaptureLease {
   /** Monotonic identity of the capture ownership acquired by this lease. */
@@ -193,7 +211,15 @@ export interface DispatchEvent {
   readonly focusView?: (view: View) => void;
   /**
    * Acquire generation-bound pointer capture and receive synchronous notification if it is lost.
-   * Prefer this seam for gestures that own timers, overlays, or other cleanup-sensitive state.
+   * Prefer this seam for gestures that own timers, overlays, or other cleanup-sensitive state. It is
+   * optional because a bare event envelope constructed by application tests has no loop operations.
+   * During real loop dispatch it is present and returns the new active owner before the handler
+   * continues.
+   *
+   * @example
+   * const lease = ev.acquireCapture?.(this, () => cancelGesture());
+   * if (lease === undefined) return; // Bare test envelope or unsupported custom dispatcher.
+   * beginGesture(lease.generation);
    */
   readonly acquireCapture?: (view: View, onLost: PointerCaptureLostHandler) => PointerCaptureLease;
   /**

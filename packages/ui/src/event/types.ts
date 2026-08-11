@@ -330,13 +330,25 @@ export interface EventLoop {
   /**
    * Capture pointer input for one gesture and receive synchronous notification when ownership ends.
    * The returned lease is generation-bound, so delayed cleanup cannot release a replacement owner.
+   * Acquiring a new capture synchronously ends the previous owner with `replaced` before this method
+   * returns. Capture is also ended when its target leaves the tree, a modal boundary changes, the
+   * host loses focus or ownership, or the loop stops or is disposed.
    *
    * @param view The view that receives captured mouse and wheel events.
    * @param onLost Cleanup invoked once with the bounded reason when this generation loses capture.
    * @returns A lease that can query or release only this acquisition.
+   * @throws {@link RangeError} If this loop has exhausted all positive safe-integer generations.
+   * @throws {@link Error} If capture is requested while a terminal or modal/host-loss lifecycle
+   * transition is in progress. An unsuccessful call never installs or replaces capture.
    * @example
-   * const lease = loop.acquireCapture(view, () => stopAutoscroll());
+   * const lease = loop.acquireCapture(view, () => {
+   *   stopAutoscroll();
+   *   clearDragOverlay();
+   * });
+   * startAutoscroll();
+   *
    * // A delayed pointer-up is safe even if another gesture replaced this lease.
+   * if (lease.active()) finishDrag();
    * lease.release();
    */
   acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease;
@@ -346,6 +358,9 @@ export interface EventLoop {
    * drag or resize keeps tracking even after the cursor leaves the affordance. Setting a new target
    * replaces any current one; capture is released automatically when a modal opens/closes or the
    * target unmounts.
+   *
+   * @throws {@link RangeError} If this loop has exhausted all positive safe-integer generations.
+   * @throws {@link Error} If capture is requested during lifecycle teardown.
    */
   setCapture(view: View): void;
   /** Release the pointer capture. A no-op if nothing is captured. */
@@ -353,6 +368,8 @@ export interface EventLoop {
   /**
    * Notify the loop that the host lost pointer ownership or focus without a decoded focus report.
    * The active lease, if any, is synchronously ended with the `host-lost` reason.
+   * Hosts that dispatch decoded `{ type: 'focus', focused: false }` reports do not need to call this
+   * method for the same loss. Repeated notification is an idempotent no-op after capture has ended.
    */
   notifyCaptureLost(): void;
   /**
