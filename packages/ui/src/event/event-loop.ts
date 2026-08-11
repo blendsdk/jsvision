@@ -191,6 +191,8 @@ class EventLoopImpl implements EventLoop {
   private capture: PointerCaptureState | null = null;
   /** Last allocated public generation; values are never reused while stale leases may exist. */
   private lastCaptureGeneration = 0;
+  /** Nested lifecycle boundaries reject reentrant capture until their loss transition is complete. */
+  private captureBoundaryDepth = 0;
   /**
    * The app-local clipboard buffer: the last text copied or cut within the app. Filled by the
    * dual-sink `setClipboard` and read back by `readClipboard`, so in-app paste works on every terminal
@@ -334,18 +336,13 @@ class EventLoopImpl implements EventLoop {
   }
 
   stop(): void {
-    // Gate the out-of-tick painter: the seam and any queued microtask early-return on `stopped`, so a
-    // late timer/promise callback during or after teardown cannot write a frame to a stopped host.
-    if (this.stopped) return;
-    this.lifecycleGeneration += 1;
-    this.stopped = true;
-    this.clearQueuedNativePaste();
+    this.stopWithReason('stopped');
   }
 
   dispose(): void {
     // Order matters: stop the painter first so unmounting (which disposes reactive scopes and may
     // dirty the tree as effects tear down) can never schedule a frame to a host that is going away.
-    this.stop();
+    this.stopWithReason('disposed');
     // Settle and release modal frames before unmounting their views. Disposal is not a user choice,
     // so pending modal promises receive `undefined` and no saved focus is restored.
     this.modal.dispose();
@@ -370,6 +367,9 @@ class EventLoopImpl implements EventLoop {
       ((routedEvent.type === 'command' && routedEvent.command === PASTE_COMMAND) ||
         (routedEvent.type === 'key' && this.keymap?.lookup(routedEvent) === PASTE_COMMAND));
     this.runTick(() => {
+      if (routedEvent.type === 'focus' && !routedEvent.focused) {
+        this.runCaptureBoundary('host-lost', () => undefined);
+      }
       // Host paste is another entry into the same clipboard pipeline. Adopt it before routing so
       // every editable control inserts the event and a later Ctrl+V repeats the same host text.
       if (routedEvent.type === 'paste') this.clipboardText = routedEvent.text;
@@ -475,9 +475,6 @@ class EventLoopImpl implements EventLoop {
   }
 
   execView<R>(view: View): Promise<R | undefined> {
-    // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
-    // frame on open; the returned promise resolves later, when endModal is called.
-    this.capture = null; // drop any in-flight drag so it cannot capture across the modal boundary
     // If the view opts into closing itself (a Dialog does), hand it the modal-host handle before it
     // opens so it can resolve this execView from its own event handling. Other views are untouched.
     if (isModalHostAware(view)) {
@@ -487,13 +484,12 @@ class EventLoopImpl implements EventLoop {
       });
     }
     return new Promise<R | undefined>((resolve) => {
-      this.runTick(() => this.modal.begin(view, resolve));
+      this.runTick(() => this.runCaptureBoundary('modal', () => this.modal.begin(view, resolve)));
     });
   }
 
   endModal<R>(result: R): void {
-    this.capture = null; // release any capture as the modal boundary changes
-    this.runTick(() => this.modal.end(result));
+    this.runTick(() => this.runCaptureBoundary('modal', () => this.modal.end(result)));
   }
 
   setAcceleratorMode(on: boolean): void {
@@ -612,11 +608,14 @@ class EventLoopImpl implements EventLoop {
 
   /** End active capture when a host reports loss outside the decoded input stream. */
   notifyCaptureLost(): void {
-    if (this.capture !== null) this.releaseCaptureGeneration(this.capture.generation, 'host-lost');
+    this.runCaptureBoundary('host-lost', () => undefined);
   }
 
   /** Allocate a positive public generation without ever reusing an identity visible to a stale lease. */
   private allocateCaptureGeneration(): number {
+    if (this.stopped || this.captureBoundaryDepth > 0) {
+      throw new Error('pointer capture is unavailable during lifecycle teardown');
+    }
     if (this.lastCaptureGeneration >= Number.MAX_SAFE_INTEGER) {
       throw new RangeError('pointer capture generation exhausted');
     }
@@ -629,6 +628,30 @@ class EventLoopImpl implements EventLoop {
     const previous = this.capture;
     this.capture = next;
     this.notifyCaptureHandler(previous?.onLost ?? null, reason);
+  }
+
+  /**
+   * End capture before a modal, host, or loop lifecycle transition and reject reentrant acquisition
+   * until that transition has completed.
+   */
+  private runCaptureBoundary<T>(reason: PointerCaptureLossReason, work: () => T): T {
+    this.captureBoundaryDepth += 1;
+    try {
+      if (this.capture !== null) this.transitionCapture(reason, null);
+      return work();
+    } finally {
+      this.captureBoundaryDepth -= 1;
+    }
+  }
+
+  /** Stop capture and asynchronous ingress with the caller-owned terminal loss reason. */
+  private stopWithReason(reason: 'stopped' | 'disposed'): void {
+    if (this.stopped) return;
+    this.runCaptureBoundary(reason, () => {
+      this.lifecycleGeneration += 1;
+      this.stopped = true;
+      this.clearQueuedNativePaste();
+    });
   }
 
   /** End only the named generation, detaching its callback before any reentrant cleanup runs. */
@@ -698,7 +721,7 @@ class EventLoopImpl implements EventLoop {
   private routeContext(): RouteContext {
     // Never route to a capture target that has been removed — drop it first.
     if (this.capture !== null && !this.capture.target.mounted) {
-      this.capture = null;
+      this.transitionCapture('unmounted', null);
     }
     const scope = this.scopeRoot();
     return {
