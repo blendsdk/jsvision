@@ -258,7 +258,10 @@ selection, release, and cancellation before enabling render-neutral card drag.
 - [x] 4.1.5 `[spec-author]` Add valid/invalid/outside/stale release, every cancellation source including decoded focus loss, queued-up suppression, and selected-block proposal semantics — `packages/kanban/test/pointer-drag-release.spec.test.ts` ✅ (completed: 2026-08-11 21:24)
   - Red evidence: the focused suite cannot collect because the planned render-neutral
     `interaction/drag-controller` module does not exist; 4.2.3 and 4.2.9 own the behavior.
-- [ ] 4.1.6 Run focused pointer-drag specifications and record expected red behavior
+- [x] 4.1.6 Run focused pointer-drag specifications and record expected red behavior ✅ (completed: 2026-08-11 21:25)
+  - Red gate: all 3 focused suites fail collection only because `drop-map`, `drop-hysteresis`,
+    `drag-prefetch`, `drag-autoscroll`, and `drag-controller` are the absent Phase 4 implementation
+    modules. Existing collapsed-hover remains the proven prerequisite.
 
 ### Step 4.2: Implementation
 
