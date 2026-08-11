@@ -756,6 +756,17 @@ Interaction or persistence state that can affect one card's presentation.
 type KanbanCardOperationState = 'idle' | 'grabbed' | 'pending' | 'rejected'
 ```
 
+## KanbanCardOperationSubject
+
+Stable card identity affected or reserved by an operation.
+
+```ts
+interface KanbanCardOperationSubject {
+  kind: 'card';   // Subject discriminator.
+  cardKey: CardKey;   // Stable application-owned card identity.
+}
+```
+
 ## KanbanCardPresentationAdapter
 
 Final-shaped generic adapter for rich standard-card presentation.
@@ -1298,6 +1309,17 @@ interface KanbanColumnMeta {
   columnId: KanbanColumnId;   // Stable semantic column identity.
   label: string;   // Human-readable label rendered after terminal sanitization.
   revision: KanbanRevision;   // Equality-only presentation revision for this metadata.
+}
+```
+
+## KanbanColumnOperationSubject
+
+Stable workflow-column identity affected or reserved by an operation.
+
+```ts
+interface KanbanColumnOperationSubject {
+  kind: 'column';   // Subject discriminator.
+  columnId: KanbanColumnId;   // Stable workflow-column identity.
 }
 ```
 
@@ -2486,6 +2508,18 @@ interface KanbanLoadedMoveSelection {
 }
 ```
 
+## KanbanMarkerPendingProjection
+
+Minimal pending marker for non-move request families.
+
+```ts
+interface KanbanMarkerPendingProjection {
+  kind: Exclude<KanbanRequest['kind'], 'card-move'>;   // Non-move request discriminator represented by this projection.
+  state: 'pending' | 'accepted';   // Lifecycle states that continue to render as pending.
+  cardKeys: readonly CardKey[];   // Bounded related card identities when the request exposes them directly.
+}
+```
+
 ## KanbanMessageMap
 
 Exact Phase A message inventory required from every Kanban locale.
@@ -2569,6 +2603,21 @@ interface KanbanMoveCurrentAuthority {
   targetEdges: Readonly<{ readonly start: 'complete' | 'unknown'; readonly end: 'complete' | 'unknown' }>;   // Current completeness of the destination's logical edges.
   targetCardKeys: readonly CardKey[];   // Current destination anchors visible to semantic placement.
   placementTokens: readonly PlacementToken[];   // Current source-issued opaque destination placement tokens.
+}
+```
+
+## KanbanMovePendingProjection
+
+Minimal pending projection for card movement, including no full card records.
+
+```ts
+interface KanbanMovePendingProjection {
+  kind: 'card-move';   // Request discriminator represented by this projection.
+  state: 'pending' | 'accepted';   // Lifecycle states that continue to render as pending.
+  cardKeys: readonly CardKey[];   // Ordered stable card identities represented atomically.
+  sources: readonly KanbanCellAddress[];   // Semantic source cells aligned by index with `cardKeys`.
+  target: KanbanCellAddress;   // Shared semantic destination cell.
+  position: KanbanMovePosition;   // Revision-bound semantic destination interval.
 }
 ```
 
@@ -2859,6 +2908,45 @@ interface KanbanOperationIdRegistryOptions {
 }
 ```
 
+## KanbanOperationSnapshot
+
+Immutable payload-free state published by the board operation coordinator.
+
+```ts
+interface KanbanOperationSnapshot {
+  operationId: KanbanOperationId;   // Stable identity of the operation.
+  kind: KanbanRequest['kind'];   // Request discriminator without its application-owned payload.
+  state: KanbanOperationState;   // Current lifecycle state.
+  affected: readonly KanbanOperationSubject[];   // Sorted type-preserving identities reserved or affected by the operation.
+  projection?: KanbanPendingProjection;   // Optional semantic pending projection for pending and accepted states only.
+  code?: string;   // Optional safe machine-readable terminal or policy reason.
+}
+```
+
+## KanbanOperationState
+
+Durable operation states exposed without request payloads or application records.
+
+```ts
+type KanbanOperationState = 'proposed' | 'pending' | 'accepted' | 'committed' | 'rejected' | 'cancelled' | 'superseded'
+```
+
+## KanbanOperationSubject
+
+Type-preserving identity used for conflict detection without retaining application records.
+
+```ts
+type KanbanOperationSubject = KanbanCardOperationSubject | KanbanColumnOperationSubject | KanbanSwimlaneOperationSubject
+```
+
+## KanbanOperationSubscriber
+
+Callback invoked with one immutable payload-free lifecycle snapshot.
+
+```ts
+type KanbanOperationSubscriber = (snapshot: KanbanOperationSnapshot) => void
+```
+
 ## KanbanOverscanOptions
 
 Finite projection retained around the visible terminal cells.
@@ -2879,6 +2967,14 @@ interface KanbanPendingNavigation {
   kind: 'reveal' | 'acquire';   // Operation being completed without moving the current focus prematurely.
   target: KanbanFocusTarget;   // Requested destination retained across asynchronous settlement.
 }
+```
+
+## KanbanPendingProjection
+
+Payload-free semantic projection retained only while an operation is pending or accepted.
+
+```ts
+type KanbanPendingProjection = KanbanMovePendingProjection | KanbanMarkerPendingProjection
 ```
 
 ## KanbanPhaseBMessageMap
@@ -4316,6 +4412,17 @@ interface KanbanSwimlaneMeta {
 }
 ```
 
+## KanbanSwimlaneOperationSubject
+
+Stable explicit-swimlane identity affected or reserved by an operation.
+
+```ts
+interface KanbanSwimlaneOperationSubject {
+  kind: 'swimlane';   // Subject discriminator.
+  swimlaneId: KanbanSwimlaneId;   // Stable explicit-swimlane identity.
+}
+```
+
 ## KanbanSwimlanePosition
 
 Semantic placement of one swimlane relative to a stable neighboring swimlane identity.
@@ -5377,6 +5484,14 @@ Creates a collision-safe key for one validated semantic cell address.
 canonicalizeKanbanCellAddress(value: KanbanCellAddress): string
 ```
 
+## canonicalizeKanbanOperationSubject
+
+Return a collision-safe identity for one type-preserving subject.
+
+```ts
+canonicalizeKanbanOperationSubject(subject: KanbanOperationSubject): string
+```
+
 ## clampKanbanScroll
 
 Clamps requested offsets to current live extents without retaining caller objects.
@@ -5991,6 +6106,38 @@ Validates one numeric summary with explicit authority and quality.
 
 ```ts
 snapshotKanbanNumericSummary(value: unknown): KanbanNumericSummary
+```
+
+## snapshotKanbanOperationSnapshot
+
+Validate, detach, and freeze one payload-free lifecycle snapshot.
+
+```ts
+snapshotKanbanOperationSnapshot(value: unknown): KanbanOperationSnapshot
+```
+
+## snapshotKanbanOperationSubject
+
+Validate, detach, and freeze one operation subject.
+
+```ts
+snapshotKanbanOperationSubject(value: unknown): KanbanOperationSubject
+```
+
+## snapshotKanbanOperationSubjects
+
+Validate a bounded sorted unique affected-subject set.
+
+```ts
+snapshotKanbanOperationSubjects(value: unknown): readonly KanbanOperationSubject[]
+```
+
+## snapshotKanbanPendingProjection
+
+Validate and detach one payload-free semantic pending projection.
+
+```ts
+snapshotKanbanPendingProjection(value: unknown): KanbanPendingProjection
 ```
 
 ## snapshotKanbanPlacement
