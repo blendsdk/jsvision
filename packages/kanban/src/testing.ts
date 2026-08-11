@@ -10,11 +10,14 @@ export * from './testing/eager-fixture.js';
 export * from './testing/instrumentation.js';
 export * from './testing/query-harness.js';
 export * from './testing/windowed-fixture.js';
+export * from './testing/board-setup-harness.js';
 export { routeKanbanKeyInput } from './interaction/input-router.js';
 export type { KanbanKeyInput, KanbanKeyInputSink } from './interaction/input-router.js';
 export { KanbanPointerRouter } from './interaction/pointer-router.js';
 export type {
   KanbanPendingPress,
+  KanbanPointerStructureDragStart,
+  KanbanDragConfiguration,
   KanbanPointerDragStart,
   KanbanPointerInput,
   KanbanPointerRouterOptions,

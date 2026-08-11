@@ -235,11 +235,24 @@ function scopedActionTargets<TCard>(
   maximum: number,
 ): readonly KanbanActionTarget[] {
   const headers = base.map((entry) => {
-    if (entry.kind !== 'workflow-header' || entry.columnId === undefined) return entry;
-    const column = source.structure.columns.find((candidate) => candidate.columnId === entry.columnId);
-    return column?.capabilities.includes('collapse') === true
-      ? Object.freeze({ ...entry, actionId: 'collapse' })
-      : entry;
+    if (entry.kind === 'workflow-header' && entry.columnId !== undefined) {
+      const column = source.structure.columns.find((candidate) => candidate.columnId === entry.columnId);
+      return Object.freeze({
+        ...entry,
+        ...(column?.capabilities.includes('collapse') === true ? { actionId: 'collapse' } : {}),
+        reorder:
+          column?.capabilities.includes('reorder') === true ? ('allowed' as const) : ('blocked-derived' as const),
+      });
+    }
+    if (entry.kind === 'swimlane-header' && entry.swimlaneId !== undefined) {
+      const explicitOrder = source.groupingPolicy?.order;
+      return Object.freeze({
+        ...entry,
+        reorder:
+          explicitOrder?.includes(entry.swimlaneId) === true ? ('allowed' as const) : ('blocked-derived' as const),
+      });
+    }
+    return entry;
   });
   const stateActions = projected.flatMap((state): readonly KanbanActionTarget[] => {
     if (state.kind !== 'filtered-empty' || state.actionId === undefined || state.address === undefined) return [];

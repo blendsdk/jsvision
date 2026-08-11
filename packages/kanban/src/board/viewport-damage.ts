@@ -87,6 +87,13 @@ function overlayRects(projection: KanbanViewportProjection): readonly Readonly<R
     ...overlay.pending.map(({ rect }) => rect),
     ...overlay.feedback.map(({ rect }) => rect),
     ...overlay.affectedStacks.map(({ rect }) => rect),
+    ...(overlay.structure === undefined
+      ? []
+      : [
+          overlay.structure.placeholder,
+          overlay.structure.ghost,
+          ...(overlay.structure.marker === undefined ? [] : [overlay.structure.marker]),
+        ]),
   ]);
 }
 
@@ -115,6 +122,22 @@ function changedOverlayRects(
   if (JSON.stringify(before.ghost) !== JSON.stringify(after.ghost)) {
     if (before.ghost !== undefined) changed.push(before.ghost.rect);
     if (after.ghost !== undefined) changed.push(after.ghost.rect);
+  }
+  if (JSON.stringify(before.structure) !== JSON.stringify(after.structure)) {
+    if (before.structure !== undefined) {
+      changed.push(
+        before.structure.placeholder,
+        before.structure.ghost,
+        ...(before.structure.marker === undefined ? [] : [before.structure.marker]),
+      );
+    }
+    if (after.structure !== undefined) {
+      changed.push(
+        after.structure.placeholder,
+        after.structure.ghost,
+        ...(after.structure.marker === undefined ? [] : [after.structure.marker]),
+      );
+    }
   }
   return Object.freeze(changed);
 }

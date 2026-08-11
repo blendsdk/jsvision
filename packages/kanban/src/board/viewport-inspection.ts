@@ -63,6 +63,8 @@ export interface KanbanViewportInspection {
   readonly interaction: KanbanInteractionInspection;
   /** Complete bounded safe values for the currently focused target. */
   readonly focusedDetail: KanbanFocusedDetailSnapshot;
+  /** Safe mutation-availability evidence for a standalone read viewport. */
+  readonly operation?: { readonly kind: 'unavailable'; readonly code: 'dispatcher-unavailable' };
 }
 
 /** Copies one range anchor without retaining controller-owned address objects. */

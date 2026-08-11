@@ -1,11 +1,22 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
-import type { KanbanExtensionId } from '../contract/identity.js';
+import type { KanbanExtensionId, KanbanOperationId } from '../contract/identity.js';
+import type { KanbanRequestResult } from '../contract/request.js';
 import type { KanbanActionScope } from '../layout/hit-map.js';
 import { snapshotKanbanInteractionResult, snapshotKanbanInteractionSnapshot } from './controller.js';
 import { KanbanIntentRouter } from './intent-router.js';
 import type { KanbanIntentRequest } from './intent-router.js';
+import { KanbanOperationFacade } from './operation-facade.js';
+import type {
+  KanbanMoveCardOptions,
+  KanbanMoveDirection,
+  KanbanMoveSelectedBlockOptions,
+  KanbanOperationFacadeApi,
+  KanbanOperationFacadeServices,
+  KanbanReorderColumnOptions,
+  KanbanReorderSwimlaneOptions,
+} from './operation-facade.js';
 import type { KanbanInteractionHandler, KanbanInteractionOrigin, KanbanScopedActionId } from './intent.js';
 import type {
   KanbanInteractionEnvironment,
@@ -77,7 +88,7 @@ export type KanbanInteractionControllerFactory = (
  * const focused = board.interaction().snapshot().focused;
  * ```
  */
-export interface KanbanInteractionFacade {
+export interface KanbanInteractionFacade extends KanbanOperationFacadeApi {
   /** Returns the last valid detached immutable interaction snapshot. */
   snapshot(): KanbanInteractionSnapshot;
   /** Synchronously queues one enabled event-loop transition when a controller is available. */
@@ -128,6 +139,8 @@ interface KanbanInteractionFacadeOwnerOptions {
   readonly observe?: (observation: KanbanObservation) => void;
   /** Optional synchronous application interaction handler. */
   readonly onInteraction?: KanbanInteractionHandler;
+  /** Board-owned semantic operation services shared by every input origin. */
+  readonly operations?: KanbanOperationFacadeServices;
 }
 
 /** Captured methods from one claimed controller, immune to later property replacement. */
@@ -241,6 +254,7 @@ function controllerMethods(controller: unknown): {
 export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   readonly #options: KanbanInteractionFacadeOwnerOptions;
   readonly #intentRouter: KanbanIntentRouter;
+  readonly #operations: KanbanOperationFacade;
   readonly #subscribers = new Set<() => void>();
   #controller: OwnedController | undefined;
   #lastSnapshot = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
@@ -258,6 +272,7 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
       ...(options.onInteraction === undefined ? {} : { handler: options.onInteraction }),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
+    this.#operations = new KanbanOperationFacade(options.operations);
   }
 
   /** Returns the last valid detached snapshot before, during, or after mount. */
@@ -319,6 +334,49 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
     origin: KanbanInteractionOrigin = 'programmatic',
   ): Promise<boolean> {
     return this.#scheduleIntent(() => ({ kind: 'scoped-action', origin, actionId, scope }));
+  }
+
+  /** Moves one explicit card after earlier semantic interaction work settles. */
+  moveCard(options: KanbanMoveCardOptions): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.moveCard(options));
+  }
+
+  /** Moves the current bounded selection after earlier focus/selection work settles. */
+  moveSelectedBlock(options: KanbanMoveSelectedBlockOptions): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.moveSelectedBlock(options));
+  }
+
+  /** Reorders one workflow column through the sole board coordinator. */
+  reorderColumn(options: KanbanReorderColumnOptions): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.reorderColumn(options));
+  }
+
+  /** Reorders one explicit swimlane through the sole board coordinator. */
+  reorderSwimlane(options: KanbanReorderSwimlaneOptions): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.reorderSwimlane(options));
+  }
+
+  /** Cancels one explicit or latest cancellable operation synchronously. */
+  cancel(operationId?: KanbanOperationId): boolean {
+    return this.#operations.cancel(operationId);
+  }
+
+  /** Requests one fresh inverse operation. */
+  undo(operationId: KanbanOperationId): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.undo(operationId));
+  }
+
+  /** Requests one fresh inverse-of-inverse operation. */
+  redo(operationId: KanbanOperationId): Promise<KanbanRequestResult> {
+    return this.#schedule(() => this.#operations.redo(operationId));
+  }
+
+  /** Starts a keyboard move for the currently focused card without synthesizing pointer visuals. */
+  acceptMoveFocused(direction: KanbanMoveDirection): boolean {
+    const focused = this.snapshot().focused;
+    if (!this.#available() || focused.kind !== 'card') return false;
+    void this.moveCard({ cardKey: focused.cardKey, direction, origin: 'keyboard' });
+    return true;
   }
 
   /** Synchronously accepts focused-card activation for mounted event routing. */

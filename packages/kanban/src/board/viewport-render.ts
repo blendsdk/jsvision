@@ -288,6 +288,28 @@ function drawOverlays(
   for (const placeholder of overlay.placeholders) {
     drawOverlayFrame(ctx, placeholder.rect, 'card.source-placeholder', theme, 'dashed');
   }
+  if (overlay.structure !== undefined) {
+    drawOverlayFrame(ctx, overlay.structure.placeholder, 'card.source-placeholder', theme, 'dashed');
+    if (overlay.structure.marker !== undefined) {
+      ctx.fillRect(
+        overlay.structure.marker.x,
+        overlay.structure.marker.y,
+        overlay.structure.marker.width,
+        overlay.structure.marker.height,
+        ctx.caps.glyphs.boxDrawing ? '◆' : '>',
+        style(theme, 'drop-target.valid'),
+      );
+    }
+    drawOverlayFrame(ctx, overlay.structure.ghost, 'card.ghost', theme, 'heavy');
+    if (overlay.structure.ghost.width > 2) {
+      ctx.text(
+        overlay.structure.ghost.x + 1,
+        overlay.structure.ghost.y,
+        cropCellText(overlay.structure.id, 0, overlay.structure.ghost.width - 2, ctx.caps.unicode.widthMode),
+        style(theme, 'card.ghost'),
+      );
+    }
+  }
   if (overlay.gap !== undefined) {
     const role: KanbanThemeRole =
       overlay.gap.visualState === 'valid'

@@ -70,6 +70,8 @@ export interface KanbanActionTarget extends Readonly<Rect> {
   readonly regionId?: string;
   /** Structural state code for state and retry targets. */
   readonly state?: KanbanStructureStateCode;
+  /** Header reorder availability; derived swimlanes remain explicitly blocked. */
+  readonly reorder?: 'allowed' | 'blocked-derived';
 }
 
 /** Options for one bounded scene hit projection. */

@@ -245,6 +245,30 @@ function mountedFrame(projection: KanbanViewportProjection, ascii = false) {
 }
 
 describe('overlay composition internals', () => {
+  it('projects structural source, insertion, and bounded header ghost cues', () => {
+    const result = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      structuralDrag: {
+        generation: 1,
+        geometryGeneration: 1,
+        structure: { kind: 'column', columnId: 'ready' },
+        point: { x: 34, y: 1 },
+        sourceRect: { x: 0, y: 1, width: 18, height: 1 },
+        markerRect: { x: 18, y: 1, width: 1, height: 1 },
+      },
+    });
+
+    expect(result.overlay.structure).toMatchObject({
+      kind: 'column',
+      id: 'ready',
+      placeholder: { x: 0, y: 1, width: 18, height: 1 },
+      marker: { x: 18, y: 1, width: 1, height: 1 },
+    });
+    expect(result.overlay.structure?.ghost.x).toBeLessThan(36);
+  });
+
   it('keeps semantic identity joins type-safe and disables only the projected card target', () => {
     const result = composeKanbanViewportOverlay({
       authoritative: authoritative(),

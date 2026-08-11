@@ -22,7 +22,10 @@ import type { KanbanRevision } from '../contract/revision.js';
 import { routeKanbanKeyInput } from '../interaction/input-router.js';
 import type { KanbanScopedActionId } from '../interaction/intent.js';
 import { KanbanPointerRouter } from '../interaction/pointer-router.js';
+import type { KanbanDragConfiguration } from '../interaction/pointer-router.js';
 import type { KanbanEligibleSelectionCandidate } from '../interaction/selection.js';
+import { KanbanStructuralDragController } from '../interaction/structural-drag.js';
+import type { KanbanStructuralDragScene } from '../interaction/structural-drag.js';
 import type {
   KanbanFocusTarget,
   KanbanInteractionAcquisitionResult,
@@ -93,6 +96,7 @@ import {
   mountKanbanViewportOperations,
   readKanbanViewportOperations,
 } from './viewport-operation-bridge.js';
+import { disposeKanbanViewportMoveReader, prepareKanbanViewportMoveReader } from './viewport-move-bridge.js';
 
 /** Board-owned listeners notified after viewport evidence changes semantically. */
 const INTERACTION_EVIDENCE_LISTENERS = new WeakMap<object, () => void>();
@@ -161,6 +165,8 @@ export interface KanbanViewportOptions<TCard> {
   readonly interaction?: KanbanViewportInteractionAdapter;
   /** Optional reactive column-collapse projection applied before cursor acquisition. */
   readonly collapsedColumnIds?: () => readonly string[];
+  /** Optional bounded board-owned drag threshold configuration. */
+  readonly drag?: KanbanDragConfiguration;
 }
 
 /** Creates an immutable empty metric snapshot before the first mounted projection. */
@@ -259,6 +265,7 @@ export class KanbanViewport<TCard> extends View {
   readonly #interactionBinding: KanbanViewportInteractionBinding;
   readonly #pointerRouter: KanbanPointerRouter;
   readonly #dragController: KanbanViewportDragController<TCard>;
+  readonly #structuralDragController: KanbanStructuralDragController;
   readonly #swimlanePresentationResolver: KanbanSwimlanePresentationResolver;
   readonly #heightIndices = new Map<
     string,
@@ -318,6 +325,16 @@ export class KanbanViewport<TCard> extends View {
       onReactiveInvalidated: () => this.invalidate(),
     });
     this.#interactionBinding = new KanbanViewportInteractionBinding(options.interaction);
+    if (options.interaction === undefined) {
+      // A standalone viewport keeps ordinary hit acknowledgement available for read-only tools.
+      // Mutation methods are deliberately absent, so crossing a drag threshold still fails closed.
+      this.#interactionBinding.attachInput({
+        accept: () => true,
+        acceptActivate: () => false,
+        acceptOpenContext: () => false,
+        acceptScopedAction: () => false,
+      });
+    }
     this.#dragController = new KanbanViewportDragController({
       readScene: () => this.#dragScene(),
       commitProposal: (proposal) => this.#interactionBinding.input()?.commitCardMove?.(proposal) ?? false,
@@ -332,19 +349,46 @@ export class KanbanViewport<TCard> extends View {
       },
       invalidate: () => this.invalidate(),
     });
-    this.#pointerRouter = new KanbanPointerRouter({
-      snapshotSelection: () => this.#snapshotInputSelection(),
-      beginPrimary: (target) => this.#beginPrimary(target),
-      completeCard: (target, completion) => this.#completeCard(target, completion),
-      completeCardAction: (target) => this.#completeCardAction(target),
-      completeScopedAction: (target) => this.#completeScopedAction(target),
-      completeRetry: (target) => this.#completeRetry(target),
-      openContext: (target) => this.#openContext(target),
-      snapshotCard: (target) => this.#snapshotDragCard(target),
-      beginCardDrag: (start) => this.#dragController.begin(start),
-      updateCardDrag: (generation, point, target) => this.#dragController.update(generation, point, target),
-      releaseCardDrag: (generation) => this.#dragController.release(generation),
-      cancelCardDrag: (generation, reason) => this.#dragController.cancel(generation, reason),
+    this.#structuralDragController = new KanbanStructuralDragController({
+      readScene: () => this.#structuralDragScene(),
+      commitProposal: (proposal) => this.#interactionBinding.input()?.commitStructureReorder?.(proposal) ?? false,
+      scroll: (step) => {
+        const before = this.#metrics.offsets;
+        this.scrollBy(step);
+        const after = this.#metrics.offsets;
+        return Object.freeze({ x: after.x - before.x, y: after.y - before.y });
+      },
+      invalidate: () => this.invalidate(),
+    });
+    this.#pointerRouter = new KanbanPointerRouter(
+      {
+        snapshotSelection: () => this.#snapshotInputSelection(),
+        beginPrimary: (target) => this.#beginPrimary(target),
+        completeCard: (target, completion) => this.#completeCard(target, completion),
+        completeCardAction: (target) => this.#completeCardAction(target),
+        completeScopedAction: (target) => this.#completeScopedAction(target),
+        completeRetry: (target) => this.#completeRetry(target),
+        openContext: (target) => this.#openContext(target),
+        snapshotCard: (target) => this.#snapshotDragCard(target),
+        beginCardDrag: (start) => this.#dragController.begin(start),
+        updateCardDrag: (generation, point, target) => this.#dragController.update(generation, point, target),
+        releaseCardDrag: (generation) => this.#dragController.release(generation),
+        cancelCardDrag: (generation, reason) => this.#dragController.cancel(generation, reason),
+        beginStructureDrag: (start) => this.#structuralDragController.begin(start),
+        updateStructureDrag: (generation, point) => this.#structuralDragController.update(generation, point),
+        releaseStructureDrag: (generation) => this.#structuralDragController.release(generation),
+        cancelStructureDrag: (generation, reason) => this.#structuralDragController.cancel(generation, reason),
+      },
+      options.drag,
+    );
+    prepareKanbanViewportMoveReader(this, () => {
+      const scene = this.#dragScene();
+      return scene === undefined
+        ? undefined
+        : Object.freeze({
+            scene,
+            ...(this.#queryViewRevision === undefined ? {} : { viewRevision: this.#queryViewRevision }),
+          });
     });
     VIEWPORT_INPUT_LIFECYCLES.set(this, {
       managed: false,
@@ -471,6 +515,9 @@ export class KanbanViewport<TCard> extends View {
       (this.#anchorSourceRevision !== snapshot.publication.revision ||
         this.#anchorSourceGeneration !== snapshot.generation);
     if (this.#dragController.sourceChangeRelevant()) this.#pointerRouter.cancel('source-change');
+    if (sourceChanged && this.#structuralDragController.snapshot().kind !== 'idle') {
+      this.#pointerRouter.cancel('source-change');
+    }
     const shouldRestoreIdentity = layoutChanged || sourceChanged;
     if (shouldRestoreIdentity && this.#restoreHorizontalAnchor(snapshot)) {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
@@ -552,16 +599,19 @@ export class KanbanViewport<TCard> extends View {
     this.#projectionCandidate = projection;
     try {
       this.#dragController.reproject();
+      this.#structuralDragController.reproject();
     } finally {
       this.#projectionCandidate = undefined;
     }
     const dragSnapshot = this.#dragController.snapshot();
+    const structuralDragSnapshot = this.#structuralDragController.snapshot();
     const operationSnapshots = operationRead.kind === 'ready' ? operationRead.snapshots : Object.freeze([]);
     const composedProjection = composeKanbanViewportOverlay({
       authoritative: projection,
       bounds: { x: 0, y: 0, width: this.bounds.width, height: this.bounds.height },
       density,
       ...(dragSnapshot.kind === 'idle' ? {} : { drag: dragSnapshot.overlay }),
+      ...(structuralDragSnapshot.kind === 'idle' ? {} : { structuralDrag: structuralDragSnapshot.overlay }),
       operations: operationSnapshots,
     });
     if (composedProjection.overlayFailure !== undefined) this.#containOverlayFailure();
@@ -623,13 +673,15 @@ export class KanbanViewport<TCard> extends View {
       return;
     }
     if (event.event.type === 'key') {
-      this.#pointerRouter.cancel(event.event.key === 'escape' ? 'escape' : 'explicit');
+      const cancelledDrag = this.#pointerRouter.cancel(event.event.key === 'escape' ? 'escape' : 'explicit');
       const input = this.#interactionBinding.input();
       if (input === undefined || this.#metrics.mode === 'minimum-size') return;
       event.handled = routeKanbanKeyInput(event.event, {
         snapshot: () => this.#interactionBinding.snapshot(),
         accept: (transition) => input.accept(transition),
         activate: (origin) => input.acceptActivate({ origin }),
+        moveFocused: (direction) => input.moveFocused?.(direction) ?? false,
+        cancelTransient: () => cancelledDrag || (input.cancelTransient?.() ?? false),
       });
       return;
     }
@@ -958,7 +1010,19 @@ export class KanbanViewport<TCard> extends View {
       ...(this.#options.formatting === undefined ? {} : { formatting: this.#options.formatting() }),
       ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
     });
-    return createKanbanViewportInspection(this.#snapshot, this.#projection, this.#damage, interaction, focusedDetail);
+    const inspection = createKanbanViewportInspection(
+      this.#snapshot,
+      this.#projection,
+      this.#damage,
+      interaction,
+      focusedDetail,
+    );
+    return this.#options.interaction === undefined
+      ? Object.freeze({
+          ...inspection,
+          operation: Object.freeze({ kind: 'unavailable' as const, code: 'dispatcher-unavailable' as const }),
+        })
+      : inspection;
   }
 
   /** Releases the complete standalone source lifecycle idempotently. */
@@ -967,6 +1031,7 @@ export class KanbanViewport<TCard> extends View {
     this.#disposed = true;
     quiesceKanbanViewportInput(this);
     this.#dragController.dispose();
+    this.#structuralDragController.dispose();
     disposeKanbanViewportOperations(this);
     this.#revealController?.abort();
     this.#revealController = undefined;
@@ -980,6 +1045,7 @@ export class KanbanViewport<TCard> extends View {
     this.#heightIndices.clear();
     this.#heightProjections = Object.freeze([]);
     unregisterKanbanViewportScaleReader(this);
+    disposeKanbanViewportMoveReader(this);
     this.#descriptorCacheDisposed = true;
     this.#source?.dispose();
     this.#source = undefined;
@@ -1016,6 +1082,36 @@ export class KanbanViewport<TCard> extends View {
         width: Math.max(1, this.bounds.width),
         height: Math.max(1, this.bounds.height - this.#metrics.stickyRows),
       }),
+    });
+  }
+
+  /** Returns current sibling order and visible header geometry for structural reordering. */
+  #structuralDragScene(): KanbanStructuralDragScene | undefined {
+    const current = this.#dragScene();
+    if (current === undefined) return undefined;
+    const order = current.source.groupingPolicy?.order;
+    return Object.freeze({
+      sceneRevision: current.sceneRevision,
+      geometryGeneration: current.geometryGeneration,
+      viewport: current.viewport,
+      columnOrder: Object.freeze(current.source.structure.columns.map(({ columnId }) => columnId)),
+      columns: Object.freeze(
+        current.geometry.workflowHeaders.map((header) =>
+          Object.freeze({ id: header.columnId, x: header.x, y: header.y, width: header.width, height: header.height }),
+        ),
+      ),
+      ...(order === undefined ? {} : { swimlaneOrder: Object.freeze([...order]) }),
+      swimlanes: Object.freeze(
+        current.geometry.swimlaneChrome.map((header) =>
+          Object.freeze({
+            id: header.swimlaneId,
+            x: header.x,
+            y: header.y,
+            width: header.width,
+            height: header.height,
+          }),
+        ),
+      ),
     });
   }
 

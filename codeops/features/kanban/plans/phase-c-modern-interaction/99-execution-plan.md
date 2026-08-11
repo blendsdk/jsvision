@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-12 01:15 CEST
-> **Progress**: 92/124 tasks (74%)
+> **Last Updated**: 2026-08-12 01:33 CEST
+> **Progress**: 101/124 tasks (81%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -393,15 +393,15 @@ facade, and lifecycle rollback before final wiring.
 **Objective**: Complete all Phase C producers through one operation lifecycle and cancellation-first mount
 ownership.
 
-- [ ] 6.2.1 Add column/swimlane source/target resolver and shared structural ghost/placeholder/insertion overlay — `packages/kanban/src/interaction/structural-drag.ts`, `packages/kanban/src/board/overlay-projector.ts`
-- [ ] 6.2.2 Wire structural header threshold/capture/autoscroll/release through the existing drag controller primitives — `packages/kanban/src/interaction/drag-controller.ts`, `packages/kanban/src/board/viewport-input.ts`
-- [ ] 6.2.3 Add typed facade methods for card/bulk move, column/swimlane reorder, cancel, and fresh undo/redo — `packages/kanban/src/interaction/facade.ts`, `packages/kanban/src/operation/types.ts`
-- [ ] 6.2.4 Route documented Phase C keyboard move subset and layered Escape through facade methods without claiming RD-12 command ownership — `packages/kanban/src/interaction/input-router.ts`, `packages/kanban/src/interaction/intent.ts`
-- [ ] 6.2.5 Add board options for operation ID, confirmation, and bounded drag configuration; keep standalone viewport mutation unavailable — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`
-- [ ] 6.2.6 Complete board→viewport operation adapter, subscriptions, inspection evidence, and same-tick handoff invalidation — `packages/kanban/src/board/board-authority.ts`, `packages/kanban/src/board/viewport-interaction.ts`
-- [ ] 6.2.7 Implement cancellation-first mount/setup rollback and disposal ordering across input/drag/coordinator/facade/source — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts`
-- [ ] 6.2.8 Export/document public facade, board configuration, inspection, and testing contracts — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts`
-- [ ] 6.2.9 Run focused integration/package specifications and make them green
+- [x] 6.2.1 Add column/swimlane source/target resolver and shared structural ghost/placeholder/insertion overlay — `packages/kanban/src/interaction/structural-drag.ts`, `packages/kanban/src/board/overlay-projector.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.2 Wire structural header threshold/capture/autoscroll/release through the existing drag controller primitives — `packages/kanban/src/interaction/drag-controller.ts`, `packages/kanban/src/board/viewport-input.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.3 Add typed facade methods for card/bulk move, column/swimlane reorder, cancel, and fresh undo/redo — `packages/kanban/src/interaction/facade.ts`, `packages/kanban/src/operation/types.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.4 Route documented Phase C keyboard move subset and layered Escape through facade methods without claiming RD-12 command ownership — `packages/kanban/src/interaction/input-router.ts`, `packages/kanban/src/interaction/intent.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.5 Add board options for operation ID, confirmation, and bounded drag configuration; keep standalone viewport mutation unavailable — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.6 Complete board→viewport operation adapter, subscriptions, inspection evidence, and same-tick handoff invalidation — `packages/kanban/src/board/board-authority.ts`, `packages/kanban/src/board/viewport-interaction.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.7 Implement cancellation-first mount/setup rollback and disposal ordering across input/drag/coordinator/facade/source — `packages/kanban/src/board/kanban-board.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.8 Export/document public facade, board configuration, inspection, and testing contracts — `packages/kanban/src/index.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-12 01:33)
+- [x] 6.2.9 Run focused integration/package specifications and make them green ✅ (completed: 2026-08-12 01:33)
 
 ### Step 6.3: Implementation tests and hardening
 

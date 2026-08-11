@@ -357,6 +357,7 @@ interface KanbanActionTarget {
   actionId?: string;   // Bounded semantic action identity for descriptor and scoped action targets.
   regionId?: string;   // Descriptor-local region identity for a card action.
   state?: KanbanStructureStateCode;   // Structural state code for state and retry targets.
+  reorder?: 'allowed' | 'blocked-derived';   // Header reorder availability; derived swimlanes remain explicitly blocked.
 }
 ```
 
@@ -454,6 +455,7 @@ interface KanbanBoardOptions<TCard> {
   operationEligibility?: (proposal: KanbanRequestProposal) => KanbanEligibility;   // Optional pure current-policy evaluator shared by programmatic proposal and confirmation paths.
   interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
   onInteraction?: KanbanInteractionHandler;   // Optional synchronous receiver for immutable, non-mutation semantic interaction intents.
+  drag?: KanbanDragConfiguration;   // Optional bounded threshold configuration for board-owned card and structural drags.
 }
 ```
 
@@ -764,6 +766,14 @@ interface KanbanCardMarker {
   role: KanbanThemeRole;   // Semantic theme role used to draw the marker.
   cues: readonly KanbanCardCue[];   // State distinctions redundantly conveyed by the marker.
 }
+```
+
+## KanbanCardMovePositionInput
+
+Caller-facing destination that is completed with current cursor revision evidence.
+
+```ts
+type KanbanCardMovePositionInput = { readonly kind: 'start' } | { readonly kind: 'end' }
 ```
 
 ## KanbanCardMoveProposal
@@ -1648,6 +1658,14 @@ Raised when a caller uses a source, cursor, or viewport after disposal.
 new KanbanDisposedResourceError()   // extends KanbanError
 // methods & signals:
 code
+```
+
+## KanbanDragConfiguration
+
+Public bounded drag configuration shared by board-owned pointer gestures.
+
+```ts
+type KanbanDragConfiguration = KanbanPointerRouterOptions
 ```
 
 ## KanbanEligibility
@@ -2685,6 +2703,20 @@ interface KanbanMoveCapability {
 }
 ```
 
+## KanbanMoveCardOptions
+
+Options for moving one explicit card through the stable facade.
+
+```ts
+interface KanbanMoveCardOptions {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  target?: KanbanCellAddress;   // Explicit semantic destination; omission requires a scene-relative direction.
+  position?: KanbanCardMovePositionInput;   // Semantic edge resolved through the current destination cursor.
+  direction?: KanbanMoveDirection;   // Scene-relative destination used when an explicit position or target is omitted.
+  origin?: 'pointer' | 'keyboard' | 'programmatic';   // Input origin retained only for parity diagnostics; it never changes request semantics.
+}
+```
+
 ## KanbanMoveCurrentAuthority
 
 Complete current semantic authority required before workflow policy is evaluated.
@@ -2704,6 +2736,14 @@ interface KanbanMoveCurrentAuthority {
   targetCardKeys: readonly CardKey[];   // Current destination anchors visible to semantic placement.
   placementTokens: readonly PlacementToken[];   // Current source-issued opaque destination placement tokens.
 }
+```
+
+## KanbanMoveDirection
+
+Direction names resolved against the current semantic scene rather than terminal coordinates.
+
+```ts
+type KanbanMoveDirection = 'left' | 'right' | 'start' | 'end'
 ```
 
 ## KanbanMovePendingProjection
@@ -2762,6 +2802,14 @@ interface KanbanMovePositionEvidence {
   cardKeys: readonly CardKey[];   // Stable card identities currently available as target anchors.
   placementTokens: readonly PlacementToken[];   // Opaque source-issued tokens that are current for this cursor revision.
 }
+```
+
+## KanbanMoveSelectedBlockOptions
+
+Options for moving the current bounded loaded selection atomically.
+
+```ts
+type KanbanMoveSelectedBlockOptions = Omit<KanbanMoveCardOptions, 'cardKey'>
 ```
 
 ## KanbanMoveSelection
@@ -3278,6 +3326,28 @@ Explicit anchor used for range selection inside one semantic cell.
 interface KanbanRangeAnchor {
   cardKey: CardKey;   // Stable card identity at which range extension began.
   address: KanbanCellAddress;   // Cell containing the anchor when it was established.
+}
+```
+
+## KanbanReorderColumnOptions
+
+Options for reordering one workflow column among stable siblings.
+
+```ts
+interface KanbanReorderColumnOptions {
+  columnId: string;   // Stable column being moved.
+  position: KanbanColumnPosition;   // Stable-neighbor destination.
+}
+```
+
+## KanbanReorderSwimlaneOptions
+
+Options for reordering one explicit swimlane among stable siblings.
+
+```ts
+interface KanbanReorderSwimlaneOptions {
+  swimlaneId: string;   // Stable explicit swimlane being moved.
+  position: KanbanSwimlanePosition;   // Stable-neighbor destination.
 }
 ```
 
@@ -5014,6 +5084,7 @@ interface KanbanViewportInspection {
   structureState?: KanbanStructureState;   // Board-level semantic structure state when one is active.
   interaction: KanbanInteractionInspection;   // Detached current controller state and bounded selection evidence.
   focusedDetail: KanbanFocusedDetailSnapshot;   // Complete bounded safe values for the currently focused target.
+  operation?: { readonly kind: 'unavailable'; readonly code: 'dispatcher-unavailable' };   // Safe mutation-availability evidence for a standalone read viewport.
 }
 ```
 
@@ -5082,6 +5153,7 @@ interface KanbanViewportOptions<TCard> {
   identity?: () => KanbanIdentityInput;   // Optional reactive compatibility identity projection for a standalone viewport.
   interaction?: KanbanViewportInteractionAdapter;   // Optional non-owning interaction publication adapter for scene cues and inspection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
+  drag?: KanbanDragConfiguration;   // Optional bounded board-owned drag threshold configuration.
 }
 ```
 

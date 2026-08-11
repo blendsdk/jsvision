@@ -1,4 +1,5 @@
 import type { KanbanInteractionOrigin } from './intent.js';
+import type { KanbanMoveDirection } from './operation-facade.js';
 import type { KanbanInteractionSnapshot, KanbanInteractionTransition, KanbanNavigationDirection } from './types.js';
 
 /** Normalized terminal key evidence accepted by the Phase B keyboard router. */
@@ -21,6 +22,10 @@ export interface KanbanKeyInputSink {
   readonly accept: (transition: KanbanInteractionTransition) => boolean;
   /** Queues focused-card activation through the semantic intent boundary. */
   readonly activate: (origin: KanbanInteractionOrigin) => boolean;
+  /** Starts one semantic focused-card move without synthesizing pointer visuals. */
+  readonly moveFocused?: (direction: KanbanMoveDirection) => boolean;
+  /** Cancels the active drag or latest cancellable operation before selection Escape. */
+  readonly cancelTransient?: () => boolean;
 }
 
 /** Resolves only the fixed Phase B navigation names emitted by the terminal decoder. */
@@ -66,6 +71,9 @@ function routeNavigation(input: KanbanKeyInput, sink: KanbanKeyInputSink): boole
 export function routeKanbanKeyInput(input: KanbanKeyInput, sink: KanbanKeyInputSink): boolean {
   if (input.alt) return false;
   if (input.ctrl) {
+    if (input.shift && (input.key === 'left' || input.key === 'right')) {
+      return sink.moveFocused?.(input.key) ?? false;
+    }
     if (input.shift || input.key !== 'a') return false;
     return sink.accept({ kind: 'selection', operation: 'select-loaded-visible-matching' });
   }
@@ -82,6 +90,7 @@ export function routeKanbanKeyInput(input: KanbanKeyInput, sink: KanbanKeyInputS
     if (sink.snapshot().focused.kind !== 'card') return false;
     return sink.activate('keyboard');
   }
+  if (input.key === 'escape' && sink.cancelTransient?.() === true) return true;
   if (input.key === 'escape') return sink.accept({ kind: 'escape' });
   return false;
 }

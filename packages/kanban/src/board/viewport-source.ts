@@ -456,6 +456,10 @@ function projectedSwimlanes<TCard>(
   query: KanbanQuery,
   policy: KanbanStructurePolicy<TCard> | undefined,
 ): { readonly visible: readonly KanbanSwimlaneMeta[]; readonly collapsedIds: readonly string[] } {
+  // Published swimlane metadata is available for grouped queries, but it must not create a visual
+  // axis while grouping is inactive. Ungrouped cards belong to column-only cells.
+  if (query.groupBy === undefined)
+    return Object.freeze({ visible: Object.freeze([]), collapsedIds: Object.freeze([]) });
   const queryVisible = query.visibleSwimlaneIds === undefined ? undefined : new Set(query.visibleSwimlaneIds);
   const grouping = policy?.grouping;
   if (grouping !== undefined && grouping.fieldId !== query.groupBy) throw new KanbanInvalidSourcePublicationError();

@@ -35,9 +35,18 @@ export type {
   KanbanInteractionFacade,
   KanbanOpenContextOptions,
 } from './interaction/facade.js';
+export type {
+  KanbanCardMovePositionInput,
+  KanbanMoveCardOptions,
+  KanbanMoveDirection,
+  KanbanMoveSelectedBlockOptions,
+  KanbanReorderColumnOptions,
+  KanbanReorderSwimlaneOptions,
+} from './interaction/operation-facade.js';
 export { createKanbanInteractionController } from './interaction/controller.js';
 export * from './interaction/intent.js';
 export * from './interaction/types.js';
+export type { KanbanDragConfiguration } from './interaction/pointer-router.js';
 export * from './layout/hit-map.js';
 export * from './layout/metrics.js';
 export * from './layout/scroll-model.js';

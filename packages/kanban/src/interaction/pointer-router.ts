@@ -11,6 +11,9 @@ export interface KanbanPointerRouterOptions {
   readonly dragThreshold?: number;
 }
 
+/** Public bounded drag configuration shared by board-owned pointer gestures. */
+export type KanbanDragConfiguration = KanbanPointerRouterOptions;
+
 /** Normalized click-family input consumed by the bounded Phase B pointer router. */
 export interface KanbanPointerInput {
   /** Mouse report phase; move and drag reports cancel an incomplete press. */
@@ -69,6 +72,23 @@ export interface KanbanPointerDragStart extends KanbanPendingPress {
   readonly dragged: readonly KanbanSelectionEntry[];
 }
 
+/** Threshold-crossing structural header evidence shared by columns and explicit swimlanes. */
+export interface KanbanPointerStructureDragStart extends KanbanPendingPress {
+  /** Current coordinate that met the configured Manhattan threshold. */
+  readonly point: Readonly<Point>;
+  /** Generation-bound capture owned by the new drag. */
+  readonly capture: PointerCaptureLease;
+  /** Exact structural identity being reordered. */
+  readonly structure:
+    { readonly kind: 'column'; readonly columnId: string } | { readonly kind: 'swimlane'; readonly swimlaneId: string };
+  /** Stable renderer-neutral cue vocabulary used by structural overlays. */
+  readonly cues: {
+    readonly ghost: 'bounded-header';
+    readonly placeholder: 'source-slot';
+    readonly marker: 'sibling-insertion';
+  };
+}
+
 /** Serialized semantic seams used without capture, drag thresholds, or insertion geometry. */
 export interface KanbanPointerRouterSink {
   /** Captures the current eligible application selection before focus changes. */
@@ -102,6 +122,18 @@ export interface KanbanPointerRouterSink {
   readonly releaseCardDrag?: (generation: number) => boolean;
   /** Cancel a previously adopted generation before stale input can reach it. */
   readonly cancelCardDrag?: (generation: number, reason: KanbanPointerDragCancellationReason) => void;
+  /** Adopt one eligible structural header after threshold and capture acquisition. */
+  readonly beginStructureDrag?: (start: KanbanPointerStructureDragStart) => boolean;
+  /** Recompute one current sibling structural destination. */
+  readonly updateStructureDrag?: (
+    generation: number,
+    point: Readonly<Point>,
+    target: KanbanActionTarget | undefined,
+  ) => boolean;
+  /** Release one captured structural reorder through exactly one proposal handoff. */
+  readonly releaseStructureDrag?: (generation: number) => boolean;
+  /** Cancel structural capture before stale reports can reach it. */
+  readonly cancelStructureDrag?: (generation: number, reason: KanbanPointerDragCancellationReason) => void;
 }
 
 /** Closed cancellation causes the pointer router can identify before board reconciliation. */
@@ -112,6 +144,8 @@ export type KanbanPointerDragCancellationReason =
 interface ActiveKanbanPointerDrag {
   readonly generation: number;
   readonly capture: PointerCaptureLease;
+  /** Selects the matching card or structural callback family. */
+  readonly kind: 'card' | 'structure';
 }
 
 /** Return true only for a finite viewport-local terminal coordinate. */
@@ -223,9 +257,11 @@ export class KanbanPointerRouter {
   }
 
   /** Cancels the current pending press idempotently. */
-  cancel(reason: Exclude<KanbanPointerDragCancellationReason, 'disposed'> = 'explicit'): void {
+  cancel(reason: Exclude<KanbanPointerDragCancellationReason, 'disposed'> = 'explicit'): boolean {
+    const hadOwnership = this.#pending !== undefined || this.#activeDrag !== undefined;
     this.#pending = undefined;
     this.#cancelActive(reason);
+    return hadOwnership;
   }
 
   /** Rejects later input and releases pending evidence idempotently. */
@@ -276,7 +312,9 @@ export class KanbanPointerRouter {
         this.#cancelActive('explicit');
         return false;
       }
-      return this.#sink.updateCardDrag?.(active.generation, input.point, input.target) ?? true;
+      return active.kind === 'card'
+        ? (this.#sink.updateCardDrag?.(active.generation, input.point, input.target) ?? true)
+        : (this.#sink.updateStructureDrag?.(active.generation, input.point, input.target) ?? true);
     }
     const pending = this.#pending;
     if (pending === undefined) return false;
@@ -302,40 +340,85 @@ export class KanbanPointerRouter {
     this.#pending = undefined;
     if (
       pending === undefined ||
-      pending.target.kind !== 'card' ||
-      pending.target.cardKey === undefined ||
       !validPoint(pending.originPoint) ||
       !validPoint(input.point) ||
       input.acquireCapture === undefined ||
-      this.#sink.snapshotCard === undefined ||
-      this.#sink.beginCardDrag === undefined
+      (pending.target.kind === 'card'
+        ? pending.target.cardKey === undefined ||
+          this.#sink.snapshotCard === undefined ||
+          this.#sink.beginCardDrag === undefined
+        : (pending.target.kind !== 'workflow-header' && pending.target.kind !== 'swimlane-header') ||
+          pending.target.reorder !== 'allowed' ||
+          (pending.target.kind === 'workflow-header' && pending.target.columnId === undefined) ||
+          (pending.target.kind === 'swimlane-header' && pending.target.swimlaneId === undefined) ||
+          this.#sink.beginStructureDrag === undefined)
     ) {
       return false;
     }
-    const dragged = resolveKanbanDraggedSelection(pending.target, pending.priorSelection, this.#sink.snapshotCard);
-    if (dragged === undefined) return false;
+    const structural = pending.target.kind === 'workflow-header' || pending.target.kind === 'swimlane-header';
+    const snapshotCard = this.#sink.snapshotCard;
+    const dragged =
+      structural || snapshotCard === undefined
+        ? undefined
+        : resolveKanbanDraggedSelection(pending.target, pending.priorSelection, snapshotCard);
+    if (!structural && dragged === undefined) return false;
     let lost: PointerCaptureLossReason | undefined;
     let capture: PointerCaptureLease;
     try {
       capture = input.acquireCapture((reason) => {
         lost = reason;
         if (this.#activeDrag?.generation !== pending.generation) return;
+        const active = this.#activeDrag;
         this.#activeDrag = undefined;
-        this.#sink.cancelCardDrag?.(pending.generation, reason);
+        if (active.kind === 'card') this.#sink.cancelCardDrag?.(pending.generation, reason);
+        else this.#sink.cancelStructureDrag?.(pending.generation, reason);
       });
     } catch {
       return false;
     }
     if (lost !== undefined || !capture.active()) return false;
-    this.#activeDrag = Object.freeze({ generation: pending.generation, capture });
-    const accepted = this.#sink.beginCardDrag(
-      Object.freeze({
-        ...pending,
-        point: Object.freeze({ x: input.point.x, y: input.point.y }),
-        capture,
-        dragged,
-      }),
-    );
+    this.#activeDrag = Object.freeze({
+      generation: pending.generation,
+      capture,
+      kind: structural ? 'structure' : 'card',
+    });
+    let accepted = false;
+    if (structural) {
+      const begin = this.#sink.beginStructureDrag;
+      const structure =
+        pending.target.kind === 'workflow-header' && pending.target.columnId !== undefined
+          ? Object.freeze({ kind: 'column' as const, columnId: pending.target.columnId })
+          : pending.target.kind === 'swimlane-header' && pending.target.swimlaneId !== undefined
+            ? Object.freeze({ kind: 'swimlane' as const, swimlaneId: pending.target.swimlaneId })
+            : undefined;
+      if (begin !== undefined && structure !== undefined) {
+        accepted = begin(
+          Object.freeze({
+            ...pending,
+            point: Object.freeze({ x: input.point.x, y: input.point.y }),
+            capture,
+            structure,
+            cues: Object.freeze({
+              ghost: 'bounded-header' as const,
+              placeholder: 'source-slot' as const,
+              marker: 'sibling-insertion' as const,
+            }),
+          }),
+        );
+      }
+    } else {
+      const begin = this.#sink.beginCardDrag;
+      if (begin !== undefined && dragged !== undefined) {
+        accepted = begin(
+          Object.freeze({
+            ...pending,
+            point: Object.freeze({ x: input.point.x, y: input.point.y }),
+            capture,
+            dragged,
+          }),
+        );
+      }
+    }
     if (!accepted || this.#activeDrag?.generation !== pending.generation || !capture.active()) {
       if (this.#activeDrag?.generation === pending.generation) this.#activeDrag = undefined;
       capture.release();
@@ -349,7 +432,8 @@ export class KanbanPointerRouter {
     const active = this.#activeDrag;
     if (active === undefined) return;
     this.#activeDrag = undefined;
-    this.#sink.cancelCardDrag?.(active.generation, reason);
+    if (active.kind === 'card') this.#sink.cancelCardDrag?.(active.generation, reason);
+    else this.#sink.cancelStructureDrag?.(active.generation, reason);
     active.capture.release();
   }
 
@@ -375,15 +459,21 @@ export class KanbanPointerRouter {
         return false;
       }
       if (
-        this.#sink.updateCardDrag !== undefined &&
-        !this.#sink.updateCardDrag(active.generation, input.point, input.target)
+        (active.kind === 'card' &&
+          this.#sink.updateCardDrag !== undefined &&
+          !this.#sink.updateCardDrag(active.generation, input.point, input.target)) ||
+        (active.kind === 'structure' &&
+          this.#sink.updateStructureDrag !== undefined &&
+          !this.#sink.updateStructureDrag(active.generation, input.point, input.target))
       ) {
         this.#cancelActive('explicit');
         return false;
       }
       this.#activeDrag = undefined;
       try {
-        return this.#sink.releaseCardDrag?.(active.generation) ?? false;
+        return active.kind === 'card'
+          ? (this.#sink.releaseCardDrag?.(active.generation) ?? false)
+          : (this.#sink.releaseStructureDrag?.(active.generation) ?? false);
       } finally {
         if (active.capture.active()) active.capture.release();
       }

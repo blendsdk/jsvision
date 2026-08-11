@@ -26,7 +26,7 @@ const QUERY: KanbanQuery = Object.freeze({ filters: [], sort: [], viewRevision: 
 const CARDS: readonly Card[] = Object.freeze([
   Object.freeze({ id: 1, columnId: 'ready', swimlaneId: 'alpha', title: 'First', revision: 'card-1-r1' }),
   Object.freeze({ id: 2, columnId: 'ready', swimlaneId: 'alpha', title: 'Second', revision: 'card-2-r1' }),
-  Object.freeze({ id: 3, columnId: 'doing', swimlaneId: 'beta', title: 'Anchor', revision: 'card-3-r1' }),
+  Object.freeze({ id: 3, columnId: 'doing', swimlaneId: 'alpha', title: 'Anchor', revision: 'card-3-r1' }),
 ]);
 const CARD: KanbanCardAdapter<Card> = Object.freeze({
   keyOf: (card: Card) => card.id,
@@ -178,13 +178,13 @@ describe('Phase C semantic operation parity', () => {
       type: 'mouse',
       kind: 'drag',
       button: 0,
-      ...absolute(target.x + 1, target.y + 1),
+      ...absolute(target.x + 1, target.y + Math.max(1, target.height - 1)),
     });
     pointer.application.loop.dispatch({
       type: 'mouse',
       kind: 'up',
       button: 0,
-      ...absolute(target.x + 1, target.y + 1),
+      ...absolute(target.x + 1, target.y + Math.max(1, target.height - 1)),
     });
     await settle();
     const pointerRequest = requests.shift();

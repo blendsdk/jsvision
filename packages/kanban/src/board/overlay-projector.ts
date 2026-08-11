@@ -4,6 +4,7 @@ import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { CardKey } from '../contract/identity.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import type { KanbanDragOverlayEvidence } from '../interaction/drag-types.js';
+import type { KanbanStructuralDragOverlayEvidence } from '../interaction/structural-drag.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
 import type { KanbanOperationSnapshot } from '../operation/types.js';
 import type { KanbanCellAddress } from '../source/types.js';
@@ -74,6 +75,20 @@ export interface KanbanOverlayAffectedStack {
   readonly rect: Readonly<Rect>;
 }
 
+/** Clipped structural source, insertion marker, and pointer-following header ghost. */
+export interface KanbanProjectedStructuralDrag {
+  /** Structural kind retained as a non-color cue. */
+  readonly kind: 'column' | 'swimlane';
+  /** Stable identity rendered inside the bounded ghost. */
+  readonly id: string;
+  /** Source header placeholder. */
+  readonly placeholder: Readonly<Rect>;
+  /** Current sibling insertion marker. */
+  readonly marker?: Readonly<Rect>;
+  /** Bounded pointer-following header ghost. */
+  readonly ghost: Readonly<Rect>;
+}
+
 /** Complete immutable overlay geometry consumed by drawing and damage calculation. */
 export interface KanbanOverlayProjection {
   /** Stable source placeholders. */
@@ -88,6 +103,8 @@ export interface KanbanOverlayProjection {
   readonly feedback: readonly KanbanProjectedOperationFeedback[];
   /** Visible stacks whose composition differs from authority. */
   readonly affectedStacks: readonly KanbanOverlayAffectedStack[];
+  /** Active structural header reorder visuals. */
+  readonly structure?: KanbanProjectedStructuralDrag;
 }
 
 /** Inputs for one pure authoritative-scene plus transient-overlay composition. */
@@ -100,6 +117,8 @@ export interface ComposeKanbanViewportOverlayOptions {
   readonly density: KanbanCardDensity;
   /** Optional current renderer-neutral drag evidence. */
   readonly drag?: KanbanDragOverlayEvidence;
+  /** Optional current renderer-neutral structural drag evidence. */
+  readonly structuralDrag?: KanbanStructuralDragOverlayEvidence;
   /** Bounded payload-free operation snapshots in admission order. */
   readonly operations?: readonly KanbanOperationSnapshot[];
   /** Optional internal observer used to prove composition work remains linear at configured limits. */
@@ -133,6 +152,31 @@ const EMPTY_OVERLAY: KanbanOverlayProjection = Object.freeze({
   feedback: Object.freeze([]),
   affectedStacks: Object.freeze([]),
 });
+
+/** Projects bounded structural evidence without retaining source models or labels. */
+function projectStructuralDrag(
+  drag: KanbanStructuralDragOverlayEvidence,
+  bounds: Readonly<Rect>,
+): KanbanProjectedStructuralDrag | undefined {
+  const placeholder = clip(drag.sourceRect, bounds);
+  if (placeholder === undefined || bounds.width < 1 || bounds.height < 1) return undefined;
+  const width = Math.min(bounds.width, Math.max(3, Math.min(20, drag.sourceRect.width)));
+  const height = Math.min(bounds.height, Math.max(1, Math.min(3, drag.sourceRect.height)));
+  const x = Math.min(Math.max(bounds.x, drag.point.x + 1), bounds.x + bounds.width - width);
+  const y = Math.min(Math.max(bounds.y, drag.point.y + 1), bounds.y + bounds.height - height);
+  const ghost = clip({ x, y, width, height }, bounds);
+  if (ghost === undefined) return undefined;
+  const structure = drag.structure;
+  const id = structure.kind === 'column' ? structure.columnId : structure.swimlaneId;
+  const marker = drag.markerRect === undefined ? undefined : clip(drag.markerRect, bounds);
+  return Object.freeze({
+    kind: structure.kind,
+    id,
+    placeholder,
+    ...(marker === undefined ? {} : { marker }),
+    ghost,
+  });
+}
 
 /** Clips a rectangle to current viewport-local bounds. */
 function clip(rect: Readonly<Rect>, bounds: Readonly<Rect>): Readonly<Rect> | undefined {
@@ -442,8 +486,11 @@ export function composeKanbanViewportOverlay(
   try {
     const operations = projectKanbanOperations(options.authoritative, options.operations ?? [], options.bounds);
     const drag = options.drag;
+    const structure =
+      options.structuralDrag === undefined ? undefined : projectStructuralDrag(options.structuralDrag, options.bounds);
     if (
       drag === undefined &&
+      structure === undefined &&
       operations.pending.length === 0 &&
       operations.feedback.length === 0 &&
       operations.blockedCardKeys.size === 0 &&
@@ -528,6 +575,7 @@ export function composeKanbanViewportOverlay(
       pending: operations.pending,
       feedback: operations.feedback,
       affectedStacks: affectedStacks(columnsById, drag, operations.pending, options.bounds, work),
+      ...(structure === undefined ? {} : { structure }),
     });
     reportProjectionWork(options.inspectWork, work);
     return Object.freeze({ ...options.authoritative, cards, actionTargets, overlay });

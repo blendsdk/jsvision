@@ -23,6 +23,7 @@ import {
 } from '../interaction/controller.js';
 import type { KanbanInteractionControllerFactory, KanbanInteractionFacade } from '../interaction/facade.js';
 import { KanbanInteractionFacadeOwner } from '../interaction/facade.js';
+import type { KanbanDragConfiguration } from '../interaction/pointer-router.js';
 import type { KanbanInteractionHandler } from '../interaction/intent.js';
 import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
 import type {
@@ -60,6 +61,7 @@ import {
   setKanbanViewportInteractionEvidenceListener,
 } from './kanban-viewport.js';
 import { prepareKanbanViewportOperations } from './viewport-operation-bridge.js';
+import { resolveKanbanViewportCardMove } from './viewport-move-bridge.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
@@ -79,7 +81,7 @@ const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
 >;
 
 /** Construction options for the responsive board shell and application authority seam. */
-export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction'> {
+export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction' | 'drag'> {
   /**
    * Optional compatibility seed captured once during construction for the default controller's mount.
    *
@@ -101,6 +103,8 @@ export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TC
   readonly interactionFactory?: KanbanInteractionControllerFactory;
   /** Optional synchronous receiver for immutable, non-mutation semantic interaction intents. */
   readonly onInteraction?: KanbanInteractionHandler;
+  /** Optional bounded threshold configuration for board-owned card and structural drags. */
+  readonly drag?: KanbanDragConfiguration;
 }
 
 /** Conditional focused-column navigator evidence. */
@@ -168,6 +172,7 @@ function viewportOptions<TCard>(
     ...(options.observe === undefined ? {} : { observe: options.observe }),
     ...(options.capabilities === undefined ? {} : { capabilities: options.capabilities }),
     ...(options.collapsedColumnIds === undefined ? {} : { collapsedColumnIds: options.collapsedColumnIds }),
+    ...(options.drag === undefined ? {} : { drag: options.drag }),
   };
 }
 
@@ -289,6 +294,17 @@ export class KanbanBoard<TCard> extends Group {
       invalidate: () => this.viewport.invalidate(),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
       ...(options.onInteraction === undefined ? {} : { onInteraction: options.onInteraction }),
+      operations: {
+        selection: () => this.#snapshotEligibleSelection(),
+        resolveCardMove: (cardKeys, moveOptions) => resolveKanbanViewportCardMove(this.viewport, cardKeys, moveOptions),
+        request: (proposal) => this.#authority.request(proposal),
+        cancel: (operationId) => {
+          const current = operationId ?? this.#authority.snapshot().at(-1)?.operationId;
+          return current === undefined ? false : this.#authority.cancel(current);
+        },
+        undo: (operationId) => this.#authority.undo(operationId),
+        redo: (operationId) => this.#authority.undo(operationId),
+      },
     });
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
@@ -307,7 +323,10 @@ export class KanbanBoard<TCard> extends Group {
       acceptScopedAction: (actionId, scope, origin) =>
         this.#interactionFacade.acceptScopedAction(actionId, scope, origin),
       commitCardMove: (proposal) => this.#authority.commitProposal(proposal),
+      commitStructureReorder: (proposal) => this.#authority.commitProposal(proposal),
       evaluateCardMove: (proposal) => this.#authority.evaluateProposal(proposal),
+      moveFocused: (direction) => this.#interactionFacade.acceptMoveFocused(direction),
+      cancelTransient: () => this.#interactionFacade.cancel(),
     });
     setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
       this.#reconcileInteraction(this.viewport.identityChanges()),

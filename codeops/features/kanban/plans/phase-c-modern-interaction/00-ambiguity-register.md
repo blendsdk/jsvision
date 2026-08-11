@@ -40,6 +40,7 @@
 | AR-C21 | Technical (runtime) | What happens when the numeric capture generation is exhausted? | Fail closed before mutation / wrap and add a hidden token / reuse only while uncaptured | Fail closed with `RangeError` before changing capture; the current owner remains active | ✅ Resolved |
 | AR-C22 | Technical (runtime) | Which limit class should bound committed undo descriptors, and how is the stale exact-manifest oracle synchronized? | Reuse `retainedDescriptors` values / reuse operation-ID retention / introduce unrelated new values | Add the independent key with the established descriptor-retention values `256/2,048/8,192`; first add a requirement-derived red assertion, then update the exact manifest oracle with production | ✅ Resolved |
 | AR-C23 | Technical (runtime) | How does the record-independent coordinator revalidate current revisions and eligibility after an asynchronous confirmation? | Coordinator reads source state / reuse admission result / board integration supplies a pure revalidator | Use a package-internal board-supplied revalidator; absence or failure after confirmation cancels fail-closed | ✅ Resolved |
+| AR-C24 | Testing (runtime) | How should the parity oracle resolve a fixture whose pointer destination is `doing/beta` while its programmatic and keyboard destination is `doing/alpha`? | Change pointer semantics to ignore the hovered swimlane / align the pointer anchor fixture with the stated same semantic destination | Keep pointer destination semantics intact and place the pointer anchor in `doing/alpha`, so all three origins exercise the same semantic fixture | ✅ Resolved |
 
 ## Resolution notes
 
@@ -177,6 +178,21 @@
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
 - **Reopen trigger:** The coordinator gains a record-independent current-authority snapshot API or board/source ownership changes.
+
+### AR-C24 — Same-fixture parity correction (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Testing strategy and fixture mechanics inside the already-approved pointer/keyboard/programmatic parity behavior; no product behavior or acceptance criterion changes.
+- **Objective:** Keep the specification assertion a valid comparison of three input origins producing one semantic move.
+- **Evidence:** The assertion describes the same semantic fixture and expects deep equality, but its pointer anchor card was assigned to `doing/beta` while the programmatic and keyboard destinations resolve to `doing/alpha`. It also aimed at the anchor's leading half, which correctly means `start`, while the other origins request `end`. Pointer drop resolution preserves both the hovered card's full cell address and its leading/trailing half.
+- **Decision:** Assign the pointer anchor card to `doing/alpha` and aim the pointer trace at its trailing row. The expected request remains unchanged and all origins must still traverse their real producer path.
+- **Rejected alternatives:** Making pointer drag ignore the hovered swimlane would break explicit cross-swimlane placement; changing the programmatic destination to `beta` would make the keyboard right-move fixture inconsistent because keyboard movement preserves the source swimlane.
+- **Strongest counterargument:** A requirement-derived specification should ordinarily remain immutable after its red phase.
+- **Confidence:** High — the contradictory addresses make the original equality assertion impossible without corrupting one producer's semantics.
+- **Hardening:** The pointer and keyboard resolver contracts were rechecked against the approved semantic-address and card-half behavior; only fixture data/coordinates change, not an expectation or assertion.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-C-20260812T0118CEST`.
+- **Reopen trigger:** Product requirements later define horizontal pointer movement as preserving the source swimlane regardless of the hovered target.
 
 ## Systematic category closure
 
