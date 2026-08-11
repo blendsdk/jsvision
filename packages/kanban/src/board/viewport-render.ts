@@ -324,19 +324,30 @@ function drawOverlays(
   }
   if (overlay.ghost !== undefined) {
     drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
-    const identityLabel =
+    const countLabel =
       overlay.ghost.count === 1 ? overlay.ghost.label : translate('kanban.drag.cards', { count: overlay.ghost.count });
     const residentCue = [overlay.ghost.title, overlay.ghost.status].filter(
       (value): value is string => value !== undefined,
     );
-    const label = residentCue.length === 0 ? identityLabel : residentCue.join(' · ');
+    const cueLabel = residentCue.join(' · ');
+    // A bulk count is the atomic-operation cue, so it owns the first row on narrow terminals.
+    // Recognizable resident content uses a second row only when the ghost has room for both.
+    const primaryLabel = overlay.ghost.count > 1 || cueLabel.length === 0 ? countLabel : cueLabel;
     if (overlay.ghost.rect.width > 2) {
       ctx.text(
         overlay.ghost.rect.x + 1,
         overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),
-        cropCellText(label, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
+        cropCellText(primaryLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
         style(theme, 'card.ghost'),
       );
+      if (overlay.ghost.count > 1 && cueLabel.length > 0 && overlay.ghost.rect.height > 3) {
+        ctx.text(
+          overlay.ghost.rect.x + 1,
+          overlay.ghost.rect.y + 2,
+          cropCellText(cueLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
+          style(theme, 'card.ghost'),
+        );
+      }
     }
   }
   for (const feedback of overlay.feedback) {

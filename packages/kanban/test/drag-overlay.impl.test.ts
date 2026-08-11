@@ -4,7 +4,7 @@ import { Group, View, createRenderRoot } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';
 import { describe, expect, it } from 'vitest';
 
-import { createKanbanOperationId, createKanbanTheme } from '../src/index.js';
+import { createKanbanOperationId, createKanbanTheme, evaluateKanbanMoveEligibility } from '../src/index.js';
 import type { KanbanCardDescriptor, KanbanOperationSnapshot } from '../src/index.js';
 import { createEnglishKanbanI18n } from '../src/i18n/catalog.js';
 import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
@@ -151,6 +151,57 @@ function drag(cardKey: string | number = 1): KanbanDragOverlayEvidence {
   });
 }
 
+/** Creates a complete allowed move whose individual policy stages can be varied by a focused test. */
+function eligibleMoveInput() {
+  return {
+    proposal: {
+      kind: 'card-move' as const,
+      moved: [
+        {
+          cardKey: 1,
+          source: { columnId: 'ready' },
+          sourcePlacement: { kind: 'start' as const, cursorRevision: 'ready-r1' },
+          sourceRevision: 'ready-r1',
+          entityRevision: 'card-1-r1',
+        },
+      ],
+      target: { columnId: 'doing' },
+      position: { kind: 'end' as const, cursorRevision: 'doing-r1' },
+    },
+    current: {
+      sourceRevision: 'source-r1',
+      queryRevision: 'query-r1',
+      columns: [
+        { columnId: 'ready', revision: 'ready-r1' },
+        { columnId: 'doing', revision: 'doing-r1' },
+      ],
+      swimlanes: [],
+      cards: [{ cardKey: 1, revision: 'card-1-r1' }],
+      sourceCells: [
+        {
+          address: { columnId: 'ready' },
+          cursorRevision: 'ready-r1',
+          edges: { start: 'complete' as const, end: 'complete' as const },
+          cardKeys: [1],
+          placementTokens: [],
+        },
+      ],
+      targetCursorRevision: 'doing-r1',
+      targetEdges: { start: 'complete' as const, end: 'complete' as const },
+      targetCardKeys: [],
+      placementTokens: [],
+    },
+    expected: { source: 'source-r1', query: 'query-r1' },
+    capability: { state: 'allowed' as const },
+    selection: { kind: 'loaded' as const, orderedCardKeys: [1], maximum: 10_000 },
+    ordering: { sorted: false, filtered: false, filteredPlacement: 'not-required' },
+    transition: { kind: 'allowed' },
+    definitionOfDone: { kind: 'allowed' },
+    wip: { kind: 'allowed' },
+    unchanged: false,
+  };
+}
+
 /** Minimal leaf that draws a supplied projection through the real viewport renderer. */
 class ProjectionLeaf extends View {
   #projection: KanbanViewportProjection;
@@ -268,7 +319,6 @@ describe('overlay composition internals', () => {
     ['wip-maximum-exceeded', 'kanban.workflow.wip-maximum-exceeded'],
     ['transition-blocked', 'kanban.operation.transition-blocked'],
     ['definition-of-done-not-met', 'kanban.operation.definition-of-done'],
-    ['stale-placement', 'kanban.operation.stale-placement'],
     ['unrecognized-safe-code', 'kanban.drop.warning'],
   ] as const)('maps safe eligibility reason %s to localized key %s', (code, messageKey) => {
     const evidence = drag();
@@ -284,6 +334,105 @@ describe('overlay composition internals', () => {
 
     expect(result.overlay.gap?.messageKey).toBe(messageKey);
     expect(result.overlay.gap?.eligibility).toEqual({ kind: 'warning' });
+  });
+
+  it('maps canonical evaluator stale, sorted, and filtered outcomes to their localized messages', () => {
+    const baseline = eligibleMoveInput();
+    const withinSource = {
+      ...baseline,
+      proposal: {
+        ...baseline.proposal,
+        target: { columnId: 'ready' },
+        position: { kind: 'end' as const, cursorRevision: 'ready-r1' },
+      },
+      current: {
+        ...baseline.current,
+        targetCursorRevision: 'ready-r1',
+        targetCardKeys: [1],
+      },
+    };
+    const outcomes = [
+      [
+        evaluateKanbanMoveEligibility({
+          ...baseline,
+          current: {
+            ...baseline.current,
+            sourceCells: [{ ...baseline.current.sourceCells[0]!, cursorRevision: 'ready-r2' }],
+          },
+        }),
+        'kanban.operation.stale-placement',
+      ],
+      [
+        evaluateKanbanMoveEligibility({
+          ...withinSource,
+          ordering: { sorted: true, filtered: false, filteredPlacement: 'not-required' },
+        }),
+        'kanban.operation.sorted-placement',
+      ],
+      [
+        evaluateKanbanMoveEligibility({
+          ...withinSource,
+          ordering: { sorted: false, filtered: true, filteredPlacement: 'unavailable' },
+        }),
+        'kanban.operation.filtered-placement',
+      ],
+    ] as const;
+
+    for (const [eligibility, messageKey] of outcomes) {
+      const evidence = drag();
+      const result = composeKanbanViewportOverlay({
+        authoritative: authoritative(),
+        bounds: { x: 0, y: 0, width: 36, height: 12 },
+        density: 'comfortable',
+        drag: { ...evidence, gap: { ...evidence.gap!, eligibility } },
+      });
+      expect(result.overlay.gap?.messageKey).toBe(messageKey);
+    }
+  });
+
+  it('indexes every maximum-resident card once and performs at most one lookup per distinct drag key', () => {
+    const cardCount = 8_192;
+    const selectionCount = 10_000;
+    const source = authoritative();
+    const cards = Object.freeze(
+      Array.from({ length: cardCount }, (_, cardKey) =>
+        Object.freeze({
+          columnId: 'ready',
+          index: cardKey,
+          descriptor: descriptor(cardKey),
+          descriptorColumnOffset: 0,
+          descriptorRowOffset: 0,
+          rect: Object.freeze({ x: 1, y: 3, width: 16, height: 4 }),
+        }),
+      ),
+    );
+    let measured:
+      | Readonly<{ indexedCards: number; cardLookups: number; indexedColumns: number; columnLookups: number }>
+      | undefined;
+    composeKanbanViewportOverlay({
+      authoritative: Object.freeze({ ...source, cards }),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: Object.freeze({
+        ...drag(0),
+        placeholders: Object.freeze([
+          Object.freeze({
+            address: Object.freeze({ columnId: 'ready' }),
+            cardKeys: Object.freeze(Array.from({ length: selectionCount }, (_, cardKey) => cardKey)),
+          }),
+        ]),
+      }),
+      inspectWork: (work) => {
+        measured = work;
+      },
+    });
+
+    expect(measured).toEqual({
+      indexedCards: cardCount,
+      cardLookups: selectionCount,
+      indexedColumns: 2,
+      columnLookups: 2,
+    });
   });
 
   it('composes source placeholders, target reflow, concurrent slots, and offscreen fallback for pending moves', () => {
@@ -344,6 +493,32 @@ describe('overlay drawing and damage internals', () => {
     expect(unicode.text()).toMatch(/[◆━┃]/u);
     expect(ascii.text()).toContain('> Move here');
     expect(ascii.text()).toMatch(/[+=!]/u);
+    unicode.render.unmount();
+    ascii.render.unmount();
+  });
+
+  it('draws localized bulk count and recognizable resident cues in Unicode and ASCII frames', () => {
+    const evidence = drag();
+    const projection = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: {
+        ...evidence,
+        ghost: { ...evidence.ghost, count: 3 },
+        placeholders: [
+          { address: { columnId: 'ready' }, cardKeys: [1, '1'] },
+          { address: { columnId: 'doing' }, cardKeys: [2] },
+        ],
+      },
+    });
+    const unicode = mountedFrame(projection);
+    const ascii = mountedFrame(projection, true);
+
+    expect(unicode.text()).toContain('Moving 3 cards');
+    expect(unicode.text()).toContain('Numeric source');
+    expect(ascii.text()).toContain('Moving 3 cards');
+    expect(ascii.text()).toContain('Numeric source');
     unicode.render.unmount();
     ascii.render.unmount();
   });
