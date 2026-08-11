@@ -317,6 +317,7 @@ class EventLoopImpl implements EventLoop {
       // focusable descendant, or nowhere) inside a tick, so the focus change and its repaint stay
       // consistent. A view tree used without a loop leaves this unset and just clears its pointer.
       healFocus: (group) => this.runTick(() => this.focus.focusInto(group)),
+      onViewUnmounting: (view) => this.handleViewUnmounting(view),
     });
   }
 
@@ -634,6 +635,18 @@ class EventLoopImpl implements EventLoop {
   private releaseCaptureGeneration(generation: number, reason: PointerCaptureLossReason): void {
     if (this.capture?.generation !== generation) return;
     this.transitionCapture(reason, null);
+  }
+
+  /** End capture before a target or any of its ancestors loses parent links and reactive scope. */
+  private handleViewUnmounting(view: View): void {
+    let cursor = this.capture?.target ?? null;
+    while (cursor !== null) {
+      if (cursor === view) {
+        this.transitionCapture('unmounted', null);
+        return;
+      }
+      cursor = cursor.parent;
+    }
   }
 
   /** Isolate application cleanup and diagnostic failures from capture ownership transitions. */

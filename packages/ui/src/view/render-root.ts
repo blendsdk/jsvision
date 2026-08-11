@@ -253,6 +253,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
   private readonly healFocusSeam?: (group: View) => void;
+  private readonly onViewUnmountingSeam?: (view: View) => void;
 
   private rootView: View | null = null;
   private disposeRoot: (() => void) | null = null;
@@ -273,6 +274,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.logger = opts.logger ?? createLogger();
     this.scheduler = opts.schedule ?? ((flush): void => queueMicrotask(flush));
     this.healFocusSeam = opts.healFocus;
+    this.onViewUnmountingSeam = opts.onViewUnmounting;
     this.current = new ScreenBuffer(size.width, size.height, BLANK);
   }
 
@@ -281,8 +283,13 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.healFocusSeam?.(group);
   }
 
+  /** @internal ViewHost — notify lifecycle owners before a mounted subtree loses ancestry or scope. */
+  onViewUnmounting(view: View): void {
+    this.onViewUnmountingSeam?.(view);
+  }
+
   mount(root: View): void {
-    this.disposeRoot?.(); // safe to re-mount: dispose any previously-mounted tree first
+    this.unmount(); // safe to re-mount: the previous root follows the same observable teardown path
     this.rootView = root;
     createRoot((dispose) => {
       this.disposeRoot = dispose;
@@ -293,7 +300,9 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   }
 
   unmount(): void {
-    // Disposing the root scope cascades through every descendant view scope, firing their onCleanup.
+    // Route root teardown through View.unmount() so permanent pre-cleanup lifecycle observers see the
+    // same transition as Group.remove() and dynamic-child reconciliation.
+    this.rootView?.unmount();
     this.disposeRoot?.();
     this.disposeRoot = null;
     this.rootView = null;

@@ -97,6 +97,14 @@ export interface RenderRootOptions {
    * unset.
    */
   healFocus?: (group: View) => void;
+  /**
+   * Observe a mounted subtree immediately before its view scope and parent links are torn down.
+   * One permanent root-level callback can therefore release state owned by any descendant without
+   * registering cleanup closures on each transient interaction.
+   *
+   * @param view The root of the subtree that is about to unmount.
+   */
+  onViewUnmounting?: (view: View) => void;
 }
 
 // --- Event-handler contract types ---------------------------------------------------------------

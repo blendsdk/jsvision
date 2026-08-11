@@ -36,6 +36,8 @@ export interface ViewHost {
    * @param group The group whose focused child was removed.
    */
   healFocus?(group: View): void;
+  /** Notify the root that `view` is about to unmount while its ancestry and scope are still intact. */
+  onViewUnmounting?(view: View): void;
 }
 
 /**
@@ -200,6 +202,8 @@ export abstract class View {
 
   private readonly pendingMounts: Array<() => void> = [];
   private mountFired = false;
+  /** Prevent a cleanup callback from recursively unmounting the same still-live scope. */
+  private unmounting = false;
 
   /**
    * Paint this view through a clipped, view-local context. Every widget overrides this to draw
@@ -451,6 +455,13 @@ export abstract class View {
    * runs their `onCleanup`. Idempotent.
    */
   unmount(): void {
-    this.disposeScope?.();
+    if (!this.mounted || this.unmounting) return;
+    this.unmounting = true;
+    try {
+      this.host?.onViewUnmounting?.(this);
+      this.disposeScope?.();
+    } finally {
+      this.unmounting = false;
+    }
   }
 }
