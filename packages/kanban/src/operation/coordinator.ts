@@ -124,8 +124,8 @@ export class KanbanOperationGenerationClock {
   /** Permanently invalidates the clock without wrapping its visible generation. */
   dispose(): void {
     if (this.#disposed) return;
-    this.advance();
     this.#disposed = true;
+    if (this.#generation < Number.MAX_SAFE_INTEGER) this.#generation += 1;
   }
 }
 
@@ -469,7 +469,13 @@ export class KanbanOperationCoordinator {
     operation: ActiveKanbanOperation,
     result: Extract<KanbanRequestResult, { readonly kind: 'cancelled' }>,
   ): KanbanRequestResult {
-    if (!this.#isCurrent(operation)) return Object.freeze(result);
+    if (!this.#isCurrent(operation)) {
+      return Object.freeze({
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: 'operation-cancelled',
+      });
+    }
     this.#finishLifecycle(operation, result.kind, result.code);
     return Object.freeze(result);
   }
@@ -540,6 +546,16 @@ export class KanbanOperationCoordinator {
     }
   }
 
+  /** Cancel one active operation synchronously; unknown and terminal identities are inert. */
+  cancel(operationId: KanbanOperationId): boolean {
+    if (this.#disposed) return false;
+    const identity = createKanbanOperationId(operationId);
+    const operation = this.#operations.get(identity);
+    if (operation === undefined || !this.#isCurrent(operation)) return false;
+    this.#finishLifecycle(operation, 'cancelled', 'operation-cancelled');
+    return true;
+  }
+
   /** Check coordinator, operation, subject, and cancellation generations before continuation. */
   #isCurrent(operation: ActiveKanbanOperation): boolean {
     return (
@@ -561,17 +577,26 @@ export class KanbanOperationCoordinator {
     return this.#snapshots.subscribe(subscriber);
   }
 
-  /** Invalidates and aborts retained admissions; later asynchronous settlement becomes unusable. */
+  /** Invalidates, cancels, and aborts retained admissions before releasing subscribers. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
     this.#generation.dispose();
-    for (const operation of this.#operations.values()) {
+    for (const operation of [...this.#operations.values()]) {
+      this.#operations.delete(operation.id.operationId);
       operation.controller.abort();
       operation.subjects.release();
       operation.id.retain();
+      this.#snapshots.publish(
+        Object.freeze({
+          operationId: operation.id.operationId,
+          kind: operation.request.kind,
+          state: 'cancelled',
+          affected: operation.subjects.affected,
+          code: 'operation-cancelled',
+        }),
+      );
     }
-    this.#operations.clear();
     this.#snapshots.dispose();
     this.#subjects.dispose();
     this.#ids.dispose();
