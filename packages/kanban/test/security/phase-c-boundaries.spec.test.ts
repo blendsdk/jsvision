@@ -5,6 +5,7 @@
  * enforce atomic bounds, and ensure opaque placement evidence never becomes diagnostic text.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { runInNewContext } from 'node:vm';
 
 import {
   KANBAN_LIMITS,
@@ -204,5 +205,85 @@ describe('bounded and redacted semantic data', () => {
 
     expect(result).toEqual({ kind: 'unavailable', code: 'placement-token-stale' });
     expect(JSON.stringify(result)).not.toContain(tokenText);
+  });
+});
+
+describe('hostile runtime representations', () => {
+  it('should contain descriptor traps without exposing their private failure text', () => {
+    const hostile = new Proxy(moveProposal(), {
+      getOwnPropertyDescriptor() {
+        throw new Error('private descriptor payload');
+      },
+    });
+
+    expect(() => snapshotKanbanRequestProposal(hostile)).toThrow();
+    try {
+      snapshotKanbanRequestProposal(hostile);
+    } catch (error) {
+      expect(String(error)).not.toContain('private descriptor payload');
+    }
+  });
+
+  it('should reject a Promise subclass result without invoking its overridden then member', async () => {
+    const request = createKanbanRequestEnvelope(moveProposal(), lifecycle());
+    const then = vi.fn(() => {
+      throw new Error('must not run');
+    });
+    class HostilePromise extends Promise<unknown> {}
+    const outcome = new HostilePromise((resolve) => resolve({ kind: 'accepted', operationId: request.operationId }));
+    Object.defineProperty(outcome, 'then', { configurable: true, value: then });
+
+    await expect(dispatchKanbanRequest(request, () => outcome, { capabilities: {} })).resolves.toEqual({
+      kind: 'rejected',
+      operationId: request.operationId,
+      code: 'invalid-dispatch-result',
+    });
+    expect(then).not.toHaveBeenCalled();
+  });
+
+  it('should reject a cross-realm proposal object before retaining its values', () => {
+    const crossRealm = runInNewContext(`({ kind: 'card-delete', cardKey: 4 })`);
+
+    expect(() => snapshotKanbanRequestProposal(crossRealm)).toThrow();
+  });
+});
+
+describe('semantic failure ceilings', () => {
+  it('should reject semantic data beyond the supported nesting depth', () => {
+    let nested: unknown = null;
+    for (let depth = 0; depth <= KANBAN_LIMITS.semanticDepth.safe; depth += 1) nested = { child: nested };
+
+    expect(() => snapshotKanbanRequestProposal({ kind: 'card-update', cardKey: 4, patch: nested })).toThrow();
+  });
+
+  it('should neutralize terminal controls in saved-view labels before publication', () => {
+    const snapshot = snapshotKanbanRequestProposal({
+      kind: 'saved-view-rename',
+      viewId: 'daily',
+      label: '\u001b[31mDanger\u0000',
+    });
+
+    expect(snapshot.label).not.toContain('\u001b');
+    expect(snapshot.label).not.toContain('\u0000');
+    expect(snapshot.label).toContain('Danger');
+  });
+
+  it('should return a payload-free rejection when a standard dispatcher throws private data', async () => {
+    const request = createKanbanRequestEnvelope(moveProposal(), lifecycle());
+
+    const result = await dispatchKanbanRequest(
+      request,
+      () => {
+        throw new Error('private application record body');
+      },
+      { capabilities: {} },
+    );
+
+    expect(result).toEqual({
+      kind: 'rejected',
+      operationId: request.operationId,
+      code: 'dispatcher-failed',
+    });
+    expect(JSON.stringify(result)).not.toContain('private');
   });
 });
