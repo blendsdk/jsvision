@@ -172,3 +172,29 @@ test('ST-05: suspend/resume is host-owned; the app re-asserts no modes', async (
   app.loop.emitCommand('quit');
   await runP;
 });
+
+// Phase C host integration — the terminal's decoded focus report and the explicit transport seam
+// converge on the same synchronous, generation-bound loss behavior.
+test('host focus and explicit transport loss synchronously end application capture', async () => {
+  const { app, input } = makeApp();
+  const target = new KeyLeaf();
+  target.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 1 } });
+  app.desktop.add(target);
+  const runP = app.run();
+  const losses: string[] = [];
+  const decodedLease = app.loop.acquireCapture(target, (reason) => losses.push(`decoded:${reason}`));
+
+  input.feed(new TextEncoder().encode('\x1b[O'));
+
+  expect(decodedLease.active()).toBe(false);
+  expect(losses).toEqual(['decoded:host-lost']);
+
+  const explicitLease = app.loop.acquireCapture(target, (reason) => losses.push(`explicit:${reason}`));
+  app.loop.notifyCaptureLost();
+
+  expect(explicitLease.active()).toBe(false);
+  expect(losses).toEqual(['decoded:host-lost', 'explicit:host-lost']);
+
+  app.loop.emitCommand('quit');
+  await runP;
+});

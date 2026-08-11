@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 11:18 CEST
-> **Progress**: 12/124 tasks (10%)
+> **Last Updated**: 2026-08-11 11:21 CEST
+> **Progress**: 13/124 tasks (10%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -90,7 +90,7 @@ changing the shared UI event loop.
 **Objective**: Prove internal ordering, regressions, and package compatibility.
 
 - [x] 1.3.1 Add implementation tests for generation rollover/exhaustion, callback reentrancy ordering, duplicate loss, anonymous legacy leases, and repeated capture/release bounded unmount-hook retention — `packages/ui/test/pointer-capture-lease.impl.test.ts` ✅ (completed: 2026-08-11 11:18)
-- [ ] 1.3.2 Add root remount/unmount, ancestor subtree, leak/disposal, and host-ingress integration coverage with real mounted views — `packages/ui/test/pointer-capture-lease.impl.test.ts`, `packages/ui/test/app-shell.lifecycle.spec.test.ts`
+- [x] 1.3.2 Add root remount/unmount, ancestor subtree, leak/disposal, and host-ingress integration coverage with real mounted views — `packages/ui/test/pointer-capture-lease.impl.test.ts`, `packages/ui/test/app-shell.lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 11:21)
 - [ ] 1.3.3 Run UI typecheck, focused capture/control tests, mapped plugin-impact review/update/check, and `yarn verify:local`
 
 **Deliverables**: additive UI lease API; all capture-loss sources converge; existing controls unchanged;
