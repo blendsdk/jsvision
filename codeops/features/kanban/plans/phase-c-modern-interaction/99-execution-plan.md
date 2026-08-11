@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 11:56 CEST
-> **Progress**: 15/124 tasks (12%)
+> **Last Updated**: 2026-08-11 12:00 CEST
+> **Progress**: 16/124 tasks (13%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -123,7 +123,7 @@ with no new or reopened Critical/Major issue.
 contracts before production expansion.
 
 - [x] 2.1.1 `[spec-author]` Write exact standard proposal/internal-envelope/new-extension and legacy-extension-overload plus semantic move cases — `packages/kanban/test/requests-placement.spec.test.ts` ✅ (completed: 2026-08-11 11:56)
-- [ ] 2.1.2 `[spec-author]` Add complete/unknown edge, anchor/token, sorted/filtered, no-op, WIP/DoD/transition, warning, and stale-revision eligibility cases — `packages/kanban/test/requests-placement.spec.test.ts`
+- [x] 2.1.2 `[spec-author]` Add complete/unknown edge, anchor/token, sorted/filtered, no-op, WIP/DoD/transition, warning, and stale-revision eligibility cases — `packages/kanban/test/requests-placement.spec.test.ts` ✅ (completed: 2026-08-11 12:00)
 - [ ] 2.1.3 `[spec-author]` Add duplicate ID/selection, partial atomic result, hostile getter/proxy/thenable, bounds, controls, and token-redaction cases — `packages/kanban/test/security/phase-c-boundaries.spec.test.ts`
 - [ ] 2.1.4 Run focused request/security specifications and record expected red behavior
 

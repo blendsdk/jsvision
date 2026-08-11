@@ -7,7 +7,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { createKanbanRequestEnvelope, createPlacementToken, snapshotKanbanRequestProposal } from '../src/index.js';
+import {
+  createKanbanRequestEnvelope,
+  createPlacementToken,
+  evaluateKanbanMoveEligibility,
+  snapshotKanbanRequestProposal,
+} from '../src/index.js';
 
 /** Lifecycle values captured by the package immediately before application dispatch. */
 function lifecycle() {
@@ -67,6 +72,37 @@ function proposals(): readonly object[] {
     { kind: 'saved-view-delete', viewId: 'daily' },
     { kind: 'extension', extensionId: 'example.review', payload: { cardKey: 4 } },
   ];
+}
+
+/** Complete current authority used as the allowed baseline for move-eligibility cases. */
+function eligibleMoveInput() {
+  return {
+    proposal: proposals()[5]!,
+    current: {
+      boardRevision: 'board-4',
+      sourceRevision: 'source-8',
+      queryRevision: 'query-12',
+      viewRevision: 'view-r2',
+      columns: [
+        { columnId: 'ready', revision: 'ready-r7' },
+        { columnId: 'doing', revision: 'doing-r8' },
+      ],
+      swimlanes: [{ swimlaneId: 'team-blue', revision: 'team-blue-r3' }],
+      cards: [{ cardKey: 4, revision: 'card-4-r3' }],
+      targetCursorRevision: 'doing-r8',
+      targetEdges: { start: 'complete', end: 'complete' },
+      targetCardKeys: [8, 9],
+      placementTokens: [],
+    },
+    expected: lifecycle().expected,
+    capability: { state: 'allowed' },
+    selection: { kind: 'loaded', orderedCardKeys: [4], maximum: 10_000 },
+    ordering: { sorted: false, filtered: false, filteredPlacement: 'not-required' },
+    transition: { kind: 'allowed' },
+    definitionOfDone: { kind: 'allowed' },
+    wip: { kind: 'allowed' },
+    unchanged: false,
+  };
 }
 
 describe('standard request proposal contract', () => {
@@ -226,5 +262,166 @@ describe('semantic card move contract', () => {
       cursorRevision: 'doing-r8',
     });
     expect(JSON.stringify(snapshot.position)).not.toMatch(/(?:index|rank)/u);
+  });
+});
+
+describe('move eligibility contract', () => {
+  // Logical start and end require complete edge evidence; partial windows cannot guess either edge.
+  it('should allow complete logical edges and make an unknown logical edge unavailable', () => {
+    const complete = eligibleMoveInput();
+    const start = {
+      ...complete,
+      proposal: { ...complete.proposal, position: { kind: 'start', cursorRevision: 'doing-r8' } },
+    };
+    const unknownEnd = {
+      ...complete,
+      proposal: { ...complete.proposal, position: { kind: 'end', cursorRevision: 'doing-r8' } },
+      current: { ...complete.current, targetEdges: { start: 'complete', end: 'unknown' } },
+    };
+
+    expect(evaluateKanbanMoveEligibility(start)).toEqual({ kind: 'allowed' });
+    expect(evaluateKanbanMoveEligibility(unknownEnd)).toEqual({
+      kind: 'unavailable',
+      code: 'placement-edge-unknown',
+    });
+  });
+
+  // Loaded anchors and source-issued tokens are current evidence; absent or obsolete evidence is not.
+  it('should require current anchors or the exact current window-edge token', () => {
+    const baseline = eligibleMoveInput();
+    const missingAnchor = {
+      ...baseline,
+      current: { ...baseline.current, targetCardKeys: [8] },
+    };
+    const token = createPlacementToken('current-edge-token');
+    const windowEdge = {
+      ...baseline,
+      proposal: {
+        ...baseline.proposal,
+        position: {
+          kind: 'window-edge',
+          edge: 'after',
+          neighborCardKey: 9,
+          token,
+          cursorRevision: 'doing-r8',
+        },
+      },
+      current: { ...baseline.current, placementTokens: [token] },
+    };
+
+    expect(evaluateKanbanMoveEligibility(missingAnchor)).toEqual({
+      kind: 'unavailable',
+      code: 'placement-anchor-stale',
+    });
+    expect(evaluateKanbanMoveEligibility(windowEdge)).toEqual({ kind: 'allowed' });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...windowEdge,
+        current: { ...windowEdge.current, placementTokens: [] },
+      }),
+    ).toEqual({ kind: 'unavailable', code: 'placement-token-stale' });
+  });
+
+  // Manual reordering under sort is ambiguous; a policy-valid cross-column transition remains valid.
+  it('should block sorted within-cell reorder but allow a cross-column move', () => {
+    const baseline = eligibleMoveInput();
+    const sortedWithinCell = {
+      ...baseline,
+      proposal: {
+        ...baseline.proposal,
+        target: { columnId: 'ready', swimlaneId: 'team-blue' },
+        position: { kind: 'between', beforeCardKey: 6, afterCardKey: 7, cursorRevision: 'ready-r7' },
+      },
+      current: { ...baseline.current, targetCursorRevision: 'ready-r7', targetCardKeys: [6, 7] },
+      ordering: { ...baseline.ordering, sorted: true },
+    };
+    const sortedCrossColumn = { ...baseline, ordering: { ...baseline.ordering, sorted: true } };
+
+    expect(evaluateKanbanMoveEligibility(sortedWithinCell)).toEqual({
+      kind: 'blocked',
+      code: 'sorted-manual-order',
+    });
+    expect(evaluateKanbanMoveEligibility(sortedCrossColumn)).toEqual({ kind: 'allowed' });
+  });
+
+  // Filtering needs explicit source resolution when visible neighbors may not be logically adjacent.
+  it('should require filtered placement resolution before dispatching a within-cell reorder', () => {
+    const baseline = eligibleMoveInput();
+    const withinCell = {
+      ...baseline,
+      proposal: {
+        ...baseline.proposal,
+        target: { columnId: 'ready', swimlaneId: 'team-blue' },
+        position: { kind: 'between', beforeCardKey: 6, afterCardKey: 7, cursorRevision: 'ready-r7' },
+      },
+      current: { ...baseline.current, targetCursorRevision: 'ready-r7', targetCardKeys: [6, 7] },
+      ordering: { sorted: false, filtered: true, filteredPlacement: 'unavailable' },
+    };
+
+    expect(evaluateKanbanMoveEligibility(withinCell)).toEqual({
+      kind: 'unavailable',
+      code: 'filtered-placement-unavailable',
+    });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...withinCell,
+        ordering: { ...withinCell.ordering, filteredPlacement: 'resolved' },
+      }),
+    ).toEqual({ kind: 'allowed' });
+  });
+
+  // Application workflow advice is composable, but the first terminal pipeline stage always wins.
+  it('should preserve transition, definition-of-done, WIP warning, and first-terminal ordering', () => {
+    const baseline = eligibleMoveInput();
+
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        transition: { kind: 'blocked', code: 'transition-not-allowed' },
+        wip: { kind: 'warning', code: 'wip-maximum-exceeded' },
+      }),
+    ).toEqual({ kind: 'blocked', code: 'transition-not-allowed' });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        definitionOfDone: { kind: 'blocked', code: 'definition-of-done-not-met' },
+      }),
+    ).toEqual({ kind: 'blocked', code: 'definition-of-done-not-met' });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        wip: { kind: 'warning', code: 'wip-maximum-exceeded', params: { maximum: 8 } },
+      }),
+    ).toEqual({
+      kind: 'warning',
+      code: 'wip-maximum-exceeded',
+      params: { maximum: 8 },
+    });
+  });
+
+  // A stale semantic snapshot is unavailable before presentation capability or workflow is consulted.
+  it('should return stale revision before a disabled capability or workflow warning', () => {
+    const baseline = eligibleMoveInput();
+    const stale = {
+      ...baseline,
+      expected: { ...baseline.expected, source: 'source-7' },
+      capability: { state: 'disabled', reasonCode: 'moves-disabled' },
+      transition: { kind: 'warning', code: 'transition-warning' },
+    };
+
+    expect(evaluateKanbanMoveEligibility(stale)).toEqual({
+      kind: 'unavailable',
+      code: 'stale-source-revision',
+    });
+  });
+
+  // Moving the same ordered cards back to their unchanged semantic interval is not dispatchable.
+  it('should block a semantic no-op after every policy stage allows it', () => {
+    const baseline = eligibleMoveInput();
+
+    expect(evaluateKanbanMoveEligibility({ ...baseline, unchanged: true })).toEqual({
+      kind: 'blocked',
+      code: 'unchanged-placement',
+    });
   });
 });
