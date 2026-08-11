@@ -132,3 +132,73 @@ describe('operation lifecycle transitions', () => {
     observed.unsubscribe();
   });
 });
+
+describe('operation publication settlement', () => {
+  it('should keep an accepted operation pending until exact correlated confirmation', async () => {
+    const operationId = createKanbanOperationId('operation-explicit-confirmation-1');
+    const unrelatedId = createKanbanOperationId('operation-unrelated-1');
+    const deferred = deferredResult();
+    const authority = new KanbanBoardAuthority(
+      () => deferred.promise,
+      () => ({}),
+    );
+    const observed = observe(authority, operationId);
+
+    const completion = authority.request(request(operationId));
+    deferred.resolve({ kind: 'accepted', operationId });
+    await completion;
+    expect(authority.snapshot().map(({ state }) => state)).toEqual(['accepted']);
+
+    authority.reconcilePublication({ kind: 'matching', ...publication(unrelatedId) });
+    expect(authority.snapshot().map(({ state }) => state)).toEqual(['accepted']);
+
+    authority.reconcilePublication({ kind: 'confirmed', operationId });
+    expect(observed.snapshots.map(({ state }) => state)).toEqual(['proposed', 'pending', 'accepted', 'committed']);
+    expect(authority.snapshot()).toEqual([]);
+    observed.unsubscribe();
+  });
+
+  it.each(['contradictory', 'deleted'] as const)(
+    'should let an exact %s authoritative publication supersede the accepted projection',
+    async (kind) => {
+      const operationId = createKanbanOperationId(`operation-${kind}-publication-1`);
+      const expectation = publication(operationId);
+      const deferred = deferredResult();
+      const authority = new KanbanBoardAuthority(
+        () => deferred.promise,
+        () => ({}),
+      );
+      const observed = observe(authority, operationId);
+
+      const completion = authority.request(request(operationId));
+      deferred.resolve({ kind: 'accepted', operationId, publication: expectation });
+      await completion;
+      authority.reconcilePublication({ kind, ...expectation });
+
+      expect(observed.snapshots.map(({ state }) => state)).toEqual(['proposed', 'pending', 'accepted', 'superseded']);
+      expect(authority.snapshot()).toEqual([]);
+      observed.unsubscribe();
+    },
+  );
+
+  it('should publish the pending snapshot before invoking an asynchronous dispatcher', async () => {
+    const operationId = createKanbanOperationId('operation-atomic-handoff-1');
+    const deferred = deferredResult();
+    const holder: { authority?: KanbanBoardAuthority } = {};
+    const dispatcher = vi.fn(() => {
+      expect(holder.authority?.snapshot().map(({ state }) => state)).toEqual(['pending']);
+      return deferred.promise;
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    holder.authority = authority;
+    const observed = observe(authority, operationId);
+
+    const completion = authority.request(request(operationId));
+    expect(dispatcher).toHaveBeenCalledOnce();
+    expect(observed.snapshots.map(({ state }) => state)).toEqual(['proposed', 'pending']);
+
+    deferred.resolve({ kind: 'rejected', operationId, code: 'test-complete' });
+    await completion;
+    observed.unsubscribe();
+  });
+});

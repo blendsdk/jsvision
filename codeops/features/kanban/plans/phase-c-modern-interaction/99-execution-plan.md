@@ -188,7 +188,7 @@ source-evidence bound were corrected without expanding Phase C scope.
 late-work behavior before introducing the coordinator.
 
 - [x] 3.1.1 `[spec-author]` Write proposed/pending/accepted/committed/rejected/cancelled/superseded transition cases — `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:06)
-- [ ] 3.1.2 `[spec-author]` Add expectation matching/contradiction/deletion, accepted-without-expectation, exact correlated reconciliation, and atomic handoff cases — `packages/kanban/test/operation-lifecycle.spec.test.ts`
+- [x] 3.1.2 `[spec-author]` Add expectation matching/contradiction/deletion, accepted-without-expectation, exact correlated reconciliation, and atomic handoff cases — `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:07)
 - [ ] 3.1.3 `[spec-author]` Add affected-entity concurrency, pending/retained limits, abort/disposal/late settlement, and fresh undo cases — `packages/kanban/test/operation-lifecycle.spec.test.ts`
 - [ ] 3.1.4 `[spec-author]` Add editor/configuration/saved-view/context-menu producer-contract fixtures proving one coordinator/dispatcher and zero source mutation — `packages/kanban/test/operation-lifecycle.spec.test.ts`
 - [ ] 3.1.5 `[spec-author]` Add lifecycle observation redaction plus hostile/reentrant/late dispatcher, confirmer, and inverse-builder settlement cases — `packages/kanban/test/security/phase-c-boundaries.spec.test.ts`, `packages/kanban/test/operation-lifecycle.spec.test.ts`
