@@ -76,6 +76,20 @@ function whole(bounds: Readonly<Rect>): readonly KanbanDamageRegion[] {
   return region === undefined ? Object.freeze([]) : Object.freeze([region]);
 }
 
+/** Returns every exact rectangle participating in one transient overlay frame. */
+function overlayRects(projection: KanbanViewportProjection): readonly Readonly<Rect>[] {
+  const overlay = projection.overlay;
+  if (overlay === undefined) return Object.freeze([]);
+  return Object.freeze([
+    ...overlay.placeholders.map(({ rect }) => rect),
+    ...(overlay.gap === undefined ? [] : [overlay.gap.rect]),
+    ...(overlay.ghost === undefined ? [] : [overlay.ghost.rect]),
+    ...overlay.pending.map(({ rect }) => rect),
+    ...overlay.feedback.map(({ rect }) => rect),
+    ...overlay.affectedStacks.map(({ rect }) => rect),
+  ]);
+}
+
 /** Inputs for one bounded canonical-scene damage comparison. */
 export interface CalculateKanbanSceneDamageOptions {
   /** Previous immutable semantic scene. */
@@ -192,6 +206,14 @@ export function calculateKanbanViewportDamage(
   ) {
     const region = clip(options.bounds, options.bounds, 'scroll-exposed');
     return region === undefined ? Object.freeze([]) : Object.freeze([region]);
+  }
+
+  if (JSON.stringify(previous.overlay) !== JSON.stringify(options.current.overlay)) {
+    const overlayDamage: KanbanDamageRegion[] = [];
+    for (const rect of [...overlayRects(previous), ...overlayRects(options.current)]) {
+      if (!pushDamage(overlayDamage, rect, options.bounds, 'overlay')) return whole(options.bounds);
+    }
+    if (overlayDamage.length > 0) return Object.freeze(overlayDamage);
   }
 
   if (

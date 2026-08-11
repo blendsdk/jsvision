@@ -326,14 +326,16 @@ behavior before drawing them.
 **Objective**: Project bounded semantic overlays into exact-cell geometry without corrupting authoritative
 scene or stale terminal cells.
 
-- [ ] 5.2.1 Extract pure authoritative-scene plus drag/pending overlay composition from the oversized viewport projector — `packages/kanban/src/board/overlay-projector.ts`, `packages/kanban/src/board/viewport-projector.ts`
-- [ ] 5.2.2 Implement source placeholders, density-aware active gap, affected-stack reflow, and bounded ghost geometry — `packages/kanban/src/board/overlay-projector.ts`
-- [ ] 5.2.3 Implement pending/accepted block projection, conflict-disabled action evidence, and missing-descriptor fallback — `packages/kanban/src/board/operation-projector.ts`, `packages/kanban/src/board/overlay-projector.ts`
-- [ ] 5.2.4 Draw ghost/placeholder/gap/target/pending/rejected states using existing theme roles and cell-safe non-color cues — `packages/kanban/src/board/viewport-render.ts`
-- [ ] 5.2.5 Extend damage to old/new overlay union, affected stacks, and bounded whole-viewport fallback — `packages/kanban/src/board/viewport-damage.ts`
-- [ ] 5.2.6 Add Phase C English overlay message contract/placeholders and consume localized safe reasons — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/board/viewport-render.ts`
-- [ ] 5.2.7 Integrate overlay snapshots/subscriptions into viewport projection while keeping semantic lifecycle board-owned — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-interaction.ts`
-- [ ] 5.2.8 Run focused rendering/security specifications and make them green
+- [x] 5.2.1 Extract pure authoritative-scene plus drag/pending overlay composition from the oversized viewport projector — `packages/kanban/src/board/overlay-projector.ts`, `packages/kanban/src/board/viewport-projector.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.2 Implement source placeholders, density-aware active gap, affected-stack reflow, and bounded ghost geometry — `packages/kanban/src/board/overlay-projector.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.3 Implement pending/accepted block projection, conflict-disabled action evidence, and missing-descriptor fallback — `packages/kanban/src/board/operation-projector.ts`, `packages/kanban/src/board/overlay-projector.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.4 Draw ghost/placeholder/gap/target/pending/rejected states using existing theme roles and cell-safe non-color cues — `packages/kanban/src/board/viewport-render.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.5 Extend damage to old/new overlay union, affected stacks, and bounded whole-viewport fallback — `packages/kanban/src/board/viewport-damage.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.6 Add Phase C English overlay message contract/placeholders and consume localized safe reasons — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/board/viewport-render.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.7 Integrate overlay snapshots/subscriptions into viewport projection while keeping semantic lifecycle board-owned — `packages/kanban/src/board/kanban-viewport.ts`, `packages/kanban/src/board/viewport-interaction.ts` ✅ (completed: 2026-08-12 00:23)
+- [x] 5.2.8 Run focused rendering/security specifications and make them green ✅ (completed: 2026-08-12 00:23)
+  - Gate evidence: Kanban build/typecheck; focused overlay, security, mounted drag, visual chrome,
+    and i18n suites 5 files / 61 tests; plugin update/check; and `yarn verify:local` passed.
 
 ### Step 5.3: Implementation tests and hardening
 

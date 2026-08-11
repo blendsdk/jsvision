@@ -140,6 +140,8 @@ export interface KanbanDragSourcePlaceholder {
 export interface KanbanDragGapEvidence {
   /** Stable semantic target slot represented by the gap. */
   readonly slotId: string;
+  /** Semantic target cell whose visible stack may reflow around the active insertion row. */
+  readonly address: KanbanCellAddress;
   /** Clipped one-row or resting-gap rectangle. */
   readonly rect: Readonly<Rect>;
   /** Current target eligibility used for color and non-color cues. */

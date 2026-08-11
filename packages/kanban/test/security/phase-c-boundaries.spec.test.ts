@@ -211,6 +211,7 @@ describe('bounded and redacted semantic data', () => {
         placeholders: [{ address: { columnId: 'ready' }, cardKeys: [17] }],
         gap: {
           slotId: 'ready:end',
+          address: { columnId: 'ready' },
           rect: { x: 1, y: 4, width: 16, height: 1 },
           eligibility: { kind: 'warning', code: 'private\u001b[2J\nrecord-body' },
         },

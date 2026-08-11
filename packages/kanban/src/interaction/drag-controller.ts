@@ -286,6 +286,7 @@ export class KanbanCardDragController {
         : {
             gap: Object.freeze({
               slotId: update.target.slotId,
+              address: update.target.address,
               rect: update.target.rect ?? Object.freeze({ x: 0, y: 0, width: 0, height: 0 }),
               eligibility: update.target.eligibility,
             }),

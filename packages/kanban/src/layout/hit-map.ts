@@ -299,7 +299,7 @@ export function projectKanbanSceneHits(
 /** Bounded changed rectangle returned by viewport damage calculation. */
 export interface KanbanDamageRegion extends Readonly<Rect> {
   /** Stable source of the damage request. */
-  readonly kind: 'descriptor' | 'sticky' | 'state' | 'scroll-exposed' | 'whole-viewport';
+  readonly kind: 'descriptor' | 'sticky' | 'state' | 'overlay' | 'scroll-exposed' | 'whole-viewport';
   /** Stable card identity when descriptor-local damage is known. */
   readonly cardKey?: CardKey;
 }

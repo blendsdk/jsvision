@@ -45,6 +45,7 @@ import type { KanbanIdentityInput } from './kanban-viewport.js';
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import type { KanbanDescriptorCacheKey } from './descriptor-cache.js';
 import type { KanbanViewportSourceCell, KanbanViewportSourceSnapshot } from './viewport-source.js';
+import type { KanbanOverlayProjection } from './overlay-projector.js';
 
 /** Weak identity revisions keep reactive service/theme replacement cache-safe without retaining them. */
 const REFERENCE_REVISIONS = new WeakMap<object, number>();
@@ -127,6 +128,8 @@ export interface KanbanViewportProjection {
   readonly actionTargets: readonly KanbanActionTarget[];
   /** Board-wide and scoped source states requiring explicit non-color feedback. */
   readonly states: readonly KanbanProjectedState[];
+  /** Optional transient drag and operation geometry composed over authoritative scene state. */
+  readonly overlay?: KanbanOverlayProjection;
 }
 
 /** Card-local presentation overrides supplied by the application or interaction facade. */

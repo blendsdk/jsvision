@@ -10,10 +10,7 @@ import { describe, expect, it } from 'vitest';
 import type { KanbanCardDescriptor } from '../src/index.js';
 import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
 import type { KanbanOperationSnapshot } from '../src/operation/types.js';
-import {
-  composeKanbanViewportOverlay,
-  type KanbanOverlayProjection,
-} from '../src/board/overlay-projector.js';
+import { composeKanbanViewportOverlay, type KanbanOverlayProjection } from '../src/board/overlay-projector.js';
 import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
 import type { KanbanViewportProjection } from '../src/board/viewport-projector.js';
 
@@ -106,6 +103,7 @@ function drag(eligibility: KanbanDragOverlayEvidence['gap'] extends infer _T ? '
     ]),
     gap: Object.freeze({
       slotId: 'doing:end',
+      address: Object.freeze({ columnId: 'doing' }),
       rect: Object.freeze({ x: 21, y: 8, width: 18, height: 1 }),
       eligibility: targetEligibility,
     }),

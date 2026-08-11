@@ -16,6 +16,7 @@ import {
   KANBAN_WORKFLOW_HEADER_TOP_BORDER_ROW,
 } from '../layout/workflow-geometry.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
+import type { KanbanOverlayProjection } from './overlay-projector.js';
 
 /** Returns the already-resolved terminal style for one allowlisted semantic role. */
 function style(theme: KanbanTheme, role: KanbanThemeRole) {
@@ -248,10 +249,116 @@ function drawFocusedCardShadows(ctx: DrawContext, projection: KanbanViewportProj
   }
 }
 
+/** Draws a complete clipped rectangle frame using one semantic overlay style. */
+function drawOverlayFrame(
+  ctx: DrawContext,
+  rect: Readonly<{ x: number; y: number; width: number; height: number }>,
+  role: KanbanThemeRole,
+  theme: KanbanTheme,
+  variant: 'dashed' | 'heavy',
+): void {
+  if (rect.width < 1 || rect.height < 1) return;
+  const unicode = ctx.caps.glyphs.boxDrawing;
+  const horizontal = variant === 'dashed' ? (unicode ? '┄' : '-') : unicode ? '━' : '=';
+  const vertical = variant === 'dashed' ? (unicode ? '┆' : ':') : unicode ? '┃' : '!';
+  const corner = unicode ? (variant === 'dashed' ? '·' : '◆') : '+';
+  const token = style(theme, role);
+  ctx.fillRect(rect.x, rect.y, rect.width, rect.height, ' ', token);
+  ctx.fillRect(rect.x, rect.y, rect.width, 1, horizontal, token);
+  if (rect.height > 1) ctx.fillRect(rect.x, rect.y + rect.height - 1, rect.width, 1, horizontal, token);
+  for (let row = 0; row < rect.height; row += 1) {
+    ctx.text(rect.x, rect.y + row, vertical, token);
+    if (rect.width > 1) ctx.text(rect.x + rect.width - 1, rect.y + row, vertical, token);
+  }
+  ctx.text(rect.x, rect.y, corner, token);
+  if (rect.width > 1) ctx.text(rect.x + rect.width - 1, rect.y, corner, token);
+  if (rect.height > 1) {
+    ctx.text(rect.x, rect.y + rect.height - 1, corner, token);
+    if (rect.width > 1) ctx.text(rect.x + rect.width - 1, rect.y + rect.height - 1, corner, token);
+  }
+}
+
+/** Paints transient overlay states last so their geometry and non-color cues remain visible. */
+function drawOverlays(
+  ctx: DrawContext,
+  overlay: KanbanOverlayProjection,
+  theme: KanbanTheme,
+  translate: (key: string, params?: Readonly<Record<string, string | number>>) => string,
+): void {
+  for (const placeholder of overlay.placeholders) {
+    drawOverlayFrame(ctx, placeholder.rect, 'card.source-placeholder', theme, 'dashed');
+  }
+  if (overlay.gap !== undefined) {
+    const role: KanbanThemeRole =
+      overlay.gap.visualState === 'valid'
+        ? 'drop-target.valid'
+        : overlay.gap.visualState === 'warning'
+          ? 'drop-target.warning'
+          : 'drop-target.invalid';
+    const marker = ctx.caps.glyphs.boxDrawing ? overlay.gap.unicodeMarker : overlay.gap.asciiMarker;
+    const token = style(theme, role);
+    ctx.fillRect(overlay.gap.rect.x, overlay.gap.rect.y, overlay.gap.rect.width, overlay.gap.rect.height, ' ', token);
+    ctx.text(
+      overlay.gap.rect.x,
+      overlay.gap.rect.y,
+      cropCellText(
+        `${marker} ${translate(overlay.gap.messageKey)}`,
+        0,
+        overlay.gap.rect.width,
+        ctx.caps.unicode.widthMode,
+      ),
+      token,
+    );
+  }
+  for (const pending of overlay.pending) {
+    const marker = ctx.caps.glyphs.boxDrawing ? pending.unicodeMarker : pending.asciiMarker;
+    const key = pending.state === 'accepted' ? 'kanban.operation.accepted' : 'kanban.operation.pending';
+    const token = style(theme, 'operation.pending');
+    ctx.fillRect(pending.rect.x, pending.rect.y, pending.rect.width, pending.rect.height, ' ', token);
+    ctx.text(
+      pending.rect.x,
+      pending.rect.y,
+      cropCellText(`${marker} ${translate(key)}`, 0, pending.rect.width, ctx.caps.unicode.widthMode),
+      token,
+    );
+  }
+  if (overlay.ghost !== undefined) {
+    drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
+    const label =
+      overlay.ghost.count === 1
+        ? translate('kanban.drag.card')
+        : translate('kanban.drag.cards', { count: overlay.ghost.count });
+    if (overlay.ghost.rect.width > 2) {
+      ctx.text(
+        overlay.ghost.rect.x + 1,
+        overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),
+        cropCellText(label, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
+        style(theme, 'card.ghost'),
+      );
+    }
+  }
+  for (const feedback of overlay.feedback) {
+    const marker = ctx.caps.glyphs.boxDrawing ? feedback.unicodeMarker : feedback.asciiMarker;
+    const token = style(theme, 'operation.rejected');
+    ctx.fillRect(feedback.rect.x, feedback.rect.y, feedback.rect.width, feedback.rect.height, ' ', token);
+    ctx.text(
+      feedback.rect.x,
+      feedback.rect.y,
+      cropCellText(`${marker} ${translate(feedback.messageKey)}`, 0, feedback.rect.width, ctx.caps.unicode.widthMode),
+      token,
+    );
+  }
+}
+
 /**
  * Paints one clipped viewport projection without creating View objects per card.
  */
-export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportProjection, theme: KanbanTheme): void {
+export function drawKanbanViewport(
+  ctx: DrawContext,
+  projection: KanbanViewportProjection,
+  theme: KanbanTheme,
+  translate: (key: string, params?: Readonly<Record<string, string | number>>) => string = (key) => key,
+): void {
   ctx.fill(' ', style(theme, 'board.surface'));
   for (const column of projection.columns) {
     ctx.fillRect(
@@ -374,4 +481,5 @@ export function drawKanbanViewport(ctx: DrawContext, projection: KanbanViewportP
     );
   }
   drawWorkflowChrome(ctx, projection, theme);
+  if (projection.overlay !== undefined) drawOverlays(ctx, projection.overlay, theme, translate);
 }

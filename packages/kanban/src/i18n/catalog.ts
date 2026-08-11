@@ -68,6 +68,11 @@ export const KANBAN_PHASE_B_PLACEHOLDER_MANIFEST: PlaceholderManifest = Object.f
   'kanban.interaction.selected-count': Object.freeze(['count']),
 });
 
+/** Exact placeholders accepted by Phase C drag and operation overlay messages. */
+export const KANBAN_PHASE_C_PLACEHOLDER_MANIFEST: PlaceholderManifest = Object.freeze({
+  'kanban.drag.cards': Object.freeze(['count']),
+});
+
 /** Canonical English messages used by the package catalog and safe application defaults. */
 export const KANBAN_ENGLISH_MESSAGES = Object.freeze({
   'kanban.board.label': 'Kanban board',
@@ -164,6 +169,29 @@ export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.interaction.unavailable': 'Interaction unavailable',
 } satisfies KanbanPhaseBMessageMap);
 
+/** Canonical English messages for modern pointer-drag and operation overlays. */
+export const KANBAN_PHASE_C_ENGLISH_MESSAGES = Object.freeze({
+  'kanban.drag.card': 'Moving card',
+  'kanban.drag.cards': 'Moving ${count} cards',
+  'kanban.drop.allowed': 'Move here',
+  'kanban.drop.warning': 'Move with warning',
+  'kanban.drop.blocked': 'Move blocked',
+  'kanban.drop.unavailable': 'Target unavailable',
+  'kanban.operation.pending': 'Move pending',
+  'kanban.operation.accepted': 'Awaiting board update',
+  'kanban.operation.rejected': 'Move rejected',
+  'kanban.operation.cancelled': 'Move cancelled',
+  'kanban.operation.superseded': 'Board changed',
+  'kanban.operation.conflict': 'Conflicting action unavailable',
+  'kanban.operation.stale-placement': 'Placement changed',
+  'kanban.operation.sorted-placement': 'Placed by current sort',
+  'kanban.operation.filtered-placement': 'Card may be filtered',
+  'kanban.operation.transition-blocked': 'Transition blocked',
+  'kanban.operation.wip-blocked': 'WIP limit blocks this move',
+  'kanban.operation.definition-of-done': 'Definition of done not met',
+  'kanban.operation.reorder': 'Reordering',
+});
+
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */
 export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(
   {
@@ -199,6 +227,19 @@ export const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog = defineCatalog(
   },
 );
 
+/** Immutable English overlay for Phase C drag, drop, pending, and outcome feedback. */
+export const KANBAN_PHASE_C_ENGLISH_CATALOG: Catalog = defineCatalog(
+  {
+    schema: 1,
+    locale: 'en',
+    messages: KANBAN_PHASE_C_ENGLISH_MESSAGES,
+  },
+  {
+    placeholderManifest: KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
+    acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
+  },
+);
+
 /**
  * Creates an isolated English service containing only the Kanban fallback catalog.
  *
@@ -211,5 +252,8 @@ export const KANBAN_PHASE_B_ENGLISH_CATALOG: Catalog = defineCatalog(
  * ```
  */
 export function createEnglishKanbanI18n(): I18n {
-  return createI18n({ locale: 'en', catalogs: [KANBAN_ENGLISH_CATALOG, KANBAN_PHASE_B_ENGLISH_CATALOG] });
+  return createI18n({
+    locale: 'en',
+    catalogs: [KANBAN_ENGLISH_CATALOG, KANBAN_PHASE_B_ENGLISH_CATALOG, KANBAN_PHASE_C_ENGLISH_CATALOG],
+  });
 }

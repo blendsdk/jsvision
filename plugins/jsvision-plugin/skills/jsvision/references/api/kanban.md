@@ -243,6 +243,30 @@ Exact placeholders accepted by first-use Phase B messages.
 const KANBAN_PHASE_B_PLACEHOLDER_MANIFEST: PlaceholderManifest
 ```
 
+## KANBAN_PHASE_C_ENGLISH_CATALOG
+
+Immutable English overlay for Phase C drag, drop, pending, and outcome feedback.
+
+```ts
+const KANBAN_PHASE_C_ENGLISH_CATALOG: Catalog
+```
+
+## KANBAN_PHASE_C_ENGLISH_MESSAGES
+
+Canonical English messages for modern pointer-drag and operation overlays.
+
+```ts
+const KANBAN_PHASE_C_ENGLISH_MESSAGES: Readonly<{ 'kanban.drag.card': "Moving card"; 'kanban.drag.cards': "Moving ${count} cards"; 'kanban.drop.allowed': "Move here"; 'kanban.drop.warning': "Move with warning"; 'kanban.drop.blocked': "Move blocked"; 'kanban.drop.unavailable': "Target unavailable"; 'kanban.operation.pending': "Move pending"; 'kanban.operation.accepted': "Awaiting board update"; 'kanban.operation.rejected': "Move rejected"; 'kanban.operation.cancelled': "Move cancelled"; 'kanban.operation.superseded': "Board changed"; 'kanban.operation.conflict': "Conflicting action unavailable"; 'kanban.operation.stale-placement': "Placement changed"; 'kanban.operation.sorted-placement': "Placed by current sort"; 'kanban.operation.filtered-placement': "Card may be filtered"; 'kanban.operation.transition-blocked': "Transition blocked"; 'kanban.operation.wip-blocked': "WIP limit blocks this move"; 'kanban.operation.definition-of-done': "Definition of done not met"; 'kanban.operation.reorder': "Reordering"; }>
+```
+
+## KANBAN_PHASE_C_PLACEHOLDER_MANIFEST
+
+Exact placeholders accepted by Phase C drag and operation overlay messages.
+
+```ts
+const KANBAN_PHASE_C_PLACEHOLDER_MANIFEST: PlaceholderManifest
+```
+
 ## KANBAN_PLACEHOLDER_MANIFEST
 
 Exact placeholders accepted by parameterized Kanban messages.
@@ -1580,7 +1604,7 @@ Bounded changed rectangle returned by viewport damage calculation.
 
 ```ts
 interface KanbanDamageRegion {
-  kind: 'descriptor' | 'sticky' | 'state' | 'scroll-exposed' | 'whole-viewport';   // Stable source of the damage request.
+  kind: 'descriptor' | 'sticky' | 'state' | 'overlay' | 'scroll-exposed' | 'whole-viewport';   // Stable source of the damage request.
   cardKey?: CardKey;   // Stable card identity when descriptor-local damage is known.
 }
 ```
@@ -5057,6 +5081,7 @@ interface KanbanViewportOptions<TCard> {
   capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
   identity?: () => KanbanIdentityInput;   // Optional reactive compatibility identity projection for a standalone viewport.
   interaction?: KanbanViewportInteractionAdapter;   // Optional non-owning interaction publication adapter for scene cues and inspection.
+  operationSnapshot?: () => readonly KanbanOperationSnapshot[];   // Board-owned payload-free operation snapshot getter used only for transient overlay projection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
 }
 ```
