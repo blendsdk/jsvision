@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-12 01:33 CEST
-> **Progress**: 101/124 tasks (81%)
+> **Last Updated**: 2026-08-12 01:42 CEST
+> **Progress**: 104/124 tasks (84%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -408,9 +408,9 @@ ownership.
 **Reference**: 03-06 §Error Handling/Testing Requirements · AR-C13/C16/C18/C20
 **Objective**: Close lifecycle, scale, weak ownership, and public compatibility risks.
 
-- [ ] 6.3.1 Add mount/rollback/dispose/leak/reactive-replacement implementation matrix — `packages/kanban/test/phase-c-lifecycle.impl.test.ts`
-- [ ] 6.3.2 Add visible/overscan operation/target/projection counters at 5,000 eager and 100,000 logical scale — `packages/kanban/test/phase-c-scale.impl.test.ts`
-- [ ] 6.3.3 Run UI/Kanban build/typecheck/focused/unit/E2E/package/deps/docs tests, plugin update/check, and `yarn verify:local`
+- [x] 6.3.1 Add mount/rollback/dispose/leak/reactive-replacement implementation matrix — `packages/kanban/test/phase-c-lifecycle.impl.test.ts` ✅ (completed: 2026-08-12 01:39)
+- [x] 6.3.2 Add visible/overscan operation/target/projection counters at 5,000 eager and 100,000 logical scale — `packages/kanban/test/phase-c-scale.impl.test.ts` ✅ (completed: 2026-08-12 01:39)
+- [x] 6.3.3 Run UI/Kanban build/typecheck/focused/unit/E2E/package/deps/docs tests, plugin update/check, and `yarn verify:local` ✅ (completed: 2026-08-12 01:42)
 
 **Deliverables**: card/column/swimlane pointer operations; keyboard/programmatic parity; stable public
 facade; bounded board lifecycle; standalone read behavior preserved.

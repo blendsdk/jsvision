@@ -22,6 +22,14 @@ export interface KanbanViewportScaleSnapshot {
   readonly sceneWindowCells: number;
   /** Exact loaded descriptor candidates omitted by the active mounted ceiling. */
   readonly descriptorOmissions: number;
+  /** Card faces retained in the final clipped projection. */
+  readonly projectedCards: number;
+  /** Final clipped actionable targets retained for pointer routing. */
+  readonly actionTargets: number;
+  /** Pending and terminal operation overlays retained in the current frame. */
+  readonly operationOverlays: number;
+  /** Card and structural drag overlay members retained in the current frame. */
+  readonly transientOverlayMembers: number;
 }
 
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */

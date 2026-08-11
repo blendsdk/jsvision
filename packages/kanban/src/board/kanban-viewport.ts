@@ -1912,6 +1912,15 @@ export class KanbanViewport<TCard> extends View {
     }
     const cells = this.#snapshot?.cells ?? [];
     const sceneWindow = this.#snapshot?.sceneWindow;
+    const overlay = this.#projection?.overlay;
+    const cardDrag = this.#dragController.snapshot();
+    const structuralDrag = this.#structuralDragController.snapshot();
+    const cardDragMembers =
+      cardDrag.kind === 'idle'
+        ? 0
+        : cardDrag.overlay.placeholders.length + 1 + (cardDrag.overlay.gap === undefined ? 0 : 1);
+    const structuralDragMembers =
+      structuralDrag.kind === 'idle' ? 0 : 2 + (structuralDrag.overlay.markerRect === undefined ? 0 : 1);
     return Object.freeze({
       retainedCursors: cells.length,
       retainedAddresses: new Set(cells.map((cell) => canonicalizeKanbanCellAddress(cell.address))).size,
@@ -1923,6 +1932,10 @@ export class KanbanViewport<TCard> extends View {
       damageRegions: this.#damage.length,
       sceneWindowCells: sceneWindow?.kind === 'available' ? sceneWindow.requestedCells.length : 0,
       descriptorOmissions: this.#projection?.scene?.states.reduce((total, state) => total + state.omittedCount, 0) ?? 0,
+      projectedCards: this.#projection?.cards.length ?? 0,
+      actionTargets: this.#projection?.actionTargets.length ?? 0,
+      operationOverlays: (overlay?.pending.length ?? 0) + (overlay?.feedback.length ?? 0),
+      transientOverlayMembers: cardDragMembers + structuralDragMembers,
     });
   }
 }
