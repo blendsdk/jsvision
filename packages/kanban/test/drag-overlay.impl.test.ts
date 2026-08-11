@@ -5,7 +5,7 @@ import type { DrawContext } from '@jsvision/ui';
 import { describe, expect, it } from 'vitest';
 
 import { createKanbanOperationId, createKanbanTheme } from '../src/index.js';
-import type { KanbanCardDescriptor } from '../src/index.js';
+import type { KanbanCardDescriptor, KanbanOperationSnapshot } from '../src/index.js';
 import { createEnglishKanbanI18n } from '../src/i18n/catalog.js';
 import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
 import { composeKanbanViewportOverlay } from '../src/board/overlay-projector.js';
@@ -116,6 +116,18 @@ function authoritative(): KanbanViewportProjection {
         width: 16,
         height: 4,
       }),
+      Object.freeze({
+        kind: 'card' as const,
+        scope: Object.freeze({ kind: 'card' as const, cardKey: 2, address: Object.freeze({ columnId: 'doing' }) }),
+        zIndex: 400,
+        address: Object.freeze({ columnId: 'doing' }),
+        cardKey: 2,
+        logicalIndex: 0,
+        x: 19,
+        y: 3,
+        width: 16,
+        height: 4,
+      }),
     ]),
     states: Object.freeze([]),
   });
@@ -191,7 +203,7 @@ describe('overlay composition internals', () => {
     });
 
     expect(result.cards.map(({ descriptor: value }) => value.cardKey)).toEqual(['1', 2]);
-    expect(result.actionTargets).toEqual([]);
+    expect(result.actionTargets.map(({ cardKey }) => cardKey)).toEqual([2]);
     expect(result.cards.find(({ descriptor: value }) => value.cardKey === 2)?.rect.y).toBe(4);
     expect(result.overlay.affectedStacks.map(({ columnId }) => columnId).sort()).toEqual(['doing', 'ready']);
   });
@@ -227,7 +239,7 @@ describe('overlay composition internals', () => {
 
     expect(missingDrag.overlay.placeholders).toEqual([]);
     expect(missingDrag.overlay.ghost).toMatchObject({ cardKey: 999, label: '#999' });
-    expect(pending.overlay.pending[0]).toMatchObject({ cardKeys: [999], rect: { width: 16 } });
+    expect(pending.overlay.pending[0]).toMatchObject({ cardKeys: [], count: 1, rect: { width: 16 } });
   });
 
   it('restores authority with an empty overlay after malformed composition input', () => {
@@ -248,6 +260,71 @@ describe('overlay composition internals', () => {
 
     expect(result.cards).toBe(source.cards);
     expect(result.overlay).toEqual({ placeholders: [], pending: [], feedback: [], affectedStacks: [] });
+    expect(result.overlayFailure).toBe('composition-failed');
+    expect(result.actionTargets).toEqual([]);
+  });
+
+  it.each([
+    ['wip-maximum-exceeded', 'kanban.workflow.wip-maximum-exceeded'],
+    ['transition-blocked', 'kanban.operation.transition-blocked'],
+    ['definition-of-done-not-met', 'kanban.operation.definition-of-done'],
+    ['stale-placement', 'kanban.operation.stale-placement'],
+    ['unrecognized-safe-code', 'kanban.drop.warning'],
+  ] as const)('maps safe eligibility reason %s to localized key %s', (code, messageKey) => {
+    const evidence = drag();
+    const result = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      drag: {
+        ...evidence,
+        gap: { ...evidence.gap!, eligibility: { kind: 'warning', code } },
+      },
+    });
+
+    expect(result.overlay.gap?.messageKey).toBe(messageKey);
+    expect(result.overlay.gap?.eligibility).toEqual({ kind: 'warning' });
+  });
+
+  it('composes source placeholders, target reflow, concurrent slots, and offscreen fallback for pending moves', () => {
+    const operation = (operationId: string, targetColumnId = 'doing'): KanbanOperationSnapshot =>
+      Object.freeze({
+        operationId: createKanbanOperationId(operationId),
+        kind: 'card-move',
+        state: 'pending',
+        affected: Object.freeze([
+          Object.freeze({ kind: 'card' as const, cardKey: 1 }),
+          Object.freeze({ kind: 'column' as const, columnId: targetColumnId }),
+        ]),
+        projection: Object.freeze({
+          kind: 'card-move' as const,
+          state: 'pending' as const,
+          cardKeys: Object.freeze([1]),
+          sources: Object.freeze([Object.freeze({ columnId: 'ready' })]),
+          target: Object.freeze({ columnId: targetColumnId }),
+          position: Object.freeze({ kind: 'start' as const, cursorRevision: 1 }),
+        }),
+      });
+    const visible = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [operation('one'), operation('two')],
+    });
+    const offscreen = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [operation('offscreen', 'hidden')],
+    });
+
+    expect(visible.overlay.placeholders).toHaveLength(2);
+    expect(visible.overlay.pending.map(({ rect }) => rect.y)).toEqual([3, 6]);
+    expect(visible.cards.find(({ descriptor: value }) => value.cardKey === 2)?.rect.y).toBeGreaterThan(3);
+    expect(visible.actionTargets).toEqual([]);
+    expect(offscreen.overlay.pending[0]).toMatchObject({ offscreen: true, rect: { x: 2, y: 3 } });
+    expect(offscreen.cards.map(({ descriptor: value }) => value.cardKey)).not.toContain(1);
+    expect(offscreen.overlay.placeholders).toHaveLength(1);
   });
 });
 
@@ -262,7 +339,7 @@ describe('overlay drawing and damage internals', () => {
     const unicode = mountedFrame(projection);
     const ascii = mountedFrame(projection, true);
 
-    expect(unicode.text()).toContain('Moving card');
+    expect(unicode.text()).toContain('Numeric source');
     expect(unicode.text()).toContain('▶ Move here');
     expect(unicode.text()).toMatch(/[◆━┃]/u);
     expect(ascii.text()).toContain('> Move here');
@@ -340,11 +417,11 @@ describe('overlay drawing and damage internals', () => {
       density: 'compact',
     });
     const mounted = mountedFrame(active);
-    expect(mounted.text()).toContain('Moving card');
+    expect(mounted.text()).toMatch(/[◆━┃]/u);
     mounted.leaf.replace(settled);
     mounted.render.flush();
 
-    expect(mounted.text()).not.toContain('Moving card');
+    expect(mounted.text()).not.toMatch(/[◆━┃]/u);
     expect(mounted.text()).toContain('Numeric source');
     mounted.render.unmount();
   });
@@ -376,5 +453,60 @@ describe('overlay drawing and damage internals', () => {
     });
 
     expect(damage).toEqual([{ kind: 'whole-viewport', ...bounds }]);
+  });
+
+  it('unions source, destination, feedback, and authoritative damage when pending work rejects', () => {
+    const source = authoritative();
+    const operationId = createKanbanOperationId('rejecting-operation');
+    const pending = composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [
+        Object.freeze({
+          operationId,
+          kind: 'card-move' as const,
+          state: 'pending' as const,
+          affected: Object.freeze([
+            Object.freeze({ kind: 'card' as const, cardKey: 1 }),
+            Object.freeze({ kind: 'column' as const, columnId: 'doing' }),
+          ]),
+          projection: Object.freeze({
+            kind: 'card-move' as const,
+            state: 'pending' as const,
+            cardKeys: Object.freeze([1]),
+            sources: Object.freeze([Object.freeze({ columnId: 'ready' })]),
+            target: Object.freeze({ columnId: 'doing' }),
+            position: Object.freeze({ kind: 'start' as const, cursorRevision: 1 }),
+          }),
+        }),
+      ],
+    });
+    const rejected = composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [
+        Object.freeze({
+          operationId,
+          kind: 'card-move' as const,
+          state: 'rejected' as const,
+          affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 1 })]),
+          code: 'private-reason',
+        }),
+      ],
+    });
+    const bounds = Object.freeze({ x: 0, y: 0, width: 36, height: 12 });
+    const damage = calculateKanbanViewportDamage({
+      previous: pending,
+      current: rejected,
+      bounds,
+      previousOffsets: { x: 0, y: 0 },
+      currentOffsets: { x: 0, y: 0 },
+    });
+
+    expect(damage.some(({ kind, x }) => kind === 'overlay' && x === 0)).toBe(true);
+    expect(damage.some(({ kind, x }) => kind === 'overlay' && x === 18)).toBe(true);
+    expect(damage.some(({ kind, y }) => kind === 'overlay' && y === 11)).toBe(true);
   });
 });

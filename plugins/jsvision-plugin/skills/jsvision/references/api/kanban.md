@@ -5081,7 +5081,6 @@ interface KanbanViewportOptions<TCard> {
   capabilities?: () => KanbanCapabilities;   // Optional reactive UX capability descriptions.
   identity?: () => KanbanIdentityInput;   // Optional reactive compatibility identity projection for a standalone viewport.
   interaction?: KanbanViewportInteractionAdapter;   // Optional non-owning interaction publication adapter for scene cues and inspection.
-  operationSnapshot?: () => readonly KanbanOperationSnapshot[];   // Board-owned payload-free operation snapshot getter used only for transient overlay projection.
   collapsedColumnIds?: () => readonly string[];   // Optional reactive column-collapse projection applied before cursor acquisition.
 }
 ```

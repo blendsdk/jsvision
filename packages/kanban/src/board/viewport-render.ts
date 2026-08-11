@@ -324,10 +324,12 @@ function drawOverlays(
   }
   if (overlay.ghost !== undefined) {
     drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
-    const label =
-      overlay.ghost.count === 1
-        ? translate('kanban.drag.card')
-        : translate('kanban.drag.cards', { count: overlay.ghost.count });
+    const identityLabel =
+      overlay.ghost.count === 1 ? overlay.ghost.label : translate('kanban.drag.cards', { count: overlay.ghost.count });
+    const residentCue = [overlay.ghost.title, overlay.ghost.status].filter(
+      (value): value is string => value !== undefined,
+    );
+    const label = residentCue.length === 0 ? identityLabel : residentCue.join(' · ');
     if (overlay.ghost.rect.width > 2) {
       ctx.text(
         overlay.ghost.rect.x + 1,

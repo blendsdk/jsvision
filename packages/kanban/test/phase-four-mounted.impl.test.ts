@@ -3,7 +3,7 @@ import { createApplication, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { KanbanBoard, createEagerKanbanDataSource } from '../src/index.js';
+import { KanbanBoard, createEagerKanbanDataSource, createKanbanOperationId } from '../src/index.js';
 import type {
   KanbanCardAdapter,
   KanbanEligibility,
@@ -155,6 +155,57 @@ function frameText(application: Application): string {
 }
 
 describe('mounted card-drag authority integration', () => {
+  it('moves a recognizable ghost with current pointer reports while keeping the destination readable', () => {
+    const { application, board } = mountedBoard(
+      (request) => ({ kind: 'accepted', operationId: request.operationId }),
+      () => ({ kind: 'allowed' }),
+    );
+    const source = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 1);
+    const destination = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 2);
+    if (source === undefined || destination === undefined) throw new Error('Expected mounted drag geometry.');
+    const down = absolute(application, board, source.x + 1, source.y + 1);
+    const threshold = absolute(application, board, source.x + 2, source.y + 1);
+    const target = absolute(application, board, destination.x + 1, destination.y + 1);
+    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+    application.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, ...threshold });
+    application.loop.renderRoot.flush();
+    const first = frameText(application);
+    const firstCue = first.indexOf('Move me');
+    expect(firstCue).toBeGreaterThanOrEqual(0);
+
+    application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...target });
+    application.loop.renderRoot.flush();
+    const moved = frameText(application);
+    expect(moved.indexOf('Move me')).not.toBe(firstCue);
+    expect(moved).toContain('Destination…');
+  });
+
+  it('hands a released ghost to mounted pending and rejected feedback without an idle source frame', async () => {
+    let settleDispatcher: ((result: KanbanRequestResult) => void) | undefined;
+    const dispatcher: KanbanRequestDispatcher = (request) =>
+      new Promise<KanbanRequestResult>((resolve) => {
+        settleDispatcher = resolve;
+      }).then((result) => ({ ...result, operationId: request.operationId }));
+    const { application, board } = mountedBoard(dispatcher, () => ({ kind: 'allowed' }));
+
+    dragToDoing(application, board);
+    application.loop.renderRoot.flush();
+    const pendingFrame = frameText(application);
+    expect(pendingFrame).toContain('Move pending');
+    expect(pendingFrame).not.toContain('Moving card');
+
+    settleDispatcher?.({
+      kind: 'rejected',
+      operationId: createKanbanOperationId('ignored-by-dispatcher-wrapper'),
+      code: 'application-private-reason',
+    });
+    await settle();
+    application.loop.renderRoot.flush();
+    const rejectedFrame = frameText(application);
+    expect(rejectedFrame).toContain('Move rejected');
+    expect(rejectedFrame).not.toContain('application-private-reason');
+  });
+
   it('keeps a hovered collapsed swimlane expanded through reprojection and restores it on release', () => {
     vi.useFakeTimers();
     const { application, board } = mountedCollapsedBoard();

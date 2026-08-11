@@ -59,6 +59,7 @@ import {
   quiesceKanbanViewportInput,
   setKanbanViewportInteractionEvidenceListener,
 } from './kanban-viewport.js';
+import { prepareKanbanViewportOperations } from './viewport-operation-bridge.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
@@ -146,7 +147,6 @@ function viewportOptions<TCard>(
   i18n: () => I18n,
   identity: () => KanbanIdentityInput,
   interaction?: KanbanViewportInteractionAdapter,
-  operationSnapshot?: () => readonly KanbanOperationSnapshot[],
 ): KanbanViewportOptions<TCard> {
   return {
     source: options.source,
@@ -155,7 +155,6 @@ function viewportOptions<TCard>(
     i18n,
     identity,
     ...(interaction === undefined ? {} : { interaction }),
-    ...(operationSnapshot === undefined ? {} : { operationSnapshot }),
     ...(options.density === undefined ? {} : { density: options.density }),
     ...(options.presentation === undefined ? {} : { presentation: options.presentation }),
     ...(options.structure === undefined ? {} : { structure: options.structure }),
@@ -242,7 +241,6 @@ export class KanbanBoard<TCard> extends Group {
   #layoutReflows = 0;
   #disposeBindings: (() => void) | undefined;
   #disposeInteractionChrome: (() => void) | undefined;
-  #disposeOperations: (() => void) | undefined;
   #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
   #automaticReconcileReady: boolean;
   #disposed = false;
@@ -293,14 +291,13 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.onInteraction === undefined ? {} : { onInteraction: options.onInteraction }),
     });
     this.viewport = new KanbanViewport(
-      viewportOptions(
-        options,
-        this.#i18n,
-        () => this.#interactionIdentity(),
-        this.#interactionFacade,
-        () => this.#authority.snapshot(),
-      ),
+      viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
     );
+    prepareKanbanViewportOperations(this.viewport, {
+      snapshot: () => this.#authority.snapshot(),
+      subscribe: (subscriber) => this.#authority.subscribe(subscriber),
+      cancel: (operationId) => this.#authority.cancel(operationId),
+    });
     prepareKanbanViewportBoardInput(this.viewport, {
       accept: (command) => this.#interactionFacade.accept(command),
       acceptSelectionActivate: (command, activateOptions) =>
@@ -348,7 +345,6 @@ export class KanbanBoard<TCard> extends Group {
 
     this.onMount(() => {
       this.#everMounted = true;
-      this.#disposeOperations = this.#authority.subscribe(() => this.viewport.invalidate());
       this.#disposeInteractionChrome = this.#interactionFacade.subscribe(() => this.#syncInteractionChrome());
       this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
         createRoot((dispose) => {
@@ -490,8 +486,6 @@ export class KanbanBoard<TCard> extends Group {
     this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
-    this.#disposeOperations?.();
-    this.#disposeOperations = undefined;
     setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     this.viewport.dispose();
     this.#authority.dispose();

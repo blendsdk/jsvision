@@ -90,6 +90,35 @@ function overlayRects(projection: KanbanViewportProjection): readonly Readonly<R
   ]);
 }
 
+/** Returns only old/new overlay rectangles whose semantic member changed between frames. */
+function changedOverlayRects(
+  previous: KanbanViewportProjection,
+  current: KanbanViewportProjection,
+): readonly Readonly<Rect>[] {
+  const before = previous.overlay;
+  const after = current.overlay;
+  if (before === undefined || after === undefined)
+    return Object.freeze([...overlayRects(previous), ...overlayRects(current)]);
+  const changed: Readonly<Rect>[] = [];
+  const retain = <T extends { readonly rect: Readonly<Rect> }>(left: readonly T[], right: readonly T[]): void => {
+    if (JSON.stringify(left) !== JSON.stringify(right))
+      changed.push(...left.map(({ rect }) => rect), ...right.map(({ rect }) => rect));
+  };
+  retain(before.placeholders, after.placeholders);
+  retain(before.pending, after.pending);
+  retain(before.feedback, after.feedback);
+  retain(before.affectedStacks, after.affectedStacks);
+  if (JSON.stringify(before.gap) !== JSON.stringify(after.gap)) {
+    if (before.gap !== undefined) changed.push(before.gap.rect);
+    if (after.gap !== undefined) changed.push(after.gap.rect);
+  }
+  if (JSON.stringify(before.ghost) !== JSON.stringify(after.ghost)) {
+    if (before.ghost !== undefined) changed.push(before.ghost.rect);
+    if (after.ghost !== undefined) changed.push(after.ghost.rect);
+  }
+  return Object.freeze(changed);
+}
+
 /** Inputs for one bounded canonical-scene damage comparison. */
 export interface CalculateKanbanSceneDamageOptions {
   /** Previous immutable semantic scene. */
@@ -208,12 +237,11 @@ export function calculateKanbanViewportDamage(
     return region === undefined ? Object.freeze([]) : Object.freeze([region]);
   }
 
+  const damage: KanbanDamageRegion[] = [];
   if (JSON.stringify(previous.overlay) !== JSON.stringify(options.current.overlay)) {
-    const overlayDamage: KanbanDamageRegion[] = [];
-    for (const rect of [...overlayRects(previous), ...overlayRects(options.current)]) {
-      if (!pushDamage(overlayDamage, rect, options.bounds, 'overlay')) return whole(options.bounds);
+    for (const rect of changedOverlayRects(previous, options.current)) {
+      if (!pushDamage(damage, rect, options.bounds, 'overlay')) return whole(options.bounds);
     }
-    if (overlayDamage.length > 0) return Object.freeze(overlayDamage);
   }
 
   if (
@@ -222,7 +250,7 @@ export function calculateKanbanViewportDamage(
     options.current.scene !== undefined &&
     options.current.geometry !== undefined
   ) {
-    return calculateKanbanSceneDamage({
+    const sceneDamage = calculateKanbanSceneDamage({
       previousScene: previous.scene,
       currentScene: options.current.scene,
       previousGeometry: previous.geometry,
@@ -230,9 +258,11 @@ export function calculateKanbanViewportDamage(
       bounds: options.bounds,
       maximumRegions: MAXIMUM_DAMAGE_REGIONS,
     });
+    if (sceneDamage.some(({ kind }) => kind === 'whole-viewport')) return sceneDamage;
+    if (damage.length + sceneDamage.length > MAXIMUM_DAMAGE_REGIONS) return whole(options.bounds);
+    return Object.freeze([...damage, ...sceneDamage]);
   }
 
-  const damage: KanbanDamageRegion[] = [];
   const previousCards = new Map(previous.cards.map((card) => [cardIdentity(card), card]));
   const currentCards = new Map(options.current.cards.map((card) => [cardIdentity(card), card]));
   for (const [identity, card] of previousCards) {

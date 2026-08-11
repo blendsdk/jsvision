@@ -130,6 +130,8 @@ export interface KanbanViewportProjection {
   readonly states: readonly KanbanProjectedState[];
   /** Optional transient drag and operation geometry composed over authoritative scene state. */
   readonly overlay?: KanbanOverlayProjection;
+  /** Fixed safe failure evidence requiring the owning viewport to cancel transient authority. */
+  readonly overlayFailure?: 'composition-failed';
 }
 
 /** Card-local presentation overrides supplied by the application or interaction facade. */

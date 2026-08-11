@@ -377,6 +377,7 @@ export class KanbanViewportDragController<TCard> {
     if (this.#disposed || generation !== this.#generation) return false;
     const current = this.#options.readScene();
     if (current === undefined) return false;
+    const previousPoint = this.#point;
     this.#point = Object.freeze({ x: point.x, y: point.y });
     this.#actionTarget = actionTarget;
     const candidate = dropMap(current, this.#target).targetAt(point);
@@ -390,6 +391,7 @@ export class KanbanViewportDragController<TCard> {
     this.#target = this.#evaluateTarget(selected);
     this.#drag.propose({
       generation,
+      point,
       target: this.#target,
       sceneRevision: current.sceneRevision,
       geometryGeneration: current.geometryGeneration,
@@ -407,7 +409,13 @@ export class KanbanViewportDragController<TCard> {
     } else {
       this.#hover.cancel();
     }
-    if (!sameTarget(previousTarget, this.#target)) this.#options.invalidate();
+    if (
+      previousPoint?.x !== this.#point.x ||
+      previousPoint.y !== this.#point.y ||
+      !sameTarget(previousTarget, this.#target)
+    ) {
+      this.#options.invalidate();
+    }
     return true;
   }
 

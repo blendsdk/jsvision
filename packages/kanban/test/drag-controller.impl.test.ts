@@ -88,6 +88,14 @@ function activeController(
 }
 
 describe('card drag generation and callback containment', () => {
+  it('updates renderer-neutral ghost position on every accepted current pointer report', () => {
+    const controller = activeController();
+    expect(controller.snapshot()).toMatchObject({ overlay: { ghost: { point: { x: 1, y: 2 } } } });
+
+    expect(controller.propose({ generation: 7, point: { x: 14, y: 9 }, target: target() })).toBe(true);
+    expect(controller.snapshot()).toMatchObject({ overlay: { ghost: { point: { x: 14, y: 9 } } } });
+  });
+
   it('keeps released overlay and capture ownership until synchronous admission publishes pending state', () => {
     const state: { controller?: ReturnType<typeof createKanbanCardDragController> } = {};
     const lease = capture();

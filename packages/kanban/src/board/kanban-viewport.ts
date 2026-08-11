@@ -17,7 +17,6 @@ import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
-import type { KanbanOperationSnapshot } from '../operation/types.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { routeKanbanKeyInput } from '../interaction/input-router.js';
@@ -88,6 +87,12 @@ import type { KanbanViewportInputAdapter, KanbanViewportInteractionAdapter } fro
 import { normalizeKanbanViewportPointerInput } from './viewport-input.js';
 import { KanbanViewportDragController } from './viewport-drag.js';
 import type { KanbanViewportDragScene } from './viewport-drag.js';
+import {
+  cancelKanbanViewportOperations,
+  disposeKanbanViewportOperations,
+  mountKanbanViewportOperations,
+  readKanbanViewportOperations,
+} from './viewport-operation-bridge.js';
 
 /** Board-owned listeners notified after viewport evidence changes semantically. */
 const INTERACTION_EVIDENCE_LISTENERS = new WeakMap<object, () => void>();
@@ -154,8 +159,6 @@ export interface KanbanViewportOptions<TCard> {
   readonly identity?: () => KanbanIdentityInput;
   /** Optional non-owning interaction publication adapter for scene cues and inspection. */
   readonly interaction?: KanbanViewportInteractionAdapter;
-  /** Board-owned payload-free operation snapshot getter used only for transient overlay projection. */
-  readonly operationSnapshot?: () => readonly KanbanOperationSnapshot[];
   /** Optional reactive column-collapse projection applied before cursor acquisition. */
   readonly collapsedColumnIds?: () => readonly string[];
 }
@@ -248,6 +251,7 @@ export class KanbanViewport<TCard> extends View {
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
   #projection: KanbanViewportProjection | undefined;
+  #projectionCandidate: KanbanViewportProjection | undefined;
   #projectionOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
   #damage: readonly KanbanDamageRegion[] = Object.freeze([]);
   #metrics: KanbanViewportMetrics = emptyMetrics();
@@ -371,6 +375,7 @@ export class KanbanViewport<TCard> extends View {
       });
       try {
         this.#interactionBinding.mount(() => this.invalidate());
+        mountKanbanViewportOperations(this, () => this.invalidate());
         if (VIEWPORT_INPUT_LIFECYCLES.get(this)?.managed !== true) this.#interactionBinding.enableInput();
       } catch (error) {
         this.dispose();
@@ -538,8 +543,20 @@ export class KanbanViewport<TCard> extends View {
     ) {
       this.#focusedColumnAnchor = undefined;
     }
+    const operationRead = readKanbanViewportOperations(
+      this,
+      this.#limits.pendingOperations,
+      this.#limits.retainedDescriptors,
+    );
+    if (operationRead.kind === 'failed') this.#containOverlayFailure();
+    this.#projectionCandidate = projection;
+    try {
+      this.#dragController.reproject();
+    } finally {
+      this.#projectionCandidate = undefined;
+    }
     const dragSnapshot = this.#dragController.snapshot();
-    const operationSnapshots = this.#options.operationSnapshot?.() ?? Object.freeze([]);
+    const operationSnapshots = operationRead.kind === 'ready' ? operationRead.snapshots : Object.freeze([]);
     const composedProjection = composeKanbanViewportOverlay({
       authoritative: projection,
       bounds: { x: 0, y: 0, width: this.bounds.width, height: this.bounds.height },
@@ -547,6 +564,7 @@ export class KanbanViewport<TCard> extends View {
       ...(dragSnapshot.kind === 'idle' ? {} : { drag: dragSnapshot.overlay }),
       operations: operationSnapshots,
     });
+    if (composedProjection.overlayFailure !== undefined) this.#containOverlayFailure();
     this.#damage = calculateKanbanViewportDamage({
       ...(this.#projection === undefined ? {} : { previous: this.#projection }),
       current: composedProjection,
@@ -558,7 +576,6 @@ export class KanbanViewport<TCard> extends View {
     this.#projectionOffsets = this.#metrics.offsets;
     this.#anchorSourceRevision = snapshot.publication.revision;
     this.#anchorSourceGeneration = snapshot.generation;
-    this.#dragController.reproject();
     const anchorRelocationPending = this.#anchorController !== undefined && !this.#anchorController.signal.aborted;
     if (!relocatingAnchor && !anchorRelocationPending) this.#rememberVerticalAnchor(projection, identity, density);
     this.#rememberHorizontalAnchor(snapshot);
@@ -570,6 +587,17 @@ export class KanbanViewport<TCard> extends View {
       INTERACTION_EVIDENCE_LISTENERS.get(this)?.();
     } catch {
       // Reconciliation failure cannot corrupt viewport projection or source ownership.
+    }
+  }
+
+  /** Cancels hidden transient ownership and emits one fixed redacted overlay failure observation. */
+  #containOverlayFailure(): void {
+    this.#pointerRouter.cancel('explicit');
+    cancelKanbanViewportOperations(this);
+    try {
+      this.#options.observe?.(Object.freeze({ code: 'overlay-composition-failed', scope: 'renderer' }));
+    } catch {
+      // Diagnostic callbacks cannot prevent capture and operation cancellation.
     }
   }
 
@@ -939,6 +967,7 @@ export class KanbanViewport<TCard> extends View {
     this.#disposed = true;
     quiesceKanbanViewportInput(this);
     this.#dragController.dispose();
+    disposeKanbanViewportOperations(this);
     this.#revealController?.abort();
     this.#revealController = undefined;
     this.#anchorController?.abort();
@@ -956,6 +985,7 @@ export class KanbanViewport<TCard> extends View {
     this.#source = undefined;
     this.#snapshot = undefined;
     this.#projection = undefined;
+    this.#projectionCandidate = undefined;
     this.#damage = Object.freeze([]);
   }
 
@@ -968,8 +998,9 @@ export class KanbanViewport<TCard> extends View {
 
   /** Returns current post-layout evidence required by the viewport-local drag owner. */
   #dragScene(): KanbanViewportDragScene<TCard> | undefined {
-    const scene = this.#projection?.scene;
-    const geometry = this.#projection?.geometry;
+    const projection = this.#projectionCandidate ?? this.#projection;
+    const scene = projection?.scene;
+    const geometry = projection?.geometry;
     const source = this.#snapshot;
     if (scene === undefined || geometry === undefined || source === undefined || this.#disposed) return undefined;
     return Object.freeze({

@@ -52,6 +52,8 @@ export interface KanbanCardDragBegin {
 export interface KanbanCardDragProposalUpdate {
   /** Gesture identity whose proposal is changing. */
   readonly generation: number;
+  /** Current viewport-local pointer point used to move the ghost. */
+  readonly point?: Readonly<Point>;
   /** Current target, or absence when the pointer is outside a target. */
   readonly target?: KanbanCardDropTarget;
   /** Current scene revision after any drag-owned scrolling and reprojection. */
@@ -278,9 +280,11 @@ export class KanbanCardDragController {
     if (update.geometryGeneration !== undefined) {
       active.geometryGeneration = generation(update.geometryGeneration);
     }
+    const currentPoint = update.point === undefined ? active.overlay.ghost.point : point(update.point);
     active.overlay = Object.freeze({
       ...active.overlay,
       geometryGeneration: active.geometryGeneration,
+      ghost: Object.freeze({ ...active.overlay.ghost, point: currentPoint }),
       ...(update.target === undefined
         ? {}
         : {

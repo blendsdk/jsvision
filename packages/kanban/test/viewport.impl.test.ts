@@ -139,6 +139,7 @@ describe('viewport descriptor cache and damage implementation', () => {
           ghost: Object.freeze({
             cardKey: 1,
             count: 1,
+            anchor: Object.freeze({ x, y: 1 }),
             label: '#1',
             rect: Object.freeze({ x, y: 1, width: 5, height: 3 }),
           }),

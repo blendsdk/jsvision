@@ -2,6 +2,7 @@ import type { Rect } from '@jsvision/ui';
 
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { CardKey } from '../contract/identity.js';
+import { sanitizeContractText } from '../contract/text-safety.js';
 import type { KanbanDragOverlayEvidence } from '../interaction/drag-types.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
 import type { KanbanOperationSnapshot } from '../operation/types.js';
@@ -51,8 +52,14 @@ export interface KanbanProjectedDragGhost {
   readonly cardKey: CardKey;
   /** Number of cards represented atomically. */
   readonly count: number;
+  /** Current viewport-local pointer anchor retained for exact frame damage. */
+  readonly anchor: Readonly<{ x: number; y: number }>;
   /** Fixed identity/count label safe for inspection. */
   readonly label: string;
+  /** Bounded safe resident title cue, absent for identity fallback. */
+  readonly title?: string;
+  /** Bounded safe resident status cue, absent for identity fallback. */
+  readonly status?: string;
   /** Clipped viewport-local rectangle. */
   readonly rect: Readonly<Rect>;
 }
@@ -119,6 +126,11 @@ function sameCard(left: CardKey, right: CardKey): boolean {
   return typeof left === typeof right && left === right;
 }
 
+/** Returns a collision-safe type-preserving identity for bounded set membership. */
+function cardIdentity(cardKey: CardKey): string {
+  return JSON.stringify([typeof cardKey, cardKey]);
+}
+
 /** Returns whether a card belongs to one semantic source cell. */
 function inCell(card: KanbanProjectedCard, address: KanbanCellAddress): boolean {
   return card.columnId === address.columnId && card.swimlaneId === address.swimlaneId;
@@ -128,6 +140,20 @@ function inCell(card: KanbanProjectedCard, address: KanbanCellAddress): boolean 
 function dropPresentation(
   eligibility: KanbanEligibility,
 ): Omit<KanbanProjectedDropGap, 'slotId' | 'address' | 'eligibility' | 'rect'> {
+  const reasonKey =
+    eligibility.kind === 'allowed'
+      ? undefined
+      : new Map<string, string>([
+          ['wip-minimum-not-met', 'kanban.workflow.wip-minimum-not-met'],
+          ['wip-maximum-exceeded', 'kanban.workflow.wip-maximum-exceeded'],
+          ['wip-count-unavailable', 'kanban.workflow.wip-count-unavailable'],
+          ['transition-unavailable', 'kanban.reason.transition-unavailable'],
+          ['transition-blocked', 'kanban.operation.transition-blocked'],
+          ['definition-of-done-not-met', 'kanban.operation.definition-of-done'],
+          ['stale-placement', 'kanban.operation.stale-placement'],
+          ['sorted-placement', 'kanban.operation.sorted-placement'],
+          ['filtered-placement', 'kanban.operation.filtered-placement'],
+        ]).get(eligibility.code);
   switch (eligibility.kind) {
     case 'allowed':
       return Object.freeze({
@@ -140,7 +166,7 @@ function dropPresentation(
     case 'warning':
       return Object.freeze({
         visualState: 'warning' as const,
-        messageKey: 'kanban.drop.warning',
+        messageKey: reasonKey ?? 'kanban.drop.warning',
         label: 'Warning',
         asciiMarker: '!' as const,
         unicodeMarker: '⚠' as const,
@@ -148,7 +174,7 @@ function dropPresentation(
     case 'blocked':
       return Object.freeze({
         visualState: 'invalid' as const,
-        messageKey: 'kanban.drop.blocked',
+        messageKey: reasonKey ?? 'kanban.drop.blocked',
         label: 'Blocked',
         asciiMarker: 'x' as const,
         unicodeMarker: '×' as const,
@@ -156,7 +182,7 @@ function dropPresentation(
     case 'unavailable':
       return Object.freeze({
         visualState: 'unavailable' as const,
-        messageKey: 'kanban.drop.unavailable',
+        messageKey: reasonKey ?? 'kanban.drop.unavailable',
         label: 'Unavailable',
         asciiMarker: '?' as const,
         unicodeMarker: '?' as const,
@@ -190,6 +216,43 @@ function projectPlaceholders(
   return Object.freeze(result);
 }
 
+/** Creates stable source placeholders for visible cards awaiting authoritative publication. */
+function projectPendingPlaceholders(
+  projection: KanbanViewportProjection,
+  pending: readonly KanbanProjectedPendingBlock[],
+  bounds: Readonly<Rect>,
+): readonly KanbanProjectedSourcePlaceholder[] {
+  const result: KanbanProjectedSourcePlaceholder[] = [];
+  for (const block of pending) {
+    block.cardKeys.forEach((cardKey, index) => {
+      const address = block.visibleSources[index];
+      if (address === undefined) return;
+      const card = projection.cards.find(
+        (candidate) => sameCard(candidate.descriptor.cardKey, cardKey) && inCell(candidate, address),
+      );
+      const rect = card === undefined ? undefined : clip(card.rect, bounds);
+      if (rect !== undefined) result.push(Object.freeze({ address, cardKeys: Object.freeze([cardKey]), rect }));
+    });
+  }
+  return Object.freeze(result);
+}
+
+/** Removes complete ANSI control sequences and remaining terminal controls from one bounded cue. */
+function safeGhostCue(value: string): string | undefined {
+  if (/[\u0000-\u001f\u007f-\u009f]/u.test(value)) return undefined;
+  const withoutAnsi = value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/gu, '');
+  const safe = sanitizeContractText(withoutAnsi, 96)
+    .replace(/[\t\n]+/gu, ' ')
+    .trim();
+  return safe.length === 0 ? undefined : safe;
+}
+
+/** Reads one bounded descriptor section without retaining the descriptor itself in overlay state. */
+function descriptorCue(card: KanbanProjectedCard | undefined, section: 'title' | 'status'): string | undefined {
+  const row = card?.descriptor.rows.find((candidate) => candidate.section === section);
+  return row === undefined ? undefined : safeGhostCue(row.spans.map(({ text }) => text).join(' '));
+}
+
 /** Creates one viewport-bounded ghost sized from the visible origin card or a compact fallback. */
 function projectGhost(
   projection: KanbanViewportProjection,
@@ -198,17 +261,50 @@ function projectGhost(
 ): KanbanProjectedDragGhost | undefined {
   if (bounds.width < 1 || bounds.height < 1) return undefined;
   const origin = projection.cards.find((card) => sameCard(card.descriptor.cardKey, drag.ghost.cardKey));
-  const width = Math.min(bounds.width, Math.max(3, Math.min(16, origin?.rect.width ?? 12)));
-  const height = Math.min(bounds.height, Math.max(2, Math.min(3, origin?.rect.height ?? 3)));
-  const x = Math.min(Math.max(bounds.x, drag.ghost.point.x + 1), bounds.x + bounds.width - width);
-  const y = Math.min(Math.max(bounds.y, drag.ghost.point.y + 1), bounds.y + bounds.height - height);
-  const rect = clip({ x, y, width, height }, bounds);
+  const width = Math.min(bounds.width, Math.max(3, Math.min(20, origin?.rect.width ?? 12)));
+  const height = Math.min(bounds.height, Math.max(2, Math.min(4, origin?.rect.height ?? 3)));
+  const clampX = (x: number): number => Math.min(Math.max(bounds.x, x), bounds.x + bounds.width - width);
+  const clampY = (y: number): number => Math.min(Math.max(bounds.y, y), bounds.y + bounds.height - height);
+  const candidates = [
+    { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y + 1) },
+    { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y - height - 1) },
+    { x: clampX(drag.ghost.point.x + 1), y: clampY(bounds.y + bounds.height - height) },
+    { x: clampX(drag.ghost.point.x - width - 1), y: clampY(drag.ghost.point.y + 1) },
+    { x: clampX(drag.ghost.point.x - width - 1), y: clampY(bounds.y + bounds.height - height) },
+  ];
+  const moved = new Set(drag.placeholders.flatMap(({ cardKeys }) => cardKeys.map(cardIdentity)));
+  const obstacles = [
+    ...projection.cards.flatMap((card) => (moved.has(cardIdentity(card.descriptor.cardKey)) ? [] : [card.rect])),
+    ...(drag.gap === undefined ? [] : [drag.gap.rect]),
+  ];
+  const overlap = (candidate: Readonly<{ x: number; y: number }>): number =>
+    obstacles.reduce((total, obstacle) => {
+      const overlapWidth = Math.max(
+        0,
+        Math.min(candidate.x + width, obstacle.x + obstacle.width) - Math.max(candidate.x, obstacle.x),
+      );
+      const overlapHeight = Math.max(
+        0,
+        Math.min(candidate.y + height, obstacle.y + obstacle.height) - Math.max(candidate.y, obstacle.y),
+      );
+      return total + overlapWidth * overlapHeight;
+    }, 0);
+  const preferred = candidates[0]!;
+  const score = (candidate: Readonly<{ x: number; y: number }>): number =>
+    overlap(candidate) * 2 + Math.abs(candidate.x - preferred.x) + Math.abs(candidate.y - preferred.y);
+  const placement = candidates.reduce((best, candidate) => (score(candidate) < score(best) ? candidate : best));
+  const rect = clip({ ...placement, width, height }, bounds);
   if (rect === undefined) return undefined;
   const identity = typeof drag.ghost.cardKey === 'number' ? String(drag.ghost.cardKey) : drag.ghost.cardKey;
+  const title = descriptorCue(origin, 'title');
+  const status = descriptorCue(origin, 'status');
   return Object.freeze({
     cardKey: drag.ghost.cardKey,
     count: drag.ghost.count,
+    anchor: drag.ghost.point,
     label: drag.ghost.count === 1 ? `#${identity}` : `${drag.ghost.count} cards`,
+    ...(title === undefined ? {} : { title }),
+    ...(status === undefined ? {} : { status }),
     rect,
   });
 }
@@ -253,6 +349,11 @@ function affectedStacks(
     identities.add(JSON.stringify([drag.gap.address.columnId, drag.gap.address.swimlaneId ?? null]));
   }
   for (const block of pending) identities.add(JSON.stringify([block.columnId, block.swimlaneId ?? null]));
+  for (const block of pending) {
+    for (const source of block.sources) {
+      identities.add(JSON.stringify([source.columnId, source.swimlaneId ?? null]));
+    }
+  }
   const result: KanbanOverlayAffectedStack[] = [];
   for (const identity of identities) {
     const [columnId, swimlaneId] = JSON.parse(identity) as [string, string | null];
@@ -282,36 +383,69 @@ export function composeKanbanViewportOverlay(
   try {
     const operations = projectKanbanOperations(options.authoritative, options.operations ?? [], options.bounds);
     const drag = options.drag;
-    if (drag === undefined && operations.pending.length === 0 && operations.feedback.length === 0) {
+    if (
+      drag === undefined &&
+      operations.pending.length === 0 &&
+      operations.feedback.length === 0 &&
+      operations.blockedCardKeys.size === 0 &&
+      operations.blockedColumnIds.size === 0 &&
+      operations.blockedSwimlaneIds.size === 0
+    ) {
       return Object.freeze({ ...options.authoritative, overlay: EMPTY_OVERLAY });
     }
-    const dragKeys = drag?.placeholders.flatMap(({ cardKeys }) => cardKeys) ?? [];
-    const projectedKeys = [...dragKeys, ...operations.projectedCardKeys];
+    const visibleIdentities = new Set(
+      options.authoritative.cards.map(({ descriptor }) => cardIdentity(descriptor.cardKey)),
+    );
+    const projectedIdentities = new Set(operations.projectedCardKeys.map(cardIdentity));
+    for (const placeholder of drag?.placeholders ?? []) {
+      for (const cardKey of placeholder.cardKeys) {
+        const identity = cardIdentity(cardKey);
+        if (visibleIdentities.has(identity)) projectedIdentities.add(identity);
+      }
+    }
     const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds);
     const cards = Object.freeze(
       options.authoritative.cards
-        .filter((card) => !projectedKeys.some((cardKey) => sameCard(card.descriptor.cardKey, cardKey)))
+        .filter((card) => !projectedIdentities.has(cardIdentity(card.descriptor.cardKey)))
         .flatMap((card): readonly KanbanProjectedCard[] => {
+          let verticalShift = 0;
           if (
-            options.density !== 'compact' ||
-            gap === undefined ||
-            !inCell(card, gap.address) ||
-            card.rect.y < gap.rect.y
+            options.density === 'compact' &&
+            gap !== undefined &&
+            inCell(card, gap.address) &&
+            card.rect.y >= gap.rect.y
           ) {
-            return [card];
+            verticalShift += 1;
           }
-          const rect = clip({ ...card.rect, y: card.rect.y + 1 }, options.bounds);
+          for (const block of operations.pending) {
+            if (!block.offscreen && inCell(card, block.target) && card.rect.y >= block.rect.y) {
+              verticalShift += block.rect.height + 1;
+            }
+          }
+          if (verticalShift === 0) return [card];
+          const rect = clip({ ...card.rect, y: card.rect.y + verticalShift }, options.bounds);
           return rect === undefined ? [] : [Object.freeze({ ...card, rect })];
         }),
     );
     const actionTargets = Object.freeze(
       options.authoritative.actionTargets.filter((target) => {
         const targetCardKey = target.cardKey;
-        return targetCardKey === undefined || !projectedKeys.some((cardKey) => sameCard(targetCardKey, cardKey));
+        if (targetCardKey !== undefined && operations.blockedCardKeys.has(cardIdentity(targetCardKey))) return false;
+        if (target.columnId !== undefined && operations.blockedColumnIds.has(target.columnId)) return false;
+        if (target.swimlaneId !== undefined && operations.blockedSwimlaneIds.has(target.swimlaneId)) return false;
+        if (target.address !== undefined) {
+          if (operations.blockedColumnIds.has(target.address.columnId)) return false;
+          if (target.address.swimlaneId !== undefined && operations.blockedSwimlaneIds.has(target.address.swimlaneId)) {
+            return false;
+          }
+        }
+        return targetCardKey === undefined || !projectedIdentities.has(cardIdentity(targetCardKey));
       }),
     );
-    const placeholders =
-      drag === undefined ? Object.freeze([]) : projectPlaceholders(options.authoritative, drag, options.bounds);
+    const placeholders = Object.freeze([
+      ...(drag === undefined ? [] : projectPlaceholders(options.authoritative, drag, options.bounds)),
+      ...projectPendingPlaceholders(options.authoritative, operations.pending, options.bounds),
+    ]);
     const overlay: KanbanOverlayProjection = Object.freeze({
       placeholders,
       ...(gap === undefined ? {} : { gap }),
@@ -322,6 +456,11 @@ export function composeKanbanViewportOverlay(
     });
     return Object.freeze({ ...options.authoritative, cards, actionTargets, overlay });
   } catch {
-    return Object.freeze({ ...options.authoritative, overlay: EMPTY_OVERLAY });
+    return Object.freeze({
+      ...options.authoritative,
+      actionTargets: Object.freeze([]),
+      overlay: EMPTY_OVERLAY,
+      overlayFailure: 'composition-failed' as const,
+    });
   }
 }
