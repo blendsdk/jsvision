@@ -33,6 +33,15 @@ function allowedMoveFacts() {
       ],
       swimlanes: [],
       cards: [{ cardKey: 4, revision: 'card-4-r3' }],
+      sourceCells: [
+        {
+          address: { columnId: 'ready' },
+          cursorRevision: 'ready-r7',
+          edges: { start: 'complete', end: 'complete' },
+          cardKeys: [],
+          placementTokens: [],
+        },
+      ],
       targetCursorRevision: 'doing-r8',
       targetEdges: { start: 'complete', end: 'complete' },
       targetCardKeys: [],
@@ -106,6 +115,15 @@ describe('operation ID implementation', () => {
     expect(reusedEvicted.operationId).toBe('operation-1');
     expect(reusedEvicted.active()).toBe(true);
   });
+
+  it('does not invoke the injected factory when active capacity is already exhausted', () => {
+    const factory = vi.fn().mockReturnValueOnce('operation-1').mockReturnValueOnce('operation-2');
+    const registry = createKanbanOperationIdRegistry({ factory, activeLimit: 1 });
+    registry.acquire();
+
+    expect(() => registry.acquire()).toThrow();
+    expect(factory).toHaveBeenCalledOnce();
+  });
 });
 
 describe('eligibility stage implementation', () => {
@@ -137,5 +155,21 @@ describe('eligibility stage implementation', () => {
 
     expect(result).toEqual({ kind: 'unavailable', code: 'stale-source-revision' });
     expect(getter).not.toHaveBeenCalled();
+  });
+
+  it('rejects members that belong to a different capability or selection variant', () => {
+    const facts = allowedMoveFacts();
+    expect(() =>
+      evaluateKanbanMoveEligibility({
+        ...facts,
+        capability: { state: 'allowed', reasonCode: 'ignored' },
+      }),
+    ).toThrow();
+    expect(() =>
+      evaluateKanbanMoveEligibility({
+        ...facts,
+        selection: { kind: 'server', orderedCardKeys: [4], maximum: 1 },
+      }),
+    ).toThrow();
   });
 });

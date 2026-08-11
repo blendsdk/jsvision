@@ -96,16 +96,16 @@ Complete input contract for the pure move-eligibility pipeline.
 
 ```ts
 interface EvaluateKanbanMoveEligibilityInput {
-  proposal: KanbanCardMoveProposal;
-  current: KanbanMoveCurrentAuthority;
-  expected: unknown;
-  capability: KanbanMoveCapability;
-  selection: KanbanMoveSelection;
-  ordering: unknown;
-  transition: unknown;
-  definitionOfDone: unknown;
-  wip: unknown;
-  unchanged: boolean;
+  proposal: KanbanCardMoveProposal;   // Exact immutable semantic move proposal.
+  current: KanbanMoveCurrentAuthority;   // Current bounded structure, revision, and placement authority.
+  expected: unknown;   // Coordinator-captured equality revisions.
+  capability: KanbanMoveCapability;   // Presentation-only move capability.
+  selection: KanbanMoveSelection;   // Atomic local or unrepresentable server selection.
+  ordering: unknown;   // Current sort/filter placement policy evidence.
+  transition: unknown;   // Output from the pure transition evaluator.
+  definitionOfDone: unknown;   // Output from the definition-of-done policy.
+  wip: unknown;   // Output from the pure WIP evaluator.
+  unchanged: boolean;   // Whether the proposal returns cards to the unchanged semantic interval.
 }
 ```
 
@@ -517,8 +517,8 @@ Archive one card through application-owned persistence.
 
 ```ts
 interface KanbanCardArchiveProposal {
-  kind: 'card-archive';
-  cardKey: CardKey;
+  kind: 'card-archive';   // Request discriminator.
+  cardKey: CardKey;   // Stable identity of the card to archive.
 }
 ```
 
@@ -528,9 +528,9 @@ Add one application-schema card to a semantic cell.
 
 ```ts
 interface KanbanCardCreateProposal {
-  kind: 'card-create';
-  target: KanbanCellAddress;
-  draft: KanbanSemanticValue;
+  kind: 'card-create';   // Request discriminator.
+  target: KanbanCellAddress;   // Semantic destination cell for the new card.
+  draft: KanbanSemanticValue;   // Bounded application-schema data used to create the card.
 }
 ```
 
@@ -559,8 +559,8 @@ Permanently delete one card through application-owned persistence.
 
 ```ts
 interface KanbanCardDeleteProposal {
-  kind: 'card-delete';
-  cardKey: CardKey;
+  kind: 'card-delete';   // Request discriminator.
+  cardKey: CardKey;   // Stable identity of the card to delete permanently.
 }
 ```
 
@@ -599,10 +599,10 @@ Duplicate one card into an exact semantic destination.
 
 ```ts
 interface KanbanCardDuplicateProposal {
-  kind: 'card-duplicate';
-  cardKey: CardKey;
-  target: KanbanCellAddress;
-  position: KanbanMovePosition;
+  kind: 'card-duplicate';   // Request discriminator.
+  cardKey: CardKey;   // Stable identity of the source card.
+  target: KanbanCellAddress;   // Semantic destination cell for the copy.
+  position: KanbanMovePosition;   // Revision-bound semantic destination interval.
 }
 ```
 
@@ -740,11 +740,11 @@ Move one ordered, non-empty atomic card set to one semantic destination.
 
 ```ts
 interface KanbanCardMoveProposal {
-  kind: 'card-move';
-  moved: readonly KanbanMovedCardSnapshot[];
-  target: KanbanCellAddress;
-  position: KanbanMovePosition;
-  viewRevision?: KanbanRevision;
+  kind: 'card-move';   // Request discriminator.
+  moved: readonly KanbanMovedCardSnapshot[];   // Ordered non-empty atomic card set with captured source evidence.
+  target: KanbanCellAddress;   // Semantic destination cell shared by the atomic card set.
+  position: KanbanMovePosition;   // Revision-bound semantic destination interval.
+  viewRevision?: KanbanRevision;   // Optional projection revision that must remain current.
 }
 ```
 
@@ -1044,9 +1044,9 @@ Patch one application-schema card without exposing its record to the component.
 
 ```ts
 interface KanbanCardUpdateProposal {
-  kind: 'card-update';
-  cardKey: CardKey;
-  patch: KanbanSemanticValue;
+  kind: 'card-update';   // Request discriminator.
+  cardKey: CardKey;   // Stable identity of the card to update.
+  patch: KanbanSemanticValue;   // Bounded application-schema patch data.
 }
 ```
 
@@ -1232,9 +1232,9 @@ Add one workflow column at a semantic structural position.
 
 ```ts
 interface KanbanColumnAddProposal {
-  kind: 'column-add';
-  draft: KanbanColumnDraft;
-  position: KanbanColumnPosition;
+  kind: 'column-add';   // Request discriminator.
+  draft: KanbanColumnDraft;   // Validated generic column definition.
+  position: KanbanColumnPosition;   // Stable-neighbor structural destination.
 }
 ```
 
@@ -1244,9 +1244,9 @@ Delete one workflow column with an optional application-authorized card reassign
 
 ```ts
 interface KanbanColumnDeleteProposal {
-  kind: 'column-delete';
-  columnId: KanbanColumnId;
-  reassignTo?: KanbanColumnId;
+  kind: 'column-delete';   // Request discriminator.
+  columnId: KanbanColumnId;   // Stable identity of the column to delete.
+  reassignTo?: KanbanColumnId;   // Optional application-authorized destination for affected cards.
 }
 ```
 
@@ -1256,9 +1256,9 @@ Generic application-owned workflow-column draft with package-validated identity 
 
 ```ts
 interface KanbanColumnDraft {
-  columnId: KanbanColumnId;
-  label: string;
-  data?: KanbanSemanticValue;
+  columnId: KanbanColumnId;   // Stable identity proposed for the new workflow column.
+  label: string;   // Safe human-readable column label.
+  data?: KanbanSemanticValue;   // Optional bounded application-owned column metadata.
 }
 ```
 
@@ -1352,9 +1352,9 @@ Reorder one workflow column without a numeric index or generated rank.
 
 ```ts
 interface KanbanColumnReorderProposal {
-  kind: 'column-reorder';
-  columnId: KanbanColumnId;
-  position: KanbanColumnPosition;
+  kind: 'column-reorder';   // Request discriminator.
+  columnId: KanbanColumnId;   // Stable identity of the column to move.
+  position: KanbanColumnPosition;   // Stable-neighbor structural destination.
 }
 ```
 
@@ -1375,9 +1375,9 @@ Patch one workflow column through application-owned policy.
 
 ```ts
 interface KanbanColumnUpdateProposal {
-  kind: 'column-update';
-  columnId: KanbanColumnId;
-  patch: KanbanSemanticValue;
+  kind: 'column-update';   // Request discriminator.
+  columnId: KanbanColumnId;   // Stable identity of the column to update.
+  patch: KanbanSemanticValue;   // Bounded application-schema patch data.
 }
 ```
 
@@ -1424,6 +1424,16 @@ interface KanbanColumnWidthSolution {
 }
 ```
 
+## KanbanConfirmationClassification
+
+Pure coordinator input describing whether a currently eligible proposal needs confirmation.
+
+```ts
+type KanbanConfirmationClassification = | Extract<KanbanEligibility, { readonly kind: 'warning' }>
+  | { readonly kind: 'destructive' }
+  | { readonly kind: 'not-required' }
+```
+
 ## KanbanCount
 
 A count whose authority and completeness are explicit.
@@ -1442,8 +1452,8 @@ Current revision of one card used by move eligibility.
 
 ```ts
 interface KanbanCurrentCard {
-  cardKey: CardKey;
-  revision: KanbanRevision;
+  cardKey: CardKey;   // Stable application-owned card identity.
+  revision: KanbanRevision;   // Current equality-only entity revision.
 }
 ```
 
@@ -1453,8 +1463,8 @@ Current revision of one structural column used by move eligibility.
 
 ```ts
 interface KanbanCurrentColumn {
-  columnId: KanbanColumnId;
-  revision: KanbanRevision;
+  columnId: KanbanColumnId;   // Stable workflow-column identity.
+  revision: KanbanRevision;   // Current equality-only entity revision.
 }
 ```
 
@@ -1464,8 +1474,8 @@ Current revision of one structural swimlane used by move eligibility.
 
 ```ts
 interface KanbanCurrentSwimlane {
-  swimlaneId: KanbanSwimlaneId;
-  revision: KanbanRevision;
+  swimlaneId: KanbanSwimlaneId;   // Stable explicit-swimlane identity.
+  revision: KanbanRevision;   // Current equality-only entity revision.
 }
 ```
 
@@ -1595,9 +1605,9 @@ Captured card revision required by an application request.
 
 ```ts
 interface KanbanExpectedCardRevision {
-  kind: 'card';
-  cardKey: CardKey;
-  revision: KanbanRevision;
+  kind: 'card';   // Entity discriminator used for exact validation.
+  cardKey: CardKey;   // Stable application-owned card identity.
+  revision: KanbanRevision;   // Equality-only revision captured before admission.
 }
 ```
 
@@ -1607,9 +1617,9 @@ Captured workflow-column revision required by an application request.
 
 ```ts
 interface KanbanExpectedColumnRevision {
-  kind: 'column';
-  columnId: KanbanColumnId;
-  revision: KanbanRevision;
+  kind: 'column';   // Entity discriminator used for exact validation.
+  columnId: KanbanColumnId;   // Stable workflow-column identity.
+  revision: KanbanRevision;   // Equality-only revision captured before admission.
 }
 ```
 
@@ -1627,9 +1637,9 @@ Captured swimlane revision required by an application request.
 
 ```ts
 interface KanbanExpectedSwimlaneRevision {
-  kind: 'swimlane';
-  swimlaneId: KanbanSwimlaneId;
-  revision: KanbanRevision;
+  kind: 'swimlane';   // Entity discriminator used for exact validation.
+  swimlaneId: KanbanSwimlaneId;   // Stable explicit-swimlane identity.
+  revision: KanbanRevision;   // Equality-only revision captured before admission.
 }
 ```
 
@@ -1669,12 +1679,12 @@ Generic namespaced application-extension request.
 
 ```ts
 interface KanbanExtensionRequest<TType extends KanbanExtensionId = KanbanExtensionId, TPayload extends KanbanSemanticValue = KanbanSemanticValue> {
-  kind: 'extension';
-  extensionId: TType;
-  operationId: KanbanOperationId;
-  expected: KanbanRequestExpectedRevisions;
-  payload: TPayload;
-  signal: AbortSignal;
+  kind: 'extension';   // Request discriminator.
+  extensionId: TType;   // Namespaced application extension identity.
+  operationId: KanbanOperationId;   // Caller-provided legacy operation identity adopted by the coordinator.
+  expected: KanbanRequestExpectedRevisions;   // Equality-only authority captured by the legacy caller.
+  payload: TPayload;   // Bounded application-owned extension data.
+  signal: AbortSignal;   // Live legacy cancellation signal adopted for this operation.
 }
 ```
 
@@ -1684,9 +1694,9 @@ Caller-facing namespaced extension proposal without coordinator-owned lifecycle 
 
 ```ts
 interface KanbanExtensionRequestProposal<TType extends KanbanExtensionId = KanbanExtensionId, TPayload extends KanbanSemanticValue = KanbanSemanticValue> {
-  kind: 'extension';
-  extensionId: TType;
-  payload: TPayload;
+  kind: 'extension';   // Request discriminator.
+  extensionId: TType;   // Namespaced application extension identity.
+  payload: TPayload;   // Bounded application-owned extension data.
 }
 ```
 
@@ -2470,9 +2480,9 @@ Bounded loaded selection represented by one atomic move proposal.
 
 ```ts
 interface KanbanLoadedMoveSelection {
-  kind: 'loaded';
-  orderedCardKeys: readonly CardKey[];
-  maximum: number;
+  kind: 'loaded';   // Selection discriminator.
+  orderedCardKeys: readonly CardKey[];   // Ordered stable keys represented by the atomic proposal.
+  maximum: number;   // Caller-selected atomic ceiling, bounded by the package manifest.
 }
 ```
 
@@ -2536,8 +2546,8 @@ Presentation-only capability state for one proposed move.
 
 ```ts
 interface KanbanMoveCapability {
-  state: 'allowed' | 'disabled' | 'hidden';
-  reasonCode?: string;
+  state: 'allowed' | 'disabled' | 'hidden';   // Presentation state; this value never authorizes persistence.
+  reasonCode?: string;   // Optional machine-readable reason for a disabled or hidden move.
 }
 ```
 
@@ -2547,17 +2557,18 @@ Complete current semantic authority required before workflow policy is evaluated
 
 ```ts
 interface KanbanMoveCurrentAuthority {
-  boardRevision?: KanbanRevision;
-  sourceRevision: KanbanRevision;
-  queryRevision: KanbanRevision;
-  viewRevision?: KanbanRevision;
-  columns: readonly KanbanCurrentColumn[];
-  swimlanes: readonly KanbanCurrentSwimlane[];
-  cards: readonly KanbanCurrentCard[];
-  targetCursorRevision: KanbanRevision;
-  targetEdges: Readonly<{ readonly start: 'complete' | 'unknown'; readonly end: 'complete' | 'unknown' }>;
-  targetCardKeys: readonly CardKey[];
-  placementTokens: readonly PlacementToken[];
+  boardRevision?: KanbanRevision;   // Current board revision when the application publishes board-wide authority.
+  sourceRevision: KanbanRevision;   // Current source generation revision.
+  queryRevision: KanbanRevision;   // Current query revision.
+  viewRevision?: KanbanRevision;   // Current saved or transient view revision when one controls placement.
+  columns: readonly KanbanCurrentColumn[];   // Bounded current workflow columns and their entity revisions.
+  swimlanes: readonly KanbanCurrentSwimlane[];   // Bounded current explicit swimlanes and their entity revisions.
+  cards: readonly KanbanCurrentCard[];   // Bounded current cards relevant to this proposal and its captured expectations.
+  sourceCells: readonly KanbanMoveSourceCellEvidence[];   // Per-source-cell evidence used to revalidate every moved card's original interval.
+  targetCursorRevision: KanbanRevision;   // Current destination cursor revision.
+  targetEdges: Readonly<{ readonly start: 'complete' | 'unknown'; readonly end: 'complete' | 'unknown' }>;   // Current completeness of the destination's logical edges.
+  targetCardKeys: readonly CardKey[];   // Current destination anchors visible to semantic placement.
+  placementTokens: readonly PlacementToken[];   // Current source-issued opaque destination placement tokens.
 }
 ```
 
@@ -2610,6 +2621,16 @@ Selection authority accepted by the synchronous move pipeline.
 
 ```ts
 type KanbanMoveSelection = KanbanLoadedMoveSelection | KanbanServerMoveSelection
+```
+
+## KanbanMoveSourceCellEvidence
+
+Current semantic placement evidence for one distinct source cell.
+
+```ts
+interface KanbanMoveSourceCellEvidence {
+  address: Readonly<{ readonly columnId: KanbanColumnId; readonly swimlaneId?: KanbanSwimlaneId }>;   // Stable column/swimlane address whose cursor issued this evidence.
+}
 ```
 
 ## KanbanMovedCardSnapshot
@@ -3070,9 +3091,9 @@ Publication metadata returned with an accepted request result.
 
 ```ts
 interface KanbanRequestAccepted {
-  kind: 'accepted';
-  operationId: KanbanOperationId;
-  publication?: KanbanPublicationExpectation;
+  kind: 'accepted';   // Result discriminator.
+  operationId: KanbanOperationId;   // Identity of the operation being acknowledged.
+  publication?: KanbanPublicationExpectation;   // Optional authoritative publication expected before commit.
 }
 ```
 
@@ -3082,10 +3103,10 @@ Explicit cancellation outcome, distinct from rejection and supersession.
 
 ```ts
 interface KanbanRequestCancelled {
-  kind: 'cancelled';
-  operationId: KanbanOperationId;
-  code?: string;
-  label?: string;
+  kind: 'cancelled';   // Result discriminator.
+  operationId: KanbanOperationId;   // Identity of the cancelled operation.
+  code?: string;   // Optional safe machine-readable reason code.
+  label?: string;   // Optional sanitized application-facing reason label.
 }
 ```
 
@@ -3116,10 +3137,10 @@ Equality-only revisions captured with an application request.
 
 ```ts
 interface KanbanRequestExpectedRevisions {
-  board?: KanbanRevision;
-  source?: KanbanRevision;
-  query?: KanbanRevision;
-  entities?: readonly KanbanExpectedEntityRevision[];
+  board?: KanbanRevision;   // Optional board-wide equality revision.
+  source?: KanbanRevision;   // Optional source-session equality revision.
+  query?: KanbanRevision;   // Optional active-query equality revision.
+  entities?: readonly KanbanExpectedEntityRevision[];   // Bounded entity revisions that must still match before dispatch.
 }
 ```
 
@@ -3152,10 +3173,10 @@ Sanitized application rejection.
 
 ```ts
 interface KanbanRequestRejected {
-  kind: 'rejected';
-  operationId: KanbanOperationId;
-  code: string;
-  label?: string;
+  kind: 'rejected';   // Result discriminator.
+  operationId: KanbanOperationId;   // Identity of the rejected operation.
+  code: string;   // Safe machine-readable reason code.
+  label?: string;   // Optional sanitized application-facing reason label.
 }
 ```
 
@@ -3173,10 +3194,10 @@ Outcome indicating that a newer application operation replaced this request.
 
 ```ts
 interface KanbanRequestSuperseded {
-  kind: 'superseded';
-  operationId: KanbanOperationId;
-  code?: string;
-  label?: string;
+  kind: 'superseded';   // Result discriminator.
+  operationId: KanbanOperationId;   // Identity of the superseded operation.
+  code?: string;   // Optional safe machine-readable reason code.
+  label?: string;   // Optional sanitized application-facing reason label.
 }
 ```
 
@@ -3311,8 +3332,8 @@ Delete one application-owned saved view.
 
 ```ts
 interface KanbanSavedViewDeleteProposal {
-  kind: 'saved-view-delete';
-  viewId: KanbanViewId;
+  kind: 'saved-view-delete';   // Request discriminator.
+  viewId: KanbanViewId;   // Stable application-owned view identity.
 }
 ```
 
@@ -3322,9 +3343,9 @@ Rename one application-owned saved view.
 
 ```ts
 interface KanbanSavedViewRenameProposal {
-  kind: 'saved-view-rename';
-  viewId: KanbanViewId;
-  label: string;
+  kind: 'saved-view-rename';   // Request discriminator.
+  viewId: KanbanViewId;   // Stable application-owned view identity.
+  label: string;   // Safe human-readable replacement label.
 }
 ```
 
@@ -3342,9 +3363,9 @@ Save or replace one application-owned semantic view definition.
 
 ```ts
 interface KanbanSavedViewSaveProposal {
-  kind: 'saved-view-save';
-  viewId: KanbanViewId;
-  data: KanbanSemanticValue;
+  kind: 'saved-view-save';   // Request discriminator.
+  viewId: KanbanViewId;   // Stable application-owned view identity.
+  data: KanbanSemanticValue;   // Bounded semantic view definition.
 }
 ```
 
@@ -3742,7 +3763,7 @@ Server-side selection that cannot be expanded into an ordered atomic move locall
 
 ```ts
 interface KanbanServerMoveSelection {
-  kind: 'server';
+  kind: 'server';   // Selection discriminator for a set that cannot be expanded locally.
 }
 ```
 
@@ -4173,9 +4194,9 @@ Add one explicit swimlane at a semantic structural position.
 
 ```ts
 interface KanbanSwimlaneAddProposal {
-  kind: 'swimlane-add';
-  draft: KanbanSwimlaneDraft;
-  position: KanbanSwimlanePosition;
+  kind: 'swimlane-add';   // Request discriminator.
+  draft: KanbanSwimlaneDraft;   // Validated generic explicit-swimlane definition.
+  position: KanbanSwimlanePosition;   // Stable-neighbor structural destination.
 }
 ```
 
@@ -4223,9 +4244,9 @@ Delete one explicit swimlane with an optional application-authorized reassignmen
 
 ```ts
 interface KanbanSwimlaneDeleteProposal {
-  kind: 'swimlane-delete';
-  swimlaneId: KanbanSwimlaneId;
-  reassignTo?: KanbanSwimlaneId;
+  kind: 'swimlane-delete';   // Request discriminator.
+  swimlaneId: KanbanSwimlaneId;   // Stable identity of the swimlane to delete.
+  reassignTo?: KanbanSwimlaneId;   // Optional application-authorized destination for affected cards.
 }
 ```
 
@@ -4235,9 +4256,9 @@ Generic application-owned swimlane draft with package-validated identity and lab
 
 ```ts
 interface KanbanSwimlaneDraft {
-  swimlaneId: KanbanSwimlaneId;
-  label: string;
-  data?: KanbanSemanticValue;
+  swimlaneId: KanbanSwimlaneId;   // Stable identity proposed for the new explicit swimlane.
+  label: string;   // Safe human-readable swimlane label.
+  data?: KanbanSemanticValue;   // Optional bounded application-owned swimlane metadata.
 }
 ```
 
@@ -4424,9 +4445,9 @@ Reorder one explicit swimlane without a numeric index or generated rank.
 
 ```ts
 interface KanbanSwimlaneReorderProposal {
-  kind: 'swimlane-reorder';
-  swimlaneId: KanbanSwimlaneId;
-  position: KanbanSwimlanePosition;
+  kind: 'swimlane-reorder';   // Request discriminator.
+  swimlaneId: KanbanSwimlaneId;   // Stable identity of the swimlane to move.
+  position: KanbanSwimlanePosition;   // Stable-neighbor structural destination.
 }
 ```
 
@@ -4448,9 +4469,9 @@ Patch one explicit swimlane through application-owned policy.
 
 ```ts
 interface KanbanSwimlaneUpdateProposal {
-  kind: 'swimlane-update';
-  swimlaneId: KanbanSwimlaneId;
-  patch: KanbanSemanticValue;
+  kind: 'swimlane-update';   // Request discriminator.
+  swimlaneId: KanbanSwimlaneId;   // Stable identity of the swimlane to update.
+  patch: KanbanSemanticValue;   // Bounded application-schema patch data.
 }
 ```
 
@@ -5364,6 +5385,14 @@ Clamps requested offsets to current live extents without retaining caller object
 clampKanbanScroll(options: ClampKanbanScrollOptions): KanbanViewportPoint
 ```
 
+## classifyKanbanRequestConfirmation
+
+Classify warning and destructive proposals without invoking a confirmer or dispatcher.
+
+```ts
+classifyKanbanRequestConfirmation(proposal: unknown, eligibility: unknown): KanbanConfirmationClassification
+```
+
 ## composeStandardKanbanCard
 
 Composes one detached presentation snapshot into a bounded immutable descriptor.
@@ -5884,6 +5913,14 @@ Detaches compact and complete definition-of-done text for safe header/help prese
 snapshotKanbanDefinitionOfDone(value: unknown): KanbanDefinitionOfDoneSnapshot
 ```
 
+## snapshotKanbanEligibility
+
+Validate and detach one result from a pure transition, DoD, WIP, or custom policy evaluator.
+
+```ts
+snapshotKanbanEligibility(value: unknown): KanbanEligibility
+```
+
 ## snapshotKanbanGroupingPolicy
 
 Snapshots the sole query-owned grouping policy without invoking card callbacks.
@@ -5930,6 +5967,14 @@ Validate, detach, and freeze one dispatchable semantic move position.
 
 ```ts
 snapshotKanbanMovePosition(value: unknown): KanbanMovePosition
+```
+
+## snapshotKanbanMovePositionEvidence
+
+Validate and detach bounded source-owned evidence before placement evaluation.
+
+```ts
+snapshotKanbanMovePositionEvidence(value: unknown): KanbanMovePositionEvidence
 ```
 
 ## snapshotKanbanMovedCard

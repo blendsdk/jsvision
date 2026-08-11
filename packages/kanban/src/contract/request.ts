@@ -14,22 +14,31 @@ import type { KanbanCellAddress } from '../source/types.js';
 
 /** Captured card revision required by an application request. */
 export interface KanbanExpectedCardRevision {
+  /** Entity discriminator used for exact validation. */
   readonly kind: 'card';
+  /** Stable application-owned card identity. */
   readonly cardKey: CardKey;
+  /** Equality-only revision captured before admission. */
   readonly revision: KanbanRevision;
 }
 
 /** Captured workflow-column revision required by an application request. */
 export interface KanbanExpectedColumnRevision {
+  /** Entity discriminator used for exact validation. */
   readonly kind: 'column';
+  /** Stable workflow-column identity. */
   readonly columnId: KanbanColumnId;
+  /** Equality-only revision captured before admission. */
   readonly revision: KanbanRevision;
 }
 
 /** Captured swimlane revision required by an application request. */
 export interface KanbanExpectedSwimlaneRevision {
+  /** Entity discriminator used for exact validation. */
   readonly kind: 'swimlane';
+  /** Stable explicit-swimlane identity. */
   readonly swimlaneId: KanbanSwimlaneId;
+  /** Equality-only revision captured before admission. */
   readonly revision: KanbanRevision;
 }
 
@@ -39,9 +48,13 @@ export type KanbanExpectedEntityRevision =
 
 /** Equality-only revisions captured with an application request. */
 export interface KanbanRequestExpectedRevisions {
+  /** Optional board-wide equality revision. */
   readonly board?: KanbanRevision;
+  /** Optional source-session equality revision. */
   readonly source?: KanbanRevision;
+  /** Optional active-query equality revision. */
   readonly query?: KanbanRevision;
+  /** Bounded entity revisions that must still match before dispatch. */
   readonly entities?: readonly KanbanExpectedEntityRevision[];
 }
 
@@ -89,44 +102,63 @@ export type KanbanMovePosition =
 
 /** Add one application-schema card to a semantic cell. */
 export interface KanbanCardCreateProposal {
+  /** Request discriminator. */
   readonly kind: 'card-create';
+  /** Semantic destination cell for the new card. */
   readonly target: KanbanCellAddress;
+  /** Bounded application-schema data used to create the card. */
   readonly draft: KanbanSemanticValue;
 }
 
 /** Patch one application-schema card without exposing its record to the component. */
 export interface KanbanCardUpdateProposal {
+  /** Request discriminator. */
   readonly kind: 'card-update';
+  /** Stable identity of the card to update. */
   readonly cardKey: CardKey;
+  /** Bounded application-schema patch data. */
   readonly patch: KanbanSemanticValue;
 }
 
 /** Duplicate one card into an exact semantic destination. */
 export interface KanbanCardDuplicateProposal {
+  /** Request discriminator. */
   readonly kind: 'card-duplicate';
+  /** Stable identity of the source card. */
   readonly cardKey: CardKey;
+  /** Semantic destination cell for the copy. */
   readonly target: KanbanCellAddress;
+  /** Revision-bound semantic destination interval. */
   readonly position: KanbanMovePosition;
 }
 
 /** Archive one card through application-owned persistence. */
 export interface KanbanCardArchiveProposal {
+  /** Request discriminator. */
   readonly kind: 'card-archive';
+  /** Stable identity of the card to archive. */
   readonly cardKey: CardKey;
 }
 
 /** Permanently delete one card through application-owned persistence. */
 export interface KanbanCardDeleteProposal {
+  /** Request discriminator. */
   readonly kind: 'card-delete';
+  /** Stable identity of the card to delete permanently. */
   readonly cardKey: CardKey;
 }
 
 /** Move one ordered, non-empty atomic card set to one semantic destination. */
 export interface KanbanCardMoveProposal {
+  /** Request discriminator. */
   readonly kind: 'card-move';
+  /** Ordered non-empty atomic card set with captured source evidence. */
   readonly moved: readonly KanbanMovedCardSnapshot[];
+  /** Semantic destination cell shared by the atomic card set. */
   readonly target: KanbanCellAddress;
+  /** Revision-bound semantic destination interval. */
   readonly position: KanbanMovePosition;
+  /** Optional projection revision that must remain current. */
   readonly viewRevision?: KanbanRevision;
 }
 
@@ -135,8 +167,11 @@ export interface KanbanExtensionRequestProposal<
   TType extends KanbanExtensionId = KanbanExtensionId,
   TPayload extends KanbanSemanticValue = KanbanSemanticValue,
 > {
+  /** Request discriminator. */
   readonly kind: 'extension';
+  /** Namespaced application extension identity. */
   readonly extensionId: TType;
+  /** Bounded application-owned extension data. */
   readonly payload: TPayload;
 }
 
@@ -168,91 +203,129 @@ export type KanbanSwimlanePosition =
 
 /** Generic application-owned workflow-column draft with package-validated identity and label. */
 export interface KanbanColumnDraft {
+  /** Stable identity proposed for the new workflow column. */
   readonly columnId: KanbanColumnId;
+  /** Safe human-readable column label. */
   readonly label: string;
+  /** Optional bounded application-owned column metadata. */
   readonly data?: KanbanSemanticValue;
 }
 
 /** Generic application-owned swimlane draft with package-validated identity and label. */
 export interface KanbanSwimlaneDraft {
+  /** Stable identity proposed for the new explicit swimlane. */
   readonly swimlaneId: KanbanSwimlaneId;
+  /** Safe human-readable swimlane label. */
   readonly label: string;
+  /** Optional bounded application-owned swimlane metadata. */
   readonly data?: KanbanSemanticValue;
 }
 
 /** Add one workflow column at a semantic structural position. */
 export interface KanbanColumnAddProposal {
+  /** Request discriminator. */
   readonly kind: 'column-add';
+  /** Validated generic column definition. */
   readonly draft: KanbanColumnDraft;
+  /** Stable-neighbor structural destination. */
   readonly position: KanbanColumnPosition;
 }
 
 /** Patch one workflow column through application-owned policy. */
 export interface KanbanColumnUpdateProposal {
+  /** Request discriminator. */
   readonly kind: 'column-update';
+  /** Stable identity of the column to update. */
   readonly columnId: KanbanColumnId;
+  /** Bounded application-schema patch data. */
   readonly patch: KanbanSemanticValue;
 }
 
 /** Reorder one workflow column without a numeric index or generated rank. */
 export interface KanbanColumnReorderProposal {
+  /** Request discriminator. */
   readonly kind: 'column-reorder';
+  /** Stable identity of the column to move. */
   readonly columnId: KanbanColumnId;
+  /** Stable-neighbor structural destination. */
   readonly position: KanbanColumnPosition;
 }
 
 /** Delete one workflow column with an optional application-authorized card reassignment target. */
 export interface KanbanColumnDeleteProposal {
+  /** Request discriminator. */
   readonly kind: 'column-delete';
+  /** Stable identity of the column to delete. */
   readonly columnId: KanbanColumnId;
+  /** Optional application-authorized destination for affected cards. */
   readonly reassignTo?: KanbanColumnId;
 }
 
 /** Add one explicit swimlane at a semantic structural position. */
 export interface KanbanSwimlaneAddProposal {
+  /** Request discriminator. */
   readonly kind: 'swimlane-add';
+  /** Validated generic explicit-swimlane definition. */
   readonly draft: KanbanSwimlaneDraft;
+  /** Stable-neighbor structural destination. */
   readonly position: KanbanSwimlanePosition;
 }
 
 /** Patch one explicit swimlane through application-owned policy. */
 export interface KanbanSwimlaneUpdateProposal {
+  /** Request discriminator. */
   readonly kind: 'swimlane-update';
+  /** Stable identity of the swimlane to update. */
   readonly swimlaneId: KanbanSwimlaneId;
+  /** Bounded application-schema patch data. */
   readonly patch: KanbanSemanticValue;
 }
 
 /** Reorder one explicit swimlane without a numeric index or generated rank. */
 export interface KanbanSwimlaneReorderProposal {
+  /** Request discriminator. */
   readonly kind: 'swimlane-reorder';
+  /** Stable identity of the swimlane to move. */
   readonly swimlaneId: KanbanSwimlaneId;
+  /** Stable-neighbor structural destination. */
   readonly position: KanbanSwimlanePosition;
 }
 
 /** Delete one explicit swimlane with an optional application-authorized reassignment target. */
 export interface KanbanSwimlaneDeleteProposal {
+  /** Request discriminator. */
   readonly kind: 'swimlane-delete';
+  /** Stable identity of the swimlane to delete. */
   readonly swimlaneId: KanbanSwimlaneId;
+  /** Optional application-authorized destination for affected cards. */
   readonly reassignTo?: KanbanSwimlaneId;
 }
 
 /** Save or replace one application-owned semantic view definition. */
 export interface KanbanSavedViewSaveProposal {
+  /** Request discriminator. */
   readonly kind: 'saved-view-save';
+  /** Stable application-owned view identity. */
   readonly viewId: KanbanViewId;
+  /** Bounded semantic view definition. */
   readonly data: KanbanSemanticValue;
 }
 
 /** Rename one application-owned saved view. */
 export interface KanbanSavedViewRenameProposal {
+  /** Request discriminator. */
   readonly kind: 'saved-view-rename';
+  /** Stable application-owned view identity. */
   readonly viewId: KanbanViewId;
+  /** Safe human-readable replacement label. */
   readonly label: string;
 }
 
 /** Delete one application-owned saved view. */
 export interface KanbanSavedViewDeleteProposal {
+  /** Request discriminator. */
   readonly kind: 'saved-view-delete';
+  /** Stable application-owned view identity. */
   readonly viewId: KanbanViewId;
 }
 
@@ -276,11 +349,17 @@ export interface KanbanExtensionRequest<
   TType extends KanbanExtensionId = KanbanExtensionId,
   TPayload extends KanbanSemanticValue = KanbanSemanticValue,
 > {
+  /** Request discriminator. */
   readonly kind: 'extension';
+  /** Namespaced application extension identity. */
   readonly extensionId: TType;
+  /** Caller-provided legacy operation identity adopted by the coordinator. */
   readonly operationId: KanbanOperationId;
+  /** Equality-only authority captured by the legacy caller. */
   readonly expected: KanbanRequestExpectedRevisions;
+  /** Bounded application-owned extension data. */
   readonly payload: TPayload;
+  /** Live legacy cancellation signal adopted for this operation. */
   readonly signal: AbortSignal;
 }
 
@@ -302,32 +381,47 @@ export type KanbanRequest = KanbanStandardRequest | KanbanExtensionRequest;
 
 /** Publication metadata returned with an accepted request result. */
 export interface KanbanRequestAccepted {
+  /** Result discriminator. */
   readonly kind: 'accepted';
+  /** Identity of the operation being acknowledged. */
   readonly operationId: KanbanOperationId;
+  /** Optional authoritative publication expected before commit. */
   readonly publication?: KanbanPublicationExpectation;
 }
 
 /** Sanitized application rejection. */
 export interface KanbanRequestRejected {
+  /** Result discriminator. */
   readonly kind: 'rejected';
+  /** Identity of the rejected operation. */
   readonly operationId: KanbanOperationId;
+  /** Safe machine-readable reason code. */
   readonly code: string;
+  /** Optional sanitized application-facing reason label. */
   readonly label?: string;
 }
 
 /** Explicit cancellation outcome, distinct from rejection and supersession. */
 export interface KanbanRequestCancelled {
+  /** Result discriminator. */
   readonly kind: 'cancelled';
+  /** Identity of the cancelled operation. */
   readonly operationId: KanbanOperationId;
+  /** Optional safe machine-readable reason code. */
   readonly code?: string;
+  /** Optional sanitized application-facing reason label. */
   readonly label?: string;
 }
 
 /** Outcome indicating that a newer application operation replaced this request. */
 export interface KanbanRequestSuperseded {
+  /** Result discriminator. */
   readonly kind: 'superseded';
+  /** Identity of the superseded operation. */
   readonly operationId: KanbanOperationId;
+  /** Optional safe machine-readable reason code. */
   readonly code?: string;
+  /** Optional sanitized application-facing reason label. */
   readonly label?: string;
 }
 

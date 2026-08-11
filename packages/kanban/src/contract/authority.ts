@@ -34,13 +34,13 @@ function requiredString(properties: KanbanDataProperties, key: string): string {
   return value;
 }
 
-/** Accept only unmodified, same-realm native Promise instances. */
+/** Accept only same-realm native Promises without own members that could affect species lookup. */
 function isExactNativePromise(value: unknown): value is Promise<KanbanRequestResult> {
   try {
     return (
       value instanceof Promise &&
       Object.getPrototypeOf(value) === Promise.prototype &&
-      Object.getOwnPropertyDescriptor(value, 'then') === undefined
+      Reflect.ownKeys(value).length === 0
     );
   } catch {
     return false;

@@ -8,9 +8,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  classifyKanbanRequestConfirmation,
   createKanbanRequestEnvelope,
   createPlacementToken,
   evaluateKanbanMoveEligibility,
+  evaluateKanbanTransition,
+  evaluateKanbanWip,
+  snapshotKanbanDefinitionOfDone,
   snapshotKanbanRequestProposal,
 } from '../src/index.js';
 
@@ -95,6 +99,15 @@ function eligibleMoveInput() {
       ],
       swimlanes: [{ swimlaneId: 'team-blue', revision: 'team-blue-r3' }],
       cards: [{ cardKey: 4, revision: 'card-4-r3' }],
+      sourceCells: [
+        {
+          address: { columnId: 'ready', swimlaneId: 'team-blue' },
+          cursorRevision: 'ready-r7',
+          edges: { start: 'complete', end: 'complete' },
+          cardKeys: [1, 5],
+          placementTokens: [],
+        },
+      ],
       targetCursorRevision: 'doing-r8',
       targetEdges: { start: 'complete', end: 'complete' },
       targetCardKeys: [8, 9],
@@ -428,6 +441,139 @@ describe('move eligibility contract', () => {
     expect(evaluateKanbanMoveEligibility({ ...baseline, unchanged: true })).toEqual({
       kind: 'blocked',
       code: 'unchanged-placement',
+    });
+  });
+
+  it('should reject stale captured entity revisions before policy evaluation', () => {
+    const baseline = eligibleMoveInput();
+    const expected = {
+      ...baseline.expected,
+      entities: [
+        { kind: 'card', cardKey: 4, revision: 'card-4-r2' },
+        { kind: 'column', columnId: 'doing', revision: 'doing-r8' },
+        { kind: 'swimlane', swimlaneId: 'team-blue', revision: 'team-blue-r3' },
+      ],
+    };
+
+    expect(evaluateKanbanMoveEligibility({ ...baseline, expected })).toEqual({
+      kind: 'unavailable',
+      code: 'stale-card-revision',
+    });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        expected: { ...expected, entities: [{ kind: 'column', columnId: 'missing', revision: 'r1' }] },
+      }),
+    ).toEqual({ kind: 'unavailable', code: 'column-not-found' });
+  });
+
+  it('should require current source cursor, anchors, and opaque tokens for every moved card', () => {
+    const baseline = eligibleMoveInput();
+    const source = baseline.current.sourceCells[0]!;
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        current: { ...baseline.current, sourceCells: [{ ...source, cursorRevision: 'ready-r6' }] },
+      }),
+    ).toEqual({ kind: 'unavailable', code: 'stale-source-placement' });
+    expect(
+      evaluateKanbanMoveEligibility({
+        ...baseline,
+        current: { ...baseline.current, sourceCells: [{ ...source, cardKeys: [1] }] },
+      }),
+    ).toEqual({ kind: 'unavailable', code: 'source-placement-anchor-stale' });
+
+    const token = createPlacementToken('source-window-token');
+    const moved = {
+      cardKey: 4,
+      source: { columnId: 'ready', swimlaneId: 'team-blue' },
+      sourceRevision: 'ready-r7',
+      entityRevision: 'card-4-r3',
+    };
+    const windowed = {
+      ...baseline,
+      proposal: {
+        ...baseline.proposal,
+        moved: [
+          {
+            ...moved,
+            sourcePlacement: {
+              kind: 'window-edge',
+              edge: 'after',
+              neighborCardKey: 5,
+              token,
+              cursorRevision: 'ready-r7',
+            },
+          },
+        ],
+      },
+    };
+    expect(evaluateKanbanMoveEligibility(windowed)).toEqual({
+      kind: 'unavailable',
+      code: 'source-placement-token-stale',
+    });
+  });
+
+  it('should compose exact transition and WIP helper results', () => {
+    const baseline = eligibleMoveInput();
+    const transition = evaluateKanbanTransition(
+      {
+        source: { columnId: 'ready', swimlaneId: 'team-blue' },
+        target: { columnId: 'doing', swimlaneId: 'team-blue' },
+        cardKeys: [4],
+        sourceRevision: 'ready-r7',
+        targetRevision: 'doing-r8',
+        sessionRevision: 'source-8',
+        queryGeneration: 12,
+        counts: { source: { quality: 'exact', value: 1 }, target: { quality: 'exact', value: 8 } },
+        definitionOfDone: snapshotKanbanDefinitionOfDone({ summary: 'Reviewed' }),
+      },
+      () => ({ kind: 'blocked', code: 'review-required', label: 'Review required' }),
+    );
+    expect(evaluateKanbanMoveEligibility({ ...baseline, transition })).toEqual({
+      kind: 'blocked',
+      code: 'review-required',
+      params: { label: 'Review required' },
+    });
+
+    const informationalWip = evaluateKanbanWip({
+      policy: { maximum: 8, mode: 'informational', countDone: 'include' },
+      authoritativeCount: { quality: 'exact', value: 8 },
+      matchingCount: { quality: 'exact', value: 4 },
+      doneCount: { quality: 'unknown' },
+      proposedDelta: 1,
+    });
+    expect(evaluateKanbanMoveEligibility({ ...baseline, wip: informationalWip })).toEqual({ kind: 'allowed' });
+
+    const wip = evaluateKanbanWip({
+      policy: { maximum: 8, mode: 'blocking', countDone: 'exclude' },
+      authoritativeCount: { quality: 'unknown' },
+      matchingCount: { quality: 'exact', value: 4 },
+      doneCount: { quality: 'unknown' },
+      proposedDelta: 1,
+    });
+    expect(evaluateKanbanMoveEligibility({ ...baseline, wip })).toEqual({
+      kind: 'unavailable',
+      code: 'wip-count-unavailable',
+      params: { retryable: true },
+    });
+  });
+});
+
+describe('confirmation classification contract', () => {
+  it('should require confirmation for warnings and every destructive standard proposal', () => {
+    const warning = classifyKanbanRequestConfirmation(proposals()[0], {
+      kind: 'warning',
+      code: 'review-required',
+    });
+    expect(warning).toEqual({ kind: 'warning', code: 'review-required' });
+
+    for (const kind of ['card-archive', 'card-delete', 'column-delete', 'swimlane-delete', 'saved-view-delete']) {
+      const proposal = proposals().find((candidate) => Reflect.get(candidate, 'kind') === kind);
+      expect(classifyKanbanRequestConfirmation(proposal, { kind: 'allowed' })).toEqual({ kind: 'destructive' });
+    }
+    expect(classifyKanbanRequestConfirmation(proposals()[0], { kind: 'allowed' })).toEqual({
+      kind: 'not-required',
     });
   });
 });

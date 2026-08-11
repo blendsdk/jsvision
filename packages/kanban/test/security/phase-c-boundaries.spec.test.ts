@@ -14,6 +14,7 @@ import {
   createPlacementToken,
   dispatchKanbanRequest,
   evaluateKanbanMoveEligibility,
+  evaluateKanbanMovePositionCurrency,
   snapshotKanbanRequestProposal,
 } from '../../src/index.js';
 
@@ -48,6 +49,44 @@ function lifecycle() {
     operationId: 'operation-17',
     expected: { source: 'source-r8', query: 'query-r12' },
     signal: new AbortController().signal,
+  };
+}
+
+/** Complete safe eligibility input used for hostile current-authority variations. */
+function eligibilityInput() {
+  return {
+    proposal: moveProposal(),
+    current: {
+      sourceRevision: 'source-r8',
+      queryRevision: 'query-r12',
+      columns: [
+        { columnId: 'ready', revision: 'ready-r7' },
+        { columnId: 'doing', revision: 'doing-r8' },
+      ],
+      swimlanes: [],
+      cards: [{ cardKey: 4, revision: 'card-4-r3' }],
+      sourceCells: [
+        {
+          address: { columnId: 'ready' },
+          cursorRevision: 'ready-r7',
+          edges: { start: 'complete', end: 'complete' },
+          cardKeys: [3, 5],
+          placementTokens: [],
+        },
+      ],
+      targetCursorRevision: 'doing-r8',
+      targetEdges: { start: 'unknown', end: 'unknown' },
+      targetCardKeys: [8, 9],
+      placementTokens: [],
+    },
+    expected: lifecycle().expected,
+    capability: { state: 'allowed' },
+    selection: { kind: 'loaded', orderedCardKeys: [4], maximum: KANBAN_LIMITS.selectedKeys.safe },
+    ordering: { sorted: false, filtered: false, filteredPlacement: 'not-required' },
+    transition: { kind: 'allowed' },
+    definitionOfDone: { kind: 'allowed' },
+    wip: { kind: 'allowed' },
+    unchanged: false,
   };
 }
 
@@ -88,6 +127,24 @@ describe('atomic request boundaries', () => {
     active.retain();
     expect(active.active()).toBe(false);
     expect(() => registry.acquire()).toThrow();
+  });
+
+  it('should reject hostile operation registry options without invoking accessors', () => {
+    const getter = vi.fn(() => 1);
+    const options = Object.defineProperty({}, 'activeLimit', { enumerable: true, get: getter });
+    expect(() => createKanbanOperationIdRegistry(options)).toThrow();
+    expect(getter).not.toHaveBeenCalled();
+
+    const proxy = new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          throw new Error('private options payload');
+        },
+      },
+    );
+    expect(() => createKanbanOperationIdRegistry(proxy)).toThrow('Invalid Kanban semantic value.');
+    expect(() => createKanbanOperationIdRegistry({ unexpected: true } as never)).toThrow();
   });
 });
 
@@ -177,34 +234,64 @@ describe('bounded and redacted semantic data', () => {
         cursorRevision: 'doing-r8',
       },
     };
+    const baseline = eligibilityInput();
     const result = evaluateKanbanMoveEligibility({
+      ...baseline,
       proposal,
-      current: {
-        sourceRevision: 'source-r8',
-        queryRevision: 'query-r12',
-        columns: [
-          { columnId: 'ready', revision: 'ready-r7' },
-          { columnId: 'doing', revision: 'doing-r8' },
-        ],
-        swimlanes: [],
-        cards: [{ cardKey: 4, revision: 'card-4-r3' }],
-        targetCursorRevision: 'doing-r8',
-        targetEdges: { start: 'unknown', end: 'unknown' },
-        targetCardKeys: [9],
-        placementTokens: [],
-      },
-      expected: lifecycle().expected,
-      capability: { state: 'allowed' },
-      selection: { kind: 'loaded', orderedCardKeys: [4], maximum: KANBAN_LIMITS.selectedKeys.safe },
-      ordering: { sorted: false, filtered: false, filteredPlacement: 'not-required' },
-      transition: { kind: 'allowed' },
-      definitionOfDone: { kind: 'allowed' },
-      wip: { kind: 'allowed' },
-      unchanged: false,
+      current: { ...baseline.current, targetCardKeys: [9] },
     });
 
     expect(result).toEqual({ kind: 'unavailable', code: 'placement-token-stale' });
     expect(JSON.stringify(result)).not.toContain(tokenText);
+  });
+
+  it('should enforce structural authority limits before policy evaluation', () => {
+    const baseline = eligibilityInput();
+    const columns = Array.from({ length: KANBAN_LIMITS.columns.safe + 1 }, (_value, index) => ({
+      columnId: `column-${index}`,
+      revision: `revision-${index}`,
+    }));
+    expect(() => evaluateKanbanMoveEligibility({ ...baseline, current: { ...baseline.current, columns } })).toThrow();
+  });
+
+  it('should enforce one aggregate budget across bounded source-cell evidence', () => {
+    const baseline = eligibilityInput();
+    const sourceCells = Array.from({ length: 40 }, (_value, cellIndex) => ({
+      address: { columnId: `source-${cellIndex}` },
+      cursorRevision: `source-${cellIndex}-r1`,
+      edges: { start: 'complete', end: 'complete' },
+      cardKeys: Array.from({ length: KANBAN_LIMITS.ensureRangeCards.safe }, (_entry, key) => key),
+      placementTokens: [],
+    }));
+
+    expect(() =>
+      evaluateKanbanMoveEligibility({ ...baseline, current: { ...baseline.current, sourceCells } }),
+    ).toThrow();
+  });
+
+  it('should reject hostile placement evidence without invoking getters or leaking proxy failures', () => {
+    const getter = vi.fn(() => 'doing-r8');
+    const evidence = Object.defineProperty(
+      { edges: { start: 'complete', end: 'complete' }, cardKeys: [], placementTokens: [] },
+      'cursorRevision',
+      { enumerable: true, get: getter },
+    );
+    expect(() =>
+      evaluateKanbanMovePositionCurrency({ kind: 'end', cursorRevision: 'doing-r8' }, evidence as never),
+    ).toThrow();
+    expect(getter).not.toHaveBeenCalled();
+
+    const proxy = new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          throw new Error('private evidence payload');
+        },
+      },
+    );
+    expect(() =>
+      evaluateKanbanMovePositionCurrency({ kind: 'end', cursorRevision: 'doing-r8' }, proxy as never),
+    ).toThrow('Invalid Kanban semantic value.');
   });
 });
 
@@ -239,6 +326,20 @@ describe('hostile runtime representations', () => {
       code: 'invalid-dispatch-result',
     });
     expect(then).not.toHaveBeenCalled();
+  });
+
+  it('should reject a native Promise with an own constructor accessor without invoking species lookup', async () => {
+    const request = createKanbanRequestEnvelope(moveProposal(), lifecycle());
+    const constructorGetter = vi.fn(() => Promise);
+    const outcome = Promise.resolve({ kind: 'accepted', operationId: request.operationId });
+    Object.defineProperty(outcome, 'constructor', { configurable: true, get: constructorGetter });
+
+    await expect(dispatchKanbanRequest(request, () => outcome, { capabilities: {} })).resolves.toEqual({
+      kind: 'rejected',
+      operationId: request.operationId,
+      code: 'invalid-dispatch-result',
+    });
+    expect(constructorGetter).not.toHaveBeenCalled();
   });
 
   it('should reject a cross-realm proposal object before retaining its values', () => {

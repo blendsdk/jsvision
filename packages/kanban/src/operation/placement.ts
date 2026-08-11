@@ -11,7 +11,7 @@ import type { KanbanCardMoveProposal, KanbanMovePosition, KanbanMovedCardSnapsho
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { snapshotKanbanCellAddress } from '../source/address.js';
-import { isKanbanPlacementTokenCurrent } from '../source/placement.js';
+import { isKanbanPlacementTokenCurrent, snapshotKanbanPlacementTokens } from '../source/placement.js';
 
 /** Exact members accepted across all semantic move-position variants. */
 const POSITION_KEYS = new Set([
@@ -29,6 +29,10 @@ const EDGE_POSITION_KEYS = new Set(['kind', 'cursorRevision']);
 const BETWEEN_POSITION_KEYS = new Set(['kind', 'beforeCardKey', 'afterCardKey', 'cursorRevision']);
 /** Exact window-edge position members. */
 const WINDOW_POSITION_KEYS = new Set(['kind', 'edge', 'neighborCardKey', 'token', 'cursorRevision']);
+/** Exact members accepted for current placement evidence. */
+const EVIDENCE_KEYS = new Set(['cursorRevision', 'edges', 'cardKeys', 'placementTokens']);
+/** Exact members accepted for logical edge-completeness evidence. */
+const EVIDENCE_EDGE_KEYS = new Set(['start', 'end']);
 /** Exact moved-card snapshot members. */
 const MOVED_CARD_KEYS = new Set(['cardKey', 'source', 'sourcePlacement', 'sourceRevision', 'entityRevision']);
 /** Exact card-move proposal members. */
@@ -49,6 +53,35 @@ export interface KanbanMovePositionEvidence {
 /** Pure result of checking semantic placement against current source evidence. */
 export type KanbanMovePositionCurrency =
   { readonly kind: 'current' } | { readonly kind: 'unavailable'; readonly code: string };
+
+/** Validate and detach bounded source-owned evidence before placement evaluation. */
+export function snapshotKanbanMovePositionEvidence(value: unknown): KanbanMovePositionEvidence {
+  try {
+    const properties = snapshotKanbanDataProperties(value, EVIDENCE_KEYS.size);
+    validateKanbanDataKeys(properties, EVIDENCE_KEYS);
+    const edgeProperties = snapshotKanbanDataProperties(properties.edges, EVIDENCE_EDGE_KEYS.size);
+    validateKanbanDataKeys(edgeProperties, EVIDENCE_EDGE_KEYS);
+    if (
+      Object.keys(edgeProperties).length !== EVIDENCE_EDGE_KEYS.size ||
+      (edgeProperties.start !== 'complete' && edgeProperties.start !== 'unknown') ||
+      (edgeProperties.end !== 'complete' && edgeProperties.end !== 'unknown')
+    ) {
+      return invalidMove();
+    }
+    const cardKeys = snapshotKanbanDataArray(properties.cardKeys, KANBAN_LIMITS.selectedKeys.safe).map(cardKey);
+    const identities = cardKeys.map((key) => (typeof key === 'number' ? `n:${key}` : `s:${key.length}:${key}`));
+    if (new Set(identities).size !== identities.length) return invalidMove();
+    return Object.freeze({
+      cursorRevision: revision(properties.cursorRevision),
+      edges: Object.freeze({ start: edgeProperties.start, end: edgeProperties.end }),
+      cardKeys: Object.freeze(cardKeys),
+      placementTokens: snapshotKanbanPlacementTokens(properties.placementTokens),
+    });
+  } catch (error) {
+    if (error instanceof KanbanInvalidSemanticValueError) throw error;
+    return invalidMove();
+  }
+}
 
 /** Convert every invalid move value to one payload-free contract error. */
 function invalidMove(): never {
@@ -156,15 +189,16 @@ export function evaluateKanbanMovePositionCurrency(
   evidence: KanbanMovePositionEvidence,
 ): KanbanMovePositionCurrency {
   const snapshot = snapshotKanbanMovePosition(position);
-  if (snapshot.cursorRevision !== revision(evidence.cursorRevision)) {
+  const current = snapshotKanbanMovePositionEvidence(evidence);
+  if (snapshot.cursorRevision !== current.cursorRevision) {
     return Object.freeze({ kind: 'unavailable', code: 'placement-revision-stale' });
   }
   if (snapshot.kind === 'start' || snapshot.kind === 'end') {
-    return evidence.edges[snapshot.kind] === 'complete'
+    return current.edges[snapshot.kind] === 'complete'
       ? Object.freeze({ kind: 'current' })
       : Object.freeze({ kind: 'unavailable', code: 'placement-edge-unknown' });
   }
-  const currentKeys = new Set(evidence.cardKeys.map(cardKey));
+  const currentKeys = new Set(current.cardKeys);
   if (snapshot.kind === 'between') {
     if (
       (snapshot.beforeCardKey !== null && !currentKeys.has(snapshot.beforeCardKey)) ||
@@ -177,7 +211,7 @@ export function evaluateKanbanMovePositionCurrency(
   if (!currentKeys.has(snapshot.neighborCardKey)) {
     return Object.freeze({ kind: 'unavailable', code: 'placement-anchor-stale' });
   }
-  return isKanbanPlacementTokenCurrent(snapshot.token, evidence.placementTokens)
+  return isKanbanPlacementTokenCurrent(snapshot.token, current.placementTokens)
     ? Object.freeze({ kind: 'current' })
     : Object.freeze({ kind: 'unavailable', code: 'placement-token-stale' });
 }

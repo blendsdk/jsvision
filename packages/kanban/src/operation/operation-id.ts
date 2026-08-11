@@ -1,7 +1,11 @@
 import { KanbanInvalidSemanticValueError } from '../contract/error.js';
+import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
 import { createKanbanOperationId } from '../contract/identity.js';
 import type { KanbanOperationId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
+
+/** Exact configurable operation-ID registry members. */
+const OPTIONS_KEYS = new Set(['factory', 'activeLimit', 'retainedLimit']);
 
 /** Trusted synchronous factory used to propose one operation identity. */
 export type KanbanOperationIdFactory = () => string;
@@ -103,6 +107,36 @@ function factoryOperationId(factory: KanbanOperationIdFactory): KanbanOperationI
   }
 }
 
+/** Snapshot registry options without invoking accessors or retaining a hostile options object. */
+function registryOptions(value: unknown): KanbanOperationIdRegistryOptions {
+  try {
+    const properties = snapshotKanbanDataProperties(value, OPTIONS_KEYS.size);
+    validateKanbanDataKeys(properties, OPTIONS_KEYS);
+    const factory = properties.factory;
+    if (factory !== undefined && typeof factory !== 'function') throw new KanbanInvalidSemanticValueError();
+    const capturedFactory =
+      typeof factory === 'function'
+        ? (): string => {
+            const result: unknown = Reflect.apply(factory, undefined, []);
+            if (typeof result !== 'string') throw new KanbanInvalidSemanticValueError();
+            return result;
+          }
+        : undefined;
+    const activeLimit = properties.activeLimit;
+    const retainedLimit = properties.retainedLimit;
+    if (activeLimit !== undefined && typeof activeLimit !== 'number') throw new KanbanInvalidSemanticValueError();
+    if (retainedLimit !== undefined && typeof retainedLimit !== 'number') throw new KanbanInvalidSemanticValueError();
+    return Object.freeze({
+      ...(capturedFactory === undefined ? {} : { factory: capturedFactory }),
+      ...(activeLimit === undefined ? {} : { activeLimit }),
+      ...(retainedLimit === undefined ? {} : { retainedLimit }),
+    });
+  } catch (error) {
+    if (error instanceof KanbanInvalidSemanticValueError) throw error;
+    throw new KanbanInvalidSemanticValueError();
+  }
+}
+
 /**
  * Create a bounded registry that rejects active and recently completed operation-ID collisions.
  *
@@ -124,16 +158,17 @@ function factoryOperationId(factory: KanbanOperationIdFactory): KanbanOperationI
 export function createKanbanOperationIdRegistry(
   options: KanbanOperationIdRegistryOptions = {},
 ): KanbanOperationIdRegistry {
+  const capturedOptions = registryOptions(options);
   const registrySequence = allocateRegistrySequence();
   let operationSequence = 0;
   let disposed = false;
   const activeLimit = limit(
-    options.activeLimit,
+    capturedOptions.activeLimit,
     KANBAN_LIMITS.pendingOperations.safe,
     KANBAN_LIMITS.pendingOperations.absolute,
   );
   const retainedLimit = limit(
-    options.retainedLimit,
+    capturedOptions.retainedLimit,
     KANBAN_LIMITS.retainedOperationIds.safe,
     KANBAN_LIMITS.retainedOperationIds.absolute,
   );
@@ -144,7 +179,7 @@ export function createKanbanOperationIdRegistry(
     operationSequence += 1;
     return `kanban-${registrySequence}-${operationSequence}`;
   };
-  const factory = options.factory ?? fallbackFactory;
+  const factory = capturedOptions.factory ?? fallbackFactory;
   const active = new Map<KanbanOperationId, LeaseState>();
   const retained = new Set<KanbanOperationId>();
   const retainedOrder: KanbanOperationId[] = [];
@@ -171,7 +206,7 @@ export function createKanbanOperationIdRegistry(
 
   return Object.freeze({
     acquire(): KanbanOperationIdLease {
-      if (disposed) throw new KanbanInvalidSemanticValueError();
+      if (disposed || active.size >= activeLimit) throw new KanbanInvalidSemanticValueError();
       return reserve(factoryOperationId(factory));
     },
     adopt(operationId: KanbanOperationId): KanbanOperationIdLease {
