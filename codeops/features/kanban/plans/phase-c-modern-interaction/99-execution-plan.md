@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 15:31 CEST
-> **Progress**: 39/124 tasks (31%)
+> **Last Updated**: 2026-08-11 15:39 CEST
+> **Progress**: 40/124 tasks (32%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -204,7 +204,7 @@ late-work behavior before introducing the coordinator.
 
 - [x] 3.2.1 Define immutable operation subject/state/projection/snapshot contracts and validators — `packages/kanban/src/operation/types.ts` ✅ (completed: 2026-08-11 13:17)
 - [x] 3.2.2 Add `retainedUndoDescriptors` to resolved limits and implement bounded active/retained ID/undo registries, affected-subject conflicts, generations, deterministic whole-entry FIFO eviction, and subscriptions — `packages/kanban/src/contract/limits.ts`, `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/subjects.ts` ✅ (completed: 2026-08-11 15:31)
-- [ ] 3.2.3 Implement synchronous proposal admission and pending projection publication before asynchronous dispatch — `packages/kanban/src/operation/coordinator.ts`
+- [x] 3.2.3 Implement synchronous proposal admission and pending projection publication before asynchronous dispatch — `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 15:39)
 - [ ] 3.2.4 Define/export exact frozen confirmer/inverse contexts, callback/result/undo-descriptor types, accepted-result keys, and implement coordinator-owned pre-dispatch confirmation with native-Promise handling, reservation, reentrancy guards, and post-settlement revalidation — `packages/kanban/src/contract/request.ts`, `packages/kanban/src/operation/types.ts`, `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/confirmation.ts`
 - [ ] 3.2.5 Integrate exact dispatcher settlement and pending→accepted/rejected/cancelled/superseded transitions — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/contract/authority.ts`
 - [ ] 3.2.6 Implement expectation-bound and exact operation-correlated publication reconciliation, contradiction/deletion handling, and affected-lock release without a universal inferred matcher — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/publication.ts`
