@@ -35,6 +35,7 @@ viewport from becoming the operation state machine (AR-C03/C04/C05/C12/C16).
 | 03-05 | [Projection and Rendering](03-05-projection-rendering.md) | Ghost, placeholder, reflow, damage, theme/i18n/accessibility |
 | 03-06 | [Integration and Delivery](03-06-integration-delivery.md) | Board/viewport wiring, testing subpath, host/docs/plugin delivery |
 | 07 | [Testing Strategy](07-testing-strategy.md) | Requirements-derived immutable specification oracles |
+| 08-01 | [Phase 1 Quality Review](08-phase-1-quality-review.md) | Independent capture-lifecycle findings and auto-design rulings |
 | 99 | [Execution Plan](99-execution-plan.md) | Ordered specification-first task checklist |
 
 ## Quick Reference

@@ -8,7 +8,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import { expect, test } from 'vitest';
 import { createEventLoop } from '../src/event/index.js';
 import type { EventLoop } from '../src/event/index.js';
-import { Group, View } from '../src/view/index.js';
+import { createRenderRoot, Group, View } from '../src/view/index.js';
 import type { DrawContext, PointerCaptureLease, PointerCaptureLossReason } from '../src/view/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
@@ -240,3 +240,126 @@ test('direct disposal detaches owner references before mounted view cleanup', ()
   expect(lease.active()).toBe(false);
   expect(first.mounted).toBe(false);
 });
+
+test('retained obsolete leases detach their loop release closure after every loss path', () => {
+  const { loop, root, first, second, third } = createFixture();
+  const replaced = loop.acquireCapture(first, () => undefined);
+  const unmounted = loop.acquireCapture(second, () => undefined);
+  root.remove(second);
+  const disposed = loop.acquireCapture(third, () => undefined);
+  loop.dispose();
+
+  for (const lease of [replaced, unmounted, disposed]) {
+    expect(lease.active()).toBe(false);
+    expect(() => lease.release()).not.toThrow();
+    expect(Object.keys(lease)).toEqual(['generation']);
+  }
+});
+
+test.each(['target', 'ancestor'] as const)(
+  '%s subtree teardown rejects reacquisition through loss and cleanup callbacks',
+  (mode) => {
+    const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+    const root = new Group();
+    const ancestor = new Group();
+    const target = new CaptureLeaf();
+    ancestor.add(target);
+    root.add(ancestor);
+    loop.mount(root);
+    const errors: unknown[] = [];
+    const attemptReacquire = (): void => {
+      try {
+        loop.acquireCapture(target, () => undefined);
+      } catch (error) {
+        errors.push(error);
+      }
+    };
+    target.onCleanup(attemptReacquire);
+    loop.acquireCapture(target, attemptReacquire);
+
+    if (mode === 'target') ancestor.remove(target);
+    else root.remove(ancestor);
+
+    expect(errors).toHaveLength(2);
+    for (const error of errors) {
+      expect(error).toBeInstanceOf(Error);
+      if (!(error instanceof Error)) throw new Error('capture reacquisition did not throw an Error');
+      expect(error.message).toBe('pointer capture is unavailable during lifecycle teardown');
+    }
+    if (!exposesCaptureOwnerState(loop)) {
+      throw new Error('event loop does not expose the implementation capture owner state');
+    }
+    expect(loop.capture).toBeNull();
+  },
+);
+
+test('quit cascade closes modal capture through the modal loss boundary', async () => {
+  const { loop, second } = createFixture();
+  const result = loop.execView<string>(second);
+  const losses: PointerCaptureLossReason[] = [];
+  const lease = loop.acquireCapture(second, (reason) => losses.push(reason));
+
+  loop.emitCommand('quit');
+
+  expect(lease.active()).toBe(false);
+  expect(losses).toEqual(['modal']);
+  await expect(result).resolves.toBe('quit');
+});
+
+test.each(['stop', 'dispose'] as const)(
+  'modal entry resolves undefined when capture loss reentrantly calls %s',
+  async (action) => {
+    const { loop, first, second } = createFixture();
+    loop.acquireCapture(first, () => loop[action]());
+
+    const result = loop.execView(second);
+
+    await expect(result).resolves.toBeUndefined();
+  },
+);
+
+test('modal close settles deterministically when capture loss stops or disposes the loop', async () => {
+  const stoppedFixture = createFixture();
+  const stoppedResult = stoppedFixture.loop.execView<string>(stoppedFixture.second);
+  stoppedFixture.loop.acquireCapture(stoppedFixture.second, () => stoppedFixture.loop.stop());
+  stoppedFixture.loop.endModal('done');
+  await expect(stoppedResult).resolves.toBe('done');
+
+  const disposedFixture = createFixture();
+  const disposedResult = disposedFixture.loop.execView<string>(disposedFixture.second);
+  disposedFixture.loop.acquireCapture(disposedFixture.second, () => disposedFixture.loop.dispose());
+  disposedFixture.loop.endModal('done');
+  await expect(disposedResult).resolves.toBeUndefined();
+});
+
+test.each(['observer', 'finalizer'] as const)(
+  'throwing unmount %s failures are isolated and cannot prevent cleanup or remount',
+  (failurePoint) => {
+    const renderRoot = createRenderRoot(
+      { width: 20, height: 5 },
+      {
+        caps,
+        onViewUnmounting: () => {
+          if (failurePoint === 'observer') throw new Error('observer failed');
+          return () => {
+            throw new Error('finalizer failed');
+          };
+        },
+      },
+    );
+    const firstRoot = new Group();
+    let cleanups = 0;
+    renderRoot.mount(firstRoot);
+    firstRoot.onCleanup(() => {
+      cleanups += 1;
+    });
+
+    expect(() => renderRoot.unmount()).not.toThrow();
+    expect(cleanups).toBe(1);
+    expect(firstRoot.mounted).toBe(false);
+
+    const replacement = new Group();
+    expect(() => renderRoot.mount(replacement)).not.toThrow();
+    expect(replacement.mounted).toBe(true);
+  },
+);

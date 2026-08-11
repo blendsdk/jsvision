@@ -100,11 +100,15 @@ export interface RenderRootOptions {
   /**
    * Observe a mounted subtree immediately before its view scope and parent links are torn down.
    * One permanent root-level callback can therefore release state owned by any descendant without
-   * registering cleanup closures on each transient interaction.
+   * registering cleanup closures on each transient interaction. Return a finalizer only when the
+   * observer must keep a synchronous lifecycle boundary active through scope disposal; it runs even
+   * if a cleanup throws. Observer and finalizer failures are contained and reported by the render
+   * root so they cannot prevent teardown.
    *
    * @param view The root of the subtree that is about to unmount.
+   * @returns An optional finalizer invoked after the subtree scope has been disposed.
    */
-  onViewUnmounting?: (view: View) => void;
+  onViewUnmounting?: (view: View) => void | (() => void);
 }
 
 // --- Event-handler contract types ---------------------------------------------------------------
@@ -213,12 +217,14 @@ export interface DispatchEvent {
    * Acquire generation-bound pointer capture and receive synchronous notification if it is lost.
    * Prefer this seam for gestures that own timers, overlays, or other cleanup-sensitive state. It is
    * optional because a bare event envelope constructed by application tests has no loop operations.
-   * During real loop dispatch it is present and returns the new active owner before the handler
-   * continues.
+   * During real loop dispatch it is present. A previous owner's loss callback may reentrantly replace
+   * the candidate before acquisition returns, so check {@link PointerCaptureLease.active} before
+   * publishing gesture state or starting resources.
    *
    * @example
    * const lease = ev.acquireCapture?.(this, () => cancelGesture());
    * if (lease === undefined) return; // Bare test envelope or unsupported custom dispatcher.
+   * if (!lease.active()) return; // A previous owner's cleanup replaced the candidate reentrantly.
    * beginGesture(lease.generation);
    */
   readonly acquireCapture?: (view: View, onLost: PointerCaptureLostHandler) => PointerCaptureLease;

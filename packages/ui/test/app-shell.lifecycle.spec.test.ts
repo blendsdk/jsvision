@@ -173,8 +173,8 @@ test('ST-05: suspend/resume is host-owned; the app re-asserts no modes', async (
   await runP;
 });
 
-// Phase C host integration — the terminal's decoded focus report and the explicit transport seam
-// converge on the same synchronous, generation-bound loss behavior.
+// The terminal's decoded focus report and the explicit transport seam converge on the same
+// synchronous, generation-bound loss behavior.
 test('host focus and explicit transport loss synchronously end application capture', async () => {
   const { app, input } = makeApp();
   const target = new KeyLeaf();

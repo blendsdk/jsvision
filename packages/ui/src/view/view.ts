@@ -36,8 +36,11 @@ export interface ViewHost {
    * @param group The group whose focused child was removed.
    */
   healFocus?(group: View): void;
-  /** Notify the root that `view` is about to unmount while its ancestry and scope are still intact. */
-  onViewUnmounting?(view: View): void;
+  /**
+   * Notify the root that `view` is about to unmount while its ancestry and scope are still intact.
+   * A returned finalizer runs after scope disposal, even when cleanup fails.
+   */
+  onViewUnmounting?(view: View): void | (() => void);
 }
 
 /**
@@ -458,8 +461,22 @@ export abstract class View {
     if (!this.mounted || this.unmounting) return;
     this.unmounting = true;
     try {
-      this.host?.onViewUnmounting?.(this);
-      this.disposeScope?.();
+      let finishBoundary: (() => void) | undefined;
+      let observerFailure: { readonly error: unknown } | null = null;
+      try {
+        const candidate = this.host?.onViewUnmounting?.(this);
+        if (typeof candidate === 'function') finishBoundary = candidate;
+      } catch (error) {
+        // A custom ViewHost may not provide the render root's error isolation. Preserve its failure,
+        // but never let it skip the mounted scope's mandatory disposal.
+        observerFailure = { error };
+      }
+      try {
+        this.disposeScope?.();
+      } finally {
+        finishBoundary?.();
+      }
+      if (observerFailure !== null) throw observerFailure.error;
     } finally {
       this.unmounting = false;
     }

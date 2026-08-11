@@ -280,8 +280,10 @@ export interface EventLoop {
   commandsVersion(): number;
   /**
    * Open `view` as a modal: input is captured to its subtree until it closes. The promise resolves
-   * with the value passed to {@link endModal}, or `undefined` if the event loop is permanently
-   * disposed while the modal is active. `await` it to run a dialog and read its result.
+   * with the value passed to {@link endModal}, or `undefined` if the event loop stops or is disposed
+   * before entry completes, or is disposed while the modal is active. A capture-loss callback may
+   * synchronously trigger that lifecycle transition; in that case the view is never opened. `await`
+   * the promise to run a dialog and read its result.
    */
   execView<R>(view: View): Promise<R | undefined>;
   /** Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`. */
@@ -331,8 +333,10 @@ export interface EventLoop {
    * Capture pointer input for one gesture and receive synchronous notification when ownership ends.
    * The returned lease is generation-bound, so delayed cleanup cannot release a replacement owner.
    * Acquiring a new capture synchronously ends the previous owner with `replaced` before this method
-   * returns. Capture is also ended when its target leaves the tree, a modal boundary changes, the
-   * host loses focus or ownership, or the loop stops or is disposed.
+   * returns. That callback may reentrantly replace the candidate, so check `lease.active()` before
+   * publishing gesture state or starting resources. Capture is also ended when its target leaves the
+   * tree, a modal boundary changes, the host loses focus or ownership, or the loop stops or is
+   * disposed.
    *
    * @param view The view that receives captured mouse and wheel events.
    * @param onLost Cleanup invoked once with the bounded reason when this generation loses capture.
@@ -345,7 +349,7 @@ export interface EventLoop {
    *   stopAutoscroll();
    *   clearDragOverlay();
    * });
-   * startAutoscroll();
+   * if (lease.active()) startAutoscroll();
    *
    * // A delayed pointer-up is safe even if another gesture replaced this lease.
    * if (lease.active()) finishDrag();

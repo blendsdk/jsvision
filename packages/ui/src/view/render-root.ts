@@ -253,7 +253,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
   private readonly healFocusSeam?: (group: View) => void;
-  private readonly onViewUnmountingSeam?: (view: View) => void;
+  private readonly onViewUnmountingSeam?: (view: View) => void | (() => void);
 
   private rootView: View | null = null;
   private disposeRoot: (() => void) | null = null;
@@ -284,8 +284,29 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   }
 
   /** @internal ViewHost — notify lifecycle owners before a mounted subtree loses ancestry or scope. */
-  onViewUnmounting(view: View): void {
-    this.onViewUnmountingSeam?.(view);
+  onViewUnmounting(view: View): void | (() => void) {
+    try {
+      const finish = this.onViewUnmountingSeam?.(view);
+      if (typeof finish !== 'function') return;
+      return (): void => {
+        try {
+          finish();
+        } catch {
+          this.reportUnmountObserverFailure();
+        }
+      };
+    } catch {
+      this.reportUnmountObserverFailure();
+    }
+  }
+
+  /** Report a lifecycle observer failure without letting an injected diagnostic sink abort teardown. */
+  private reportUnmountObserverFailure(): void {
+    try {
+      this.logger.error('view', 'view unmount observer threw');
+    } catch {
+      // Diagnostic sinks are injected application code and cannot own view lifecycle correctness.
+    }
   }
 
   mount(root: View): void {

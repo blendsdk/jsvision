@@ -73,11 +73,37 @@ interface NativeClipboardRead {
   readonly text: string;
 }
 
+/** Mutable ownership link retained by a lease; loss clears its only reference back to the loop. */
+interface PointerCaptureLeaseState {
+  release: (() => void) | null;
+}
+
+/** Public lease implementation that retains only its detachable state cell after capture loss. */
+class PointerCaptureLeaseImpl implements PointerCaptureLease {
+  readonly #state: PointerCaptureLeaseState;
+
+  constructor(
+    readonly generation: number,
+    state: PointerCaptureLeaseState,
+  ) {
+    this.#state = state;
+  }
+
+  active(): boolean {
+    return this.#state.release !== null;
+  }
+
+  release(): void {
+    this.#state.release?.();
+  }
+}
+
 /** One active pointer-capture generation and its detached-on-loss cleanup callback. */
 interface PointerCaptureState {
   readonly target: View;
   readonly generation: number;
   readonly onLost: PointerCaptureLostHandler | null;
+  readonly leaseState: PointerCaptureLeaseState | null;
 }
 
 /** A modal view that can veto its own close via a `valid(command)` gate (e.g. `Dialog`). */
@@ -456,7 +482,7 @@ class EventLoopImpl implements EventLoop {
     while (this.modal.isActive()) {
       const top = this.modal.topView();
       if (top !== null && isQuitVetoed(top, command)) return; // a modal vetoed — the app stays open
-      this.modal.end(command); // close this modal, resolving its execView with the quit command
+      this.endModalFrame(command); // close this modal, resolving its execView with the quit command
     }
     this.registry.emit(command, arg); // stack empty — hand the quit to the app's quit handler
   }
@@ -475,21 +501,36 @@ class EventLoopImpl implements EventLoop {
   }
 
   execView<R>(view: View): Promise<R | undefined> {
-    // If the view opts into closing itself (a Dialog does), hand it the modal-host handle before it
-    // opens so it can resolve this execView from its own event handling. Other views are untouched.
-    if (isModalHostAware(view)) {
-      view.attachModalHost({
-        endModal: (result: unknown) => this.endModal(result),
-        isCommandEnabled: (command: string) => this.isCommandEnabled(command),
-      });
-    }
     return new Promise<R | undefined>((resolve) => {
-      this.runTick(() => this.runCaptureBoundary('modal', () => this.modal.begin(view, resolve)));
+      this.runTick(() =>
+        this.runCaptureBoundary('modal', () => {
+          // Capture cleanup may synchronously stop or dispose the loop. Decline the modal instead of
+          // installing a frame whose host can no longer guarantee progress or presentation.
+          if (this.stopped) {
+            resolve(undefined);
+            return;
+          }
+          // Hand a self-closing modal its host only after lifecycle revalidation, so a declined view
+          // never receives a handle into a terminal loop.
+          if (isModalHostAware(view)) {
+            view.attachModalHost({
+              endModal: (result: unknown) => this.endModal(result),
+              isCommandEnabled: (command: string) => this.isCommandEnabled(command),
+            });
+          }
+          this.modal.begin(view, resolve);
+        }),
+      );
     });
   }
 
   endModal<R>(result: R): void {
-    this.runTick(() => this.runCaptureBoundary('modal', () => this.modal.end(result)));
+    this.runTick(() => this.endModalFrame(result));
+  }
+
+  /** Close one modal through the same capture boundary used by public and quit-driven closure. */
+  private endModalFrame<R>(result: R): void {
+    this.runCaptureBoundary('modal', () => this.modal.end(result));
   }
 
   setAcceleratorMode(on: boolean): void {
@@ -589,17 +630,17 @@ class EventLoopImpl implements EventLoop {
   /** Acquire pointer capture and return a generation-bound lease for cleanup-safe gestures. */
   acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease {
     const generation = this.allocateCaptureGeneration();
-    this.transitionCapture('replaced', { target: view, generation, onLost });
-    return Object.freeze({
-      generation,
-      active: (): boolean => this.capture?.generation === generation && this.capture.target === view,
-      release: (): void => this.releaseCaptureGeneration(generation, 'released'),
-    });
+    const leaseState: PointerCaptureLeaseState = {
+      release: () => this.releaseCaptureGeneration(generation, 'released'),
+    };
+    const lease = new PointerCaptureLeaseImpl(generation, leaseState);
+    this.transitionCapture('replaced', { target: view, generation, onLost, leaseState });
+    return Object.freeze(lease);
   }
 
   setCapture(view: View): void {
     const generation = this.allocateCaptureGeneration();
-    this.transitionCapture('replaced', { target: view, generation, onLost: null });
+    this.transitionCapture('replaced', { target: view, generation, onLost: null, leaseState: null });
   }
 
   releaseCapture(): void {
@@ -627,6 +668,8 @@ class EventLoopImpl implements EventLoop {
   private transitionCapture(reason: PointerCaptureLossReason, next: PointerCaptureState | null): void {
     const previous = this.capture;
     this.capture = next;
+    const previousLeaseState = previous?.leaseState ?? null;
+    if (previousLeaseState !== null) previousLeaseState.release = null;
     this.notifyCaptureHandler(previous?.onLost ?? null, reason);
   }
 
@@ -635,13 +678,24 @@ class EventLoopImpl implements EventLoop {
    * until that transition has completed.
    */
   private runCaptureBoundary<T>(reason: PointerCaptureLossReason, work: () => T): T {
-    this.captureBoundaryDepth += 1;
+    const finish = this.beginCaptureBoundary(reason);
     try {
-      if (this.capture !== null) this.transitionCapture(reason, null);
       return work();
     } finally {
-      this.captureBoundaryDepth -= 1;
+      finish();
     }
+  }
+
+  /** Enter a synchronous capture-loss boundary and return its idempotent completion callback. */
+  private beginCaptureBoundary(reason: PointerCaptureLossReason | null): () => void {
+    this.captureBoundaryDepth += 1;
+    if (reason !== null && this.capture !== null) this.transitionCapture(reason, null);
+    let active = true;
+    return (): void => {
+      if (!active) return;
+      active = false;
+      this.captureBoundaryDepth -= 1;
+    };
   }
 
   /** Stop capture and asynchronous ingress with the caller-owned terminal loss reason. */
@@ -660,16 +714,19 @@ class EventLoopImpl implements EventLoop {
     this.transitionCapture(reason, null);
   }
 
-  /** End capture before a target or any of its ancestors loses parent links and reactive scope. */
-  private handleViewUnmounting(view: View): void {
+  /** Keep capture unavailable until a tearing-down subtree has disposed its complete reactive scope. */
+  private handleViewUnmounting(view: View): () => void {
+    return this.beginCaptureBoundary(this.captureBelongsTo(view) ? 'unmounted' : null);
+  }
+
+  /** Whether a target is the named view or one of its descendants while ancestry is intact. */
+  private captureBelongsTo(view: View): boolean {
     let cursor = this.capture?.target ?? null;
     while (cursor !== null) {
-      if (cursor === view) {
-        this.transitionCapture('unmounted', null);
-        return;
-      }
+      if (cursor === view) return true;
       cursor = cursor.parent;
     }
+    return false;
   }
 
   /** Isolate application cleanup and diagnostic failures from capture ownership transitions. */
