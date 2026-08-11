@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 23:22 CEST
-> **Progress**: 58/124 tasks (47%)
+> **Last Updated**: 2026-08-11 23:24 CEST
+> **Progress**: 59/124 tasks (48%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -287,7 +287,7 @@ coordinator.
 **Reference**: 03-04 §Error Handling/Testing Requirements · AR-C09/C13/C18/C20
 **Objective**: Close pure target, state-machine, timer, and stale-work internals.
 
-- [ ] 4.3.1 Add drop-map implementation tests for region ordering, clipping, slot identity, inner bounds, and finite target budgets — `packages/kanban/test/drop-map.impl.test.ts`
+- [x] 4.3.1 Add drop-map implementation tests for region ordering, clipping, slot identity, inner bounds, and finite target budgets — `packages/kanban/test/drop-map.impl.test.ts` ✅ (completed: 2026-08-11 23:24)
 - [ ] 4.3.2 Add controller/timer/prefetch implementation tests for stale generations, duplicate reports, callback failure, abort, and resource cleanup — `packages/kanban/test/drag-controller.impl.test.ts`
 - [ ] 4.3.3 Run Kanban build/typecheck/focused tests, UI pointer-capture lease specification/implementation suites, check:deps/check:docs, plugin update/check, and `yarn verify:local`
 
