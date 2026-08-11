@@ -389,23 +389,6 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
       }
     }
 
-    const leading = cell.complete.leading ? region(cell.leading, bounds) : undefined;
-    if (leading !== undefined) {
-      append(
-        targets,
-        target('cell-leading', address, leading.position, leading.rect, geometryGeneration, leading.eligibility),
-        maximum,
-      );
-    }
-    const trailing = cell.complete.trailing ? region(cell.trailing, bounds) : undefined;
-    if (trailing !== undefined) {
-      append(
-        targets,
-        target('cell-trailing', address, trailing.position, trailing.rect, geometryGeneration, trailing.eligibility),
-        maximum,
-      );
-    }
-
     if (!Array.isArray(cell.cards) || cell.cards.length > KANBAN_LIMITS.retainedDescriptors.absolute) {
       throw new KanbanInvalidGeometryError();
     }
@@ -425,6 +408,25 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
           maximum,
         );
       }
+    }
+
+    // Card halves precede complete edge zones where their rectangles overlap. The edge rectangles
+    // remain deliberately wider, so their exposed side cells still provide substantial start/end hits.
+    const leading = cell.complete.leading ? region(cell.leading, bounds) : undefined;
+    if (leading !== undefined) {
+      append(
+        targets,
+        target('cell-leading', address, leading.position, leading.rect, geometryGeneration, leading.eligibility),
+        maximum,
+      );
+    }
+    const trailing = cell.complete.trailing ? region(cell.trailing, bounds) : undefined;
+    if (trailing !== undefined) {
+      append(
+        targets,
+        target('cell-trailing', address, trailing.position, trailing.rect, geometryGeneration, trailing.eligibility),
+        maximum,
+      );
     }
   }
 

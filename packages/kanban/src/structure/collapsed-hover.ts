@@ -37,13 +37,21 @@ export interface KanbanCollapsedHoverControllerOptions {
 const IDLE: KanbanCollapsedHoverState = Object.freeze({ kind: 'idle' });
 const DISPOSED: KanbanCollapsedHoverState = Object.freeze({ kind: 'disposed' });
 
+/** Host handles stay private so the public scheduler boundary remains opaque and cast-free. */
+const HOST_TIMERS = new WeakMap<object, ReturnType<typeof setTimeout>>();
 /** Default scheduler delegates to host timers so fake-timer tools remain effective. */
 const HOST_SCHEDULER: KanbanCollapsedHoverScheduler = Object.freeze({
   schedule(callback: () => void, delayMs: number): unknown {
-    return setTimeout(callback, delayMs);
+    const handle = Object.freeze({});
+    HOST_TIMERS.set(handle, setTimeout(callback, delayMs));
+    return handle;
   },
   cancel(handle: unknown): void {
-    clearTimeout(handle as ReturnType<typeof setTimeout>);
+    if (typeof handle !== 'object' || handle === null) return;
+    const timer = HOST_TIMERS.get(handle);
+    if (timer === undefined) return;
+    HOST_TIMERS.delete(handle);
+    clearTimeout(timer);
   },
 });
 
@@ -81,6 +89,9 @@ export class KanbanCollapsedHoverController {
     } catch {
       this.cancel();
       return false;
+    }
+    if ((this.#state.kind === 'waiting' || this.#state.kind === 'expanded') && this.#state.swimlaneId === swimlaneId) {
+      return true;
     }
     this.#clearTimer();
     this.#generation += 1;
