@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 23:27 CEST
-> **Progress**: 60/124 tasks (48%)
+> **Last Updated**: 2026-08-11 23:31 CEST
+> **Progress**: 61/124 tasks (49%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -289,7 +289,10 @@ coordinator.
 
 - [x] 4.3.1 Add drop-map implementation tests for region ordering, clipping, slot identity, inner bounds, and finite target budgets — `packages/kanban/test/drop-map.impl.test.ts` ✅ (completed: 2026-08-11 23:24)
 - [x] 4.3.2 Add controller/timer/prefetch implementation tests for stale generations, duplicate reports, callback failure, abort, and resource cleanup — `packages/kanban/test/drag-controller.impl.test.ts` ✅ (completed: 2026-08-11 23:27)
-- [ ] 4.3.3 Run Kanban build/typecheck/focused tests, UI pointer-capture lease specification/implementation suites, check:deps/check:docs, plugin update/check, and `yarn verify:local`
+- [x] 4.3.3 Run Kanban build/typecheck/focused tests, UI pointer-capture lease specification/implementation suites, check:deps/check:docs, plugin update/check, and `yarn verify:local` ✅ (completed: 2026-08-11 23:31)
+  - Gate evidence: Kanban build/typecheck; 10 focused files / 111 tests; 4 E2E files / 23 tests;
+    6 UI capture/control files / 58 tests; deps/docs/plugin gates; Examples typecheck and Kanban
+    showcase smoke 1 file / 8 tests; and `yarn verify:local` all passed.
 
 **Deliverables**: modern card grab; substantial targets; one-cell hysteresis; live placement recompute;
 autoscroll/prefetch/hover; atomic release; comprehensive cancellation.
