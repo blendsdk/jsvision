@@ -19,6 +19,8 @@ import {
   snapshotKanbanRequestProposal,
 } from '../../src/index.js';
 import { KanbanBoardAuthority } from '../../src/board/board-authority.js';
+import { composeKanbanViewportOverlay } from '../../src/board/overlay-projector.js';
+import type { KanbanViewportProjection } from '../../src/board/viewport-projector.js';
 import type { KanbanOperationId, KanbanRequest } from '../../src/index.js';
 
 beforeEach(() => {
@@ -190,6 +192,34 @@ describe('hostile application values', () => {
 });
 
 describe('bounded and redacted semantic data', () => {
+  it('should contain hostile overlay reason codes without retaining terminal controls or application text', () => {
+    const authoritative: KanbanViewportProjection = Object.freeze({
+      columns: Object.freeze([]),
+      cards: Object.freeze([]),
+      regions: Object.freeze([]),
+      actionTargets: Object.freeze([]),
+      states: Object.freeze([]),
+    });
+    const result = composeKanbanViewportOverlay({
+      authoritative,
+      bounds: { x: 0, y: 0, width: 18, height: 5 },
+      density: 'compact',
+      drag: {
+        generation: 1,
+        geometryGeneration: 1,
+        ghost: { cardKey: 17, point: { x: 2, y: 2 }, count: 1 },
+        placeholders: [{ address: { columnId: 'ready' }, cardKeys: [17] }],
+        gap: {
+          slotId: 'ready:end',
+          rect: { x: 1, y: 4, width: 16, height: 1 },
+          eligibility: { kind: 'warning', code: 'private\u001b[2J\nrecord-body' },
+        },
+      },
+    });
+
+    expect(JSON.stringify(result.overlay)).not.toMatch(/private|record-body|\u001b|2J/u);
+  });
+
   // The selection ceiling applies before any partial ordered collection becomes package state.
   it('should reject a moved collection above the configured safe atomic limit', () => {
     const proposal = moveProposal();

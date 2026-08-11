@@ -312,11 +312,13 @@ gates; `yarn verify:local`
 **Objective**: Freeze ghost/placeholder/gap/pending visuals, damage, fallbacks, hostile text, and responsive
 behavior before drawing them.
 
-- [ ] 5.1.1 `[spec-author]` Write overlay composition and same-tick drag→pending handoff specifications — `packages/kanban/test/drag-rendering.spec.test.ts`
-- [ ] 5.1.2 `[spec-author]` Add Unicode/color and ASCII/mono allowed/warning/invalid/unavailable/pending/rejected frame cases — `packages/kanban/test/drag-rendering.spec.test.ts`
-- [ ] 5.1.3 `[spec-author]` Add ghost-only/target-change/cancel/reject/supersede damage and settled-frame equality cases — `packages/kanban/test/drag-rendering.spec.test.ts`
-- [ ] 5.1.4 `[spec-author]` Add direct surface/window resize/maximize/restore/focused-column/minimum and hostile text/wide glyph cases — `packages/kanban/test/drag-rendering.spec.test.ts`, `packages/kanban/test/security/phase-c-boundaries.spec.test.ts`
-- [ ] 5.1.5 Run focused rendering/security specifications and record expected red behavior
+- [x] 5.1.1 `[spec-author]` Write overlay composition and same-tick drag→pending handoff specifications — `packages/kanban/test/drag-rendering.spec.test.ts` ✅ (completed: 2026-08-12 00:11)
+- [x] 5.1.2 `[spec-author]` Add Unicode/color and ASCII/mono allowed/warning/invalid/unavailable/pending/rejected frame cases — `packages/kanban/test/drag-rendering.spec.test.ts` ✅ (completed: 2026-08-12 00:11)
+- [x] 5.1.3 `[spec-author]` Add ghost-only/target-change/cancel/reject/supersede damage and settled-frame equality cases — `packages/kanban/test/drag-rendering.spec.test.ts` ✅ (completed: 2026-08-12 00:11)
+- [x] 5.1.4 `[spec-author]` Add direct surface/window resize/maximize/restore/focused-column/minimum and hostile text/wide glyph cases — `packages/kanban/test/drag-rendering.spec.test.ts`, `packages/kanban/test/security/phase-c-boundaries.spec.test.ts` ✅ (completed: 2026-08-12 00:11)
+- [x] 5.1.5 Run focused rendering/security specifications and record expected red behavior ✅ (completed: 2026-08-12 00:11)
+  - Expected red: both focused specifications stop at module resolution because the planned pure
+    `board/overlay-projector.ts` implementation does not exist yet; no production behavior was changed.
 
 ### Step 5.2: Implementation
 
