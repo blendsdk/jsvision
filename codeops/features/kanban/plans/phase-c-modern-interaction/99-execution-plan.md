@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 11:09 CEST
-> **Progress**: 8/124 tasks (6%)
+> **Last Updated**: 2026-08-11 11:11 CEST
+> **Progress**: 9/124 tasks (7%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -78,7 +78,7 @@ changing the shared UI event loop.
 - [x] 1.2.2 Replace the nullable target with generation/callback capture state and one internal lose/replace transition — `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:00)
 - [x] 1.2.3 Add one permanent View/RenderRoot subtree-unmount notification, make root unmount/remount converge through `View.unmount()`, and route target/ancestor loss before user/scope cleanup through the central transition without per-capture registrations — `packages/ui/src/view/view.ts`, `packages/ui/src/view/types.ts`, `packages/ui/src/view/render-root.ts`, `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:04)
 - [x] 1.2.4 Route explicit release, replacement, modal begin/end, decoded `focus: false`, explicit host-loss ingress, and private stop-with-reason/direct-dispose precedence through the central transition — `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:09)
-- [ ] 1.2.5 Expose per-dispatch acquisition while preserving the existing capture trio and routing short-circuit — `packages/ui/src/event/dispatch.ts`, `packages/ui/src/event/event-loop.ts`
+- [x] 1.2.5 Expose per-dispatch acquisition while preserving the existing capture trio and routing short-circuit — `packages/ui/src/event/dispatch.ts`, `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:11)
 - [ ] 1.2.6 Document the new public APIs with safe examples and update UI public exports if required — `packages/ui/src/event/types.ts`, `packages/ui/src/view/types.ts`, `packages/ui/src/index.ts`
 - [ ] 1.2.7 Run the focused capture specification and existing UI drag suites; make all specification cases green without changing their expectations
 
