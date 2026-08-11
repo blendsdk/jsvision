@@ -171,13 +171,23 @@ source-evidence bound were corrected without expanding Phase C scope.
 
 ## Phase 3: Operation lifecycle and publication
 
+> **Phase baseline tree**: `5d03509cf7e6d21ad8aaed867ac57426beb237fb`
+> **Scope mode**: strict
+> **Confirmed scope baseline**: RD-08 Phase C operation lifecycle, confirmation, publication,
+> concurrency, cancellation, observation, and undo contracts built on the verified Phase 2 request authority.
+> **Expected modification set**: `packages/kanban/src/operation/**`,
+> `packages/kanban/src/contract/{request,authority,observation,limits}.ts`,
+> `packages/kanban/src/board/{board-authority,kanban-board}.ts`, `packages/kanban/src/index.ts`, focused files
+> under `packages/kanban/test/`, this execution plan, and generated plugin/API/skill outputs reported by
+> repository impact tooling.
+
 ### Step 3.1: Specification tests
 
 **Reference**: 03-03 · ST-C-REQ-13; ST-C-OP-01..12 · AR-C04/C05/C12–C14/C20
 **Objective**: Freeze exactly-once dispatch, state transitions, conflicts, publication, undo, redaction, and
 late-work behavior before introducing the coordinator.
 
-- [ ] 3.1.1 `[spec-author]` Write proposed/pending/accepted/committed/rejected/cancelled/superseded transition cases — `packages/kanban/test/operation-lifecycle.spec.test.ts`
+- [x] 3.1.1 `[spec-author]` Write proposed/pending/accepted/committed/rejected/cancelled/superseded transition cases — `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:06)
 - [ ] 3.1.2 `[spec-author]` Add expectation matching/contradiction/deletion, accepted-without-expectation, exact correlated reconciliation, and atomic handoff cases — `packages/kanban/test/operation-lifecycle.spec.test.ts`
 - [ ] 3.1.3 `[spec-author]` Add affected-entity concurrency, pending/retained limits, abort/disposal/late settlement, and fresh undo cases — `packages/kanban/test/operation-lifecycle.spec.test.ts`
 - [ ] 3.1.4 `[spec-author]` Add editor/configuration/saved-view/context-menu producer-contract fixtures proving one coordinator/dispatcher and zero source mutation — `packages/kanban/test/operation-lifecycle.spec.test.ts`
