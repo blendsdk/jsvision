@@ -255,7 +255,9 @@ selection, release, and cancellation before enabling render-neutral card drag.
 - [x] 4.1.4 `[spec-author]` Add fake-clock four-edge autoscroll/corner/clamp/small-viewport/recompute cases — `packages/kanban/test/pointer-drag-autoscroll.spec.test.ts` ✅ (completed: 2026-08-11 21:22)
   - Red evidence: the focused suite cannot collect because the planned `interaction/drag-autoscroll`
     module does not exist; 4.2.7 owns its pure zone resolver and timer controller.
-- [ ] 4.1.5 `[spec-author]` Add valid/invalid/outside/stale release, every cancellation source including decoded focus loss, queued-up suppression, and selected-block proposal semantics — `packages/kanban/test/pointer-drag.spec.test.ts`
+- [x] 4.1.5 `[spec-author]` Add valid/invalid/outside/stale release, every cancellation source including decoded focus loss, queued-up suppression, and selected-block proposal semantics — `packages/kanban/test/pointer-drag-release.spec.test.ts` ✅ (completed: 2026-08-11 21:24)
+  - Red evidence: the focused suite cannot collect because the planned render-neutral
+    `interaction/drag-controller` module does not exist; 4.2.3 and 4.2.9 own the behavior.
 - [ ] 4.1.6 Run focused pointer-drag specifications and record expected red behavior
 
 ### Step 4.2: Implementation
