@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 02:08 CEST
-> **Progress**: 0/124 tasks (0%)
+> **Last Updated**: 2026-08-11 10:44 CEST
+> **Progress**: 1/124 tasks (1%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -47,13 +47,21 @@ red → implementation → green → implementation tests/hardening (AR-C01–C2
 
 ## Phase 1: UI pointer-capture lease
 
+> **Phase baseline tree**: `6ccbae33f8f9a387df2755f1606a93657e9aeec6`
+> **Scope mode**: strict
+> **Confirmed scope baseline**: RD-07/RD-08 Phase C plus the approved backward-compatible UI pointer-capture prerequisite.
+> **Expected modification set**: `packages/ui/src/event/{types,event-loop,dispatch}.ts`,
+> `packages/ui/src/view/{types,view,render-root}.ts`, `packages/ui/src/index.ts`, focused files under
+> `packages/ui/test/`, this execution plan, and generated plugin/API/skill outputs reported by the
+> repository impact tooling.
+
 ### Step 1.1: Specification tests
 
 **Reference**: 03-01 §UI capture lease/Loss sources · ST-C-CAP-01..04 · AR-C03
 **Objective**: Freeze same-frame capture-loss, reentrancy, compatibility, and cleanup behavior before
 changing the shared UI event loop.
 
-- [ ] 1.1.1 `[spec-author]` Write generation/replacement/stale-release specification cases — `packages/ui/test/pointer-capture-lease.spec.test.ts`
+- [x] 1.1.1 `[spec-author]` Write generation/replacement/stale-release specification cases — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:44)
 - [ ] 1.1.2 `[spec-author]` Add modal/immediate target-or-ancestor subtree unmount without later input/decoded-focus/explicit-host-loss/direct-stop/direct-dispose precedence and throwing/reentrant callback cases — `packages/ui/test/pointer-capture-lease.spec.test.ts`
 - [ ] 1.1.3 `[spec-author]` Add legacy set/release/has-capture compatibility cases using real Slider/ScrollBar/Desktop/Input fixtures — `packages/ui/test/pointer-capture-lease.spec.test.ts`
 - [ ] 1.1.4 Run the focused capture specification and record the expected red cases; justify only legacy assertions that already pass — `packages/ui/test/pointer-capture-lease.spec.test.ts`
