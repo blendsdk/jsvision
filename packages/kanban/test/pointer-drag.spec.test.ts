@@ -10,6 +10,7 @@ import type { PointerCaptureLease, PointerCaptureLossReason, PointerCaptureLostH
 
 import type { KanbanActionTarget, KanbanSelectionEntry, KanbanSelectionSnapshot } from '../src/index.js';
 import { KanbanPointerRouter } from '../src/testing.js';
+import { projectKanbanCardDropMap } from '../src/interaction/drop-map.js';
 
 /** One selected card with complete semantic and revision evidence. */
 function selectionEntry(cardKey: number, logicalColumn = 'ready'): KanbanSelectionEntry {
@@ -319,5 +320,177 @@ describe('card drag generation and dragged-set contract', () => {
 
     start(1, 32);
     expect(sink.beginCardDrag.mock.calls[1]?.[0].dragged).toEqual(selected.entries);
+  });
+});
+
+/** Two-card cell geometry with explicit revision-bound placement evidence. */
+function populatedDropCell() {
+  return Object.freeze({
+    address: Object.freeze({ columnId: 'ready' }),
+    content: Object.freeze({ x: 0, y: 2, width: 20, height: 14 }),
+    header: Object.freeze({ x: 0, y: 0, width: 20, height: 1 }),
+    postHeader: Object.freeze({
+      rect: Object.freeze({ x: 0, y: 1, width: 20, height: 1 }),
+      position: Object.freeze({ kind: 'start' as const, cursorRevision: 'cursor-r1' }),
+    }),
+    leading: Object.freeze({
+      rect: Object.freeze({ x: 0, y: 2, width: 20, height: 2 }),
+      position: Object.freeze({ kind: 'start' as const, cursorRevision: 'cursor-r1' }),
+    }),
+    trailing: Object.freeze({
+      rect: Object.freeze({ x: 0, y: 14, width: 20, height: 2 }),
+      position: Object.freeze({ kind: 'end' as const, cursorRevision: 'cursor-r1' }),
+    }),
+    cards: Object.freeze([
+      Object.freeze({
+        cardKey: 1,
+        rect: Object.freeze({ x: 1, y: 3, width: 18, height: 4 }),
+        before: Object.freeze({ kind: 'start' as const, cursorRevision: 'cursor-r1' }),
+        after: Object.freeze({
+          kind: 'between' as const,
+          beforeCardKey: 1,
+          afterCardKey: 2,
+          cursorRevision: 'cursor-r1',
+        }),
+      }),
+      Object.freeze({
+        cardKey: 2,
+        rect: Object.freeze({ x: 1, y: 7, width: 18, height: 4 }),
+        before: Object.freeze({
+          kind: 'between' as const,
+          beforeCardKey: 1,
+          afterCardKey: 2,
+          cursorRevision: 'cursor-r1',
+        }),
+        after: Object.freeze({ kind: 'end' as const, cursorRevision: 'cursor-r1' }),
+      }),
+    ]),
+    gutters: Object.freeze([
+      Object.freeze({
+        rect: Object.freeze({ x: 0, y: 7, width: 20, height: 1 }),
+        position: Object.freeze({
+          kind: 'between' as const,
+          beforeCardKey: 1,
+          afterCardKey: 2,
+          cursorRevision: 'cursor-r1',
+        }),
+      }),
+    ]),
+    complete: Object.freeze({ leading: true, trailing: true, empty: false }),
+  });
+}
+
+describe('semantic card drop-map target contract', () => {
+  it('prefers a full-width resting gutter over an overlapping card half', () => {
+    const map = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [populatedDropCell()],
+    });
+
+    expect(map.targetAt({ x: 5, y: 7 })).toMatchObject({
+      kind: 'resting-gutter',
+      address: { columnId: 'ready' },
+      position: { kind: 'between', beforeCardKey: 1, afterCardKey: 2 },
+    });
+  });
+
+  it('uses card upper and lower halves only outside a resting gutter', () => {
+    const map = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [populatedDropCell()],
+    });
+
+    expect(map.targetAt({ x: 5, y: 3 })).toMatchObject({
+      kind: 'card-before',
+      cardKey: 1,
+      position: { kind: 'start' },
+    });
+    expect(map.targetAt({ x: 5, y: 5 })).toMatchObject({
+      kind: 'card-after',
+      cardKey: 1,
+      position: { kind: 'between', beforeCardKey: 1, afterCardKey: 2 },
+    });
+  });
+
+  it('resolves bounded leading and trailing zones only from complete source evidence', () => {
+    const complete = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [populatedDropCell()],
+    });
+    const incomplete = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [
+        {
+          ...populatedDropCell(),
+          complete: { leading: false, trailing: false, empty: false },
+        },
+      ],
+    });
+
+    expect(complete.targetAt({ x: 19, y: 2 })).toMatchObject({
+      kind: 'cell-leading',
+      position: { kind: 'start' },
+    });
+    expect(complete.targetAt({ x: 19, y: 15 })).toMatchObject({
+      kind: 'cell-trailing',
+      position: { kind: 'end' },
+    });
+    expect(incomplete.targetAt({ x: 19, y: 2 })).toBeUndefined();
+    expect(incomplete.targetAt({ x: 19, y: 15 })).toBeUndefined();
+  });
+
+  it('keeps the swimlane header inert and exposes a separate first post-header gap', () => {
+    const map = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [populatedDropCell()],
+    });
+
+    expect(map.targetAt({ x: 10, y: 0 })).toBeUndefined();
+    expect(map.targetAt({ x: 10, y: 1 })).toMatchObject({
+      kind: 'post-header',
+      position: { kind: 'start' },
+    });
+  });
+
+  it('uses the large card-content region as the target for a known empty cell', () => {
+    const populated = populatedDropCell();
+    const map = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [
+        {
+          ...populated,
+          cards: [],
+          gutters: [],
+          complete: { leading: true, trailing: true, empty: true },
+        },
+      ],
+    });
+
+    expect(map.targetAt({ x: 10, y: 9 })).toMatchObject({
+      kind: 'empty-cell',
+      address: { columnId: 'ready' },
+      position: { kind: 'start' },
+    });
+  });
+
+  it('creates exactly one one-row compact gap only for the active semantic proposal', () => {
+    const map = projectKanbanCardDropMap({
+      density: 'compact',
+      cells: [populatedDropCell()],
+      activeGap: {
+        address: { columnId: 'ready' },
+        rect: { x: 0, y: 7, width: 20, height: 1 },
+        position: {
+          kind: 'between',
+          beforeCardKey: 1,
+          afterCardKey: 2,
+          cursorRevision: 'cursor-r1',
+        },
+      },
+    });
+
+    expect(map.targets.filter(({ kind }) => kind === 'active-gap')).toHaveLength(1);
+    expect(map.targetAt({ x: 10, y: 7 })).toMatchObject({ kind: 'active-gap' });
+    expect(map.targets.some(({ kind }) => kind === 'resting-gutter')).toBe(false);
   });
 });
