@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 16:50 CEST
-> **Progress**: 47/124 tasks (37%)
+> **Last Updated**: 2026-08-11 16:51 CEST
+> **Progress**: 48/124 tasks (38%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -212,7 +212,8 @@ late-work behavior before introducing the coordinator.
 - [x] 3.2.8 Add exact token/inverse descriptor validation, commit-only bounded retention, FIFO eviction/disposal, and proposal-valued native-Promise settlement whose output re-enters complete fresh-proposal validation/confirmation — `packages/kanban/src/operation/undo.ts`, `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 16:30)
 - [x] 3.2.9 Replace the metadata-only board authority with standard-proposal and validated legacy-extension coordinator adapters while preserving `board.request`/publication compatibility — `packages/kanban/src/board/board-authority.ts`, `packages/kanban/src/board/kanban-board.ts` ✅ (completed: 2026-08-11 16:44)
 - [x] 3.2.10 Add payload-free lifecycle observations and safe callback isolation — `packages/kanban/src/contract/observation.ts`, `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 16:50)
-- [ ] 3.2.11 Run focused lifecycle/security specifications and make them green
+- [x] 3.2.11 Run focused lifecycle/security specifications and make them green ✅ (completed: 2026-08-11 16:51)
+  - Gate evidence: 2 focused lifecycle/security specification files and all 41 cases passed.
 
 ### Step 3.3: Implementation tests and hardening
 
