@@ -249,7 +249,9 @@ selection, release, and cancellation before enabling render-neutral card drag.
 - [x] 4.1.2 `[spec-author]` Add gutter/card-half/leading/trailing/post-header/empty/compact drop-map cases — `packages/kanban/test/pointer-drag.spec.test.ts` ✅ (completed: 2026-08-11 21:21)
   - Red evidence: the focused suite cannot collect because the planned pure `interaction/drop-map`
     module does not exist; 4.2.5 owns that implementation.
-- [ ] 4.1.3 `[spec-author]` Add hysteresis, unknown-edge prefetch, collapsed-hover, and stale geometry/revision cases — `packages/kanban/test/pointer-drag.spec.test.ts`
+- [x] 4.1.3 `[spec-author]` Add hysteresis, unknown-edge prefetch, collapsed-hover, and stale geometry/revision cases — `packages/kanban/test/pointer-drag.spec.test.ts` ✅ (completed: 2026-08-11 21:24)
+  - Red evidence: target hysteresis and drag-prefetch modules remain absent; collapsed-hover behavior is
+    retained as an existing green prerequisite within the otherwise expected-red focused suite.
 - [ ] 4.1.4 `[spec-author]` Add fake-clock four-edge autoscroll/corner/clamp/small-viewport/recompute cases — `packages/kanban/test/pointer-drag.spec.test.ts`
 - [ ] 4.1.5 `[spec-author]` Add valid/invalid/outside/stale release, every cancellation source including decoded focus loss, queued-up suppression, and selected-block proposal semantics — `packages/kanban/test/pointer-drag.spec.test.ts`
 - [ ] 4.1.6 Run focused pointer-drag specifications and record expected red behavior

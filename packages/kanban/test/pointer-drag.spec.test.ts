@@ -9,8 +9,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type { PointerCaptureLease, PointerCaptureLossReason, PointerCaptureLostHandler } from '@jsvision/ui';
 
 import type { KanbanActionTarget, KanbanSelectionEntry, KanbanSelectionSnapshot } from '../src/index.js';
+import { createKanbanCollapsedHoverController } from '../src/index.js';
 import { KanbanPointerRouter } from '../src/testing.js';
 import { projectKanbanCardDropMap } from '../src/interaction/drop-map.js';
+import { selectKanbanDropTargetWithHysteresis } from '../src/interaction/drop-hysteresis.js';
+import { createKanbanDragPrefetchController } from '../src/interaction/drag-prefetch.js';
 
 /** One selected card with complete semantic and revision evidence. */
 function selectionEntry(cardKey: number, logicalColumn = 'ready'): KanbanSelectionEntry {
@@ -492,5 +495,145 @@ describe('semantic card drop-map target contract', () => {
     expect(map.targets.filter(({ kind }) => kind === 'active-gap')).toHaveLength(1);
     expect(map.targetAt({ x: 10, y: 7 })).toMatchObject({ kind: 'active-gap' });
     expect(map.targets.some(({ kind }) => kind === 'resting-gutter')).toBe(false);
+  });
+});
+
+describe('drag target stability and bounded discovery contract', () => {
+  it('retains the current semantic slot inside its one-cell band but switches semantic owners immediately', () => {
+    const current = Object.freeze({
+      kind: 'card-after' as const,
+      slotId: 'ready:after:1',
+      address: Object.freeze({ columnId: 'ready' }),
+      rect: Object.freeze({ x: 0, y: 5, width: 20, height: 2 }),
+      position: Object.freeze({
+        kind: 'between' as const,
+        beforeCardKey: 1,
+        afterCardKey: 2,
+        cursorRevision: 'cursor-r1',
+      }),
+      geometryGeneration: 4,
+    });
+    const adjacent = Object.freeze({
+      ...current,
+      kind: 'card-before' as const,
+      slotId: 'ready:before:2',
+      rect: Object.freeze({ x: 0, y: 7, width: 20, height: 2 }),
+    });
+    const otherCell = Object.freeze({
+      ...adjacent,
+      slotId: 'doing:before:9',
+      address: Object.freeze({ columnId: 'doing' }),
+    });
+
+    expect(
+      selectKanbanDropTargetWithHysteresis({
+        current,
+        candidate: adjacent,
+        point: { x: 10, y: 7 },
+        geometryGeneration: 4,
+      }),
+    ).toBe(current);
+    expect(
+      selectKanbanDropTargetWithHysteresis({
+        current,
+        candidate: otherCell,
+        point: { x: 10, y: 7 },
+        geometryGeneration: 4,
+      }),
+    ).toBe(otherCell);
+  });
+
+  it('never retains a target whose geometry generation became stale', () => {
+    const current = Object.freeze({
+      kind: 'cell-leading' as const,
+      slotId: 'ready:start',
+      address: Object.freeze({ columnId: 'ready' }),
+      rect: Object.freeze({ x: 0, y: 2, width: 20, height: 2 }),
+      position: Object.freeze({ kind: 'start' as const, cursorRevision: 'cursor-r1' }),
+      geometryGeneration: 3,
+    });
+    const candidate = Object.freeze({
+      ...current,
+      position: Object.freeze({ kind: 'start' as const, cursorRevision: 'cursor-r2' }),
+      geometryGeneration: 4,
+    });
+
+    expect(
+      selectKanbanDropTargetWithHysteresis({
+        current,
+        candidate,
+        point: { x: 10, y: 2 },
+        geometryGeneration: 4,
+      }),
+    ).toBe(candidate);
+  });
+
+  it('keeps an unknown window edge unavailable and cancels stale prefetch work on leave', async () => {
+    let resolvePrefetch: (() => void) | undefined;
+    let capturedSignal: AbortSignal | undefined;
+    const ensureRange = vi.fn((_hint: unknown, signal: AbortSignal) => {
+      capturedSignal = signal;
+      return new Promise<void>((resolve) => {
+        resolvePrefetch = resolve;
+      });
+    });
+    const publishEvidence = vi.fn();
+    const prefetch = createKanbanDragPrefetchController({ ensureRange, publishEvidence });
+    const populated = populatedDropCell();
+    const map = projectKanbanCardDropMap({
+      density: 'comfortable',
+      cells: [
+        {
+          ...populated,
+          complete: { leading: true, trailing: false, empty: false },
+          unknownTrailing: {
+            rect: { x: 0, y: 14, width: 20, height: 2 },
+            position: {
+              kind: 'window-edge',
+              edge: 'after',
+              neighborCardKey: 2,
+              token: 'edge-token-r1',
+              cursorRevision: 'cursor-r1',
+            },
+            prefetch: { address: { columnId: 'ready' }, start: 2, count: 16, revision: 'cursor-r1' },
+          },
+        },
+      ],
+    });
+    const target = map.targetAt({ x: 10, y: 15 });
+
+    expect(target).toMatchObject({
+      kind: 'unknown-edge',
+      eligibility: { kind: 'unavailable', code: 'placement-loading' },
+    });
+    expect(prefetch.update(target, 7)).toBe(true);
+    expect(prefetch.update(target, 7)).toBe(false);
+    expect(ensureRange).toHaveBeenCalledOnce();
+
+    prefetch.update(undefined, 7);
+    expect(capturedSignal?.aborted).toBe(true);
+    resolvePrefetch?.();
+    await Promise.resolve();
+    expect(publishEvidence).not.toHaveBeenCalled();
+  });
+
+  it('temporarily expands only a visible collapsed swimlane and restores it on leave', () => {
+    vi.useFakeTimers();
+    try {
+      const hover = createKanbanCollapsedHoverController();
+      expect(hover.begin({ swimlaneId: 'team-a', visible: false, collapsed: true })).toBe(false);
+      expect(hover.snapshot()).toEqual({ kind: 'idle' });
+
+      expect(hover.begin({ swimlaneId: 'team-a', visible: true, collapsed: true })).toBe(true);
+      vi.advanceTimersByTime(499);
+      expect(hover.snapshot()).toEqual({ kind: 'waiting', swimlaneId: 'team-a' });
+      vi.advanceTimersByTime(1);
+      expect(hover.snapshot()).toEqual({ kind: 'expanded', swimlaneId: 'team-a', temporary: true });
+
+      hover.leave('team-a');
+      expect(hover.snapshot()).toEqual({ kind: 'idle' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
