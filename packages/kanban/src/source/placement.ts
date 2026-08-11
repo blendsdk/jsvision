@@ -1,7 +1,12 @@
-import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
+import {
+  snapshotKanbanDataArray,
+  snapshotKanbanDataProperties,
+  validateKanbanDataKeys,
+} from '../contract/data-snapshot.js';
 import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { createKanbanCardKey, createPlacementToken } from '../contract/identity.js';
-import type { CardKey } from '../contract/identity.js';
+import type { CardKey, PlacementToken } from '../contract/identity.js';
+import { KANBAN_LIMITS } from '../contract/limits.js';
 import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
@@ -147,4 +152,34 @@ export function assertKanbanPlacementCurrent(
     return invalidPublication();
   }
   return snapshot;
+}
+
+/**
+ * Validate a bounded set of current opaque placement tokens without interpreting their contents.
+ *
+ * Duplicate tokens are rejected because one source evidence set must name each authority token once.
+ */
+export function snapshotKanbanPlacementTokens(value: unknown): readonly PlacementToken[] {
+  try {
+    const tokens = snapshotKanbanDataArray(value, KANBAN_LIMITS.ensureRangeCards.safe).map((entry) => {
+      if (typeof entry !== 'string') return invalidPublication();
+      return createPlacementToken(entry);
+    });
+    if (new Set(tokens).size !== tokens.length) return invalidPublication();
+    return Object.freeze(tokens);
+  } catch (error) {
+    if (error instanceof KanbanInvalidSourcePublicationError) throw error;
+    return invalidPublication();
+  }
+}
+
+/** Check opaque token membership only after validating the complete current source-owned set. */
+export function isKanbanPlacementTokenCurrent(token: PlacementToken, current: unknown): boolean {
+  let candidate: PlacementToken;
+  try {
+    candidate = createPlacementToken(token);
+  } catch {
+    return invalidPublication();
+  }
+  return snapshotKanbanPlacementTokens(current).includes(candidate);
 }

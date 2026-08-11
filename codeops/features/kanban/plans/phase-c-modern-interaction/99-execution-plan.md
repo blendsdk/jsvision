@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 12:13 CEST
-> **Progress**: 21/124 tasks (17%)
+> **Last Updated**: 2026-08-11 12:16 CEST
+> **Progress**: 22/124 tasks (18%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -138,7 +138,7 @@ contracts before production expansion.
 - [x] 2.2.1 Define caller-facing standard proposals, coordinator-owned dispatch envelopes, generic card variants, and move snapshots while retaining validated legacy extension envelope adoption — `packages/kanban/src/contract/request.ts` ✅ (completed: 2026-08-11 12:06)
 - [x] 2.2.2 Add column/swimlane and saved-view standard variants while retaining extension compatibility — `packages/kanban/src/contract/request.ts` ✅ (completed: 2026-08-11 12:08)
 - [x] 2.2.3 Extract exact request/result validation from the existing authority helper into variant-focused modules below the public boundary — `packages/kanban/src/contract/request-validation.ts`, `packages/kanban/src/contract/authority.ts` ✅ (completed: 2026-08-11 12:13)
-- [ ] 2.2.4 Implement semantic move/source snapshot validation and current placement/token checks without numeric authority — `packages/kanban/src/operation/placement.ts`, `packages/kanban/src/source/placement.ts`
+- [x] 2.2.4 Implement semantic move/source snapshot validation and current placement/token checks without numeric authority — `packages/kanban/src/operation/placement.ts`, `packages/kanban/src/source/placement.ts` ✅ (completed: 2026-08-11 12:16)
 - [ ] 2.2.5 Implement eligibility result/reason contracts and structural/revision/capability/selection pipeline stages — `packages/kanban/src/operation/eligibility.ts`
 - [ ] 2.2.6 Integrate sorted/filtered placement, transition, WIP, DoD, and semantic no-op stages through existing pure workflow helpers — `packages/kanban/src/operation/eligibility.ts`
 - [ ] 2.2.7 Add validated injected/default operation-ID factory with active/retained collision protection primitives — `packages/kanban/src/operation/operation-id.ts`

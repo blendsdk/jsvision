@@ -10,7 +10,7 @@ import type {
 } from './identity.js';
 import type { KanbanRevision } from './revision.js';
 import type { KanbanSemanticValue } from './semantic-query.js';
-import type { KanbanCellAddress, KanbanPlacement } from '../source/types.js';
+import type { KanbanCellAddress } from '../source/types.js';
 
 /** Captured card revision required by an application request. */
 export interface KanbanExpectedCardRevision {
@@ -62,7 +62,7 @@ export interface KanbanMovedCardSnapshot {
   /** Semantic source cell before the move. */
   readonly source: KanbanCellAddress;
   /** Source-issued semantic placement at capture time. */
-  readonly sourcePlacement: KanbanPlacement;
+  readonly sourcePlacement: KanbanMovePosition;
   /** Equality-only source-cell revision captured with the placement. */
   readonly sourceRevision: KanbanRevision;
   /** Equality-only card revision captured with the placement. */
