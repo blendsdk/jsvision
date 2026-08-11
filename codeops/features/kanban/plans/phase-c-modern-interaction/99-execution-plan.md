@@ -271,7 +271,7 @@ coordinator.
 
 - [x] 4.2.1 Extract pointer/drag immutable types, generation snapshot, and render-neutral overlay evidence — `packages/kanban/src/interaction/drag-types.ts` ✅ (completed: 2026-08-11 21:26)
 - [x] 4.2.2 Extend pending-press routing with coordinates/modifiers, threshold preservation, and click-compatible below-threshold movement — `packages/kanban/src/interaction/pointer-router.ts` ✅ (completed: 2026-08-11 21:30)
-- [ ] 4.2.3 Implement capture-lease-backed card drag state/cancellation controller — `packages/kanban/src/interaction/drag-controller.ts`
+- [x] 4.2.3 Implement capture-lease-backed card drag state/cancellation controller — `packages/kanban/src/interaction/drag-controller.ts` ✅ (completed: 2026-08-11 21:34)
 - [ ] 4.2.4 Implement deterministic single/selected-block resolution and bounded ghost identity metadata — `packages/kanban/src/interaction/drag-selection.ts`
 - [ ] 4.2.5 Implement pure semantic drop-map geometry and target-priority projection separate from action hits — `packages/kanban/src/interaction/drop-map.ts`
 - [ ] 4.2.6 Implement one-cell semantic hysteresis across reflow/scroll geometry generations — `packages/kanban/src/interaction/drop-hysteresis.ts`

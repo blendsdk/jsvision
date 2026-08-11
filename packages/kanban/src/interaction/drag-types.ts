@@ -14,7 +14,14 @@ export type KanbanDragGeneration = number;
 
 /** Closed cancellation causes shared by pointer input, drag work, and board lifecycle. */
 export type KanbanDragCancellationReason =
-  PointerCaptureLossReason | 'explicit' | 'escape' | 'resize' | 'source-change' | 'policy-change' | 'invalid-input';
+  | PointerCaptureLossReason
+  | 'explicit'
+  | 'escape'
+  | 'resize'
+  | 'source-change'
+  | 'policy-change'
+  | 'dispose'
+  | 'invalid-input';
 
 /** Exact semantic kinds produced by the pure card drop map. */
 export type KanbanCardDropTargetKind =
