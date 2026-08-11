@@ -1,7 +1,9 @@
 import { KanbanInvalidSemanticValueError } from '../contract/error.js';
 import { createKanbanOperationId } from '../contract/identity.js';
-import type { KanbanOperationId } from '../contract/identity.js';
+import type { CardKey, KanbanOperationId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
+import type { KanbanRequestProposal } from '../contract/request.js';
+import type { KanbanCellAddress } from '../source/types.js';
 import { canonicalizeKanbanOperationSubject, snapshotKanbanOperationSubjects } from './types.js';
 import type { KanbanOperationSubject } from './types.js';
 
@@ -117,4 +119,126 @@ export function createKanbanOperationSubjectRegistry(
       subjects.clear();
     },
   });
+}
+
+/** Card placement variants that may reserve neighboring card anchors. */
+type CardPlacementProposal = Extract<KanbanRequestProposal, { readonly kind: 'card-move' | 'card-duplicate' }>;
+
+/** Create one frozen card subject without retaining an application record. */
+function cardSubject(cardKey: CardKey): KanbanOperationSubject {
+  return Object.freeze({ kind: 'card', cardKey });
+}
+
+/** Add the structural identities represented by one semantic cell address. */
+function appendCellSubjects(subjects: KanbanOperationSubject[], address: KanbanCellAddress): void {
+  subjects.push(Object.freeze({ kind: 'column', columnId: address.columnId }));
+  if (address.swimlaneId !== undefined) {
+    subjects.push(Object.freeze({ kind: 'swimlane', swimlaneId: address.swimlaneId }));
+  }
+}
+
+/** Add stable card anchors referenced by one semantic card placement. */
+function appendCardPlacementSubjects(
+  subjects: KanbanOperationSubject[],
+  position: CardPlacementProposal['position'],
+): void {
+  if (position.kind === 'between') {
+    if (position.beforeCardKey !== null) subjects.push(cardSubject(position.beforeCardKey));
+    if (position.afterCardKey !== null) subjects.push(cardSubject(position.afterCardKey));
+  } else if (position.kind === 'window-edge') {
+    subjects.push(cardSubject(position.neighborCardKey));
+  }
+}
+
+/** Add neighboring column identities used by one structural interval. */
+function appendColumnPlacementSubjects(
+  subjects: KanbanOperationSubject[],
+  position: Extract<KanbanRequestProposal, { readonly kind: 'column-add' | 'column-reorder' }>['position'],
+): void {
+  if (position.kind !== 'between') return;
+  if (position.beforeColumnId !== null) {
+    subjects.push(Object.freeze({ kind: 'column', columnId: position.beforeColumnId }));
+  }
+  if (position.afterColumnId !== null) {
+    subjects.push(Object.freeze({ kind: 'column', columnId: position.afterColumnId }));
+  }
+}
+
+/** Add a referenced swimlane neighbor when the placement is not an absolute edge. */
+function appendSwimlanePlacementSubject(
+  subjects: KanbanOperationSubject[],
+  position: Extract<KanbanRequestProposal, { readonly kind: 'swimlane-add' | 'swimlane-reorder' }>['position'],
+): void {
+  if (position.kind === 'before' || position.kind === 'after') {
+    subjects.push(Object.freeze({ kind: 'swimlane', swimlaneId: position.swimlaneId }));
+  }
+}
+
+/** Derive the smallest safe sorted conflict set carried by one validated proposal. */
+export function deriveKanbanOperationSubjects(proposal: KanbanRequestProposal): readonly KanbanOperationSubject[] {
+  const affected: KanbanOperationSubject[] = [];
+  switch (proposal.kind) {
+    case 'card-create':
+      appendCellSubjects(affected, proposal.target);
+      break;
+    case 'card-update':
+    case 'card-archive':
+    case 'card-delete':
+      affected.push(cardSubject(proposal.cardKey));
+      break;
+    case 'card-duplicate':
+      affected.push(cardSubject(proposal.cardKey));
+      appendCellSubjects(affected, proposal.target);
+      appendCardPlacementSubjects(affected, proposal.position);
+      break;
+    case 'card-move':
+      for (const moved of proposal.moved) affected.push(cardSubject(moved.cardKey));
+      appendCellSubjects(affected, proposal.target);
+      appendCardPlacementSubjects(affected, proposal.position);
+      break;
+    case 'column-add':
+      affected.push(Object.freeze({ kind: 'column', columnId: proposal.draft.columnId }));
+      appendColumnPlacementSubjects(affected, proposal.position);
+      break;
+    case 'column-update':
+      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
+      break;
+    case 'column-reorder':
+      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
+      appendColumnPlacementSubjects(affected, proposal.position);
+      break;
+    case 'column-delete':
+      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
+      if (proposal.reassignTo !== undefined) {
+        affected.push(Object.freeze({ kind: 'column', columnId: proposal.reassignTo }));
+      }
+      break;
+    case 'swimlane-add':
+      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.draft.swimlaneId }));
+      appendSwimlanePlacementSubject(affected, proposal.position);
+      break;
+    case 'swimlane-update':
+      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
+      break;
+    case 'swimlane-reorder':
+      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
+      appendSwimlanePlacementSubject(affected, proposal.position);
+      break;
+    case 'swimlane-delete':
+      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
+      if (proposal.reassignTo !== undefined) {
+        affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.reassignTo }));
+      }
+      break;
+    case 'saved-view-save':
+    case 'saved-view-rename':
+    case 'saved-view-delete':
+    case 'extension':
+      break;
+  }
+  const unique = new Map(affected.map((subject) => [canonicalizeKanbanOperationSubject(subject), subject]));
+  const ordered = [...unique.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([, subject]) => subject);
+  return snapshotKanbanOperationSubjects(ordered);
 }

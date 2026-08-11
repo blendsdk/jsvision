@@ -12,9 +12,16 @@ import {
 } from '../contract/identity.js';
 import type { CardKey, KanbanColumnId, KanbanOperationId, KanbanSwimlaneId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
-import type { KanbanMovePosition, KanbanRequest } from '../contract/request.js';
+import type { KanbanCapabilities } from '../contract/capability.js';
+import type {
+  KanbanMovePosition,
+  KanbanRequest,
+  KanbanRequestExpectedRevisions,
+  KanbanRequestProposal,
+} from '../contract/request.js';
 import { snapshotKanbanCellAddress } from '../source/address.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import type { KanbanEligibility } from './eligibility.js';
 import { snapshotKanbanMovePosition } from './placement.js';
 
 /** Durable operation states exposed without request payloads or application records. */
@@ -96,6 +103,76 @@ export interface KanbanOperationSnapshot {
 
 /** Callback invoked with one immutable payload-free lifecycle snapshot. */
 export type KanbanOperationSubscriber = (snapshot: KanbanOperationSnapshot) => void;
+
+/** Build the payload-free pending projection for one already-validated proposal. */
+export function createKanbanPendingProjection(proposal: KanbanRequestProposal): KanbanPendingProjection {
+  if (proposal.kind === 'card-move') {
+    return Object.freeze({
+      kind: proposal.kind,
+      state: 'pending',
+      cardKeys: Object.freeze(proposal.moved.map(({ cardKey }) => cardKey)),
+      sources: Object.freeze(proposal.moved.map(({ source }) => source)),
+      target: proposal.target,
+      position: proposal.position,
+    });
+  }
+  const cardKeys =
+    proposal.kind === 'card-update' ||
+    proposal.kind === 'card-duplicate' ||
+    proposal.kind === 'card-archive' ||
+    proposal.kind === 'card-delete'
+      ? Object.freeze([proposal.cardKey])
+      : Object.freeze([]);
+  return Object.freeze({ kind: proposal.kind, state: 'pending', cardKeys });
+}
+
+declare const kanbanUndoTokenBrand: unique symbol;
+
+/** Opaque bounded application token used only to request a fresh undo operation. */
+export type KanbanUndoToken = string & { readonly [kanbanUndoTokenBrand]: true };
+
+/** Exact confirmation facts exposed without application records or terminal geometry. */
+export interface KanbanConfirmationContext {
+  /** Reserved operation identity. */
+  readonly operationId: KanbanOperationId;
+  /** Detached validated proposal awaiting dispatch. */
+  readonly proposal: KanbanRequestProposal;
+  /** Sorted semantic subjects reserved by this operation. */
+  readonly affected: readonly KanbanOperationSubject[];
+  /** Equality-only revisions captured at admission. */
+  readonly expected: KanbanRequestExpectedRevisions;
+  /** Warning or destructive classification that requires a user decision. */
+  readonly eligibility: Extract<KanbanEligibility, { readonly kind: 'warning' }> | { readonly kind: 'destructive' };
+  /** Live coordinator-owned cancellation signal. */
+  readonly signal: AbortSignal;
+}
+
+/** Application confirmation callback with an exact synchronous-or-native-Promise result. */
+export type KanbanConfirmer = (context: KanbanConfirmationContext) => boolean | Promise<boolean>;
+
+/** Exact metadata supplied when an application builds a fresh inverse proposal. */
+export interface KanbanInverseRequestContext {
+  /** Payload-free snapshot of the committed operation being undone. */
+  readonly prior: KanbanOperationSnapshot;
+  /** Opaque committed descriptor selected for this fresh operation. */
+  readonly undo: KanbanUndoDescriptor;
+  /** Current equality-only revisions captured for the inverse request. */
+  readonly expected: KanbanRequestExpectedRevisions;
+  /** Current presentation capabilities; application authorization remains in the dispatcher. */
+  readonly capabilities: KanbanCapabilities;
+  /** Live coordinator-owned cancellation signal. */
+  readonly signal: AbortSignal;
+}
+
+/** Trusted application callback that constructs one fresh proposal from current authority. */
+export type KanbanInverseRequestBuilder = (
+  context: KanbanInverseRequestContext,
+) => KanbanRequestProposal | Promise<KanbanRequestProposal>;
+
+/** Mutually exclusive application undo token or inverse-proposal builder. */
+export type KanbanUndoDescriptor =
+  | { readonly kind: 'token'; readonly token: KanbanUndoToken }
+  | { readonly kind: 'inverse-builder'; readonly build: KanbanInverseRequestBuilder };
 
 /** Exact subject members before discriminator narrowing. */
 const SUBJECT_KEYS = new Set(['kind', 'cardKey', 'columnId', 'swimlaneId']);

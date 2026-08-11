@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase C Modern Interaction
 
 > **Status**: ✅ GATE PASSED — all 21 items resolved
-> **Last Updated**: 2026-08-11 15:26 CEST
+> **Last Updated**: 2026-08-11 15:50 CEST
 > **Root Invocation ID**: `MP-PHASE-C-20260811T0144CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -39,6 +39,7 @@
 | AR-C20 | Security | What may cross the dispatcher/observation boundary? | Raw records/tokens/errors / bounded semantic envelopes and redacted observations | Snapshot exact allowlisted data; never log or observe card bodies, placement/undo tokens, custom payloads, raw errors, or unsanitized ghost text | ✅ Resolved |
 | AR-C21 | Technical (runtime) | What happens when the numeric capture generation is exhausted? | Fail closed before mutation / wrap and add a hidden token / reuse only while uncaptured | Fail closed with `RangeError` before changing capture; the current owner remains active | ✅ Resolved |
 | AR-C22 | Technical (runtime) | Which limit class should bound committed undo descriptors, and how is the stale exact-manifest oracle synchronized? | Reuse `retainedDescriptors` values / reuse operation-ID retention / introduce unrelated new values | Add the independent key with the established descriptor-retention values `256/2,048/8,192`; first add a requirement-derived red assertion, then update the exact manifest oracle with production | ✅ Resolved |
+| AR-C23 | Technical (runtime) | How does the record-independent coordinator revalidate current revisions and eligibility after an asynchronous confirmation? | Coordinator reads source state / reuse admission result / board integration supplies a pure revalidator | Use a package-internal board-supplied revalidator; absence or failure after confirmation cancels fail-closed | ✅ Resolved |
 
 ## Resolution notes
 
@@ -161,6 +162,21 @@
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
 - **Reopen trigger:** Measured callback-retention memory requires a lower class budget or application history integration no longer retains descriptors in the component.
+
+### AR-C23 — Post-confirmation authority revalidation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal consistency and callback-boundary architecture inside the approved confirmation and application-authority behavior; no product or scope change.
+- **Objective:** Ensure an affirmative asynchronous confirmation cannot dispatch stale intent while the operation coordinator remains independent of application records and source-session ownership.
+- **Evidence:** The coordinator owns reservations and generations but deliberately owns no records or source cursor. Board construction already owns both the source projection and coordinator and is therefore the only layer able to recapture current eligibility without adding a second authority path.
+- **Decision:** Board integration supplies one package-internal pure revalidator to the coordinator. After any required confirmation, the coordinator requires that callback, snapshots its result, verifies generations/reservations, and dispatches only when the current result is allowed or the previously approved warning remains semantically identical. Missing, throwing, blocked, unavailable, or changed-warning results cancel fail-closed.
+- **Rejected alternatives:** Letting the coordinator read source records violates its ownership boundary; reusing the admission result ignores changes while a dialog is open; asking the application confirmer to authorize freshness conflates UX confirmation with persistence authority.
+- **Strongest counterargument:** The internal callback adds one integration seam and makes standalone coordinator construction more explicit.
+- **Confidence:** High — it follows the existing board/coordinator/source ownership partition and has a deterministic fail-closed fallback.
+- **Hardening:** Reentrancy, obsolescence, and 10× callback-latency reframes retained the seam; semantic warning comparison prevents approval from silently carrying across changed warning details.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
+- **Reopen trigger:** The coordinator gains a record-independent current-authority snapshot API or board/source ownership changes.
 
 ## Systematic category closure
 

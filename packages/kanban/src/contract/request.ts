@@ -11,6 +11,7 @@ import type {
 import type { KanbanRevision } from './revision.js';
 import type { KanbanSemanticValue } from './semantic-query.js';
 import type { KanbanCellAddress } from '../source/types.js';
+import type { KanbanUndoDescriptor } from '../operation/types.js';
 
 /** Captured card revision required by an application request. */
 export interface KanbanExpectedCardRevision {
@@ -387,6 +388,8 @@ export interface KanbanRequestAccepted {
   readonly operationId: KanbanOperationId;
   /** Optional authoritative publication expected before commit. */
   readonly publication?: KanbanPublicationExpectation;
+  /** Optional application-owned descriptor retained only after authoritative commit. */
+  readonly undo?: KanbanUndoDescriptor;
 }
 
 /** Sanitized application rejection. */

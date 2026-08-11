@@ -54,9 +54,9 @@ const SWIMLANE_SUBJECT_KEYS = new Set(['kind', 'swimlaneId', 'baselineRevision',
 /** Exact publication expectation members. */
 const EXPECTATION_KEYS = new Set(['operationId', 'subjects']);
 /** Exact dispatcher result members before discriminator narrowing. */
-const RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'code', 'label']);
+const RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'undo', 'code', 'label']);
 /** Exact accepted-result members. */
-const ACCEPTED_RESULT_KEYS = new Set(['kind', 'operationId', 'publication']);
+const ACCEPTED_RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'undo']);
 /** Exact rejected-result members. */
 const REJECTED_RESULT_KEYS = new Set(['kind', 'operationId', 'code', 'label']);
 /** Exact cancellation and supersession result members. */
@@ -580,6 +580,7 @@ export function snapshotKanbanRequestResult(value: unknown, operationId: KanbanO
   switch (kind) {
     case 'accepted': {
       validateKanbanDataKeys(properties, ACCEPTED_RESULT_KEYS);
+      if (properties.undo !== undefined) throw new KanbanInvalidSemanticValueError();
       const publication =
         properties.publication === undefined ? undefined : snapshotKanbanPublicationExpectation(properties.publication);
       if (publication !== undefined && publication.operationId !== operationId) {

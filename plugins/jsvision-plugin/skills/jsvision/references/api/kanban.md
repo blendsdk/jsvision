@@ -1456,6 +1456,29 @@ type KanbanConfirmationClassification = | Extract<KanbanEligibility, { readonly 
   | { readonly kind: 'not-required' }
 ```
 
+## KanbanConfirmationContext
+
+Exact confirmation facts exposed without application records or terminal geometry.
+
+```ts
+interface KanbanConfirmationContext {
+  operationId: KanbanOperationId;   // Reserved operation identity.
+  proposal: KanbanRequestProposal;   // Detached validated proposal awaiting dispatch.
+  affected: readonly KanbanOperationSubject[];   // Sorted semantic subjects reserved by this operation.
+  expected: KanbanRequestExpectedRevisions;   // Equality-only revisions captured at admission.
+  eligibility: Extract<KanbanEligibility, { readonly kind: 'warning' }> | { readonly kind: 'destructive' };   // Warning or destructive classification that requires a user decision.
+  signal: AbortSignal;   // Live coordinator-owned cancellation signal.
+}
+```
+
+## KanbanConfirmer
+
+Application confirmation callback with an exact synchronous-or-native-Promise result.
+
+```ts
+type KanbanConfirmer = (context: KanbanConfirmationContext) => boolean | Promise<boolean>
+```
+
 ## KanbanCount
 
 A count whose authority and completeness are explicit.
@@ -2395,6 +2418,30 @@ new KanbanInvalidSourcePublicationError()   // extends KanbanError
 code
 ```
 
+## KanbanInverseRequestBuilder
+
+Trusted application callback that constructs one fresh proposal from current authority.
+
+```ts
+type KanbanInverseRequestBuilder = (
+  context: KanbanInverseRequestContext,
+) => KanbanRequestProposal | Promise<KanbanRequestProposal>
+```
+
+## KanbanInverseRequestContext
+
+Exact metadata supplied when an application builds a fresh inverse proposal.
+
+```ts
+interface KanbanInverseRequestContext {
+  prior: KanbanOperationSnapshot;   // Payload-free snapshot of the committed operation being undone.
+  undo: KanbanUndoDescriptor;   // Opaque committed descriptor selected for this fresh operation.
+  expected: KanbanRequestExpectedRevisions;   // Current equality-only revisions captured for the inverse request.
+  capabilities: KanbanCapabilities;   // Current presentation capabilities; application authorization remains in the dispatcher.
+  signal: AbortSignal;   // Live coordinator-owned cancellation signal.
+}
+```
+
 ## KanbanKnownLength
 
 Logical length knowledge exposed without fabricating completeness.
@@ -3191,6 +3238,7 @@ interface KanbanRequestAccepted {
   kind: 'accepted';   // Result discriminator.
   operationId: KanbanOperationId;   // Identity of the operation being acknowledged.
   publication?: KanbanPublicationExpectation;   // Optional authoritative publication expected before commit.
+  undo?: KanbanUndoDescriptor;   // Optional application-owned descriptor retained only after authoritative commit.
 }
 ```
 
@@ -4716,6 +4764,23 @@ Pure application callback that provides transition advice without dispatching.
 type KanbanTransitionResolver = (context: KanbanTransitionContext) => KanbanWorkflowEvaluation
 ```
 
+## KanbanUndoDescriptor
+
+Mutually exclusive application undo token or inverse-proposal builder.
+
+```ts
+type KanbanUndoDescriptor = | { readonly kind: 'token'; readonly token: KanbanUndoToken }
+  | { readonly kind: 'inverse-builder'; readonly build: KanbanInverseRequestBuilder }
+```
+
+## KanbanUndoToken
+
+Opaque bounded application token used only to request a fresh undo operation.
+
+```ts
+type KanbanUndoToken = string & { readonly [kanbanUndoTokenBrand]: true }
+```
+
 ## KanbanUngroupedResult
 
 Normalized result when the query does not select a grouping field.
@@ -5627,6 +5692,14 @@ Create a bounded registry that rejects active and recently completed operation-I
 
 ```ts
 createKanbanOperationIdRegistry(options: KanbanOperationIdRegistryOptions = {}): KanbanOperationIdRegistry
+```
+
+## createKanbanPendingProjection
+
+Build the payload-free pending projection for one already-validated proposal.
+
+```ts
+createKanbanPendingProjection(proposal: KanbanRequestProposal): KanbanPendingProjection
 ```
 
 ## createKanbanRequestEnvelope

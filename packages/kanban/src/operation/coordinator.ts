@@ -2,7 +2,7 @@ import { dispatchKanbanRequest } from '../contract/authority.js';
 import { snapshotKanbanCapabilities } from '../contract/capability.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
 import { createKanbanOperationId } from '../contract/identity.js';
-import type { CardKey, KanbanOperationId } from '../contract/identity.js';
+import type { KanbanOperationId } from '../contract/identity.js';
 import { KanbanInvalidLimitError, KANBAN_LIMITS, validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type {
@@ -17,22 +17,16 @@ import {
   snapshotKanbanRequestExpectedRevisions,
   snapshotKanbanRequestProposal,
 } from '../contract/request-validation.js';
-import type { KanbanCellAddress } from '../source/types.js';
+import { fingerprintKanbanSemanticValue } from '../contract/semantic-query.js';
+import { settleKanbanConfirmation } from './confirmation.js';
+import { classifyKanbanRequestConfirmation, snapshotKanbanEligibility } from './eligibility.js';
+import type { KanbanEligibility } from './eligibility.js';
 import { createKanbanOperationIdRegistry } from './operation-id.js';
 import type { KanbanOperationIdFactory, KanbanOperationIdLease, KanbanOperationIdRegistry } from './operation-id.js';
-import { createKanbanOperationSubjectRegistry } from './subjects.js';
+import { createKanbanOperationSubjectRegistry, deriveKanbanOperationSubjects } from './subjects.js';
 import type { KanbanOperationSubjectLease, KanbanOperationSubjectRegistry } from './subjects.js';
-import {
-  canonicalizeKanbanOperationSubject,
-  snapshotKanbanOperationSnapshot,
-  snapshotKanbanOperationSubjects,
-} from './types.js';
-import type {
-  KanbanOperationSnapshot,
-  KanbanOperationSubject,
-  KanbanOperationSubscriber,
-  KanbanPendingProjection,
-} from './types.js';
+import { createKanbanPendingProjection, snapshotKanbanOperationSnapshot } from './types.js';
+import type { KanbanConfirmer, KanbanOperationSnapshot, KanbanOperationSubscriber } from './types.js';
 
 /** Unsubscribe function returned by payload-free operation-state subscriptions. */
 export type KanbanOperationUnsubscribe = () => void;
@@ -45,9 +39,19 @@ export interface KanbanOperationCoordinatorOptions {
   readonly capabilities?: () => unknown;
   /** Optional application operation-ID factory; every returned value is validated. */
   readonly operationId?: KanbanOperationIdFactory;
+  /** Optional application confirmation callback for warnings and destructive proposals. */
+  readonly confirm?: KanbanConfirmer;
+  /** Package integration seam that recomputes current eligibility after confirmation callbacks. */
+  readonly revalidate?: KanbanOperationRevalidator;
   /** Optional lower resource ceilings for this coordinator. */
   readonly limits?: KanbanLimitOptions;
 }
+
+/** Recompute current eligibility and revision currency without exposing source records. */
+export type KanbanOperationRevalidator = (
+  proposal: KanbanRequestProposal,
+  expected: KanbanRequestExpectedRevisions,
+) => KanbanEligibility;
 
 /** Atomic handoff returned after pending state is visible and dispatch has started. */
 export interface KanbanOperationSubmission {
@@ -64,7 +68,6 @@ interface ActiveKanbanOperation {
   readonly subjects: KanbanOperationSubjectLease;
   readonly controller: AbortController;
   readonly coordinatorGeneration: number;
-  readonly completion: Promise<KanbanRequestResult>;
 }
 
 /** Validate a caller-supplied finite capacity before allocating its registry. */
@@ -253,150 +256,6 @@ export class KanbanOperationSnapshotRegistry {
   }
 }
 
-/** Card placement variants that may reserve neighboring card anchors. */
-type CardPlacementProposal = Extract<KanbanRequestProposal, { readonly kind: 'card-move' | 'card-duplicate' }>;
-
-/** Create one frozen card subject without retaining an application record. */
-function cardSubject(cardKey: CardKey): KanbanOperationSubject {
-  return Object.freeze({ kind: 'card', cardKey });
-}
-
-/** Add the structural identities represented by one semantic cell address. */
-function appendCellSubjects(subjects: KanbanOperationSubject[], address: KanbanCellAddress): void {
-  subjects.push(Object.freeze({ kind: 'column', columnId: address.columnId }));
-  if (address.swimlaneId !== undefined) {
-    subjects.push(Object.freeze({ kind: 'swimlane', swimlaneId: address.swimlaneId }));
-  }
-}
-
-/** Add stable card anchors referenced by one semantic card placement. */
-function appendCardPlacementSubjects(
-  subjects: KanbanOperationSubject[],
-  position: CardPlacementProposal['position'],
-): void {
-  if (position.kind === 'between') {
-    if (position.beforeCardKey !== null) subjects.push(cardSubject(position.beforeCardKey));
-    if (position.afterCardKey !== null) subjects.push(cardSubject(position.afterCardKey));
-  } else if (position.kind === 'window-edge') {
-    subjects.push(cardSubject(position.neighborCardKey));
-  }
-}
-
-/** Add neighboring column identities used by one structural interval. */
-function appendColumnPlacementSubjects(
-  subjects: KanbanOperationSubject[],
-  position: Extract<KanbanRequestProposal, { readonly kind: 'column-add' | 'column-reorder' }>['position'],
-): void {
-  if (position.kind !== 'between') return;
-  if (position.beforeColumnId !== null) {
-    subjects.push(Object.freeze({ kind: 'column', columnId: position.beforeColumnId }));
-  }
-  if (position.afterColumnId !== null) {
-    subjects.push(Object.freeze({ kind: 'column', columnId: position.afterColumnId }));
-  }
-}
-
-/** Add a referenced swimlane neighbor when the placement is not an absolute edge. */
-function appendSwimlanePlacementSubject(
-  subjects: KanbanOperationSubject[],
-  position: Extract<KanbanRequestProposal, { readonly kind: 'swimlane-add' | 'swimlane-reorder' }>['position'],
-): void {
-  if (position.kind === 'before' || position.kind === 'after') {
-    subjects.push(Object.freeze({ kind: 'swimlane', swimlaneId: position.swimlaneId }));
-  }
-}
-
-/** Derive the smallest safe type-preserving conflict set carried by a validated proposal. */
-function affectedSubjects(proposal: KanbanRequestProposal): readonly KanbanOperationSubject[] {
-  const affected: KanbanOperationSubject[] = [];
-  switch (proposal.kind) {
-    case 'card-create':
-      appendCellSubjects(affected, proposal.target);
-      break;
-    case 'card-update':
-    case 'card-archive':
-    case 'card-delete':
-      affected.push(cardSubject(proposal.cardKey));
-      break;
-    case 'card-duplicate':
-      affected.push(cardSubject(proposal.cardKey));
-      appendCellSubjects(affected, proposal.target);
-      appendCardPlacementSubjects(affected, proposal.position);
-      break;
-    case 'card-move':
-      for (const moved of proposal.moved) affected.push(cardSubject(moved.cardKey));
-      appendCellSubjects(affected, proposal.target);
-      appendCardPlacementSubjects(affected, proposal.position);
-      break;
-    case 'column-add':
-      affected.push(Object.freeze({ kind: 'column', columnId: proposal.draft.columnId }));
-      appendColumnPlacementSubjects(affected, proposal.position);
-      break;
-    case 'column-update':
-      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
-      break;
-    case 'column-reorder':
-      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
-      appendColumnPlacementSubjects(affected, proposal.position);
-      break;
-    case 'column-delete':
-      affected.push(Object.freeze({ kind: 'column', columnId: proposal.columnId }));
-      if (proposal.reassignTo !== undefined) {
-        affected.push(Object.freeze({ kind: 'column', columnId: proposal.reassignTo }));
-      }
-      break;
-    case 'swimlane-add':
-      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.draft.swimlaneId }));
-      appendSwimlanePlacementSubject(affected, proposal.position);
-      break;
-    case 'swimlane-update':
-      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
-      break;
-    case 'swimlane-reorder':
-      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
-      appendSwimlanePlacementSubject(affected, proposal.position);
-      break;
-    case 'swimlane-delete':
-      affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.swimlaneId }));
-      if (proposal.reassignTo !== undefined) {
-        affected.push(Object.freeze({ kind: 'swimlane', swimlaneId: proposal.reassignTo }));
-      }
-      break;
-    case 'saved-view-save':
-    case 'saved-view-rename':
-    case 'saved-view-delete':
-    case 'extension':
-      break;
-  }
-  const unique = new Map(affected.map((subject) => [canonicalizeKanbanOperationSubject(subject), subject]));
-  const ordered = [...unique.entries()]
-    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-    .map(([, subject]) => subject);
-  return snapshotKanbanOperationSubjects(ordered);
-}
-
-/** Build the payload-free pending projection for one validated proposal. */
-function pendingProjection(proposal: KanbanRequestProposal): KanbanPendingProjection {
-  if (proposal.kind === 'card-move') {
-    return Object.freeze({
-      kind: proposal.kind,
-      state: 'pending',
-      cardKeys: Object.freeze(proposal.moved.map(({ cardKey }) => cardKey)),
-      sources: Object.freeze(proposal.moved.map(({ source }) => source)),
-      target: proposal.target,
-      position: proposal.position,
-    });
-  }
-  const cardKeys =
-    proposal.kind === 'card-update' ||
-    proposal.kind === 'card-duplicate' ||
-    proposal.kind === 'card-archive' ||
-    proposal.kind === 'card-delete'
-      ? Object.freeze([proposal.cardKey])
-      : Object.freeze([]);
-  return Object.freeze({ kind: proposal.kind, state: 'pending', cardKeys });
-}
-
 /** Snapshot live capabilities without allowing a throwing application getter to escape. */
 function currentCapabilities(getter: (() => unknown) | undefined): KanbanCapabilities {
   try {
@@ -404,6 +263,15 @@ function currentCapabilities(getter: (() => unknown) | undefined): KanbanCapabil
   } catch {
     return Object.freeze({});
   }
+}
+
+/** Ensure an approved warning did not change meaning while application confirmation was open. */
+function confirmationStillApplies(previous: KanbanEligibility, current: KanbanEligibility): boolean {
+  if (current.kind === 'allowed') return true;
+  if (previous.kind !== 'warning' || current.kind !== 'warning' || previous.code !== current.code) return false;
+  const previousParams = previous.params === undefined ? false : fingerprintKanbanSemanticValue(previous.params);
+  const currentParams = current.params === undefined ? false : fingerprintKanbanSemanticValue(current.params);
+  return previousParams === currentParams;
 }
 
 /**
@@ -423,6 +291,8 @@ function currentCapabilities(getter: (() => unknown) | undefined): KanbanCapabil
 export class KanbanOperationCoordinator {
   readonly #dispatcher: KanbanRequestDispatcher;
   readonly #capabilities: (() => unknown) | undefined;
+  readonly #confirm: KanbanConfirmer | undefined;
+  readonly #revalidate: KanbanOperationRevalidator | undefined;
   readonly #limits: KanbanResolvedLimits;
   readonly #ids: KanbanOperationIdRegistry;
   readonly #subjects: KanbanOperationSubjectRegistry;
@@ -436,6 +306,8 @@ export class KanbanOperationCoordinator {
     this.#limits = validateKanbanLimitOptions(options.limits);
     this.#dispatcher = options.dispatcher;
     this.#capabilities = options.capabilities;
+    this.#confirm = options.confirm;
+    this.#revalidate = options.revalidate;
     this.#ids = createKanbanOperationIdRegistry({
       ...(options.operationId === undefined ? {} : { factory: options.operationId }),
       activeLimit: this.#limits.pendingOperations,
@@ -457,22 +329,33 @@ export class KanbanOperationCoordinator {
   commitProposal(
     value: KanbanRequestProposal,
     expected: KanbanRequestExpectedRevisions = {},
+    eligibility: KanbanEligibility = Object.freeze({ kind: 'allowed' }),
   ): KanbanOperationSubmission {
     if (this.#disposed || this.#operations.size >= this.#limits.pendingOperations) {
       throw new KanbanInvalidLimitError();
     }
     const proposal = snapshotKanbanRequestProposal(value);
     const capturedExpected = snapshotKanbanRequestExpectedRevisions(expected);
+    const capturedEligibility = snapshotKanbanEligibility(eligibility);
     const id = this.#ids.acquire();
     let subjects: KanbanOperationSubjectLease | undefined;
     try {
-      subjects = this.#subjects.reserve(id.operationId, affectedSubjects(proposal));
+      subjects = this.#subjects.reserve(id.operationId, deriveKanbanOperationSubjects(proposal));
       const controller = new AbortController();
       const request = createKanbanRequestEnvelope(proposal, {
         operationId: id.operationId,
         expected: capturedExpected,
         signal: controller.signal,
       });
+      const coordinatorGeneration = this.#generation.capture();
+      const operation: ActiveKanbanOperation = {
+        request,
+        id,
+        subjects,
+        controller,
+        coordinatorGeneration,
+      };
+      this.#operations.set(id.operationId, operation);
       this.#snapshots.publish(
         Object.freeze({
           operationId: id.operationId,
@@ -481,33 +364,94 @@ export class KanbanOperationCoordinator {
           affected: subjects.affected,
         }),
       );
-      this.#snapshots.publish(
-        Object.freeze({
-          operationId: id.operationId,
-          kind: request.kind,
-          state: 'pending',
-          affected: subjects.affected,
-          projection: pendingProjection(proposal),
-        }),
-      );
-      const coordinatorGeneration = this.#generation.capture();
-      const completion = dispatchKanbanRequest(request, this.#dispatcher, {
-        capabilities: currentCapabilities(this.#capabilities),
-      });
-      this.#operations.set(id.operationId, {
-        request,
-        id,
-        subjects,
-        controller,
-        coordinatorGeneration,
-        completion,
-      });
+      const completion = this.#confirmAndDispatch(operation, proposal, capturedExpected, capturedEligibility);
       return Object.freeze({ operationId: id.operationId, completion });
     } catch (error) {
       subjects?.release();
       id.release();
       throw error;
     }
+  }
+
+  /** Confirm when required, revalidate current ownership, then expose pending state before dispatch. */
+  async #confirmAndDispatch(
+    operation: ActiveKanbanOperation,
+    proposal: KanbanRequestProposal,
+    expected: KanbanRequestExpectedRevisions,
+    eligibility: KanbanEligibility,
+  ): Promise<KanbanRequestResult> {
+    const classification = classifyKanbanRequestConfirmation(proposal, eligibility);
+    if (classification.kind !== 'not-required') {
+      const settlement = await settleKanbanConfirmation(this.#confirm, {
+        operationId: operation.id.operationId,
+        proposal,
+        affected: operation.subjects.affected,
+        expected,
+        eligibility: classification,
+        signal: operation.controller.signal,
+      });
+      if (settlement !== 'approved') {
+        return Object.freeze({
+          kind: 'cancelled',
+          operationId: operation.id.operationId,
+          code: settlement === 'declined' ? 'confirmation-declined' : 'confirmation-invalid',
+        });
+      }
+      if (this.#revalidate === undefined) {
+        return Object.freeze({
+          kind: 'cancelled',
+          operationId: operation.id.operationId,
+          code: 'confirmation-stale',
+        });
+      }
+      let current: KanbanEligibility;
+      try {
+        current = snapshotKanbanEligibility(this.#revalidate(proposal, expected));
+      } catch {
+        return Object.freeze({
+          kind: 'cancelled',
+          operationId: operation.id.operationId,
+          code: 'confirmation-stale',
+        });
+      }
+      if (!confirmationStillApplies(eligibility, current)) {
+        return Object.freeze({
+          kind: 'cancelled',
+          operationId: operation.id.operationId,
+          code: current.kind === 'blocked' || current.kind === 'unavailable' ? current.code : 'confirmation-stale',
+        });
+      }
+    }
+    if (!this.#isCurrent(operation)) {
+      return Object.freeze({
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: 'operation-cancelled',
+      });
+    }
+    this.#snapshots.publish(
+      Object.freeze({
+        operationId: operation.id.operationId,
+        kind: operation.request.kind,
+        state: 'pending',
+        affected: operation.subjects.affected,
+        projection: createKanbanPendingProjection(proposal),
+      }),
+    );
+    return dispatchKanbanRequest(operation.request, this.#dispatcher, {
+      capabilities: currentCapabilities(this.#capabilities),
+    });
+  }
+
+  /** Check coordinator, operation, subject, and cancellation generations before continuation. */
+  #isCurrent(operation: ActiveKanbanOperation): boolean {
+    return (
+      !this.#disposed &&
+      this.#generation.isCurrent(operation.coordinatorGeneration) &&
+      this.#operations.get(operation.id.operationId) === operation &&
+      this.#subjects.isCurrent(operation.subjects) &&
+      !operation.controller.signal.aborted
+    );
   }
 
   /** Returns detached active operation projections in admission order. */
