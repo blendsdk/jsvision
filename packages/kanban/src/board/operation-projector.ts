@@ -4,7 +4,7 @@ import type { CardKey, KanbanOperationId } from '../contract/identity.js';
 import type { KanbanMovePosition } from '../contract/request.js';
 import type { KanbanOperationSnapshot } from '../operation/types.js';
 import type { KanbanCellAddress } from '../source/types.js';
-import type { KanbanViewportProjection } from './viewport-projector.js';
+import type { KanbanProjectedCard, KanbanViewportProjection } from './viewport-projector.js';
 
 /** One clipped pending or accepted semantic block, containing identities but no application records. */
 export interface KanbanProjectedPendingBlock {
@@ -66,6 +66,24 @@ export interface KanbanOperationProjection {
   readonly blockedColumnIds: ReadonlySet<string>;
   /** Swimlane subjects whose conflicting actions must be disabled. */
   readonly blockedSwimlaneIds: ReadonlySet<string>;
+  /** Counter-only proof that operation projection uses indexes rather than nested scene scans. */
+  readonly work: KanbanOperationProjectionWork;
+}
+
+/** Internal operation-projection work counters used by deterministic scale tests. */
+export interface KanbanOperationProjectionWork {
+  /** Visible cards indexed once by identity and semantic cell. */
+  readonly indexedCards: number;
+  /** Semantic target-cell index lookups performed by active move operations. */
+  readonly cardCellLookups: number;
+  /** Visible cell geometries indexed once. */
+  readonly indexedCells: number;
+  /** Target geometry lookups performed by active move operations. */
+  readonly cellLookups: number;
+  /** Visible columns indexed once. */
+  readonly indexedColumns: number;
+  /** Fallback column lookups performed by active move operations. */
+  readonly columnLookups: number;
 }
 
 /** Clips a rectangle to viewport-local bounds. */
@@ -82,43 +100,37 @@ function cardIdentity(cardKey: CardKey): string {
   return JSON.stringify([typeof cardKey, cardKey]);
 }
 
-/** Compares complete semantic cell addresses. */
-function sameAddress(left: KanbanCellAddress, right: KanbanCellAddress): boolean {
-  return left.columnId === right.columnId && left.swimlaneId === right.swimlaneId;
+/** Creates one collision-safe semantic cell identity for frame-local indexes. */
+function cellIdentity(address: KanbanCellAddress): string {
+  return JSON.stringify([address.columnId, address.swimlaneId ?? null]);
+}
+
+/** Cards and identity lookup retained for one visible semantic cell. */
+interface KanbanVisibleCellIndex {
+  readonly cards: readonly KanbanProjectedCard[];
+  readonly byCardIdentity: ReadonlyMap<string, KanbanProjectedCard>;
 }
 
 /** Finds the visible insertion row represented by a semantic move position. */
 function insertionRow(
-  projection: KanbanViewportProjection,
-  target: KanbanCellAddress,
+  targetCards: KanbanVisibleCellIndex | undefined,
   position: KanbanMovePosition,
   fallback: number,
 ): number {
-  const targetCards = projection.cards.filter((card) =>
-    sameAddress(
-      { columnId: card.columnId, ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }) },
-      target,
-    ),
-  );
+  const cards = targetCards?.cards ?? [];
   switch (position.kind) {
     case 'start':
-      return targetCards[0]?.rect.y ?? fallback;
+      return cards[0]?.rect.y ?? fallback;
     case 'end': {
-      const last = targetCards.at(-1);
+      const last = cards.at(-1);
       return last === undefined ? fallback : last.rect.y + last.rect.height + 1;
     }
     case 'between': {
       const beforeKey = position.beforeCardKey;
-      const before =
-        beforeKey === null
-          ? undefined
-          : targetCards.find((card) => cardIdentity(card.descriptor.cardKey) === cardIdentity(beforeKey));
+      const before = beforeKey === null ? undefined : targetCards?.byCardIdentity.get(cardIdentity(beforeKey));
       if (before !== undefined) return before.rect.y + before.rect.height + 1;
       const afterKey = position.afterCardKey;
-      const after =
-        afterKey === null
-          ? undefined
-          : targetCards.find((card) => cardIdentity(card.descriptor.cardKey) === cardIdentity(afterKey));
+      const after = afterKey === null ? undefined : targetCards?.byCardIdentity.get(cardIdentity(afterKey));
       return after?.rect.y ?? fallback;
     }
     case 'window-edge':
@@ -161,10 +173,39 @@ export function projectKanbanOperations(
   const feedback: KanbanProjectedOperationFeedback[] = [];
   const projectedCardKeys: CardKey[] = [];
   const visibleCards = new Map(projection.cards.map((card) => [cardIdentity(card.descriptor.cardKey), card] as const));
+  const mutableCells = new Map<
+    string,
+    { cards: KanbanProjectedCard[]; byCardIdentity: Map<string, KanbanProjectedCard> }
+  >();
+  for (const card of projection.cards) {
+    const identity = cellIdentity({
+      columnId: card.columnId,
+      ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+    });
+    const indexed: { cards: KanbanProjectedCard[]; byCardIdentity: Map<string, KanbanProjectedCard> } =
+      mutableCells.get(identity) ?? { cards: [], byCardIdentity: new Map() };
+    indexed.cards.push(card);
+    indexed.byCardIdentity.set(cardIdentity(card.descriptor.cardKey), card);
+    mutableCells.set(identity, indexed);
+  }
+  const cardsByCell = new Map<string, KanbanVisibleCellIndex>();
+  for (const [identity, indexed] of mutableCells) {
+    cardsByCell.set(
+      identity,
+      Object.freeze({ cards: Object.freeze(indexed.cards), byCardIdentity: indexed.byCardIdentity }),
+    );
+  }
+  const cellsByAddress = new Map(
+    (projection.geometry?.cells ?? []).map((cell) => [cellIdentity(cell.address), cell] as const),
+  );
+  const columnsById = new Map(projection.columns.map((column) => [column.columnId, column] as const));
   const blockedCardKeys = new Set<string>();
   const blockedColumnIds = new Set<string>();
   const blockedSwimlaneIds = new Set<string>();
   const slotRows = new Map<string, number>();
+  let cardCellLookups = 0;
+  let cellLookups = 0;
+  let columnLookups = 0;
 
   for (const operation of operations) {
     for (const affected of operation.affected) {
@@ -184,8 +225,13 @@ export function projectKanbanOperations(
       );
       const visibleMoved = visiblePairs.map(({ cardKey }) => cardKey);
       projectedCardKeys.push(...visibleMoved);
-      const cell = projection.geometry?.cells.find(({ address }) => sameAddress(address, semantic.target));
-      const column = projection.columns.find(({ columnId }) => columnId === semantic.target.columnId);
+      const targetIdentity = cellIdentity(semantic.target);
+      cardCellLookups += 1;
+      const targetCards = cardsByCell.get(targetIdentity);
+      cellLookups += 1;
+      const cell = cellsByAddress.get(targetIdentity);
+      columnLookups += 1;
+      const column = columnsById.get(semantic.target.columnId);
       const sourceCard = visibleMoved.map((cardKey) => visibleCards.get(cardIdentity(cardKey))).find(Boolean);
       const surface = cell ?? column?.rect ?? sourceCard?.rect;
       if (surface === undefined) continue;
@@ -194,7 +240,7 @@ export function projectKanbanOperations(
       const slot = slotIdentity(semantic.target, semantic.position);
       const baseRow = offscreen
         ? (sourceCard?.rect.y ?? surface.y)
-        : insertionRow(projection, semantic.target, semantic.position, surface.y);
+        : insertionRow(targetCards, semantic.position, surface.y);
       const y = Math.min(
         Math.max(surface.y, baseRow + (slotRows.get(slot) ?? 0)),
         Math.max(surface.y, surface.y + surface.height - blockHeight),
@@ -250,5 +296,13 @@ export function projectKanbanOperations(
     blockedCardKeys,
     blockedColumnIds,
     blockedSwimlaneIds,
+    work: Object.freeze({
+      indexedCards: projection.cards.length,
+      cardCellLookups,
+      indexedCells: cellsByAddress.size,
+      cellLookups,
+      indexedColumns: columnsById.size,
+      columnLookups,
+    }),
   });
 }

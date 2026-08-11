@@ -94,9 +94,12 @@ function targetAddress<TCard>(
   options: Omit<KanbanMoveCardOptions, 'cardKey'>,
 ) {
   if (options.target !== undefined) return Object.freeze({ ...options.target });
-  if (options.direction !== 'left' && options.direction !== 'right') return undefined;
   const source = moved[0]?.source;
   if (source === undefined) return undefined;
+  if (options.direction === 'start' || options.direction === 'end') {
+    return Object.freeze({ ...source });
+  }
+  if (options.direction !== 'left' && options.direction !== 'right') return undefined;
   const columns = evidence.scene.source.structure.columns;
   const index = columns.findIndex(({ columnId }) => columnId === source.columnId);
   const targetIndex = options.direction === 'left' ? index - 1 : index + 1;

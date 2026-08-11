@@ -77,7 +77,7 @@ interface ActiveKanbanStructuralDrag {
   readonly generation: number;
   readonly capture: PointerCaptureLease;
   readonly structure: KanbanStructuralDragIdentity;
-  readonly sourceRect: Readonly<Rect>;
+  sourceRect: Readonly<Rect>;
   point: Readonly<Point>;
   sceneRevision: KanbanRevision;
   geometryGeneration: number;
@@ -219,10 +219,19 @@ export class KanbanStructuralDragController {
     const active = this.#active;
     const scene = this.#options.readScene();
     if (this.#disposed || active === undefined || active.generation !== generation || scene === undefined) return false;
+    const siblings = active.structure.kind === 'column' ? scene.columns : scene.swimlanes;
+    const sourceId = active.structure.kind === 'column' ? active.structure.columnId : active.structure.swimlaneId;
+    const source = siblings.find((candidate) => candidate.id === sourceId);
+    if (source === undefined) {
+      this.cancel(generation, 'source-change');
+      return false;
+    }
+    const geometryChanged = active.geometryGeneration !== scene.geometryGeneration;
     active.point = Object.freeze({ ...point });
+    active.sourceRect = Object.freeze({ x: source.x, y: source.y, width: source.width, height: source.height });
     active.sceneRevision = scene.sceneRevision;
     active.geometryGeneration = scene.geometryGeneration;
-    if (active.target === undefined || !insideHalo(point, active.target.markerRect)) {
+    if (geometryChanged || active.target === undefined || !insideHalo(point, active.target.markerRect)) {
       active.target =
         active.structure.kind === 'column'
           ? columnTarget(active.structure, scene, point)

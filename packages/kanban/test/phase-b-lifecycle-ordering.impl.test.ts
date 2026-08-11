@@ -81,7 +81,7 @@ describe('Phase B lifecycle gate ordering', () => {
     activeRender.unmount();
   });
 
-  it('releases the source session before disabling application request authority', async () => {
+  it('disables application request authority before releasing the source session', async () => {
     const fixture = createWindowedKanbanFixture<Card>({
       logicalCardCount: 20,
       columns: [{ columnId: 'ready', label: 'Ready', revision: 1 }],
@@ -117,12 +117,15 @@ describe('Phase B lifecycle gate ordering', () => {
 
     board.dispose();
     expect(duringSessionDispose).toBeDefined();
-    await expect(duringSessionDispose).resolves.toMatchObject({ kind: 'accepted' });
+    await expect(duringSessionDispose).resolves.toMatchObject({
+      kind: 'rejected',
+      code: 'dispatcher-unavailable',
+    });
     await expect(board.request(request('after-board-dispose'))).resolves.toMatchObject({
       kind: 'rejected',
       code: 'dispatcher-unavailable',
     });
-    expect(dispatcher).toHaveBeenCalledOnce();
+    expect(dispatcher).not.toHaveBeenCalled();
 
     render.unmount();
     fixture.dispose();

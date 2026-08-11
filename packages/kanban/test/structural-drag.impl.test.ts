@@ -138,4 +138,37 @@ describe('structural drag controller', () => {
     expect(commit).not.toHaveBeenCalled();
     expect(lease.active()).toBe(false);
   });
+
+  it('reprojects source and marker geometry when scrolling changes the scene generation', () => {
+    let current = scene();
+    const controller = new KanbanStructuralDragController({
+      readScene: () => current,
+      commitProposal: () => true,
+      scroll: () => Object.freeze({ x: 0, y: 0 }),
+      invalidate: () => undefined,
+    });
+
+    expect(controller.begin(start(capture(), { kind: 'column', columnId: 'doing' }))).toBe(true);
+    expect(controller.update(1, { x: 59, y: 1 })).toBe(true);
+    expect(controller.snapshot()).toMatchObject({
+      kind: 'dragging',
+      overlay: { geometryGeneration: 1, sourceRect: { x: 20 }, markerRect: { x: 59 } },
+    });
+
+    current = Object.freeze({
+      ...scene(),
+      geometryGeneration: 2,
+      columns: Object.freeze([
+        Object.freeze({ id: 'ready', x: -20, y: 1, width: 20, height: 1 }),
+        Object.freeze({ id: 'doing', x: 0, y: 1, width: 20, height: 1 }),
+        Object.freeze({ id: 'done', x: 20, y: 1, width: 20, height: 1 }),
+      ]),
+    });
+    controller.reproject();
+
+    expect(controller.snapshot()).toMatchObject({
+      kind: 'dragging',
+      overlay: { geometryGeneration: 2, sourceRect: { x: 0 }, markerRect: { x: 39 } },
+    });
+  });
 });

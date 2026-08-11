@@ -83,8 +83,24 @@ describe('Phase C board lifecycle implementation', () => {
   it('cancels pending work before releasing controller and reactive owners', async () => {
     const completion = createKanbanDeferred<KanbanRequestResult>();
     const unsubscribe = vi.fn();
-    const dispose = vi.fn();
-    const dispatcher = vi.fn(() => completion.promise);
+    let pendingSignal: AbortSignal | undefined;
+    let pendingOperationId: string | undefined;
+    let signalWasAbortedDuringControllerDispose = false;
+    let reentrantRequest: Promise<KanbanRequestResult> | undefined;
+    const boardHolder: { board?: KanbanBoard<Card> } = {};
+    const dispose = vi.fn(() => {
+      signalWasAbortedDuringControllerDispose = pendingSignal?.aborted ?? false;
+      reentrantRequest = boardHolder.board?.request({
+        kind: 'column-reorder',
+        columnId: 'doing',
+        position: { kind: 'start' },
+      });
+    });
+    const dispatcher = vi.fn((request) => {
+      pendingSignal = request.signal;
+      pendingOperationId = request.operationId;
+      return completion.promise;
+    });
     const density = signal<'comfortable' | 'compact'>('comfortable');
     const structure = signal({ revision: 1, columns: [] });
     const board = new KanbanBoard({
@@ -97,6 +113,7 @@ describe('Phase C board lifecycle implementation', () => {
       structure,
       interactionFactory: () => trackedController(unsubscribe, dispose),
     });
+    boardHolder.board = board;
     const render = mount(board);
     const move = board.interaction().moveCard({
       cardKey: 1,
@@ -112,11 +129,14 @@ describe('Phase C board lifecycle implementation', () => {
     render.flush();
     board.dispose();
     board.dispose();
-    completion.resolve({ kind: 'accepted', operationId: board.operationSnapshot()[0]?.operationId ?? 'late' });
+    completion.resolve({ kind: 'accepted', operationId: pendingOperationId ?? 'late' });
     await move;
+    const reentrantResult = await reentrantRequest;
 
     expect(unsubscribe).toHaveBeenCalledOnce();
     expect(dispose).toHaveBeenCalledOnce();
+    expect(signalWasAbortedDuringControllerDispose).toBe(true);
+    expect(reentrantResult?.kind).toBe('rejected');
     expect(board.operationSnapshot()).toEqual([]);
     expect(dispatcher).toHaveBeenCalledOnce();
     expect(() => render.mount(board)).toThrow();

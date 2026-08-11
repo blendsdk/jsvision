@@ -1,5 +1,11 @@
 import type { CardKey, KanbanOperationId } from '../contract/identity.js';
-import { createKanbanOperationId } from '../contract/identity.js';
+import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
+import {
+  createKanbanCardKey,
+  createKanbanColumnId,
+  createKanbanOperationId,
+  createKanbanSwimlaneId,
+} from '../contract/identity.js';
 import type {
   KanbanCardMoveProposal,
   KanbanColumnPosition,
@@ -8,6 +14,8 @@ import type {
   KanbanSwimlanePosition,
 } from '../contract/request.js';
 import { createKanbanRejectedResult } from '../contract/request-validation.js';
+import { snapshotKanbanRequestProposal } from '../contract/request-validation.js';
+import { snapshotKanbanCellAddress } from '../source/address.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanSelectionSnapshot } from './types.js';
 
@@ -92,6 +100,48 @@ function unavailableResult(): KanbanRequestResult {
   return createKanbanRejectedResult(createKanbanOperationId('operation-unavailable'), 'operation-unavailable');
 }
 
+const MOVE_CARD_KEYS = new Set(['cardKey', 'target', 'position', 'direction', 'origin']);
+const MOVE_BLOCK_KEYS = new Set(['target', 'position', 'direction', 'origin']);
+const COLUMN_REORDER_KEYS = new Set(['columnId', 'position']);
+const SWIMLANE_REORDER_KEYS = new Set(['swimlaneId', 'position']);
+const EDGE_KEYS = new Set(['kind']);
+
+/** Snapshots a caller-facing edge without invoking accessors or retaining its object. */
+function snapshotEdge(value: unknown): KanbanCardMovePositionInput {
+  const properties = snapshotKanbanDataProperties(value, EDGE_KEYS.size);
+  validateKanbanDataKeys(properties, EDGE_KEYS);
+  if (properties.kind !== 'start' && properties.kind !== 'end') throw new Error('Invalid move edge.');
+  return Object.freeze({ kind: properties.kind });
+}
+
+/** Detaches the shared destination fields accepted by card and selected-block moves. */
+function snapshotMoveDestination(
+  properties: Readonly<Record<string, unknown>>,
+): Omit<KanbanMoveCardOptions, 'cardKey'> {
+  const target = properties.target === undefined ? undefined : snapshotKanbanCellAddress(properties.target);
+  const position = properties.position === undefined ? undefined : snapshotEdge(properties.position);
+  const direction = properties.direction;
+  if (
+    direction !== undefined &&
+    direction !== 'left' &&
+    direction !== 'right' &&
+    direction !== 'start' &&
+    direction !== 'end'
+  ) {
+    throw new Error('Invalid move direction.');
+  }
+  const origin = properties.origin;
+  if (origin !== undefined && origin !== 'pointer' && origin !== 'keyboard' && origin !== 'programmatic') {
+    throw new Error('Invalid move origin.');
+  }
+  return Object.freeze({
+    ...(target === undefined ? {} : { target }),
+    ...(position === undefined ? {} : { position }),
+    ...(direction === undefined ? {} : { direction }),
+    ...(origin === undefined ? {} : { origin }),
+  });
+}
+
 /** Implements typed operation methods while leaving serialization to the coordinator. */
 export class KanbanOperationFacade implements KanbanOperationFacadeApi {
   readonly #services: KanbanOperationFacadeServices;
@@ -112,43 +162,84 @@ export class KanbanOperationFacade implements KanbanOperationFacadeApi {
 
   /** Moves one explicit card using current source and destination cursor evidence. */
   moveCard(options: KanbanMoveCardOptions): Promise<KanbanRequestResult> {
-    const { cardKey, ...destination } = options;
-    return this.#resolvedMove([cardKey], destination);
+    return this.#contained(async () => {
+      const properties = snapshotKanbanDataProperties(options, MOVE_CARD_KEYS.size);
+      validateKanbanDataKeys(properties, MOVE_CARD_KEYS);
+      const rawCardKey = properties.cardKey;
+      if (typeof rawCardKey !== 'string' && typeof rawCardKey !== 'number') return unavailableResult();
+      const cardKey = createKanbanCardKey(rawCardKey);
+      return this.#resolvedMove([cardKey], snapshotMoveDestination(properties));
+    });
   }
 
   /** Moves the current bounded loaded selection as one ordered atomic proposal. */
   moveSelectedBlock(options: KanbanMoveSelectedBlockOptions): Promise<KanbanRequestResult> {
-    const keys = this.#services.selection().entries.map(({ cardKey }) => cardKey);
-    return this.#resolvedMove(keys, options);
+    return this.#contained(async () => {
+      const properties = snapshotKanbanDataProperties(options, MOVE_BLOCK_KEYS.size);
+      validateKanbanDataKeys(properties, MOVE_BLOCK_KEYS);
+      const keys = this.#services.selection().entries.map(({ cardKey }) => cardKey);
+      return this.#resolvedMove(keys, snapshotMoveDestination(properties));
+    });
   }
 
   /** Reorders one workflow column through the board coordinator. */
   reorderColumn(options: KanbanReorderColumnOptions): Promise<KanbanRequestResult> {
-    return this.#services.request({ kind: 'column-reorder', columnId: options.columnId, position: options.position });
+    return this.#contained(async () => {
+      const properties = snapshotKanbanDataProperties(options, COLUMN_REORDER_KEYS.size);
+      validateKanbanDataKeys(properties, COLUMN_REORDER_KEYS);
+      if (typeof properties.columnId !== 'string') return unavailableResult();
+      const proposal = snapshotKanbanRequestProposal({
+        kind: 'column-reorder',
+        columnId: createKanbanColumnId(properties.columnId),
+        position: properties.position,
+      });
+      return this.#services.request(proposal);
+    });
   }
 
   /** Reorders one explicit swimlane through the board coordinator. */
   reorderSwimlane(options: KanbanReorderSwimlaneOptions): Promise<KanbanRequestResult> {
-    return this.#services.request({
-      kind: 'swimlane-reorder',
-      swimlaneId: options.swimlaneId,
-      position: options.position,
+    return this.#contained(async () => {
+      const properties = snapshotKanbanDataProperties(options, SWIMLANE_REORDER_KEYS.size);
+      validateKanbanDataKeys(properties, SWIMLANE_REORDER_KEYS);
+      if (typeof properties.swimlaneId !== 'string') return unavailableResult();
+      const proposal = snapshotKanbanRequestProposal({
+        kind: 'swimlane-reorder',
+        swimlaneId: createKanbanSwimlaneId(properties.swimlaneId),
+        position: properties.position,
+      });
+      return this.#services.request(proposal);
     });
   }
 
   /** Cancels one explicit operation or the most recent cancellable operation when omitted. */
   cancel(operationId?: KanbanOperationId): boolean {
-    return this.#services.cancel(operationId);
+    try {
+      return this.#services.cancel(operationId === undefined ? undefined : createKanbanOperationId(operationId));
+    } catch {
+      return false;
+    }
   }
 
   /** Dispatches a retained inverse descriptor as a fresh operation. */
   undo(operationId: KanbanOperationId): Promise<KanbanRequestResult> {
-    return this.#services.undo(operationId);
+    return this.#contained(() => this.#services.undo(createKanbanOperationId(operationId)));
   }
 
   /** Dispatches a retained inverse-of-inverse descriptor as a fresh operation. */
   redo(operationId: KanbanOperationId): Promise<KanbanRequestResult> {
-    return this.#services.redo(operationId);
+    return this.#contained(() => this.#services.redo(createKanbanOperationId(operationId)));
+  }
+
+  /** Contains hostile runtime values and callback failures behind the typed result boundary. */
+  #contained(operation: () => Promise<KanbanRequestResult>): Promise<KanbanRequestResult> {
+    return Promise.resolve().then(async () => {
+      try {
+        return await operation();
+      } catch {
+        return unavailableResult();
+      }
+    });
   }
 
   /** Resolves one move immediately before coordinator admission to avoid stale queued evidence. */

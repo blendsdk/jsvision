@@ -9,6 +9,7 @@ import type { KanbanCardDescriptor, KanbanOperationSnapshot } from '../src/index
 import { createEnglishKanbanI18n } from '../src/i18n/catalog.js';
 import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
 import { composeKanbanViewportOverlay } from '../src/board/overlay-projector.js';
+import type { KanbanOverlayProjectionWork } from '../src/board/overlay-projector.js';
 import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
 import type { KanbanViewportProjection } from '../src/board/viewport-projector.js';
 import { drawKanbanViewport } from '../src/board/viewport-render.js';
@@ -456,6 +457,48 @@ describe('overlay composition internals', () => {
       cardLookups: selectionCount,
       indexedColumns: 2,
       columnLookups: 2,
+      operationIndexedCards: cardCount,
+      operationCellLookups: 0,
+      operationShiftEvents: 0,
+      operationShiftLookups: 0,
+    });
+  });
+
+  it('indexes configured pending-operation work without card-by-operation scans', () => {
+    const source = authoritative();
+    const operation = (index: number): KanbanOperationSnapshot =>
+      Object.freeze({
+        operationId: createKanbanOperationId(`bounded-${index}`),
+        kind: 'card-move',
+        state: 'pending',
+        affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 1 })]),
+        projection: Object.freeze({
+          kind: 'card-move' as const,
+          state: 'pending' as const,
+          cardKeys: Object.freeze([1]),
+          sources: Object.freeze([Object.freeze({ columnId: 'ready' })]),
+          target: Object.freeze({ columnId: 'doing' }),
+          position: Object.freeze({ kind: 'start' as const, cursorRevision: 1 }),
+        }),
+      });
+    const operations = Object.freeze(Array.from({ length: 512 }, (_, index) => operation(index)));
+    let measured: KanbanOverlayProjectionWork | undefined;
+
+    composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations,
+      inspectWork: (work) => {
+        measured = work;
+      },
+    });
+
+    expect(measured).toMatchObject({
+      operationIndexedCards: source.cards.length,
+      operationCellLookups: operations.length * 3,
+      operationShiftEvents: operations.length,
+      operationShiftLookups: source.cards.length - 1,
     });
   });
 

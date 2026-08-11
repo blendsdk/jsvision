@@ -1,7 +1,7 @@
 /** Specification coverage for Phase C cross-input operations and cancellation-first integration. */
 import { createApplication, resolveCapabilities } from '@jsvision/ui';
 import type { Application, DispatchEvent } from '@jsvision/ui';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, KanbanViewport, createEagerKanbanDataSource } from '../src/index.js';
 import type {
@@ -233,6 +233,57 @@ describe('Phase C semantic operation parity', () => {
     expect(results).toHaveLength(4);
     expect(results.every((result) => typeof result === 'object' && result !== null && 'kind' in result)).toBe(true);
     expect(requests.map(({ kind }) => kind)).toEqual(['card-move', 'card-move', 'column-reorder', 'swimlane-reorder']);
+  });
+
+  it.each(['start', 'end'] as const)(
+    'resolves a same-cell %s move through current cursor evidence',
+    async (direction) => {
+      // Start/end are semantic edges in the card's current cell, not horizontal navigation aliases.
+      const requests: KanbanRequest[] = [];
+      const { board } = mountedBoard((request) => {
+        requests.push(request);
+        return { kind: 'rejected', operationId: request.operationId, code: 'fixture-complete' };
+      });
+
+      const result = await board.interaction().moveCard({ cardKey: 2, direction });
+
+      expect(result.kind).toBe('rejected');
+      expect(requests).toHaveLength(1);
+      expect(requests[0]).toMatchObject({
+        kind: 'card-move',
+        target: { columnId: 'ready', swimlaneId: 'alpha' },
+        position: { kind: direction },
+      });
+    },
+  );
+
+  it('contains hostile runtime facade arguments behind typed rejected results', async () => {
+    // Public TypeScript types do not make JavaScript callers trustworthy at runtime.
+    const dispatcher = vi.fn<KanbanRequestDispatcher>((request) => ({
+      kind: 'rejected',
+      operationId: request.operationId,
+      code: 'fixture-complete',
+    }));
+    const { board } = mountedBoard(dispatcher);
+    const facade = board.interaction();
+    const getter = vi.fn(() => 1);
+    const hostile = Object.defineProperty({}, 'cardKey', { enumerable: true, get: getter });
+    const moveCard: unknown = Reflect.get(facade, 'moveCard');
+    const reorderColumn: unknown = Reflect.get(facade, 'reorderColumn');
+    if (typeof moveCard !== 'function' || typeof reorderColumn !== 'function')
+      throw new Error('Missing facade methods.');
+
+    const results = await Promise.all([
+      Reflect.apply(moveCard, facade, [null]),
+      Reflect.apply(moveCard, facade, [hostile]),
+      Reflect.apply(moveCard, facade, [{ cardKey: 1, direction: 'right', extra: true }]),
+      Reflect.apply(reorderColumn, facade, [null]),
+      Reflect.apply(reorderColumn, facade, [{ columnId: '', position: { kind: 'start' } }]),
+    ]);
+
+    expect(results.every((result) => result.kind === 'rejected')).toBe(true);
+    expect(getter).not.toHaveBeenCalled();
+    expect(dispatcher).not.toHaveBeenCalled();
   });
 
   it('applies Escape to active drag, then cancellable operation, then selection without creating a ghost for keys', async () => {

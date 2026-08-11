@@ -60,7 +60,7 @@ import {
   quiesceKanbanViewportInput,
   setKanbanViewportInteractionEvidenceListener,
 } from './kanban-viewport.js';
-import { prepareKanbanViewportOperations } from './viewport-operation-bridge.js';
+import { disposeKanbanViewportOperations, prepareKanbanViewportOperations } from './viewport-operation-bridge.js';
 import { resolveKanbanViewportCardMove } from './viewport-move-bridge.js';
 import type { KanbanIdentityInput, KanbanViewportOptions } from './kanban-viewport.js';
 import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js';
@@ -500,14 +500,15 @@ export class KanbanBoard<TCard> extends Group {
     if (this.#disposed) return;
     this.#disposed = true;
     quiesceKanbanViewportInput(this.viewport);
+    setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
+    disposeKanbanViewportOperations(this.viewport);
+    this.#authority.dispose();
     this.#interactionFacade.dispose();
     this.#disposeInteractionChrome?.();
     this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
-    setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     this.viewport.dispose();
-    this.#authority.dispose();
   }
 
   /** Mounts this board only while its single owned-resource lifecycle remains available. */

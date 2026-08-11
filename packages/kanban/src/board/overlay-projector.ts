@@ -135,6 +135,14 @@ export interface KanbanOverlayProjectionWork {
   readonly indexedColumns: number;
   /** Number of distinct affected columns looked up for damage projection. */
   readonly columnLookups: number;
+  /** Visible cards indexed once for semantic operation placement. */
+  readonly operationIndexedCards: number;
+  /** Constant-time semantic cell lookups performed by pending operations. */
+  readonly operationCellLookups: number;
+  /** Pending insertion thresholds indexed once for vertical reflow. */
+  readonly operationShiftEvents: number;
+  /** Binary-search shift lookups performed for authoritative cards. */
+  readonly operationShiftLookups: number;
 }
 
 /** Mutable counters remain local to one synchronous composition and are frozen before observation. */
@@ -143,6 +151,10 @@ interface MutableKanbanOverlayProjectionWork {
   cardLookups: number;
   indexedColumns: number;
   columnLookups: number;
+  operationIndexedCards: number;
+  operationCellLookups: number;
+  operationShiftEvents: number;
+  operationShiftLookups: number;
 }
 
 /** Empty immutable overlay shared only by value, not by mutable state. */
@@ -280,6 +292,73 @@ function reportProjectionWork(
   } catch {
     // Diagnostic observation is deliberately outside renderer correctness and failure containment.
   }
+}
+
+/** One sorted insertion threshold and its cumulative downward shift. */
+interface KanbanPendingShiftEvent {
+  readonly y: number;
+  readonly cumulativeShift: number;
+}
+
+/** Creates one collision-safe identity for a semantic cell. */
+function addressIdentity(address: KanbanCellAddress): string {
+  return JSON.stringify([address.columnId, address.swimlaneId ?? null]);
+}
+
+/** Indexes pending block shifts once so card projection never rescans every operation. */
+function indexPendingShifts(
+  pending: readonly KanbanProjectedPendingBlock[],
+  work: MutableKanbanOverlayProjectionWork,
+): ReadonlyMap<string, readonly KanbanPendingShiftEvent[]> {
+  const grouped = new Map<string, { y: number; shift: number }[]>();
+  for (const block of pending) {
+    if (block.offscreen) continue;
+    const identity = addressIdentity(block.target);
+    const events = grouped.get(identity) ?? [];
+    events.push({ y: block.rect.y, shift: block.rect.height + 1 });
+    grouped.set(identity, events);
+    work.operationShiftEvents += 1;
+  }
+  const result = new Map<string, readonly KanbanPendingShiftEvent[]>();
+  for (const [identity, events] of grouped) {
+    events.sort((left, right) => left.y - right.y);
+    let cumulativeShift = 0;
+    result.set(
+      identity,
+      Object.freeze(
+        events.map(({ y, shift }) => {
+          cumulativeShift += shift;
+          return Object.freeze({ y, cumulativeShift });
+        }),
+      ),
+    );
+  }
+  return result;
+}
+
+/** Finds the cumulative shift for one card with logarithmic indexed work. */
+function pendingShiftAt(
+  index: ReadonlyMap<string, readonly KanbanPendingShiftEvent[]>,
+  card: KanbanProjectedCard,
+  work: MutableKanbanOverlayProjectionWork,
+): number {
+  work.operationShiftLookups += 1;
+  const events = index.get(
+    addressIdentity({
+      columnId: card.columnId,
+      ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+    }),
+  );
+  if (events === undefined) return 0;
+  let low = 0;
+  let high = events.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const event = events[middle];
+    if (event !== undefined && event.y <= card.rect.y) low = middle + 1;
+    else high = middle;
+  }
+  return low === 0 ? 0 : (events[low - 1]?.cumulativeShift ?? 0);
 }
 
 /** Creates placeholder fragments from current visible moved-card geometry. */
@@ -504,7 +583,13 @@ export function composeKanbanViewportOverlay(
       cardLookups: 0,
       indexedColumns: options.authoritative.columns.length,
       columnLookups: 0,
+      operationIndexedCards: operations.work.indexedCards,
+      operationCellLookups:
+        operations.work.cardCellLookups + operations.work.cellLookups + operations.work.columnLookups,
+      operationShiftEvents: 0,
+      operationShiftLookups: 0,
     };
+    const pendingShifts = indexPendingShifts(operations.pending, work);
     const cardsByCell = new Map(
       options.authoritative.cards.map((card) => [
         cardCellIdentity(card.descriptor.cardKey, {
@@ -539,11 +624,7 @@ export function composeKanbanViewportOverlay(
           ) {
             verticalShift += 1;
           }
-          for (const block of operations.pending) {
-            if (!block.offscreen && inCell(card, block.target) && card.rect.y >= block.rect.y) {
-              verticalShift += block.rect.height + 1;
-            }
-          }
+          verticalShift += pendingShiftAt(pendingShifts, card, work);
           if (verticalShift === 0) return [card];
           const rect = clip({ ...card.rect, y: card.rect.y + verticalShift }, options.bounds);
           return rect === undefined ? [] : [Object.freeze({ ...card, rect })];
