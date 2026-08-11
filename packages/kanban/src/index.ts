@@ -51,6 +51,7 @@ export * from './operation/eligibility.js';
 export * from './operation/operation-id.js';
 export * from './operation/placement.js';
 export * from './operation/types.js';
+export * from './operation/undo.js';
 export * from './board/kanban-viewport.js';
 export * from './board/kanban-board.js';
 export * from './board/scene-builder.js';

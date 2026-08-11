@@ -20,7 +20,7 @@ import {
   snapshotKanbanRequestProposal,
 } from '../contract/request-validation.js';
 import { fingerprintKanbanSemanticValue } from '../contract/semantic-query.js';
-import { settleKanbanConfirmation } from './confirmation.js';
+import { createKanbanInverseRequestContext, settleKanbanConfirmation } from './confirmation.js';
 import { classifyKanbanRequestConfirmation, snapshotKanbanEligibility } from './eligibility.js';
 import type { KanbanEligibility } from './eligibility.js';
 import { createKanbanOperationIdRegistry } from './operation-id.js';
@@ -28,6 +28,7 @@ import type { KanbanOperationIdFactory, KanbanOperationIdLease, KanbanOperationI
 import { settleKanbanPublication } from './publication.js';
 import { createKanbanOperationSubjectRegistry, deriveKanbanOperationSubjects } from './subjects.js';
 import type { KanbanOperationSubjectLease, KanbanOperationSubjectRegistry } from './subjects.js';
+import { settleKanbanInverseRequest } from './undo.js';
 import {
   acceptKanbanPendingProjection,
   createKanbanPendingProjection,
@@ -35,10 +36,12 @@ import {
 } from './types.js';
 import type {
   KanbanConfirmer,
+  KanbanInverseRequestBuilder,
   KanbanOperationSnapshot,
   KanbanOperationState,
   KanbanOperationSubscriber,
   KanbanPendingProjection,
+  KanbanUndoDescriptor,
 } from './types.js';
 
 /** Unsubscribe function returned by payload-free operation-state subscriptions. */
@@ -54,6 +57,8 @@ export interface KanbanOperationCoordinatorOptions {
   readonly operationId?: KanbanOperationIdFactory;
   /** Optional application confirmation callback for warnings and destructive proposals. */
   readonly confirm?: KanbanConfirmer;
+  /** Optional application callback that resolves an opaque undo token into one fresh proposal. */
+  readonly resolveUndo?: KanbanInverseRequestBuilder;
   /** Package integration seam that recomputes current eligibility after confirmation callbacks. */
   readonly revalidate?: KanbanOperationRevalidator;
   /** Optional lower resource ceilings for this coordinator. */
@@ -84,6 +89,13 @@ interface ActiveKanbanOperation {
   readonly projection: KanbanPendingProjection;
   state: 'proposed' | 'pending' | 'accepted';
   publication?: KanbanPublicationExpectation;
+  undo?: KanbanUndoDescriptor;
+}
+
+/** Whole committed entry retained for a future application-authorized inverse operation. */
+interface CommittedKanbanUndo {
+  readonly prior: KanbanOperationSnapshot;
+  readonly undo: KanbanUndoDescriptor;
 }
 
 /** Validate a caller-supplied finite capacity before allocating its registry. */
@@ -308,13 +320,16 @@ export class KanbanOperationCoordinator {
   readonly #dispatcher: KanbanRequestDispatcher;
   readonly #capabilities: (() => unknown) | undefined;
   readonly #confirm: KanbanConfirmer | undefined;
+  readonly #resolveUndo: KanbanInverseRequestBuilder | undefined;
   readonly #revalidate: KanbanOperationRevalidator | undefined;
   readonly #limits: KanbanResolvedLimits;
   readonly #ids: KanbanOperationIdRegistry;
   readonly #subjects: KanbanOperationSubjectRegistry;
   readonly #snapshots: KanbanOperationSnapshotRegistry;
+  readonly #undo: KanbanCommittedUndoRegistry<CommittedKanbanUndo>;
   readonly #generation = new KanbanOperationGenerationClock();
   readonly #operations = new Map<KanbanOperationId, ActiveKanbanOperation>();
+  readonly #inverseControllers = new Set<AbortController>();
   #disposed = false;
 
   /** Validates resource options before allocating coordinator-owned registries. */
@@ -323,6 +338,7 @@ export class KanbanOperationCoordinator {
     this.#dispatcher = options.dispatcher;
     this.#capabilities = options.capabilities;
     this.#confirm = options.confirm;
+    this.#resolveUndo = options.resolveUndo;
     this.#revalidate = options.revalidate;
     this.#ids = createKanbanOperationIdRegistry({
       ...(options.operationId === undefined ? {} : { factory: options.operationId }),
@@ -334,6 +350,7 @@ export class KanbanOperationCoordinator {
       this.#limits.pendingOperations,
       this.#limits.retainedObservations,
     );
+    this.#undo = new KanbanCommittedUndoRegistry(this.#limits.retainedUndoDescriptors);
   }
 
   /**
@@ -492,6 +509,7 @@ export class KanbanOperationCoordinator {
     if (result.kind === 'accepted') {
       operation.state = 'accepted';
       operation.publication = result.publication;
+      operation.undo = result.undo;
       this.#snapshots.publish(
         Object.freeze({
           operationId: operation.id.operationId,
@@ -513,19 +531,24 @@ export class KanbanOperationCoordinator {
     state: Extract<KanbanOperationState, 'committed' | 'rejected' | 'cancelled' | 'superseded'>,
     code: string | undefined,
   ): void {
+    const terminal = Object.freeze({
+      operationId: operation.id.operationId,
+      kind: operation.request.kind,
+      state,
+      affected: operation.subjects.affected,
+      ...(code === undefined ? {} : { code }),
+    });
     this.#operations.delete(operation.id.operationId);
     operation.controller.abort();
     operation.subjects.release();
     operation.id.retain();
-    this.#snapshots.publish(
-      Object.freeze({
-        operationId: operation.id.operationId,
-        kind: operation.request.kind,
-        state,
-        affected: operation.subjects.affected,
-        ...(code === undefined ? {} : { code }),
-      }),
-    );
+    if (state === 'committed' && operation.undo !== undefined) {
+      this.#undo.retain(
+        operation.id.operationId,
+        Object.freeze({ prior: snapshotKanbanOperationSnapshot(terminal), undo: operation.undo }),
+      );
+    }
+    this.#snapshots.publish(terminal);
   }
 
   /** Reconcile one exact operation-correlated authoritative publication. */
@@ -556,6 +579,61 @@ export class KanbanOperationCoordinator {
     return true;
   }
 
+  /**
+   * Turn one committed descriptor into a completely fresh application-authorized operation.
+   *
+   * Current equality revisions and eligibility are supplied by the board integration because the
+   * coordinator deliberately owns no application records or source cursor. The inverse output is
+   * untrusted and re-enters `commitProposal`, including exact validation and confirmation.
+   */
+  async undo(
+    operationId: KanbanOperationId,
+    expected: KanbanRequestExpectedRevisions = {},
+    eligibility: KanbanEligibility = Object.freeze({ kind: 'allowed' }),
+  ): Promise<KanbanRequestResult> {
+    const identity = createKanbanOperationId(operationId);
+    const unavailable = (code: string): KanbanRequestResult =>
+      Object.freeze({ kind: 'rejected', operationId: identity, code });
+    if (this.#disposed) return unavailable('undo-unavailable');
+    const committed = this.#undo.get(identity);
+    if (committed === undefined) return unavailable('undo-unavailable');
+    const capturedExpected = snapshotKanbanRequestExpectedRevisions(expected);
+    const capturedEligibility = snapshotKanbanEligibility(eligibility);
+    const builder = committed.undo.kind === 'inverse-builder' ? committed.undo.build : this.#resolveUndo;
+    if (builder === undefined) return unavailable('undo-unavailable');
+    const controller = new AbortController();
+    const generation = this.#generation.capture();
+    this.#inverseControllers.add(controller);
+    try {
+      const context = createKanbanInverseRequestContext(
+        committed.prior,
+        committed.undo,
+        capturedExpected,
+        currentCapabilities(this.#capabilities),
+        controller.signal,
+      );
+      const settlement = await settleKanbanInverseRequest(builder, context);
+      if (
+        this.#disposed ||
+        controller.signal.aborted ||
+        !this.#generation.isCurrent(generation) ||
+        this.#undo.get(identity) !== committed
+      ) {
+        return Object.freeze({ kind: 'cancelled', operationId: identity, code: 'operation-cancelled' });
+      }
+      if (settlement.kind === 'invalid') return unavailable('undo-invalid');
+      try {
+        const proposal = snapshotKanbanRequestProposal(settlement.proposal);
+        return await this.commitProposal(proposal, capturedExpected, capturedEligibility).completion;
+      } catch {
+        return unavailable('undo-invalid');
+      }
+    } finally {
+      controller.abort();
+      this.#inverseControllers.delete(controller);
+    }
+  }
+
   /** Check coordinator, operation, subject, and cancellation generations before continuation. */
   #isCurrent(operation: ActiveKanbanOperation): boolean {
     return (
@@ -582,6 +660,8 @@ export class KanbanOperationCoordinator {
     if (this.#disposed) return;
     this.#disposed = true;
     this.#generation.dispose();
+    for (const controller of this.#inverseControllers) controller.abort();
+    this.#inverseControllers.clear();
     for (const operation of [...this.#operations.values()]) {
       this.#operations.delete(operation.id.operationId);
       operation.controller.abort();
@@ -598,6 +678,7 @@ export class KanbanOperationCoordinator {
       );
     }
     this.#snapshots.dispose();
+    this.#undo.dispose();
     this.#subjects.dispose();
     this.#ids.dispose();
   }

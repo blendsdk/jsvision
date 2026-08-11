@@ -2453,6 +2453,14 @@ interface KanbanInverseRequestContext {
 }
 ```
 
+## KanbanInverseRequestSettlement
+
+Safe result of settling an application-owned inverse proposal builder.
+
+```ts
+type KanbanInverseRequestSettlement = { readonly kind: 'proposal'; readonly proposal: unknown } | { readonly kind: 'invalid' }
+```
+
 ## KanbanKnownLength
 
 Logical length knowledge exposed without fabricating completeness.
@@ -5777,6 +5785,14 @@ Creates the complete immutable Kanban semantic palette for a Core theme.
 createKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOverrides): KanbanTheme
 ```
 
+## createKanbanUndoToken
+
+Create a bounded opaque application token for a future fresh undo operation.
+
+```ts
+createKanbanUndoToken(value: string): KanbanUndoToken
+```
+
 ## createKanbanVerticalHeightProjection
 
 Samples retained rows and the logical end boundary from one sparse index.
@@ -6039,6 +6055,14 @@ Registers or clears one owning board listener without widening consumer construc
 
 ```ts
 setKanbanViewportInteractionEvidenceListener<TCard>(viewport: KanbanViewport<TCard>, listener: (() => void) | undefined): void
+```
+
+## settleKanbanInverseRequest
+
+Invoke one inverse builder through an exception-contained direct/native-Promise boundary.
+
+```ts
+settleKanbanInverseRequest(builder: KanbanInverseRequestBuilder, context: KanbanInverseRequestContext): Promise<KanbanInverseRequestSettlement>
 ```
 
 ## snapshotKanbanBoardCounts
@@ -6343,6 +6367,14 @@ Validates one ordered swimlane metadata record.
 
 ```ts
 snapshotKanbanSwimlaneMeta(value: unknown): KanbanSwimlaneMeta
+```
+
+## snapshotKanbanUndoDescriptor
+
+Validate and freeze one exact mutually exclusive undo descriptor.
+
+```ts
+snapshotKanbanUndoDescriptor(value: unknown): KanbanUndoDescriptor
 ```
 
 ## snapshotKanbanVerticalHeightProjection

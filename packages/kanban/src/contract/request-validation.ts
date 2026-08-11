@@ -28,6 +28,7 @@ import type { KanbanRevision } from './revision.js';
 import { snapshotKanbanSemanticValue } from './semantic-query.js';
 import { snapshotKanbanCellAddress } from '../source/address.js';
 import { snapshotKanbanCardMoveProposal, snapshotKanbanMovePosition } from '../operation/placement.js';
+import { snapshotKanbanUndoDescriptor } from '../operation/undo.js';
 
 /** Maximum entity subjects retained by one request or publication expectation. */
 const MAX_SUBJECTS = KANBAN_LIMITS.selectedKeys.safe;
@@ -580,13 +581,18 @@ export function snapshotKanbanRequestResult(value: unknown, operationId: KanbanO
   switch (kind) {
     case 'accepted': {
       validateKanbanDataKeys(properties, ACCEPTED_RESULT_KEYS);
-      if (properties.undo !== undefined) throw new KanbanInvalidSemanticValueError();
       const publication =
         properties.publication === undefined ? undefined : snapshotKanbanPublicationExpectation(properties.publication);
+      const undo = properties.undo === undefined ? undefined : snapshotKanbanUndoDescriptor(properties.undo);
       if (publication !== undefined && publication.operationId !== operationId) {
         return createKanbanRejectedResult(operationId, 'operation-mismatch');
       }
-      return Object.freeze({ kind, operationId, ...(publication === undefined ? {} : { publication }) });
+      return Object.freeze({
+        kind,
+        operationId,
+        ...(publication === undefined ? {} : { publication }),
+        ...(undo === undefined ? {} : { undo }),
+      });
     }
     case 'rejected': {
       validateKanbanDataKeys(properties, REJECTED_RESULT_KEYS);
