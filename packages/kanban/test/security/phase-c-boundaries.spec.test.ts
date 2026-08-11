@@ -9,6 +9,7 @@ import { runInNewContext } from 'node:vm';
 
 import {
   KANBAN_LIMITS,
+  createKanbanOperationId,
   createKanbanOperationIdRegistry,
   createKanbanRequestEnvelope,
   createPlacementToken,
@@ -17,6 +18,8 @@ import {
   evaluateKanbanMovePositionCurrency,
   snapshotKanbanRequestProposal,
 } from '../../src/index.js';
+import { KanbanBoardAuthority } from '../../src/board/board-authority.js';
+import type { KanbanOperationId, KanbanRequest } from '../../src/index.js';
 
 beforeEach(() => {
   expect(snapshotKanbanRequestProposal).toBeTypeOf('function');
@@ -386,5 +389,163 @@ describe('semantic failure ceilings', () => {
       code: 'dispatcher-failed',
     });
     expect(JSON.stringify(result)).not.toContain('private');
+  });
+});
+
+/** Final destructive request used to exercise coordinator-owned confirmation. */
+function destructiveRequest(operationId: KanbanOperationId): KanbanRequest {
+  return createKanbanRequestEnvelope(
+    { kind: 'card-delete', cardKey: 4 },
+    {
+      operationId,
+      expected: { entities: [{ kind: 'card', cardKey: 4, revision: 'card-4-r1' }] },
+      signal: new AbortController().signal,
+    },
+  );
+}
+
+describe('hostile operation callbacks and observations', () => {
+  it('should let reentrant cancellation win over a synchronous dispatcher settlement', async () => {
+    const operationId = createKanbanOperationId('operation-reentrant-dispatch-1');
+    const holder: { authority?: KanbanBoardAuthority } = {};
+    const dispatcher = vi.fn(() => {
+      holder.authority?.cancel(operationId);
+      return { kind: 'accepted', operationId } as const;
+    });
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    holder.authority = authority;
+
+    await expect(authority.request(destructiveRequest(operationId))).resolves.toEqual({
+      kind: 'cancelled',
+      operationId,
+      code: 'operation-cancelled',
+    });
+    expect(dispatcher).toHaveBeenCalledOnce();
+  });
+
+  it('should reject a thenable confirmer without invoking it or dispatching', async () => {
+    const operationId = createKanbanOperationId('operation-hostile-confirmer-1');
+    const then = vi.fn(() => {
+      throw new Error('private confirmer payload');
+    });
+    const dispatcher = vi.fn(() => ({ kind: 'accepted', operationId }) as const);
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), {
+      confirm: () => ({ then }),
+    });
+
+    await expect(authority.request(destructiveRequest(operationId))).resolves.toMatchObject({
+      kind: 'cancelled',
+      operationId,
+    });
+    expect(then).not.toHaveBeenCalled();
+    expect(dispatcher).not.toHaveBeenCalled();
+  });
+
+  it('should make late affirmative confirmation inert after disposal', async () => {
+    const operationId = createKanbanOperationId('operation-late-confirmer-1');
+    let approve: ((approved: boolean) => void) | undefined;
+    const confirmation = new Promise<boolean>((resolve) => {
+      approve = resolve;
+    });
+    const dispatcher = vi.fn(() => ({ kind: 'accepted', operationId }) as const);
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), { confirm: () => confirmation });
+
+    const completion = authority.request(destructiveRequest(operationId));
+    authority.dispose();
+    approve?.(true);
+    await completion;
+
+    expect(dispatcher).not.toHaveBeenCalled();
+  });
+
+  it('should reject a thenable inverse result without invoking it or dispatching a fresh request', async () => {
+    const operationId = createKanbanOperationId('operation-hostile-inverse-1');
+    const expectation = {
+      operationId,
+      subjects: [{ kind: 'card', cardKey: 4, baselineRevision: 'card-4-r1', expectedRevision: 'card-4-r2' }],
+    } as const;
+    const then = vi.fn(() => {
+      throw new Error('private inverse payload');
+    });
+    const builder = vi.fn(() => ({ then }));
+    const dispatcher = vi.fn(
+      () =>
+        ({
+          kind: 'accepted',
+          operationId,
+          publication: expectation,
+          undo: { kind: 'inverse-builder', build: builder },
+        }) as const,
+    );
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+
+    await authority.request(destructiveRequest(operationId));
+    authority.reconcilePublication({ kind: 'matching', ...expectation });
+    await expect(authority.undo(operationId)).resolves.toMatchObject({ kind: 'rejected' });
+
+    expect(builder).toHaveBeenCalledOnce();
+    expect(then).not.toHaveBeenCalled();
+    expect(dispatcher).toHaveBeenCalledOnce();
+  });
+
+  it('should make a late inverse proposal inert after reentrant disposal', async () => {
+    const operationId = createKanbanOperationId('operation-late-inverse-1');
+    const expectation = {
+      operationId,
+      subjects: [{ kind: 'card', cardKey: 4, baselineRevision: 'card-4-r1', expectedRevision: 'card-4-r2' }],
+    } as const;
+    let publishInverse: ((proposal: unknown) => void) | undefined;
+    const inverse = new Promise<unknown>((resolve) => {
+      publishInverse = resolve;
+    });
+    const dispatcher = vi.fn(
+      () =>
+        ({
+          kind: 'accepted',
+          operationId,
+          publication: expectation,
+          undo: { kind: 'inverse-builder', build: () => inverse },
+        }) as const,
+    );
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+
+    await authority.request(destructiveRequest(operationId));
+    authority.reconcilePublication({ kind: 'matching', ...expectation });
+    const completion = authority.undo(operationId);
+    authority.dispose();
+    publishInverse?.({ kind: 'card-update', cardKey: 4, patch: { title: 'must stay inert' } });
+    await completion;
+
+    expect(dispatcher).toHaveBeenCalledOnce();
+  });
+
+  it('should publish lifecycle observations without payloads, tokens, labels, or raw errors', async () => {
+    const operationId = createKanbanOperationId('operation-observed-1');
+    const observations: unknown[] = [];
+    const authority = new KanbanBoardAuthority(
+      () => {
+        throw new Error('private raw dispatcher error');
+      },
+      () => ({}),
+      { observe: (observation: unknown) => observations.push(observation) },
+    );
+    const requestWithPrivatePayload = createKanbanRequestEnvelope(
+      {
+        kind: 'extension',
+        extensionId: 'example.private',
+        payload: { body: 'private-card-body', token: 'private-placement-token', label: 'private-label' },
+      },
+      { operationId, expected: {}, signal: new AbortController().signal },
+    );
+
+    await authority.request(requestWithPrivatePayload);
+
+    expect(observations.length).toBeGreaterThan(0);
+    expect(observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ operationId, kind: 'extension', state: 'rejected', code: 'dispatcher-failed' }),
+      ]),
+    );
+    expect(JSON.stringify(observations)).not.toMatch(/private-card-body|private-placement-token|private-label|raw/u);
   });
 });
