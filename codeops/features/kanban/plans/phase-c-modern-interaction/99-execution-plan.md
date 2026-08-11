@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 17:02 CEST
-> **Progress**: 51/124 tasks (41%)
+> **Last Updated**: 2026-08-11 22:57 CEST
+> **Progress**: 52/124 tasks (42%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -273,7 +273,7 @@ coordinator.
 - [x] 4.2.2 Extend pending-press routing with coordinates/modifiers, threshold preservation, and click-compatible below-threshold movement — `packages/kanban/src/interaction/pointer-router.ts` ✅ (completed: 2026-08-11 21:30)
 - [x] 4.2.3 Implement capture-lease-backed card drag state/cancellation controller — `packages/kanban/src/interaction/drag-controller.ts` ✅ (completed: 2026-08-11 21:34)
 - [x] 4.2.4 Implement deterministic single/selected-block resolution and bounded ghost identity metadata — `packages/kanban/src/interaction/drag-selection.ts` ✅ (completed: 2026-08-11 21:37)
-- [ ] 4.2.5 Implement pure semantic drop-map geometry and target-priority projection separate from action hits — `packages/kanban/src/interaction/drop-map.ts`
+- [x] 4.2.5 Implement pure semantic drop-map geometry and target-priority projection separate from action hits — `packages/kanban/src/interaction/drop-map.ts` ✅ (completed: 2026-08-11 22:57)
 - [ ] 4.2.6 Implement one-cell semantic hysteresis across reflow/scroll geometry generations — `packages/kanban/src/interaction/drop-hysteresis.ts`
 - [ ] 4.2.7 Implement fake-clock-friendly four-edge autoscroll with two speeds, corner steps, clamps, and stop rules — `packages/kanban/src/interaction/drag-autoscroll.ts`
 - [ ] 4.2.8 Integrate bounded unknown-edge prefetch and collapsed-swimlane hover expansion ownership — `packages/kanban/src/interaction/drag-prefetch.ts`, `packages/kanban/src/structure/collapsed-hover.ts`
