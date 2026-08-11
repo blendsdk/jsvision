@@ -472,12 +472,26 @@ export interface KanbanPublicationExpectation {
   readonly subjects: readonly KanbanPublicationSubject[];
 }
 
-/** Authoritative source publication classification used to clear pending metadata. */
-export interface KanbanPublicationNotice {
-  readonly kind: 'matching' | 'contradictory';
+/** Exact operation-correlated confirmation that carries no inferred application semantics. */
+export interface KanbanConfirmedPublicationNotice {
+  /** Notice discriminator. */
+  readonly kind: 'confirmed';
+  /** Operation explicitly confirmed by the authoritative application publication. */
   readonly operationId: KanbanOperationId;
+}
+
+/** Authoritative subject publication that matches, contradicts, or deletes operation state. */
+export interface KanbanSubjectPublicationNotice {
+  /** Notice discriminator. */
+  readonly kind: 'matching' | 'contradictory' | 'deleted';
+  /** Operation explicitly correlated by the application. */
+  readonly operationId: KanbanOperationId;
+  /** Bounded identity/revision evidence carried by the authoritative publication. */
   readonly subjects: readonly KanbanPublicationSubject[];
 }
+
+/** Exact authoritative notice accepted by operation publication reconciliation. */
+export type KanbanPublicationNotice = KanbanConfirmedPublicationNotice | KanbanSubjectPublicationNotice;
 
 /** Pure reconciliation result that contains no application records. */
 export interface KanbanPublicationReconciliation {

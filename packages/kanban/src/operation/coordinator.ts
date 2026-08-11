@@ -6,6 +6,8 @@ import type { KanbanOperationId } from '../contract/identity.js';
 import { KanbanInvalidLimitError, KANBAN_LIMITS, validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type {
+  KanbanPublicationExpectation,
+  KanbanPublicationNotice,
   KanbanRequest,
   KanbanRequestDispatcher,
   KanbanRequestExpectedRevisions,
@@ -23,6 +25,7 @@ import { classifyKanbanRequestConfirmation, snapshotKanbanEligibility } from './
 import type { KanbanEligibility } from './eligibility.js';
 import { createKanbanOperationIdRegistry } from './operation-id.js';
 import type { KanbanOperationIdFactory, KanbanOperationIdLease, KanbanOperationIdRegistry } from './operation-id.js';
+import { settleKanbanPublication } from './publication.js';
 import { createKanbanOperationSubjectRegistry, deriveKanbanOperationSubjects } from './subjects.js';
 import type { KanbanOperationSubjectLease, KanbanOperationSubjectRegistry } from './subjects.js';
 import {
@@ -33,6 +36,7 @@ import {
 import type {
   KanbanConfirmer,
   KanbanOperationSnapshot,
+  KanbanOperationState,
   KanbanOperationSubscriber,
   KanbanPendingProjection,
 } from './types.js';
@@ -78,6 +82,8 @@ interface ActiveKanbanOperation {
   readonly controller: AbortController;
   readonly coordinatorGeneration: number;
   readonly projection: KanbanPendingProjection;
+  state: 'proposed' | 'pending' | 'accepted';
+  publication?: KanbanPublicationExpectation;
 }
 
 /** Validate a caller-supplied finite capacity before allocating its registry. */
@@ -366,6 +372,7 @@ export class KanbanOperationCoordinator {
         controller,
         coordinatorGeneration,
         projection,
+        state: 'proposed',
       };
       this.#operations.set(id.operationId, operation);
       this.#snapshots.publish(
@@ -441,6 +448,7 @@ export class KanbanOperationCoordinator {
         code: 'operation-cancelled',
       });
     }
+    operation.state = 'pending';
     this.#snapshots.publish(
       Object.freeze({
         operationId: operation.id.operationId,
@@ -462,7 +470,7 @@ export class KanbanOperationCoordinator {
     result: Extract<KanbanRequestResult, { readonly kind: 'cancelled' }>,
   ): KanbanRequestResult {
     if (!this.#isCurrent(operation)) return Object.freeze(result);
-    this.#finishTerminal(operation, result.kind, result.code);
+    this.#finishLifecycle(operation, result.kind, result.code);
     return Object.freeze(result);
   }
 
@@ -476,6 +484,8 @@ export class KanbanOperationCoordinator {
       });
     }
     if (result.kind === 'accepted') {
+      operation.state = 'accepted';
+      operation.publication = result.publication;
       this.#snapshots.publish(
         Object.freeze({
           operationId: operation.id.operationId,
@@ -487,14 +497,14 @@ export class KanbanOperationCoordinator {
       );
       return result;
     }
-    this.#finishTerminal(operation, result.kind, result.code);
+    this.#finishLifecycle(operation, result.kind, result.code);
     return result;
   }
 
   /** Release all live resources before notifying subscribers of one terminal transition. */
-  #finishTerminal(
+  #finishLifecycle(
     operation: ActiveKanbanOperation,
-    state: Extract<KanbanRequestResult, { readonly kind: 'rejected' | 'cancelled' | 'superseded' }>['kind'],
+    state: Extract<KanbanOperationState, 'committed' | 'rejected' | 'cancelled' | 'superseded'>,
     code: string | undefined,
   ): void {
     this.#operations.delete(operation.id.operationId);
@@ -510,6 +520,24 @@ export class KanbanOperationCoordinator {
         ...(code === undefined ? {} : { code }),
       }),
     );
+  }
+
+  /** Reconcile one exact operation-correlated authoritative publication. */
+  reconcilePublication(value: KanbanPublicationNotice): void {
+    const reconciliation = settleKanbanPublication(undefined, value);
+    if (this.#disposed) return;
+    const operation = this.#operations.get(reconciliation.notice.operationId);
+    if (operation === undefined || operation.state !== 'accepted' || !this.#isCurrent(operation)) return;
+    const current = settleKanbanPublication(operation.publication, reconciliation.notice);
+    if (current.settlement === 'committed') {
+      this.#finishLifecycle(operation, 'committed', undefined);
+    } else if (current.settlement === 'superseded') {
+      this.#finishLifecycle(
+        operation,
+        'superseded',
+        current.notice.kind === 'deleted' ? 'publication-deleted' : 'publication-contradictory',
+      );
+    }
   }
 
   /** Check coordinator, operation, subject, and cancellation generations before continuation. */

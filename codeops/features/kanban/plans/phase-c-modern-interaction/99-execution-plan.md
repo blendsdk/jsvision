@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 15:54 CEST
-> **Progress**: 42/124 tasks (34%)
+> **Last Updated**: 2026-08-11 16:18 CEST
+> **Progress**: 43/124 tasks (35%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -207,7 +207,7 @@ late-work behavior before introducing the coordinator.
 - [x] 3.2.3 Implement synchronous proposal admission and pending projection publication before asynchronous dispatch — `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 15:39)
 - [x] 3.2.4 Define/export exact frozen confirmer/inverse contexts, callback/result/undo-descriptor types, accepted-result keys, and implement coordinator-owned pre-dispatch confirmation with native-Promise handling, reservation, reentrancy guards, and post-settlement revalidation — `packages/kanban/src/contract/request.ts`, `packages/kanban/src/operation/types.ts`, `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/confirmation.ts` ✅ (completed: 2026-08-11 15:50)
 - [x] 3.2.5 Integrate exact dispatcher settlement and pending→accepted/rejected/cancelled/superseded transitions — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/contract/authority.ts` ✅ (completed: 2026-08-11 15:54)
-- [ ] 3.2.6 Implement expectation-bound and exact operation-correlated publication reconciliation, contradiction/deletion handling, and affected-lock release without a universal inferred matcher — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/publication.ts`
+- [x] 3.2.6 Implement expectation-bound and exact operation-correlated publication reconciliation, contradiction/deletion handling, and affected-lock release without a universal inferred matcher — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/publication.ts` ✅ (completed: 2026-08-11 16:18)
 - [ ] 3.2.7 Implement operation cancellation, disposal, and late-continuation generation checks — `packages/kanban/src/operation/coordinator.ts`
 - [ ] 3.2.8 Add exact token/inverse descriptor validation, commit-only bounded retention, FIFO eviction/disposal, and proposal-valued native-Promise settlement whose output re-enters complete fresh-proposal validation/confirmation — `packages/kanban/src/operation/undo.ts`, `packages/kanban/src/operation/coordinator.ts`
 - [ ] 3.2.9 Replace the metadata-only board authority with standard-proposal and validated legacy-extension coordinator adapters while preserving `board.request`/publication compatibility — `packages/kanban/src/board/board-authority.ts`, `packages/kanban/src/board/kanban-board.ts`

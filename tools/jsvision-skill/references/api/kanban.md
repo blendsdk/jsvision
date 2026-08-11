@@ -1471,6 +1471,17 @@ interface KanbanConfirmationContext {
 }
 ```
 
+## KanbanConfirmedPublicationNotice
+
+Exact operation-correlated confirmation that carries no inferred application semantics.
+
+```ts
+interface KanbanConfirmedPublicationNotice {
+  kind: 'confirmed';   // Notice discriminator.
+  operationId: KanbanOperationId;   // Operation explicitly confirmed by the authoritative application publication.
+}
+```
+
 ## KanbanConfirmer
 
 Application confirmation callback with an exact synchronous-or-native-Promise result.
@@ -3145,14 +3156,10 @@ interface KanbanPublicationExpectation {
 
 ## KanbanPublicationNotice
 
-Authoritative source publication classification used to clear pending metadata.
+Exact authoritative notice accepted by operation publication reconciliation.
 
 ```ts
-interface KanbanPublicationNotice {
-  kind: 'matching' | 'contradictory';
-  operationId: KanbanOperationId;
-  subjects: readonly KanbanPublicationSubject[];
-}
+type KanbanPublicationNotice = KanbanConfirmedPublicationNotice | KanbanSubjectPublicationNotice
 ```
 
 ## KanbanPublicationReconciliation
@@ -4301,6 +4308,18 @@ Allowlisted semantic role attached to one column or swimlane surface.
 ```ts
 interface KanbanStructureStyle {
   role: KanbanThemeRole;   // Theme role resolved through the complete Kanban fallback chain.
+}
+```
+
+## KanbanSubjectPublicationNotice
+
+Authoritative subject publication that matches, contradicts, or deletes operation state.
+
+```ts
+interface KanbanSubjectPublicationNotice {
+  kind: 'matching' | 'contradictory' | 'deleted';   // Notice discriminator.
+  operationId: KanbanOperationId;   // Operation explicitly correlated by the application.
+  subjects: readonly KanbanPublicationSubject[];   // Bounded identity/revision evidence carried by the authoritative publication.
 }
 ```
 
