@@ -57,6 +57,7 @@ function mountedBoard(
       { columnId: 'ready', label: 'Ready', revision: 'ready-r1' },
       { columnId: 'doing', label: 'Doing', revision: 'doing-r1' },
       { columnId: 'done', label: 'Done', revision: 'done-r1' },
+      { columnId: 'blocked', label: 'Blocked', revision: 'blocked-r1' },
     ],
     keyOf: (card) => card.id,
     columnOf: (card) => card.columnId,
@@ -258,7 +259,7 @@ describe('mounted card-drag authority integration', () => {
     records.set([
       records()[0]!,
       records()[1]!,
-      { id: 3, columnId: 'done', title: 'Unrelated changed', revision: 'card-3-r2' },
+      { id: 3, columnId: 'blocked', title: 'Unrelated changed', revision: 'card-3-r2' },
     ]);
     await settle();
     application.loop.renderRoot.flush();
@@ -266,6 +267,9 @@ describe('mounted card-drag authority integration', () => {
     await settle();
 
     expect(dispatcher).toHaveBeenCalledOnce();
+    expect(dispatcher.mock.calls[0]?.[0]).toMatchObject({
+      moved: [{ sourceRevision: 2, sourcePlacement: { cursorRevision: 2 } }],
+    });
   });
 
   it('cancels an active drag when its source card entity revision changes', async () => {

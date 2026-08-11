@@ -423,6 +423,7 @@ export class KanbanViewportDragController<TCard> {
     const moved = this.#moved;
     if (this.#generation === undefined || current === undefined || moved === undefined) return false;
     try {
+      const refreshed: KanbanMovedCardSnapshot[] = [];
       for (const entry of moved) {
         const card = current.scene.cards.find((candidate) => sameCard(candidate.cardKey, entry.cardKey));
         if (
@@ -436,6 +437,15 @@ export class KanbanViewportDragController<TCard> {
         if (cell === undefined) return true;
         const placement = movePosition(cell.cursor.placementAt(card.logicalIndex));
         if (placement === undefined || !samePosition(placement, entry.sourcePlacement)) return true;
+        refreshed.push(
+          Object.freeze({
+            cardKey: card.cardKey,
+            source: card.address,
+            sourcePlacement: placement,
+            sourceRevision: cell.cursor.revision(),
+            entityRevision: card.entityRevision,
+          }),
+        );
       }
       if (this.#target !== undefined && this.#target.kind !== 'unknown-edge') {
         const target = this.#target;
@@ -450,6 +460,17 @@ export class KanbanViewportDragController<TCard> {
           return true;
         }
       }
+      const next = Object.freeze(refreshed);
+      if (
+        !this.#drag.refreshSource({
+          generation: this.#generation,
+          dragged: next,
+          sceneRevision: current.sceneRevision,
+        })
+      ) {
+        return true;
+      }
+      this.#moved = next;
       return false;
     } catch {
       return true;

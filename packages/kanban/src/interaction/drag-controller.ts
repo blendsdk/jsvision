@@ -80,6 +80,16 @@ export interface KanbanCardDragReconcile {
   readonly changedCardKeys?: readonly CardKey[];
 }
 
+/** Fresh equivalent source snapshots adopted after an unrelated authoritative publication. */
+export interface KanbanCardDragSourceRefresh {
+  /** Current gesture identity. */
+  readonly generation: number;
+  /** Same ordered card identities with refreshed cursor and entity revisions. */
+  readonly dragged: readonly KanbanMovedCardSnapshot[];
+  /** Scene revision owning the refreshed snapshots. */
+  readonly sceneRevision: KanbanRevision;
+}
+
 /** Application-independent seams used by one render-neutral card drag. */
 export interface KanbanCardDragControllerOptions {
   /** Atomically hand a fresh move proposal and current eligibility to board coordination. */
@@ -98,7 +108,7 @@ export type KanbanCardDragControllerSnapshot =
 interface ActiveCardDrag {
   readonly generation: number;
   readonly capture: PointerCaptureLease;
-  readonly dragged: readonly KanbanMovedCardSnapshot[];
+  dragged: readonly KanbanMovedCardSnapshot[];
   readonly viewRevision?: KanbanRevision;
   sceneRevision: KanbanRevision;
   geometryGeneration: number;
@@ -342,6 +352,31 @@ export class KanbanCardDragController {
     const relevant = changed.some((cardKey) => active.dragged.some((card) => sameCard(card.cardKey, cardKey)));
     if (!relevant) return false;
     return this.cancel('source-change');
+  }
+
+  /** Replaces stale cursor revisions only when ordered card and source ownership stay identical. */
+  refreshSource(value: KanbanCardDragSourceRefresh): boolean {
+    const active = this.#active;
+    if (active === undefined || value.generation !== active.generation) return false;
+    try {
+      const refreshed = draggedCards(value.dragged);
+      if (
+        refreshed.length !== active.dragged.length ||
+        refreshed.some(
+          (entry, index) =>
+            !sameCard(entry.cardKey, active.dragged[index]!.cardKey) ||
+            entry.source.columnId !== active.dragged[index]!.source.columnId ||
+            entry.source.swimlaneId !== active.dragged[index]!.source.swimlaneId,
+        )
+      ) {
+        return false;
+      }
+      active.dragged = refreshed;
+      active.sceneRevision = snapshotKanbanRevision(value.sceneRevision);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Return immutable renderer-neutral evidence for inspection and later projection. */
