@@ -11,6 +11,7 @@ import type { PointerCaptureLease, PointerCaptureLossReason, PointerCaptureLostH
 import type { KanbanActionTarget, KanbanSelectionEntry, KanbanSelectionSnapshot } from '../src/index.js';
 import { createKanbanCollapsedHoverController } from '../src/index.js';
 import { KanbanPointerRouter } from '../src/testing.js';
+import type { KanbanPointerDragStart } from '../src/testing.js';
 import { projectKanbanCardDropMap } from '../src/interaction/drop-map.js';
 import { selectKanbanDropTargetWithHysteresis } from '../src/interaction/drop-hysteresis.js';
 import { createKanbanDragPrefetchController } from '../src/interaction/drag-prefetch.js';
@@ -87,7 +88,7 @@ function gestureSink(selected: KanbanSelectionSnapshot) {
     openContext: () => true,
     snapshotCard: (target: KanbanActionTarget) =>
       target.cardKey === undefined ? undefined : selectionEntry(Number(target.cardKey)),
-    beginCardDrag: vi.fn(() => true),
+    beginCardDrag: vi.fn((_start: KanbanPointerDragStart) => true),
     cancelCardDrag: vi.fn(),
   };
 }

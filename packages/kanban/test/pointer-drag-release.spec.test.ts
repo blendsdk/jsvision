@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { PointerCaptureLease } from '@jsvision/ui';
 
+import type { KanbanCardMoveProposal } from '../src/contract/request.js';
 import { createKanbanCardDragController } from '../src/interaction/drag-controller.js';
+import type { KanbanEligibility } from '../src/operation/eligibility.js';
 
 /** Active capture lease whose release is visible to the specification. */
 function captureLease(generation: number) {
@@ -52,7 +54,7 @@ function allowedTarget() {
 
 /** Begin one current drag and install the default allowed target. */
 function activeController(cardKeys: readonly number[] = [1]) {
-  const commitProposal = vi.fn(() => true);
+  const commitProposal = vi.fn((_proposal: KanbanCardMoveProposal, _eligibility: KanbanEligibility) => true);
   const invalidate = vi.fn();
   const capture = captureLease(41);
   const controller = createKanbanCardDragController({ commitProposal, invalidate });

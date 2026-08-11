@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 23:20 CEST
-> **Progress**: 57/124 tasks (46%)
+> **Last Updated**: 2026-08-11 23:22 CEST
+> **Progress**: 58/124 tasks (47%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -279,7 +279,8 @@ coordinator.
 - [x] 4.2.8 Integrate bounded unknown-edge prefetch and collapsed-swimlane hover expansion ownership — `packages/kanban/src/interaction/drag-prefetch.ts`, `packages/kanban/src/structure/collapsed-hover.ts` ✅ (completed: 2026-08-11 23:07)
 - [x] 4.2.9 Implement atomic valid-release `commitProposal` handoff and no-request invalid cancellation — `packages/kanban/src/interaction/drag-controller.ts`, `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 23:09)
 - [x] 4.2.10 Wire viewport event normalization, post-scroll geometry recomputation, Escape/resize/source/dispose cancellation, and overlay invalidation — `packages/kanban/src/board/viewport-input.ts`, `packages/kanban/src/board/kanban-viewport.ts` ✅ (completed: 2026-08-11 23:20)
-- [ ] 4.2.11 Run focused card-drag specifications and make them green
+- [x] 4.2.11 Run focused card-drag specifications and make them green ✅ (completed: 2026-08-11 23:22)
+  - Gate evidence: all 3 focused pointer-drag files / 34 tests passed; Kanban package typecheck passed.
 
 ### Step 4.3: Implementation tests and hardening
 
