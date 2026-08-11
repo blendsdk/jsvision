@@ -40,6 +40,10 @@ export interface KanbanCardDragProposalUpdate {
   readonly generation: number;
   /** Current target, or absence when the pointer is outside a target. */
   readonly target?: KanbanCardDropTarget;
+  /** Current scene revision after any drag-owned scrolling and reprojection. */
+  readonly sceneRevision?: KanbanRevision;
+  /** Current geometry generation after any drag-owned scrolling and reprojection. */
+  readonly geometryGeneration?: number;
 }
 
 /** Current release evidence captured before atomic coordinator handoff. */
@@ -81,8 +85,8 @@ interface ActiveCardDrag {
   readonly generation: number;
   readonly capture: PointerCaptureLease;
   readonly dragged: readonly KanbanMovedCardSnapshot[];
-  readonly sceneRevision: KanbanRevision;
-  readonly geometryGeneration: number;
+  sceneRevision: KanbanRevision;
+  geometryGeneration: number;
   overlay: KanbanDragOverlayEvidence;
   target?: KanbanCardDropTarget;
 }
@@ -233,8 +237,13 @@ export class KanbanCardDragController {
     const active = this.#active;
     if (active === undefined || update.generation !== active.generation) return false;
     active.target = update.target;
+    if (update.sceneRevision !== undefined) active.sceneRevision = snapshotKanbanRevision(update.sceneRevision);
+    if (update.geometryGeneration !== undefined) {
+      active.geometryGeneration = generation(update.geometryGeneration);
+    }
     active.overlay = Object.freeze({
       ...active.overlay,
+      geometryGeneration: active.geometryGeneration,
       ...(update.target === undefined
         ? {}
         : {

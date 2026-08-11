@@ -1208,6 +1208,7 @@ Construction options for one independent hover lease controller.
 ```ts
 interface KanbanCollapsedHoverControllerOptions {
   scheduler?: KanbanCollapsedHoverScheduler;   // Timer boundary; omission uses the current JavaScript host timers.
+  onChanged?: () => void;   // Optional repaint/reprojection request after observable lease state changes.
 }
 ```
 

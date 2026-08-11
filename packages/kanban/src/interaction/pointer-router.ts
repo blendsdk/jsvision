@@ -92,9 +92,21 @@ export interface KanbanPointerRouterSink {
   readonly snapshotCard?: (target: KanbanActionTarget) => KanbanSelectionEntry | undefined;
   /** Adopt one captured threshold-crossing handoff. */
   readonly beginCardDrag?: (start: KanbanPointerDragStart) => boolean;
+  /** Recompute the current semantic destination for one captured move report. */
+  readonly updateCardDrag?: (
+    generation: number,
+    point: Readonly<Point>,
+    target: KanbanActionTarget | undefined,
+  ) => boolean;
+  /** Release one captured drag through its current semantic destination. */
+  readonly releaseCardDrag?: (generation: number) => boolean;
   /** Cancel a previously adopted generation before stale input can reach it. */
-  readonly cancelCardDrag?: (generation: number, reason: PointerCaptureLossReason | 'explicit' | 'disposed') => void;
+  readonly cancelCardDrag?: (generation: number, reason: KanbanPointerDragCancellationReason) => void;
 }
+
+/** Closed cancellation causes the pointer router can identify before board reconciliation. */
+export type KanbanPointerDragCancellationReason =
+  PointerCaptureLossReason | 'explicit' | 'disposed' | 'escape' | 'resize' | 'source-change' | 'policy-change';
 
 /** Router-owned capture retained only to invalidate loss and queued reports deterministically. */
 interface ActiveKanbanPointerDrag {
@@ -204,9 +216,9 @@ export class KanbanPointerRouter {
   }
 
   /** Cancels the current pending press idempotently. */
-  cancel(): void {
+  cancel(reason: Exclude<KanbanPointerDragCancellationReason, 'disposed'> = 'explicit'): void {
     this.#pending = undefined;
-    this.#cancelActive('explicit');
+    this.#cancelActive(reason);
   }
 
   /** Rejects later input and releases pending evidence idempotently. */
@@ -248,7 +260,14 @@ export class KanbanPointerRouter {
   /** Preserve click state below threshold and atomically hand off one captured card drag. */
   #move(input: KanbanPointerInput): boolean {
     if (this.#activeDrag !== undefined) {
-      return input.gestureGeneration === undefined || input.gestureGeneration === this.#activeDrag.generation;
+      const active = this.#activeDrag;
+      if (
+        (input.gestureGeneration !== undefined && input.gestureGeneration !== active.generation) ||
+        !validPoint(input.point)
+      ) {
+        return false;
+      }
+      return this.#sink.updateCardDrag?.(active.generation, input.point, input.target) ?? true;
     }
     const pending = this.#pending;
     if (pending === undefined) return false;
@@ -317,7 +336,7 @@ export class KanbanPointerRouter {
   }
 
   /** Invalidate router ownership before notifying drag cleanup and releasing capture. */
-  #cancelActive(reason: 'explicit' | 'disposed'): void {
+  #cancelActive(reason: KanbanPointerDragCancellationReason): void {
     const active = this.#activeDrag;
     if (active === undefined) return;
     this.#activeDrag = undefined;
@@ -335,7 +354,16 @@ export class KanbanPointerRouter {
 
   /** Commits only an exact current target/button/revision match, then clears pending state first. */
   #up(input: KanbanPointerInput): boolean {
-    if (this.#activeDrag !== undefined) return false;
+    if (this.#activeDrag !== undefined) {
+      const active = this.#activeDrag;
+      if (input.gestureGeneration !== undefined && input.gestureGeneration !== active.generation) return false;
+      this.#activeDrag = undefined;
+      try {
+        return this.#sink.releaseCardDrag?.(active.generation) ?? false;
+      } finally {
+        if (active.capture.active()) active.capture.release();
+      }
+    }
     const pending = this.#pending;
     this.#pending = undefined;
     if (

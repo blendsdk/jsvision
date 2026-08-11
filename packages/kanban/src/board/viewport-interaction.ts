@@ -1,5 +1,6 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import type { KanbanActionScope } from '../layout/hit-map.js';
+import type { KanbanCardMoveProposal } from '../contract/request.js';
 import { snapshotKanbanInteractionSnapshot } from '../interaction/controller.js';
 import type { KanbanActivateOptions, KanbanOpenContextOptions } from '../interaction/facade.js';
 import type { KanbanInteractionOrigin, KanbanScopedActionId } from '../interaction/intent.js';
@@ -54,6 +55,8 @@ export interface KanbanViewportInputAdapter {
     scope: KanbanActionScope,
     origin: KanbanInteractionOrigin,
   ) => boolean;
+  /** Optional board-only mutation admission; standalone viewports deliberately omit it. */
+  readonly commitCardMove?: (proposal: KanbanCardMoveProposal) => boolean;
 }
 
 /** Captured input methods that cannot be replaced after board construction. */
@@ -67,6 +70,7 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
     const acceptActivate = Reflect.get(adapter, 'acceptActivate');
     const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
     const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
+    const commitCardMove = Reflect.get(adapter, 'commitCardMove');
     if (
       typeof accept !== 'function' ||
       typeof acceptActivate !== 'function' ||
@@ -88,6 +92,12 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
         Reflect.apply(acceptOpenContext, adapter, [options]) === true,
       acceptScopedAction: (actionId: KanbanScopedActionId, scope: KanbanActionScope, origin: KanbanInteractionOrigin) =>
         Reflect.apply(acceptScopedAction, adapter, [actionId, scope, origin]) === true,
+      ...(typeof commitCardMove === 'function'
+        ? {
+            commitCardMove: (proposal: KanbanCardMoveProposal) =>
+              Reflect.apply(commitCardMove, adapter, [proposal]) === true,
+          }
+        : {}),
     });
   } catch {
     throw new KanbanInvalidSourcePublicationError();

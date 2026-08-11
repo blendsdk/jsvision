@@ -135,6 +135,27 @@ export class KanbanBoardAuthority {
   }
 
   /**
+   * Atomically admits one mounted interaction proposal and publishes pending state synchronously.
+   *
+   * The boolean reports admission only; application settlement remains observable through operation
+   * subscriptions and authoritative source publication.
+   */
+  commitProposal(value: KanbanRequestProposal): boolean {
+    if (this.#disposed) return false;
+    try {
+      const proposal = snapshotKanbanRequestProposal(value);
+      this.#coordinator.commitProposal(
+        proposal,
+        currentExpected(this.#expected),
+        currentEligibility(this.#eligibility, proposal),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Validate and dispatch one complete compatibility envelope or lifecycle-free standard proposal.
    *
    * Complete envelopes preserve caller identity and cancellation semantics. Proposals receive a fresh

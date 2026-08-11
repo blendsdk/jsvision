@@ -21,7 +21,6 @@ import type { KanbanRevision } from '../contract/revision.js';
 import { routeKanbanKeyInput } from '../interaction/input-router.js';
 import type { KanbanScopedActionId } from '../interaction/intent.js';
 import { KanbanPointerRouter } from '../interaction/pointer-router.js';
-import type { KanbanPointerInput } from '../interaction/pointer-router.js';
 import type { KanbanEligibleSelectionCandidate } from '../interaction/selection.js';
 import type {
   KanbanFocusTarget,
@@ -82,6 +81,9 @@ import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader 
 import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
 import { KanbanViewportInteractionBinding } from './viewport-interaction.js';
 import type { KanbanViewportInputAdapter, KanbanViewportInteractionAdapter } from './viewport-interaction.js';
+import { normalizeKanbanViewportPointerInput } from './viewport-input.js';
+import { KanbanViewportDragController } from './viewport-drag.js';
+import type { KanbanViewportDragScene } from './viewport-drag.js';
 
 /** Board-owned listeners notified after viewport evidence changes semantically. */
 const INTERACTION_EVIDENCE_LISTENERS = new WeakMap<object, () => void>();
@@ -246,6 +248,7 @@ export class KanbanViewport<TCard> extends View {
   readonly #descriptorCache: KanbanDescriptorCache;
   readonly #interactionBinding: KanbanViewportInteractionBinding;
   readonly #pointerRouter: KanbanPointerRouter;
+  readonly #dragController: KanbanViewportDragController<TCard>;
   readonly #swimlanePresentationResolver: KanbanSwimlanePresentationResolver;
   readonly #heightIndices = new Map<
     string,
@@ -292,6 +295,7 @@ export class KanbanViewport<TCard> extends View {
   #everMounted = false;
   #releasedLifecycle = false;
   #disposed = false;
+  #lastDragBounds: Readonly<Size2D> | undefined;
 
   /** Stores configuration without opening application resources before mount. */
   constructor(options: KanbanViewportOptions<TCard>) {
@@ -302,6 +306,17 @@ export class KanbanViewport<TCard> extends View {
       onReactiveInvalidated: () => this.invalidate(),
     });
     this.#interactionBinding = new KanbanViewportInteractionBinding(options.interaction);
+    this.#dragController = new KanbanViewportDragController({
+      readScene: () => this.#dragScene(),
+      commitProposal: (proposal) => this.#interactionBinding.input()?.commitCardMove?.(proposal) ?? false,
+      scroll: (step) => {
+        const before = this.#metrics.offsets;
+        this.scrollBy(step);
+        const after = this.#metrics.offsets;
+        return Object.freeze({ x: after.x - before.x, y: after.y - before.y });
+      },
+      invalidate: () => this.invalidate(),
+    });
     this.#pointerRouter = new KanbanPointerRouter({
       snapshotSelection: () => this.#snapshotInputSelection(),
       beginPrimary: (target) => this.#beginPrimary(target),
@@ -310,6 +325,11 @@ export class KanbanViewport<TCard> extends View {
       completeScopedAction: (target) => this.#completeScopedAction(target),
       completeRetry: (target) => this.#completeRetry(target),
       openContext: (target) => this.#openContext(target),
+      snapshotCard: (target) => this.#snapshotDragCard(target),
+      beginCardDrag: (start) => this.#dragController.begin(start),
+      updateCardDrag: (generation, point, target) => this.#dragController.update(generation, point, target),
+      releaseCardDrag: (generation) => this.#dragController.release(generation),
+      cancelCardDrag: (generation, reason) => this.#dragController.cancel(generation, reason),
     });
     VIEWPORT_INPUT_LIFECYCLES.set(this, {
       managed: false,
@@ -349,7 +369,7 @@ export class KanbanViewport<TCard> extends View {
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = readKanbanIdentityInput(options.identity);
           const density = options.density?.() ?? 'comfortable';
-          const structure = options.structure?.();
+          const structure = this.#structurePolicy();
           void options.i18n?.();
           void options.theme?.();
           void options.capabilities?.();
@@ -394,6 +414,14 @@ export class KanbanViewport<TCard> extends View {
   /** Refreshes bounded source acquisition; visual descriptor drawing is added by the render task. */
   override draw(ctx: DrawContext): void {
     if (this.#source === undefined || this.#disposed) return;
+    const currentBounds = Object.freeze({ width: this.bounds.width, height: this.bounds.height });
+    if (
+      this.#lastDragBounds !== undefined &&
+      (this.#lastDragBounds.width !== currentBounds.width || this.#lastDragBounds.height !== currentBounds.height)
+    ) {
+      this.#pointerRouter.cancel('resize');
+    }
+    this.#lastDragBounds = currentBounds;
     const identity = readKanbanIdentityInput(this.#options.identity);
     const interaction = this.#options.interaction === undefined ? undefined : this.#interactionBinding.snapshot();
     const density = this.#options.density?.() ?? 'comfortable';
@@ -403,7 +431,7 @@ export class KanbanViewport<TCard> extends View {
     const formatting = this.#options.formatting?.();
     const renderer = this.#options.renderer?.();
     const rendererRevision = this.#options.rendererRevision?.();
-    const structure = this.#options.structure?.();
+    const structure = this.#structurePolicy();
     this.#interactionStructureRevision = structure?.revision ?? 'default';
     const layoutChanged = this.#restoreVerticalAnchor(density, i18n, theme, ctx.caps);
     const collapsedColumnIds = this.#options.collapsedColumnIds?.();
@@ -414,6 +442,7 @@ export class KanbanViewport<TCard> extends View {
       this.#anchorSourceRevision !== undefined &&
       (this.#anchorSourceRevision !== snapshot.publication.revision ||
         this.#anchorSourceGeneration !== snapshot.generation);
+    if (sourceChanged) this.#pointerRouter.cancel('source-change');
     const shouldRestoreIdentity = layoutChanged || sourceChanged;
     if (shouldRestoreIdentity && this.#restoreHorizontalAnchor(snapshot)) {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
@@ -497,6 +526,7 @@ export class KanbanViewport<TCard> extends View {
     this.#projectionOffsets = this.#metrics.offsets;
     this.#anchorSourceRevision = snapshot.publication.revision;
     this.#anchorSourceGeneration = snapshot.generation;
+    this.#dragController.reproject();
     const anchorRelocationPending = this.#anchorController !== undefined && !this.#anchorController.signal.aborted;
     if (!relocatingAnchor && !anchorRelocationPending) this.#rememberVerticalAnchor(projection, identity, density);
     this.#rememberHorizontalAnchor(snapshot);
@@ -527,11 +557,11 @@ export class KanbanViewport<TCard> extends View {
       return;
     }
     if (event.event.type === 'focus') {
-      if (!event.event.focused) this.#pointerRouter.cancel();
+      if (!event.event.focused) this.#pointerRouter.cancel('host-lost');
       return;
     }
     if (event.event.type === 'key') {
-      this.#pointerRouter.cancel();
+      this.#pointerRouter.cancel(event.event.key === 'escape' ? 'escape' : 'explicit');
       const input = this.#interactionBinding.input();
       if (input === undefined || this.#metrics.mode === 'minimum-size') return;
       event.handled = routeKanbanKeyInput(event.event, {
@@ -551,15 +581,12 @@ export class KanbanViewport<TCard> extends View {
       this.#pointerRouter.cancel();
       return;
     }
-    const pointer: KanbanPointerInput = {
-      kind: event.event.kind,
-      button: event.event.button,
-      ctrl: event.event.ctrl === true,
+    const pointer = normalizeKanbanViewportPointerInput(event, {
+      owner: this,
       target: this.#actionTargetAt(local.x, local.y),
       sceneRevision: this.#inputSceneRevision(),
-      ...(event.clickCount === undefined ? {} : { clickCount: event.clickCount }),
-    };
-    event.handled = this.#pointerRouter.route(pointer);
+    });
+    event.handled = pointer === undefined ? false : this.#pointerRouter.route(pointer);
   }
 
   /** Returns an immutable exact-cell metric snapshot from the latest projection. */
@@ -583,12 +610,8 @@ export class KanbanViewport<TCard> extends View {
     const identity = readKanbanIdentityInput(this.#options.identity);
     const density = this.#options.density?.() ?? 'comfortable';
     return (
-      this.#refresh(
-        this.#options.collapsedColumnIds?.(),
-        identity.focusedColumnId,
-        density,
-        this.#options.structure?.(),
-      )?.publication.identityChanges ?? this.#snapshot?.publication.identityChanges
+      this.#refresh(this.#options.collapsedColumnIds?.(), identity.focusedColumnId, density, this.#structurePolicy())
+        ?.publication.identityChanges ?? this.#snapshot?.publication.identityChanges
     );
   }
 
@@ -761,7 +784,7 @@ export class KanbanViewport<TCard> extends View {
         this.#options.collapsedColumnIds?.(),
         target.columnId,
         this.#options.density?.() ?? 'comfortable',
-        this.#options.structure?.(),
+        this.#structurePolicy(),
       );
       if (refreshed !== undefined) {
         this.#snapshot = refreshed;
@@ -879,6 +902,7 @@ export class KanbanViewport<TCard> extends View {
     if (this.#disposed) return;
     this.#disposed = true;
     quiesceKanbanViewportInput(this);
+    this.#dragController.dispose();
     this.#revealController?.abort();
     this.#revealController = undefined;
     this.#anchorController?.abort();
@@ -903,6 +927,40 @@ export class KanbanViewport<TCard> extends View {
   #actionTargetAt(x: number, y: number): KanbanActionTarget | undefined {
     return this.#projection?.actionTargets.find(
       (target) => x >= target.x && y >= target.y && x < target.x + target.width && y < target.y + target.height,
+    );
+  }
+
+  /** Returns current post-layout evidence required by the viewport-local drag owner. */
+  #dragScene(): KanbanViewportDragScene<TCard> | undefined {
+    const scene = this.#projection?.scene;
+    const geometry = this.#projection?.geometry;
+    const source = this.#snapshot;
+    if (scene === undefined || geometry === undefined || source === undefined || this.#disposed) return undefined;
+    return Object.freeze({
+      scene,
+      geometry,
+      source,
+      density: this.#options.density?.() ?? 'comfortable',
+      sceneRevision: this.#inputSceneRevision(),
+      geometryGeneration: Math.max(1, this.#metrics.generation),
+      viewport: Object.freeze({
+        x: 0,
+        y: this.#metrics.stickyRows,
+        width: Math.max(1, this.bounds.width),
+        height: Math.max(1, this.bounds.height - this.#metrics.stickyRows),
+      }),
+    });
+  }
+
+  /** Resolves current entity evidence for the pointer-origin card without retaining its record. */
+  #snapshotDragCard(target: KanbanActionTarget) {
+    if (target.cardKey === undefined || target.address === undefined) return undefined;
+    return this.interactionEligibleSelection().find(
+      (entry) =>
+        typeof entry.cardKey === typeof target.cardKey &&
+        entry.cardKey === target.cardKey &&
+        entry.address.columnId === target.address?.columnId &&
+        entry.address.swimlaneId === target.address?.swimlaneId,
     );
   }
 
@@ -1030,6 +1088,20 @@ export class KanbanViewport<TCard> extends View {
       sessionRevision: revisions.sessionRevision,
       queryGeneration: revisions.queryGeneration,
       ...(revisions.viewRevision === undefined ? {} : { viewRevision: revisions.viewRevision }),
+    });
+  }
+
+  /** Removes one drag-hover swimlane from the projected collapse set without mutating caller policy. */
+  #structurePolicy(): KanbanStructurePolicy<TCard> | undefined {
+    const policy = this.#options.structure?.();
+    const swimlaneId = this.#dragController.temporaryExpandedSwimlaneId();
+    const grouping = policy?.grouping;
+    if (policy === undefined || grouping === undefined || swimlaneId === undefined) return policy;
+    const collapsedSwimlaneIds = grouping.collapsedSwimlaneIds?.filter((candidate) => candidate !== swimlaneId) ?? [];
+    return Object.freeze({
+      ...policy,
+      revision: JSON.stringify([policy.revision, 'temporary-drag-expansion', swimlaneId]),
+      grouping: Object.freeze({ ...grouping, collapsedSwimlaneIds: Object.freeze(collapsedSwimlaneIds) }),
     });
   }
 

@@ -32,7 +32,7 @@ export interface KanbanDropRegionInput {
   /** Current clipped viewport-local geometry. */
   readonly rect: Readonly<Rect>;
   /** Revision-bound semantic placement represented by the geometry. */
-  readonly position: KanbanMovePosition;
+  readonly position: unknown;
   /** Optional pure policy result; omitted regions are allowed. */
   readonly eligibility?: KanbanEligibility;
 }
@@ -44,9 +44,9 @@ export interface KanbanDropCardInput {
   /** Current clipped viewport-local card rectangle. */
   readonly rect: Readonly<Rect>;
   /** Placement before the card. */
-  readonly before: KanbanMovePosition;
+  readonly before: unknown;
   /** Placement after the card. */
-  readonly after: KanbanMovePosition;
+  readonly after: unknown;
   /** Optional policy result for the upper half. */
   readonly beforeEligibility?: KanbanEligibility;
   /** Optional policy result for the lower half. */
@@ -438,7 +438,7 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
     targetAt(point: Readonly<Point>): KanbanCardDropTarget | undefined {
       const x = integer(point.x, Number.MIN_SAFE_INTEGER);
       const y = integer(point.y, Number.MIN_SAFE_INTEGER);
-      return frozenTargets.find((candidate) => contains(candidate.rect, { x, y }));
+      return frozenTargets.find((candidate) => candidate.rect !== undefined && contains(candidate.rect, { x, y }));
     },
   });
 }

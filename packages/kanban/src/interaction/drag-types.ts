@@ -21,6 +21,7 @@ export type KanbanDragCancellationReason =
   | 'source-change'
   | 'policy-change'
   | 'dispose'
+  | 'capture-lost'
   | 'invalid-input';
 
 /** Exact semantic kinds produced by the pure card drop map. */
@@ -60,7 +61,7 @@ export interface KanbanCardDropTarget {
   /** Pure policy result captured with this target. */
   readonly eligibility: KanbanEligibility;
   /** Current clipped viewport-local target rectangle. */
-  readonly rect: Readonly<Rect>;
+  readonly rect?: Readonly<Rect>;
   /** Geometry generation that owns the rectangle and placement. */
   readonly geometryGeneration: number;
   /** Card whose upper or lower half supplied a fallback target. */

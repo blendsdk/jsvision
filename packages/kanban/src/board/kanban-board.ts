@@ -292,7 +292,16 @@ export class KanbanBoard<TCard> extends Group {
     this.viewport = new KanbanViewport(
       viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
     );
-    prepareKanbanViewportBoardInput(this.viewport, this.#interactionFacade);
+    prepareKanbanViewportBoardInput(this.viewport, {
+      accept: (command) => this.#interactionFacade.accept(command),
+      acceptSelectionActivate: (command, activateOptions) =>
+        this.#interactionFacade.acceptSelectionActivate(command, activateOptions),
+      acceptActivate: (activateOptions) => this.#interactionFacade.acceptActivate(activateOptions),
+      acceptOpenContext: (contextOptions) => this.#interactionFacade.acceptOpenContext(contextOptions),
+      acceptScopedAction: (actionId, scope, origin) =>
+        this.#interactionFacade.acceptScopedAction(actionId, scope, origin),
+      commitCardMove: (proposal) => this.#authority.commitProposal(proposal),
+    });
     setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
       this.#reconcileInteraction(this.viewport.identityChanges()),
     );

@@ -31,6 +31,8 @@ export interface KanbanCollapsedHoverScheduler {
 export interface KanbanCollapsedHoverControllerOptions {
   /** Timer boundary; omission uses the current JavaScript host timers. */
   readonly scheduler?: KanbanCollapsedHoverScheduler;
+  /** Optional repaint/reprojection request after observable lease state changes. */
+  readonly onChanged?: () => void;
 }
 
 /** Shared frozen inert states. */
@@ -63,6 +65,7 @@ const HOST_SCHEDULER: KanbanCollapsedHoverScheduler = Object.freeze({
  */
 export class KanbanCollapsedHoverController {
   readonly #scheduler: KanbanCollapsedHoverScheduler;
+  readonly #onChanged: (() => void) | undefined;
   #state: KanbanCollapsedHoverState = IDLE;
   #generation = 0;
   #timer: unknown;
@@ -70,6 +73,7 @@ export class KanbanCollapsedHoverController {
   /** Creates a controller with an optional injected scheduler. */
   constructor(options: KanbanCollapsedHoverControllerOptions = {}) {
     this.#scheduler = options.scheduler ?? HOST_SCHEDULER;
+    this.#onChanged = options.onChanged;
   }
 
   /**
@@ -97,6 +101,7 @@ export class KanbanCollapsedHoverController {
     this.#generation += 1;
     const generation = this.#generation;
     this.#state = Object.freeze({ kind: 'waiting', swimlaneId });
+    this.#notify();
     let timer: unknown;
     try {
       timer = this.#scheduler.schedule(() => {
@@ -109,10 +114,12 @@ export class KanbanCollapsedHoverController {
         }
         this.#timer = undefined;
         this.#state = Object.freeze({ kind: 'expanded', swimlaneId, temporary: true });
+        this.#notify();
       }, KANBAN_TIMING_DEFAULTS.collapsedSwimlaneHoverMs);
     } catch {
       this.#generation += 1;
       this.#state = IDLE;
+      this.#notify();
       return false;
     }
     if (generation !== this.#generation || this.#state.kind !== 'waiting') {
@@ -139,9 +146,11 @@ export class KanbanCollapsedHoverController {
   /** Cancels any waiting or expanded lease and restores the underlying collapsed projection. */
   cancel(): void {
     this.#active();
+    if (this.#state.kind === 'idle') return;
     this.#clearTimer();
     this.#generation += 1;
     this.#state = IDLE;
+    this.#notify();
   }
 
   /** Returns the current frozen lease state. */
@@ -155,6 +164,7 @@ export class KanbanCollapsedHoverController {
     this.#clearTimer();
     this.#generation += 1;
     this.#state = DISPOSED;
+    this.#notify();
   }
 
   /** Cancels the current scheduler handle without trusting cancellation to be synchronous. */
@@ -172,6 +182,15 @@ export class KanbanCollapsedHoverController {
   /** Rejects state-changing operations after disposal. */
   #active(): void {
     if (this.#state.kind === 'disposed') throw new KanbanDisposedResourceError();
+  }
+
+  /** Isolates repaint notification from temporary state ownership. */
+  #notify(): void {
+    try {
+      this.#onChanged?.();
+    } catch {
+      // A repaint failure cannot corrupt or retain the temporary lease.
+    }
   }
 }
 

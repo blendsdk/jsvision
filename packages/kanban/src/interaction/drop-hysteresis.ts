@@ -11,7 +11,7 @@ export interface KanbanDropHysteresisTarget {
   /** Cell owning the semantic slot. */
   readonly address: KanbanCellAddress;
   /** Current viewport-local target rectangle. */
-  readonly rect: Readonly<Rect>;
+  readonly rect?: Readonly<Rect>;
   /** Geometry generation that owns the rectangle. */
   readonly geometryGeneration: number;
 }
@@ -86,6 +86,6 @@ export function selectKanbanDropTargetWithHysteresis<
   if (candidateValid && candidate !== undefined && current !== undefined && !sameCell(current, candidate)) {
     return candidate;
   }
-  if (current !== undefined && insideOneCellBand(current.rect, input.point)) return current;
+  if (current?.rect !== undefined && insideOneCellBand(current.rect, input.point)) return current;
   return candidateValid ? candidate : undefined;
 }
