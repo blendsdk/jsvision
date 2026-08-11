@@ -13,7 +13,13 @@ export * from './testing/windowed-fixture.js';
 export { routeKanbanKeyInput } from './interaction/input-router.js';
 export type { KanbanKeyInput, KanbanKeyInputSink } from './interaction/input-router.js';
 export { KanbanPointerRouter } from './interaction/pointer-router.js';
-export type { KanbanPendingPress, KanbanPointerInput, KanbanPointerRouterSink } from './interaction/pointer-router.js';
+export type {
+  KanbanPendingPress,
+  KanbanPointerDragStart,
+  KanbanPointerInput,
+  KanbanPointerRouterOptions,
+  KanbanPointerRouterSink,
+} from './interaction/pointer-router.js';
 export {
   readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,
   type KanbanViewportScaleSnapshot,
