@@ -243,7 +243,9 @@ conflicts/IDs; fresh-request undo; late work inert.
 **Objective**: Freeze the gesture machine, density-aware drop map, hysteresis, prefetch, autoscroll,
 selection, release, and cancellation before enabling render-neutral card drag.
 
-- [ ] 4.1.1 `[spec-author]` Write click/threshold/capture-generation/card-set gesture specifications — `packages/kanban/test/pointer-drag.spec.test.ts`
+- [x] 4.1.1 `[spec-author]` Write click/threshold/capture-generation/card-set gesture specifications — `packages/kanban/test/pointer-drag.spec.test.ts` ✅ (completed: 2026-08-11 21:18)
+  - Red evidence: all 5 gesture cases fail because pointer movement still cancels pending clicks and
+    threshold, capture-generation, and dragged-set handoff behavior is not implemented.
 - [ ] 4.1.2 `[spec-author]` Add gutter/card-half/leading/trailing/post-header/empty/compact drop-map cases — `packages/kanban/test/pointer-drag.spec.test.ts`
 - [ ] 4.1.3 `[spec-author]` Add hysteresis, unknown-edge prefetch, collapsed-hover, and stale geometry/revision cases — `packages/kanban/test/pointer-drag.spec.test.ts`
 - [ ] 4.1.4 `[spec-author]` Add fake-clock four-edge autoscroll/corner/clamp/small-viewport/recompute cases — `packages/kanban/test/pointer-drag.spec.test.ts`
