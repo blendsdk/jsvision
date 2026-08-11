@@ -6,16 +6,27 @@
  * cannot release the current owner.
  */
 import { resolveCapabilities } from '@jsvision/core';
+import type { MouseEvent } from '@jsvision/core';
 import { expect, test } from 'vitest';
+import { createApplication } from '../src/app/index.js';
+import { Input, Slider } from '../src/controls/index.js';
 import { createEventLoop } from '../src/event/index.js';
+import { signal } from '../src/reactive/index.js';
+import { ScrollBar } from '../src/scroll/index.js';
 import { Group, View } from '../src/view/index.js';
 import type { DrawContext } from '../src/view/index.js';
+import { Window } from '../src/window/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
 /** A mounted leaf used only as a stable capture identity. */
 class CaptureLeaf extends View {
   override draw(_ctx: DrawContext): void {}
+}
+
+/** Build a primary-button mouse report from zero-based terminal coordinates. */
+function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
+  return { type: 'mouse', kind, button: 0, x: x + 1, y: y + 1 };
 }
 
 /** Mount two capture candidates and return their real event loop. */
@@ -212,4 +223,69 @@ test('reentrant acquisition from a loss handler preserves the newest generation'
   expect(losses).toEqual(['first:replaced', 'second:replaced']);
   expect(replacedDuringCallback.active()).toBe(false);
   expect(reentrantLease?.active()).toBe(true);
+});
+
+// Existing Slider gestures must keep using the dispatch envelope's set/release capture helpers.
+test('legacy capture helpers preserve Slider drag and commit behavior', () => {
+  const value = signal(0);
+  const commits: number[] = [];
+  const slider = new Slider({ value, min: 0, max: 100, onChange: (next) => commits.push(next) });
+  slider.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 11, height: 1 } });
+  const loop = createEventLoop({ width: 11, height: 1 }, { caps });
+  loop.mount(slider);
+
+  loop.dispatch(mouse('down', 10, 0));
+  loop.dispatch(mouse('drag', 5, 0));
+  loop.dispatch(mouse('up', 5, 0));
+
+  expect(value()).toBe(50);
+  expect(commits).toEqual([50]);
+});
+
+// Existing ScrollBar gestures must retain off-axis capture and release through mouse-up.
+test('legacy capture helpers preserve ScrollBar thumb dragging', () => {
+  const value = signal(5);
+  const scrollBar = new ScrollBar({ value, min: 0, max: 10 });
+  const loop = createEventLoop({ width: 1, height: 8 }, { caps });
+  loop.mount(scrollBar);
+
+  loop.dispatch(mouse('down', 0, 4));
+  loop.dispatch(mouse('drag', 0, 6));
+  loop.dispatch(mouse('up', 0, 6));
+
+  expect(value()).toBe(10);
+});
+
+// Existing Input selection must remain captured while the pointer extends the selected range.
+test('legacy capture helpers preserve Input pointer selection', () => {
+  const value = signal('hello world');
+  const input = new Input({ value });
+  input.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 15, height: 1 } });
+  const loop = createEventLoop({ width: 15, height: 2 }, { caps });
+  loop.mount(input);
+  loop.focusView(input);
+
+  loop.dispatch(mouse('down', 3, 0));
+  loop.dispatch(mouse('drag', 8, 0));
+  loop.dispatch(mouse('up', 8, 0));
+
+  expect(input.selection).toEqual({ start: 2, end: 7 });
+});
+
+// Desktop uses hasCapture to abandon an externally released window gesture before applying movement.
+test('legacy capture query preserves Desktop stale-gesture cancellation', () => {
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const window = new Window('Capture compatibility');
+  window.setLayout({ rect: { x: 5, y: 2, width: 18, height: 5 } });
+  app.desktop.addWindow(window);
+  app.loop.renderRoot.flush();
+
+  app.loop.dispatch(mouse('down', 12, 2));
+  expect(window.dragging()).toBe(true);
+  app.loop.releaseCapture();
+  const before = window.layout.rect === undefined ? undefined : { ...window.layout.rect };
+  app.loop.dispatch(mouse('drag', 30, 8));
+
+  expect(window.dragging()).toBe(false);
+  expect(window.layout.rect).toEqual(before);
 });
