@@ -333,3 +333,74 @@ describe('operation concurrency and resource lifecycle', () => {
     expect(submitted[1]?.operationId).not.toBe(operationId);
   });
 });
+
+describe('operation producer convergence', () => {
+  it('should route editor, configuration, saved-view, menu, pointer, keyboard, and programmatic intent once', async () => {
+    const sourceRecords = [{ id: 4, title: 'Authoritative title', status: 'ready' }];
+    const before = JSON.stringify(sourceRecords);
+    const proposals = [
+      { kind: 'card-update', cardKey: 4, patch: { title: 'Edited title' }, origin: 'editor' },
+      {
+        kind: 'column-add',
+        draft: { columnId: 'review', label: 'Review' },
+        position: { kind: 'end' },
+        origin: 'configuration',
+      },
+      { kind: 'saved-view-save', viewId: 'mine', data: { filter: 'assigned-to-me' }, origin: 'saved-view' },
+      { kind: 'card-archive', cardKey: 4, origin: 'context-menu' },
+      {
+        kind: 'card-move',
+        moved: [
+          {
+            cardKey: 4,
+            source: { columnId: 'ready' },
+            sourcePlacement: { kind: 'start', cursorRevision: 'ready-r1' },
+            sourceRevision: 'ready-r1',
+            entityRevision: 'card-4-r1',
+          },
+        ],
+        target: { columnId: 'doing' },
+        position: { kind: 'end', cursorRevision: 'doing-r1' },
+        origin: 'pointer',
+      },
+      {
+        kind: 'column-reorder',
+        columnId: 'doing',
+        position: { kind: 'start' },
+        origin: 'keyboard',
+      },
+      {
+        kind: 'extension',
+        extensionId: 'example.programmatic',
+        payload: { action: 'synchronize' },
+        origin: 'programmatic',
+      },
+    ] as const;
+    const dispatched: KanbanRequest[] = [];
+    const authority = new KanbanBoardAuthority(
+      (submitted) => {
+        dispatched.push(submitted);
+        return { kind: 'accepted', operationId: submitted.operationId };
+      },
+      () => ({}),
+    );
+
+    const results = await Promise.all(
+      proposals.map(({ origin: _origin, ...proposal }, index) => {
+        const operationId = createKanbanOperationId(`operation-producer-${index}`);
+        return authority.request(
+          createKanbanRequestEnvelope(proposal, {
+            operationId,
+            expected: { source: 'source-r1', query: 'query-r1' },
+            signal: new AbortController().signal,
+          }),
+        );
+      }),
+    );
+
+    expect(results.every(({ kind }) => kind === 'accepted')).toBe(true);
+    expect(dispatched.map(({ kind }) => kind)).toEqual(proposals.map(({ kind }) => kind));
+    expect(dispatched).toHaveLength(proposals.length);
+    expect(JSON.stringify(sourceRecords)).toBe(before);
+  });
+});
