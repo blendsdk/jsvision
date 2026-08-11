@@ -2467,6 +2467,7 @@ interface KanbanLimitManifest {
   concurrentValidators: KanbanLimitRow;
   pendingOperations: KanbanLimitRow;
   retainedOperationIds: KanbanLimitRow;
+  retainedUndoDescriptors: KanbanLimitRow;   // Maximum whole committed undo descriptors retained by one board coordinator.
   retainedObservations: KanbanLimitRow;
   verticalOverscan: KanbanLimitRow;
   horizontalOverscan: KanbanLimitRow;

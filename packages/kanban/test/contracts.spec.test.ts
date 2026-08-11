@@ -58,6 +58,7 @@ const EXPECTED_LIMITS: KanbanLimitManifest = {
   concurrentValidators: { safe: 4, standard: 16, absolute: 32 },
   pendingOperations: { safe: 32, standard: 128, absolute: 512 },
   retainedOperationIds: { safe: 1_024, standard: 8_192, absolute: 32_768 },
+  retainedUndoDescriptors: { safe: 256, standard: 2_048, absolute: 8_192 },
   retainedObservations: { safe: 256, standard: 2_048, absolute: 8_192 },
   verticalOverscan: { safe: 1, standard: 4, absolute: 8 },
   horizontalOverscan: { safe: 1, standard: 4, absolute: 8 },
@@ -114,6 +115,15 @@ describe('Kanban identity and limits contracts', () => {
       expect(row.safe).toBeLessThanOrEqual(row.standard);
       expect(row.standard).toBeLessThanOrEqual(row.absolute);
     }
+  });
+
+  // Committed undo descriptors retain application callbacks or opaque tokens, so their whole-entry
+  // capacity is independently configurable instead of borrowing an unrelated renderer limit.
+  it('should publish an independently bounded retained undo descriptor limit', () => {
+    expect(Object.entries(KANBAN_LIMITS)).toContainEqual([
+      'retainedUndoDescriptors',
+      { safe: 256, standard: 2_048, absolute: 8_192 },
+    ]);
   });
 
   it.each([

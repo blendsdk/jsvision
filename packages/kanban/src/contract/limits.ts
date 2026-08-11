@@ -38,6 +38,8 @@ export interface KanbanLimitManifest {
   readonly concurrentValidators: KanbanLimitRow;
   readonly pendingOperations: KanbanLimitRow;
   readonly retainedOperationIds: KanbanLimitRow;
+  /** Maximum whole committed undo descriptors retained by one board coordinator. */
+  readonly retainedUndoDescriptors: KanbanLimitRow;
   readonly retainedObservations: KanbanLimitRow;
   readonly verticalOverscan: KanbanLimitRow;
   readonly horizontalOverscan: KanbanLimitRow;
@@ -151,6 +153,7 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   concurrentValidators: limit(4, 16, 32),
   pendingOperations: limit(32, 128, 512),
   retainedOperationIds: limit(1_024, 8_192, 32_768),
+  retainedUndoDescriptors: limit(256, 2_048, 8_192),
   retainedObservations: limit(256, 2_048, 8_192),
   verticalOverscan: limit(1, 4, 8),
   horizontalOverscan: limit(1, 4, 8),

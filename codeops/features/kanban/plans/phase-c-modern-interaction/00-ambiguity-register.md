@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase C Modern Interaction
 
 > **Status**: ✅ GATE PASSED — all 21 items resolved
-> **Last Updated**: 2026-08-11 10:58 CEST
+> **Last Updated**: 2026-08-11 15:26 CEST
 > **Root Invocation ID**: `MP-PHASE-C-20260811T0144CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -38,6 +38,7 @@
 | AR-C19 | Integration | What documentation and generated surfaces move with Phase C? | Defer all docs / update only README / synchronize package docs, architecture, API/plugin references, locales, and kitchen sink evidence | Keep public JSDoc/examples, package/architecture docs, locale roles/messages, generated API/plugin parity, and the existing incremental kitchen sink aligned with shipped Phase C behavior | ✅ Resolved |
 | AR-C20 | Security | What may cross the dispatcher/observation boundary? | Raw records/tokens/errors / bounded semantic envelopes and redacted observations | Snapshot exact allowlisted data; never log or observe card bodies, placement/undo tokens, custom payloads, raw errors, or unsanitized ghost text | ✅ Resolved |
 | AR-C21 | Technical (runtime) | What happens when the numeric capture generation is exhausted? | Fail closed before mutation / wrap and add a hidden token / reuse only while uncaptured | Fail closed with `RangeError` before changing capture; the current owner remains active | ✅ Resolved |
+| AR-C22 | Technical (runtime) | Which limit class should bound committed undo descriptors, and how is the stale exact-manifest oracle synchronized? | Reuse `retainedDescriptors` values / reuse operation-ID retention / introduce unrelated new values | Add the independent key with the established descriptor-retention values `256/2,048/8,192`; first add a requirement-derived red assertion, then update the exact manifest oracle with production | ✅ Resolved |
 
 ## Resolution notes
 
@@ -145,6 +146,21 @@
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
 - **Reopen trigger:** The public generation becomes an opaque non-numeric token or leases gain bounded lifetime enforcement.
+
+### AR-C22 — Retained undo descriptor limit (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Resource-limit mechanics and specification synchronization inside the approved bounded undo contract; no product behavior or scope change.
+- **Objective:** Bound retained application callbacks and opaque tokens independently while preserving the package's established safe, standard, and advanced resource classes.
+- **Evidence:** The lifecycle design requires `limits.retainedUndoDescriptors`, while the current exact limit-manifest oracle predates that key. `retainedDescriptors` already defines the package's whole-descriptor retention classes as 256, 2,048, and 8,192; retained operation IDs have a different collision-history purpose and materially larger ceilings.
+- **Decision:** Add `retainedUndoDescriptors` with safe/standard/absolute values 256/2,048/8,192. Add a requirement-derived failing assertion before production, then synchronize the existing exact-manifest oracle when implementation adds the key.
+- **Rejected alternatives:** Reusing `retainedDescriptors` directly would couple callback retention to renderer allocation; using `retainedOperationIds` values would retain substantially more closures than the established descriptor budget; inventing new values has no repository evidence.
+- **Strongest counterargument:** Matching `retainedDescriptors` makes the two independent limits numerically identical and may look redundant.
+- **Confidence:** High — the identical values preserve the established descriptor budget while the separate key preserves independent ownership and future tuning.
+- **Hardening:** 10× scale and memory-retention reframes rejected the larger ID-history ceiling; obsolescence analysis retained a separate key so future tuning does not couple unrelated resources.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
+- **Reopen trigger:** Measured callback-retention memory requires a lower class budget or application history integration no longer retains descriptors in the component.
 
 ## Systematic category closure
 
