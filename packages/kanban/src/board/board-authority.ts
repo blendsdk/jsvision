@@ -123,6 +123,7 @@ export class KanbanBoardAuthority {
       ...(options.operationId === undefined ? {} : { operationId: options.operationId }),
       ...(options.revalidate === undefined ? {} : { revalidate: options.revalidate }),
       ...(options.limits === undefined ? {} : { limits: options.limits }),
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
   }
 

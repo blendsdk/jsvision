@@ -1,8 +1,10 @@
-import type { CardKey, KanbanColumnId, KanbanSwimlaneId } from './identity.js';
+import type { CardKey, KanbanColumnId, KanbanOperationId, KanbanSwimlaneId } from './identity.js';
 import { KANBAN_LIMITS, KanbanInvalidLimitError } from './limits.js';
+import type { KanbanRequest } from './request.js';
 import { snapshotKanbanDataProperties, validateKanbanDataKeys } from './data-snapshot.js';
 import type { KanbanDataProperties } from './data-snapshot.js';
 import { sanitizeContractText } from './text-safety.js';
+import type { KanbanOperationState } from '../operation/types.js';
 
 /** Runtime scope in which an isolated application or package failure occurred. */
 export type KanbanObservationScope = 'board' | 'query' | 'source' | 'cell' | 'card' | 'renderer' | 'request';
@@ -16,6 +18,12 @@ export interface KanbanObservation {
   readonly code: string;
   /** Small semantic scope used to route diagnostics. */
   readonly scope: KanbanObservationScope;
+  /** Optional operation identity for payload-free request lifecycle diagnostics. */
+  readonly operationId?: KanbanOperationId;
+  /** Optional request discriminator for payload-free operation lifecycle diagnostics. */
+  readonly kind?: KanbanRequest['kind'];
+  /** Optional operation lifecycle state. */
+  readonly state?: KanbanOperationState;
   /** Optional application card identity, preserving string and number distinction. */
   readonly cardKey?: CardKey;
   /** Optional validated workflow-column identity. */
@@ -51,7 +59,19 @@ const MAX_ID_BYTES = 256;
 /** Shared encoder for bounded diagnostic identities. */
 const OBSERVATION_ENCODER = new TextEncoder();
 /** Exact members accepted at the diagnostic boundary. */
-const OBSERVATION_KEYS = new Set(['code', 'scope', 'cardKey', 'columnId', 'swimlaneId', 'counts', 'error', 'message']);
+const OBSERVATION_KEYS = new Set([
+  'code',
+  'scope',
+  'operationId',
+  'kind',
+  'state',
+  'cardKey',
+  'columnId',
+  'swimlaneId',
+  'counts',
+  'error',
+  'message',
+]);
 
 /** Narrows an untrusted value to one allowlisted observation scope. */
 function isObservationScope(value: unknown): value is KanbanObservationScope {
@@ -64,6 +84,49 @@ function isObservationScope(value: unknown): value is KanbanObservationScope {
     value === 'renderer' ||
     value === 'request'
   );
+}
+
+/** Narrow one optional request discriminator without retaining custom payload data. */
+function safeRequestKind(value: unknown): KanbanRequest['kind'] | undefined {
+  switch (value) {
+    case 'card-create':
+    case 'card-update':
+    case 'card-duplicate':
+    case 'card-archive':
+    case 'card-delete':
+    case 'card-move':
+    case 'column-add':
+    case 'column-update':
+    case 'column-reorder':
+    case 'column-delete':
+    case 'swimlane-add':
+    case 'swimlane-update':
+    case 'swimlane-reorder':
+    case 'swimlane-delete':
+    case 'saved-view-save':
+    case 'saved-view-rename':
+    case 'saved-view-delete':
+    case 'extension':
+      return value;
+    default:
+      return undefined;
+  }
+}
+
+/** Narrow one optional operation state to the closed public lifecycle union. */
+function safeOperationState(value: unknown): KanbanOperationState | undefined {
+  switch (value) {
+    case 'proposed':
+    case 'pending':
+    case 'accepted':
+    case 'committed':
+    case 'rejected':
+    case 'cancelled':
+    case 'superseded':
+      return value;
+    default:
+      return undefined;
+  }
 }
 
 /** Sanitizes and bounds a display label without reading a caught error. */
@@ -134,12 +197,18 @@ export function createKanbanObservation(input: KanbanObservationInput): KanbanOb
   }
   const message = safeMessage(properties.message);
   const counts = safeCounts(properties.counts);
+  const operationId = safeIdentity(properties.operationId);
+  const kind = safeRequestKind(properties.kind);
+  const state = safeOperationState(properties.state);
   const cardKey = safeCardKey(properties.cardKey);
   const columnId = safeIdentity(properties.columnId);
   const swimlaneId = safeIdentity(properties.swimlaneId);
   return Object.freeze({
     code: safeCode(properties.code),
     scope: isObservationScope(properties.scope) ? properties.scope : 'board',
+    ...(operationId === undefined ? {} : { operationId }),
+    ...(kind === undefined ? {} : { kind }),
+    ...(state === undefined ? {} : { state }),
     ...(cardKey === undefined ? {} : { cardKey }),
     ...(columnId === undefined ? {} : { columnId }),
     ...(swimlaneId === undefined ? {} : { swimlaneId }),

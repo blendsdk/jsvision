@@ -2848,6 +2848,9 @@ Safe diagnostic metadata that never contains application records, queries, token
 interface KanbanObservation {
   code: string;   // Stable sanitized reason code.
   scope: KanbanObservationScope;   // Small semantic scope used to route diagnostics.
+  operationId?: KanbanOperationId;   // Optional operation identity for payload-free request lifecycle diagnostics.
+  kind?: KanbanRequest['kind'];   // Optional request discriminator for payload-free operation lifecycle diagnostics.
+  state?: KanbanOperationState;   // Optional operation lifecycle state.
   cardKey?: CardKey;   // Optional application card identity, preserving string and number distinction.
   columnId?: KanbanColumnId;   // Optional validated workflow-column identity.
   swimlaneId?: KanbanSwimlaneId;   // Optional validated swimlane identity.
