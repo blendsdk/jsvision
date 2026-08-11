@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 10:44 CEST
-> **Progress**: 1/124 tasks (1%)
+> **Last Updated**: 2026-08-11 10:46 CEST
+> **Progress**: 2/124 tasks (2%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -62,7 +62,7 @@ red → implementation → green → implementation tests/hardening (AR-C01–C2
 changing the shared UI event loop.
 
 - [x] 1.1.1 `[spec-author]` Write generation/replacement/stale-release specification cases — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:44)
-- [ ] 1.1.2 `[spec-author]` Add modal/immediate target-or-ancestor subtree unmount without later input/decoded-focus/explicit-host-loss/direct-stop/direct-dispose precedence and throwing/reentrant callback cases — `packages/ui/test/pointer-capture-lease.spec.test.ts`
+- [x] 1.1.2 `[spec-author]` Add modal/immediate target-or-ancestor subtree unmount without later input/decoded-focus/explicit-host-loss/direct-stop/direct-dispose precedence and throwing/reentrant callback cases — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:46)
 - [ ] 1.1.3 `[spec-author]` Add legacy set/release/has-capture compatibility cases using real Slider/ScrollBar/Desktop/Input fixtures — `packages/ui/test/pointer-capture-lease.spec.test.ts`
 - [ ] 1.1.4 Run the focused capture specification and record the expected red cases; justify only legacy assertions that already pass — `packages/ui/test/pointer-capture-lease.spec.test.ts`
 
