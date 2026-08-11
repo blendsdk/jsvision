@@ -12,6 +12,8 @@ export interface NormalizeKanbanViewportPointerInputOptions {
   readonly target?: KanbanActionTarget;
   /** Equality-only scene revision owning target geometry. */
   readonly sceneRevision: KanbanRevision;
+  /** Router gesture derived from the capture generation stamped at event ingress. */
+  readonly gestureGeneration?: number;
 }
 
 /**
@@ -44,6 +46,7 @@ export function normalizeKanbanViewportPointerInput(
     point: Object.freeze({ x: event.local.x, y: event.local.y }),
     ...(options.target === undefined ? {} : { target: options.target }),
     sceneRevision: options.sceneRevision,
+    ...(options.gestureGeneration === undefined ? {} : { gestureGeneration: options.gestureGeneration }),
     ...(event.clickCount === undefined ? {} : { clickCount: event.clickCount }),
     ...(acquireCapture === undefined
       ? {}

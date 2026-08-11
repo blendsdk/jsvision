@@ -411,7 +411,14 @@ class EventLoopImpl implements EventLoop {
         this.lastClickCell = { x: routedEvent.x, y: routedEvent.y };
         clickCount = this.clickCount;
       }
-      this.queue.push({ event: routedEvent, handled: false, clickCount });
+      this.queue.push({
+        event: routedEvent,
+        handled: false,
+        clickCount,
+        ...(routedEvent.type === 'mouse' && this.capture !== null
+          ? { pointerCaptureGeneration: this.capture.generation }
+          : {}),
+      });
     }, nativePasteGesture);
   }
 

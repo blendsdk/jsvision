@@ -227,6 +227,86 @@ describe('card drag press and threshold contract', () => {
 });
 
 describe('card drag generation and dragged-set contract', () => {
+  it('cancels malformed/out-of-bounds reports and refreshes the release point before handoff', () => {
+    const selected = selection(selectionEntry(1));
+    const target = cardTarget(1);
+    const capture = captureHarness(31);
+    let dispatchable = true;
+    const releaseCardDrag = vi.fn(() => dispatchable);
+    const sink = {
+      ...gestureSink(selected),
+      updateCardDrag: vi.fn(
+        (_generation: number, _point: Readonly<{ x: number; y: number }>, current?: KanbanActionTarget) => {
+          dispatchable = current !== undefined;
+          return true;
+        },
+      ),
+      releaseCardDrag,
+    };
+    const router = new KanbanPointerRouter(sink);
+    router.route({
+      kind: 'down',
+      button: 0,
+      ctrl: false,
+      point: { x: 1, y: 1 },
+      target,
+      sceneRevision: 'scene-r1',
+      acquireCapture: capture.acquire,
+    });
+    router.route({
+      kind: 'move',
+      button: 0,
+      ctrl: false,
+      point: { x: 2, y: 1 },
+      target,
+      sceneRevision: 'scene-r1',
+      acquireCapture: capture.acquire,
+    });
+
+    expect(
+      router.route({
+        kind: 'up',
+        button: 0,
+        ctrl: false,
+        point: { x: 5, y: 5 },
+        sceneRevision: 'scene-r1',
+      }),
+    ).toBe(false);
+    expect(sink.updateCardDrag).toHaveBeenLastCalledWith(expect.any(Number), { x: 5, y: 5 }, undefined);
+    expect(releaseCardDrag).toHaveBeenCalledOnce();
+
+    const malformedCapture = captureHarness(32);
+    router.route({
+      kind: 'down',
+      button: 0,
+      ctrl: false,
+      point: { x: 1, y: 1 },
+      target,
+      sceneRevision: 'scene-r1',
+      acquireCapture: malformedCapture.acquire,
+    });
+    router.route({
+      kind: 'move',
+      button: 0,
+      ctrl: false,
+      point: { x: 2, y: 1 },
+      target,
+      sceneRevision: 'scene-r1',
+      acquireCapture: malformedCapture.acquire,
+    });
+    expect(
+      router.route({
+        kind: 'up',
+        button: 2,
+        ctrl: false,
+        point: { x: 2, y: 1 },
+        target,
+        sceneRevision: 'scene-r1',
+      }),
+    ).toBe(false);
+    expect(releaseCardDrag).toHaveBeenCalledOnce();
+  });
+
   it('invalidates capture loss before ignoring queued reports from the cancelled generation', () => {
     const sink = gestureSink(selection(selectionEntry(1)));
     const firstCapture = captureHarness(21);

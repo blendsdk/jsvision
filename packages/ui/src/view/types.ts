@@ -203,6 +203,8 @@ export interface DispatchEvent {
    * widget that activates on double-click checks `ev.clickCount === 2`.
    */
   readonly clickCount?: number;
+  /** Pointer-capture generation active when this host report entered the event queue. */
+  readonly pointerCaptureGeneration?: number;
   /**
    * Raise a typed command onto the current dispatch tick — how a widget signals an action (e.g. a
    * button emitting `'ok'`) for a menu/status/app handler to pick up.

@@ -4,6 +4,9 @@ import { snapshotKanbanRevision } from '../contract/revision.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from '../source/address.js';
 import type { KanbanCardDropTarget, KanbanDragGeneration, KanbanDragPrefetchHint } from './drag-types.js';
 
+/** Same-realm Promise intrinsic used without consulting an application object's public `then`. */
+const NATIVE_PROMISE_THEN = Promise.prototype.then;
+
 /** Side-effect boundaries used by one unknown-edge source acquisition controller. */
 export interface KanbanDragPrefetchControllerOptions {
   /** Starts one bounded source request under the controller-owned abort signal. */
@@ -32,6 +35,33 @@ interface ActivePrefetch {
   readonly hint: KanbanDragPrefetchHint;
   /** Controller-owned cancellation source. */
   readonly abort: AbortController;
+}
+
+/** Accept only an unmodified same-realm native Promise with no own members. */
+function isExactNativePromise(value: unknown): value is Promise<void> {
+  try {
+    return (
+      value instanceof Promise &&
+      Object.getPrototypeOf(value) === Promise.prototype &&
+      Reflect.ownKeys(value).length === 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Settle an exact native Promise without invoking a replaceable `then` property. */
+function settleNativePromise(value: Promise<void>, settled: (succeeded: boolean) => void): boolean {
+  try {
+    NATIVE_PROMISE_THEN.call(
+      value,
+      () => settled(true),
+      () => settled(false),
+    );
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Validates one non-negative safe integer. */
@@ -110,19 +140,20 @@ class DefaultKanbanDragPrefetchController implements KanbanDragPrefetchControlle
 
     const active: ActivePrefetch = Object.freeze({ key, generation, hint, abort: new AbortController() });
     this.#active = active;
-    let pending: Promise<void>;
+    let pending: unknown;
     try {
       pending = this.#ensureRange(hint, active.abort.signal);
-      if (!(pending instanceof Promise)) throw new TypeError('Kanban drag prefetch requires a native Promise.');
+      if (!isExactNativePromise(pending)) throw new TypeError('Kanban drag prefetch requires an exact native Promise.');
     } catch {
       if (this.#active === active) this.#active = undefined;
       active.abort.abort();
       return false;
     }
-    void pending.then(
-      () => this.#settle(active, true),
-      () => this.#settle(active, false),
-    );
+    if (!settleNativePromise(pending, (succeeded) => this.#settle(active, succeeded))) {
+      if (this.#active === active) this.#active = undefined;
+      active.abort.abort();
+      return false;
+    }
     return true;
   }
 

@@ -39,11 +39,14 @@ export function resolveKanbanDraggedSelection(
 export function createKanbanDragGhostEvidence(
   dragged: readonly KanbanMovedCardSnapshot[],
   point: Readonly<Point>,
+  originCardKey?: string | number,
 ): KanbanDragGhostEvidence {
   const origin = dragged[0];
   if (origin === undefined) throw new RangeError('A Kanban drag ghost requires at least one card.');
+  const ghost = originCardKey === undefined ? origin : dragged.find(({ cardKey }) => sameCard(cardKey, originCardKey));
+  if (ghost === undefined) throw new RangeError('The Kanban drag origin must belong to the moved card set.');
   return Object.freeze({
-    cardKey: origin.cardKey,
+    cardKey: ghost.cardKey,
     point: Object.freeze({ x: point.x, y: point.y }),
     count: dragged.length,
   });

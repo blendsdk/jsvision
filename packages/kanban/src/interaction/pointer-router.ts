@@ -202,6 +202,13 @@ export class KanbanPointerRouter {
     this.#dragThreshold = threshold;
   }
 
+  /** Maps an event-loop capture generation to the matching router gesture, or a stale sentinel. */
+  gestureGenerationForCapture(captureGeneration: number | undefined): number | undefined {
+    if (captureGeneration === undefined) return undefined;
+    const active = this.#activeDrag;
+    return active !== undefined && active.capture.generation === captureGeneration ? active.generation : 0;
+  }
+
   /** Routes one normalized pointer report and returns immediate handled acceptance. */
   route(input: KanbanPointerInput): boolean {
     if (this.#disposed) return false;
@@ -262,9 +269,11 @@ export class KanbanPointerRouter {
     if (this.#activeDrag !== undefined) {
       const active = this.#activeDrag;
       if (
+        input.button !== 0 ||
         (input.gestureGeneration !== undefined && input.gestureGeneration !== active.generation) ||
         !validPoint(input.point)
       ) {
+        this.#cancelActive('explicit');
         return false;
       }
       return this.#sink.updateCardDrag?.(active.generation, input.point, input.target) ?? true;
@@ -356,7 +365,22 @@ export class KanbanPointerRouter {
   #up(input: KanbanPointerInput): boolean {
     if (this.#activeDrag !== undefined) {
       const active = this.#activeDrag;
-      if (input.gestureGeneration !== undefined && input.gestureGeneration !== active.generation) return false;
+      if (
+        input.button !== 0 ||
+        !active.capture.active() ||
+        !validPoint(input.point) ||
+        (input.gestureGeneration !== undefined && input.gestureGeneration !== active.generation)
+      ) {
+        this.#cancelActive('explicit');
+        return false;
+      }
+      if (
+        this.#sink.updateCardDrag !== undefined &&
+        !this.#sink.updateCardDrag(active.generation, input.point, input.target)
+      ) {
+        this.#cancelActive('explicit');
+        return false;
+      }
       this.#activeDrag = undefined;
       try {
         return this.#sink.releaseCardDrag?.(active.generation) ?? false;

@@ -1,6 +1,8 @@
 import type { Point, Rect } from '@jsvision/ui';
 
 import { KanbanInvalidGeometryError } from '../contract/error.js';
+import type { KanbanMovePosition } from '../contract/request.js';
+import { kanbanRevisionsEqual } from '../contract/revision.js';
 import { canonicalizeKanbanCellAddress } from '../source/address.js';
 import type { KanbanCellAddress } from '../source/types.js';
 
@@ -8,6 +10,8 @@ import type { KanbanCellAddress } from '../source/types.js';
 export interface KanbanDropHysteresisTarget {
   /** Stable semantic slot identity. */
   readonly slotId: string;
+  /** Semantic placement represented by visually distinct regions for the same insertion slot. */
+  readonly position?: KanbanMovePosition;
   /** Cell owning the semantic slot. */
   readonly address: KanbanCellAddress;
   /** Current viewport-local target rectangle. */
@@ -50,9 +54,29 @@ function insideOneCellBand(rect: Readonly<Rect>, point: Readonly<Point>): boolea
   return pointX >= x - 1 && pointX <= x + width && pointY >= y - 1 && pointY <= y + height;
 }
 
-/** Returns whether two targets belong to the same semantic board cell. */
-function sameCell(left: KanbanDropHysteresisTarget, right: KanbanDropHysteresisTarget): boolean {
-  return canonicalizeKanbanCellAddress(left.address) === canonicalizeKanbanCellAddress(right.address);
+/** Returns whether two targets describe the same semantic insertion owner. */
+function sameOwner(left: KanbanDropHysteresisTarget, right: KanbanDropHysteresisTarget): boolean {
+  const leftPosition = left.position;
+  const rightPosition = right.position;
+  const samePosition =
+    leftPosition !== undefined && rightPosition !== undefined
+      ? leftPosition.kind === rightPosition.kind &&
+        kanbanRevisionsEqual(leftPosition.cursorRevision, rightPosition.cursorRevision) &&
+        (leftPosition.kind === 'start' || leftPosition.kind === 'end'
+          ? true
+          : leftPosition.kind === 'between' && rightPosition.kind === 'between'
+            ? typeof leftPosition.beforeCardKey === typeof rightPosition.beforeCardKey &&
+              leftPosition.beforeCardKey === rightPosition.beforeCardKey &&
+              typeof leftPosition.afterCardKey === typeof rightPosition.afterCardKey &&
+              leftPosition.afterCardKey === rightPosition.afterCardKey
+            : leftPosition.kind === 'window-edge' && rightPosition.kind === 'window-edge'
+              ? leftPosition.edge === rightPosition.edge &&
+                typeof leftPosition.neighborCardKey === typeof rightPosition.neighborCardKey &&
+                leftPosition.neighborCardKey === rightPosition.neighborCardKey &&
+                leftPosition.token === rightPosition.token
+              : false)
+      : left.slotId === right.slotId;
+  return samePosition && canonicalizeKanbanCellAddress(left.address) === canonicalizeKanbanCellAddress(right.address);
 }
 
 /**
@@ -83,7 +107,7 @@ export function selectKanbanDropTargetWithHysteresis<
   const candidateValid = candidate !== undefined && integer(candidate.geometryGeneration, 1) === generation;
 
   if (!currentValid) return candidateValid ? candidate : undefined;
-  if (candidateValid && candidate !== undefined && current !== undefined && !sameCell(current, candidate)) {
+  if (candidateValid && candidate !== undefined && current !== undefined && !sameOwner(current, candidate)) {
     return candidate;
   }
   if (current?.rect !== undefined && insideOneCellBand(current.rect, input.point)) return current;

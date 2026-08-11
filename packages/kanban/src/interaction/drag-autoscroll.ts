@@ -141,6 +141,7 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
   readonly #recompute: KanbanDragAutoscrollControllerOptions['recompute'];
   #active: ActiveAutoscroll | undefined;
   #timer: unknown;
+  #scheduling = false;
 
   /** Creates an isolated controller around validated callback seams. */
   constructor(options: KanbanDragAutoscrollControllerOptions) {
@@ -177,10 +178,30 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
 
   /** Schedules one deferred tick unless one is already pending. */
   #schedule(): void {
-    if (this.#active === undefined || this.#timer !== undefined) return;
+    if (this.#active === undefined || this.#timer !== undefined || this.#scheduling) return;
+    this.#scheduling = true;
+    let deliveredSynchronously = false;
     try {
-      this.#timer = this.#scheduler.schedule(() => this.#tick(), KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS);
+      const handle = this.#scheduler.schedule(() => {
+        if (this.#scheduling) {
+          deliveredSynchronously = true;
+          return;
+        }
+        this.#tick();
+      }, KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS);
+      this.#scheduling = false;
+      if (deliveredSynchronously) {
+        try {
+          this.#scheduler.cancel(handle);
+        } catch {
+          // A synchronously delivered hostile handle has no trusted future work to retain.
+        }
+        this.cancel();
+        return;
+      }
+      this.#timer = handle;
     } catch {
+      this.#scheduling = false;
       this.cancel();
     }
   }

@@ -267,9 +267,36 @@ function region(
   });
 }
 
-/** Adds a target only while the configured finite output budget has room. */
-function append(targets: KanbanCardDropTarget[], value: KanbanCardDropTarget, maximum: number): void {
-  if (targets.length < maximum) targets.push(value);
+/** Adds one lazily constructed target only while the finite output budget has room. */
+function append(targets: KanbanCardDropTarget[], maximum: number, create: () => KanbanCardDropTarget): void {
+  if (targets.length < maximum) targets.push(create());
+}
+
+/** Rejects aggregate scene work that could exceed the package-wide target construction ceiling. */
+function validateAggregateWork(cells: readonly KanbanDropCellInput[], density: KanbanCardDensity): void {
+  let work = 0;
+  for (const cell of cells) {
+    if (!Array.isArray(cell.cards) || !Array.isArray(cell.gutters)) throw new KanbanInvalidGeometryError();
+    if (
+      cell.cards.length > KANBAN_LIMITS.retainedDescriptors.absolute ||
+      cell.gutters.length > KANBAN_LIMITS.retainedDescriptors.absolute
+    ) {
+      throw new KanbanInvalidGeometryError();
+    }
+    const regions =
+      (density === 'compact' ? 0 : cell.gutters.length) +
+      cell.cards.length * 2 +
+      (cell.unknownLeading === undefined ? 0 : 1) +
+      (cell.unknownTrailing === undefined ? 0 : 1) +
+      (cell.postHeader === undefined ? 0 : 1) +
+      (cell.complete.empty ? 1 : 0) +
+      (cell.complete.leading ? 1 : 0) +
+      (cell.complete.trailing ? 1 : 0);
+    if (!Number.isSafeInteger(regions) || work > ABSOLUTE_TARGET_LIMIT - regions) {
+      throw new KanbanInvalidGeometryError();
+    }
+    work += regions;
+  }
 }
 
 /**
@@ -292,23 +319,16 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
   if (options.density !== 'compact' && options.density !== 'comfortable' && options.density !== 'spacious') {
     throw new KanbanInvalidGeometryError();
   }
+  validateAggregateWork(options.cells, options.density);
   const bounds = options.bounds === undefined ? undefined : snapshotRect(options.bounds);
   const targets: KanbanCardDropTarget[] = [];
 
   if (options.density === 'compact' && options.activeGap !== undefined) {
-    const active = region(options.activeGap, bounds);
+    const activeGap = options.activeGap;
+    const active = region(activeGap, bounds);
     if (active !== undefined) {
-      append(
-        targets,
-        target(
-          'active-gap',
-          options.activeGap.address,
-          active.position,
-          active.rect,
-          geometryGeneration,
-          active.eligibility,
-        ),
-        maximum,
+      append(targets, maximum, () =>
+        target('active-gap', activeGap.address, active.position, active.rect, geometryGeneration, active.eligibility),
       );
     }
   }
@@ -327,10 +347,8 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
       for (const value of cell.gutters) {
         const gutter = region(value, bounds);
         if (gutter !== undefined) {
-          append(
-            targets,
+          append(targets, maximum, () =>
             target('resting-gutter', address, gutter.position, gutter.rect, geometryGeneration, gutter.eligibility),
-            maximum,
           );
         }
       }
@@ -342,8 +360,7 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
     ] as const) {
       const edge = region(value, bounds);
       if (edge !== undefined && value !== undefined) {
-        append(
-          targets,
+        append(targets, maximum, () =>
           target(
             kind,
             address,
@@ -354,15 +371,13 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
             undefined,
             prefetchHint(value.prefetch),
           ),
-          maximum,
         );
       }
     }
 
     const postHeader = region(cell.postHeader, bounds);
     if (postHeader !== undefined) {
-      append(
-        targets,
+      append(targets, maximum, () =>
         target(
           'post-header',
           address,
@@ -371,7 +386,6 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
           geometryGeneration,
           postHeader.eligibility,
         ),
-        maximum,
       );
     }
 
@@ -381,10 +395,8 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
       const leadingPosition = cell.leading?.position;
       const position = postHeaderPosition ?? leadingPosition;
       if (position !== undefined) {
-        append(
-          targets,
+        append(targets, maximum, () =>
           target('empty-cell', address, position, content, geometryGeneration, cell.emptyEligibility),
-          maximum,
         );
       }
     }
@@ -396,16 +408,12 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
       const rect = clippedRect(card.rect, bounds);
       if (rect === undefined) continue;
       const [upper, lower] = cardHalves(rect);
-      append(
-        targets,
+      append(targets, maximum, () =>
         target('card-before', address, card.before, upper, geometryGeneration, card.beforeEligibility, card.cardKey),
-        maximum,
       );
       if (lower.height > 0) {
-        append(
-          targets,
+        append(targets, maximum, () =>
           target('card-after', address, card.after, lower, geometryGeneration, card.afterEligibility, card.cardKey),
-          maximum,
         );
       }
     }
@@ -414,18 +422,14 @@ export function projectKanbanCardDropMap(options: ProjectKanbanCardDropMapOption
     // remain deliberately wider, so their exposed side cells still provide substantial start/end hits.
     const leading = cell.complete.leading ? region(cell.leading, bounds) : undefined;
     if (leading !== undefined) {
-      append(
-        targets,
+      append(targets, maximum, () =>
         target('cell-leading', address, leading.position, leading.rect, geometryGeneration, leading.eligibility),
-        maximum,
       );
     }
     const trailing = cell.complete.trailing ? region(cell.trailing, bounds) : undefined;
     if (trailing !== undefined) {
-      append(
-        targets,
+      append(targets, maximum, () =>
         target('cell-trailing', address, trailing.position, trailing.rect, geometryGeneration, trailing.eligibility),
-        maximum,
       );
     }
   }

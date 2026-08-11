@@ -9,13 +9,22 @@ import { expect, test } from 'vitest';
 import { createEventLoop } from '../src/event/index.js';
 import type { EventLoop } from '../src/event/index.js';
 import { createRenderRoot, Group, View } from '../src/view/index.js';
-import type { DrawContext, PointerCaptureLease, PointerCaptureLossReason } from '../src/view/index.js';
+import type { DispatchEvent, DrawContext, PointerCaptureLease, PointerCaptureLossReason } from '../src/view/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
 /** A mounted identity that can own capture without adding widget behavior. */
 class CaptureLeaf extends View {
   override draw(_ctx: DrawContext): void {}
+}
+
+/** Captured leaf that records the ingress generation stamped on delivered pointer reports. */
+class ReportingCaptureLeaf extends CaptureLeaf {
+  readonly generations: Array<number | undefined> = [];
+
+  override onEvent(event: DispatchEvent): void {
+    if (event.event.type === 'mouse') this.generations.push(event.pointerCaptureGeneration);
+  }
 }
 
 /** The implementation-only allocator state used to position one test at numeric exhaustion. */
@@ -75,6 +84,19 @@ test('generation exhaustion fails closed instead of rolling over or replacing th
   expect(() => loop.acquireCapture(second, () => undefined)).toThrow(RangeError);
   expect(finalLease.active()).toBe(true);
   expect(losses).toEqual([]);
+});
+
+test('captured mouse reports retain the capture generation active when they entered the queue', () => {
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  const root = new Group();
+  const leaf = new ReportingCaptureLeaf();
+  root.add(leaf);
+  loop.mount(root);
+  const lease = loop.acquireCapture(leaf, () => undefined);
+
+  loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: 4, y: 2 });
+
+  expect(leaf.generations).toEqual([lease.generation]);
 });
 
 test('replacement installs its candidate before the old callback may reentrantly replace it', () => {

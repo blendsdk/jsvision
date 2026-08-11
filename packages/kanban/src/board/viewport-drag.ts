@@ -3,7 +3,10 @@ import type { Point, Rect } from '@jsvision/ui';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanCardMoveProposal, KanbanMovePosition, KanbanMovedCardSnapshot } from '../contract/request.js';
+import { snapshotKanbanRequestProposal } from '../contract/request-validation.js';
+import { kanbanRevisionsEqual } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import { snapshotKanbanEligibility } from '../operation/eligibility.js';
 import { createKanbanDragAutoscrollController } from '../interaction/drag-autoscroll.js';
 import type { KanbanDragAutoscrollController } from '../interaction/drag-autoscroll.js';
 import { createKanbanCardDragController } from '../interaction/drag-controller.js';
@@ -20,7 +23,7 @@ import type { KanbanSceneGeometry, KanbanSceneCardGeometry } from '../layout/swi
 import type { KanbanPlacement } from '../source/types.js';
 import { createKanbanCollapsedHoverController } from '../structure/collapsed-hover.js';
 import type { KanbanCollapsedHoverController } from '../structure/collapsed-hover.js';
-import type { KanbanScene, KanbanSceneCard } from './scene-model.js';
+import type { KanbanScene } from './scene-model.js';
 import type { KanbanViewportSourceCell, KanbanViewportSourceSnapshot } from './viewport-source.js';
 
 /** Current post-layout scene read by one viewport-local drag decision. */
@@ -47,6 +50,8 @@ export interface KanbanViewportDragControllerOptions<TCard> {
   readonly readScene: () => KanbanViewportDragScene<TCard> | undefined;
   /** Admits one board-owned card move; standalone viewports return false. */
   readonly commitProposal: (proposal: KanbanCardMoveProposal) => boolean;
+  /** Evaluates current board policy for one detached move without admitting it. */
+  readonly evaluateProposal: (proposal: KanbanCardMoveProposal) => unknown;
   /** Applies one bounded scroll step and returns actual clamped movement. */
   readonly scroll: (step: Readonly<Point>) => Readonly<Point>;
   /** Requests projection/drawing after controller evidence changes. */
@@ -64,6 +69,27 @@ function sameAddress(
   right: Readonly<{ readonly columnId: string; readonly swimlaneId?: string }>,
 ): boolean {
   return left.columnId === right.columnId && left.swimlaneId === right.swimlaneId;
+}
+
+/** Compares semantic placement ownership while allowing a refreshed cursor revision/token. */
+function samePosition(left: KanbanMovePosition, right: KanbanMovePosition): boolean {
+  if (left.kind !== right.kind) return false;
+  if (left.kind === 'start' || left.kind === 'end') return true;
+  if (left.kind === 'between' && right.kind === 'between') {
+    return (
+      typeof left.beforeCardKey === typeof right.beforeCardKey &&
+      left.beforeCardKey === right.beforeCardKey &&
+      typeof left.afterCardKey === typeof right.afterCardKey &&
+      left.afterCardKey === right.afterCardKey
+    );
+  }
+  return (
+    left.kind === 'window-edge' &&
+    right.kind === 'window-edge' &&
+    left.edge === right.edge &&
+    typeof left.neighborCardKey === typeof right.neighborCardKey &&
+    left.neighborCardKey === right.neighborCardKey
+  );
 }
 
 /** Compares renderer-relevant target evidence without depending on object identity. */
@@ -103,19 +129,20 @@ function sourceCell<TCard>(
   return source.cells.find((cell) => sameAddress(cell.address, address));
 }
 
-/** Finds one canonical scene card using type-preserving identity and address. */
-function sceneCard(scene: KanbanScene, cardKey: CardKey): KanbanSceneCard | undefined {
-  return scene.cards.find((card) => sameCard(card.cardKey, cardKey));
-}
-
 /** Resolves the complete ordered moved set from current source-owned placement evidence. */
 function movedCards<TCard>(
   start: KanbanPointerDragStart,
   current: KanbanViewportDragScene<TCard>,
 ): readonly KanbanMovedCardSnapshot[] | undefined {
   try {
-    const moved = start.dragged.map((entry): KanbanMovedCardSnapshot => {
-      const card = sceneCard(current.scene, entry.cardKey);
+    const selected = new Set(start.dragged.map(({ cardKey }) => JSON.stringify([typeof cardKey, cardKey])));
+    const ordered = current.scene.cards.filter((card) =>
+      selected.has(JSON.stringify([typeof card.cardKey, card.cardKey])),
+    );
+    if (ordered.length !== start.dragged.length) throw new Error('stale-card-set');
+    const moved = ordered.map((card): KanbanMovedCardSnapshot => {
+      const entry = start.dragged.find(({ cardKey }) => sameCard(cardKey, card.cardKey));
+      if (entry === undefined) throw new Error('stale-card');
       if (card === undefined || !sameAddress(card.address, entry.address)) throw new Error('stale-card');
       const cell = sourceCell(current.source, card.address);
       if (cell === undefined) throw new Error('stale-cell');
@@ -289,6 +316,9 @@ export class KanbanViewportDragController<TCard> {
   readonly #hover: KanbanCollapsedHoverController;
   #generation: number | undefined;
   #point: Readonly<Point> | undefined;
+  #actionTarget: KanbanActionTarget | undefined;
+  #moved: readonly KanbanMovedCardSnapshot[] | undefined;
+  #viewRevision: KanbanRevision | undefined;
   #target: KanbanCardDropTarget | undefined;
   #disposed = false;
 
@@ -330,10 +360,14 @@ export class KanbanViewportDragController<TCard> {
       originPoint: start.originPoint,
       sceneRevision: current.sceneRevision,
       geometryGeneration: current.geometryGeneration,
+      ...(start.target.cardKey === undefined ? {} : { originCardKey: start.target.cardKey }),
+      ...(start.priorSelection.viewRevision === undefined ? {} : { viewRevision: start.priorSelection.viewRevision }),
     });
     if (!accepted) return false;
     this.#generation = start.generation;
     this.#point = start.point;
+    this.#moved = moved;
+    this.#viewRevision = start.priorSelection.viewRevision;
     this.update(start.generation, start.point);
     return true;
   }
@@ -344,14 +378,16 @@ export class KanbanViewportDragController<TCard> {
     const current = this.#options.readScene();
     if (current === undefined) return false;
     this.#point = Object.freeze({ x: point.x, y: point.y });
+    this.#actionTarget = actionTarget;
     const candidate = dropMap(current, this.#target).targetAt(point);
     const previousTarget = this.#target;
-    this.#target = selectKanbanDropTargetWithHysteresis({
+    const selected = selectKanbanDropTargetWithHysteresis({
       current: this.#target,
       candidate,
       point,
       geometryGeneration: current.geometryGeneration,
     });
+    this.#target = this.#evaluateTarget(selected);
     this.#drag.propose({
       generation,
       target: this.#target,
@@ -361,10 +397,12 @@ export class KanbanViewportDragController<TCard> {
     this.#prefetch.update(this.#target, generation);
     this.#autoscroll.update({ point, viewport: current.viewport, generation });
     if (actionTarget?.kind === 'swimlane-header' && actionTarget.swimlaneId !== undefined) {
+      const hover = this.#hover.snapshot();
+      const ownsTemporaryExpansion = hover.kind === 'expanded' && hover.swimlaneId === actionTarget.swimlaneId;
       this.#hover.begin({
         swimlaneId: actionTarget.swimlaneId,
         visible: current.source.visibleSwimlanes.some(({ swimlaneId }) => swimlaneId === actionTarget.swimlaneId),
-        collapsed: current.source.collapsedSwimlaneIds.includes(actionTarget.swimlaneId),
+        collapsed: ownsTemporaryExpansion || current.source.collapsedSwimlaneIds.includes(actionTarget.swimlaneId),
       });
     } else {
       this.#hover.cancel();
@@ -376,7 +414,46 @@ export class KanbanViewportDragController<TCard> {
   /** Re-evaluates the retained point after a projection or drag-owned scroll changes geometry. */
   reproject(): void {
     if (this.#generation === undefined || this.#point === undefined) return;
-    this.update(this.#generation, this.#point);
+    this.update(this.#generation, this.#point, this.#actionTarget);
+  }
+
+  /** Returns whether a source publication invalidated dragged or current destination evidence. */
+  sourceChangeRelevant(): boolean {
+    const current = this.#options.readScene();
+    const moved = this.#moved;
+    if (this.#generation === undefined || current === undefined || moved === undefined) return false;
+    try {
+      for (const entry of moved) {
+        const card = current.scene.cards.find((candidate) => sameCard(candidate.cardKey, entry.cardKey));
+        if (
+          card === undefined ||
+          !sameAddress(card.address, entry.source) ||
+          !kanbanRevisionsEqual(card.entityRevision, entry.entityRevision)
+        ) {
+          return true;
+        }
+        const cell = sourceCell(current.source, entry.source);
+        if (cell === undefined) return true;
+        const placement = movePosition(cell.cursor.placementAt(card.logicalIndex));
+        if (placement === undefined || !samePosition(placement, entry.sourcePlacement)) return true;
+      }
+      if (this.#target !== undefined && this.#target.kind !== 'unknown-edge') {
+        const target = this.#target;
+        if (
+          !dropMap(current, target).targets.some(
+            (candidate) =>
+              candidate.kind === target.kind &&
+              sameAddress(candidate.address, target.address) &&
+              samePosition(candidate.position, target.position),
+          )
+        ) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return true;
+    }
   }
 
   /** Releases through the current semantic target and clears all discovery work first. */
@@ -424,9 +501,37 @@ export class KanbanViewportDragController<TCard> {
   #clearDiscovery(): void {
     this.#generation = undefined;
     this.#point = undefined;
+    this.#actionTarget = undefined;
+    this.#moved = undefined;
+    this.#viewRevision = undefined;
     this.#target = undefined;
     this.#autoscroll.cancel();
     this.#prefetch.cancel();
     this.#hover.cancel();
+  }
+
+  /** Classifies one current geometric target through the owning board's pure policy boundary. */
+  #evaluateTarget(target: KanbanCardDropTarget | undefined): KanbanCardDropTarget | undefined {
+    const moved = this.#moved;
+    if (target === undefined || moved === undefined || target.kind === 'unknown-edge') return target;
+    try {
+      const proposal = snapshotKanbanRequestProposal({
+        kind: 'card-move',
+        moved,
+        target: target.address,
+        position: target.position,
+        ...(this.#viewRevision === undefined ? {} : { viewRevision: this.#viewRevision }),
+      });
+      if (proposal.kind !== 'card-move') return undefined;
+      return Object.freeze({
+        ...target,
+        eligibility: snapshotKanbanEligibility(this.#options.evaluateProposal(proposal)),
+      });
+    } catch {
+      return Object.freeze({
+        ...target,
+        eligibility: Object.freeze({ kind: 'unavailable', code: 'eligibility-unavailable' }),
+      });
+    }
   }
 }

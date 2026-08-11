@@ -301,6 +301,7 @@ export class KanbanBoard<TCard> extends Group {
       acceptScopedAction: (actionId, scope, origin) =>
         this.#interactionFacade.acceptScopedAction(actionId, scope, origin),
       commitCardMove: (proposal) => this.#authority.commitProposal(proposal),
+      evaluateCardMove: (proposal) => this.#authority.evaluateProposal(proposal),
     });
     setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
       this.#reconcileInteraction(this.viewport.identityChanges()),
@@ -694,16 +695,11 @@ export class KanbanBoard<TCard> extends Group {
   /** Captures ordered eligible selection with exact current card and query revisions. */
   #snapshotEligibleSelection(): KanbanSelectionSnapshot {
     const snapshot: KanbanInteractionSnapshot = this.#interactionFacade.snapshot();
-    const eligible = new Map(
+    const selectedKeys = new Set(snapshot.selectedCardKeys.map((key) => JSON.stringify([typeof key, key])));
+    const entries = Object.freeze(
       this.viewport
         .interactionEligibleSelection()
-        .map((entry) => [JSON.stringify([typeof entry.cardKey, entry.cardKey]), entry]),
-    );
-    const entries = Object.freeze(
-      snapshot.selectedCardKeys.flatMap((key) => {
-        const entry = eligible.get(JSON.stringify([typeof key, key]));
-        return entry === undefined ? [] : [entry];
-      }),
+        .filter((entry) => selectedKeys.has(JSON.stringify([typeof entry.cardKey, entry.cardKey]))),
     );
     const revisions = this.viewport.interactionRevisions();
     return Object.freeze({

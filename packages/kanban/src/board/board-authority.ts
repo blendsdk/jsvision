@@ -33,6 +33,11 @@ import type {
 const UNAVAILABLE_OPERATION_ID = createKanbanOperationId('kanban-unavailable');
 /** Shared immutable allowed result for proposal paths without a board-specific policy evaluator. */
 const ALLOWED: KanbanEligibility = Object.freeze({ kind: 'allowed' });
+/** Closed preview result used after authority disposal or malformed proposal input. */
+const ELIGIBILITY_UNAVAILABLE: KanbanEligibility = Object.freeze({
+  kind: 'unavailable',
+  code: 'eligibility-unavailable',
+});
 
 /** Application-independent fallback used when a board has no mutation dispatcher. */
 const UNAVAILABLE_DISPATCHER: KanbanCoordinatorDispatcher = (request) =>
@@ -152,6 +157,17 @@ export class KanbanBoardAuthority {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /** Returns current detached policy eligibility without admitting or publishing an operation. */
+  evaluateProposal(value: KanbanRequestProposal): KanbanEligibility {
+    if (this.#disposed) return ELIGIBILITY_UNAVAILABLE;
+    try {
+      const proposal = snapshotKanbanRequestProposal(value);
+      return currentEligibility(this.#eligibility, proposal);
+    } catch {
+      return ELIGIBILITY_UNAVAILABLE;
     }
   }
 

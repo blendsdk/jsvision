@@ -6,6 +6,7 @@ import {
   validateKanbanDataKeys,
 } from '../contract/data-snapshot.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
+import { createKanbanCardKey } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import type { KanbanCardMoveProposal, KanbanMovedCardSnapshot } from '../contract/request.js';
 import { snapshotKanbanRequestProposal } from '../contract/request-validation.js';
@@ -16,7 +17,16 @@ import type { KanbanCardDropTarget, KanbanDragCancellationReason, KanbanDragOver
 import { createKanbanDragGhostEvidence } from './drag-selection.js';
 
 /** Exact members accepted when beginning one captured card drag. */
-const BEGIN_KEYS = new Set(['generation', 'capture', 'dragged', 'originPoint', 'sceneRevision', 'geometryGeneration']);
+const BEGIN_KEYS = new Set([
+  'generation',
+  'capture',
+  'dragged',
+  'originCardKey',
+  'originPoint',
+  'sceneRevision',
+  'geometryGeneration',
+  'viewRevision',
+]);
 
 /** Minimal threshold-crossing evidence adopted by the controller. */
 export interface KanbanCardDragBegin {
@@ -26,12 +36,16 @@ export interface KanbanCardDragBegin {
   readonly capture: PointerCaptureLease;
   /** Ordered concrete source evidence for the atomic move. */
   readonly dragged: readonly KanbanMovedCardSnapshot[];
+  /** Pointer-origin identity retained separately from deterministic moved-set ordering. */
+  readonly originCardKey?: CardKey;
   /** Viewport-local point where the press began. */
   readonly originPoint: Readonly<Point>;
   /** Scene revision that owns the source evidence. */
   readonly sceneRevision: KanbanRevision;
   /** Geometry generation used for target discovery. */
   readonly geometryGeneration: number;
+  /** Optional saved-view revision captured with the selected set. */
+  readonly viewRevision?: KanbanRevision;
 }
 
 /** Current semantic target update for one active generation. */
@@ -85,6 +99,7 @@ interface ActiveCardDrag {
   readonly generation: number;
   readonly capture: PointerCaptureLease;
   readonly dragged: readonly KanbanMovedCardSnapshot[];
+  readonly viewRevision?: KanbanRevision;
   sceneRevision: KanbanRevision;
   geometryGeneration: number;
   overlay: KanbanDragOverlayEvidence;
@@ -172,7 +187,7 @@ function initialOverlay(begin: KanbanCardDragBegin): KanbanDragOverlayEvidence {
   return Object.freeze({
     generation: begin.generation,
     geometryGeneration: begin.geometryGeneration,
-    ghost: createKanbanDragGhostEvidence(begin.dragged, begin.originPoint),
+    ghost: createKanbanDragGhostEvidence(begin.dragged, begin.originPoint, begin.originCardKey),
     placeholders: placeholders(begin.dragged),
   });
 }
@@ -210,6 +225,16 @@ export class KanbanCardDragController {
       const dragged = draggedCards(properties.dragged);
       const sceneRevision = snapshotKanbanRevision(properties.sceneRevision);
       const geometryGeneration = generation(properties.geometryGeneration);
+      const originCardKey =
+        properties.originCardKey === undefined
+          ? undefined
+          : typeof properties.originCardKey === 'string' || typeof properties.originCardKey === 'number'
+            ? createKanbanCardKey(properties.originCardKey)
+            : (() => {
+                throw new RangeError('Invalid Kanban drag origin identity.');
+              })();
+      const viewRevision =
+        properties.viewRevision === undefined ? undefined : snapshotKanbanRevision(properties.viewRevision);
       const capture = properties.capture;
       if (!isPointerCaptureLease(capture) || capture.active() !== true) {
         return false;
@@ -221,6 +246,8 @@ export class KanbanCardDragController {
         originPoint,
         sceneRevision,
         geometryGeneration,
+        ...(originCardKey === undefined ? {} : { originCardKey }),
+        ...(viewRevision === undefined ? {} : { viewRevision }),
       });
       this.#active = {
         ...begin,
@@ -281,12 +308,16 @@ export class KanbanCardDragController {
       moved: active.dragged,
       target: target.address,
       position: target.position,
+      ...(active.viewRevision === undefined ? {} : { viewRevision: active.viewRevision }),
     });
-    this.#finish(active);
     try {
       return proposal.kind === 'card-move' && this.#commitProposal(proposal, target.eligibility);
     } catch {
       return false;
+    } finally {
+      // Pending publication happens synchronously inside admission. Retaining the released overlay
+      // until that boundary prevents an observable idle frame between drag and pending feedback.
+      this.#finish(active);
     }
   }
 

@@ -1,6 +1,8 @@
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import type { KanbanActionScope } from '../layout/hit-map.js';
 import type { KanbanCardMoveProposal } from '../contract/request.js';
+import { snapshotKanbanEligibility } from '../operation/eligibility.js';
+import type { KanbanEligibility } from '../operation/eligibility.js';
 import { snapshotKanbanInteractionSnapshot } from '../interaction/controller.js';
 import type { KanbanActivateOptions, KanbanOpenContextOptions } from '../interaction/facade.js';
 import type { KanbanInteractionOrigin, KanbanScopedActionId } from '../interaction/intent.js';
@@ -57,6 +59,8 @@ export interface KanbanViewportInputAdapter {
   ) => boolean;
   /** Optional board-only mutation admission; standalone viewports deliberately omit it. */
   readonly commitCardMove?: (proposal: KanbanCardMoveProposal) => boolean;
+  /** Optional board-only pure policy preview used to classify the current semantic drop target. */
+  readonly evaluateCardMove?: (proposal: KanbanCardMoveProposal) => KanbanEligibility;
 }
 
 /** Captured input methods that cannot be replaced after board construction. */
@@ -71,6 +75,7 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
     const acceptOpenContext = Reflect.get(adapter, 'acceptOpenContext');
     const acceptScopedAction = Reflect.get(adapter, 'acceptScopedAction');
     const commitCardMove = Reflect.get(adapter, 'commitCardMove');
+    const evaluateCardMove = Reflect.get(adapter, 'evaluateCardMove');
     if (
       typeof accept !== 'function' ||
       typeof acceptActivate !== 'function' ||
@@ -96,6 +101,12 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
         ? {
             commitCardMove: (proposal: KanbanCardMoveProposal) =>
               Reflect.apply(commitCardMove, adapter, [proposal]) === true,
+          }
+        : {}),
+      ...(typeof evaluateCardMove === 'function'
+        ? {
+            evaluateCardMove: (proposal: KanbanCardMoveProposal) =>
+              snapshotKanbanEligibility(Reflect.apply(evaluateCardMove, adapter, [proposal])),
           }
         : {}),
     });

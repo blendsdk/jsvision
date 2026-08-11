@@ -152,6 +152,27 @@ describe('drop-map clipping and half-open boundaries', () => {
 });
 
 describe('drop-map semantic identity and resource bounds', () => {
+  it('rejects aggregate multi-cell work above the package target ceiling', () => {
+    const cards = Object.freeze(
+      Array.from({ length: 4_097 }, (_, index) =>
+        Object.freeze({
+          cardKey: index,
+          rect: Object.freeze({ x: 0, y: index + 2, width: 1, height: 1 }),
+          before: START,
+          after: END,
+        }),
+      ),
+    );
+    const overloaded = Object.freeze([
+      Object.freeze({ ...cell('left'), cards, gutters: Object.freeze([]) }),
+      Object.freeze({ ...cell('right'), cards, gutters: Object.freeze([]) }),
+    ]);
+
+    expect(() => projectKanbanCardDropMap({ density: 'compact', cells: overloaded })).toThrow(
+      KanbanInvalidGeometryError,
+    );
+  });
+
   it('keeps one slot identity stable across geometry generations and target representations', () => {
     const first = projectKanbanCardDropMap({ density: 'comfortable', cells: [cell()], geometryGeneration: 4 });
     const second = projectKanbanCardDropMap({ density: 'compact', cells: [cell()], geometryGeneration: 5 });
