@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 10:49 CEST
-> **Progress**: 3/124 tasks (2%)
+> **Last Updated**: 2026-08-11 10:50 CEST
+> **Progress**: 4/124 tasks (3%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -64,7 +64,10 @@ changing the shared UI event loop.
 - [x] 1.1.1 `[spec-author]` Write generation/replacement/stale-release specification cases — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:44)
 - [x] 1.1.2 `[spec-author]` Add modal/immediate target-or-ancestor subtree unmount without later input/decoded-focus/explicit-host-loss/direct-stop/direct-dispose precedence and throwing/reentrant callback cases — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:46)
 - [x] 1.1.3 `[spec-author]` Add legacy set/release/has-capture compatibility cases using real Slider/ScrollBar/Desktop/Input fixtures — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:49)
-- [ ] 1.1.4 Run the focused capture specification and record the expected red cases; justify only legacy assertions that already pass — `packages/ui/test/pointer-capture-lease.spec.test.ts`
+- [x] 1.1.4 Run the focused capture specification and record the expected red cases; justify only legacy assertions that already pass — `packages/ui/test/pointer-capture-lease.spec.test.ts` ✅ (completed: 2026-08-11 10:50)
+  - Red evidence: 12 lease/loss cases fail because the additive acquisition/loss APIs are absent; 4
+    legacy Slider, ScrollBar, Input, and Desktop cases pass because they intentionally freeze the
+    existing set/release/query behavior.
 
 ### Step 1.2: Implementation
 
