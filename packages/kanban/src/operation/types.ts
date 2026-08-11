@@ -289,9 +289,12 @@ export function snapshotKanbanOperationSubject(value: unknown): KanbanOperationS
   }
 }
 
+/** Maximum standard move subjects: selected cards, destination axes, and two placement anchors. */
+const MAX_AFFECTED_SUBJECTS = KANBAN_LIMITS.selectedKeys.safe + 4;
+
 /** Validate a bounded sorted unique affected-subject set. */
 export function snapshotKanbanOperationSubjects(value: unknown): readonly KanbanOperationSubject[] {
-  const subjects = snapshotKanbanDataArray(value, KANBAN_LIMITS.selectedKeys.safe).map(snapshotKanbanOperationSubject);
+  const subjects = snapshotKanbanDataArray(value, MAX_AFFECTED_SUBJECTS).map(snapshotKanbanOperationSubject);
   const identities = subjects.map(canonicalizeKanbanOperationSubject);
   if (new Set(identities).size !== identities.length) return invalidOperation();
   if (identities.some((identity, index) => index > 0 && identity < identities[index - 1]!)) {

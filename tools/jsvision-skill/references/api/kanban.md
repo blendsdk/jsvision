@@ -2851,6 +2851,7 @@ interface KanbanObservation {
   operationId?: KanbanOperationId;   // Optional operation identity for payload-free request lifecycle diagnostics.
   kind?: KanbanRequest['kind'];   // Optional request discriminator for payload-free operation lifecycle diagnostics.
   state?: KanbanOperationState;   // Optional operation lifecycle state.
+  duration?: KanbanObservationDurationBucket;   // Optional coarse elapsed time since the operation was admitted.
   cardKey?: CardKey;   // Optional application card identity, preserving string and number distinction.
   columnId?: KanbanColumnId;   // Optional validated workflow-column identity.
   swimlaneId?: KanbanSwimlaneId;   // Optional validated swimlane identity.
@@ -2877,6 +2878,18 @@ Bounded numeric counters that provide payload-free diagnostic context.
 
 ```ts
 type KanbanObservationCounts = Readonly<Record<string, number>>
+```
+
+## KanbanObservationDurationBucket
+
+Coarse monotonic elapsed-time band that avoids exposing precise timing data.
+
+```ts
+type KanbanObservationDurationBucket = | 'under-10ms'
+  | 'under-100ms'
+  | 'under-1s'
+  | 'under-10s'
+  | '10s-or-more'
 ```
 
 ## KanbanObservationInput

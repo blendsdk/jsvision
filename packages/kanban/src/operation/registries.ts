@@ -7,6 +7,12 @@ import type { KanbanOperationSnapshot, KanbanOperationSubscriber } from './types
 /** Unsubscribe function returned by payload-free operation-state subscriptions. */
 export type KanbanOperationUnsubscribe = () => void;
 
+/** One ordered transition plus its coordinator-owned observation delivery. */
+interface KanbanOperationNotification {
+  readonly snapshot: KanbanOperationSnapshot;
+  readonly observe?: () => void;
+}
+
 /** Validate a caller-supplied finite capacity before allocating its registry. */
 function registryCapacity(value: number, absolute: number): number {
   if (!Number.isSafeInteger(value) || value < 0 || value > absolute) throw new KanbanInvalidLimitError();
@@ -114,7 +120,7 @@ export class KanbanOperationSnapshotRegistry {
   readonly #subscriberCapacity: number;
   readonly #active = new Map<KanbanOperationId, KanbanOperationSnapshot>();
   readonly #subscribers = new Set<KanbanOperationSubscriber>();
-  readonly #notifications: KanbanOperationSnapshot[] = [];
+  readonly #notifications: KanbanOperationNotification[] = [];
   #notifying = false;
   #disposed = false;
 
@@ -128,7 +134,7 @@ export class KanbanOperationSnapshotRegistry {
   }
 
   /** Publishes one lifecycle transition after updating the bounded active snapshot set. */
-  publish(value: KanbanOperationSnapshot): void {
+  publish(value: KanbanOperationSnapshot, observe?: () => void): void {
     if (this.#disposed) return;
     const snapshot = snapshotKanbanOperationSnapshot(value);
     const active = snapshot.state === 'proposed' || snapshot.state === 'pending' || snapshot.state === 'accepted';
@@ -137,7 +143,7 @@ export class KanbanOperationSnapshotRegistry {
     }
     if (active) this.#active.set(snapshot.operationId, snapshot);
     else this.#active.delete(snapshot.operationId);
-    this.#notifications.push(snapshot);
+    this.#notifications.push(Object.freeze({ snapshot, ...(observe === undefined ? {} : { observe }) }));
     this.#flushNotifications();
   }
 
@@ -176,11 +182,16 @@ export class KanbanOperationSnapshotRegistry {
     this.#notifying = true;
     try {
       while (!this.#disposed && this.#notifications.length > 0) {
-        const snapshot = this.#notifications.shift();
-        if (snapshot === undefined) continue;
+        const notification = this.#notifications.shift();
+        if (notification === undefined) continue;
+        try {
+          notification.observe?.();
+        } catch {
+          // Diagnostic callbacks cannot alter an already-published lifecycle transition.
+        }
         for (const subscriber of [...this.#subscribers]) {
           try {
-            subscriber(snapshot);
+            subscriber(notification.snapshot);
           } catch {
             // Lifecycle observers cannot roll back an already-published coordinator transition.
           }

@@ -12,6 +12,9 @@ export type KanbanObservationScope = 'board' | 'query' | 'source' | 'cell' | 'ca
 /** Bounded numeric counters that provide payload-free diagnostic context. */
 export type KanbanObservationCounts = Readonly<Record<string, number>>;
 
+/** Coarse monotonic elapsed-time band that avoids exposing precise timing data. */
+export type KanbanObservationDurationBucket = 'under-10ms' | 'under-100ms' | 'under-1s' | 'under-10s' | '10s-or-more';
+
 /** Safe diagnostic metadata that never contains application records, queries, tokens, or raw errors. */
 export interface KanbanObservation {
   /** Stable sanitized reason code. */
@@ -24,6 +27,8 @@ export interface KanbanObservation {
   readonly kind?: KanbanRequest['kind'];
   /** Optional operation lifecycle state. */
   readonly state?: KanbanOperationState;
+  /** Optional coarse elapsed time since the operation was admitted. */
+  readonly duration?: KanbanObservationDurationBucket;
   /** Optional application card identity, preserving string and number distinction. */
   readonly cardKey?: CardKey;
   /** Optional validated workflow-column identity. */
@@ -65,6 +70,7 @@ const OBSERVATION_KEYS = new Set([
   'operationId',
   'kind',
   'state',
+  'duration',
   'cardKey',
   'columnId',
   'swimlaneId',
@@ -72,6 +78,20 @@ const OBSERVATION_KEYS = new Set([
   'error',
   'message',
 ]);
+
+/** Narrow one optional duration band to the closed payload-free union. */
+function safeDuration(value: unknown): KanbanObservationDurationBucket | undefined {
+  switch (value) {
+    case 'under-10ms':
+    case 'under-100ms':
+    case 'under-1s':
+    case 'under-10s':
+    case '10s-or-more':
+      return value;
+    default:
+      return undefined;
+  }
+}
 
 /** Narrows an untrusted value to one allowlisted observation scope. */
 function isObservationScope(value: unknown): value is KanbanObservationScope {
@@ -200,6 +220,7 @@ export function createKanbanObservation(input: KanbanObservationInput): KanbanOb
   const operationId = safeIdentity(properties.operationId);
   const kind = safeRequestKind(properties.kind);
   const state = safeOperationState(properties.state);
+  const duration = safeDuration(properties.duration);
   const cardKey = safeCardKey(properties.cardKey);
   const columnId = safeIdentity(properties.columnId);
   const swimlaneId = safeIdentity(properties.swimlaneId);
@@ -209,6 +230,7 @@ export function createKanbanObservation(input: KanbanObservationInput): KanbanOb
     ...(operationId === undefined ? {} : { operationId }),
     ...(kind === undefined ? {} : { kind }),
     ...(state === undefined ? {} : { state }),
+    ...(duration === undefined ? {} : { duration }),
     ...(cardKey === undefined ? {} : { cardKey }),
     ...(columnId === undefined ? {} : { columnId }),
     ...(swimlaneId === undefined ? {} : { swimlaneId }),

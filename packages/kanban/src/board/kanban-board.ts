@@ -273,7 +273,6 @@ export class KanbanBoard<TCard> extends Group {
         ? {}
         : {
             eligibility: operationEligibility,
-            revalidate: (proposal: KanbanRequestProposal) => operationEligibility(proposal),
           }),
       ...(options.confirmOperation === undefined ? {} : { confirm: options.confirmOperation }),
       ...(options.resolveUndo === undefined ? {} : { resolveUndo: options.resolveUndo }),

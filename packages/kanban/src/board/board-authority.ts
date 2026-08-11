@@ -18,7 +18,7 @@ import {
   snapshotKanbanRequestProposal,
 } from '../contract/request-validation.js';
 import { KanbanOperationCoordinator } from '../operation/coordinator.js';
-import type { KanbanCoordinatorDispatcher } from '../operation/coordinator.js';
+import type { KanbanCoordinatorDispatcher, KanbanOperationAuthoritySnapshot } from '../operation/coordinator.js';
 import type { KanbanConfirmationCallback } from '../operation/confirmation.js';
 import type { KanbanOperationIdFactory } from '../operation/operation-id.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
@@ -54,7 +54,7 @@ export interface KanbanBoardAuthorityOptions {
   readonly revalidate?: (
     proposal: KanbanRequestProposal,
     expected: KanbanRequestExpectedRevisions,
-  ) => KanbanEligibility;
+  ) => KanbanOperationAuthoritySnapshot;
   /** Optional lower coordinator resource ceilings. */
   readonly limits?: KanbanLimitOptions;
   /** Optional payload-free lifecycle observation sink, wired by the observation layer. */
@@ -96,7 +96,8 @@ function completeRequest(value: unknown): KanbanRequest | undefined {
  * Owns one board-level semantic operation coordinator without reading application card records.
  *
  * Standard proposals receive coordinator-owned lifecycle fields. Existing complete request envelopes
- * keep their validated operation ID, expected revisions, and live signal for backward compatibility.
+ * keep their validated operation ID and expected revisions; caller cancellation is bridged into the
+ * coordinator-owned signal so teardown can still abort application dispatch.
  */
 export class KanbanBoardAuthority {
   readonly #coordinator: KanbanOperationCoordinator;
@@ -121,7 +122,13 @@ export class KanbanBoardAuthority {
       ...(options.confirm === undefined ? {} : { confirm: options.confirm }),
       ...(options.resolveUndo === undefined ? {} : { resolveUndo: options.resolveUndo }),
       ...(options.operationId === undefined ? {} : { operationId: options.operationId }),
-      ...(options.revalidate === undefined ? {} : { revalidate: options.revalidate }),
+      revalidate:
+        options.revalidate ??
+        ((proposal): KanbanOperationAuthoritySnapshot =>
+          Object.freeze({
+            expected: currentExpected(this.#expected),
+            eligibility: currentEligibility(this.#eligibility, proposal),
+          })),
       ...(options.limits === undefined ? {} : { limits: options.limits }),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
@@ -130,8 +137,8 @@ export class KanbanBoardAuthority {
   /**
    * Validate and dispatch one complete compatibility envelope or lifecycle-free standard proposal.
    *
-   * Complete envelopes preserve their caller identity and signal. Proposals receive a fresh package
-   * identity and current board revision/policy snapshots before entering the same coordinator.
+   * Complete envelopes preserve caller identity and cancellation semantics. Proposals receive a fresh
+   * package identity and current board revision/policy snapshots before entering the same coordinator.
    */
   async request(value: KanbanRequest | KanbanRequestProposal): Promise<KanbanRequestResult> {
     const adopted = completeRequest(value);

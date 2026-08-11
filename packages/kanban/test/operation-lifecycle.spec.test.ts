@@ -385,18 +385,21 @@ describe('operation producer convergence', () => {
       () => ({}),
     );
 
-    const results = await Promise.all(
-      proposals.map(({ origin: _origin, ...proposal }, index) => {
-        const operationId = createKanbanOperationId(`operation-producer-${index}`);
-        return authority.request(
-          createKanbanRequestEnvelope(proposal, {
-            operationId,
-            expected: { source: 'source-r1', query: 'query-r1' },
-            signal: new AbortController().signal,
-          }),
-        );
-      }),
-    );
+    const results: KanbanRequestResult[] = [];
+    for (const [index, { origin: _origin, ...proposal }] of proposals.entries()) {
+      const operationId = createKanbanOperationId(`operation-producer-${index}`);
+      const result = await authority.request(
+        createKanbanRequestEnvelope(proposal, {
+          operationId,
+          expected: { source: 'source-r1', query: 'query-r1' },
+          signal: new AbortController().signal,
+        }),
+      );
+      results.push(result);
+      // This case proves producer convergence, not overlapping-operation admission. Complete each
+      // accepted lifecycle so later producers do not intentionally conflict with its subjects.
+      if (result.kind === 'accepted') authority.reconcilePublication({ kind: 'confirmed', operationId });
+    }
 
     expect(results.every(({ kind }) => kind === 'accepted')).toBe(true);
     expect(dispatched.map(({ kind }) => kind)).toEqual(proposals.map(({ kind }) => kind));

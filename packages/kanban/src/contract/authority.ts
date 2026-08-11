@@ -26,6 +26,10 @@ const MAX_PENDING_OPERATIONS = KANBAN_LIMITS.pendingOperations.safe;
 const NATIVE_PROMISE_THEN = Promise.prototype.then;
 /** Exact publication notice members. */
 const NOTICE_KEYS = new Set(['kind', 'operationId', 'subjects']);
+/** Exact operation-only confirmation members. */
+const CONFIRMED_NOTICE_KEYS = new Set(['kind', 'operationId']);
+/** Exact subject-bearing publication members. */
+const SUBJECT_NOTICE_KEYS = new Set(['kind', 'operationId', 'subjects']);
 
 /** Read one required string data member without coercion. */
 function requiredString(properties: KanbanDataProperties, key: string): string {
@@ -129,8 +133,20 @@ export function reconcileKanbanPublication(
   const properties = snapshotKanbanDataProperties(notice);
   validateKanbanDataKeys(properties, NOTICE_KEYS);
   const kind = properties.kind;
-  if (kind !== 'matching' && kind !== 'contradictory') throw new KanbanInvalidSemanticValueError();
   const operationId = createKanbanOperationId(requiredString(properties, 'operationId'));
+  if (kind === 'confirmed') {
+    validateKanbanDataKeys(properties, CONFIRMED_NOTICE_KEYS);
+    const cleared = Object.freeze({ kind, operationId });
+    const remaining = expectations.filter((expectation) => expectation.operationId !== operationId);
+    return Object.freeze({
+      pending: Object.freeze(remaining),
+      ...(remaining.length === expectations.length ? {} : { cleared }),
+    });
+  }
+  if (kind !== 'matching' && kind !== 'contradictory' && kind !== 'deleted') {
+    throw new KanbanInvalidSemanticValueError();
+  }
+  validateKanbanDataKeys(properties, SUBJECT_NOTICE_KEYS);
   const subjects = snapshotKanbanPublicationSubjects(properties.subjects);
   const cleared = Object.freeze({ kind, operationId, subjects });
   const remaining = expectations.filter((expectation) => expectation.operationId !== operationId);
