@@ -13,11 +13,13 @@ import { snapshotKanbanEligibility } from './eligibility.js';
 import { snapshotKanbanOperationSnapshot, snapshotKanbanOperationSubjects } from './types.js';
 import type {
   KanbanConfirmationContext,
-  KanbanConfirmer,
   KanbanInverseRequestContext,
   KanbanOperationSnapshot,
   KanbanUndoDescriptor,
 } from './types.js';
+
+/** Internal callback-ingestion type whose output is validated before any lifecycle decision. */
+export type KanbanConfirmationCallback = (context: KanbanConfirmationContext) => unknown;
 
 /** Exact confirmation-context members. */
 const CONTEXT_KEYS = new Set(['operationId', 'proposal', 'affected', 'expected', 'eligibility', 'signal']);
@@ -97,7 +99,7 @@ export function snapshotKanbanConfirmationContext(value: unknown): KanbanConfirm
  * non-boolean settlements become `invalid` without reading a hostile `then` member.
  */
 export async function settleKanbanConfirmation(
-  confirmer: KanbanConfirmer | undefined,
+  confirmer: KanbanConfirmationCallback | undefined,
   value: KanbanConfirmationContext,
 ): Promise<KanbanConfirmationSettlement> {
   if (confirmer === undefined) return 'declined';

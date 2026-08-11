@@ -24,6 +24,7 @@ import {
 } from '../contract/request-validation.js';
 import { fingerprintKanbanSemanticValue } from '../contract/semantic-query.js';
 import { createKanbanInverseRequestContext, settleKanbanConfirmation } from './confirmation.js';
+import type { KanbanConfirmationCallback } from './confirmation.js';
 import { classifyKanbanRequestConfirmation, snapshotKanbanEligibility } from './eligibility.js';
 import type { KanbanEligibility } from './eligibility.js';
 import { createKanbanOperationIdRegistry } from './operation-id.js';
@@ -44,7 +45,6 @@ import {
   snapshotKanbanOperationSnapshot,
 } from './types.js';
 import type {
-  KanbanConfirmer,
   KanbanInverseRequestBuilder,
   KanbanOperationSnapshot,
   KanbanOperationState,
@@ -53,6 +53,9 @@ import type {
   KanbanPendingProjection,
   KanbanUndoDescriptor,
 } from './types.js';
+
+/** Internal dispatcher ingestion type whose untrusted output is validated after invocation. */
+export type KanbanCoordinatorDispatcher = (...parameters: Parameters<KanbanRequestDispatcher>) => unknown;
 
 export {
   KanbanCommittedUndoRegistry,
@@ -64,13 +67,13 @@ export type { KanbanOperationUnsubscribe } from './registries.js';
 /** Construction options for one board-owned semantic operation coordinator. */
 export interface KanbanOperationCoordinatorOptions {
   /** Single application-owned mutation dispatcher. */
-  readonly dispatcher: KanbanRequestDispatcher;
+  readonly dispatcher: KanbanCoordinatorDispatcher;
   /** Live presentation capabilities captured immediately before dispatch. */
   readonly capabilities?: () => unknown;
   /** Optional application operation-ID factory; every returned value is validated. */
   readonly operationId?: KanbanOperationIdFactory;
   /** Optional application confirmation callback for warnings and destructive proposals. */
-  readonly confirm?: KanbanConfirmer;
+  readonly confirm?: KanbanConfirmationCallback;
   /** Optional application callback that resolves an opaque undo token into one fresh proposal. */
   readonly resolveUndo?: KanbanInverseRequestBuilder;
   /** Package integration seam that recomputes current eligibility after confirmation callbacks. */
@@ -148,9 +151,9 @@ function confirmationStillApplies(previous: KanbanEligibility, current: KanbanEl
  * ```
  */
 export class KanbanOperationCoordinator {
-  readonly #dispatcher: KanbanRequestDispatcher;
+  readonly #dispatcher: KanbanCoordinatorDispatcher;
   readonly #capabilities: (() => unknown) | undefined;
-  readonly #confirm: KanbanConfirmer | undefined;
+  readonly #confirm: KanbanConfirmationCallback | undefined;
   readonly #resolveUndo: KanbanInverseRequestBuilder | undefined;
   readonly #revalidate: KanbanOperationRevalidator | undefined;
   readonly #observe: ((observation: KanbanObservation) => void) | undefined;

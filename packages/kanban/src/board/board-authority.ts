@@ -7,7 +7,6 @@ import type {
   KanbanPublicationExpectation,
   KanbanPublicationNotice,
   KanbanRequest,
-  KanbanRequestDispatcher,
   KanbanRequestExpectedRevisions,
   KanbanRequestProposal,
   KanbanRequestResult,
@@ -19,11 +18,12 @@ import {
   snapshotKanbanRequestProposal,
 } from '../contract/request-validation.js';
 import { KanbanOperationCoordinator } from '../operation/coordinator.js';
+import type { KanbanCoordinatorDispatcher } from '../operation/coordinator.js';
+import type { KanbanConfirmationCallback } from '../operation/confirmation.js';
 import type { KanbanOperationIdFactory } from '../operation/operation-id.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
 import { snapshotKanbanEligibility } from '../operation/eligibility.js';
 import type {
-  KanbanConfirmer,
   KanbanInverseRequestBuilder,
   KanbanOperationSnapshot,
   KanbanOperationSubscriber,
@@ -35,7 +35,7 @@ const UNAVAILABLE_OPERATION_ID = createKanbanOperationId('kanban-unavailable');
 const ALLOWED: KanbanEligibility = Object.freeze({ kind: 'allowed' });
 
 /** Application-independent fallback used when a board has no mutation dispatcher. */
-const UNAVAILABLE_DISPATCHER: KanbanRequestDispatcher = (request) =>
+const UNAVAILABLE_DISPATCHER: KanbanCoordinatorDispatcher = (request) =>
   Object.freeze({ kind: 'rejected', operationId: request.operationId, code: 'dispatcher-unavailable' });
 
 /** Optional board integration callbacks used to capture current record-independent request authority. */
@@ -45,7 +45,7 @@ export interface KanbanBoardAuthorityOptions {
   /** Current pure policy result for one standard proposal. */
   readonly eligibility?: (proposal: KanbanRequestProposal) => unknown;
   /** Optional application confirmation callback for warning and destructive proposals. */
-  readonly confirm?: KanbanConfirmer;
+  readonly confirm?: KanbanConfirmationCallback;
   /** Optional application callback that resolves an opaque undo token into a fresh proposal. */
   readonly resolveUndo?: KanbanInverseRequestBuilder;
   /** Optional application operation-ID factory for lifecycle-free proposals. */
@@ -108,7 +108,7 @@ export class KanbanBoardAuthority {
 
   /** Creates one coordinator-backed authority while preserving the historical constructor shape. */
   constructor(
-    dispatcher: KanbanRequestDispatcher | undefined,
+    dispatcher: KanbanCoordinatorDispatcher | undefined,
     capabilities: (() => unknown) | undefined,
     options: KanbanBoardAuthorityOptions = {},
   ) {

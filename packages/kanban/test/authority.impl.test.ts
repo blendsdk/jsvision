@@ -314,7 +314,7 @@ describe('board authority coordinator compatibility', () => {
       settle = resolve;
     });
     let dispatchedSignal: AbortSignal | undefined;
-    const dispatcher: KanbanRequestDispatcher = vi.fn((received) => {
+    const dispatcher: KanbanRequestDispatcher = vi.fn((received): Promise<KanbanRequestResult> => {
       dispatchedSignal = received.signal;
       return deferred;
     });
@@ -337,7 +337,7 @@ describe('board authority coordinator compatibility', () => {
 
   it('captures current revisions for a standard proposal and rejects requests after disposal', async () => {
     let submittedOperationId = '';
-    const dispatcher: KanbanRequestDispatcher = vi.fn((received) => {
+    const dispatcher: KanbanRequestDispatcher = vi.fn((received): KanbanRequestResult => {
       submittedOperationId = received.operationId;
       expect(received.expected).toEqual({ source: 'source-current', query: 7 });
       return { kind: 'rejected', operationId: received.operationId, code: 'test-complete' };

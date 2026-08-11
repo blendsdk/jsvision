@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 16:58 CEST
-> **Progress**: 50/124 tasks (40%)
+> **Last Updated**: 2026-08-11 17:02 CEST
+> **Progress**: 51/124 tasks (41%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -222,7 +222,9 @@ late-work behavior before introducing the coordinator.
 
 - [x] 3.3.1 Add coordinator implementation tests for subject keys, subscriber reentrancy/failure, queue ordering, ID eviction, and exact generation checks — `packages/kanban/test/operation-coordinator.impl.test.ts` ✅ (completed: 2026-08-11 16:54)
 - [x] 3.3.2 Add board-authority compatibility and request-before/after-mount/dispose tests — `packages/kanban/test/authority.impl.test.ts`, `packages/kanban/test/board-lifecycle.impl.test.ts` ✅ (completed: 2026-08-11 16:58)
-- [ ] 3.3.3 Run Kanban build/typecheck/focused tests/check:deps/check:docs, mapped plugin-impact update/check, and `yarn verify:local`
+- [x] 3.3.3 Run Kanban build/typecheck/focused tests/check:deps/check:docs, mapped plugin-impact update/check, and `yarn verify:local` ✅ (completed: 2026-08-11 17:02)
+  - Gate evidence: Kanban build/typecheck; 8 focused files / 114 tests; `check:deps`;
+    `check:docs`; plugin update/check; and `yarn verify:local` all passed.
 
 **Deliverables**: one semantic coordinator; exactly-once dispatch; honest pending publication; bounded
 conflicts/IDs; fresh-request undo; late work inert.
