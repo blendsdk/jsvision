@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 11:45 CEST
-> **Progress**: 14/124 tasks (11%)
+> **Last Updated**: 2026-08-11 11:56 CEST
+> **Progress**: 15/124 tasks (12%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -107,13 +107,22 @@ with no new or reopened Critical/Major issue.
 
 ## Phase 2: Request, placement, and eligibility contracts
 
+> **Phase baseline tree**: `ce42d01f30d26519cebaae15e1a31a0b2b844509`
+> **Scope mode**: strict
+> **Confirmed scope baseline**: RD-08 Phase C request, semantic placement, eligibility, and operation-ID contracts while preserving legacy extension compatibility and application authority.
+> **Expected modification set**: `packages/kanban/src/contract/{request,request-validation,authority}.ts`,
+> `packages/kanban/src/operation/{placement,eligibility,operation-id}.ts`,
+> `packages/kanban/src/source/placement.ts`, `packages/kanban/src/index.ts`, focused files under
+> `packages/kanban/test/`, this execution plan, and generated plugin/API/skill outputs reported by the
+> repository impact tooling.
+
 ### Step 2.1: Specification tests
 
 **Reference**: 03-02 · ST-C-REQ-01..12 · AR-C05/C06/C10/C11/C14/C20
 **Objective**: Freeze the public union, semantic placement, exact validation, eligibility, and operation-ID
 contracts before production expansion.
 
-- [ ] 2.1.1 `[spec-author]` Write exact standard proposal/internal-envelope/new-extension and legacy-extension-overload plus semantic move cases — `packages/kanban/test/requests-placement.spec.test.ts`
+- [x] 2.1.1 `[spec-author]` Write exact standard proposal/internal-envelope/new-extension and legacy-extension-overload plus semantic move cases — `packages/kanban/test/requests-placement.spec.test.ts` ✅ (completed: 2026-08-11 11:56)
 - [ ] 2.1.2 `[spec-author]` Add complete/unknown edge, anchor/token, sorted/filtered, no-op, WIP/DoD/transition, warning, and stale-revision eligibility cases — `packages/kanban/test/requests-placement.spec.test.ts`
 - [ ] 2.1.3 `[spec-author]` Add duplicate ID/selection, partial atomic result, hostile getter/proxy/thenable, bounds, controls, and token-redaction cases — `packages/kanban/test/security/phase-c-boundaries.spec.test.ts`
 - [ ] 2.1.4 Run focused request/security specifications and record expected red behavior
