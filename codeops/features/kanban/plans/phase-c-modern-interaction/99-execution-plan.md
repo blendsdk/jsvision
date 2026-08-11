@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 23:24 CEST
-> **Progress**: 59/124 tasks (48%)
+> **Last Updated**: 2026-08-11 23:27 CEST
+> **Progress**: 60/124 tasks (48%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -288,7 +288,7 @@ coordinator.
 **Objective**: Close pure target, state-machine, timer, and stale-work internals.
 
 - [x] 4.3.1 Add drop-map implementation tests for region ordering, clipping, slot identity, inner bounds, and finite target budgets — `packages/kanban/test/drop-map.impl.test.ts` ✅ (completed: 2026-08-11 23:24)
-- [ ] 4.3.2 Add controller/timer/prefetch implementation tests for stale generations, duplicate reports, callback failure, abort, and resource cleanup — `packages/kanban/test/drag-controller.impl.test.ts`
+- [x] 4.3.2 Add controller/timer/prefetch implementation tests for stale generations, duplicate reports, callback failure, abort, and resource cleanup — `packages/kanban/test/drag-controller.impl.test.ts` ✅ (completed: 2026-08-11 23:27)
 - [ ] 4.3.3 Run Kanban build/typecheck/focused tests, UI pointer-capture lease specification/implementation suites, check:deps/check:docs, plugin update/check, and `yarn verify:local`
 
 **Deliverables**: modern card grab; substantial targets; one-cell hysteresis; live placement recompute;
