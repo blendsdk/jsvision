@@ -192,7 +192,10 @@ late-work behavior before introducing the coordinator.
 - [x] 3.1.3 `[spec-author]` Add affected-entity concurrency, pending/retained limits, abort/disposal/late settlement, and fresh undo cases — `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:10)
 - [x] 3.1.4 `[spec-author]` Add editor/configuration/saved-view/context-menu producer-contract fixtures proving one coordinator/dispatcher and zero source mutation — `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:11)
 - [x] 3.1.5 `[spec-author]` Add lifecycle observation redaction plus hostile/reentrant/late dispatcher, confirmer, and inverse-builder settlement cases — `packages/kanban/test/security/phase-c-boundaries.spec.test.ts`, `packages/kanban/test/operation-lifecycle.spec.test.ts` ✅ (completed: 2026-08-11 13:13)
-- [ ] 3.1.6 Run focused lifecycle/security specifications and record expected red behavior
+- [x] 3.1.6 Run focused lifecycle/security specifications and record expected red behavior ✅ (completed: 2026-08-11 13:14)
+  - Red evidence: 14 lifecycle and 6 new hostile-boundary cases failed because board-owned
+    subscribe/snapshot/cancel/undo, confirmation, observation, and publication lifecycle behavior is absent;
+    all 21 pre-existing Phase 2 security cases remained green.
 
 ### Step 3.2: Implementation
 
