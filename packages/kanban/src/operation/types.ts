@@ -126,6 +126,12 @@ export function createKanbanPendingProjection(proposal: KanbanRequestProposal): 
   return Object.freeze({ kind: proposal.kind, state: 'pending', cardKeys });
 }
 
+/** Copy one pending projection into its accepted-but-unpublished lifecycle state. */
+export function acceptKanbanPendingProjection(projection: KanbanPendingProjection): KanbanPendingProjection {
+  const snapshot = snapshotKanbanPendingProjection(projection);
+  return Object.freeze({ ...snapshot, state: 'accepted' });
+}
+
 declare const kanbanUndoTokenBrand: unique symbol;
 
 /** Opaque bounded application token used only to request a fresh undo operation. */

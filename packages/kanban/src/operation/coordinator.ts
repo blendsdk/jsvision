@@ -25,8 +25,17 @@ import { createKanbanOperationIdRegistry } from './operation-id.js';
 import type { KanbanOperationIdFactory, KanbanOperationIdLease, KanbanOperationIdRegistry } from './operation-id.js';
 import { createKanbanOperationSubjectRegistry, deriveKanbanOperationSubjects } from './subjects.js';
 import type { KanbanOperationSubjectLease, KanbanOperationSubjectRegistry } from './subjects.js';
-import { createKanbanPendingProjection, snapshotKanbanOperationSnapshot } from './types.js';
-import type { KanbanConfirmer, KanbanOperationSnapshot, KanbanOperationSubscriber } from './types.js';
+import {
+  acceptKanbanPendingProjection,
+  createKanbanPendingProjection,
+  snapshotKanbanOperationSnapshot,
+} from './types.js';
+import type {
+  KanbanConfirmer,
+  KanbanOperationSnapshot,
+  KanbanOperationSubscriber,
+  KanbanPendingProjection,
+} from './types.js';
 
 /** Unsubscribe function returned by payload-free operation-state subscriptions. */
 export type KanbanOperationUnsubscribe = () => void;
@@ -68,6 +77,7 @@ interface ActiveKanbanOperation {
   readonly subjects: KanbanOperationSubjectLease;
   readonly controller: AbortController;
   readonly coordinatorGeneration: number;
+  readonly projection: KanbanPendingProjection;
 }
 
 /** Validate a caller-supplied finite capacity before allocating its registry. */
@@ -347,6 +357,7 @@ export class KanbanOperationCoordinator {
         expected: capturedExpected,
         signal: controller.signal,
       });
+      const projection = createKanbanPendingProjection(proposal);
       const coordinatorGeneration = this.#generation.capture();
       const operation: ActiveKanbanOperation = {
         request,
@@ -354,6 +365,7 @@ export class KanbanOperationCoordinator {
         subjects,
         controller,
         coordinatorGeneration,
+        projection,
       };
       this.#operations.set(id.operationId, operation);
       this.#snapshots.publish(
@@ -391,14 +403,14 @@ export class KanbanOperationCoordinator {
         signal: operation.controller.signal,
       });
       if (settlement !== 'approved') {
-        return Object.freeze({
+        return this.#finishBeforeDispatch(operation, {
           kind: 'cancelled',
           operationId: operation.id.operationId,
           code: settlement === 'declined' ? 'confirmation-declined' : 'confirmation-invalid',
         });
       }
       if (this.#revalidate === undefined) {
-        return Object.freeze({
+        return this.#finishBeforeDispatch(operation, {
           kind: 'cancelled',
           operationId: operation.id.operationId,
           code: 'confirmation-stale',
@@ -408,14 +420,14 @@ export class KanbanOperationCoordinator {
       try {
         current = snapshotKanbanEligibility(this.#revalidate(proposal, expected));
       } catch {
-        return Object.freeze({
+        return this.#finishBeforeDispatch(operation, {
           kind: 'cancelled',
           operationId: operation.id.operationId,
           code: 'confirmation-stale',
         });
       }
       if (!confirmationStillApplies(eligibility, current)) {
-        return Object.freeze({
+        return this.#finishBeforeDispatch(operation, {
           kind: 'cancelled',
           operationId: operation.id.operationId,
           code: current.kind === 'blocked' || current.kind === 'unavailable' ? current.code : 'confirmation-stale',
@@ -435,12 +447,69 @@ export class KanbanOperationCoordinator {
         kind: operation.request.kind,
         state: 'pending',
         affected: operation.subjects.affected,
-        projection: createKanbanPendingProjection(proposal),
+        projection: operation.projection,
       }),
     );
-    return dispatchKanbanRequest(operation.request, this.#dispatcher, {
+    const result = await dispatchKanbanRequest(operation.request, this.#dispatcher, {
       capabilities: currentCapabilities(this.#capabilities),
     });
+    return this.#settleDispatcher(operation, result);
+  }
+
+  /** Release a current reservation and publish one pre-dispatch cancellation. */
+  #finishBeforeDispatch(
+    operation: ActiveKanbanOperation,
+    result: Extract<KanbanRequestResult, { readonly kind: 'cancelled' }>,
+  ): KanbanRequestResult {
+    if (!this.#isCurrent(operation)) return Object.freeze(result);
+    this.#finishTerminal(operation, result.kind, result.code);
+    return Object.freeze(result);
+  }
+
+  /** Apply one exact dispatcher result only while its operation generation remains current. */
+  #settleDispatcher(operation: ActiveKanbanOperation, result: KanbanRequestResult): KanbanRequestResult {
+    if (!this.#isCurrent(operation)) {
+      return Object.freeze({
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: 'operation-cancelled',
+      });
+    }
+    if (result.kind === 'accepted') {
+      this.#snapshots.publish(
+        Object.freeze({
+          operationId: operation.id.operationId,
+          kind: operation.request.kind,
+          state: 'accepted',
+          affected: operation.subjects.affected,
+          projection: acceptKanbanPendingProjection(operation.projection),
+        }),
+      );
+      return result;
+    }
+    this.#finishTerminal(operation, result.kind, result.code);
+    return result;
+  }
+
+  /** Release all live resources before notifying subscribers of one terminal transition. */
+  #finishTerminal(
+    operation: ActiveKanbanOperation,
+    state: Extract<KanbanRequestResult, { readonly kind: 'rejected' | 'cancelled' | 'superseded' }>['kind'],
+    code: string | undefined,
+  ): void {
+    this.#operations.delete(operation.id.operationId);
+    operation.controller.abort();
+    operation.subjects.release();
+    operation.id.retain();
+    this.#snapshots.publish(
+      Object.freeze({
+        operationId: operation.id.operationId,
+        kind: operation.request.kind,
+        state,
+        affected: operation.subjects.affected,
+        ...(code === undefined ? {} : { code }),
+      }),
+    );
   }
 
   /** Check coordinator, operation, subject, and cancellation generations before continuation. */

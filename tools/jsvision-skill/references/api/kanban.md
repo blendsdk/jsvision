@@ -5518,6 +5518,14 @@ interface StandardKanbanCardTextFieldConfiguration {
 }
 ```
 
+## acceptKanbanPendingProjection
+
+Copy one pending projection into its accepted-but-unpublished lifecycle state.
+
+```ts
+acceptKanbanPendingProjection(projection: KanbanPendingProjection): KanbanPendingProjection
+```
+
 ## assertKanbanPlacementCurrent
 
 Rejects any placement derived from a different cursor revision.

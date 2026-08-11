@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 15:50 CEST
-> **Progress**: 41/124 tasks (33%)
+> **Last Updated**: 2026-08-11 15:54 CEST
+> **Progress**: 42/124 tasks (34%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -206,7 +206,7 @@ late-work behavior before introducing the coordinator.
 - [x] 3.2.2 Add `retainedUndoDescriptors` to resolved limits and implement bounded active/retained ID/undo registries, affected-subject conflicts, generations, deterministic whole-entry FIFO eviction, and subscriptions — `packages/kanban/src/contract/limits.ts`, `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/subjects.ts` ✅ (completed: 2026-08-11 15:31)
 - [x] 3.2.3 Implement synchronous proposal admission and pending projection publication before asynchronous dispatch — `packages/kanban/src/operation/coordinator.ts` ✅ (completed: 2026-08-11 15:39)
 - [x] 3.2.4 Define/export exact frozen confirmer/inverse contexts, callback/result/undo-descriptor types, accepted-result keys, and implement coordinator-owned pre-dispatch confirmation with native-Promise handling, reservation, reentrancy guards, and post-settlement revalidation — `packages/kanban/src/contract/request.ts`, `packages/kanban/src/operation/types.ts`, `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/confirmation.ts` ✅ (completed: 2026-08-11 15:50)
-- [ ] 3.2.5 Integrate exact dispatcher settlement and pending→accepted/rejected/cancelled/superseded transitions — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/contract/authority.ts`
+- [x] 3.2.5 Integrate exact dispatcher settlement and pending→accepted/rejected/cancelled/superseded transitions — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/contract/authority.ts` ✅ (completed: 2026-08-11 15:54)
 - [ ] 3.2.6 Implement expectation-bound and exact operation-correlated publication reconciliation, contradiction/deletion handling, and affected-lock release without a universal inferred matcher — `packages/kanban/src/operation/coordinator.ts`, `packages/kanban/src/operation/publication.ts`
 - [ ] 3.2.7 Implement operation cancellation, disposal, and late-continuation generation checks — `packages/kanban/src/operation/coordinator.ts`
 - [ ] 3.2.8 Add exact token/inverse descriptor validation, commit-only bounded retention, FIFO eviction/disposal, and proposal-valued native-Promise settlement whose output re-enters complete fresh-proposal validation/confirmation — `packages/kanban/src/operation/undo.ts`, `packages/kanban/src/operation/coordinator.ts`
