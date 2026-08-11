@@ -7,7 +7,7 @@ techdocs: true
 > **Project**: JSVision
 > **Type**: TypeScript library and SDK monorepo
 > **Tech Stack**: Node.js 22+, ESM TypeScript, Yarn workspaces, Turborepo, VitePress
-> **Last Updated**: 2026-08-10
+> **Last Updated**: 2026-08-11
 
 ## System purpose
 
@@ -18,8 +18,10 @@ components, web hosting, and examples so applications can depend only on the sur
 The `@jsvision/kanban` core board provides application-owned contracts, revisioned eager and windowed
 data sources, bounded configurable cards, workflow-column/swimlane policy, sparse canonical scene
 geometry, focus and selection, mounted keyboard/pointer interaction, semantic application intents,
-and ten locale subpaths with additive Phase B overlays. Drag/drop, commands, packaged editors, component teaching labs,
-kitchen sink, and showcase documentation remain staged work.
+and ten locale subpaths with additive Phase B overlays. The shared UI event loop now provides the
+generation-bound pointer-capture lifecycle required by modern drag interactions. Kanban drag/drop,
+commands, packaged editors, component teaching labs, kitchen sink, and showcase documentation remain
+staged work.
 
 ## Architecture at a glance
 

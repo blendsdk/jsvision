@@ -1,6 +1,6 @@
 # System overview
 
-> **Last Updated**: 2026-08-04
+> **Last Updated**: 2026-08-11
 
 ## Architecture style
 
@@ -101,6 +101,18 @@ vocabulary but are not rendered until their later implementation phase.
   temporary collapsed-hover lease state.
 - **Boundary**: Eligibility never grants authorization; custom resolvers and chrome cannot inject
   card/drop targets or leak record payloads through observations.
+
+### UI pointer-capture lifecycle
+
+- **Purpose**: Give cleanup-sensitive mouse gestures immediate, reasoned notification when capture
+  ends outside their normal pointer-up path.
+- **Technology**: A generation-bound `EventLoop.acquireCapture()` lease layered over the legacy
+  `setCapture()`, `hasCapture()`, and `releaseCapture()` compatibility surface.
+- **Inputs**: A mounted target view and a synchronous capture-loss callback.
+- **Outputs**: One detachable lease plus one bounded loss reason for replacement, explicit release,
+  modal transitions, host lifecycle loss, unmount, stop, or disposal.
+- **Boundary**: This is reusable UI infrastructure. Kanban's drag controller and insertion/drop
+  presentation remain later work; see [ADR-014](/decisions/ADR-014-generation-bound-pointer-capture).
 
 ### Application request dispatcher
 

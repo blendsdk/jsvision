@@ -1,7 +1,7 @@
 # Kanban architecture
 
-> **Last Updated**: 2026-08-10
-> **Status**: Phase B core board implemented; drag/drop, editors, commands, and product documentation planned
+> **Last Updated**: 2026-08-11
+> **Status**: Phase B core board and shared capture prerequisite implemented; Kanban drag/drop, editors, commands, and product documentation planned
 
 ## Boundary and ownership
 
@@ -154,6 +154,12 @@ and wheel scrolling share this mounted path. Unknown and Alt-modified keys propa
 application. Pointer release commits only when button, semantic target, and scene revision still match;
 move or drag input cancels the pending click because drag/drop is not implemented in this phase.
 
+The shared UI event loop now exposes a generation-bound pointer-capture lease with synchronous,
+reasoned loss notification across replacement, modal, host, unmount, stop, and disposal boundaries.
+That lifecycle is the prerequisite for Kanban's later mouse drag controller: it prevents a gesture
+from surviving capture loss or retaining a dead view. It deliberately does not choose Kanban drag
+thresholds, ghost geometry, insertion targets, or move semantics.
+
 `open-card`, `open-context`, and `scoped-action` intents cross a synchronous application handler only
 after required focus/selection work settles. They carry identities and closed scopes, never record
 payloads or mutation authority. The stable facade also exposes the same operations programmatically.
@@ -176,6 +182,7 @@ released board cannot remount.
 | Workflow structure, WIP/DoD eligibility, and one swimlane axis           | Nested grouping                                            |
 | Focus, bounded selection, mounted keyboard and pointer clicks            | Pointer drag/drop                                          |
 | Semantic interaction intents and request reconciliation                  | Package-owned record mutation                              |
+| Shared generation-bound UI pointer-capture lifecycle                     | Kanban drag controller, ghost, and insertion/drop behavior |
 
 This boundary is intentionally publishable and testable, but it is not presented as a complete
 Kanban application. Later phases add drag/drop, commands, and package-owned input UI while retaining

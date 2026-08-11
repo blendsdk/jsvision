@@ -40,6 +40,10 @@ export default withMermaid(
             { text: 'ADR-011: Card schema', link: '/decisions/ADR-011-kanban-card-schema' },
             { text: 'ADR-012: Saved views', link: '/decisions/ADR-012-kanban-saved-views' },
             { text: 'ADR-013: Bounded degradation', link: '/decisions/ADR-013-kanban-bounded-degradation' },
+            {
+              text: 'ADR-014: Pointer capture leases',
+              link: '/decisions/ADR-014-generation-bound-pointer-capture',
+            },
           ],
         },
         {

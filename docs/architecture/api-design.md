@@ -1,7 +1,7 @@
 # Kanban API design
 
-> **Last Updated**: 2026-08-10
-> **Status**: Phase B core-board API implemented; drag/drop, commands, editors, and saved-view codecs planned
+> **Last Updated**: 2026-08-11
+> **Status**: Phase B core-board API and shared capture prerequisite implemented; Kanban drag/drop, commands, editors, and saved-view codecs planned
 
 ## API style
 
@@ -95,6 +95,25 @@ Keyboard and pointer routing operate on final semantic scene targets. The router
 from `@jsvision/kanban/testing`; production hosts use the mounted board path. Unknown gestures remain
 unhandled. Click completion requires matching target/revision evidence, and drag reports cancel the
 press because insertion/drop contracts are deferred.
+
+### Shared UI capture prerequisite
+
+`@jsvision/ui` now exposes `EventLoop.acquireCapture(view, onLost)` and the matching
+`DispatchEvent.acquireCapture` seam. A successful acquisition returns a generation-bound lease. Its
+`active()` query reports whether that exact generation still owns capture, and `release()` ends only
+that generation. Replacement and every lifecycle-loss path synchronously detach the lease before
+invoking its callback, so callback code cannot accidentally act through stale capture state.
+
+Loss reasons distinguish replacement, explicit release, modal transitions, host lifecycle loss,
+unmount, stop, and disposal. An unmount boundary remains active until the removed subtree's reactive
+owner is disposed, preventing a cleanup callback from reacquiring capture for a dying view. Stale
+leases retain only their detached state cell rather than the event loop or captured view.
+
+The legacy `setCapture()`, `hasCapture()`, and `releaseCapture()` methods remain supported for
+existing controls. New cleanup-sensitive gestures should use the lease API and confirm that the
+returned lease is still active before starting gesture-owned resources. This infrastructure does
+not itself implement Kanban dragging; see
+[ADR-014](/decisions/ADR-014-generation-bound-pointer-capture).
 
 ## Query and pagination conventions
 
