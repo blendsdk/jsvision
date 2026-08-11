@@ -12,7 +12,9 @@ import type { KanbanCardMoveProposal } from '../contract/request.js';
 import { snapshotKanbanRequestExpectedRevisions } from '../contract/request-validation.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
+import { canonicalizeKanbanCellAddress } from '../source/address.js';
 import { snapshotKanbanPlacementTokens } from '../source/placement.js';
 import { snapshotKanbanCardMoveProposal, evaluateKanbanMovePositionCurrency } from './placement.js';
 
@@ -127,6 +129,10 @@ const CAPABILITY_KEYS = new Set(['state', 'reasonCode']);
 const SELECTION_KEYS = new Set(['kind', 'orderedCardKeys', 'maximum']);
 /** Exact edge-evidence members. */
 const EDGE_KEYS = new Set(['start', 'end']);
+/** Exact ordering-policy members. */
+const ORDERING_KEYS = new Set(['sorted', 'filtered', 'filteredPlacement']);
+/** Exact workflow-advice members. */
+const ADVICE_KEYS = new Set(['kind', 'code', 'params']);
 /** Machine-readable reason-code grammar. */
 const REASON_CODE = /^[a-z][a-z0-9-]*$/u;
 /** Shared immutable allowed result. */
@@ -335,6 +341,63 @@ function selectionStage(value: unknown, proposal: KanbanCardMoveProposal): Kanba
   return ALLOWED;
 }
 
+/** Whether every moved card originates in the proposed target cell. */
+function isWithinOneCell(proposal: KanbanCardMoveProposal): boolean {
+  const target = canonicalizeKanbanCellAddress(proposal.target);
+  return proposal.moved.every(({ source }) => canonicalizeKanbanCellAddress(source) === target);
+}
+
+/** Evaluate whether the active sort/filter projection can represent manual placement safely. */
+function orderingStage(value: unknown, proposal: KanbanCardMoveProposal): KanbanEligibility {
+  const properties = snapshotKanbanDataProperties(value, ORDERING_KEYS.size);
+  validateKanbanDataKeys(properties, ORDERING_KEYS);
+  if (typeof properties.sorted !== 'boolean' || typeof properties.filtered !== 'boolean') {
+    return invalidEligibility();
+  }
+  const filteredPlacement = properties.filteredPlacement;
+  if (filteredPlacement !== 'not-required' && filteredPlacement !== 'resolved' && filteredPlacement !== 'unavailable') {
+    return invalidEligibility();
+  }
+  if (!isWithinOneCell(proposal)) return ALLOWED;
+  if (properties.sorted) return Object.freeze({ kind: 'blocked', code: 'sorted-manual-order' });
+  if (properties.filtered && filteredPlacement !== 'resolved') {
+    return Object.freeze({ kind: 'unavailable', code: 'filtered-placement-unavailable' });
+  }
+  return ALLOWED;
+}
+
+/** Snapshot one precomputed result from a pure transition, DoD, or WIP policy evaluator. */
+function workflowAdvice(value: unknown): KanbanEligibility {
+  const properties = snapshotKanbanDataProperties(value, ADVICE_KEYS.size);
+  validateKanbanDataKeys(properties, ADVICE_KEYS);
+  if (properties.kind === 'allowed') {
+    if (Object.keys(properties).length !== 1) return invalidEligibility();
+    return ALLOWED;
+  }
+  if (properties.kind !== 'warning' && properties.kind !== 'blocked' && properties.kind !== 'unavailable') {
+    return invalidEligibility();
+  }
+  if (typeof properties.code !== 'string' || !REASON_CODE.test(properties.code)) return invalidEligibility();
+  const params = properties.params === undefined ? undefined : snapshotKanbanSemanticValue(properties.params);
+  return Object.freeze({
+    kind: properties.kind,
+    code: properties.code,
+    ...(params === undefined ? {} : { params }),
+  });
+}
+
+/** Preserve transition-before-definition ordering within the workflow-policy stage. */
+function transitionStage(transition: unknown, definitionOfDone: unknown): KanbanEligibility {
+  const transitionResult = workflowAdvice(transition);
+  return transitionResult.kind === 'allowed' ? workflowAdvice(definitionOfDone) : transitionResult;
+}
+
+/** Return the configured no-op policy only after every earlier policy stage allows dispatch. */
+function unchangedStage(value: unknown): KanbanEligibility {
+  if (typeof value !== 'boolean') return invalidEligibility();
+  return value ? Object.freeze({ kind: 'blocked', code: 'unchanged-placement' }) : ALLOWED;
+}
+
 /**
  * Evaluate immutable move facts in fixed fail-closed order without dispatching or authorizing.
  *
@@ -352,5 +415,13 @@ export function evaluateKanbanMoveEligibility(input: unknown): KanbanEligibility
   if (revisions.kind !== 'allowed') return revisions;
   const capability = capabilityStage(properties.capability);
   if (capability.kind !== 'allowed') return capability;
-  return selectionStage(properties.selection, proposal);
+  const selection = selectionStage(properties.selection, proposal);
+  if (selection.kind !== 'allowed') return selection;
+  const ordering = orderingStage(properties.ordering, proposal);
+  if (ordering.kind !== 'allowed') return ordering;
+  const transition = transitionStage(properties.transition, properties.definitionOfDone);
+  if (transition.kind !== 'allowed') return transition;
+  const wip = workflowAdvice(properties.wip);
+  if (wip.kind !== 'allowed') return wip;
+  return unchangedStage(properties.unchanged);
 }
