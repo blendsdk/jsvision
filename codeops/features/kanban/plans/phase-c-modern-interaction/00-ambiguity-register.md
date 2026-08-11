@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase C Modern Interaction
 
-> **Status**: ✅ GATE PASSED — all 20 items resolved
-> **Last Updated**: 2026-08-11 01:48 CEST
+> **Status**: ✅ GATE PASSED — all 21 items resolved
+> **Last Updated**: 2026-08-11 10:58 CEST
 > **Root Invocation ID**: `MP-PHASE-C-20260811T0144CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -37,6 +37,7 @@
 | AR-C18 | Testing | Which commands are authoritative for task verification? | Full `yarn verify` every task / project-local changed-file gate plus focused workspace gates | Use `yarn verify:local` for every task plus the smallest applicable Kanban/UI package gate; phase closure runs Kanban build/typecheck/unit/E2E/deps/docs, affected UI tests, plugin checks, and targeted docs checks | ✅ Resolved |
 | AR-C19 | Integration | What documentation and generated surfaces move with Phase C? | Defer all docs / update only README / synchronize package docs, architecture, API/plugin references, locales, and kitchen sink evidence | Keep public JSDoc/examples, package/architecture docs, locale roles/messages, generated API/plugin parity, and the existing incremental kitchen sink aligned with shipped Phase C behavior | ✅ Resolved |
 | AR-C20 | Security | What may cross the dispatcher/observation boundary? | Raw records/tokens/errors / bounded semantic envelopes and redacted observations | Snapshot exact allowlisted data; never log or observe card bodies, placement/undo tokens, custom payloads, raw errors, or unsanitized ghost text | ✅ Resolved |
+| AR-C21 | Technical (runtime) | What happens when the numeric capture generation is exhausted? | Fail closed before mutation / wrap and add a hidden token / reuse only while uncaptured | Fail closed with `RangeError` before changing capture; the current owner remains active | ✅ Resolved |
 
 ## Resolution notes
 
@@ -130,6 +131,21 @@
 - **Root invocation ID:** `MP-PHASE-C-20260811T0144CEST`.
 - **Reopen trigger:** Mapping becomes manifest-discovered or later RD-13/RD-15 explicitly assumes ownership of a Phase C-only surface.
 
+### AR-C21 — Capture-generation exhaustion (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal failure and recovery design inside the approved generation-bound capture contract; no product behavior, compatibility, or scope change.
+- **Objective:** Preserve the invariant that an obsolete lease can never appear active or release a newer owner.
+- **Evidence:** The public lease exposes a JavaScript `number` generation, whose largest exact integer is `Number.MAX_SAFE_INTEGER`; wrapping or reusing a visible generation can collide with a retained stale lease.
+- **Decision:** Allocate only positive safe-integer generations. Once the last value is active or has been issued, a later acquisition throws `RangeError` before changing the current capture target, callback, or generation. Legacy and lease acquisitions share this fail-closed allocator.
+- **Rejected alternatives:** Wrapping with a hidden token keeps internal release safe but makes the public generation cease to be a unique identity; reuse while uncaptured still collides with retained leases.
+- **Strongest counterargument:** The loop becomes unable to acquire capture after an astronomically large number of acquisitions, rather than transparently recovering.
+- **Confidence:** High — the numeric public contract makes non-colliding reuse impossible without a compatibility change.
+- **Hardening:** A 10×-longevity reframe and contrarian wraparound design were tested; both retained the fail-closed choice because stale public leases can outlive any idle interval.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-C-20260811T1042CEST`.
+- **Reopen trigger:** The public generation becomes an opaque non-numeric token or leases gain bounded lifetime enforcement.
+
 ## Systematic category closure
 
 | Category | Closure evidence |
@@ -137,7 +153,7 @@
 | Feature gaps | Phase C target and downstream producer boundary are explicit in AR-C01/C02. |
 | Behavioral gaps | Threshold, eligibility, hysteresis, autoscroll, release, cancellation, pending, reconciliation, and keyboard parity are owned by AR-C05–C15. |
 | Scope ambiguities | Strict RD-07/RD-08 boundary is frozen; no optional expansion is planned. |
-| Technical unknowns | Capture and controller partition passed independent hardening; all mechanisms are resolved. |
+| Technical unknowns | Capture/controller partition and generation exhaustion are resolved; all mechanisms are closed. |
 | Edge cases | Unknown edges, stale revisions, outside release, capture loss, small viewports, bulk atomicity, late outcomes, and disposal are explicit. |
 | Integration points | UI capture, Core/Web input, Kanban source/scene/facade/dispatcher, i18n/theme/docs/plugin, and testing boundaries are named. |
 | Data & state | Application authority, immutable projections, semantic anchors/tokens, revisions, operation IDs, and bounded registries are resolved. |

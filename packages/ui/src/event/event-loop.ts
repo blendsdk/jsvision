@@ -73,6 +73,13 @@ interface NativeClipboardRead {
   readonly text: string;
 }
 
+/** One active pointer-capture generation and its detached-on-loss cleanup callback. */
+interface PointerCaptureState {
+  readonly target: View;
+  readonly generation: number;
+  readonly onLost: PointerCaptureLostHandler | null;
+}
+
 /** A modal view that can veto its own close via a `valid(command)` gate (e.g. `Dialog`). */
 interface QuitValidatable {
   valid(command: string): boolean;
@@ -180,12 +187,10 @@ class EventLoopImpl implements EventLoop {
   private readonly queue: DispatchEvent[] = [];
   /** True while a tick is draining, so a re-entrant call joins it instead of starting a new one. */
   private draining = false;
-  /** The pointer-capture target: while set, all mouse/wheel events go here. */
-  private captureTarget: View | null = null;
-  /** Generation of the current or most recently released pointer capture. */
-  private captureGeneration = 0;
-  /** Cleanup callback owned by the active generation; detached before it is invoked. */
-  private captureLostHandler: PointerCaptureLostHandler | null = null;
+  /** Active pointer-capture generation, or `null` while routing uses normal hit testing. */
+  private capture: PointerCaptureState | null = null;
+  /** Last allocated public generation; values are never reused while stale leases may exist. */
+  private lastCaptureGeneration = 0;
   /**
    * The app-local clipboard buffer: the last text copied or cut within the app. Filled by the
    * dual-sink `setClipboard` and read back by `readClipboard`, so in-app paste works on every terminal
@@ -347,7 +352,7 @@ class EventLoopImpl implements EventLoop {
     // A disposed host must not retain focus paths, pointer capture, or application command closures.
     // Clearing the root also makes every later dispatch inert because there is no routing scope.
     this.root = null;
-    this.captureTarget = null;
+    this.capture = null;
     this.commandSink.clear();
     this.writeClipboardText = undefined;
     this.readClipboardText = undefined;
@@ -471,7 +476,7 @@ class EventLoopImpl implements EventLoop {
   execView<R>(view: View): Promise<R | undefined> {
     // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
     // frame on open; the returned promise resolves later, when endModal is called.
-    this.captureTarget = null; // drop any in-flight drag so it cannot capture across the modal boundary
+    this.capture = null; // drop any in-flight drag so it cannot capture across the modal boundary
     // If the view opts into closing itself (a Dialog does), hand it the modal-host handle before it
     // opens so it can resolve this execView from its own event handling. Other views are untouched.
     if (isModalHostAware(view)) {
@@ -486,7 +491,7 @@ class EventLoopImpl implements EventLoop {
   }
 
   endModal<R>(result: R): void {
-    this.captureTarget = null; // release any capture as the modal boundary changes
+    this.capture = null; // release any capture as the modal boundary changes
     this.runTick(() => this.modal.end(result));
   }
 
@@ -586,49 +591,49 @@ class EventLoopImpl implements EventLoop {
 
   /** Acquire pointer capture and return a generation-bound lease for cleanup-safe gestures. */
   acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease {
-    const generation = this.captureGeneration + 1;
-    this.replaceCapture(view, generation, onLost, 'replaced');
+    const generation = this.allocateCaptureGeneration();
+    this.transitionCapture('replaced', { target: view, generation, onLost });
     return Object.freeze({
       generation,
-      active: (): boolean => this.captureTarget === view && this.captureGeneration === generation,
+      active: (): boolean => this.capture?.generation === generation && this.capture.target === view,
       release: (): void => this.releaseCaptureGeneration(generation, 'released'),
     });
   }
 
   setCapture(view: View): void {
-    this.replaceCapture(view, this.captureGeneration + 1, null, 'replaced');
+    const generation = this.allocateCaptureGeneration();
+    this.transitionCapture('replaced', { target: view, generation, onLost: null });
   }
 
   releaseCapture(): void {
-    this.releaseCaptureGeneration(this.captureGeneration, 'released');
+    if (this.capture !== null) this.releaseCaptureGeneration(this.capture.generation, 'released');
   }
 
   /** End active capture when a host reports loss outside the decoded input stream. */
   notifyCaptureLost(): void {
-    this.releaseCaptureGeneration(this.captureGeneration, 'host-lost');
+    if (this.capture !== null) this.releaseCaptureGeneration(this.capture.generation, 'host-lost');
   }
 
-  /** Install a capture before notifying the previous owner, so reentrant acquisition remains newest. */
-  private replaceCapture(
-    view: View,
-    generation: number,
-    onLost: PointerCaptureLostHandler | null,
-    reason: PointerCaptureLossReason,
-  ): void {
-    const previous = this.captureLostHandler;
-    this.captureTarget = view;
-    this.captureGeneration = generation;
-    this.captureLostHandler = onLost;
-    this.notifyCaptureHandler(previous, reason);
+  /** Allocate a positive public generation without ever reusing an identity visible to a stale lease. */
+  private allocateCaptureGeneration(): number {
+    if (this.lastCaptureGeneration >= Number.MAX_SAFE_INTEGER) {
+      throw new RangeError('pointer capture generation exhausted');
+    }
+    this.lastCaptureGeneration += 1;
+    return this.lastCaptureGeneration;
+  }
+
+  /** Install the next owner before notifying the previous owner, preserving reentrant acquisition. */
+  private transitionCapture(reason: PointerCaptureLossReason, next: PointerCaptureState | null): void {
+    const previous = this.capture;
+    this.capture = next;
+    this.notifyCaptureHandler(previous?.onLost ?? null, reason);
   }
 
   /** End only the named generation, detaching its callback before any reentrant cleanup runs. */
   private releaseCaptureGeneration(generation: number, reason: PointerCaptureLossReason): void {
-    if (this.captureTarget === null || this.captureGeneration !== generation) return;
-    const previous = this.captureLostHandler;
-    this.captureTarget = null;
-    this.captureLostHandler = null;
-    this.notifyCaptureHandler(previous, reason);
+    if (this.capture?.generation !== generation) return;
+    this.transitionCapture(reason, null);
   }
 
   /** Isolate application cleanup and diagnostic failures from capture ownership transitions. */
@@ -679,8 +684,8 @@ class EventLoopImpl implements EventLoop {
   /** Build the {@link RouteContext} of operations the dispatch machine needs from this loop. */
   private routeContext(): RouteContext {
     // Never route to a capture target that has been removed — drop it first.
-    if (this.captureTarget !== null && !this.captureTarget.mounted) {
-      this.captureTarget = null;
+    if (this.capture !== null && !this.capture.target.mounted) {
+      this.capture = null;
     }
     const scope = this.scopeRoot();
     return {
@@ -697,7 +702,7 @@ class EventLoopImpl implements EventLoop {
       releaseCapture: () => this.releaseCapture(),
       // A view checks this to detect that its capture was lost externally (a modal opened, the target
       // unmounted). The stale-target release above means this reflects the live capture.
-      hasCapture: (view) => this.captureTarget === view,
+      hasCapture: (view) => this.capture?.target === view,
       // Clipboard write a control requests from its onEvent (Input/Editor copy/cut). Commit locally
       // first, then offer raw text to a modern host adapter. Direct terminal integrations that still
       // use the legacy sink receive a capability-gated OSC 52 sequence instead.
@@ -730,7 +735,7 @@ class EventLoopImpl implements EventLoop {
       hitTestRoute: (ev) =>
         hitTestRoute(ev, {
           scopeRoot: scope,
-          captureTarget: this.captureTarget, // when set, mouse events short-circuit to it
+          captureTarget: this.capture?.target ?? null, // when set, mouse events short-circuit to it
           isFocusable: (view) => this.focus.isFocusable(view),
           focusInto: (view) => this.focus.focusInto(view),
           deliver: (view, mouseEv) => this.deliver(view, mouseEv),
