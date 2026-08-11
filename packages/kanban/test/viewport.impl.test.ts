@@ -128,6 +128,39 @@ describe('viewport descriptor cache and damage implementation', () => {
     });
     expect(scrolled).toEqual([{ kind: 'scroll-exposed', ...bounds }]);
   });
+
+  it('damages both overlapping ghost frames before unchanged scene revisions can short-circuit repaint', () => {
+    const base = projection();
+    const overlayAt = (x: number): KanbanViewportProjection =>
+      Object.freeze({
+        ...base,
+        overlay: Object.freeze({
+          placeholders: Object.freeze([]),
+          ghost: Object.freeze({
+            cardKey: 1,
+            count: 1,
+            label: '#1',
+            rect: Object.freeze({ x, y: 1, width: 5, height: 3 }),
+          }),
+          pending: Object.freeze([]),
+          feedback: Object.freeze([]),
+          affectedStacks: Object.freeze([]),
+        }),
+      });
+    const bounds = Object.freeze({ x: 0, y: 0, width: 20, height: 8 });
+    const damage = calculateKanbanViewportDamage({
+      previous: overlayAt(2),
+      current: overlayAt(5),
+      bounds,
+      previousOffsets: { x: 0, y: 0 },
+      currentOffsets: { x: 0, y: 0 },
+    });
+
+    expect(damage).toEqual([
+      { kind: 'overlay', x: 2, y: 1, width: 5, height: 3 },
+      { kind: 'overlay', x: 5, y: 1, width: 5, height: 3 },
+    ]);
+  });
 });
 
 describe('viewport source metric and ownership implementation', () => {

@@ -342,9 +342,12 @@ scene or stale terminal cells.
 **Reference**: 03-05 §Error Handling/Testing Requirements · AR-C16/C18–C20
 **Objective**: Prove pure composition, damage budgets, responsive drawing, and accessibility fallbacks.
 
-- [ ] 5.3.1 Add overlay implementation tests for partial residency, region caps, semantic joins, structural-ready shapes, and composition failures — `packages/kanban/test/drag-overlay.impl.test.ts`
-- [ ] 5.3.2 Add damage and renderer implementation tests for cropped/wide/combining text, ghost overlap, and no stale cells — `packages/kanban/test/viewport.impl.test.ts`, `packages/kanban/test/drag-overlay.impl.test.ts`
-- [ ] 5.3.3 Run Kanban build/typecheck/focused tests/E2E, check:deps/check:docs, plugin update/check, and `yarn verify:local`
+- [x] 5.3.1 Add overlay implementation tests for partial residency, region caps, semantic joins, structural-ready shapes, and composition failures — `packages/kanban/test/drag-overlay.impl.test.ts` ✅ (completed: 2026-08-12 00:31)
+- [x] 5.3.2 Add damage and renderer implementation tests for cropped/wide/combining text, ghost overlap, and no stale cells — `packages/kanban/test/viewport.impl.test.ts`, `packages/kanban/test/drag-overlay.impl.test.ts` ✅ (completed: 2026-08-12 00:31)
+- [x] 5.3.3 Run Kanban build/typecheck/focused tests/E2E, check:deps/check:docs, plugin update/check, and `yarn verify:local` ✅ (completed: 2026-08-12 00:31)
+  - Gate evidence: Kanban build/typecheck; unit 70 files / 680 tests; E2E 4 files / 23 tests;
+    deps/docs (143 files, no missing examples); plugin update/check; Examples typecheck and Kanban
+    showcase smoke 1 file / 8 tests; `yarn verify:local`; and diff checks all passed.
 
 **Deliverables**: recognizable bounded drag visuals; honest pending/rejected overlays; exact damage;
 responsive Unicode/ASCII/color/mono presentation.

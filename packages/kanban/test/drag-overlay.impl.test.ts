@@ -1,0 +1,380 @@
+/** Implementation coverage for pure overlay composition, drawing, and bounded damage. */
+import { classicTheme, resolveCapabilities } from '@jsvision/core';
+import { Group, View, createRenderRoot } from '@jsvision/ui';
+import type { DrawContext } from '@jsvision/ui';
+import { describe, expect, it } from 'vitest';
+
+import { createKanbanOperationId, createKanbanTheme } from '../src/index.js';
+import type { KanbanCardDescriptor } from '../src/index.js';
+import { createEnglishKanbanI18n } from '../src/i18n/catalog.js';
+import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
+import { composeKanbanViewportOverlay } from '../src/board/overlay-projector.js';
+import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
+import type { KanbanViewportProjection } from '../src/board/viewport-projector.js';
+import { drawKanbanViewport } from '../src/board/viewport-render.js';
+
+const UNICODE_CAPS = resolveCapabilities({
+  env: {},
+  platform: 'linux',
+  override: { colorDepth: 'truecolor', glyphs: { boxDrawing: true } },
+}).profile;
+const ASCII_CAPS = resolveCapabilities({
+  env: {},
+  platform: 'linux',
+  override: { colorDepth: 'mono', unicode: { utf8: false }, glyphs: { boxDrawing: false } },
+}).profile;
+const THEME = createKanbanTheme(classicTheme);
+const I18N = createEnglishKanbanI18n();
+
+/** Creates one small deterministic descriptor without retaining an application record. */
+function descriptor(cardKey: string | number, title = `Card ${String(cardKey)}`): KanbanCardDescriptor {
+  return Object.freeze({
+    cardKey,
+    width: 14,
+    measuredHeight: 2,
+    surfaceRole: 'card.normal',
+    borderRole: 'card.normal',
+    marker: Object.freeze({ row: 1, column: 0, glyph: 'R', role: 'content.status', cues: Object.freeze([]) }),
+    rows: Object.freeze([
+      Object.freeze({
+        section: 'title' as const,
+        spans: Object.freeze([Object.freeze({ column: 0, text: title, role: 'content.title' as const })]),
+      }),
+      Object.freeze({
+        section: 'status' as const,
+        spans: Object.freeze([Object.freeze({ column: 0, text: 'Ready', role: 'content.status' as const })]),
+      }),
+    ]),
+    sections: Object.freeze([
+      Object.freeze({ id: 'title', kind: 'title' as const, startRow: 0, rowCount: 1, priority: 0 }),
+      Object.freeze({ id: 'status', kind: 'status' as const, startRow: 1, rowCount: 1, priority: 1 }),
+    ]),
+    actions: Object.freeze([]),
+    regions: Object.freeze([]),
+    degradation: Object.freeze({ level: 'none', omittedSections: Object.freeze([]) }),
+  });
+}
+
+/** Creates an authoritative two-stack viewport with type-distinct identities. */
+function authoritative(): KanbanViewportProjection {
+  return Object.freeze({
+    columns: Object.freeze([
+      Object.freeze({
+        columnId: 'ready',
+        label: 'Ready',
+        contentOffset: 0,
+        contentWidth: 18,
+        headerAlignment: 'start' as const,
+        rect: Object.freeze({ x: 0, y: 0, width: 18, height: 12 }),
+      }),
+      Object.freeze({
+        columnId: 'doing',
+        label: 'Doing',
+        contentOffset: 0,
+        contentWidth: 18,
+        headerAlignment: 'start' as const,
+        rect: Object.freeze({ x: 18, y: 0, width: 18, height: 12 }),
+      }),
+    ]),
+    cards: Object.freeze([
+      Object.freeze({
+        columnId: 'ready',
+        index: 0,
+        descriptor: descriptor(1, 'Numeric source'),
+        descriptorColumnOffset: 0,
+        descriptorRowOffset: 0,
+        rect: Object.freeze({ x: 1, y: 3, width: 16, height: 4 }),
+      }),
+      Object.freeze({
+        columnId: 'ready',
+        index: 1,
+        descriptor: descriptor('1', 'String sibling'),
+        descriptorColumnOffset: 0,
+        descriptorRowOffset: 0,
+        rect: Object.freeze({ x: 1, y: 8, width: 16, height: 4 }),
+      }),
+      Object.freeze({
+        columnId: 'doing',
+        index: 0,
+        descriptor: descriptor(2, 'Wide 界e\u0301 target'),
+        descriptorColumnOffset: 0,
+        descriptorRowOffset: 0,
+        rect: Object.freeze({ x: 19, y: 3, width: 16, height: 4 }),
+      }),
+    ]),
+    regions: Object.freeze([]),
+    actionTargets: Object.freeze([
+      Object.freeze({
+        kind: 'card' as const,
+        scope: Object.freeze({ kind: 'card' as const, cardKey: 1, address: Object.freeze({ columnId: 'ready' }) }),
+        zIndex: 400,
+        address: Object.freeze({ columnId: 'ready' }),
+        cardKey: 1,
+        logicalIndex: 0,
+        x: 1,
+        y: 3,
+        width: 16,
+        height: 4,
+      }),
+    ]),
+    states: Object.freeze([]),
+  });
+}
+
+/** Creates one compact move with an intentionally non-resident ghost identity when requested. */
+function drag(cardKey: string | number = 1): KanbanDragOverlayEvidence {
+  return Object.freeze({
+    generation: 1,
+    geometryGeneration: 1,
+    ghost: Object.freeze({ cardKey, point: Object.freeze({ x: 31, y: 10 }), count: 1 }),
+    placeholders: Object.freeze([
+      Object.freeze({ address: Object.freeze({ columnId: 'ready' }), cardKeys: Object.freeze([cardKey]) }),
+    ]),
+    gap: Object.freeze({
+      slotId: 'doing:end',
+      address: Object.freeze({ columnId: 'doing' }),
+      rect: Object.freeze({ x: 19, y: 5, width: 16, height: 2 }),
+      eligibility: Object.freeze({ kind: 'allowed' as const }),
+    }),
+  });
+}
+
+/** Minimal leaf that draws a supplied projection through the real viewport renderer. */
+class ProjectionLeaf extends View {
+  #projection: KanbanViewportProjection;
+
+  /** Retains only immutable projection values for deterministic frame tests. */
+  constructor(projection: KanbanViewportProjection) {
+    super();
+    this.#projection = projection;
+  }
+
+  /** Replaces the frame input and requests repaint through the normal render scheduler. */
+  replace(projection: KanbanViewportProjection): void {
+    this.#projection = projection;
+    this.invalidate();
+  }
+
+  /** Draws with the same theme and translation boundary as the mounted viewport. */
+  override draw(ctx: DrawContext): void {
+    drawKanbanViewport(ctx, this.#projection, THEME, (key, params) =>
+      I18N.t(key, params === undefined ? undefined : { params }),
+    );
+  }
+}
+
+/** Mounts one exact-cell projection leaf and returns its text frame. */
+function mountedFrame(projection: KanbanViewportProjection, ascii = false) {
+  const leaf = new ProjectionLeaf(projection);
+  leaf.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 36, height: 12 } });
+  const host = new Group();
+  host.add(leaf);
+  const render = createRenderRoot({ width: 36, height: 12 }, { caps: ascii ? ASCII_CAPS : UNICODE_CAPS });
+  render.mount(host);
+  render.flush();
+  const text = () =>
+    render
+      .buffer()
+      .rows()
+      .map((row) => row.map(({ char }) => char).join(''))
+      .join('\n');
+  return Object.freeze({ leaf, render, text });
+}
+
+describe('overlay composition internals', () => {
+  it('keeps semantic identity joins type-safe and disables only the projected card target', () => {
+    const result = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: drag(1),
+    });
+
+    expect(result.cards.map(({ descriptor: value }) => value.cardKey)).toEqual(['1', 2]);
+    expect(result.actionTargets).toEqual([]);
+    expect(result.cards.find(({ descriptor: value }) => value.cardKey === 2)?.rect.y).toBe(4);
+    expect(result.overlay.affectedStacks.map(({ columnId }) => columnId).sort()).toEqual(['doing', 'ready']);
+  });
+
+  it('uses bounded identity fallback when the ghost and pending descriptor are not resident', () => {
+    const missingDrag = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 20, height: 6 },
+      density: 'comfortable',
+      drag: drag(999),
+    });
+    const pending = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [
+        Object.freeze({
+          operationId: createKanbanOperationId('missing-card'),
+          kind: 'card-move' as const,
+          state: 'pending' as const,
+          affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 999 })]),
+          projection: Object.freeze({
+            kind: 'card-move' as const,
+            state: 'pending' as const,
+            cardKeys: Object.freeze([999]),
+            sources: Object.freeze([Object.freeze({ columnId: 'ready' })]),
+            target: Object.freeze({ columnId: 'doing' }),
+            position: Object.freeze({ kind: 'end' as const, cursorRevision: 1 }),
+          }),
+        }),
+      ],
+    });
+
+    expect(missingDrag.overlay.placeholders).toEqual([]);
+    expect(missingDrag.overlay.ghost).toMatchObject({ cardKey: 999, label: '#999' });
+    expect(pending.overlay.pending[0]).toMatchObject({ cardKeys: [999], rect: { width: 16 } });
+  });
+
+  it('restores authority with an empty overlay after malformed composition input', () => {
+    const source = authoritative();
+    const malformed = Object.freeze({
+      operationId: createKanbanOperationId('malformed'),
+      kind: 'card-move' as const,
+      state: 'pending' as const,
+      affected: Object.freeze([]),
+      projection: Object.freeze({ kind: 'card-move' as const, state: 'pending' as const }),
+    });
+    const result = composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      operations: [malformed as never],
+    });
+
+    expect(result.cards).toBe(source.cards);
+    expect(result.overlay).toEqual({ placeholders: [], pending: [], feedback: [], affectedStacks: [] });
+  });
+});
+
+describe('overlay drawing and damage internals', () => {
+  it('draws Unicode/color and ASCII/mono ghosts with explicit non-color target cues', () => {
+    const projection = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: drag(),
+    });
+    const unicode = mountedFrame(projection);
+    const ascii = mountedFrame(projection, true);
+
+    expect(unicode.text()).toContain('Moving card');
+    expect(unicode.text()).toContain('▶ Move here');
+    expect(unicode.text()).toMatch(/[◆━┃]/u);
+    expect(ascii.text()).toContain('> Move here');
+    expect(ascii.text()).toMatch(/[+=!]/u);
+    unicode.render.unmount();
+    ascii.render.unmount();
+  });
+
+  it.each([
+    ['pending', 'Move pending'],
+    ['accepted', 'Awaiting board'],
+  ] as const)('draws a source-free %s operation block with localized non-color evidence', (state, label) => {
+    const projection = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [
+        Object.freeze({
+          operationId: createKanbanOperationId(`operation-${state}`),
+          kind: 'card-move' as const,
+          state,
+          affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 1 })]),
+          projection: Object.freeze({
+            kind: 'card-move' as const,
+            state,
+            cardKeys: Object.freeze([1]),
+            sources: Object.freeze([Object.freeze({ columnId: 'ready' })]),
+            target: Object.freeze({ columnId: 'doing' }),
+            position: Object.freeze({ kind: 'end' as const, cursorRevision: 1 }),
+          }),
+        }),
+      ],
+    });
+    const mounted = mountedFrame(projection);
+
+    expect(mounted.text()).toContain(label);
+    expect(mounted.text()).not.toContain('Numeric source');
+    mounted.render.unmount();
+  });
+
+  it('draws rejected and superseded feedback outside the restored authoritative card body', () => {
+    const projection = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [
+        Object.freeze({
+          operationId: createKanbanOperationId('operation-superseded'),
+          kind: 'card-move' as const,
+          state: 'superseded' as const,
+          affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 1 })]),
+          code: 'private-application-code',
+        }),
+      ],
+    });
+    const mounted = mountedFrame(projection);
+
+    expect(mounted.text()).toContain('! Board changed');
+    expect(mounted.text()).toContain('Numeric source');
+    expect(mounted.text()).not.toContain('private-application-code');
+    mounted.render.unmount();
+  });
+
+  it('clears every ghost cell after cancellation and leaves a settled authoritative frame', () => {
+    const source = authoritative();
+    const active = composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: drag(),
+    });
+    const settled = composeKanbanViewportOverlay({
+      authoritative: source,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+    });
+    const mounted = mountedFrame(active);
+    expect(mounted.text()).toContain('Moving card');
+    mounted.leaf.replace(settled);
+    mounted.render.flush();
+
+    expect(mounted.text()).not.toContain('Moving card');
+    expect(mounted.text()).toContain('Numeric source');
+    mounted.render.unmount();
+  });
+
+  it('falls back to one whole-viewport region when overlay damage exceeds the finite budget', () => {
+    const source = authoritative();
+    const crowdedOverlay = Object.freeze({
+      placeholders: Object.freeze(
+        Array.from({ length: 257 }, (_, index) =>
+          Object.freeze({
+            address: Object.freeze({ columnId: 'ready' }),
+            cardKeys: Object.freeze([index]),
+            rect: Object.freeze({ x: index % 36, y: index % 12, width: 1, height: 1 }),
+          }),
+        ),
+      ),
+      pending: Object.freeze([]),
+      feedback: Object.freeze([]),
+      affectedStacks: Object.freeze([]),
+    });
+    const current: KanbanViewportProjection = Object.freeze({ ...source, overlay: crowdedOverlay });
+    const bounds = Object.freeze({ x: 0, y: 0, width: 36, height: 12 });
+    const damage = calculateKanbanViewportDamage({
+      previous: source,
+      current,
+      bounds,
+      previousOffsets: { x: 0, y: 0 },
+      currentOffsets: { x: 0, y: 0 },
+    });
+
+    expect(damage).toEqual([{ kind: 'whole-viewport', ...bounds }]);
+  });
+});

@@ -279,45 +279,49 @@ function affectedStacks(
 export function composeKanbanViewportOverlay(
   options: ComposeKanbanViewportOverlayOptions,
 ): KanbanViewportProjection & { readonly overlay: KanbanOverlayProjection } {
-  const operations = projectKanbanOperations(options.authoritative, options.operations ?? [], options.bounds);
-  const drag = options.drag;
-  if (drag === undefined && operations.pending.length === 0 && operations.feedback.length === 0) {
+  try {
+    const operations = projectKanbanOperations(options.authoritative, options.operations ?? [], options.bounds);
+    const drag = options.drag;
+    if (drag === undefined && operations.pending.length === 0 && operations.feedback.length === 0) {
+      return Object.freeze({ ...options.authoritative, overlay: EMPTY_OVERLAY });
+    }
+    const dragKeys = drag?.placeholders.flatMap(({ cardKeys }) => cardKeys) ?? [];
+    const projectedKeys = [...dragKeys, ...operations.projectedCardKeys];
+    const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds);
+    const cards = Object.freeze(
+      options.authoritative.cards
+        .filter((card) => !projectedKeys.some((cardKey) => sameCard(card.descriptor.cardKey, cardKey)))
+        .flatMap((card): readonly KanbanProjectedCard[] => {
+          if (
+            options.density !== 'compact' ||
+            gap === undefined ||
+            !inCell(card, gap.address) ||
+            card.rect.y < gap.rect.y
+          ) {
+            return [card];
+          }
+          const rect = clip({ ...card.rect, y: card.rect.y + 1 }, options.bounds);
+          return rect === undefined ? [] : [Object.freeze({ ...card, rect })];
+        }),
+    );
+    const actionTargets = Object.freeze(
+      options.authoritative.actionTargets.filter((target) => {
+        const targetCardKey = target.cardKey;
+        return targetCardKey === undefined || !projectedKeys.some((cardKey) => sameCard(targetCardKey, cardKey));
+      }),
+    );
+    const placeholders =
+      drag === undefined ? Object.freeze([]) : projectPlaceholders(options.authoritative, drag, options.bounds);
+    const overlay: KanbanOverlayProjection = Object.freeze({
+      placeholders,
+      ...(gap === undefined ? {} : { gap }),
+      ...(drag === undefined ? {} : { ghost: projectGhost(options.authoritative, drag, options.bounds) }),
+      pending: operations.pending,
+      feedback: operations.feedback,
+      affectedStacks: affectedStacks(options.authoritative, drag, operations.pending, options.bounds),
+    });
+    return Object.freeze({ ...options.authoritative, cards, actionTargets, overlay });
+  } catch {
     return Object.freeze({ ...options.authoritative, overlay: EMPTY_OVERLAY });
   }
-  const dragKeys = drag?.placeholders.flatMap(({ cardKeys }) => cardKeys) ?? [];
-  const projectedKeys = [...dragKeys, ...operations.projectedCardKeys];
-  const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds);
-  const cards = Object.freeze(
-    options.authoritative.cards
-      .filter((card) => !projectedKeys.some((cardKey) => sameCard(card.descriptor.cardKey, cardKey)))
-      .flatMap((card): readonly KanbanProjectedCard[] => {
-        if (
-          options.density !== 'compact' ||
-          gap === undefined ||
-          !inCell(card, gap.address) ||
-          card.rect.y < gap.rect.y
-        ) {
-          return [card];
-        }
-        const rect = clip({ ...card.rect, y: card.rect.y + 1 }, options.bounds);
-        return rect === undefined ? [] : [Object.freeze({ ...card, rect })];
-      }),
-  );
-  const actionTargets = Object.freeze(
-    options.authoritative.actionTargets.filter((target) => {
-      const targetCardKey = target.cardKey;
-      return targetCardKey === undefined || !projectedKeys.some((cardKey) => sameCard(targetCardKey, cardKey));
-    }),
-  );
-  const placeholders =
-    drag === undefined ? Object.freeze([]) : projectPlaceholders(options.authoritative, drag, options.bounds);
-  const overlay: KanbanOverlayProjection = Object.freeze({
-    placeholders,
-    ...(gap === undefined ? {} : { gap }),
-    ...(drag === undefined ? {} : { ghost: projectGhost(options.authoritative, drag, options.bounds) }),
-    pending: operations.pending,
-    feedback: operations.feedback,
-    affectedStacks: affectedStacks(options.authoritative, drag, operations.pending, options.bounds),
-  });
-  return Object.freeze({ ...options.authoritative, cards, actionTargets, overlay });
 }
