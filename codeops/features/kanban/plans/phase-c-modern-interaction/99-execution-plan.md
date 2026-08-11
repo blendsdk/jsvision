@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 11:14 CEST
-> **Progress**: 10/124 tasks (8%)
+> **Last Updated**: 2026-08-11 11:15 CEST
+> **Progress**: 11/124 tasks (9%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -80,7 +80,9 @@ changing the shared UI event loop.
 - [x] 1.2.4 Route explicit release, replacement, modal begin/end, decoded `focus: false`, explicit host-loss ingress, and private stop-with-reason/direct-dispose precedence through the central transition — `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:09)
 - [x] 1.2.5 Expose per-dispatch acquisition while preserving the existing capture trio and routing short-circuit — `packages/ui/src/event/dispatch.ts`, `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-08-11 11:11)
 - [x] 1.2.6 Document the new public APIs with safe examples and update UI public exports if required — `packages/ui/src/event/types.ts`, `packages/ui/src/view/types.ts`, `packages/ui/src/index.ts` ✅ (completed: 2026-08-11 11:14)
-- [ ] 1.2.7 Run the focused capture specification and existing UI drag suites; make all specification cases green without changing their expectations
+- [x] 1.2.7 Run the focused capture specification and existing UI drag suites; make all specification cases green without changing their expectations ✅ (completed: 2026-08-11 11:15)
+  - Gate evidence: 27 focused UI files / 170 tests passed unchanged; UI typecheck and
+    `yarn verify:local` passed.
 
 ### Step 1.3: Implementation tests and hardening
 
