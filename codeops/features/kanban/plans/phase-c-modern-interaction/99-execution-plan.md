@@ -294,6 +294,10 @@ coordinator.
     6 UI capture/control files / 58 tests; deps/docs/plugin gates; Examples typecheck and Kanban
     showcase smoke 1 file / 8 tests; and `yarn verify:local` all passed.
 
+**Quality review**: [PASS](11-phase-4-quality-review.md) — independent general and security reviews
+closed eleven Major reports and three Minor reports; the final gate passed 6 Kanban files / 64 tests,
+2 UI files / 36 tests, and the Kanban showcase smoke suite.
+
 **Deliverables**: modern card grab; substantial targets; one-cell hysteresis; live placement recompute;
 autoscroll/prefetch/hover; atomic release; comprehensive cancellation.
 
