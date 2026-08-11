@@ -12,7 +12,16 @@ import { boundPasteText, createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile, Theme } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot, View } from '../view/index.js';
-import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
+import type {
+  RenderRoot,
+  AppEvent,
+  DispatchEvent,
+  Point,
+  PointerCaptureLease,
+  PointerCaptureLossReason,
+  PointerCaptureLostHandler,
+  PopupHost,
+} from '../view/index.js';
 import type { ClipboardTextReader, ClipboardTextWriter, EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { buildKeymap } from './default-keymap.js';
 import { normalizeFunctionKey } from './function-key-fallback.js';
@@ -173,6 +182,10 @@ class EventLoopImpl implements EventLoop {
   private draining = false;
   /** The pointer-capture target: while set, all mouse/wheel events go here. */
   private captureTarget: View | null = null;
+  /** Generation of the current or most recently released pointer capture. */
+  private captureGeneration = 0;
+  /** Cleanup callback owned by the active generation; detached before it is invoked. */
+  private captureLostHandler: PointerCaptureLostHandler | null = null;
   /**
    * The app-local clipboard buffer: the last text copied or cut within the app. Filled by the
    * dual-sink `setClipboard` and read back by `readClipboard`, so in-app paste works on every terminal
@@ -571,12 +584,65 @@ class EventLoopImpl implements EventLoop {
     this.onCaret(origin === null || local === null ? null : { x: origin.x + local.x, y: origin.y + local.y });
   }
 
+  /** Acquire pointer capture and return a generation-bound lease for cleanup-safe gestures. */
+  acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease {
+    const generation = this.captureGeneration + 1;
+    this.replaceCapture(view, generation, onLost, 'replaced');
+    return Object.freeze({
+      generation,
+      active: (): boolean => this.captureTarget === view && this.captureGeneration === generation,
+      release: (): void => this.releaseCaptureGeneration(generation, 'released'),
+    });
+  }
+
   setCapture(view: View): void {
-    this.captureTarget = view; // a later setCapture replaces this one
+    this.replaceCapture(view, this.captureGeneration + 1, null, 'replaced');
   }
 
   releaseCapture(): void {
+    this.releaseCaptureGeneration(this.captureGeneration, 'released');
+  }
+
+  /** End active capture when a host reports loss outside the decoded input stream. */
+  notifyCaptureLost(): void {
+    this.releaseCaptureGeneration(this.captureGeneration, 'host-lost');
+  }
+
+  /** Install a capture before notifying the previous owner, so reentrant acquisition remains newest. */
+  private replaceCapture(
+    view: View,
+    generation: number,
+    onLost: PointerCaptureLostHandler | null,
+    reason: PointerCaptureLossReason,
+  ): void {
+    const previous = this.captureLostHandler;
+    this.captureTarget = view;
+    this.captureGeneration = generation;
+    this.captureLostHandler = onLost;
+    this.notifyCaptureHandler(previous, reason);
+  }
+
+  /** End only the named generation, detaching its callback before any reentrant cleanup runs. */
+  private releaseCaptureGeneration(generation: number, reason: PointerCaptureLossReason): void {
+    if (this.captureTarget === null || this.captureGeneration !== generation) return;
+    const previous = this.captureLostHandler;
     this.captureTarget = null;
+    this.captureLostHandler = null;
+    this.notifyCaptureHandler(previous, reason);
+  }
+
+  /** Isolate application cleanup and diagnostic failures from capture ownership transitions. */
+  private notifyCaptureHandler(handler: PointerCaptureLostHandler | null, reason: PointerCaptureLossReason): void {
+    if (handler === null) return;
+    try {
+      handler(reason);
+    } catch {
+      try {
+        this.logger.error('event', 'pointer capture loss handler threw');
+      } catch {
+        // A diagnostic sink is injected application code and cannot be allowed to break capture cleanup.
+      }
+    }
   }
 
   /**
@@ -626,6 +692,7 @@ class EventLoopImpl implements EventLoop {
       emit: (name, arg) => this.emitRegisteredCommand(name, arg),
       focusView: (view) => this.focus.focusView(view),
       // Pointer capture a view requests from within its own onEvent (e.g. a scrollbar thumb-drag).
+      acquireCapture: (view, onLost) => this.acquireCapture(view, onLost),
       setCapture: (view) => this.setCapture(view),
       releaseCapture: () => this.releaseCapture(),
       // A view checks this to detect that its capture was lost externally (a modal opened, the target

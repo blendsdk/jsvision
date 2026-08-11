@@ -118,6 +118,42 @@ export interface CommandEvent {
 export type AppEvent = InputEvent | CommandEvent;
 
 /**
+ * Why an event-loop pointer capture ended.
+ *
+ * The value is intentionally bounded so a gesture can choose deterministic cleanup behavior without
+ * receiving host errors, view records, or other untrusted payloads.
+ */
+export type PointerCaptureLossReason =
+  'replaced' | 'released' | 'modal' | 'unmounted' | 'host-lost' | 'stopped' | 'disposed';
+
+/**
+ * Called synchronously and at most once when an owned pointer capture ends.
+ *
+ * @param reason The bounded cause of capture loss.
+ */
+export type PointerCaptureLostHandler = (reason: PointerCaptureLossReason) => void;
+
+/**
+ * Generation-bound ownership of one event-loop pointer capture.
+ *
+ * A stale lease is safe to retain: {@link active} becomes false and {@link release} cannot release
+ * a newer owner's capture.
+ *
+ * @example
+ * const lease = ev.acquireCapture?.(this, () => this.cancelDrag());
+ * if (lease?.active()) this.updateDrag();
+ * lease?.release();
+ */
+export interface PointerCaptureLease {
+  /** Monotonic identity of the capture ownership acquired by this lease. */
+  readonly generation: number;
+  /** Whether this exact generation still owns pointer capture. */
+  active(): boolean;
+  /** Release this generation; an idempotent no-op after replacement or loss. */
+  release(): void;
+}
+
+/**
  * The envelope wrapped around each event before it is routed to views. This — not the raw read-only
  * input event — is what `View.onEvent(ev)` receives. A handler reads the event and sets `handled` to
  * consume it, and uses the optional seams below (`emit`, `focusView`, capture, clipboard, …) to act
@@ -147,6 +183,11 @@ export interface DispatchEvent {
    * non-focusable target is a no-op.
    */
   readonly focusView?: (view: View) => void;
+  /**
+   * Acquire generation-bound pointer capture and receive synchronous notification if it is lost.
+   * Prefer this seam for gestures that own timers, overlays, or other cleanup-sensitive state.
+   */
+  readonly acquireCapture?: (view: View, onLost: PointerCaptureLostHandler) => PointerCaptureLease;
   /**
    * Capture the pointer to `view`: while captured, all mouse/wheel events route to `view` until
    * {@link releaseCapture}. Used for drag gestures such as dragging a scrollbar thumb.

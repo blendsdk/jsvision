@@ -14,7 +14,15 @@ export { intersect, translate, contains } from './geometry.js';
 export type { Point } from './geometry.js';
 export type { ViewState, DrawContext, ThemeRoleName, RenderRootOptions } from './types.js';
 // Event-handler contract types (declared here rather than in the event module to avoid an import cycle).
-export type { CommandEvent, AppEvent, DispatchEvent, PopupHost } from './types.js';
+export type {
+  CommandEvent,
+  AppEvent,
+  DispatchEvent,
+  PointerCaptureLease,
+  PointerCaptureLossReason,
+  PointerCaptureLostHandler,
+  PopupHost,
+} from './types.js';
 // Paint seams used by the render root and by custom widgets/tests: the clipped DrawContext factory
 // and the theme-role→Style adapter.
 export { makeDrawContext } from './draw-context.js';

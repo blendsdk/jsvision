@@ -4,7 +4,15 @@
  */
 import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import type { View, RenderRoot, AppEvent, Point, PopupHost } from '../view/index.js';
+import type {
+  View,
+  RenderRoot,
+  AppEvent,
+  Point,
+  PointerCaptureLease,
+  PointerCaptureLostHandler,
+  PopupHost,
+} from '../view/index.js';
 import type { ClipboardKeys } from './default-keymap.js';
 import type { FunctionKeyFallback } from './function-key-fallback.js';
 
@@ -320,6 +328,19 @@ export interface EventLoop {
 
   // --- Host-integration sinks -------------------------------------------------------------------
   /**
+   * Capture pointer input for one gesture and receive synchronous notification when ownership ends.
+   * The returned lease is generation-bound, so delayed cleanup cannot release a replacement owner.
+   *
+   * @param view The view that receives captured mouse and wheel events.
+   * @param onLost Cleanup invoked once with the bounded reason when this generation loses capture.
+   * @returns A lease that can query or release only this acquisition.
+   * @example
+   * const lease = loop.acquireCapture(view, () => stopAutoscroll());
+   * // A delayed pointer-up is safe even if another gesture replaced this lease.
+   * lease.release();
+   */
+  acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease;
+  /**
    * Capture the pointer to `view`: while captured, **all** mouse/wheel events go to `view` (with
    * view-local `ev.local` coordinates), bypassing hit-testing and focus-on-click — this is how a
    * drag or resize keeps tracking even after the cursor leaves the affordance. Setting a new target
@@ -329,6 +350,11 @@ export interface EventLoop {
   setCapture(view: View): void;
   /** Release the pointer capture. A no-op if nothing is captured. */
   releaseCapture(): void;
+  /**
+   * Notify the loop that the host lost pointer ownership or focus without a decoded focus report.
+   * The active lease, if any, is synchronously ended with the `host-lost` reason.
+   */
+  notifyCaptureLost(): void;
   /**
    * Called with the composed buffer after every frame (each dispatch tick, resize, and mount) so a
    * host can paint it. Set this to `host.render` (or your own writer) after the host exists;

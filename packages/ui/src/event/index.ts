@@ -22,4 +22,11 @@ export type {
 } from './types.js';
 export type { ClipboardKeys } from './default-keymap.js';
 export type { FunctionKeyFallback } from './function-key-fallback.js';
-export type { CommandEvent, AppEvent, DispatchEvent } from '../view/index.js';
+export type {
+  CommandEvent,
+  AppEvent,
+  DispatchEvent,
+  PointerCaptureLease,
+  PointerCaptureLossReason,
+  PointerCaptureLostHandler,
+} from '../view/index.js';

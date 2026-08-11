@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-11 10:50 CEST
-> **Progress**: 4/124 tasks (3%)
+> **Last Updated**: 2026-08-11 10:56 CEST
+> **Progress**: 5/124 tasks (4%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -74,7 +74,7 @@ changing the shared UI event loop.
 **Reference**: 03-01 §Public contracts/Internal transition/Compatibility · AR-C03/C20
 **Objective**: Add one reusable exception-contained capture lease without breaking existing controls.
 
-- [ ] 1.2.1 Add documented public loss-reason, handler, and lease contracts plus EventLoop/DispatchEvent acquisition and host-loss seams — `packages/ui/src/event/types.ts`, `packages/ui/src/view/types.ts`
+- [x] 1.2.1 Add documented public loss-reason, handler, and lease contracts plus EventLoop/DispatchEvent acquisition and host-loss seams — `packages/ui/src/event/types.ts`, `packages/ui/src/view/types.ts` ✅ (completed: 2026-08-11 10:56)
 - [ ] 1.2.2 Replace the nullable target with generation/callback capture state and one internal lose/replace transition — `packages/ui/src/event/event-loop.ts`
 - [ ] 1.2.3 Add one permanent View/RenderRoot subtree-unmount notification, make root unmount/remount converge through `View.unmount()`, and route target/ancestor loss before user/scope cleanup through the central transition without per-capture registrations — `packages/ui/src/view/view.ts`, `packages/ui/src/view/types.ts`, `packages/ui/src/view/render-root.ts`, `packages/ui/src/event/event-loop.ts`
 - [ ] 1.2.4 Route explicit release, replacement, modal begin/end, decoded `focus: false`, explicit host-loss ingress, and private stop-with-reason/direct-dispose precedence through the central transition — `packages/ui/src/event/event-loop.ts`

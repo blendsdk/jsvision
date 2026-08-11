@@ -86,6 +86,9 @@ export type {
   CommandEvent,
   AppEvent,
   DispatchEvent,
+  PointerCaptureLease,
+  PointerCaptureLossReason,
+  PointerCaptureLostHandler,
   ModalHost,
   ModalHostAware,
 } from './event/index.js';

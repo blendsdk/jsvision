@@ -54,6 +54,7 @@ interface DispatchEvent {
   clickCount?: number;   // For a mouse-down, how many consecutive clicks landed on the same cell (1 = single, 2 = double, 3 = triple…). Present only on a mouse-down during real dispatch; `undefined` otherwise. A row widget that activates on double-click checks `ev.clickCount === 2`.
   emit?: (command: string, arg?: unknown) => void;   // Raise a typed command onto the current dispatch tick — how a widget signals an action (e.g. a button emitting `'ok'`) for a menu/status/app handler to pick up.
   focusView?: (view: View) => void;   // Move focus to another view — used e.g. by a `Label` to focus the control it labels. A non-focusable target is a no-op.
+  acquireCapture?: (view: View, onLost: PointerCaptureLostHandler) => PointerCaptureLease;   // Acquire generation-bound pointer capture and receive synchronous notification if it is lost. Prefer this seam for gestures that own timers, overlays, or other cleanup-sensitive state.
   setCapture?: (view: View) => void;   // Capture the pointer to `view`: while captured, all mouse/wheel events route to `view` until releaseCapture. Used for drag gestures such as dragging a scrollbar thumb.
   releaseCapture?: () => void;   // Release the pointer capture; a no-op if none is set. Pairs with setCapture.
   hasCapture?: (view: View) => boolean;   // Whether `view` currently holds the pointer capture. A view mid-gesture (a window drag, a status press) checks this before applying a move, so if the capture was lost externally (a modal opened or closed mid-drag) the gesture aborts cleanly instead of jumping to the cursor.
@@ -200,6 +201,34 @@ interface Point {
   x: number;
   y: number;
 }
+```
+
+## PointerCaptureLease
+
+Generation-bound ownership of one event-loop pointer capture.
+
+```ts
+interface PointerCaptureLease {
+  generation: number;   // Monotonic identity of the capture ownership acquired by this lease.
+  active(): boolean;   // Whether this exact generation still owns pointer capture.
+  release(): void;   // Release this generation; an idempotent no-op after replacement or loss.
+}
+```
+
+## PointerCaptureLossReason
+
+Why an event-loop pointer capture ended.
+
+```ts
+type PointerCaptureLossReason = 'replaced' | 'released' | 'modal' | 'unmounted' | 'host-lost' | 'stopped' | 'disposed'
+```
+
+## PointerCaptureLostHandler
+
+Called synchronously and at most once when an owned pointer capture ends.
+
+```ts
+type PointerCaptureLostHandler = (reason: PointerCaptureLossReason) => void
 ```
 
 ## PopupHost

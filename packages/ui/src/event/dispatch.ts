@@ -21,7 +21,7 @@
  */
 import type { Keymap } from '@jsvision/core';
 import { View, Group } from '../view/index.js';
-import type { DispatchEvent, PopupHost } from '../view/index.js';
+import type { DispatchEvent, PointerCaptureLease, PointerCaptureLostHandler, PopupHost } from '../view/index.js';
 import { devWarn } from '../shared/warnings.js';
 
 /** The seams `route` needs from the loop; the loop owns the mutable focus/command/modal state. */
@@ -38,6 +38,8 @@ export interface RouteContext {
   emit(name: string, arg?: unknown): void;
   /** Focus a view from within a view's `onEvent`. Exposed on each event as `ev.focusView`. */
   focusView(view: View): void;
+  /** Acquire a generation-bound pointer capture. Exposed on each event as `ev.acquireCapture`. */
+  acquireCapture(view: View, onLost: PointerCaptureLostHandler): PointerCaptureLease;
   /** Capture the pointer to a view from within its `onEvent`. Exposed as `ev.setCapture`. */
   setCapture(view: View): void;
   /** Release the pointer capture. Exposed as `ev.releaseCapture`. */
@@ -185,6 +187,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     ...ev,
     emit: ctx.emit,
     focusView: ctx.focusView,
+    acquireCapture: ctx.acquireCapture,
     setCapture: ctx.setCapture,
     releaseCapture: ctx.releaseCapture,
     hasCapture: ctx.hasCapture,
