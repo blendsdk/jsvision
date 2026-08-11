@@ -5,6 +5,7 @@ import type {
   KanbanExtensionId,
   KanbanOperationId,
   KanbanSwimlaneId,
+  KanbanViewId,
   PlacementToken,
 } from './identity.js';
 import type { KanbanRevision } from './revision.js';
@@ -148,6 +149,128 @@ export type KanbanCardRequestProposal =
   | KanbanCardDeleteProposal
   | KanbanCardMoveProposal;
 
+/** Semantic placement of one workflow column among stable neighboring column identities. */
+export type KanbanColumnPosition =
+  | { readonly kind: 'start' }
+  | { readonly kind: 'end' }
+  | {
+      readonly kind: 'between';
+      readonly beforeColumnId: KanbanColumnId | null;
+      readonly afterColumnId: KanbanColumnId | null;
+    };
+
+/** Semantic placement of one swimlane relative to a stable neighboring swimlane identity. */
+export type KanbanSwimlanePosition =
+  | { readonly kind: 'start' }
+  | { readonly kind: 'end' }
+  | { readonly kind: 'before'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'after'; readonly swimlaneId: KanbanSwimlaneId };
+
+/** Generic application-owned workflow-column draft with package-validated identity and label. */
+export interface KanbanColumnDraft {
+  readonly columnId: KanbanColumnId;
+  readonly label: string;
+  readonly data?: KanbanSemanticValue;
+}
+
+/** Generic application-owned swimlane draft with package-validated identity and label. */
+export interface KanbanSwimlaneDraft {
+  readonly swimlaneId: KanbanSwimlaneId;
+  readonly label: string;
+  readonly data?: KanbanSemanticValue;
+}
+
+/** Add one workflow column at a semantic structural position. */
+export interface KanbanColumnAddProposal {
+  readonly kind: 'column-add';
+  readonly draft: KanbanColumnDraft;
+  readonly position: KanbanColumnPosition;
+}
+
+/** Patch one workflow column through application-owned policy. */
+export interface KanbanColumnUpdateProposal {
+  readonly kind: 'column-update';
+  readonly columnId: KanbanColumnId;
+  readonly patch: KanbanSemanticValue;
+}
+
+/** Reorder one workflow column without a numeric index or generated rank. */
+export interface KanbanColumnReorderProposal {
+  readonly kind: 'column-reorder';
+  readonly columnId: KanbanColumnId;
+  readonly position: KanbanColumnPosition;
+}
+
+/** Delete one workflow column with an optional application-authorized card reassignment target. */
+export interface KanbanColumnDeleteProposal {
+  readonly kind: 'column-delete';
+  readonly columnId: KanbanColumnId;
+  readonly reassignTo?: KanbanColumnId;
+}
+
+/** Add one explicit swimlane at a semantic structural position. */
+export interface KanbanSwimlaneAddProposal {
+  readonly kind: 'swimlane-add';
+  readonly draft: KanbanSwimlaneDraft;
+  readonly position: KanbanSwimlanePosition;
+}
+
+/** Patch one explicit swimlane through application-owned policy. */
+export interface KanbanSwimlaneUpdateProposal {
+  readonly kind: 'swimlane-update';
+  readonly swimlaneId: KanbanSwimlaneId;
+  readonly patch: KanbanSemanticValue;
+}
+
+/** Reorder one explicit swimlane without a numeric index or generated rank. */
+export interface KanbanSwimlaneReorderProposal {
+  readonly kind: 'swimlane-reorder';
+  readonly swimlaneId: KanbanSwimlaneId;
+  readonly position: KanbanSwimlanePosition;
+}
+
+/** Delete one explicit swimlane with an optional application-authorized reassignment target. */
+export interface KanbanSwimlaneDeleteProposal {
+  readonly kind: 'swimlane-delete';
+  readonly swimlaneId: KanbanSwimlaneId;
+  readonly reassignTo?: KanbanSwimlaneId;
+}
+
+/** Save or replace one application-owned semantic view definition. */
+export interface KanbanSavedViewSaveProposal {
+  readonly kind: 'saved-view-save';
+  readonly viewId: KanbanViewId;
+  readonly data: KanbanSemanticValue;
+}
+
+/** Rename one application-owned saved view. */
+export interface KanbanSavedViewRenameProposal {
+  readonly kind: 'saved-view-rename';
+  readonly viewId: KanbanViewId;
+  readonly label: string;
+}
+
+/** Delete one application-owned saved view. */
+export interface KanbanSavedViewDeleteProposal {
+  readonly kind: 'saved-view-delete';
+  readonly viewId: KanbanViewId;
+}
+
+/** Structural standard proposals for columns and explicit swimlanes. */
+export type KanbanStructureRequestProposal =
+  | KanbanColumnAddProposal
+  | KanbanColumnUpdateProposal
+  | KanbanColumnReorderProposal
+  | KanbanColumnDeleteProposal
+  | KanbanSwimlaneAddProposal
+  | KanbanSwimlaneUpdateProposal
+  | KanbanSwimlaneReorderProposal
+  | KanbanSwimlaneDeleteProposal;
+
+/** Saved-view standard proposals defined for later package-owned view UI. */
+export type KanbanSavedViewRequestProposal =
+  KanbanSavedViewSaveProposal | KanbanSavedViewRenameProposal | KanbanSavedViewDeleteProposal;
+
 /** Generic namespaced application-extension request. */
 export interface KanbanExtensionRequest<
   TType extends KanbanExtensionId = KanbanExtensionId,
@@ -161,14 +284,21 @@ export interface KanbanExtensionRequest<
   readonly signal: AbortSignal;
 }
 
-/** Caller-facing proposal union before structural variants are added. */
-export type KanbanRequestProposal = KanbanCardRequestProposal | KanbanExtensionRequestProposal;
+/** Complete caller-facing standard and namespaced-extension proposal union. */
+export type KanbanRequestProposal =
+  | KanbanCardRequestProposal
+  | KanbanStructureRequestProposal
+  | KanbanSavedViewRequestProposal
+  | KanbanExtensionRequestProposal;
 
-/** Final package-owned card dispatch envelope. */
-export type KanbanCardRequest = KanbanCardRequestProposal & KanbanRequestLifecycle;
+/** Final package-owned standard dispatch envelope. */
+export type KanbanStandardRequest = (
+  KanbanCardRequestProposal | KanbanStructureRequestProposal | KanbanSavedViewRequestProposal
+) &
+  KanbanRequestLifecycle;
 
 /** Final request union accepted by the application dispatcher. */
-export type KanbanRequest = KanbanCardRequest | KanbanExtensionRequest;
+export type KanbanRequest = KanbanStandardRequest | KanbanExtensionRequest;
 
 /** Publication metadata returned with an accepted request result. */
 export interface KanbanRequestAccepted {
