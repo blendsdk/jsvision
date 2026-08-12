@@ -9,7 +9,7 @@ import type { Application } from '@jsvision/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource, createStandardKanbanCardAdapter } from '../src/index.js';
-import type { KanbanQuery } from '../src/index.js';
+import type { KanbanLayoutRegion, KanbanQuery, KanbanViewportInspection } from '../src/index.js';
 import {
   createKanbanStabilizationFixture,
   type KanbanStabilizationCard,
@@ -76,6 +76,68 @@ function absoluteCardPoint(
   return Object.freeze({ x: origin.x + target.x + 1, y: origin.y + target.y + 1 });
 }
 
+/** Returns the visible card rectangles ordered by source identity within each workflow column. */
+function cardRegionsByColumn(
+  inspection: KanbanViewportInspection,
+  cards: readonly KanbanStabilizationCard[],
+): ReadonlyMap<string, readonly KanbanLayoutRegion[]> {
+  const sourceByKey = new Map(cards.map((card, index) => [card.key, { card, index }] as const));
+  const grouped = new Map<string, KanbanLayoutRegion[]>();
+  for (const region of inspection.regions) {
+    if (region.kind !== 'card' || region.cardKey === undefined) continue;
+    const source = sourceByKey.get(region.cardKey);
+    if (source === undefined) throw new Error(`Unexpected visible card identity ${String(region.cardKey)}.`);
+    const current = grouped.get(source.card.columnId) ?? [];
+    current.push(region);
+    grouped.set(source.card.columnId, current);
+  }
+  for (const regions of grouped.values()) {
+    regions.sort((left, right) => {
+      const leftIndex = sourceByKey.get(left.cardKey ?? '')?.index ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex = sourceByKey.get(right.cardKey ?? '')?.index ?? Number.MAX_SAFE_INTEGER;
+      return leftIndex - rightIndex;
+    });
+  }
+  return grouped;
+}
+
+/** Asserts that final painted card rectangles and whole-card hit targets are exactly identical. */
+function expectGeometryIntegrity(
+  inspection: KanbanViewportInspection,
+  cards: readonly KanbanStabilizationCard[],
+): void {
+  const cardRegions = inspection.regions.filter((region) => region.kind === 'card');
+  const identities = cardRegions.map(({ cardKey }) => cardKey);
+  expect(new Set(identities).size).toBe(identities.length);
+
+  for (const region of cardRegions) {
+    expect(Number.isFinite(region.x)).toBe(true);
+    expect(Number.isFinite(region.y)).toBe(true);
+    expect(Number.isFinite(region.width)).toBe(true);
+    expect(Number.isFinite(region.height)).toBe(true);
+    expect(region.width).toBeGreaterThan(0);
+    expect(region.height).toBeGreaterThan(0);
+    const target = inspection.actionTargets.find(
+      (candidate) => candidate.kind === 'card' && candidate.cardKey === region.cardKey,
+    );
+    expect(target).toMatchObject({
+      x: region.x,
+      y: region.y,
+      width: region.width,
+      height: region.height,
+    });
+  }
+
+  for (const regions of cardRegionsByColumn(inspection, cards).values()) {
+    for (let index = 1; index < regions.length; index += 1) {
+      const previous = regions[index - 1];
+      const current = regions[index];
+      if (previous === undefined || current === undefined) continue;
+      expect(current.y).toBeGreaterThanOrEqual(previous.y + previous.height + 1);
+    }
+  }
+}
+
 describe('mounted mixed-height viewport sequence', () => {
   // Click, two-axis scrolling, shrink/grow, and restore must remain one continuous usable board session.
   it('should remain operable through click, wheel, horizontal scroll, resize, and restore', () => {
@@ -121,5 +183,30 @@ describe('mounted mixed-height viewport sequence', () => {
     expect(metrics.offsets.y).toBeGreaterThan(0);
     expect(inspection.visibleCards.length).toBeGreaterThan(0);
     expect(inspection.actionTargets.some(({ kind }) => kind === 'card')).toBe(true);
+  });
+
+  // Every completed frame must preserve source order, the one-cell gap, and exact paint/hit parity.
+  it('should keep every visible card rectangle finite, ordered, separated, unique, and actionable', () => {
+    const { application, board } = mountedFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const inspect = (): void => expectGeometryIntegrity(board.inspection(), fixture.cards);
+
+    inspect();
+    for (let index = 0; index < 7; index += 1) {
+      board.scrollBy({ y: 3 });
+      application.loop.renderRoot.flush();
+      inspect();
+    }
+    for (let index = 0; index < 7; index += 1) {
+      board.scrollBy({ y: -3 });
+      application.loop.renderRoot.flush();
+      inspect();
+    }
+    application.loop.resize({ width: 54, height: 16 });
+    inspect();
+    application.loop.resize({ width: 104, height: 30 });
+    inspect();
+    application.loop.resize({ width: 80, height: 24 });
+    inspect();
   });
 });
