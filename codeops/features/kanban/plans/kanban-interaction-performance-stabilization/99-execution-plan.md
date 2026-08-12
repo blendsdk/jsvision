@@ -261,8 +261,9 @@ viewport-scale tests. No third review was run.
 - [x] 2.1.4 Keep sparse index storage, source-range resolution, and correction work bounded by resident
       descriptors plus configured overscan; never enumerate an unknown or 100,000-card logical cell. ✅
       (completed: 2026-08-12 17:35)
-- [ ] 2.1.5 Preserve vertical card identity and relative row across wheel, resize, source publication, and
-      measured-height correction without allowing a stale anchor to reorder the stack.
+- [x] 2.1.5 Preserve vertical card identity and relative row across wheel, resize, source publication, and
+      measured-height correction without allowing a stale anchor to reorder the stack. ✅ (completed:
+      2026-08-12 17:37)
 - [ ] 2.1.6 Align clipping, content extent, hit maps, drop maps, and drag source/target geometry to the one
       final authoritative height projection selected for the frame.
 - [ ] 2.1.7 Run Phase 1 geometry specifications until green, then add implementation cases for bootstrap and

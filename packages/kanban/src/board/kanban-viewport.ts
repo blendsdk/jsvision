@@ -1077,7 +1077,9 @@ export class KanbanViewport<TCard> extends View {
   /** Scrolls to an absolute partial terminal-cell target and clamps both axes to live extents. */
   scrollTo(target: KanbanScrollTarget): void {
     this.#cancelAnchorRelocation();
-    this.#requestedOffsets = resolveKanbanScrollTo(this.#requestedOffsets, this.#metrics.extents, target);
+    const next = resolveKanbanScrollTo(this.#requestedOffsets, this.#metrics.extents, target);
+    this.#shiftVerticalAnchor(this.#requestedOffsets.y, next.y);
+    this.#requestedOffsets = next;
     this.#metrics = Object.freeze({ ...this.#metrics, offsets: this.#requestedOffsets });
     this.invalidate();
   }
@@ -1085,9 +1087,21 @@ export class KanbanViewport<TCard> extends View {
   /** Scrolls by a signed partial terminal-cell delta and clamps both axes to live extents. */
   scrollBy(delta: KanbanScrollTarget): void {
     this.#cancelAnchorRelocation();
-    this.#requestedOffsets = resolveKanbanScrollBy(this.#requestedOffsets, this.#metrics.extents, delta);
+    const next = resolveKanbanScrollBy(this.#requestedOffsets, this.#metrics.extents, delta);
+    this.#shiftVerticalAnchor(this.#requestedOffsets.y, next.y);
+    this.#requestedOffsets = next;
     this.#metrics = Object.freeze({ ...this.#metrics, offsets: this.#requestedOffsets });
     this.invalidate();
+  }
+
+  /** Keeps the retained anchor's screen row consistent with an explicit scroll request. */
+  #shiftVerticalAnchor(previousOffset: number, nextOffset: number): void {
+    const anchor = this.#verticalAnchor;
+    if (anchor === undefined || previousOffset === nextOffset) return;
+    this.#verticalAnchor = Object.freeze({
+      ...anchor,
+      relativeRow: anchor.relativeRow - (nextOffset - previousOffset),
+    });
   }
 
   /** Reveals one card through the optional bounded source locator without scanning cursor contents. */
