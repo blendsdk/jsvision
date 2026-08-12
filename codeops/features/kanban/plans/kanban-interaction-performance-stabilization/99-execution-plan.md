@@ -290,6 +290,10 @@ waived, dismissed, or used to expand product behavior.
 plugin update/check, and `yarn verify:local` are green. One permitted independent re-review remains required
 before Phase 3 may start.
 
+**Required re-review:** PASS. The single independent remediation re-review confirmed RV-004/PE-003,
+RV-005, RV-006, RV-007, RV-008, and RV-009/PE-004 closed, found no new Critical or Major issue, and
+reported no performance regression. No third review was run.
+
 ## Phase 3: Make mouse interaction and repaint immediate
 
 ### Step 3.1: Pointer and overlay behavior
