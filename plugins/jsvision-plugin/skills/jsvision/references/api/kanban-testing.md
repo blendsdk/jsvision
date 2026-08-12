@@ -778,6 +778,61 @@ Supported deterministic transports for the standard semantic pointer trace.
 type KanbanSemanticTraceTransport = 'direct' | 'browser-xterm' | 'unix-pty' | 'windows-conpty'
 ```
 
+## KanbanStabilizationCard
+
+Card shape shared by stabilization geometry, interaction, and performance specifications.
+
+```ts
+type KanbanStabilizationCard = StandardCard<string, KanbanStabilizationCardData>
+```
+
+## KanbanStabilizationCardData
+
+Application-owned metadata that makes the fixture resemble imported GitHub project items.
+
+```ts
+interface KanbanStabilizationCardData {
+  repository: string;   // Repository that owns the simulated issue or pull request.
+  reference: string;   // Compact source-system item reference.
+  statusColor: KanbanStabilizationStatusColor;   // GitHub status color retained for application-level presentation tests.
+}
+```
+
+## KanbanStabilizationFixture
+
+Complete deterministic source data for the Kanban stabilization test matrix.
+
+```ts
+interface KanbanStabilizationFixture {
+  columns: readonly KanbanColumnMeta[];   // Five ordered workflow columns, including one deliberately empty column.
+  cards: readonly KanbanStabilizationCard[];   // Exactly 84 GitHub-shaped cards in deterministic source order.
+  named: KanbanStabilizationNamedCards;   // Named identities for cases that tests need to target directly.
+}
+```
+
+## KanbanStabilizationNamedCards
+
+Stable identities for deliberately adversarial cards within the larger fixture.
+
+```ts
+interface KanbanStabilizationNamedCards {
+  short: string;   // Small card used as the normal estimated-height control.
+  tall: string;   // Checklist-heavy card expected to occupy substantially more rows.
+  dense: string;   // Metadata-heavy card used to exercise bounded optional presentation.
+  hostile: string;   // Card containing terminal controls and bidirectional formatting controls.
+  unicode: string;   // Card containing wide and combining Unicode sequences.
+  longestLocale: string;   // Card containing a deliberately long Dutch presentation string.
+}
+```
+
+## KanbanStabilizationStatusColor
+
+GitHub status colors represented by the deterministic stabilization fixture.
+
+```ts
+type KanbanStabilizationStatusColor = 'GRAY' | 'BLUE' | 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'PINK' | 'PURPLE'
+```
+
 ## KanbanTestingEventRing
 
 Fixed-capacity FIFO used by testing instrumentation without retaining payload objects.
@@ -796,6 +851,40 @@ One unavailable loaded-window edge that may request bounded source evidence.
 ```ts
 interface KanbanUnknownDropEdgeInput {
   prefetch: KanbanDragPrefetchHint;   // Bounded request used only while this edge remains the current target.
+}
+```
+
+## KanbanViewportOperationObserver
+
+One explicitly active testing observation of mounted viewport operations.
+
+```ts
+interface KanbanViewportOperationObserver {
+  snapshot: () => KanbanViewportOperationSnapshot;   // Reads detached evidence accumulated by this observation.
+  dispose: () => void;   // Stops the observation idempotently and releases retained evidence.
+}
+```
+
+## KanbanViewportOperationSnapshot
+
+Additive testing-only operation evidence kept separate from the stable scale snapshot.
+
+```ts
+interface KanbanViewportOperationSnapshot {
+  projectionPasses: readonly KanbanViewportProjectionPassSnapshot[];   // Every projection attempt performed by the latest completed frame, in execution order.
+}
+```
+
+## KanbanViewportProjectionPassSnapshot
+
+Payload-free quality evidence for one projection pass in the latest completed viewport frame.
+
+```ts
+interface KanbanViewportProjectionPassSnapshot {
+  ordinal: number;   // One-based pass position within the completed frame.
+  heightQuality: 'estimated' | 'mixed' | 'measured';   // Whether this pass used only estimates, only exact measurements, or a mixture of both.
+  measuredRows: number;   // Exact sparse rows consumed by this pass.
+  estimatedRows: number;   // Estimated sparse rows consumed by this pass.
 }
 ```
 
@@ -1019,6 +1108,14 @@ Creates a deterministic safe-integer revision sequence for fixtures.
 createKanbanRevisionController(initialRevision = 0): KanbanRevisionController
 ```
 
+## createKanbanStabilizationFixture
+
+Creates the canonical 84-card mixed-height fixture used by stabilization tests and benchmarks.
+
+```ts
+createKanbanStabilizationFixture(): KanbanStabilizationFixture
+```
+
 ## createKanbanStandardPointerTrace
 
 Returns the canonical bounded SGR trace used for cross-host semantic parity.
@@ -1043,12 +1140,28 @@ Reads sanitized drag/operation overlay counts for one live mounted viewport.
 inspectKanbanDragFrame(viewport: object): KanbanDragFrameSnapshot
 ```
 
+## inspectKanbanViewportOperations
+
+Reads payload-free projection-pass evidence for one live mounted viewport.
+
+```ts
+inspectKanbanViewportOperations(viewport: object): KanbanViewportOperationSnapshot
+```
+
 ## inspectKanbanViewportScale
 
 Reads counter-only bounded scale evidence for a live Kanban viewport.
 
 ```ts
 inspectKanbanViewportScale(viewport: object): KanbanViewportScaleSnapshot
+```
+
+## observeKanbanViewportOperations
+
+Enables payload-free projection diagnostics until the returned observer is disposed.
+
+```ts
+observeKanbanViewportOperations(viewport: object): KanbanViewportOperationObserver
 ```
 
 ## projectKanbanCardDropMap

@@ -105,10 +105,14 @@ function cardRegionsByColumn(
 function expectGeometryIntegrity(
   inspection: KanbanViewportInspection,
   cards: readonly KanbanStabilizationCard[],
+  viewport: Readonly<{ width: number; height: number }>,
 ): void {
   const cardRegions = inspection.regions.filter((region) => region.kind === 'card');
   const identities = cardRegions.map(({ cardKey }) => cardKey);
   expect(new Set(identities).size).toBe(identities.length);
+  const cardTargets = inspection.actionTargets.filter(({ kind }) => kind === 'card');
+  expect(cardTargets).toHaveLength(cardRegions.length);
+  expect(cardTargets.map(({ cardKey }) => cardKey).sort()).toEqual([...identities].sort());
 
   for (const region of cardRegions) {
     expect(Number.isFinite(region.x)).toBe(true);
@@ -117,10 +121,15 @@ function expectGeometryIntegrity(
     expect(Number.isFinite(region.height)).toBe(true);
     expect(region.width).toBeGreaterThan(0);
     expect(region.height).toBeGreaterThan(0);
-    const target = inspection.actionTargets.find(
+    expect(region.x).toBeGreaterThanOrEqual(0);
+    expect(region.y).toBeGreaterThanOrEqual(0);
+    expect(region.x + region.width).toBeLessThanOrEqual(viewport.width);
+    expect(region.y + region.height).toBeLessThanOrEqual(viewport.height);
+    const targets = cardTargets.filter(
       (candidate) => candidate.kind === 'card' && candidate.cardKey === region.cardKey,
     );
-    expect(target).toMatchObject({
+    expect(targets).toHaveLength(1);
+    expect(targets[0]).toMatchObject({
       x: region.x,
       y: region.y,
       width: region.width,
@@ -133,7 +142,7 @@ function expectGeometryIntegrity(
       const previous = regions[index - 1];
       const current = regions[index];
       if (previous === undefined || current === undefined) continue;
-      expect(current.y).toBeGreaterThanOrEqual(previous.y + previous.height + 1);
+      expect(current.y).toBe(previous.y + previous.height + 1);
     }
   }
 }
@@ -198,7 +207,7 @@ describe('mounted mixed-height viewport sequence', () => {
   it('should keep every visible card rectangle finite, ordered, separated, unique, and actionable', () => {
     const { application, board } = mountedFixture();
     const fixture = createKanbanStabilizationFixture();
-    const inspect = (): void => expectGeometryIntegrity(board.inspection(), fixture.cards);
+    const inspect = (): void => expectGeometryIntegrity(board.inspection(), fixture.cards, board.viewport.bounds);
 
     inspect();
     for (let index = 0; index < 7; index += 1) {

@@ -114,6 +114,71 @@ function overlayField(board: KanbanBoard<KanbanStabilizationCard>, field: 'ghost
   return Reflect.get(inspectKanbanDragFrame(board.viewport), field);
 }
 
+/** Detached compact-ghost evidence required by the mounted specification. */
+interface CompactGhostEvidence {
+  readonly count: number;
+  readonly contentRows: number;
+  readonly rawOrigin: Readonly<{ x: number; y: number }>;
+  readonly visibleRect: Readonly<{ x: number; y: number; width: number; height: number }>;
+}
+
+/** Validates detached compact-ghost evidence without casting private implementation objects. */
+function compactGhost(board: KanbanBoard<KanbanStabilizationCard>): CompactGhostEvidence {
+  const value = overlayField(board, 'ghost');
+  if (typeof value !== 'object' || value === null) throw new Error('Expected detached compact ghost evidence.');
+  const count = Reflect.get(value, 'count');
+  const contentRows = Reflect.get(value, 'contentRows');
+  const rawOrigin = Reflect.get(value, 'rawOrigin');
+  const visibleRect = Reflect.get(value, 'visibleRect');
+  if (
+    typeof count !== 'number' ||
+    typeof contentRows !== 'number' ||
+    typeof rawOrigin !== 'object' ||
+    rawOrigin === null ||
+    typeof visibleRect !== 'object' ||
+    visibleRect === null
+  ) {
+    throw new Error('Expected complete detached compact ghost geometry.');
+  }
+  const x = Reflect.get(rawOrigin, 'x');
+  const y = Reflect.get(rawOrigin, 'y');
+  const visibleX = Reflect.get(visibleRect, 'x');
+  const visibleY = Reflect.get(visibleRect, 'y');
+  const width = Reflect.get(visibleRect, 'width');
+  const height = Reflect.get(visibleRect, 'height');
+  if ([x, y, visibleX, visibleY, width, height].some((member) => typeof member !== 'number')) {
+    throw new Error('Expected finite detached compact ghost coordinates.');
+  }
+  return Object.freeze({
+    count,
+    contentRows,
+    rawOrigin: Object.freeze({ x, y }),
+    visibleRect: Object.freeze({ x: visibleX, y: visibleY, width, height }),
+  });
+}
+
+/** Clips the complete three-row ghost to exact viewport-local bounds. */
+function clippedGhostRect(
+  origin: Readonly<{ x: number; y: number }>,
+  width: number,
+  bounds: Readonly<{ width: number; height: number }>,
+): Readonly<{ x: number; y: number; width: number; height: number }> {
+  const x = Math.max(0, origin.x);
+  const y = Math.max(0, origin.y);
+  const right = Math.min(bounds.width, origin.x + width);
+  const bottom = Math.min(bounds.height, origin.y + 3);
+  return Object.freeze({ x, y, width: right - x, height: bottom - y });
+}
+
+/** Extracts the serialized cells covered by one detached visible rectangle. */
+function frameRect(frame: string, rect: Readonly<{ x: number; y: number; width: number; height: number }>): string {
+  return frame
+    .split('\n')
+    .slice(rect.y, rect.y + rect.height)
+    .map((row) => row.slice(rect.x, rect.x + rect.width))
+    .join('\n');
+}
+
 /** Starts a captured drag and returns the exact normalized grab offset. */
 function beginDrag(
   application: Application,
@@ -136,11 +201,6 @@ describe('mounted dispatch-return drag feedback', () => {
     const { application, board, frames } = mountedDragFixture();
     const fixture = createKanbanStabilizationFixture();
     const source = cardTarget(board, fixture.named.short);
-    const sibling = cardTarget(board, fixture.named.tall);
-
-    const siblingPoint = eventPoint(application, board, sibling.x + 1, sibling.y + 1);
-    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ctrl: true, ...siblingPoint });
-    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ctrl: true, ...siblingPoint });
     const grabOffset = beginDrag(application, board, fixture.named.short);
     const origin = application.loop.renderRoot.originOf(board.viewport);
     if (origin === null) throw new Error('Expected mounted viewport origin.');
@@ -156,23 +216,46 @@ describe('mounted dispatch-return drag feedback', () => {
       const framesBefore = frames.length;
       application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
       expect(frames.length).toBeGreaterThan(framesBefore);
-      expect(frames.at(-1)).toContain('Small sour');
-      expect(overlayField(board, 'ghost')).toMatchObject({
-        count: 2,
+      const rawOrigin = {
+        x: sample.x - origin.x - grabOffset.x,
+        y: sample.y - origin.y - grabOffset.y,
+      };
+      const ghost = compactGhost(board);
+      expect(ghost).toEqual({
+        count: 1,
         contentRows: 1,
-        rawOrigin: {
-          x: sample.x - origin.x - grabOffset.x,
-          y: sample.y - origin.y - grabOffset.y,
-        },
-        visibleRect: {
-          x: expect.any(Number),
-          y: expect.any(Number),
-          width: expect.any(Number),
-          height: 3,
-        },
+        rawOrigin,
+        visibleRect: clippedGhostRect(rawOrigin, source.width, board.viewport.bounds),
       });
+      const emitted = frames.at(-1);
+      if (emitted === undefined) throw new Error('Expected an emitted drag frame.');
+      const visibleContentWidth = Math.max(0, ghost.visibleRect.width - 2);
+      const expectedTitle = 'Small source-range control'.slice(0, visibleContentWidth);
+      expect(frameRect(emitted, ghost.visibleRect)).toContain(expectedTitle);
       expect(overlayField(board, 'gap')).toMatchObject({ rect: { height: 1 } });
     }
+  });
+
+  it('should render one bounded selected-count cue for an atomic multi-card drag', () => {
+    const { application, board, frames } = mountedDragFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const sibling = cardTarget(board, fixture.named.tall);
+    const siblingPoint = eventPoint(application, board, sibling.x + 1, sibling.y + 1);
+    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ctrl: true, ...siblingPoint });
+    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ctrl: true, ...siblingPoint });
+    const source = cardTarget(board, fixture.named.short);
+    beginDrag(application, board, fixture.named.short);
+    const sample = eventPoint(application, board, source.x + 8, source.y + 2);
+
+    application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
+
+    const ghost = compactGhost(board);
+    expect(ghost).toMatchObject({ count: 2, contentRows: 1 });
+    const emitted = frames.at(-1);
+    if (emitted === undefined) throw new Error('Expected an emitted multi-card drag frame.');
+    const cue = frameRect(emitted, ghost.visibleRect);
+    expect(cue.match(/2 cards/g)).toHaveLength(1);
+    expect(cue).not.toContain('Small source-range control');
   });
 
   // Wheel scrolling keeps capture alive; release publishes one local move and leaves the card draggable.
@@ -181,18 +264,20 @@ describe('mounted dispatch-return drag feedback', () => {
     const fixture = createKanbanStabilizationFixture();
     beginDrag(application, board, fixture.named.short);
     const target = cardTarget(board, fixture.named.tall);
-    const destination = eventPoint(application, board, target.x + 1, target.y + target.height);
+    const wheelPoint = eventPoint(application, board, target.x + 1, target.y + target.height);
 
     application.loop.dispatch({
       type: 'wheel',
       dir: 'down',
-      x: destination.x,
-      y: destination.y,
+      x: wheelPoint.x,
+      y: wheelPoint.y,
       shift: false,
       alt: false,
       ctrl: false,
     });
     expect(overlayField(board, 'ghost')).toBeDefined();
+    const currentTarget = cardTarget(board, fixture.named.tall);
+    const destination = eventPoint(application, board, currentTarget.x + 1, currentTarget.y + currentTarget.height);
     application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...destination });
     application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...destination });
 

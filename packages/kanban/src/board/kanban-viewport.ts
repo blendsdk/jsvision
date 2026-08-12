@@ -281,7 +281,8 @@ export class KanbanViewport<TCard> extends View {
     { readonly logicalLength: number; readonly index: KanbanSparseHeightIndex }
   >();
   #heightProjections: readonly KanbanViewportCellHeightProjection[] = Object.freeze([]);
-  #projectionPasses: readonly KanbanViewportProjectionPassSnapshot[] = Object.freeze([]);
+  #projectionPasses: KanbanViewportProjectionPassSnapshot[] = [];
+  #operationInspectionEnabled = false;
   #descriptorCacheDisposed = false;
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
@@ -409,7 +410,17 @@ export class KanbanViewport<TCard> extends View {
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
-    registerKanbanViewportOperationReader(this, () => this.#operationSnapshot());
+    registerKanbanViewportOperationReader(this, {
+      enable: () => {
+        this.#operationInspectionEnabled = true;
+        this.#projectionPasses.length = 0;
+      },
+      disable: () => {
+        this.#operationInspectionEnabled = false;
+        this.#projectionPasses.length = 0;
+      },
+      read: () => this.#operationSnapshot(),
+    });
     this.focusable = true;
     this.onMount(() => {
       this.#everMounted = true;
@@ -538,9 +549,8 @@ export class KanbanViewport<TCard> extends View {
       source: KanbanViewportSourceSnapshot<TCard>,
       heightProjections: readonly KanbanViewportCellHeightProjection[] = this.#heightProjections,
     ): KanbanViewportProjection => {
-      this.#recordProjectionPass(source, heightProjections);
       const swimlanePresentation = this.#resolveSwimlanePresentation(source);
-      return projectKanbanViewport({
+      const projected = projectKanbanViewport({
         source,
         width: this.bounds.width,
         height: this.bounds.height,
@@ -565,8 +575,10 @@ export class KanbanViewport<TCard> extends View {
         ...(interaction === undefined ? {} : { interaction }),
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
       });
+      this.#recordProjectionPass(source, heightProjections, projected);
+      return projected;
     };
-    this.#projectionPasses = Object.freeze([]);
+    if (this.#operationInspectionEnabled) this.#projectionPasses.length = 0;
     let projection = project(snapshot);
     const measured = this.#measureSparseHeights(
       snapshot,
@@ -1058,7 +1070,8 @@ export class KanbanViewport<TCard> extends View {
     for (const entry of this.#heightIndices.values()) entry.index.dispose();
     this.#heightIndices.clear();
     this.#heightProjections = Object.freeze([]);
-    this.#projectionPasses = Object.freeze([]);
+    this.#projectionPasses.length = 0;
+    this.#operationInspectionEnabled = false;
     unregisterKanbanViewportOperationReader(this);
     unregisterKanbanViewportScaleReader(this);
     disposeKanbanViewportMoveReader(this);
@@ -1959,29 +1972,46 @@ export class KanbanViewport<TCard> extends View {
   #recordProjectionPass(
     source: KanbanViewportSourceSnapshot<TCard>,
     projections: readonly KanbanViewportCellHeightProjection[],
+    projected: KanbanViewportProjection,
   ): void {
+    if (!this.#operationInspectionEnabled) return;
     let measuredRows = 0;
     let estimatedRows = 0;
-    if (projections.length === 0) {
-      estimatedRows = source.cells.reduce((total, cell) => total + Math.max(0, cell.range.end - cell.range.start), 0);
-    } else {
-      for (const { projection } of projections) {
-        for (const row of projection.rows) {
-          if (row.descriptorRow.quality === 'exact') measuredRows += 1;
-          else estimatedRows += 1;
-        }
+    for (const cell of source.cells) {
+      const logicalRows = Math.max(0, cell.range.end - cell.range.start);
+      const heightProjection = projections.find(
+        ({ address }) => address.columnId === cell.address.columnId && address.swimlaneId === cell.address.swimlaneId,
+      )?.projection;
+      if (heightProjection === undefined) {
+        const residentRows =
+          projected.scene?.cells.find(
+            ({ address }) =>
+              address.columnId === cell.address.columnId && address.swimlaneId === cell.address.swimlaneId,
+          )?.cards.length ?? 0;
+        measuredRows += Math.min(logicalRows, residentRows);
+        estimatedRows += Math.max(0, logicalRows - residentRows);
+        continue;
       }
+      const exactRows = new Set(
+        heightProjection.rows
+          .filter(
+            ({ logicalIndex, descriptorRow }) =>
+              descriptorRow.quality === 'exact' && logicalIndex >= cell.range.start && logicalIndex < cell.range.end,
+          )
+          .map(({ logicalIndex }) => logicalIndex),
+      ).size;
+      measuredRows += Math.min(logicalRows, exactRows);
+      estimatedRows += Math.max(0, logicalRows - exactRows);
     }
     const heightQuality = measuredRows === 0 ? 'estimated' : estimatedRows === 0 ? 'measured' : 'mixed';
-    this.#projectionPasses = Object.freeze([
-      ...this.#projectionPasses,
+    this.#projectionPasses.push(
       Object.freeze({
         ordinal: this.#projectionPasses.length + 1,
         heightQuality,
         measuredRows,
         estimatedRows,
       }),
-    ]);
+    );
   }
 
   /** Returns detached projection-pass evidence for the latest completed frame. */

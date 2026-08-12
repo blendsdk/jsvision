@@ -63,8 +63,26 @@ export interface KanbanViewportOperationSnapshot {
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
 const VIEWPORT_SCALE_READERS = new WeakMap<object, () => KanbanViewportScaleSnapshot>();
 
-/** Mounted viewport instances mapped to operation-only testing evidence. */
-const VIEWPORT_OPERATION_READERS = new WeakMap<object, () => KanbanViewportOperationSnapshot>();
+/** Testing-only controls that activate expensive operation evidence only while a test observes it. */
+export interface KanbanViewportOperationInspectionControl {
+  /** Starts recording subsequent projection work for this viewport. */
+  readonly enable: () => void;
+  /** Stops recording and releases retained operation evidence. */
+  readonly disable: () => void;
+  /** Reads detached evidence accumulated since recording was enabled. */
+  readonly read: () => KanbanViewportOperationSnapshot;
+}
+
+/** One explicitly active testing observation of mounted viewport operations. */
+export interface KanbanViewportOperationObserver {
+  /** Reads detached evidence accumulated by this observation. */
+  readonly snapshot: () => KanbanViewportOperationSnapshot;
+  /** Stops the observation idempotently and releases retained evidence. */
+  readonly dispose: () => void;
+}
+
+/** Mounted viewport instances mapped to opt-in operation-only testing controls. */
+const VIEWPORT_OPERATION_CONTROLS = new WeakMap<object, KanbanViewportOperationInspectionControl>();
 
 /**
  * Registers one live viewport's private counter reader for the testing-only entry point.
@@ -88,14 +106,14 @@ export function unregisterKanbanViewportScaleReader(viewport: object): void {
 /** Registers one live viewport's additive operation reader for the testing-only entry point. */
 export function registerKanbanViewportOperationReader(
   viewport: object,
-  read: () => KanbanViewportOperationSnapshot,
+  control: KanbanViewportOperationInspectionControl,
 ): void {
-  VIEWPORT_OPERATION_READERS.set(viewport, read);
+  VIEWPORT_OPERATION_CONTROLS.set(viewport, control);
 }
 
 /** Removes one disposed viewport from the additive operation registry. */
 export function unregisterKanbanViewportOperationReader(viewport: object): void {
-  VIEWPORT_OPERATION_READERS.delete(viewport);
+  VIEWPORT_OPERATION_CONTROLS.delete(viewport);
 }
 
 /**
@@ -140,7 +158,39 @@ export function readKanbanDragFrameSnapshot(viewport: object): KanbanDragFrameSn
  * ```
  */
 export function readKanbanViewportOperationSnapshot(viewport: object): KanbanViewportOperationSnapshot {
-  const read = VIEWPORT_OPERATION_READERS.get(viewport);
-  if (read === undefined) throw new KanbanDisposedResourceError();
-  return read();
+  const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
+  if (control === undefined) throw new KanbanDisposedResourceError();
+  return control.read();
+}
+
+/**
+ * Enables payload-free projection diagnostics until the returned observer is disposed.
+ *
+ * Normal application rendering does not scan source windows or allocate pass snapshots. Tests opt in
+ * before the frame they need to measure, then dispose the observer during teardown.
+ *
+ * @example
+ * ```ts
+ * const observation = observeKanbanViewportOperations(board.viewport);
+ * render.flush();
+ * const passes = observation.snapshot().projectionPasses;
+ * observation.dispose();
+ * ```
+ */
+export function observeKanbanViewportOperations(viewport: object): KanbanViewportOperationObserver {
+  const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
+  if (control === undefined) throw new KanbanDisposedResourceError();
+  control.enable();
+  let active = true;
+  return Object.freeze({
+    snapshot: () => {
+      if (!active) throw new KanbanDisposedResourceError();
+      return control.read();
+    },
+    dispose: () => {
+      if (!active) return;
+      active = false;
+      control.disable();
+    },
+  });
 }

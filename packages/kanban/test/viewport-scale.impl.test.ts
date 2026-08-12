@@ -8,6 +8,7 @@ import {
   createWindowedKanbanFixture,
   inspectKanbanViewportOperations,
   inspectKanbanViewportScale,
+  observeKanbanViewportOperations,
 } from '../src/testing.js';
 
 interface ScaleCard {
@@ -55,19 +56,13 @@ describe('viewport scale implementation', () => {
     host.add(viewport);
     const render = createRenderRoot({ width: 80, height: 24 }, { caps: CAPS });
     render.mount(host);
+    expect(inspectKanbanViewportOperations(viewport).projectionPasses).toEqual([]);
+    const observation = observeKanbanViewportOperations(viewport);
     render.flush();
 
-    const passes = inspectKanbanViewportOperations(viewport).projectionPasses;
-    expect(passes.length).toBeGreaterThan(0);
-    expect(passes.map(({ ordinal }) => ordinal)).toEqual(passes.map((_, index) => index + 1));
-    expect(
-      passes.every(
-        ({ heightQuality, measuredRows, estimatedRows }) =>
-          (heightQuality === 'estimated' && measuredRows === 0) ||
-          (heightQuality === 'measured' && estimatedRows === 0) ||
-          (heightQuality === 'mixed' && measuredRows > 0 && estimatedRows > 0),
-      ),
-    ).toBe(true);
+    const passes = observation.snapshot().projectionPasses;
+    expect(passes).toEqual([{ ordinal: 1, heightQuality: 'mixed', measuredRows: 16, estimatedRows: 44 }]);
+    observation.dispose();
     render.unmount();
   });
 

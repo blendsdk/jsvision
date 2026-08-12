@@ -213,6 +213,22 @@ remains for Phase 3: the wheel branch unconditionally calls `pointerRouter.cance
 active captured drag cannot survive wheel input. The missing detached ghost/gap fields are a testing-bridge
 evidence gap, not proof of another runtime input failure.
 
+### Phase 1 quality review
+
+Two independent reviewers examined the Phase 1 snapshot. Under `--auto-design`, the delegated technical
+ruling accepted every major finding as an in-scope correction; no finding was waived and no product or scope
+decision changed.
+
+| Finding | Severity | Ruling | Resolution |
+| --- | --- | --- | --- |
+| RV-001 | Major | Accepted | Freeze exact edge clipping, serialized single-title and multi-count cues, gap-only evidence, and reacquire release geometry after wheel input. |
+| RV-002 | Major | Accepted | Require viewport clipping, one-to-one whole-card target parity, and the exact configured one-row gap. |
+| RV-003 / PE-001 | Major | Accepted (duplicate) | Count exact and estimated rows across every current source range, including cells and logical positions absent from retained sparse projections; assert independent fixture totals. |
+| PE-002 | Major | Accepted | Make operation diagnostics explicitly opt-in; normal production frames perform no diagnostic scans or snapshot allocations. |
+
+**Ruling provenance:** AI — delegated by `--auto-design`; technical specification and testing-instrumentation
+corrections only, with no new application behavior or widened modification scope.
+
 ## Phase 2: Stabilize variable-height projection
 
 ### Step 2.1: Sparse geometry correction
