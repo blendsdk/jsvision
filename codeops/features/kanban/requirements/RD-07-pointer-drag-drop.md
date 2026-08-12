@@ -117,8 +117,11 @@ token/anchors arrive, the target is unavailable and pointer-up cancels/no-ops wi
 ### Edge autoscroll — Complexity L
 
 Four edge zones exist inside the viewport. By default the outermost one cell at each scrollable edge is
-the fast zone (two cells per 50 ms tick); the next two cells inward are the slow zone (one cell per
-50 ms tick). Zones clamp without overlap in very small viewports. A deterministic fake-clock-friendly
+the fast zone (two cells per step); the next two cells inward are the slow zone (one cell per step).
+Autoscroll arms after a 250 ms same-direction edge dwell and then advances at a 125 ms steady cadence.
+Same-direction reprojection and slow/fast changes preserve the current deadline; leaving the zones,
+reversing direction, changing gesture generation, or ending capture cancels synchronously and requires a
+new grace period. Zones clamp without overlap in very small viewports. A deterministic fake-clock-friendly
 controller advances one bounded step per tick, clamps at extent, and stops when the pointer leaves,
 capture ends, modal opens, or no movement is possible. Target hysteresis is one cell and visible
 collapsed-swimlane hover expansion begins after 500 ms. The controller
@@ -153,7 +156,7 @@ cancelled release dispatches nothing and restores source layout/focus in one set
 | Hover | Required / optional enhancement | Optional | Terminal hosts vary | AR #39 |
 | Unknown edge | Guess / block/prefetch | Block and prefetch | Prevent wrong rank | AR #32, #31 |
 | Bulk | One / selection | Atomic selection | Productivity without partial state | AR #15, #31 |
-| Timing | Deferred / fixed safe defaults | 50 ms zones, 500 ms expansion | Deterministic modern feedback | AR #43 |
+| Timing | Deferred / fixed safe defaults | 250 ms edge grace, 125 ms steady cadence, 500 ms expansion | Responsive feedback without flooding terminal repaint/output | AR #46 |
 | Ghost content | Title/status fragment / compact title-only | Compact framed title plus multi-count | Native visual review found the extra row unnecessarily large | AR #44 |
 
 ---

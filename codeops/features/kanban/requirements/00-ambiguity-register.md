@@ -451,8 +451,8 @@ during RD authoring must reopen this register before the affected requirement is
   ordinary configurable ceiling, and absolute maximum; immutable ID/token/standard-row/custom-descriptor
   bounds repeat the same value in all classes. It additionally bounds source columns, source swimlanes,
   retained cursors, and one `ensureRange` span. Search debounce is 150 ms. Drag uses the approved one-cell threshold, one-cell
-  hysteresis, a 50 ms autoscroll tick with outermost one-cell fast zone at two cells/tick and next two-cell
-  slow zone at one cell/tick, and 500 ms collapsed-swimlane hover expansion.
+  hysteresis, the original two-speed autoscroll zones, and 500 ms collapsed-swimlane hover expansion.
+  AR-46 supersedes only the autoscroll activation and cadence defaults after native-terminal evidence.
 - **Default keys:** arrows, Home/End, PageUp/PageDown and Primary+Home/End navigate; Enter opens/drops;
   Space toggles selection; Shift+navigation extends a cell-local range; Primary+A selects loaded visible
   matching cards; Primary+F focuses search; Insert creates a card; Alt+M starts keyboard grab/move; Esc
@@ -525,6 +525,34 @@ during RD authoring must reopen this register before the affected requirement is
 - **Reopen triggers:** Existing theme literals fail source/runtime compatibility, four accents cannot retain
   readable fallbacks in a supported profile, or a future separately approved generic token API supersedes
   the bounded inventory.
+
+### AR-46 — Terminal-safe drag autoscroll cadence
+
+- **Authority:** AI — delegated by `--auto-design` during execution remediation.
+- **Eligibility:** Reversible interaction timing and performance engineering inside the already approved
+  four-edge, two-speed autoscroll behavior; no product capability, scope, or compatibility boundary changes.
+- **Objective:** Preserve web-like hold-to-scroll behavior without letting large terminal repaints starve
+  pointer-up, keyboard, or quit input.
+- **Decision:** A directional edge dwell arms for 250 ms, then advances at a fixed 125 ms cadence. The outer
+  zone retains its two-cell step and the inner zone its one-cell step. Same-direction reprojection and
+  slow/fast changes retain the current activation phase; leaving all zones, reversing direction, changing
+  generation, or ending capture cancels synchronously and a later edge dwell rearms.
+- **Evidence:** Native 248×54 testing reproduced a scrolled drag returning to row zero in under 500 ms while
+  the prior 50 ms loop emitted up to 20 large repaint frames per second. The fixed cadence caps repeated work
+  at eight frames per second while keeping deterministic target recomputation after every successful step.
+- **Rejected alternatives:** Adaptive render-duration timing is nondeterministic and adds complexity before
+  fixed backpressure has been measured. Disabling edge autoscroll or reducing every step to one cell removes
+  approved behavior or needlessly discards the two-speed zones.
+- **Strongest counterargument:** The initial 250 ms dwell and 8/16 cells-per-second steady speeds feel slower
+  than a web board when traversing a very long lane.
+- **Confidence:** High for preventing the reproduced repaint flood; native acceptance remains the reopen gate
+  for perceived speed.
+- **Hardening:** An independent blind challenger approved the fixed cadence and required explicit arming versus
+  steady ownership so reprojection cannot postpone activation and direction reversal cannot inherit a timer.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-runtime-20260812`.
+- **Reopen triggers:** Native acceptance finds ordinary long-lane traversal too slow, a supported host still
+  starves input at eight frames per second, or measured host backpressure supports a simpler stronger cadence.
 
 ## Auto-design context
 

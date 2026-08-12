@@ -53,7 +53,7 @@ describe('drag autoscroll zone contract', () => {
     expect(resolveKanbanDragAutoscrollStep({ point: { x: 10, y: 8 }, viewport: VIEWPORT })).toEqual({ x: 0, y: 1 });
   });
 
-  it('advances both axes at a corner without creating a duplicate tick', () => {
+  it('uses a short activation grace and a slower steady cadence without duplicate ticks', () => {
     expect(resolveKanbanDragAutoscrollStep({ point: { x: 19, y: 10 }, viewport: VIEWPORT })).toEqual({ x: 2, y: 2 });
 
     const clock = new FakeAutoscrollClock();
@@ -62,10 +62,14 @@ describe('drag autoscroll zone contract', () => {
     controller.update({ point: { x: 19, y: 10 }, viewport: VIEWPORT, generation: 1 });
 
     expect(clock.pending()).toBe(1);
-    expect(clock.tick()).toBe(50);
+    expect(clock.tick()).toBe(250);
     expect(scroll).toHaveBeenCalledOnce();
     expect(scroll).toHaveBeenCalledWith({ x: 2, y: 2 }, 1);
     expect(clock.pending()).toBe(1);
+    expect(clock.tick()).toBe(125);
+    expect(scroll).toHaveBeenCalledTimes(2);
+    controller.cancel();
+    expect(clock.pending()).toBe(0);
   });
 
   it('clamps non-overlapping zones in a tiny viewport', () => {
@@ -85,6 +89,89 @@ describe('drag autoscroll zone contract', () => {
 });
 
 describe('drag autoscroll timer and recomputation contract', () => {
+  it('waits through 249 ms of edge dwell and then repeats at the 125 ms cadence', () => {
+    vi.useFakeTimers();
+    try {
+      const scroll = vi.fn((step: Readonly<{ x: number; y: number }>) => step);
+      const controller = createKanbanDragAutoscrollController({ scroll, recompute: vi.fn() });
+      controller.update({ point: { x: 19, y: 6 }, viewport: VIEWPORT, generation: 5 });
+
+      vi.advanceTimersByTime(249);
+      expect(scroll).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(scroll).toHaveBeenCalledOnce();
+      vi.advanceTimersByTime(124);
+      expect(scroll).toHaveBeenCalledOnce();
+      vi.advanceTimersByTime(1);
+      expect(scroll).toHaveBeenCalledTimes(2);
+      controller.cancel();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('preserves grace through same-direction reprojection and rearms after reversal', () => {
+    const clock = new FakeAutoscrollClock();
+    const scroll = vi.fn((step: Readonly<{ x: number; y: number }>) => step);
+    const controller = createKanbanDragAutoscrollController({ scheduler: clock.scheduler, scroll, recompute: vi.fn() });
+
+    controller.update({ point: { x: 19, y: 6 }, viewport: VIEWPORT, generation: 6 });
+    controller.update({ point: { x: 17, y: 6 }, viewport: VIEWPORT, generation: 6 });
+    expect(clock.pending()).toBe(1);
+    expect(clock.tick()).toBe(250);
+    expect(scroll).toHaveBeenLastCalledWith({ x: 1, y: 0 }, 6);
+
+    controller.update({ point: { x: 0, y: 6 }, viewport: VIEWPORT, generation: 6 });
+    expect(clock.pending()).toBe(1);
+    expect(clock.tick()).toBe(250);
+    expect(scroll).toHaveBeenLastCalledWith({ x: -2, y: 0 }, 6);
+    controller.cancel();
+  });
+
+  it('cancels both arming and steady timers on leave or generation replacement', () => {
+    const clock = new FakeAutoscrollClock();
+    const controller = createKanbanDragAutoscrollController({
+      scheduler: clock.scheduler,
+      scroll: (step) => step,
+      recompute: vi.fn(),
+    });
+
+    controller.update({ point: { x: 19, y: 6 }, viewport: VIEWPORT, generation: 10 });
+    controller.update({ point: { x: 10, y: 6 }, viewport: VIEWPORT, generation: 10 });
+    expect(clock.pending()).toBe(0);
+
+    controller.update({ point: { x: 19, y: 6 }, viewport: VIEWPORT, generation: 10 });
+    expect(clock.tick()).toBe(250);
+    expect(clock.pending()).toBe(1);
+    controller.update({ point: { x: 19, y: 6 }, viewport: VIEWPORT, generation: 11 });
+    expect(clock.pending()).toBe(1);
+    expect(clock.tick()).toBe(250);
+    controller.cancel();
+    expect(clock.pending()).toBe(0);
+  });
+
+  it('retains a clamped corner axis through reentrant reprojection while the other stays steady', () => {
+    const clock = new FakeAutoscrollClock();
+    const steps: Array<Readonly<{ x: number; y: number }>> = [];
+    const controller = createKanbanDragAutoscrollController({
+      scheduler: clock.scheduler,
+      scroll: (step) => {
+        steps.push(step);
+        return steps.length === 1 ? { x: 0, y: 2 } : step;
+      },
+      recompute: (generation) => controller.update({ point: { x: 19, y: 10 }, viewport: VIEWPORT, generation }),
+    });
+    controller.update({ point: { x: 19, y: 10 }, viewport: VIEWPORT, generation: 12 });
+
+    expect(clock.tick()).toBe(250);
+    expect(clock.tick()).toBe(125);
+    expect(steps).toEqual([
+      { x: 2, y: 2 },
+      { x: 0, y: 2 },
+    ]);
+    controller.cancel();
+  });
+
   it('recomputes current post-scroll geometry after every successful bounded step', () => {
     const clock = new FakeAutoscrollClock();
     const calls: string[] = [];

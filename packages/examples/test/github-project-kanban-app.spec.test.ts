@@ -6,7 +6,7 @@
  */
 import { classicTheme, nordTheme, resolveCapabilities } from '@jsvision/core';
 import { inspectKanbanDragFrame } from '@jsvision/kanban/testing';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import type { GitHubProjectSnapshot } from '../github-project-kanban/github-project.js';
 import { GITHUB_KANBAN_COMMANDS, createGitHubProjectKanbanApp } from '../github-project-kanban/shell.js';
@@ -86,6 +86,24 @@ function scaledProjectSnapshot(): GitHubProjectSnapshot {
   };
 }
 
+/** Adds two statuses so the wide native-terminal fixture exposes five independent drop lanes. */
+function wideProjectSnapshot(): GitHubProjectSnapshot {
+  const scaled = scaledProjectSnapshot();
+  const columns = [
+    ...scaled.columns,
+    { columnId: 'review', label: 'Review', revision: 1, color: 'BLUE' as const },
+    { columnId: 'released', label: 'Released', revision: 1, color: 'GREEN' as const },
+  ];
+  return {
+    ...scaled,
+    columns,
+    cards: scaled.cards.map((card, index) => {
+      const columnIndex = index < 33 ? 0 : index < 47 ? 1 : index < 60 ? 2 : index < 64 ? 3 : 4;
+      return { ...card, columnId: columns[columnIndex]!.columnId };
+    }),
+  };
+}
+
 /** Returns all text currently painted to the terminal buffer. */
 function screenText(showcase: ReturnType<typeof createGitHubProjectKanbanApp>): string {
   return showcase.app.loop.renderRoot
@@ -101,6 +119,7 @@ async function settleBoard(): Promise<void> {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const dispose of disposeApps.splice(0)) dispose();
 });
 
@@ -305,20 +324,9 @@ test('should paint the scaled showcase through monochrome capability fallbacks',
 
 // Real GitHub item IDs must not make a wide board's bounded interaction revision invalid.
 test('should keep realistic GitHub item identities clickable in a 248 by 54 window', async () => {
-  const scaled = scaledProjectSnapshot();
-  const columns = [
-    ...scaled.columns,
-    { columnId: 'review', label: 'Review', revision: 1, color: 'BLUE' as const },
-    { columnId: 'released', label: 'Released', revision: 1, color: 'GREEN' as const },
-  ];
-  const snapshot = {
-    ...scaled,
-    columns,
-    cards: scaled.cards.map((card, index) => ({ ...card, columnId: columns[index % columns.length]!.columnId })),
-  };
   const showcase = createGitHubProjectKanbanApp(CAPS, {
     viewport: { width: 248, height: 54 },
-    loader: () => Promise.resolve(snapshot),
+    loader: () => Promise.resolve(wideProjectSnapshot()),
   });
   disposeApps.push(() => showcase.app.loop.dispose());
   await showcase.load(SOURCE_URL);
@@ -343,4 +351,113 @@ test('should keep realistic GitHub item identities clickable in a 248 by 54 wind
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, x: 150, y: 10 });
 
   expect(board.inspection().interaction.focused).toMatchObject({ kind: 'card', cardKey: clicked.cardKey });
+});
+
+// Publishing a move after browsing down must retain a usable non-zero viewport and event loop.
+test('should remain scrolled and responsive after a native drop below the first cards', async () => {
+  const showcase = createGitHubProjectKanbanApp(CAPS, {
+    viewport: { width: 248, height: 54 },
+    loader: () => Promise.resolve(wideProjectSnapshot()),
+  });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  await showcase.load(SOURCE_URL);
+  await settleBoard();
+  const board = showcase.activeBoard();
+  if (board === undefined) throw new Error('Expected a mounted wide board.');
+
+  const initialOrigin = showcase.app.loop.renderRoot.originOf(board.viewport);
+  if (initialOrigin === null) throw new Error('Expected a mounted board origin.');
+  for (let index = 0; index < 5; index += 1) {
+    showcase.app.loop.dispatch({
+      type: 'wheel',
+      dir: 'down',
+      x: initialOrigin.x + 2,
+      y: initialOrigin.y + 8,
+      shift: false,
+      alt: false,
+      ctrl: false,
+    });
+  }
+  await settleBoard();
+  const scrollBefore = board.viewport.metrics().offsets.y;
+  const origin = showcase.app.loop.renderRoot.originOf(board.viewport);
+  const cards = board.inspection().actionTargets.filter(({ kind, height }) => kind === 'card' && height >= 3);
+  const source = cards.find((target) => target.address?.columnId === 'todo');
+  const destination = cards.find((target) => target.address?.columnId === 'review');
+  if (scrollBefore <= 0 || origin === null || source === undefined || destination === undefined) {
+    throw new Error('Expected non-zero scrolling and visible cross-lane drop targets.');
+  }
+  const down = { x: origin.x + source.x + 2, y: origin.y + source.y + 1 };
+  const drop = { x: origin.x + destination.x + 2, y: origin.y + destination.y + 1 };
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: down.x + 2, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...drop });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...drop });
+  await settleBoard();
+  showcase.app.loop.renderRoot.flush();
+
+  if (source.cardKey === undefined || destination.address === undefined) {
+    throw new Error('Expected concrete source and destination identities.');
+  }
+  expect(showcase.localCards().find(({ key }) => key === source.cardKey)?.columnId).toBe(destination.address.columnId);
+  expect(board.viewport.metrics().offsets.y).toBeGreaterThan(0);
+  const revision = board.inspection().interaction.revision;
+  showcase.app.loop.dispatch({ type: 'key', key: 'right', ctrl: false, alt: false, shift: false });
+  expect(board.inspection().interaction.revision).toBeGreaterThan(revision);
+});
+
+// A scrolled edge dwell must remain input-safe while still providing deliberate hold-to-scroll behavior.
+test('should delay and bound native edge autoscroll before releasing a scrolled drag', async () => {
+  vi.useFakeTimers();
+  const showcase = createGitHubProjectKanbanApp(CAPS, {
+    viewport: { width: 248, height: 54 },
+    loader: () => Promise.resolve(wideProjectSnapshot()),
+  });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  await showcase.load(SOURCE_URL);
+  await settleBoard();
+  const board = showcase.activeBoard();
+  const origin = board === undefined ? null : showcase.app.loop.renderRoot.originOf(board.viewport);
+  if (board === undefined || origin === null) throw new Error('Expected a mounted wide board.');
+
+  for (let index = 0; index < 5; index += 1) {
+    showcase.app.loop.dispatch({
+      type: 'wheel',
+      dir: 'down',
+      x: origin.x + 2,
+      y: origin.y + 8,
+      shift: false,
+      alt: false,
+      ctrl: false,
+    });
+  }
+  const scrollBefore = board.viewport.metrics().offsets.y;
+  const source = board
+    .inspection()
+    .actionTargets.find(({ kind, height, address }) => kind === 'card' && height >= 3 && address?.columnId === 'todo');
+  if (scrollBefore <= 4 || source === undefined) throw new Error('Expected a scrolled visible source card.');
+
+  const down = { x: origin.x + source.x + 2, y: origin.y + source.y + 1 };
+  const edge = { x: down.x + 2, y: down.y };
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...edge });
+  expect(inspectKanbanDragFrame(board.viewport).ghost).toBeDefined();
+  expect(vi.getTimerCount()).toBe(1);
+
+  vi.advanceTimersByTime(249);
+  expect(board.viewport.metrics().offsets.y).toBe(scrollBefore);
+  vi.advanceTimersByTime(1);
+  const afterActivation = board.viewport.metrics().offsets.y;
+  expect(afterActivation).toBeLessThan(scrollBefore);
+  expect(afterActivation).toBeGreaterThan(0);
+  vi.advanceTimersByTime(124);
+  expect(board.viewport.metrics().offsets.y).toBe(afterActivation);
+  vi.advanceTimersByTime(1);
+  expect(board.viewport.metrics().offsets.y).toBeLessThan(afterActivation);
+
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...edge });
+  expect(vi.getTimerCount()).toBe(0);
+  const revision = board.inspection().interaction.revision;
+  showcase.app.loop.dispatch({ type: 'key', key: 'right', ctrl: false, alt: false, shift: false });
+  expect(board.inspection().interaction.revision).toBeGreaterThan(revision);
 });

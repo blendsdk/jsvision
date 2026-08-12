@@ -159,7 +159,9 @@ function buildModernInteractionStory() {
         activeTimers -= 1;
         resolve();
       };
-      const handle = setTimeout(settle, 70);
+      // Wait just beyond the component's activation grace so this permanent showcase proves a real
+      // autoscroll step while still keeping the story-owned delay bounded and cancellable on teardown.
+      const handle = setTimeout(settle, 275);
       delays.set(handle, settle);
     });
   }

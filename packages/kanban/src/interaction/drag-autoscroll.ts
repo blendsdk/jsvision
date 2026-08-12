@@ -3,8 +3,11 @@ import type { Point, Rect } from '@jsvision/ui';
 import { KanbanInvalidGeometryError } from '../contract/error.js';
 import type { KanbanDragGeneration } from './drag-types.js';
 
-/** Fixed interval between drag-autoscroll steps. */
-export const KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS = 50;
+/** Grace period before an edge dwell begins scrolling. */
+export const KANBAN_DRAG_AUTOSCROLL_ACTIVATION_MS = 250;
+
+/** Fixed interval between steady drag-autoscroll steps. */
+export const KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS = 125;
 
 /** Injectable timer boundary used by deterministic host and specification clocks. */
 export interface KanbanDragAutoscrollScheduler {
@@ -133,7 +136,18 @@ export function resolveKanbanDragAutoscrollStep(input: ResolveKanbanDragAutoscro
 /** One immutable tick input retained while the pointer remains in an edge zone. */
 interface ActiveAutoscroll {
   readonly generation: KanbanDragGeneration;
+  /** Current pointer-requested zone step before extent clamping suppresses an axis. */
+  readonly desiredStep: Readonly<Point>;
   readonly step: Readonly<Point>;
+  readonly clampedX: boolean;
+  readonly clampedY: boolean;
+  /** Arming owns the initial grace; steady owns the slower repeated cadence. */
+  readonly phase: 'arming' | 'steady';
+}
+
+/** Rejects only an actual sign reversal; entering or leaving one corner axis retains activation. */
+function sameDirection(left: Readonly<Point>, right: Readonly<Point>): boolean {
+  return left.x * right.x >= 0 && left.y * right.y >= 0;
 }
 
 /** Timer-backed implementation that owns at most one scheduled callback. */
@@ -162,8 +176,32 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
       this.cancel();
       return;
     }
-    if (this.#active !== undefined && this.#active.generation !== generation) this.cancel();
-    this.#active = Object.freeze({ generation, step });
+    const active = this.#active;
+    if (active === undefined || active.generation !== generation || !sameDirection(active.desiredStep, step)) {
+      this.cancel();
+      this.#active = Object.freeze({
+        generation,
+        desiredStep: step,
+        step,
+        clampedX: false,
+        clampedY: false,
+        phase: 'arming',
+      });
+    } else {
+      // Reprojection calls update with the retained pointer. Preserve its original deadline so repeated
+      // layout passes cannot postpone scrolling forever. An extent-clamped axis stays disabled until the
+      // pointer leaves that axis's edge zone, while the other axis retains its steady cadence.
+      const clampedX = step.x === 0 ? false : active.clampedX;
+      const clampedY = step.y === 0 ? false : active.clampedY;
+      this.#active = Object.freeze({
+        generation,
+        desiredStep: step,
+        step: Object.freeze({ x: clampedX ? 0 : step.x, y: clampedY ? 0 : step.y }),
+        clampedX,
+        clampedY,
+        phase: active.phase,
+      });
+    }
     this.#schedule();
   }
 
@@ -186,13 +224,16 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
     this.#scheduling = true;
     let deliveredSynchronously = false;
     try {
-      const handle = this.#scheduler.schedule(() => {
-        if (this.#scheduling) {
-          deliveredSynchronously = true;
-          return;
-        }
-        this.#runTick(() => this.#tick());
-      }, KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS);
+      const handle = this.#scheduler.schedule(
+        () => {
+          if (this.#scheduling) {
+            deliveredSynchronously = true;
+            return;
+          }
+          this.#runTick(() => this.#tick());
+        },
+        this.#active.phase === 'arming' ? KANBAN_DRAG_AUTOSCROLL_ACTIVATION_MS : KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS,
+      );
       this.#scheduling = false;
       if (deliveredSynchronously) {
         try {
@@ -235,18 +276,26 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
       this.cancel();
       return;
     }
+    this.#active = Object.freeze({
+      generation: active.generation,
+      desiredStep: active.desiredStep,
+      step: nextStep,
+      clampedX: active.clampedX || (active.step.x !== 0 && movement.x === 0),
+      clampedY: active.clampedY || (active.step.y !== 0 && movement.y === 0),
+      phase: 'steady',
+    });
     try {
       this.#recompute(active.generation);
     } catch {
       this.cancel();
       return;
     }
-    if (this.#active !== active) return;
+    const current = this.#active;
+    if (current === undefined || current.generation !== active.generation) return;
     if (nextStep.x === 0 && nextStep.y === 0) {
       this.cancel();
       return;
     }
-    this.#active = Object.freeze({ generation: active.generation, step: nextStep });
     this.#schedule();
   }
 }

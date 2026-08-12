@@ -4,7 +4,7 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 23:17 CEST
+> **Last Updated**: 2026-08-13 00:12 CEST
 > **Progress**: 44/46 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 
@@ -550,6 +550,38 @@ accepted drops before proving later keyboard input. The required single re-revie
 or Major findings. Final automated evidence: 770 Kanban unit tests pass in a timing-safe single-worker run,
 442 examples tests pass, 26 Kanban end-to-end tests pass with two unchanged platform skips, the isolated
 performance gate passes, both package typechecks pass, and plugin regeneration/integrity checks pass.
+
+**Scrolled-drag runtime remediation:** Native 248×54 acceptance testing then reproduced a second physical-host
+failure: after browsing several card rows, holding a captured drag in a vertical edge zone could return the
+board to row zero in under 500 ms. The former immediate 50 ms loop requested as many as 20 large terminal
+repaints per second, which could starve the later pointer-up, keyboard, and quit input on a real terminal.
+AR-46 now supersedes only that timing default: the existing two-speed zones arm after a 250 ms same-direction
+dwell and then repeat every 125 ms. Explicit arming/steady ownership preserves the deadline across ordinary
+reprojection, adopts same-direction slow/fast changes, rearms after reversal or generation replacement, and
+cancels synchronously on leave/release/lifecycle loss. The independent blind challenge approved the fixed
+cadence and required those ownership rules; adaptive render-duration timing was rejected as nondeterministic
+and disproportionate.
+
+The realistic GitHub application oracle now mirrors the live project's 33/14/13/4/20 lane distribution,
+performs five native wheel reports, accepts a cross-lane down→source-drag→destination-drag→up move at nonzero
+offset, and proves later keyboard response. The permanent kitchen-sink driver waits just beyond activation and
+still proves cancellable teardown. Focused timing, mounted-frame, structural-drag, and application tests pass;
+native testing observed bounded delayed movement, a responsive later wheel event, and clean Alt-X exit without
+returning to row zero during an ordinary 500 ms edge dwell. Tasks 6.7 and 6.8 remain open for the complete
+manual matrix and explicit user acceptance.
+
+**Scrolled-drag quality review remediation:** The independent performance audit passed with no Critical or
+Major finding. The correctness review reported two Majors: synchronous corner reprojection could revive an
+extent-clamped axis and rearm the still-scrollable axis, and the first GitHub regression oracle released before
+any autoscroll timer could fire. Both findings were accepted under auto-design. Active state now retains the
+pointer-requested direction separately from its per-axis clamped step, so reprojection preserves the 125 ms
+cadence on the surviving axis without retrying the clamped one. A reentrant corner oracle proves that behavior.
+The mounted 248×54 GitHub oracle now holds a real captured edge-zone drag through 249 ms of no movement, the
+250 ms activation step, and the next 125 ms steady step before releasing; it then proves timer cleanup and later
+keyboard response. Final verification after remediation: 774 Kanban tests, 444 examples tests, 26 E2E tests
+with two unchanged platform skips, both typechecks, exact `yarn perf:check`, dependency/documentation checks,
+plugin update/check, and `yarn verify:local` pass. The single permitted remediation re-review passed: both
+Majors are closed and no new Critical or Major issue was found.
 
 Three stale demo processes created before the rollback were found consuming approximately one CPU core each
 after their terminals had closed. They ignored SIGTERM and were force-terminated by exact PID; no persistent

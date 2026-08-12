@@ -379,7 +379,7 @@ describe('mounted dispatch-return drag feedback', () => {
     const beforeFrames = frames.length;
     const beforeOffset = board.viewport.metrics().offsets.x;
 
-    vi.advanceTimersByTime(50);
+    vi.advanceTimersByTime(250);
 
     expect(board.viewport.metrics().offsets.x).toBeGreaterThan(beforeOffset);
     expect(frames.length).toBeGreaterThan(beforeFrames);
