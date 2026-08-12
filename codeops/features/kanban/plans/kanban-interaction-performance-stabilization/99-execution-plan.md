@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:40 CEST
-> **Progress**: 1/46 tasks (2%)
+> **Last Updated**: 2026-08-12 16:43 CEST
+> **Progress**: 2/46 tasks (4%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -164,8 +164,9 @@ checkpoint `0bd32c9d2`; `git status --short` was empty. The checkpoint was pushe
       bounded hostile control/bidi text, wide/combining glyphs, and longest supported-locale strings. Keep
       focused parser/sanitizer cases separate, and never use live network data as an automated oracle. ✅
       (completed: 2026-08-12 16:40)
-- [ ] 1.1.2 Add a mounted viewport specification that performs click, repeated wheel down/up, horizontal
-      scroll, narrow/wide resize, and restore sequences against the real fixture.
+- [x] 1.1.2 Add a mounted viewport specification that performs click, repeated wheel down/up, horizontal
+      scroll, narrow/wide resize, and restore sequences against the real fixture. ✅ (completed:
+      2026-08-12 16:43)
 - [ ] 1.1.3 Add geometry assertions for monotonic card order, configured gaps, non-overlap, finite clipped
       rectangles, one card per logical identity, and exact paint/hit-region parity.
 - [ ] 1.1.4 Add a focus-damage specification proving unrelated resident card geometry and lower fragments
