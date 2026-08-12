@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Italian Kanban catalog. */
 export const kanbanIt = createKanbanTranslationCatalog('it', {
@@ -20,6 +24,29 @@ export const kanbanIt = createKanbanTranslationCatalog('it', {
   'kanban.card.unknown-status': 'Stato sconosciuto',
   'kanban.reason.source-unavailable': 'Origine non disponibile',
   'kanban.reason.renderer-unavailable': 'Scheda non disponibile',
+});
+
+/** Official reviewed Italian Phase C Kanban overlay. */
+export const kanbanPhaseCIt = createKanbanPhaseCTranslationCatalog('it', {
+  'kanban.drag.card': 'Spostamento scheda',
+  'kanban.drag.cards': 'Spostamento di ${count} schede',
+  'kanban.drop.allowed': 'Sposta qui',
+  'kanban.drop.warning': 'Sposta con avviso',
+  'kanban.drop.blocked': 'Spostamento bloccato',
+  'kanban.drop.unavailable': 'Destinazione non disponibile',
+  'kanban.operation.pending': 'Spostamento in attesa',
+  'kanban.operation.accepted': 'In attesa dell’aggiornamento della bacheca',
+  'kanban.operation.rejected': 'Spostamento rifiutato',
+  'kanban.operation.cancelled': 'Spostamento annullato',
+  'kanban.operation.superseded': 'Bacheca modificata',
+  'kanban.operation.conflict': 'Azione in conflitto non disponibile',
+  'kanban.operation.stale-placement': 'Posizione modificata',
+  'kanban.operation.sorted-placement': 'Posizionata secondo l’ordinamento attuale',
+  'kanban.operation.filtered-placement': 'La scheda potrebbe essere filtrata',
+  'kanban.operation.transition-blocked': 'Transizione bloccata',
+  'kanban.operation.wip-blocked': 'Il limite WIP blocca questo spostamento',
+  'kanban.operation.definition-of-done': 'Definizione di completato non soddisfatta',
+  'kanban.operation.reorder': 'Riordinamento',
 });
 
 /** Official reviewed Italian Phase B Kanban overlay. */

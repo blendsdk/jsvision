@@ -6,6 +6,7 @@ import { sanitizeContractText } from '../contract/text-safety.js';
 import type { KanbanDragOverlayEvidence } from '../interaction/drag-types.js';
 import type { KanbanStructuralDragOverlayEvidence } from '../interaction/structural-drag.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
+import { KANBAN_PHASE_C_ENGLISH_MESSAGES } from '../i18n/catalog.js';
 import type { KanbanOperationSnapshot } from '../operation/types.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import { projectKanbanOperations } from './operation-projector.js';
@@ -123,6 +124,8 @@ export interface ComposeKanbanViewportOverlayOptions {
   readonly operations?: readonly KanbanOperationSnapshot[];
   /** Optional internal observer used to prove composition work remains linear at configured limits. */
   readonly inspectWork?: (work: KanbanOverlayProjectionWork) => void;
+  /** Optional locale service adapter used to resolve the fixed package-owned drop vocabulary. */
+  readonly translate?: (messageKey: string) => string;
 }
 
 /** Internal counters that expose index construction and lookup work without timing-sensitive tests. */
@@ -217,14 +220,25 @@ function inCell(card: KanbanProjectedCard, address: KanbanCellAddress): boolean 
 /** Maps validated policy evidence to fixed safe renderer vocabulary. */
 function dropPresentation(
   eligibility: KanbanEligibility,
+  translate?: (messageKey: string) => string,
 ): Omit<KanbanProjectedDropGap, 'slotId' | 'address' | 'eligibility' | 'rect'> {
   const reasonKey = eligibility.kind === 'allowed' ? undefined : dropReasonMessageKey(eligibility.code);
+  /** Resolves a reason-specific label, falling back to the closed Phase C English vocabulary. */
+  const label = (
+    messageKey: keyof typeof KANBAN_PHASE_C_ENGLISH_MESSAGES,
+    preferredKey: string | undefined = messageKey,
+  ): string => {
+    const translated = translate?.(preferredKey);
+    return translated === undefined || translated === preferredKey
+      ? KANBAN_PHASE_C_ENGLISH_MESSAGES[messageKey]
+      : translated;
+  };
   switch (eligibility.kind) {
     case 'allowed':
       return Object.freeze({
         visualState: 'valid' as const,
         messageKey: 'kanban.drop.allowed',
-        label: 'Move here',
+        label: label('kanban.drop.allowed'),
         asciiMarker: '>' as const,
         unicodeMarker: '▶' as const,
       });
@@ -232,7 +246,7 @@ function dropPresentation(
       return Object.freeze({
         visualState: 'warning' as const,
         messageKey: reasonKey ?? 'kanban.drop.warning',
-        label: 'Warning',
+        label: label('kanban.drop.warning', reasonKey),
         asciiMarker: '!' as const,
         unicodeMarker: '⚠' as const,
       });
@@ -240,7 +254,7 @@ function dropPresentation(
       return Object.freeze({
         visualState: 'invalid' as const,
         messageKey: reasonKey ?? 'kanban.drop.blocked',
-        label: 'Blocked',
+        label: label('kanban.drop.blocked', reasonKey),
         asciiMarker: 'x' as const,
         unicodeMarker: '×' as const,
       });
@@ -248,7 +262,7 @@ function dropPresentation(
       return Object.freeze({
         visualState: 'unavailable' as const,
         messageKey: reasonKey ?? 'kanban.drop.unavailable',
-        label: 'Unavailable',
+        label: label('kanban.drop.unavailable', reasonKey),
         asciiMarker: '?' as const,
         unicodeMarker: '?' as const,
       });
@@ -494,6 +508,7 @@ function projectGap(
   drag: KanbanDragOverlayEvidence,
   density: KanbanCardDensity,
   bounds: Readonly<Rect>,
+  translate?: (messageKey: string) => string,
 ): KanbanProjectedDropGap | undefined {
   const gap = drag.gap;
   if (gap === undefined) return undefined;
@@ -510,7 +525,7 @@ function projectGap(
         address: gap.address,
         eligibility: Object.freeze({ kind: gap.eligibility.kind }),
         rect,
-        ...dropPresentation(gap.eligibility),
+        ...dropPresentation(gap.eligibility, translate),
       });
 }
 
@@ -610,7 +625,7 @@ export function composeKanbanViewportOverlay(
         if (visibleIdentities.has(identity)) projectedIdentities.add(identity);
       }
     }
-    const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds);
+    const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds, options.translate);
     const cards = Object.freeze(
       options.authoritative.cards
         .filter((card) => !projectedIdentities.has(cardIdentity(card.descriptor.cardKey)))

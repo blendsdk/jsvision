@@ -22,30 +22,30 @@ undo integration.
 
 ### Must Have — Complexity XL
 
-- [ ] Define a discriminated `KanbanRequest` union and one application `dispatch(request, context)` seam
+- [x] Define a discriminated `KanbanRequest` union and one application `dispatch(request, context)` seam
   used by all mutation producers.
-- [ ] Correlate each request/result/event/projection through a unique operation ID and captured board,
+- [x] Correlate each request/result/event/projection through a unique operation ID and captured board,
   query, entity, and placement revisions.
-- [ ] Support card create/update/duplicate/archive/delete/move, atomic bulk move, column/swimlane
+- [x] Support card create/update/duplicate/archive/delete/move, atomic bulk move, column/swimlane
   add/update/reorder/delete, application-store saved-view save/rename/delete, and namespaced custom
   requests without direct mutation; pure local saved-view apply/personalization is not a request.
-- [ ] Describe move position by target structure, explicit edge kind, nullable stable neighbor anchors,
+- [x] Describe move position by target structure, explicit edge kind, nullable stable neighbor anchors,
   optional placement token, and ordered moved IDs; never by authoritative numeric index.
-- [ ] Run pure synchronous eligibility for preview and application authorization/async validation in the
+- [x] Run pure synchronous eligibility for preview and application authorization/async validation in the
   dispatcher.
-- [ ] Represent proposed, pending, accepted, committed, rejected, cancelled, and superseded operation
+- [x] Represent proposed, pending, accepted, committed, rejected, cancelled, and superseded operation
   states distinctly.
-- [ ] Show bounded pending projection while awaiting authoritative publication, then confirm, reject, or
+- [x] Show bounded pending projection while awaiting authoritative publication, then confirm, reject, or
   supersede deterministically.
-- [ ] Require all-or-nothing results for multi-card and structural reassignment requests.
-- [ ] Cancel or supersede stale work and ignore late outcomes.
-- [ ] Integrate undo/redo through fresh application requests/tokens, never component-owned history rewind.
+- [x] Require all-or-nothing results for multi-card and structural reassignment requests.
+- [x] Cancel or supersede stale work and ignore late outcomes.
+- [x] Integrate undo/redo through fresh application requests/tokens, never component-owned history rewind.
 
 ### Should Have — Complexity L
 
-- [ ] Support application-provided confirmation for warning outcomes and destructive requests.
-- [ ] Permit request deduplication/idempotency by operation ID at the application boundary.
-- [ ] Expose normalized lifecycle observations without card payloads.
+- [x] Support application-provided confirmation for warning outcomes and destructive requests.
+- [x] Permit request deduplication/idempotency by operation ID at the application boundary.
+- [x] Expose normalized lifecycle observations without card payloads.
 
 ### Won't Have (Out of Scope)
 
@@ -170,31 +170,31 @@ and feedback, not durable history or record snapshots.
 
 ## Acceptance Criteria
 
-1. [ ] Card, column, swimlane, editor, dialog, context-menu, keyboard, and programmatic mutation fixtures
+1. [x] Card, column, swimlane, editor, dialog, context-menu, keyboard, and programmatic mutation fixtures
    all invoke the same dispatcher spy and none changes source records directly.
-2. [ ] A move proposal contains operation ID, ordered moved IDs, captured source placements, target
+2. [x] A move proposal contains operation ID, ordered moved IDs, captured source placements, target
    column/swimlane, explicit edge kind, anchors/token as applicable, and source/query revisions.
-3. [ ] Numeric visual index is absent from authoritative placement interpretation; changing scroll/filter
+3. [x] Numeric visual index is absent from authoritative placement interpretation; changing scroll/filter
    indices does not change a captured semantic proposal.
-4. [ ] Logical `start`/`end` dispatches only when the cursor declared that edge authoritative; unknown
+4. [x] Logical `start`/`end` dispatches only when the cursor declared that edge authoritative; unknown
    window edge without token is unavailable and emits zero requests.
-5. [ ] Sorted within-cell reorder is blocked with reason; an allowed cross-column move can still dispatch.
-6. [ ] Filtered ambiguous within-cell placement is blocked unless the source/application supplies a
+5. [x] Sorted within-cell reorder is blocked with reason; an allowed cross-column move can still dispatch.
+6. [x] Filtered ambiguous within-cell placement is blocked unless the source/application supplies a
    current resolver/token.
-7. [ ] A four-card request is one dispatcher call with deterministic order; a partial result shape is
+7. [x] A four-card request is one dispatcher call with deterministic order; a partial result shape is
    rejected and leaves all four authoritative cards unchanged.
-8. [ ] Pending projection appears after dispatch, disables conflicting actions only on affected entities,
+8. [x] Pending projection appears after dispatch, disables conflicting actions only on affected entities,
    and remains until authoritative publication/application cancellation.
-9. [ ] An accepted result without source publication remains visibly pending and is not announced committed.
-10. [ ] Matching publication clears pending; rejection restores authoritative layout; contradictory
+9. [x] An accepted result without source publication remains visibly pending and is not announced committed.
+10. [x] Matching publication clears pending; rejection restores authoritative layout; contradictory
     publication wins and reports superseded/conflict feedback.
-11. [ ] A relevant revision change before pointer release cancels with zero request; an unrelated card
+11. [x] A relevant revision change before pointer release cancels with zero request; an unrelated card
     publication does not cancel.
-12. [ ] Aborting/disposal then resolving a dispatcher promise produces no late state/frame/event mutation.
-13. [ ] Reusing an active operation ID or a stale placement token is rejected before application dispatch.
-14. [ ] Undo creates a fresh operation with current revisions and application token/inverse; rejection
+12. [x] Aborting/disposal then resolving a dispatcher promise produces no late state/frame/event mutation.
+13. [x] Reusing an active operation ID or a stale placement token is rejected before application dispatch.
+14. [x] Undo creates a fresh operation with current revisions and application token/inverse; rejection
     leaves current data intact and reports feedback.
-15. [ ] A capability-allowed preview followed by dispatcher authorization rejection displays rejection
+15. [x] A capability-allowed preview followed by dispatcher authorization rejection displays rejection
     and never treats capability as security.
-16. [ ] Normalized observations contain operation/entity IDs, kind, state, duration/error code, and counts
+16. [x] Normalized observations contain operation/entity IDs, kind, state, duration/error code, and counts
     but no card body, placement token, undo token, or custom payload.

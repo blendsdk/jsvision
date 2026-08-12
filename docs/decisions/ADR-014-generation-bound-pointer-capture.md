@@ -77,5 +77,5 @@ safety, and complete lifecycle coverage are prerequisites for reliable mouse dra
   acquisition while terminal, modal, host-loss, or unmount boundaries are active.
 - A consumer may assume successful return means the lease stayed active through a reentrant
   replacement. Gesture setup must check `active()` before starting owned resources.
-- This infrastructure could be mistaken for completed Kanban dragging. Kanban drag thresholds,
-  previews, insertion targets, accessibility parity, and move requests remain separate work.
+- Capture is infrastructure rather than Kanban policy. Kanban supplies its own thresholds, previews,
+  insertion targets, accessibility parity, and move requests on top of the shared lease contract.

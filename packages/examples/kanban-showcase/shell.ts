@@ -20,7 +20,12 @@ import {
 import type { Application } from '@jsvision/ui';
 import type { KanbanBoard } from '@jsvision/kanban';
 
-import type { KanbanStoryBuild } from './story.js';
+import type {
+  KanbanPhaseCScenario,
+  KanbanPhaseCScenarioEvidence,
+  KanbanPhaseCStoryDriver,
+  KanbanStoryBuild,
+} from './story.js';
 import type { ShowcaseCard } from './work-items.js';
 import { KANBAN_STORIES } from './stories/index.js';
 
@@ -51,6 +56,11 @@ export interface KanbanShowcase {
   activeActivity(): string;
   /** Counts story owners released while navigating between scenarios. */
   disposedStoryCount(): number;
+  /** Returns the modern story driver bound to the real application event loop. */
+  phaseC(): {
+    exercise(scenario: KanbanPhaseCScenario): Promise<KanbanPhaseCScenarioEvidence>;
+    snapshot(): ReturnType<KanbanPhaseCStoryDriver['snapshot']>;
+  };
 }
 
 /** Builds the compact application menu from the same explicit registry as the sidebar. */
@@ -105,6 +115,11 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     focusedStory.set(index);
     storyHost.add(grow(activeBuild!.view));
     storyHost.invalidateLayout();
+    activeBuild!.phaseC?.bind({
+      dispatch: (event) => app.loop.dispatch(event),
+      origin: () => app.loop.renderRoot.originOf(activeBuild!.board.viewport),
+      flush: () => app.loop.renderRoot.flush(),
+    });
   }
 
   const navigator = new ListBox({
@@ -179,5 +194,18 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     },
     activeActivity: () => activeBuild?.activity() ?? '',
     disposedStoryCount: () => disposedStories,
+    phaseC: () => {
+      const driver = activeBuild?.phaseC;
+      if (driver === undefined) throw new Error('The active Kanban story has no Phase C driver.');
+      return Object.freeze({
+        exercise: (scenario: KanbanPhaseCScenario) =>
+          driver.exercise(scenario, {
+            dispatch: (event) => app.loop.dispatch(event),
+            origin: () => app.loop.renderRoot.originOf(activeBuild!.board.viewport),
+            flush: () => app.loop.renderRoot.flush(),
+          }),
+        snapshot: () => driver.snapshot(),
+      });
+    },
   };
 }

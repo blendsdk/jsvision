@@ -3,8 +3,8 @@
 > **Feature-Set**: JSVision Kanban
 > **Status**: In Progress
 > **Created**: 2026-08-03
-> **Last Updated**: 2026-08-11
-> **Progress**: 3 / 15 (20%)
+> **Last Updated**: 2026-08-12
+> **Progress**: 5 / 15 (33%)
 > **CodeOps Artifact Schema**: 1
 
 ## Legend
@@ -21,8 +21,8 @@
 | RD-04 | Cards and presentation | [RD-04](requirements/RD-04-cards-presentation.md) | [Phase A slice](plans/phase-a-foundation/00-index.md), [Phase B](plans/phase-b-core-board/00-index.md) | Executing | 🔄 | 2026-08-10 | open 10/13; dep 1/3 |
 | RD-05 | Columns, swimlanes, and workflow policy | [RD-05](requirements/RD-05-columns-swimlanes-workflow.md) | [Phase A slice](plans/phase-a-foundation/00-index.md), [Phase B](plans/phase-b-core-board/00-index.md) | Executing | 🔄 | 2026-08-10 | open 7/8/11; dep 2–4 |
 | RD-06 | Focus, navigation, and selection | [RD-06](requirements/RD-06-focus-navigation-selection.md) | [Phase B](plans/phase-b-core-board/00-index.md) | Executing | 🔄 | 2026-08-10 | open 7/12; dep 3/5 |
-| RD-07 | Pointer drag and drop | [RD-07](requirements/RD-07-pointer-drag-drop.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Executing | 🔄 | 2026-08-11 | depends on RD-03, RD-04, RD-06 |
-| RD-08 | Requests, placement, and operation lifecycle | [RD-08](requirements/RD-08-requests-placement-lifecycle.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Executing | 🔄 | 2026-08-11 | depends on RD-02, RD-05–RD-07 |
+| RD-07 | Pointer drag and drop | [RD-07](requirements/RD-07-pointer-drag-drop.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Done | ✅ | 2026-08-12 | depends on RD-03, RD-04, RD-06 |
+| RD-08 | Requests, placement, and operation lifecycle | [RD-08](requirements/RD-08-requests-placement-lifecycle.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Done | ✅ | 2026-08-12 | depends on RD-02, RD-05–RD-07 |
 | RD-09 | Search, filters, sorting, and saved views | [RD-09](requirements/RD-09-search-filters-saved-views.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-02, RD-05, RD-06, RD-08 |
 | RD-10 | Card schema and editor dialogs | [RD-10](requirements/RD-10-card-schema-editor-dialogs.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-04, RD-08 |
 | RD-11 | Board configuration APIs and dialogs | [RD-11](requirements/RD-11-board-configuration-dialogs.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-05, RD-08–RD-10 |

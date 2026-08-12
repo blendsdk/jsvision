@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed French Kanban catalog. */
 export const kanbanFr = createKanbanTranslationCatalog('fr', {
@@ -20,6 +24,29 @@ export const kanbanFr = createKanbanTranslationCatalog('fr', {
   'kanban.card.unknown-status': 'Statut inconnu',
   'kanban.reason.source-unavailable': 'Source indisponible',
   'kanban.reason.renderer-unavailable': 'Carte indisponible',
+});
+
+/** Official reviewed French Phase C Kanban overlay. */
+export const kanbanPhaseCFr = createKanbanPhaseCTranslationCatalog('fr', {
+  'kanban.drag.card': 'Déplacement de la carte',
+  'kanban.drag.cards': 'Déplacement de ${count} cartes',
+  'kanban.drop.allowed': 'Déplacer ici',
+  'kanban.drop.warning': 'Déplacer avec avertissement',
+  'kanban.drop.blocked': 'Déplacement bloqué',
+  'kanban.drop.unavailable': 'Cible indisponible',
+  'kanban.operation.pending': 'Déplacement en attente',
+  'kanban.operation.accepted': 'En attente de la mise à jour du tableau',
+  'kanban.operation.rejected': 'Déplacement refusé',
+  'kanban.operation.cancelled': 'Déplacement annulé',
+  'kanban.operation.superseded': 'Tableau modifié',
+  'kanban.operation.conflict': 'Action conflictuelle indisponible',
+  'kanban.operation.stale-placement': 'Placement modifié',
+  'kanban.operation.sorted-placement': 'Placée selon le tri actuel',
+  'kanban.operation.filtered-placement': 'La carte peut être filtrée',
+  'kanban.operation.transition-blocked': 'Transition bloquée',
+  'kanban.operation.wip-blocked': 'La limite WIP bloque ce déplacement',
+  'kanban.operation.definition-of-done': 'Définition de terminé non satisfaite',
+  'kanban.operation.reorder': 'Réorganisation',
 });
 
 /** Official reviewed French Phase B Kanban overlay. */

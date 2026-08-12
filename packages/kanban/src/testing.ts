@@ -11,6 +11,30 @@ export * from './testing/instrumentation.js';
 export * from './testing/query-harness.js';
 export * from './testing/windowed-fixture.js';
 export * from './testing/board-setup-harness.js';
+export {
+  createKanbanDragHarness,
+  createKanbanFakeClock,
+  createKanbanStandardPointerTrace,
+  replayKanbanSemanticPointerTrace,
+} from './testing/drag-harness.js';
+export type {
+  KanbanDragHarness,
+  KanbanDragHarnessEvent,
+  KanbanFakeClock,
+  KanbanFakeClockHandle,
+  KanbanSemanticHostEvidence,
+  KanbanSemanticPointerResult,
+  KanbanSemanticPointerTrace,
+  KanbanSemanticTraceTransport,
+} from './testing/drag-harness.js';
+export { createKanbanDispatcherHarness, createKanbanOperationLifecycleHarness } from './testing/operation-harness.js';
+export type {
+  KanbanDispatcherHarness,
+  KanbanDispatcherHarnessCall,
+  KanbanOperationLifecycleHarness,
+  KanbanOperationLifecycleMetrics,
+  KanbanOperationLifecycleRecord,
+} from './testing/operation-harness.js';
 export { routeKanbanKeyInput } from './interaction/input-router.js';
 export type { KanbanKeyInput, KanbanKeyInputSink } from './interaction/input-router.js';
 export { KanbanPointerRouter } from './interaction/pointer-router.js';
@@ -23,7 +47,20 @@ export type {
   KanbanPointerRouterOptions,
   KanbanPointerRouterSink,
 } from './interaction/pointer-router.js';
+export { projectKanbanCardDropMap } from './interaction/drop-map.js';
+export type {
+  KanbanActiveDropGapInput,
+  KanbanDropCardInput,
+  KanbanDropCellCompleteness,
+  KanbanDropCellInput,
+  KanbanDropRegionInput,
+  KanbanUnknownDropEdgeInput,
+  ProjectKanbanCardDropMapOptions,
+} from './interaction/drop-map.js';
+export type { KanbanCardDropMap, KanbanCardDropTarget, KanbanCardDropTargetKind } from './interaction/drag-types.js';
 export {
+  readKanbanDragFrameSnapshot as inspectKanbanDragFrame,
   readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,
+  type KanbanDragFrameSnapshot,
   type KanbanViewportScaleSnapshot,
 } from './board/viewport-scale-inspection.js';

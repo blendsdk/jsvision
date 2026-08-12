@@ -1,7 +1,7 @@
 # Kanban data model
 
-> **Last Updated**: 2026-08-10
-> **Status**: Phase B contracts, reads, structure, presentation, scene, and interaction state implemented
+> **Last Updated**: 2026-08-12
+> **Status**: Phase C read, presentation, scene, interaction, request, operation, and drag state implemented
 
 ## Domain model
 
@@ -18,6 +18,9 @@ erDiagram
     SCENE ||--o{ ACTION_TARGET : exposes
     BOARD ||--|| INTERACTION_SNAPSHOT : owns
     INTERACTION_SNAPSHOT ||--o{ SELECTED_CARD : references
+    BOARD ||--o{ OPERATION : coordinates
+    OPERATION ||--o{ AFFECTED_SUBJECT : reserves
+    OPERATION ||--o| PUBLICATION_EXPECTATION : reconciles
     BOARD ||--o{ SAVED_VIEW : restores
     QUERY_SESSION ||--|{ CELL_CURSOR : exposes
     CELL_CURSOR ||--o{ CARD_PROJECTION : windows
@@ -37,29 +40,33 @@ erDiagram
 | Scene              | Revision, retained rows, clipped regions, semantic targets           | Viewport                                                   | Finite visible/overscan snapshot; no application record payloads         |
 | Interaction        | Revision, focus, ordered selected keys, range/pending/feedback state | Board-owned controller                                     | Detached immutable snapshot with finite selection                        |
 | Interaction intent | Kind, origin, closed scope, eligible selection snapshot              | Component to application handler                           | Identity-only evidence; never authorizes or performs mutation            |
+| Operation          | ID, request, affected subjects, lifecycle state, expectation         | Board coordinator                                          | Exactly one dispatcher call; bounded retention and conflict ownership    |
+| Drag overlay       | Generation, moved keys, source placeholders, target, ghost           | Viewport/controller                                        | Payload-free, clipped, capture-owned, and absent after cancellation      |
 | Saved view         | Version, query, grouping, order, density, visibility                 | Application storage                                        | Semantic configuration only; transient focus/drag/load state is excluded |
 
 ## State ownership
 
-| State                                                     | Owner                 | Lifetime                         |
-| --------------------------------------------------------- | --------------------- | -------------------------------- |
-| Card records, workflow policy, authorization, persistence | Application           | Durable                          |
-| Saved-view JSON                                           | Application           | Durable and versioned            |
-| Query revision and loaded windows                         | Query session         | Until query replacement/disposal |
-| Focus, selection, scroll, hover, pending navigation       | Board/controller      | Mounted board session            |
-| Pending press and semantic interaction intent             | Viewport/facade       | One input or serialized action   |
-| Open dialog, drag ghost, insertion marker                 | Later board/dialog UI | Not implemented in Phase B       |
+| State                                                     | Owner               | Lifetime                         |
+| --------------------------------------------------------- | ------------------- | -------------------------------- |
+| Card records, workflow policy, authorization, persistence | Application         | Durable                          |
+| Saved-view JSON                                           | Application         | Durable and versioned            |
+| Query revision and loaded windows                         | Query session       | Until query replacement/disposal |
+| Focus, selection, scroll, hover, pending navigation       | Board/controller    | Mounted board session            |
+| Pending press, drag ghost, insertion marker               | Viewport/controller | One capture generation           |
+| Operation snapshots and undo descriptors                  | Board coordinator   | Bounded mounted-board retention  |
+| Open dialog                                               | Later dialog UI     | Not implemented in Phase C       |
 
 ## Data flow
 
 1. The application supplies a `KanbanDataSource<TCard>` and opens a revisioned query session.
 2. The board asks sparse cell cursors only for visible and overscan ranges.
 3. Card adapters derive bounded presentation descriptors from application records.
-4. Mounted or programmatic interaction updates immutable focus/selection state and may emit an
-   identity-only semantic intent to the application.
-5. When a data operation is requested, the application authorizes and applies its discriminated
-   request, then publishes committed source state or a rejection. The component reconciles from that
-   authoritative result.
+4. Mounted or programmatic interaction updates immutable focus/selection state, emits identity-only
+   semantic intents, or proposes a standard request through the board coordinator.
+5. The coordinator validates eligibility, reserves affected subjects, publishes pending visual state,
+   and invokes the application dispatcher exactly once.
+6. Accepted operations remain pending until authoritative source publication satisfies their exact
+   expectation; rejection, cancellation, contradiction, or disposal releases transient ownership.
 
 ## Implemented source invariants
 
@@ -112,15 +119,18 @@ erDiagram
   separately identified reference.
 - Async navigation carries generation and cancellation evidence. A later resize, query, structure,
   explicit scroll, new navigation, Escape, or disposal prevents stale completion from publishing.
-- A click commits only on matching down/up semantic identity, button, and scene revision. Move/drag
-  cancels the pending press; Phase B does not create drag state.
+- A click commits only on matching down/up semantic identity, button, and scene revision. Crossing the
+  configured threshold atomically transfers the press into a capture-owned card or structural drag.
+- Drag state retains semantic keys and bounded renderer-neutral overlay evidence, never application
+  records. Resize, focus/capture loss, policy/source invalidation, Escape, invalid release, and disposal
+  synchronously clear timers, prefetch, hover, capture, and overlays.
 - Interaction intents contain stable identities, origin, closed scope, and a detached eligible
   selection. They never retain application records or imply mutation authorization.
 
 ## Compatibility and migration
 
-Public TypeScript contracts, ten stable foundation catalogs, and ten additive Phase B overlays follow
-package semantic versioning.
+Public TypeScript contracts, ten stable foundation catalogs, and ten additive Phase B and Phase C
+overlays follow package semantic versioning.
 Saved-view codecs remain a later phase governed by the accepted application-owned semantic storage
 decision; transient scene, focus, selection, press, and pending-navigation state is not a durable
 saved-view model.

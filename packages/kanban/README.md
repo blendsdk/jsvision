@@ -156,13 +156,18 @@ the containing application:
 | Ctrl+A                               | Select loaded, visible, matching cards up to the configured bound                       |
 | Enter or primary-button double-click | Emit an open-card intent for the focused card                                           |
 | Primary click                        | Focus and select; Ctrl+click toggles the target card                                    |
+| Primary drag                         | Move one card or the selected loaded block through a semantic resting-gutter target     |
 | Right-click on a card                | Focus the card and emit an application-owned context intent                             |
 | Escape                               | Cancel pending navigation, then clear progressively broader transient interaction state |
 | Mouse wheel                          | Scroll the mounted viewport on the available axis                                       |
 
 The pointer router commits a click only when button, semantic target, and scene revision still match
-on release. Move and drag reports cancel an incomplete press, preventing stale geometry from invoking
-an action.
+on release. Crossing the configured movement threshold instead acquires a generation-bound pointer
+capture lease and starts a card or structural drag. The overlay keeps the source placeholder, bounded
+ghost, warning/blocked state, insertion marker, and pending projection distinct. Drop placement is a
+revision-bound semantic interval (`start`, `end`, `between`, or a source-issued window-edge token),
+never a visual row index. Edge zones autoscroll in bounded steps and recompute the target after every
+successful step.
 
 Pass `onInteraction` to receive immutable `open-card`, `open-context`, and `scoped-action` intents.
 They contain stable identities, closed semantic scopes, origin, and a bounded selection snapshot—not
@@ -201,15 +206,16 @@ can import only the catalogs they use:
 
 ```ts
 import { createI18n } from '@jsvision/i18n';
-import { kanbanNl, kanbanPhaseBNl } from '@jsvision/kanban/locales/nl';
+import { kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl } from '@jsvision/kanban/locales/nl';
 
-const i18n = createI18n({ locale: 'nl', catalogs: [kanbanNl, kanbanPhaseBNl] });
+const i18n = createI18n({ locale: 'nl', catalogs: [kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl] });
 const board = new KanbanBoard({ source, query, card, i18n: () => i18n });
 ```
 
 Available locale tags are `en`, `nl`, `de`, `fr`, `es`, `it`, `pt-PT`, `pl`, `ro`, and `sv`. Each
-subpath exports the stable foundation catalog plus an additive `kanbanPhaseB*` overlay. Passing both
-preserves the original exact catalog contract while enabling the complete core-board vocabulary.
+subpath exports the stable foundation catalog plus additive `kanbanPhaseB*` and `kanbanPhaseC*`
+overlays. Passing all three preserves the original exact catalog contract while enabling the complete
+core-board and modern-interaction vocabulary.
 Applications may replace the `I18n` service reactively.
 
 ## Themes and terminal capabilities
@@ -222,22 +228,43 @@ monochrome and no-color terminals retain markers, borders, attributes, or text p
 ## Application requests
 
 The board can publish typed data-operation requests through an optional application-owned dispatcher.
-It does not optimistically mutate cards, columns, or swimlanes. The application authorizes a request,
-updates its own data, and publishes the authoritative result through the source. Pending metadata is
-bounded and cleared when that publication arrives. These requests complement the non-mutation
-interaction intents above: intents describe what UI action the user requested, while dispatch requests
-coordinate an application-authorized data operation.
+Every pointer, keyboard, programmatic, editor, menu, or structural producer enters the same
+coordinator. The coordinator validates semantic placement, reserves affected identities, publishes
+`proposed` then `pending`, optionally asks the application to confirm a warning/destructive proposal,
+and invokes the dispatcher exactly once. Accepted work remains a pending visual projection until an
+operation-correlated authoritative publication commits or supersedes it.
+
+The board does not optimistically mutate cards, columns, or swimlanes. The application authorizes a
+request, updates its own source, and calls `reconcilePublication` with exact correlation evidence.
+Rejection, cancellation, capture loss, stale geometry, and contradictory/deleted publication release
+the reservation without rewriting records. These requests complement non-mutation interaction intents:
+intents describe which application UI the user requested, while dispatch requests coordinate a typed
+data operation.
 
 ## Testing
 
 Deterministic source fixtures and instrumentation are isolated from production imports:
 
 ```ts
-import { createKanbanDeferred, createWindowedKanbanFixture } from '@jsvision/kanban/testing';
+import {
+  createKanbanDeferred,
+  createKanbanDispatcherHarness,
+  createKanbanFakeClock,
+  createKanbanStandardPointerTrace,
+  createWindowedKanbanFixture,
+  replayKanbanSemanticPointerTrace,
+} from '@jsvision/kanban/testing';
 ```
 
-The package verifies its public entry points through a real packed, offline NodeNext consumer. Private
-source paths are deliberately not exported.
+The testing entry point also provides bounded operation lifecycle recording and real direct,
+headless-xterm, PTY, or ConPTY semantic trace replay. Direct replay has no optional dependency.
+Browser replay requires the consumer test project to install compatible development copies of
+`@jsvision/web` and `@xterm/headless`; native replay likewise requires a development copy of
+`node-pty` and a platform/toolchain supported by that package. Missing adapters fail with a bounded,
+named prerequisite error instead of silently falling back to synthetic or pipe-backed evidence.
+These host packages remain dev-only and are absent from the production entry point and runtime
+dependency graph. The package verifies its public entries through a real packed, offline NodeNext
+consumer; private source paths are not exported.
 
 ## Standalone kitchen sink
 
@@ -248,9 +275,13 @@ the package. From a repository checkout, run it in a real terminal:
 yarn workspace @jsvision/examples demo:kanban
 ```
 
-The initial stories cover rich status-driven cards, bounded metadata and checklist previews, dense
+The stories cover rich status-driven cards, bounded metadata and checklist previews, dense
 Dutch and German card content, horizontal team swimlanes, responsive density, scrolling, keyboard
-selection and activation, and mouse targeting. The localized density story deliberately combines
+selection and activation, mouse targeting, and a modern interaction lab. That lab uses genuine mounted
+pointer input and visible keyboard/mouse controls to show warning confirmation, blocked and unavailable
+drops, pending/rejected state, authoritative publication, atomic selected-card movement, edge
+autoscroll, responsive resize, and teardown. The
+localized density story deliberately combines
 long titles, several labels, multiple summaries, and more checklist items than fit, making wrapping,
 ellipsis, omitted-item evidence, degradation, and vertical scrolling visible. Each story uses the
 public package entry point and is mounted inside a disposable reactive owner, so future drag, editor,
@@ -259,9 +290,10 @@ leaking prior story state.
 
 ## Current boundary
 
-The core board now includes configurable card presentation, workflow/swimlane structure, sparse scene
-geometry, focus and bounded selection, mounted keyboard and click-family pointer interaction, and
-application-owned semantic intents. Workflow lanes use a compact three-row sticky header: a joined top
+The board includes configurable card presentation, workflow/swimlane structure, sparse scene
+geometry, focus and bounded selection, mounted keyboard/click/drag interaction, semantic move and
+structural placement, a single application-authority coordinator, operation lifecycle projections,
+publication reconciliation, and application-owned semantic intents. Workflow lanes use a compact three-row sticky header: a joined top
 border, a horizontally padded and optionally centered label, and a joined lower separator. Continuous
 vertical boundaries use terminal-safe junction glyphs. Cards use the same one-cell horizontal padding,
 a single resting frame, and a double focused frame, with an ASCII-safe distinction when box drawing is
@@ -274,12 +306,9 @@ status-driven surfaces remain visually coherent. Standard-card rows reserve the 
 left and one matching blank cell before the right frame; ellipsis never occupies that trailing padding.
 Checklist content is a bounded card presentation; checklist-item editing remains application-owned.
 
-Drag-and-drop with insertion targets and ghost feedback, packaged card/lane editor dialogs, the
-command/keymap layer, full component documentation and docs-site live examples remain later phases.
-The standalone kitchen sink now exists, but it deliberately demonstrates only shipped behavior and
-will gain those scenarios with their owning phases. Move/drag pointer reports currently cancel click
-tracking; they do not start a card move. Applications should not infer later editing or drag behavior
-from the present structural and intent APIs.
+Package-owned card/lane editor dialogs, the command/keymap layer, and the full docs-site component
+course remain later phases. Application persistence and authorization intentionally remain outside the
+package. Nested grouping remains excluded because it does not preserve a legible TUI interaction model.
 
 ## License
 

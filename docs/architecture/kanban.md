@@ -1,7 +1,7 @@
 # Kanban architecture
 
-> **Last Updated**: 2026-08-11
-> **Status**: Phase B core board and shared capture prerequisite implemented; Kanban drag/drop, editors, commands, and product documentation planned
+> **Last Updated**: 2026-08-12
+> **Status**: Phase C modern interaction implemented; editors, commands, and product documentation planned
 
 ## Boundary and ownership
 
@@ -33,7 +33,7 @@ graph LR
 | ----------------------------------- | --------------------------------------------------------------------- |
 | `@jsvision/kanban`                  | Production sources, presentation, scene, interaction, board, viewport |
 | `@jsvision/kanban/testing`          | Deterministic source, scene, input, and contract fixtures             |
-| `@jsvision/kanban/locales/{locale}` | Stable foundation catalog plus reviewed Phase B overlay per subpath   |
+| `@jsvision/kanban/locales/{locale}` | Foundation plus reviewed Phase B and Phase C overlays per subpath     |
 
 The package depends only on the public Core, I18n, and UI packages. Testing helpers are isolated from
 the production module graph, and undeclared private subpaths are not part of the SDK surface.
@@ -112,10 +112,19 @@ restores the underlying projection.
 
 ## Request authority
 
-The board's request dispatcher carries application-authorized data-operation requests and tracks
-bounded publication expectations. Capability metadata may hide or disable controls, but only the
-application authorizes and applies a request. The component never mutates an application record
-optimistically and reconciles only from dispatcher results and authoritative source publication.
+The board owns one operation coordinator shared by pointer, keyboard, programmatic, editor, menu, and
+structural producers. Admission validates a detached proposal and semantic placement, reserves its
+affected identities, and publishes `proposed` then `pending` before exactly one dispatcher call.
+Warnings and destructive proposals pass through the application confirmer while the same reservation
+remains held. Conflicts fail closed; bounded active, retained-ID, and undo registries prevent duplicate
+or unbounded operation state.
+
+An accepted result does not mutate records. It retains a payload-free pending projection and optional
+publication expectation until the application publishes its own source update and explicitly calls
+`reconcilePublication`. Exact matching/confirmation commits; correlated contradiction or deletion
+supersedes. Rejection, cancellation, stale work, or disposal releases reservations before notifying
+observers, and late asynchronous settlements cannot revive a retired generation. Capability metadata
+may hide or disable controls, but only the application authorizes and applies a request.
 
 ## Interaction and input lifecycle
 
@@ -138,7 +147,7 @@ sequenceDiagram
     participant C as Interaction controller
     participant A as Application handler
 
-    H->>V: Normalized key, click, context, or wheel report
+    H->>V: Normalized key, click, drag, context, or wheel report
     V->>F: Accept semantic transition
     F->>C: Serialize and validate transition
     C-->>F: Immutable snapshot or bounded unavailable result
@@ -150,15 +159,19 @@ sequenceDiagram
 
 Arrow/Home/End/Page navigation, Shift range extension, Space toggle, Ctrl+A loaded selection, Enter
 activation, Escape cancellation, click/Ctrl-click/double-click/right-click, descriptor actions, retry,
-and wheel scrolling share this mounted path. Unknown and Alt-modified keys propagate to the containing
-application. Pointer release commits only when button, semantic target, and scene revision still match;
-move or drag input cancels the pending click because drag/drop is not implemented in this phase.
+drag, and wheel scrolling share this mounted path. Unknown and Alt-modified keys propagate to the
+containing application. Pointer release commits only when button, semantic target, and scene revision
+still match. Crossing the movement threshold converts the press into a capture-backed drag. Card drags
+retain immutable source/revision evidence for one card or the ordered loaded selection, render a
+bounded ghost and source placeholders, and resolve only semantic resting-gutter placement. Structural
+drags use stable neighbor identities. Visual indices never cross the request boundary.
 
-The shared UI event loop now exposes a generation-bound pointer-capture lease with synchronous,
+The shared UI event loop exposes a generation-bound pointer-capture lease with synchronous,
 reasoned loss notification across replacement, modal, host, unmount, stop, and disposal boundaries.
-That lifecycle is the prerequisite for Kanban's later mouse drag controller: it prevents a gesture
-from surviving capture loss or retaining a dead view. It deliberately does not choose Kanban drag
-thresholds, ghost geometry, insertion targets, or move semantics.
+The Kanban drag controller owns that lease and cancels synchronously on focus/capture loss, Escape,
+resize, relevant source or policy change, unmount, and disposal. Edge autoscroll owns at most one timer
+per drag generation, applies bounded steps, and rebuilds semantic targets after each successful move.
+Collapsed-swimlane expansion is likewise a temporary generation-owned lease.
 
 `open-card`, `open-context`, and `scoped-action` intents cross a synchronous application handler only
 after required focus/selection work settles. They carry identities and closed scopes, never record
@@ -172,22 +185,17 @@ released board cannot remount.
 
 ## Phase boundary
 
-| Implemented Phase B core board                                           | Deliberately deferred                                      |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Public contracts, validation, limits, and semantic defaults              | Drag ghosts, insertion targets, and card movement          |
-| Eager and sparse revisioned read sources                                 | Command registry and user-remappable keymap                |
-| Configurable rich cards with bounded checklist/summary sections          | Card and lane-configuration dialogs                        |
-| Theme roles, English fallback, and ten locale entry points with overlays | Application authorization, persistence, and saved-view UI  |
-| Responsive board/viewport, sparse scene, scrolling, and host parity      | Component teaching page, live labs, kitchen sink, showcase |
-| Workflow structure, WIP/DoD eligibility, and one swimlane axis           | Nested grouping                                            |
-| Focus, bounded selection, mounted keyboard and pointer clicks            | Pointer drag/drop                                          |
-| Semantic interaction intents and request reconciliation                  | Package-owned record mutation                              |
-| Shared generation-bound UI pointer-capture lifecycle                     | Kanban drag controller, ghost, and insertion/drop behavior |
+| Implemented modern-interaction foundation                                 | Deliberately deferred                                     |
+| ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Generic sources, bounded rendering, responsive layout, and one swimlane   | Nested grouping                                           |
+| Rich cards, themes, ten locales, keyboard, click, and capture-backed drag | Command registry and user-remappable keymap               |
+| Semantic card/structure placement and atomic selected-block movement      | Card and lane-configuration dialogs                       |
+| One coordinator, confirmation, lifecycle, publication, cancellation       | Application persistence and authorization implementations |
+| Direct, xterm, PTY/ConPTY evidence and permanent kitchen-sink story       | Full component teaching page and focused docs-site labs   |
 
-This boundary is intentionally publishable and testable, but it is not presented as a complete
-Kanban application. Later phases add drag/drop, commands, and package-owned input UI while retaining
-the application authority, query lifecycle, bounded rendering, localization, and responsive-layout
-decisions documented here.
+The package remains a component foundation rather than a complete Kanban application. Later phases
+add package-owned input UI and command/documentation surfaces while preserving application authority,
+bounded query/rendering, semantic placement, localization, and responsive layout.
 
 ## Related architecture
 

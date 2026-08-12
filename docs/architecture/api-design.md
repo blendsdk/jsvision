@@ -1,32 +1,35 @@
 # Kanban API design
 
-> **Last Updated**: 2026-08-11
-> **Status**: Phase B core-board API and shared capture prerequisite implemented; Kanban drag/drop, commands, editors, and saved-view codecs planned
+> **Last Updated**: 2026-08-12
+> **Status**: Phase C modern interaction API implemented; commands, editors, saved-view codecs, and consumer course planned
 
 ## API style
 
 `@jsvision/kanban` is a browser-neutral, typed in-process SDK. Its main barrel exposes models,
-adapters, presentation, scene, interaction, the board, and viewport. Locale catalogs use explicit
+adapters, presentation, scene, interaction, requests, operations, the board, and viewport. Locale catalogs use explicit
 locale subpaths, and deterministic fixtures use a `/testing` subpath. Commands and package-owned
 dialogs remain deferred; the design deliberately avoids separate `/model` or `/dialogs` subpaths.
 
 ## Public topology
 
-| Surface                        | Purpose                                              | Authority                                       |
-| ------------------------------ | ---------------------------------------------------- | ----------------------------------------------- |
-| `KanbanBoard<TCard>`           | DSL-composed board component                         | Component session state                         |
-| `KanbanDataSource<TCard>`      | Open a coherent query session                        | Application/data adapter                        |
-| Query session and cell cursor  | Bounded lazy acquisition and edge/count knowledge    | Data adapter                                    |
-| Card adapter/descriptors       | Map arbitrary records to safe visual content         | Application/package adapter                     |
-| Structure/grouping policy      | Normalize columns and one optional swimlane axis     | Application policy; component projection        |
-| Workflow evaluators            | Report WIP, DoD, and transition eligibility          | Pure presentation logic; never authorization    |
-| Swimlane presentation          | Resolve bounded built-in or custom header chrome     | Component with validated application extension  |
-| Scene and hit-map contracts    | Project final clipped geometry and semantic targets  | Viewport; application extensions remain bounded |
-| `KanbanInteractionFacade`      | Programmatic focus, selection, activation, context   | Stable board session surface                    |
-| Interaction controller factory | Replace the mount-owned semantic state controller    | Ownership transfers to one board                |
-| Interaction intents            | Notify open-card, context, and scoped application UI | Identity-only; never mutation authority         |
-| `KanbanRequest` dispatcher     | Carry every requested mutation atomically            | Application                                     |
-| Commands, dialogs, saved views | Planned application-facing layers                    | Deferred; not exported in Phase B               |
+| Surface                        | Purpose                                                | Authority                                       |
+| ------------------------------ | ------------------------------------------------------ | ----------------------------------------------- |
+| `KanbanBoard<TCard>`           | DSL-composed board component                           | Component session state                         |
+| `KanbanDataSource<TCard>`      | Open a coherent query session                          | Application/data adapter                        |
+| Query session and cell cursor  | Bounded lazy acquisition and edge/count knowledge      | Data adapter                                    |
+| Card adapter/descriptors       | Map arbitrary records to safe visual content           | Application/package adapter                     |
+| Structure/grouping policy      | Normalize columns and one optional swimlane axis       | Application policy; component projection        |
+| Workflow evaluators            | Report WIP, DoD, and transition eligibility            | Pure presentation logic; never authorization    |
+| Swimlane presentation          | Resolve bounded built-in or custom header chrome       | Component with validated application extension  |
+| Scene and hit-map contracts    | Project final clipped geometry and semantic targets    | Viewport; application extensions remain bounded |
+| `KanbanInteractionFacade`      | Programmatic focus, selection, activation, context     | Stable board session surface                    |
+| Interaction controller factory | Replace the mount-owned semantic state controller      | Ownership transfers to one board                |
+| Interaction intents            | Notify open-card, context, and scoped application UI   | Identity-only; never mutation authority         |
+| `KanbanRequest` dispatcher     | Carry every requested mutation atomically              | Application                                     |
+| Operation coordinator          | Validate, reserve, dispatch, reconcile, cancel, undo   | Board session; source remains authoritative     |
+| Drag controllers/drop map      | Card and structural pointer movement                   | Viewport-local semantic geometry                |
+| `/testing`                     | Fake clock, host trace, dispatcher/lifecycle harnesses | Development-only public SDK surface             |
+| Commands, dialogs, saved views | Planned application-facing layers                      | Deferred; not exported in Phase C               |
 
 ## Request protocol
 
@@ -52,13 +55,16 @@ sequenceDiagram
     end
 ```
 
-Data-operation requests use this dispatcher. Future create, edit, move, reorder, configure, bulk, and
-undo/redo UI paths must preserve that boundary. A move uses destination column/swimlane identity plus
-an opaque placement token. The component never writes rank fields or guesses persistence semantics.
+Data-operation requests use this dispatcher. Card moves, selected-card moves, column/swimlane reorder,
+programmatic move, and undo proposals already preserve that boundary; future create/edit/configuration
+dialogs and commands must reuse it. A move uses destination column/swimlane identity plus a semantic
+placement snapshot or bounded opaque edge token. The component never writes rank fields or guesses
+persistence semantics.
 
-The implemented foundation currently exposes a namespaced extension request envelope, captured
-board/source/query/entity revisions, four operation-correlated result variants, bounded publication
-expectations, and pure reconciliation. Requests, contexts, results, and publication notices are
+The implementation exposes exact standard proposal and coordinator-owned envelope unions plus the
+compatible namespaced extension envelope, captured board/source/query/entity revisions, four
+operation-correlated result variants, bounded publication expectations, cancellation, fresh-proposal
+undo, and pure reconciliation. Requests, contexts, results, and publication notices are
 copied through descriptor-only exact-shape validation before application data is retained or used.
 Capability descriptions control presentation only and are never treated as authorization.
 
@@ -93,8 +99,10 @@ owning `KanbanBoard` attaches the facade's synchronous input seam during its mou
 
 Keyboard and pointer routing operate on final semantic scene targets. The routers are public only
 from `@jsvision/kanban/testing`; production hosts use the mounted board path. Unknown gestures remain
-unhandled. Click completion requires matching target/revision evidence, and drag reports cancel the
-press because insertion/drop contracts are deferred.
+unhandled. Click completion requires matching target/revision evidence. Threshold-crossing movement
+acquires a generation-bound lease and routes through the density-aware drop map, one-cell hysteresis,
+bounded prefetch/hover, and two-axis autoscroll before one valid release hands a semantic proposal to
+the coordinator.
 
 ### Shared UI capture prerequisite
 
@@ -111,9 +119,22 @@ leases retain only their detached state cell rather than the event loop or captu
 
 The legacy `setCapture()`, `hasCapture()`, and `releaseCapture()` methods remain supported for
 existing controls. New cleanup-sensitive gestures should use the lease API and confirm that the
-returned lease is still active before starting gesture-owned resources. This infrastructure does
-not itself implement Kanban dragging; see
+returned lease is still active before starting gesture-owned resources. Kanban card and structural
+drag controllers use this lifecycle; see
 [ADR-014](/decisions/ADR-014-generation-bound-pointer-capture).
+
+## Operation and drag conventions
+
+- Standard caller proposals are detached and validated before the coordinator allocates the final
+  operation ID and dispatch envelope.
+- Affected card, column, and swimlane subjects serialize conflicting operations while unrelated
+  subjects may proceed concurrently within configured bounds.
+- Pending visuals are projection-only. Accepted dispatch does not mutate records and becomes committed
+  only through exact authoritative publication evidence.
+- Card and structure drags keep capture, timers, prefetch, hover, and overlays under one generation;
+  every cancellation path is idempotent and late continuations are inert.
+- Keyboard `Ctrl+Shift+Left/Right` and `board.moveFocusedCard()` use the same move authority without
+  synthesizing pointer-only ghost geometry.
 
 ## Query and pagination conventions
 
@@ -164,9 +185,9 @@ being silently reported as zero.
   application payloads through diagnostics.
 - Semantic Kanban theme roles resolve through mapped Core roles, family fallbacks, and emergency
   styles while retaining non-color cues.
-- The main entry exports the typed foundation and Phase B inventories plus isolated English fallback
-  service. Each explicit locale subpath preserves its exact foundation symbol and adds a reviewed
-  `kanbanPhaseB*` overlay; applications pass both catalogs for the complete vocabulary.
+- The main entry exports the typed foundation, Phase B, and Phase C inventories plus isolated English
+  fallback services. Each explicit locale subpath preserves its foundation symbol and adds reviewed
+  `kanbanPhaseB*` and `kanbanPhaseC*` overlays; the locale helper composes them in deterministic order.
 
 ## Error conventions
 

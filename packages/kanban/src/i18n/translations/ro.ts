@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Romanian Kanban catalog. */
 export const kanbanRo = createKanbanTranslationCatalog('ro', {
@@ -20,6 +24,29 @@ export const kanbanRo = createKanbanTranslationCatalog('ro', {
   'kanban.card.unknown-status': 'Stare necunoscută',
   'kanban.reason.source-unavailable': 'Sursă indisponibilă',
   'kanban.reason.renderer-unavailable': 'Card indisponibil',
+});
+
+/** Official reviewed Romanian Phase C Kanban overlay. */
+export const kanbanPhaseCRo = createKanbanPhaseCTranslationCatalog('ro', {
+  'kanban.drag.card': 'Se mută cardul',
+  'kanban.drag.cards': 'Se mută ${count} carduri',
+  'kanban.drop.allowed': 'Mută aici',
+  'kanban.drop.warning': 'Mută cu avertisment',
+  'kanban.drop.blocked': 'Mutare blocată',
+  'kanban.drop.unavailable': 'Destinație indisponibilă',
+  'kanban.operation.pending': 'Mutare în așteptare',
+  'kanban.operation.accepted': 'Se așteaptă actualizarea panoului',
+  'kanban.operation.rejected': 'Mutare respinsă',
+  'kanban.operation.cancelled': 'Mutare anulată',
+  'kanban.operation.superseded': 'Panoul s-a modificat',
+  'kanban.operation.conflict': 'Acțiune conflictuală indisponibilă',
+  'kanban.operation.stale-placement': 'Poziția s-a modificat',
+  'kanban.operation.sorted-placement': 'Poziționat după sortarea curentă',
+  'kanban.operation.filtered-placement': 'Cardul poate fi filtrat',
+  'kanban.operation.transition-blocked': 'Tranziție blocată',
+  'kanban.operation.wip-blocked': 'Limita WIP blochează această mutare',
+  'kanban.operation.definition-of-done': 'Definiția finalizării nu este îndeplinită',
+  'kanban.operation.reorder': 'Reordonare',
 });
 
 /** Official reviewed Romanian Phase B Kanban overlay. */

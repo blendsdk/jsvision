@@ -20,11 +20,12 @@ const WIDTH = 72;
 const HEIGHT = 20;
 const disposeApps: (() => void)[] = [];
 
-type PhaseCScenario = 'warning' | 'blocked' | 'pending' | 'rejected' | 'publication' | 'bulk' | 'autoscroll';
+type PhaseCScenario =
+  'warning' | 'blocked' | 'unavailable' | 'pending' | 'rejected' | 'publication' | 'bulk' | 'autoscroll';
 
 interface PhaseCScenarioEvidence {
   readonly inputOrigin: 'pointer';
-  readonly targetState?: 'warning' | 'blocked';
+  readonly targetState?: 'warning' | 'blocked' | 'unavailable';
   readonly dispatcherCalls: number;
   readonly confirmationCalls: number;
   readonly lifecycleStates: readonly string[];
@@ -92,6 +93,7 @@ test('the registry should include one truthful modern interaction story', () => 
   expect(story).toBeDefined();
   expect(story?.title).toMatch(/drag|interaction|operation/iu);
   expect(story?.blurb).toMatch(/warning|blocked/iu);
+  expect(story?.blurb).toMatch(/unavailable/iu);
   expect(story?.blurb).toMatch(/pending|publication/iu);
 });
 
@@ -209,6 +211,28 @@ test('the modern interaction story drives warning and blocked targets through re
     confirmationCalls: 0,
   });
   expect(blocked.lifecycleStates).toEqual([]);
+
+  const unavailable = await driver.exercise('unavailable');
+  expect(unavailable).toMatchObject({
+    inputOrigin: 'pointer',
+    targetState: 'unavailable',
+    dispatcherCalls: 0,
+    confirmationCalls: 0,
+  });
+  expect(unavailable.activity).toMatch(/unavailable/iu);
+});
+
+test('the modern interaction story exposes a keyboard-reachable visible scenario action', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+
+  showcase.app.loop.dispatch({ type: 'key', key: 'r', ctrl: false, alt: true, shift: false });
+  for (let attempt = 0; attempt < 40; attempt += 1) await Promise.resolve();
+
+  expect(showcase.activeActivity()).toMatch(/warning confirmed/iu);
 });
 
 test('the modern interaction story shows pending, rejection, and authoritative publication honestly', async () => {
@@ -279,5 +303,22 @@ test('the modern interaction story remains responsive and releases drag resource
   expect(showcase.activeBoard().inspection().visibleCards.length).toBeGreaterThan(0);
 
   showcase.selectStory(storyIndex === 0 ? 1 : 0);
+  expect(driver.snapshot()).toEqual({ disposed: true, timers: 0, captureLeases: 0, subscriptions: 0 });
+});
+
+test('the modern interaction story cancels an in-flight autoscroll delay when its owner is replaced', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+  const driver = phaseCDriver(showcase);
+  const exercise = driver.exercise('autoscroll');
+  for (let attempt = 0; attempt < 60 && driver.snapshot().timers === 0; attempt += 1) await Promise.resolve();
+  expect(driver.snapshot().timers).toBe(1);
+
+  showcase.selectStory(storyIndex === 0 ? 1 : 0);
+
+  await expect(exercise).rejects.toThrow(/cancelled|teardown/iu);
   expect(driver.snapshot()).toEqual({ disposed: true, timers: 0, captureLeases: 0, subscriptions: 0 });
 });

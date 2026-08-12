@@ -70,7 +70,7 @@ describe('Kanban authored catalog implementation', () => {
     }
   });
 
-  it('exports the ten stable foundation catalogs and ten additive Phase B overlays', () => {
+  it('exports the ten stable foundation catalogs and additive Phase B and Phase C overlays', () => {
     expect(Object.keys(locales).sort()).toEqual([
       'kanbanDe',
       'kanbanEn',
@@ -88,6 +88,16 @@ describe('Kanban authored catalog implementation', () => {
       'kanbanPhaseBPtPT',
       'kanbanPhaseBRo',
       'kanbanPhaseBSv',
+      'kanbanPhaseCDe',
+      'kanbanPhaseCEn',
+      'kanbanPhaseCEs',
+      'kanbanPhaseCFr',
+      'kanbanPhaseCIt',
+      'kanbanPhaseCNl',
+      'kanbanPhaseCPl',
+      'kanbanPhaseCPtPT',
+      'kanbanPhaseCRo',
+      'kanbanPhaseCSv',
       'kanbanPl',
       'kanbanPtPT',
       'kanbanRo',

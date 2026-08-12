@@ -174,11 +174,11 @@ assertions for ST-C-REQ-11/12, ST-C-OP-09..12, and ST-C-DRAG-16 without becoming
 
 ## Verification checklist
 
-- [ ] All 60 ST cases are implemented before their owning production phases.
-- [ ] Every ST case carries a plain-language in-code behavior comment, never a CodeOps ID/path.
-- [ ] Each spec-test phase is observed red for behavior not yet implemented, with justified pre-existing
+- [x] All 60 ST cases are implemented before their owning production phases.
+- [x] Every ST case carries a plain-language in-code behavior comment, never a CodeOps ID/path.
+- [x] Each spec-test phase is observed red for behavior not yet implemented, with justified pre-existing
   compatibility assertions allowed to pass.
-- [ ] Implementation makes immutable specification tests green without weakening expectations.
-- [ ] Implementation/security/integration/E2E tests cover internals and hostile boundaries.
-- [ ] UI and Kanban package gates, docs/plugin parity, `yarn verify:local`, and host-scoped evidence pass.
-- [ ] Runtime dependencies remain pure JS; native PTY support is test-only and absent from packed output.
+- [x] Implementation makes immutable specification tests green without weakening expectations.
+- [x] Implementation/security/integration/E2E tests cover internals and hostile boundaries.
+- [x] UI and Kanban package gates, docs/plugin parity, `yarn verify:local`, and host-scoped evidence pass.
+- [x] Runtime dependencies remain pure JS; native PTY support is test-only and absent from packed output.

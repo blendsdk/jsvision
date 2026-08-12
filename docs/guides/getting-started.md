@@ -1,14 +1,14 @@
 # Getting started
 
-> **Last Updated**: 2026-08-04
+> **Last Updated**: 2026-08-12
 
 ## Current status
 
-The Kanban package foundation, read-source, card-presentation, and workflow-structure layers are
-implemented on the feature branch. They are available for package development and contract testing,
-but canonical scene geometry, interactive controllers, dialogs, official locale registration, and
-consumer documentation are not complete yet. Do not treat the package as release-ready until those
-phases close.
+The Kanban package implements its foundation through Phase C: read sources, configurable card
+presentation, workflow/swimlane structure, canonical scene geometry, mounted interaction, semantic
+requests, operation lifecycle, card and structural drag, ten reviewed locale entry points, deterministic
+testing helpers, cross-host evidence, and a standalone showcase. Dialogs, command registration,
+saved-view codecs, the consumer component course, and release readiness remain later phases.
 
 ## Prerequisites
 
@@ -51,14 +51,17 @@ docs/
 
 ## Verification commands
 
-| Task                         | Command                                     |
-| ---------------------------- | ------------------------------------------- |
-| Changed-file gate            | `yarn verify:local`                         |
-| Kanban package typecheck     | `yarn workspace @jsvision/kanban typecheck` |
-| Kanban package tests         | `yarn workspace @jsvision/kanban test`      |
-| Plugin synchronization check | `yarn plugin:check`                         |
-| Product docs build           | `yarn docs:build`                           |
-| Architecture docs build      | `yarn techdocs:build`                       |
+| Task                         | Command                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| Changed-file gate            | `yarn verify:local`                                                            |
+| Kanban package typecheck     | `yarn workspace @jsvision/kanban typecheck`                                    |
+| Kanban package tests         | `yarn workspace @jsvision/kanban test`                                         |
+| Kanban host E2E              | `yarn workspace @jsvision/kanban test:e2e`                                     |
+| Examples build/typecheck     | `yarn workspace @jsvision/examples typecheck`                                  |
+| Kanban showcase smoke        | `yarn workspace @jsvision/examples test -- kanban-showcase.smoke.spec.test.ts` |
+| Plugin synchronization check | `yarn plugin:check`                                                            |
+| Product docs build           | `yarn docs:build`                                                              |
+| Architecture docs build      | `yarn techdocs:build`                                                          |
 
 CI owns the authoritative full `yarn verify` gate. Local development adds only the smallest relevant
 package or docs checks to `yarn verify:local`.
@@ -67,6 +70,7 @@ package or docs checks to `yarn verify:local`.
 
 1. Read the [system overview](/architecture/system-overview) and [API design](/architecture/api-design)
    before extending public source contracts.
-2. Add immutable specification coverage before implementing the next presentation or component layer.
-3. Run the package gates above and preserve the application-authority boundaries in the
+2. Run `yarn workspace @jsvision/examples demo:kanban` to inspect the current standalone showcase.
+3. Add immutable specification coverage before implementing the next component layer.
+4. Run the package gates above and preserve the application-authority boundaries in the
    [decision log](/decisions/).

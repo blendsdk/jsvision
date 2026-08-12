@@ -1,6 +1,6 @@
 # System overview
 
-> **Last Updated**: 2026-08-11
+> **Last Updated**: 2026-08-12
 
 ## Architecture style
 
@@ -8,8 +8,9 @@ JSVision is a modular TypeScript SDK monorepo. Public packages form a layered li
 runtime service: applications instantiate components locally, retain authority over their data and
 effects, and select terminal or browser hosts. The Kanban foundation now exists as the specialist
 `@jsvision/kanban` package under `packages/`, following the Data Grid and Code Editor precedent. Its
-contract, source/session, presentation-adapter, descriptor, theme, English fallback catalog, and
-workflow-structure layers are implemented; canonical scene and dialog layers remain staged work.
+contract, source/session, presentation, workflow structure, canonical scene, operation lifecycle,
+card/structural drag, locale, testing, and showcase layers are implemented. Package-owned editors,
+command registration, saved-view codecs, and consumer teaching pages remain staged work.
 
 ## Kanban component architecture
 
@@ -24,7 +25,8 @@ graph TB
     Theme[Semantic theme resolver]
     Board[KanbanBoard DSL group]
     Viewport[KanbanViewport measured leaf]
-    Dialogs[Card and board dialogs]
+    Producers[Pointer, keyboard, programmatic, and future dialog producers]
+    Coordinator[Operation coordinator]
     Requests[Atomic request dispatcher]
     Events[Bounded observations]
 
@@ -36,10 +38,11 @@ graph TB
     Theme --> Descriptor
     Cursor --> Board
     Board --> Viewport
-    Board --> Dialogs
+    Board --> Producers
     Viewport --> Requests
-    Dialogs --> Requests
-    Requests --> Host
+    Producers --> Requests
+    Requests --> Coordinator
+    Coordinator --> Host
     Requests --> Events
     Events --> Host
 ```
@@ -87,9 +90,9 @@ cards while materializing only requested visible and overscan ranges.
 - **Boundary**: Accessors, hostile prototypes, control text, invalid geometry, and throwing renderers
   are isolated before any descriptor reaches the future viewport.
 
-The standard renderer deliberately covers only title, status, and interaction-state cues in this
-foundation slice. Rich summaries and checklist previews remain represented in the public descriptor
-vocabulary but are not rendered until their later implementation phase.
+The standard renderer supports bounded title, status, labels, metadata, summaries, checklist previews,
+progress, and interaction-state cues according to the selected presentation policy. Named presets keep
+checklist detail opt-in; custom policies can enable a clipped preview within published row limits.
 
 ### Workflow structure boundary
 
@@ -111,15 +114,16 @@ vocabulary but are not rendered until their later implementation phase.
 - **Inputs**: A mounted target view and a synchronous capture-loss callback.
 - **Outputs**: One detachable lease plus one bounded loss reason for replacement, explicit release,
   modal transitions, host lifecycle loss, unmount, stop, or disposal.
-- **Boundary**: This is reusable UI infrastructure. Kanban's drag controller and insertion/drop
-  presentation remain later work; see [ADR-014](/decisions/ADR-014-generation-bound-pointer-capture).
+- **Boundary**: This is reusable UI infrastructure. Kanban consumes the lease through its own bounded
+  drag controllers; other controls retain the legacy compatibility API. See
+  [ADR-014](/decisions/ADR-014-generation-bound-pointer-capture).
 
 ### Application request dispatcher
 
 - **Purpose**: Receive every create, edit, move, configure, bulk, and history intent through one
   discriminated request contract.
 - **Inputs**: Normalized identifiers, semantic placements, expected revision, and bounded tokens.
-- **Outputs**: Pending, commit, or rejection state published by the application.
+- **Outputs**: Proposed, pending, accepted, committed, rejected, cancelled, or superseded operation state.
 - **Boundary**: Capability checks guide the UI but never replace host authorization.
 
 ## Communication patterns

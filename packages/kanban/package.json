@@ -100,7 +100,10 @@
     "@jsvision/ui": "1.5.2"
   },
   "devDependencies": {
+    "@jsvision/web": "1.5.2",
     "@types/node": "^26.1.1",
+    "@xterm/headless": "^6.0.0",
+    "node-pty": "^1.1.0",
     "vitest": "^4.1.10"
   }
 }

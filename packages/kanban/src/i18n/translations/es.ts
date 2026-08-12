@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Spanish Kanban catalog. */
 export const kanbanEs = createKanbanTranslationCatalog('es', {
@@ -20,6 +24,29 @@ export const kanbanEs = createKanbanTranslationCatalog('es', {
   'kanban.card.unknown-status': 'Estado desconocido',
   'kanban.reason.source-unavailable': 'Fuente no disponible',
   'kanban.reason.renderer-unavailable': 'Tarjeta no disponible',
+});
+
+/** Official reviewed Spanish Phase C Kanban overlay. */
+export const kanbanPhaseCEs = createKanbanPhaseCTranslationCatalog('es', {
+  'kanban.drag.card': 'Moviendo tarjeta',
+  'kanban.drag.cards': 'Moviendo ${count} tarjetas',
+  'kanban.drop.allowed': 'Mover aquí',
+  'kanban.drop.warning': 'Mover con advertencia',
+  'kanban.drop.blocked': 'Movimiento bloqueado',
+  'kanban.drop.unavailable': 'Destino no disponible',
+  'kanban.operation.pending': 'Movimiento pendiente',
+  'kanban.operation.accepted': 'Esperando la actualización del tablero',
+  'kanban.operation.rejected': 'Movimiento rechazado',
+  'kanban.operation.cancelled': 'Movimiento cancelado',
+  'kanban.operation.superseded': 'Tablero modificado',
+  'kanban.operation.conflict': 'Acción en conflicto no disponible',
+  'kanban.operation.stale-placement': 'La ubicación cambió',
+  'kanban.operation.sorted-placement': 'Ubicada según el orden actual',
+  'kanban.operation.filtered-placement': 'La tarjeta puede quedar filtrada',
+  'kanban.operation.transition-blocked': 'Transición bloqueada',
+  'kanban.operation.wip-blocked': 'El límite WIP bloquea este movimiento',
+  'kanban.operation.definition-of-done': 'No se cumple la definición de terminado',
+  'kanban.operation.reorder': 'Reordenando',
 });
 
 /** Official reviewed Spanish Phase B Kanban overlay. */

@@ -94,15 +94,15 @@ lower integration layer and are not labeled PTY evidence (AR-C17).
 
 ## Plan-local acceptance criteria
 
-1. [ ] Every RD-07 and RD-08 acceptance criterion maps to at least one immutable ST case in 07.
-2. [ ] SPEC-C-CAPTURE, SPEC-C-HANDOFF, SPEC-C-PARITY, SPEC-C-PROJECTION, and
+1. [x] Every RD-07 and RD-08 acceptance criterion maps to at least one immutable ST case in 07.
+2. [x] SPEC-C-CAPTURE, SPEC-C-HANDOFF, SPEC-C-PARITY, SPEC-C-PROJECTION, and
    SPEC-C-HOST-EVIDENCE pass without weakening application authority.
-3. [ ] Every mutation producer present in Phase C invokes one validated dispatcher and no source record
+3. [x] Every mutation producer present in Phase C invokes one validated dispatcher and no source record
    changes directly; bounded saved-view/editor/configuration/context-menu producer-contract fixtures prove
    the same public submission seam without advertising deferred UI as implemented.
-4. [ ] Drag and pending frames are bounded, damage-free, readable in Unicode/color and ASCII/monochrome,
+4. [x] Drag and pending frames are bounded, damage-free, readable in Unicode/color and ASCII/monochrome,
    responsive after resize/maximize/restore, and reachable without pointer-only required actions.
-5. [ ] UI and Kanban public compatibility, package boundaries, locale/theme/docs/API/plugin parity,
+5. [x] UI and Kanban public compatibility, package boundaries, locale/theme/docs/API/plugin parity,
    native/browser host evidence, and the exact verification matrix in AR-C18 pass.
-6. [ ] Roadmap criteria advance only when their complete owning evidence is verified; later RD-09–15 work
+6. [x] Roadmap criteria advance only when their complete owning evidence is verified; later RD-09–15 work
    remains open.

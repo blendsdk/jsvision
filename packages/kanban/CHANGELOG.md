@@ -46,14 +46,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   alignment, and continuous joined separators, plus coherent card surfaces with single resting frames,
   double focused frames, bold focused titles, contained focused-card shadows, one-row gaps in every
   named density, symmetric standard-card text padding, and distinct ASCII fallbacks.
+- Added capture-backed card and structural drag/drop with semantic resting-gutter placement, bounded
+  ghosts and placeholders, warning/blocked feedback, selected-block moves, edge autoscroll, and
+  cancellation on stale geometry, capture loss, resize, source change, or disposal.
+- Added one board-owned request coordinator with proposed/pending/accepted/committed/rejected lifecycle
+  projections, confirmation, affected-identity conflict control, publication reconciliation, bounded
+  undo descriptors, and cancellation-first teardown without optimistic record mutation.
+- Added reviewed `kanbanPhaseC*` interaction overlays for all ten locale entry points and ordered
+  multi-overlay locale generation.
+- Added deterministic fake-clock, dispatcher, lifecycle, and cross-host semantic trace helpers under
+  `@jsvision/kanban/testing`, plus real xterm, Unix PTY, and Windows ConPTY evidence and dedicated CI.
+- Added a permanent modern-interaction kitchen-sink story covering drag policy, lifecycle outcomes,
+  authoritative publication, atomic bulk movement, autoscroll, responsive layout, and teardown.
 
 ### Security
 
-- Kept native dependencies, runtime schema adapters, editor forms, optimistic mutations, and private
+- Kept native host packages dev-only and outside the production module graph; kept runtime schema adapters, editor forms, optimistic mutations, and private
   source paths outside the initial public package boundary.
 - Bounded source reads, viewport work, retained descriptors, diagnostics, text, identities, and
   application request metadata.
 - Required matching semantic targets and scene revisions before pointer release can commit an action;
   move/drag reports and lifecycle teardown cancel incomplete presses.
-- Kept card/lane editing, drag-and-drop mutation, and application authorization outside the component;
-  the board emits bounded semantic intents and accepts authoritative source publication instead.
+- Kept card/lane editing UI, record mutation, persistence, and application authorization outside the
+  component; drag/drop emits validated requests and accepts authoritative source publication instead.

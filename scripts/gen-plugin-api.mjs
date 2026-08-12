@@ -32,6 +32,7 @@ export const PACKAGES = [
   { pkg: 'files', entry: join('packages', 'files', 'src', 'index.ts') },
   { pkg: 'web', entry: join('packages', 'web', 'src', 'index.ts') },
   { pkg: 'kanban', entry: join('packages', 'kanban', 'src', 'index.ts') },
+  { pkg: 'kanban-testing', entry: join('packages', 'kanban', 'src', 'testing.ts') },
 ];
 
 /** Category order + titles. Every export lands in exactly one; the slug is the page file name. */
@@ -114,6 +115,12 @@ export const CATEGORIES = [
     blurb: 'Board and viewport composition, generic sources, cards, themes, localization, and application authority.',
     importPath: '@jsvision/kanban',
   },
+  {
+    slug: 'kanban-testing',
+    title: '@jsvision/kanban/testing — deterministic interaction harnesses',
+    blurb: 'Test-only clocks, host trace replay, dispatcher control, and operation lifecycle evidence.',
+    importPath: '@jsvision/kanban/testing',
+  },
 ];
 
 /** `@jsvision/ui` source segment → category slug. Anything unmapped in ui falls to `core-essentials`. */
@@ -162,6 +169,7 @@ export function categoryFor(pkg, file) {
   if (pkg === 'web') return 'web';
   if (pkg === 'files') return 'files';
   if (pkg === 'kanban') return 'kanban';
+  if (pkg === 'kanban-testing') return 'kanban-testing';
   if (/packages\/core\//.test(file)) return 'core-essentials';
   const seg = (file.match(/packages\/ui\/src\/([^/]+)/) ?? [])[1];
   return (seg && UI_SEGMENT_CATEGORY[seg]) ?? 'core-essentials';

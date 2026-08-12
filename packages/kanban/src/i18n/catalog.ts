@@ -169,6 +169,29 @@ export const KANBAN_PHASE_B_ENGLISH_MESSAGES = Object.freeze({
   'kanban.interaction.unavailable': 'Interaction unavailable',
 } satisfies KanbanPhaseBMessageMap);
 
+/** Exact modern drag, target, and operation overlay inventory required from every official locale. */
+export interface KanbanPhaseCMessageMap {
+  readonly 'kanban.drag.card': Message;
+  readonly 'kanban.drag.cards': Message;
+  readonly 'kanban.drop.allowed': Message;
+  readonly 'kanban.drop.warning': Message;
+  readonly 'kanban.drop.blocked': Message;
+  readonly 'kanban.drop.unavailable': Message;
+  readonly 'kanban.operation.pending': Message;
+  readonly 'kanban.operation.accepted': Message;
+  readonly 'kanban.operation.rejected': Message;
+  readonly 'kanban.operation.cancelled': Message;
+  readonly 'kanban.operation.superseded': Message;
+  readonly 'kanban.operation.conflict': Message;
+  readonly 'kanban.operation.stale-placement': Message;
+  readonly 'kanban.operation.sorted-placement': Message;
+  readonly 'kanban.operation.filtered-placement': Message;
+  readonly 'kanban.operation.transition-blocked': Message;
+  readonly 'kanban.operation.wip-blocked': Message;
+  readonly 'kanban.operation.definition-of-done': Message;
+  readonly 'kanban.operation.reorder': Message;
+}
+
 /** Canonical English messages for modern pointer-drag and operation overlays. */
 export const KANBAN_PHASE_C_ENGLISH_MESSAGES = Object.freeze({
   'kanban.drag.card': 'Moving card',
@@ -190,7 +213,7 @@ export const KANBAN_PHASE_C_ENGLISH_MESSAGES = Object.freeze({
   'kanban.operation.wip-blocked': 'WIP limit blocks this move',
   'kanban.operation.definition-of-done': 'Definition of done not met',
   'kanban.operation.reorder': 'Reordering',
-});
+} satisfies KanbanPhaseCMessageMap);
 
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */
 export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(

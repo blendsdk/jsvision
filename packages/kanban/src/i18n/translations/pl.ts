@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Polish Kanban catalog. */
 export const kanbanPl = createKanbanTranslationCatalog('pl', {
@@ -20,6 +24,29 @@ export const kanbanPl = createKanbanTranslationCatalog('pl', {
   'kanban.card.unknown-status': 'Nieznany status',
   'kanban.reason.source-unavailable': 'Źródło niedostępne',
   'kanban.reason.renderer-unavailable': 'Karta niedostępna',
+});
+
+/** Official reviewed Polish Phase C Kanban overlay. */
+export const kanbanPhaseCPl = createKanbanPhaseCTranslationCatalog('pl', {
+  'kanban.drag.card': 'Przenoszenie karty',
+  'kanban.drag.cards': 'Przenoszenie ${count} kart',
+  'kanban.drop.allowed': 'Przenieś tutaj',
+  'kanban.drop.warning': 'Przenieś z ostrzeżeniem',
+  'kanban.drop.blocked': 'Przenoszenie zablokowane',
+  'kanban.drop.unavailable': 'Miejsce docelowe niedostępne',
+  'kanban.operation.pending': 'Przenoszenie oczekuje',
+  'kanban.operation.accepted': 'Oczekiwanie na aktualizację tablicy',
+  'kanban.operation.rejected': 'Przenoszenie odrzucone',
+  'kanban.operation.cancelled': 'Przenoszenie anulowane',
+  'kanban.operation.superseded': 'Tablica została zmieniona',
+  'kanban.operation.conflict': 'Sprzeczna akcja niedostępna',
+  'kanban.operation.stale-placement': 'Położenie uległo zmianie',
+  'kanban.operation.sorted-placement': 'Umieszczono według bieżącego sortowania',
+  'kanban.operation.filtered-placement': 'Karta może zostać odfiltrowana',
+  'kanban.operation.transition-blocked': 'Przejście zablokowane',
+  'kanban.operation.wip-blocked': 'Limit WIP blokuje to przeniesienie',
+  'kanban.operation.definition-of-done': 'Definicja ukończenia nie została spełniona',
+  'kanban.operation.reorder': 'Zmiana kolejności',
 });
 
 /** Official reviewed Polish Phase B Kanban overlay. */

@@ -1,11 +1,10 @@
 # Kanban configuration reference
 
-> **Last Updated**: 2026-08-03
-> **Status**: Design-level defaults; implementation pending
+> **Last Updated**: 2026-08-12
+> **Status**: Phase C defaults implemented; later command and saved-view settings identified explicitly
 
-The final TypeScript names and signatures will be fixed during specification-first planning. The
-values below are accepted compatibility targets and must not be silently replaced by implementation
-guesses.
+The implemented values below come from the public manifests and interaction constants. Saved-view and
+dialog values are design targets until their owning phases introduce public APIs.
 
 ## Presentation defaults
 
@@ -46,29 +45,27 @@ scroll.
 | Concurrent async validators per form |               4 |
 | Pending operations                   |              32 |
 | Retained deduplication IDs           |           1,024 |
+| Retained undo descriptors            |             256 |
 | Retained observations                |             256 |
+| Retained cursor/descriptor entries   |        64 / 256 |
 
 Applications may lower limits. Raising a safety ceiling requires explicit documented support and
 verification; it must not disable sanitization, cancellation, or lifecycle bounds.
 
-## Default keymap
+## Implemented mounted key subset
 
-| Keys                 | Action                                                             |
-| -------------------- | ------------------------------------------------------------------ |
-| Arrow keys           | Spatial navigation                                                 |
-| Home / End           | First or last card in the current context                          |
-| Page Up / Page Down  | Viewport-relative navigation                                       |
-| Ctrl+Home / Ctrl+End | Logical board start or end when known                              |
-| Enter                | Open card or confirm a keyboard drop                               |
-| Space                | Toggle selection                                                   |
-| Shift+navigation     | Extend selection range                                             |
-| Ctrl+A               | Select loaded, visible, matching cards within the configured bound |
-| Ctrl+F               | Focus search                                                       |
-| Insert               | Request card creation                                              |
-| Alt+M                | Start keyboard grab/move mode                                      |
-| Escape               | Cancel active interaction or clear transient state                 |
-| Shift+F10            | Open context menu                                                  |
-| F1                   | Open help                                                          |
-| Ctrl+Z / Ctrl+Y      | Request undo / redo                                                |
+| Keys                    | Action                                                                   |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Arrow keys              | Spatial navigation                                                       |
+| Home / End              | First or last card in the current context                                |
+| Page Up / Page Down     | Viewport-relative navigation                                             |
+| Enter                   | Activate the focused card                                                |
+| Space                   | Toggle focused-card selection                                            |
+| Shift+navigation        | Extend selection range                                                   |
+| Ctrl+A                  | Select loaded, visible, matching cards within the configured bound       |
+| Ctrl+Shift+Left / Right | Move the focused card through the shared semantic operation path         |
+| Escape                  | Cancel drag/latest cancellable operation, then clear transient selection |
 
-Destructive and board-configuration commands are exported but unbound by default.
+Alt-modified and unknown gestures remain unhandled for the containing application. Search, create,
+keyboard grab mode, context-menu, help, undo/redo bindings, and destructive/configuration commands are
+later command-layer work and are not claimed as current defaults.

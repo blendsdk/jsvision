@@ -22,30 +22,30 @@ and request rules; drag visuals never become authoritative state.
 
 ### Must Have — Complexity XL
 
-- [ ] Start card drag only after a configurable default one-cell movement threshold from primary-button
+- [x] Start card drag only after a configurable default one-cell movement threshold from primary-button
   pointer-down; ordinary click remains selection/open behavior.
-- [ ] Capture the pointer for the drag lifetime and recover safely from capture loss, host blur, modal
+- [x] Capture the pointer for the drag lifetime and recover safely from capture loss, host blur, modal
   opening, source deletion/change, resize, disposal, Esc, and explicit cancellation.
-- [ ] Render one bounded recognizable lifted-card ghost, a source placeholder, target insertion gap,
+- [x] Render one bounded recognizable lifted-card ghost, a source placeholder, target insertion gap,
   and live stack reflow without stale trails or screen damage.
-- [ ] Use full-width resting card gutters as primary comfortable/spacious targets, card upper/lower halves
+- [x] Use full-width resting card gutters as primary comfortable/spacious targets, card upper/lower halves
   as forgiving before/after fallback, and one-row expanded active gaps in compact density.
-- [ ] Expose leading/trailing positions, a separate first gap below swimlane headers, and large empty-cell
+- [x] Expose leading/trailing positions, a separate first gap below swimlane headers, and large empty-cell
   targets.
-- [ ] Apply target hysteresis so small pointer movement does not flicker between adjacent positions.
-- [ ] Display allowed, warning, invalid, unavailable/loading, and pending target states with non-color cues
+- [x] Apply target hysteresis so small pointer movement does not flicker between adjacent positions.
+- [x] Display allowed, warning, invalid, unavailable/loading, and pending target states with non-color cues
   and localized reasons.
-- [ ] Provide two-speed four-edge autoscroll while captured and recompute placement after each step.
-- [ ] Dispatch exactly one move request on valid pointer-up; invalid/outside pointer-up cancels with no
+- [x] Provide two-speed four-edge autoscroll while captured and recompute placement after each step.
+- [x] Dispatch exactly one move request on valid pointer-up; invalid/outside pointer-up cancels with no
   request.
-- [ ] Drag one card or the complete selected set atomically, with a bounded stacked-count ghost.
-- [ ] Apply the same quality principles to column and explicit-swimlane reordering.
+- [x] Drag one card or the complete selected set atomically, with a bounded stacked-count ghost.
+- [x] Apply the same quality principles to column and explicit-swimlane reordering.
 
 ### Should Have — Complexity L
 
-- [ ] Prefetch an unknown window-edge target during hover while keeping it unavailable until resolvable.
-- [ ] Temporarily expand a visible collapsed swimlane after a bounded hover delay and restore it on leave.
-- [ ] Expose deterministic drag-frame/geometry evidence through the testing subpath.
+- [x] Prefetch an unknown window-edge target during hover while keeping it unavailable until resolvable.
+- [x] Temporarily expand a visible collapsed swimlane after a bounded hover delay and restore it on leave.
+- [x] Expose deterministic drag-frame/geometry evidence through the testing subpath.
 
 ### Won't Have (Out of Scope)
 
@@ -170,37 +170,37 @@ cancelled release dispatches nothing and restores source layout/focus in one set
 
 ## Acceptance Criteria
 
-1. [ ] With the one-cell default, zero Manhattan movement produces click selection and zero move requests;
+1. [x] With the one-cell default, zero Manhattan movement produces click selection and zero move requests;
    the first cell transition (`abs(dx) + abs(dy) >= 1`) starts exactly one captured drag for the active
    button/generation.
-2. [ ] A drag frame contains one bounded ghost, one source placeholder, and at most one active insertion
+2. [x] A drag frame contains one bounded ghost, one source placeholder, and at most one active insertion
    gap; moving between targets leaves no old ghost/gap cells in the settled frame.
-3. [ ] Comfortable/spacious gutter coordinates win over card-half fallback and map to the correct
+3. [x] Comfortable/spacious gutter coordinates win over card-half fallback and map to the correct
    between anchors.
-4. [ ] Moving one cell inside the configured hysteresis band retains the target; crossing its boundary
+4. [x] Moving one cell inside the configured hysteresis band retains the target; crossing its boundary
    changes target once without oscillation.
-5. [ ] Compact mode expands the active gap to one row only while dragging and removes it on cancellation.
-6. [ ] A swimlane header coordinate never yields a card slot; the coordinate immediately below its
+5. [x] Compact mode expands the active gap to one row only while dragging and removes it on cancellation.
+6. [x] A swimlane header coordinate never yields a card slot; the coordinate immediately below its
    separate leading gap can.
-7. [ ] An empty writable cell exposes a larger target and produces logical start only when the source
+7. [x] An empty writable cell exposes a larger target and produces logical start only when the source
    declares the cell empty/complete.
-8. [ ] Slow/fast edge zones advance their configured bounded steps under a fake clock, clamp at extents,
+8. [x] Slow/fast edge zones advance their configured bounded steps under a fake clock, clamp at extents,
    and stop on leave/cancel/capture loss.
-9. [ ] After each autoscroll step, hit testing uses the new scroll offset; pointer-up dispatches the newly
+9. [x] After each autoscroll step, hit testing uses the new scroll offset; pointer-up dispatches the newly
    visible placement, not the pre-scroll slot.
-10. [ ] Unknown window-edge hover starts at most the configured bounded prefetch, remains unavailable,
+10. [x] Unknown window-edge hover starts at most the configured bounded prefetch, remains unavailable,
     and becomes valid only after a current-revision token/anchor arrives.
-11. [ ] Pointer-up on one valid target emits exactly one request; pointer-up on invalid/outside/stale
+11. [x] Pointer-up on one valid target emits exactly one request; pointer-up on invalid/outside/stale
     target emits zero.
-12. [ ] Capture loss, Esc, modal opening, relevant source revision, disposal, and resize cancellation each
+12. [x] Capture loss, Esc, modal opening, relevant source revision, disposal, and resize cancellation each
     synchronously invalidate the gesture, clear ghost/gap/timers/capture, and restore a damage-free frame;
     a same-frame queued pointer-up cannot dispatch.
-13. [ ] Dragging an unselected card moves only it; dragging one of four selected cards creates one four-card
+13. [x] Dragging an unselected card moves only it; dragging one of four selected cards creates one four-card
     atomic proposal and a bounded count ghost.
-14. [ ] Column/swimlane reorder drags use capture, ghost/placeholder, insertion marker, autoscroll,
+14. [x] Column/swimlane reorder drags use capture, ghost/placeholder, insertion marker, autoscroll,
     cancellation, and one-request release semantics equivalent to cards.
-15. [ ] A real Unix PTY harness and platform-scoped Windows ConPTY-equivalent harness, plus browser/xterm,
+15. [x] A real Unix PTY harness and platform-scoped Windows ConPTY-equivalent harness, plus browser/xterm,
     deliver the same semantic pointer trace and final proposal for the standard fixture, allowing
     host-specific raw byte differences; pipe-backed tests remain a lower integration layer and are not
     labeled PTY evidence.
-16. [ ] ANSI text in a dragged title is neutralized in the ghost and absent from observations.
+16. [x] ANSI text in a dragged title is neutralized in the ghost and absent from observations.

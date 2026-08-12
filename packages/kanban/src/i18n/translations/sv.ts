@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Swedish Kanban catalog. */
 export const kanbanSv = createKanbanTranslationCatalog('sv', {
@@ -20,6 +24,29 @@ export const kanbanSv = createKanbanTranslationCatalog('sv', {
   'kanban.card.unknown-status': 'Okänd status',
   'kanban.reason.source-unavailable': 'Källa inte tillgänglig',
   'kanban.reason.renderer-unavailable': 'Kort inte tillgängligt',
+});
+
+/** Official reviewed Swedish Phase C Kanban overlay. */
+export const kanbanPhaseCSv = createKanbanPhaseCTranslationCatalog('sv', {
+  'kanban.drag.card': 'Flyttar kort',
+  'kanban.drag.cards': 'Flyttar ${count} kort',
+  'kanban.drop.allowed': 'Flytta hit',
+  'kanban.drop.warning': 'Flytta med varning',
+  'kanban.drop.blocked': 'Flytt blockerad',
+  'kanban.drop.unavailable': 'Målet är inte tillgängligt',
+  'kanban.operation.pending': 'Flytt väntar',
+  'kanban.operation.accepted': 'Väntar på uppdatering av tavlan',
+  'kanban.operation.rejected': 'Flytt avvisad',
+  'kanban.operation.cancelled': 'Flytt avbruten',
+  'kanban.operation.superseded': 'Tavlan har ändrats',
+  'kanban.operation.conflict': 'Motstridig åtgärd är inte tillgänglig',
+  'kanban.operation.stale-placement': 'Placeringen har ändrats',
+  'kanban.operation.sorted-placement': 'Placerad enligt aktuell sortering',
+  'kanban.operation.filtered-placement': 'Kortet kan filtreras bort',
+  'kanban.operation.transition-blocked': 'Övergång blockerad',
+  'kanban.operation.wip-blocked': 'WIP-gränsen blockerar flytten',
+  'kanban.operation.definition-of-done': 'Definitionen av klart är inte uppfylld',
+  'kanban.operation.reorder': 'Ändrar ordning',
 });
 
 /** Official reviewed Swedish Phase B Kanban overlay. */

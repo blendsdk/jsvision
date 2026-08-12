@@ -189,6 +189,48 @@
       "key": "forms.action.ok"
     },
     {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "label",
+      "literal": "Alpha",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "label",
+      "literal": "Unassigned",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "title",
+      "literal": "Cancellation source",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "title",
+      "literal": "Following anchor",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "title",
+      "literal": "Placement anchor",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/kanban/src/testing/semantic-host-board.ts",
+      "context": "title",
+      "literal": "Primary source",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
       "path": "packages/ui/src/controls/switch.ts",
       "context": "default-message",
       "literal": "Off",

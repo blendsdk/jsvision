@@ -17,6 +17,35 @@ on:
   pull_request:
 
 jobs:
+  kanban-host-e2e:
+    name: kanban host evidence (${{ matrix.os }}, node 22)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      JSVISION_KANBAN_REQUIRE_HOST_EVIDENCE: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Kanban host dependencies
+        run: yarn turbo run build --filter=@jsvision/kanban... --filter=@jsvision/web...
+
+      - name: Run mandatory Kanban host E2E
+        run: yarn workspace @jsvision/kanban test:e2e
+
   build-test:
     name: build & test (${{ matrix.os }}, node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}

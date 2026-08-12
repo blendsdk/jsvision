@@ -613,6 +613,7 @@ export class KanbanViewport<TCard> extends View {
       ...(dragSnapshot.kind === 'idle' ? {} : { drag: dragSnapshot.overlay }),
       ...(structuralDragSnapshot.kind === 'idle' ? {} : { structuralDrag: structuralDragSnapshot.overlay }),
       operations: operationSnapshots,
+      translate: (messageKey) => i18n.t(messageKey),
     });
     if (composedProjection.overlayFailure !== undefined) this.#containOverlayFailure();
     this.#damage = calculateKanbanViewportDamage({

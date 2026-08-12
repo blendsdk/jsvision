@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-12 02:08 CEST
-> **Progress**: 110/124 tasks (89%)
+> **Last Updated**: 2026-08-12 03:42 CEST
+> **Progress**: 124/124 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -456,32 +456,46 @@ harness and showcase updates.
 **Reference**: 03-06 §Testing subpath/Host verification/Documentation · AR-C17–C20
 **Objective**: Produce real transport evidence and synchronize every supported SDK/documentation surface.
 
-- [ ] 7.2.1 With explicit execution-time authorization, add `node-pty@^1.1.0`, `@xterm/headless@^6.0.0`, and workspace `@jsvision/web@1.5.2` as Kanban dev-only dependencies and prove install/package-runtime separation — `packages/kanban/package.json`, `yarn.lock`
-- [ ] 7.2.2 Implement deterministic fake-clock, drag-frame/drop-map, dispatcher/lifecycle, and semantic trace testing helpers — `packages/kanban/src/testing/drag-harness.ts`, `packages/kanban/src/testing/operation-harness.ts`, `packages/kanban/src/testing.ts`
-- [ ] 7.2.3 Implement real child-host PTY/ConPTY fixture as bounded checked-in `.mjs` with finite input/output, teardown, sanitized semantic result, and honest platform guards — `packages/kanban/test/e2e/fixtures/phase-c-host-child.mjs`, `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts`
-- [ ] 7.2.4 Add the focused Node 22 Ubuntu/macOS/Windows Kanban host-E2E CI matrix; designated runners must execute PTY/ConPTY assertions rather than pass by skip — `.github/workflows/ci.yml`
-- [ ] 7.2.5 Add all nine Phase C translated overlays/placeholders, translation factory/aggregator, ordered multi-overlay generator/config consumers, generated locale exports/API index, and digest-bound review entries; retain Phase 5 English ownership and run locale update before checks — `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/i18n/translation.ts`, `packages/kanban/src/i18n/locales.ts`, `packages/kanban/src/locales/*.ts`, `tools/i18n-locale-exports.json`, `scripts/update-i18n-locales.mjs`, `scripts/check-i18n-reviews.mjs`, `packages/docs-site/scripts/gen-api.mjs`, `tools/i18n-translation-reviews.json`
-- [ ] 7.2.6 Update package README/CHANGELOG and architecture docs with authoritative request/pending/capture/placement/host behavior — `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md`, `docs/architecture/kanban.md`
-- [ ] 7.2.7 Extend `packages/examples/kanban-showcase/**` with real drag, warning/blocked/unavailable, bulk, autoscroll, rejection/confirmation/publication controls, responsive layout, and visible feedback — `packages/examples/kanban-showcase/**`
-- [ ] 7.2.8 Run `yarn plugin:update`, inspect mapped UI/Kanban references and generated API/recipe changes, then make `yarn plugin:check` green — `tools/jsvision-skill/**`, generated plugin copy, docs API outputs
-- [ ] 7.2.9 Run focused host/i18n/Examples delivery specifications and make them green
+- [x] 7.2.1 With explicit execution-time authorization, add `node-pty@^1.1.0`, `@xterm/headless@^6.0.0`, and workspace `@jsvision/web@1.5.2` as Kanban dev-only dependencies and prove install/package-runtime separation — `packages/kanban/package.json`, `yarn.lock` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.2 Implement deterministic fake-clock, drag-frame/drop-map, dispatcher/lifecycle, and semantic trace testing helpers — `packages/kanban/src/testing/drag-harness.ts`, `packages/kanban/src/testing/operation-harness.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.3 Implement real child-host PTY/ConPTY fixture as bounded checked-in `.mjs` with finite input/output, teardown, sanitized semantic result, and honest platform guards — `packages/kanban/test/e2e/fixtures/phase-c-host-child.mjs`, `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.4 Add the focused Node 22 Ubuntu/macOS/Windows Kanban host-E2E CI matrix; designated runners must execute PTY/ConPTY assertions rather than pass by skip — `.github/workflows/ci.yml` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.5 Add all nine Phase C translated overlays/placeholders, translation factory/aggregator, ordered multi-overlay generator/config consumers, generated locale exports/API index, and digest-bound review entries; retain Phase 5 English ownership and run locale update before checks — `packages/kanban/src/i18n/translations/*.ts`, `packages/kanban/src/i18n/translation.ts`, `packages/kanban/src/i18n/locales.ts`, `packages/kanban/src/locales/*.ts`, `tools/i18n-locale-exports.json`, `scripts/update-i18n-locales.mjs`, `scripts/check-i18n-reviews.mjs`, `packages/docs-site/scripts/gen-api.mjs`, `tools/i18n-translation-reviews.json` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.6 Update package README/CHANGELOG and architecture docs with authoritative request/pending/capture/placement/host behavior — `packages/kanban/README.md`, `packages/kanban/CHANGELOG.md`, `docs/architecture/kanban.md` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.7 Extend `packages/examples/kanban-showcase/**` with real drag, warning/blocked/unavailable, bulk, autoscroll, rejection/confirmation/publication controls, responsive layout, and visible feedback — `packages/examples/kanban-showcase/**` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.8 Run `yarn plugin:update`, inspect mapped UI/Kanban references and generated API/recipe changes, then make `yarn plugin:check` green — `tools/jsvision-skill/**`, generated plugin copy, docs API outputs ✅ (completed: 2026-08-12 03:42)
+- [x] 7.2.9 Run focused host/i18n/Examples delivery specifications and make them green ✅ (completed: 2026-08-12 03:42)
+  - Gate evidence: direct/browser/Unix PTY semantic parity; package locale registration/generation/review;
+    Examples typecheck and 16-case showcase smoke all passed.
 
 ### Step 7.3: Implementation tests and hardening
 
 **Reference**: 03-06 §Verification commands · 07 §Verification checklist · AR-C17–C20
 **Objective**: Close Phase C with platform-honest, package-complete, criterion-honest evidence.
 
-- [ ] 7.3.1 Update implementation coverage for ordered multi-overlay locale config, generated wrapper/API symbols, and docs index closure — `packages/i18n/test/i18n-package-registration.impl.test.ts`, `packages/docs-site/test/i18n-docs.impl.test.ts`
-- [ ] 7.3.2 Run every literal command in 03-06 §Verification commands, confirm designated CI host-matrix coverage, and record each gate without placeholders
-- [ ] 7.3.3 Resolve independent phase reviewer/auditor critical/major findings, re-review fixes once, and preserve strict RD-09+ scope
-- [ ] 7.3.4 Mark plan-local criteria and RD acceptance evidence only where proven; synchronize the Kanban feature roadmap without claiming later RD-09–15 completion
-- [ ] 7.3.5 Run post-completion project analysis/technical-doc integration hooks required by CodeOps and record final clean evidence
+- [x] 7.3.1 Update implementation coverage for ordered multi-overlay locale config, generated wrapper/API symbols, and docs index closure — `packages/i18n/test/i18n-package-registration.impl.test.ts`, `packages/docs-site/test/i18n-docs.impl.test.ts` ✅ (completed: 2026-08-12 03:42)
+- [x] 7.3.2 Run every literal command in 03-06 §Verification commands, confirm designated CI host-matrix coverage, and record each gate without placeholders ✅ (completed: 2026-08-12 03:42)
+  - Gate evidence: every literal UI/Kanban/Examples/i18n/docs/plugin command passed; Kanban unit was
+    77 files/735 tests and E2E was 25 passed/2 platform-scoped skips on Linux. The CI contract requires
+    native evidence on Node 22 Ubuntu, macOS, and Windows. Full `yarn verify` remains CI-owned.
+- [x] 7.3.3 Resolve independent phase reviewer/auditor critical/major findings, re-review fixes once, and preserve strict RD-09+ scope ✅ (completed: 2026-08-12 03:42)
+  - Review evidence: [Phase 7 quality review](14-phase-7-quality-review.md). The permitted re-review's
+    final real-autoscroll finding was corrected afterward and proved by the immutable host E2E oracle.
+- [x] 7.3.4 Mark plan-local criteria and RD acceptance evidence only where proven; synchronize the Kanban feature roadmap without claiming later RD-09–15 completion ✅ (completed: 2026-08-12 03:42)
+- [x] 7.3.5 Run post-completion project analysis/technical-doc integration hooks required by CodeOps and record final clean evidence ✅ (completed: 2026-08-12 03:42)
+  - Hook evidence: comprehensive techdocs reconciliation found no ADR divergence and `yarn techdocs:build`
+    passed. Project analysis confirmed the managed `AGENTS.md` guidance remains accurate, so it required
+    no branch-wide rewrite.
 
 **Deliverables**: deterministic public testing kit; browser/real PTY/ConPTY semantic evidence; all locales;
 accurate docs/API/plugin; incremental kitchen sink; passed quality gate and criterion-honest roadmap.
 
 **Verify**: every exact command in 03-06 §Verification commands and 07 §Verification checklist, including
 an inspected `yarn plugin:update` and `yarn plugin:check`; CI owns full `yarn verify`
+
+**Quality review**: [PASS](14-phase-7-quality-review.md) — independent delivery review/audit findings
+were corrected; the final post-re-review autoscroll correction requires actual mounted offset movement
+and passes direct, browser/xterm, and Unix PTY evidence.
 
 ## Dependencies
 

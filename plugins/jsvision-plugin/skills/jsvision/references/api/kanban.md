@@ -256,7 +256,7 @@ const KANBAN_PHASE_C_ENGLISH_CATALOG: Catalog
 Canonical English messages for modern pointer-drag and operation overlays.
 
 ```ts
-const KANBAN_PHASE_C_ENGLISH_MESSAGES: Readonly<{ 'kanban.drag.card': "Moving card"; 'kanban.drag.cards': "Moving ${count} cards"; 'kanban.drop.allowed': "Move here"; 'kanban.drop.warning': "Move with warning"; 'kanban.drop.blocked': "Move blocked"; 'kanban.drop.unavailable': "Target unavailable"; 'kanban.operation.pending': "Move pending"; 'kanban.operation.accepted': "Awaiting board update"; 'kanban.operation.rejected': "Move rejected"; 'kanban.operation.cancelled': "Move cancelled"; 'kanban.operation.superseded': "Board changed"; 'kanban.operation.conflict': "Conflicting action unavailable"; 'kanban.operation.stale-placement': "Placement changed"; 'kanban.operation.sorted-placement': "Placed by current sort"; 'kanban.operation.filtered-placement': "Card may be filtered"; 'kanban.operation.transition-blocked': "Transition blocked"; 'kanban.operation.wip-blocked': "WIP limit blocks this move"; 'kanban.operation.definition-of-done': "Definition of done not met"; 'kanban.operation.reorder': "Reordering"; }>
+const KANBAN_PHASE_C_ENGLISH_MESSAGES: Readonly<{ 'kanban.drag.card': string; 'kanban.drag.cards': string; 'kanban.drop.allowed': string; 'kanban.drop.warning': string; 'kanban.drop.blocked': string; 'kanban.drop.unavailable': string; 'kanban.operation.pending': string; 'kanban.operation.accepted': string; 'kanban.operation.rejected': string; 'kanban.operation.cancelled': string; 'kanban.operation.superseded': string; 'kanban.operation.conflict': string; 'kanban.operation.stale-placement': string; 'kanban.operation.sorted-placement': string; 'kanban.operation.filtered-placement': string; 'kanban.operation.transition-blocked': string; 'kanban.operation.wip-blocked': string; 'kanban.operation.definition-of-done': string; 'kanban.operation.reorder': string; }>
 ```
 
 ## KANBAN_PHASE_C_PLACEHOLDER_MANIFEST
@@ -3165,6 +3165,34 @@ interface KanbanPhaseBMessageMap {
   'kanban.interaction.selected-count': Message;   // Compact count shown while multiple loaded cards are selected.
   'kanban.interaction.server-selection-active': Message;   // Fallback label for an application-owned server selection without its own label.
   'kanban.interaction.unavailable': Message;   // Payload-free feedback when the interaction owner is unavailable.
+}
+```
+
+## KanbanPhaseCMessageMap
+
+Exact modern drag, target, and operation overlay inventory required from every official locale.
+
+```ts
+interface KanbanPhaseCMessageMap {
+  'kanban.drag.card': Message;
+  'kanban.drag.cards': Message;
+  'kanban.drop.allowed': Message;
+  'kanban.drop.warning': Message;
+  'kanban.drop.blocked': Message;
+  'kanban.drop.unavailable': Message;
+  'kanban.operation.pending': Message;
+  'kanban.operation.accepted': Message;
+  'kanban.operation.rejected': Message;
+  'kanban.operation.cancelled': Message;
+  'kanban.operation.superseded': Message;
+  'kanban.operation.conflict': Message;
+  'kanban.operation.stale-placement': Message;
+  'kanban.operation.sorted-placement': Message;
+  'kanban.operation.filtered-placement': Message;
+  'kanban.operation.transition-blocked': Message;
+  'kanban.operation.wip-blocked': Message;
+  'kanban.operation.definition-of-done': Message;
+  'kanban.operation.reorder': Message;
 }
 ```
 

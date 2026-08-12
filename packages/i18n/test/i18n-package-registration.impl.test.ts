@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -24,6 +24,20 @@ afterEach(() => {
 });
 
 describe('configuration-driven literal source discovery', () => {
+  test('keeps Kanban locale overlays in foundation, Phase B, then Phase C order', () => {
+    const parsed: unknown = JSON.parse(readFileSync(join(repoRoot, 'tools', 'i18n-locale-exports.json'), 'utf8'));
+    if (typeof parsed !== 'object' || parsed === null) throw new TypeError('Missing locale export configuration.');
+    const packages = Reflect.get(parsed, 'packages');
+    if (!Array.isArray(packages)) throw new TypeError('Missing locale package configuration.');
+    const kanban = packages.find(
+      (entry) => typeof entry === 'object' && entry !== null && Reflect.get(entry, 'name') === 'kanban',
+    );
+
+    expect(kanban).toBeDefined();
+    expect(Reflect.get(kanban!, 'symbolPrefix')).toBe('kanban');
+    expect(Reflect.get(kanban!, 'overlaySymbolPrefixes')).toEqual(['kanbanPhaseB', 'kanbanPhaseC']);
+  });
+
   test('scans the source root of a newly configured safe package', () => {
     const root = createFixture([{ name: 'future-widget', symbolPrefix: 'futureWidget' }]);
     const sourceRoot = join(root, 'packages', 'future-widget', 'src');

@@ -214,8 +214,10 @@ function validateLocaleConfig(config) {
         !SAFE_PACKAGE.test(entry.name) ||
         typeof entry.symbolPrefix !== 'string' ||
         !SAFE_SYMBOL.test(entry.symbolPrefix) ||
-        (entry.overlaySymbolPrefix !== undefined &&
-          (typeof entry.overlaySymbolPrefix !== 'string' || !SAFE_SYMBOL.test(entry.overlaySymbolPrefix))),
+        (entry.overlaySymbolPrefixes !== undefined &&
+          (!Array.isArray(entry.overlaySymbolPrefixes) ||
+            entry.overlaySymbolPrefixes.length === 0 ||
+            entry.overlaySymbolPrefixes.some((prefix) => typeof prefix !== 'string' || !SAFE_SYMBOL.test(prefix)))),
     ) ||
     config.locales.some((locale) => typeof locale !== 'string' || !SAFE_LOCALE.test(locale)) ||
     new Set(config.packages.map((entry) => entry.name)).size !== config.packages.length ||
@@ -237,7 +239,7 @@ function validateLocaleConfig(config) {
  */
 async function loadOfficialCatalogs(config) {
   const catalogs = [];
-  for (const { name: packageName, symbolPrefix, overlaySymbolPrefix } of config.packages) {
+  for (const { name: packageName, symbolPrefix, overlaySymbolPrefixes } of config.packages) {
     for (const locale of config.locales.filter((candidate) => candidate !== 'en')) {
       const url = new URL(`../packages/${packageName}/dist/locales/${locale}.js`, import.meta.url);
       const module = await import(url.href);
@@ -246,21 +248,25 @@ async function loadOfficialCatalogs(config) {
       if (catalog === null || typeof catalog !== 'object') {
         throw new Error(`Built catalog export ${exportName} is missing.`);
       }
-      if (overlaySymbolPrefix === undefined) {
+      if (overlaySymbolPrefixes === undefined) {
         catalogs.push({ packageName, catalog });
         continue;
       }
-      const overlayExportName = `${overlaySymbolPrefix}${localeSuffix(locale)}`;
-      const overlay = module[overlayExportName];
-      if (overlay === null || typeof overlay !== 'object' || overlay.locale !== catalog.locale) {
-        throw new Error(`Built catalog overlay ${overlayExportName} is missing or mismatched.`);
+      const overlays = [];
+      for (const prefix of overlaySymbolPrefixes) {
+        const overlayExportName = `${prefix}${localeSuffix(locale)}`;
+        const overlay = module[overlayExportName];
+        if (overlay === null || typeof overlay !== 'object' || overlay.locale !== catalog.locale) {
+          throw new Error(`Built catalog overlay ${overlayExportName} is missing or mismatched.`);
+        }
+        overlays.push(overlay);
       }
       catalogs.push({
         packageName,
         catalog: {
           schema: catalog.schema,
           locale: catalog.locale,
-          messages: { ...catalog.messages, ...overlay.messages },
+          messages: Object.assign({}, catalog.messages, ...overlays.map((overlay) => overlay.messages)),
         },
       });
     }

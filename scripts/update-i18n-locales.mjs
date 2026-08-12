@@ -38,16 +38,18 @@ async function loadConfig() {
       !SAFE_NAME.test(entry.name) ||
       typeof entry.symbolPrefix !== 'string' ||
       !SAFE_SYMBOL.test(entry.symbolPrefix) ||
-      (entry.overlaySymbolPrefix !== undefined &&
-        (typeof entry.overlaySymbolPrefix !== 'string' || !SAFE_SYMBOL.test(entry.overlaySymbolPrefix)))
+      (entry.overlaySymbolPrefixes !== undefined &&
+        (!Array.isArray(entry.overlaySymbolPrefixes) ||
+          entry.overlaySymbolPrefixes.length === 0 ||
+          entry.overlaySymbolPrefixes.some((prefix) => typeof prefix !== 'string' || !SAFE_SYMBOL.test(prefix))))
     ) {
       throw new Error('Invalid i18n package export configuration.');
     }
   }
   if (
     new Set(value.packages.map((entry) => entry.name)).size !== value.packages.length ||
-    new Set(value.packages.flatMap((entry) => [entry.symbolPrefix, entry.overlaySymbolPrefix].filter(Boolean))).size !==
-      value.packages.reduce((count, entry) => count + (entry.overlaySymbolPrefix === undefined ? 1 : 2), 0)
+    new Set(value.packages.flatMap((entry) => [entry.symbolPrefix, ...(entry.overlaySymbolPrefixes ?? [])])).size !==
+      value.packages.reduce((count, entry) => count + 1 + (entry.overlaySymbolPrefixes?.length ?? 0), 0)
   ) {
     throw new Error('Duplicate i18n package export configuration.');
   }
@@ -55,11 +57,9 @@ async function loadConfig() {
 }
 
 /** Canonical checked source for one explicit locale subpath. */
-function localeModule(packageName, symbolPrefix, overlaySymbolPrefix, locale) {
-  const symbols = [symbolPrefix, overlaySymbolPrefix]
-    .filter((prefix) => prefix !== undefined)
-    .map((prefix) => `${prefix}${localeSuffix(locale)}`);
-  const noun = overlaySymbolPrefix === undefined ? 'catalog' : 'catalogs';
+function localeModule(packageName, symbolPrefix, overlaySymbolPrefixes, locale) {
+  const symbols = [symbolPrefix, ...(overlaySymbolPrefixes ?? [])].map((prefix) => `${prefix}${localeSuffix(locale)}`);
+  const noun = symbols.length === 1 ? 'catalog' : 'catalogs';
   return `/** Official ${locale} ${noun} for the @jsvision/${packageName} locale subpath. */\nexport { ${symbols.join(', ')} } from '../i18n/locales.js';\n`;
 }
 
@@ -121,7 +121,7 @@ async function main() {
     for (const locale of config.locales) {
       await publish(
         join(localeRoot, `${locale}.ts`),
-        localeModule(entry.name, entry.symbolPrefix, entry.overlaySymbolPrefix, locale),
+        localeModule(entry.name, entry.symbolPrefix, entry.overlaySymbolPrefixes, locale),
         check,
         drift,
       );

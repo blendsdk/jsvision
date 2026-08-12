@@ -32,6 +32,16 @@ export interface KanbanViewportScaleSnapshot {
   readonly transientOverlayMembers: number;
 }
 
+/** Counter-only drag frame evidence that never exposes card content or private overlay objects. */
+export interface KanbanDragFrameSnapshot {
+  /** Card and structural drag overlay members retained in the current frame. */
+  readonly transientOverlayMembers: number;
+  /** Pending and terminal operation overlays retained in the current frame. */
+  readonly operationOverlays: number;
+  /** Damage rectangles produced by the most recent frame projection. */
+  readonly damageRegions: number;
+}
+
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
 const VIEWPORT_SCALE_READERS = new WeakMap<object, () => KanbanViewportScaleSnapshot>();
 
@@ -66,4 +76,22 @@ export function readKanbanViewportScaleSnapshot(viewport: object): KanbanViewpor
   const read = VIEWPORT_SCALE_READERS.get(viewport);
   if (read === undefined) throw new KanbanDisposedResourceError();
   return read();
+}
+
+/**
+ * Reads sanitized drag/operation overlay counts for one live mounted viewport.
+ *
+ * @example
+ * ```ts
+ * const before = inspectKanbanDragFrame(board.viewport);
+ * // Dispatch a pointer drag, flush, and compare the bounded counter snapshot.
+ * ```
+ */
+export function readKanbanDragFrameSnapshot(viewport: object): KanbanDragFrameSnapshot {
+  const snapshot = readKanbanViewportScaleSnapshot(viewport);
+  return Object.freeze({
+    transientOverlayMembers: snapshot.transientOverlayMembers,
+    operationOverlays: snapshot.operationOverlays,
+    damageRegions: snapshot.damageRegions,
+  });
 }

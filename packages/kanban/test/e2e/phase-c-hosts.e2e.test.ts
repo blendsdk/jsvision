@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import * as kanbanTesting from '../../src/testing.js';
 
 type Transport = 'direct' | 'browser-xterm' | 'unix-pty' | 'windows-conpty';
+const REQUIRE_HOST_EVIDENCE = process.env.JSVISION_KANBAN_REQUIRE_HOST_EVIDENCE === '1';
 
 interface HostEvidence {
   readonly transport: Transport;
@@ -67,6 +68,19 @@ function semantics(result: SemanticTraceResult): SemanticTraceResult['semantic']
 }
 
 describe('Phase C semantic host parity', () => {
+  it.runIf(REQUIRE_HOST_EVIDENCE)(
+    'executes one real native transport in every designated host-evidence CI cell',
+    async () => {
+      expect(['linux', 'darwin', 'win32']).toContain(process.platform);
+      const api = traceApi();
+      const transport: Transport = process.platform === 'win32' ? 'windows-conpty' : 'unix-pty';
+      const result = await api.replayKanbanSemanticPointerTrace(api.createKanbanStandardPointerTrace(), {
+        transport,
+      });
+      expect(result.evidence.terminal).toBe(process.platform === 'win32' ? 'conpty' : 'pty');
+      expect(result.evidence.pipeBacked).toBe(false);
+    },
+  );
   it('replays one standard trace equivalently through direct dispatch and the real browser/xterm path', async () => {
     const api = traceApi();
     const trace = api.createKanbanStandardPointerTrace();

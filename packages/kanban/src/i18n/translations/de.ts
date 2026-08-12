@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed German Kanban catalog. */
 export const kanbanDe = createKanbanTranslationCatalog('de', {
@@ -20,6 +24,29 @@ export const kanbanDe = createKanbanTranslationCatalog('de', {
   'kanban.card.unknown-status': 'Unbekannter Status',
   'kanban.reason.source-unavailable': 'Quelle nicht verfügbar',
   'kanban.reason.renderer-unavailable': 'Karte nicht verfügbar',
+});
+
+/** Official reviewed German Phase C Kanban overlay. */
+export const kanbanPhaseCDe = createKanbanPhaseCTranslationCatalog('de', {
+  'kanban.drag.card': 'Karte verschieben',
+  'kanban.drag.cards': '${count} Karten verschieben',
+  'kanban.drop.allowed': 'Hierher verschieben',
+  'kanban.drop.warning': 'Mit Warnung verschieben',
+  'kanban.drop.blocked': 'Verschieben blockiert',
+  'kanban.drop.unavailable': 'Ziel nicht verfügbar',
+  'kanban.operation.pending': 'Verschieben ausstehend',
+  'kanban.operation.accepted': 'Warten auf Board-Aktualisierung',
+  'kanban.operation.rejected': 'Verschieben abgelehnt',
+  'kanban.operation.cancelled': 'Verschieben abgebrochen',
+  'kanban.operation.superseded': 'Board geändert',
+  'kanban.operation.conflict': 'Konfliktaktion nicht verfügbar',
+  'kanban.operation.stale-placement': 'Platzierung geändert',
+  'kanban.operation.sorted-placement': 'Nach aktueller Sortierung platziert',
+  'kanban.operation.filtered-placement': 'Karte kann herausgefiltert werden',
+  'kanban.operation.transition-blocked': 'Übergang blockiert',
+  'kanban.operation.wip-blocked': 'WIP-Limit blockiert dieses Verschieben',
+  'kanban.operation.definition-of-done': 'Definition of Done nicht erfüllt',
+  'kanban.operation.reorder': 'Reihenfolge ändern',
 });
 
 /** Official reviewed German Phase B Kanban overlay. */

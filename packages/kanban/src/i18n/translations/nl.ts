@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed Dutch Kanban catalog. */
 export const kanbanNl = createKanbanTranslationCatalog('nl', {
@@ -46,4 +50,27 @@ export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
   'kanban.interaction.selected-count': '${count} geselecteerd',
   'kanban.interaction.server-selection-active': 'Serverselectie actief',
   'kanban.interaction.unavailable': 'Interactie niet beschikbaar',
+});
+
+/** Official reviewed Dutch Phase C Kanban overlay. */
+export const kanbanPhaseCNl = createKanbanPhaseCTranslationCatalog('nl', {
+  'kanban.drag.card': 'Kaart verplaatsen',
+  'kanban.drag.cards': '${count} kaarten verplaatsen',
+  'kanban.drop.allowed': 'Hierheen verplaatsen',
+  'kanban.drop.warning': 'Verplaatsen met waarschuwing',
+  'kanban.drop.blocked': 'Verplaatsing geblokkeerd',
+  'kanban.drop.unavailable': 'Doel niet beschikbaar',
+  'kanban.operation.pending': 'Verplaatsing in behandeling',
+  'kanban.operation.accepted': 'Wachten op bordupdate',
+  'kanban.operation.rejected': 'Verplaatsing afgewezen',
+  'kanban.operation.cancelled': 'Verplaatsing geannuleerd',
+  'kanban.operation.superseded': 'Bord gewijzigd',
+  'kanban.operation.conflict': 'Conflicterende actie niet beschikbaar',
+  'kanban.operation.stale-placement': 'Plaatsing gewijzigd',
+  'kanban.operation.sorted-placement': 'Geplaatst volgens huidige sortering',
+  'kanban.operation.filtered-placement': 'Kaart kan worden uitgefilterd',
+  'kanban.operation.transition-blocked': 'Overgang geblokkeerd',
+  'kanban.operation.wip-blocked': 'WIP-limiet blokkeert deze verplaatsing',
+  'kanban.operation.definition-of-done': 'Definitie van klaar niet bereikt',
+  'kanban.operation.reorder': 'Volgorde wijzigen',
 });

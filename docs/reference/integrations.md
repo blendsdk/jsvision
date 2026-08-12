@@ -1,20 +1,20 @@
 # Kanban integrations
 
-> **Last Updated**: 2026-08-04
-> **Status**: Foundation integrations implemented; mounted board, dialogs, and saved views pending
+> **Last Updated**: 2026-08-12
+> **Status**: Phase C board, operation, drag, locale, testing, and host integrations implemented; dialogs and saved views pending
 
 ## Integration map
 
-| System                       | Direction           | Purpose                                            | Trust boundary                                   |
-| ---------------------------- | ------------------- | -------------------------------------------------- | ------------------------------------------------ |
-| Application record model     | Into component      | Supply generic cards through an adapter            | Validate descriptors and identifiers             |
-| Application data source      | Both                | Open query sessions and publish revisions          | Cancel stale loads; isolate cell failures        |
-| Application dispatcher       | Out of component    | Authorize and apply atomic requests                | Capabilities are not authorization               |
-| Application saved-view store | Both                | Persist semantic view JSON                         | Validate version and resource bounds             |
-| `@jsvision/ui`               | Internal dependency | Layout DSL, views, input, commands, windows        | Public package APIs only                         |
-| `@jsvision/forms`            | Internal dependency | Generic editor/configuration fields and validation | Bounded schemas and async validation             |
-| `@jsvision/i18n`             | Internal dependency | Catalogs, locale fallback, accelerators            | Ten package locale subpaths                      |
-| Docs browser host            | Example-only        | Run deterministic terminal labs                    | No implicit visitor files, network, or clipboard |
+| System                       | Direction                | Purpose                                            | Trust boundary                                   |
+| ---------------------------- | ------------------------ | -------------------------------------------------- | ------------------------------------------------ |
+| Application record model     | Into component           | Supply generic cards through an adapter            | Validate descriptors and identifiers             |
+| Application data source      | Both                     | Open query sessions and publish revisions          | Cancel stale loads; isolate cell failures        |
+| Application dispatcher       | Out of component         | Authorize and apply atomic requests                | Capabilities are not authorization               |
+| Application saved-view store | Both                     | Persist semantic view JSON                         | Validate version and resource bounds             |
+| `@jsvision/ui`               | Internal dependency      | Layout DSL, views, input, commands, windows        | Public package APIs only                         |
+| `@jsvision/forms`            | Future dialog dependency | Generic editor/configuration fields and validation | Not a Kanban runtime dependency in Phase C       |
+| `@jsvision/i18n`             | Internal dependency      | Catalogs, locale fallback, accelerators            | Ten package locale subpaths                      |
+| Docs browser host            | Example-only             | Run deterministic terminal labs                    | No implicit visitor files, network, or clipboard |
 
 ## Application data adapter
 
@@ -51,3 +51,8 @@ sharing authorization, retention, and conflict resolution remain application con
 The `/testing` subpath supplies deterministic fixtures and contract harnesses, not production mocks.
 Host tests must cover cancellation, stale results, failure isolation, authorization rejection,
 responsive geometry, keyboard parity, pointer capture, Unicode/color degradation, and disposal.
+
+Browser semantic replay dynamically requires caller-installed development packages `@jsvision/web`
+and `@xterm/headless`. Native replay dynamically requires caller-installed `node-pty` and uses a real
+Unix PTY or Windows ConPTY child. These optional tools are Kanban development dependencies only and are
+absent from the production import graph; missing tools fail with a bounded prerequisite message.

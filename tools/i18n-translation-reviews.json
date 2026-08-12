@@ -409,82 +409,82 @@
     {
       "package": "kanban",
       "locale": "nl",
-      "digest": "43e13134d3de97764c9ccae0dd283f12ba3299e3c3902ba2c39f195252e691b5",
+      "digest": "b1eb04d0b412ce6463bf5262b7d5ed866bd20463baa1cdb8d51fc3e43a66d9b2",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "de",
-      "digest": "06b9be2e3643f5e30c1edc1740f76ebf58dabed3610646439c7f9e34de457d31",
+      "digest": "e3afcc040e948d202e3fa477d3efca48ba265f7c1701d7a05417e21774a7a624",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "fr",
-      "digest": "f427e04bdba48c5a419787e92a5cd4d142840b523be95b472b4e0cecd213df24",
+      "digest": "60c2037ef8dc6fe4ce5caad7c050df52feee1574ad547c9f8bd98c575026a879",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "es",
-      "digest": "0da04350254c8a362393fa2c06acef0085dfedfbb11402a13d6af2cde406fbd8",
+      "digest": "93db45fbd64170d63ae502355ef9164062c5b73b723140087b2723a4544ce589",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "it",
-      "digest": "ac9cf21d469839d22306daf4f252b325c9f55d0b69e7d7740885395e948a6aeb",
+      "digest": "d2551ad1dc3913aa27c73b74db28c853d7edff6837eb823b17951145f0c73503",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "pt-PT",
-      "digest": "27162426bc9d2a47006e56f5ff420e1fcdf9f4d56a44cc49c0ae31e1f99d9cee",
+      "digest": "23eedb48ba4a3da823ba3bcedad088453b02e6d790c7f509fd18e1bf2b02a83e",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "pl",
-      "digest": "ed75fcaca10c4c47ab62658c500ad6f375a9bf1ef00a315fb47b2ff942d1bf04",
+      "digest": "be8db802009e47cf1f21577a07a827a4742255b04adcb427a0a018698586c634",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "ro",
-      "digest": "2f930c628b93137c6fac783b10f8b8d7365bd6aee030b9f6baffecbe0cb13c9d",
+      "digest": "be05ff8891bfe07590f48478d0bd317f1557abfc361b3483a1ec842c5f34091f",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     },
     {
       "package": "kanban",
       "locale": "sv",
-      "digest": "281ab385a262bc2ff7e4f10834760dcb65696d6101daeaa31af97bc96bd2ef4a",
+      "digest": "67ef696fe53a2ca57508a94a5b3ae87d0a9aa2ad14a14c4c3b0466d17e5bdd9c",
       "reviewer": "OpenAI Codex",
       "reviewMethod": "ai-assisted",
-      "reviewedAt": "2026-08-10",
+      "reviewedAt": "2026-08-12",
       "status": "approved"
     }
   ]

@@ -5,8 +5,10 @@ import {
   KANBAN_ACCELERATOR_MANIFEST,
   KANBAN_PLACEHOLDER_MANIFEST,
   KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
+  KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
   type KanbanMessageMap,
   type KanbanPhaseBMessageMap,
+  type KanbanPhaseCMessageMap,
 } from './catalog.js';
 
 /**
@@ -31,6 +33,17 @@ export function createKanbanPhaseBTranslationCatalog(locale: string, messages: K
     { schema: 1, locale, messages },
     {
       placeholderManifest: KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
+      acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
+    },
+  );
+}
+
+/** Builds one complete immutable authored Phase C translation overlay. */
+export function createKanbanPhaseCTranslationCatalog(locale: string, messages: KanbanPhaseCMessageMap): Catalog {
+  return defineCatalog(
+    { schema: 1, locale, messages },
+    {
+      placeholderManifest: KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
       acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
     },
   );

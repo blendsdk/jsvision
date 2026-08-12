@@ -32,8 +32,11 @@ function readLocaleExportDimensions(): {
         packageConfig !== null &&
         typeof Reflect.get(packageConfig, 'name') === 'string' &&
         typeof Reflect.get(packageConfig, 'symbolPrefix') === 'string' &&
-        (Reflect.get(packageConfig, 'overlaySymbolPrefix') === undefined ||
-          typeof Reflect.get(packageConfig, 'overlaySymbolPrefix') === 'string'),
+        (Reflect.get(packageConfig, 'overlaySymbolPrefixes') === undefined ||
+          (Array.isArray(Reflect.get(packageConfig, 'overlaySymbolPrefixes')) &&
+            Reflect.get(packageConfig, 'overlaySymbolPrefixes').every(
+              (prefix: unknown) => typeof prefix === 'string',
+            ))),
     )
   ) {
     throw new TypeError('The locale export configuration has invalid package or locale entries.');
@@ -42,12 +45,12 @@ function readLocaleExportDimensions(): {
   return {
     locales,
     packages: packages.map((packageConfig) => {
-      const overlaySymbolPrefix = Reflect.get(packageConfig, 'overlaySymbolPrefix');
+      const overlaySymbolPrefixes = Reflect.get(packageConfig, 'overlaySymbolPrefixes');
       return {
         name: Reflect.get(packageConfig, 'name'),
         symbolPrefixes: [
           Reflect.get(packageConfig, 'symbolPrefix'),
-          ...(overlaySymbolPrefix === undefined ? [] : [overlaySymbolPrefix]),
+          ...(Array.isArray(overlaySymbolPrefixes) ? overlaySymbolPrefixes : []),
         ],
       };
     }),

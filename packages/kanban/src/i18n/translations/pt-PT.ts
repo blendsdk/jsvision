@@ -1,4 +1,8 @@
-import { createKanbanPhaseBTranslationCatalog, createKanbanTranslationCatalog } from '../translation.js';
+import {
+  createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseCTranslationCatalog,
+  createKanbanTranslationCatalog,
+} from '../translation.js';
 
 /** Official reviewed European Portuguese Kanban catalog. */
 export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
@@ -20,6 +24,29 @@ export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
   'kanban.card.unknown-status': 'Estado desconhecido',
   'kanban.reason.source-unavailable': 'Fonte indisponível',
   'kanban.reason.renderer-unavailable': 'Cartão indisponível',
+});
+
+/** Official reviewed European Portuguese Phase C Kanban overlay. */
+export const kanbanPhaseCPtPT = createKanbanPhaseCTranslationCatalog('pt-PT', {
+  'kanban.drag.card': 'A mover cartão',
+  'kanban.drag.cards': 'A mover ${count} cartões',
+  'kanban.drop.allowed': 'Mover para aqui',
+  'kanban.drop.warning': 'Mover com aviso',
+  'kanban.drop.blocked': 'Movimento bloqueado',
+  'kanban.drop.unavailable': 'Destino indisponível',
+  'kanban.operation.pending': 'Movimento pendente',
+  'kanban.operation.accepted': 'A aguardar atualização do quadro',
+  'kanban.operation.rejected': 'Movimento rejeitado',
+  'kanban.operation.cancelled': 'Movimento cancelado',
+  'kanban.operation.superseded': 'Quadro alterado',
+  'kanban.operation.conflict': 'Ação em conflito indisponível',
+  'kanban.operation.stale-placement': 'Posição alterada',
+  'kanban.operation.sorted-placement': 'Posicionado pela ordenação atual',
+  'kanban.operation.filtered-placement': 'O cartão pode ser filtrado',
+  'kanban.operation.transition-blocked': 'Transição bloqueada',
+  'kanban.operation.wip-blocked': 'O limite WIP bloqueia este movimento',
+  'kanban.operation.definition-of-done': 'Definição de concluído não cumprida',
+  'kanban.operation.reorder': 'A reordenar',
 });
 
 /** Official reviewed European Portuguese Phase B Kanban overlay. */

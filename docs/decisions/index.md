@@ -4,13 +4,12 @@ This log tracks accepted architectural decisions for JSVision. ADRs describe des
 implementation must not silently supersede them.
 
 The [Kanban architecture overview](/architecture/kanban) maps ADR-006 through ADR-014 to the
-implemented Phase B core board. Phase B applies the accepted package authority, responsive viewport,
-sparse-session, single-swimlane-axis, generic-card, and bounded-degradation decisions to configurable
-cards, workflow/grouping, canonical sparse scene geometry, focus/selection, mounted click-family
-keyboard and pointer input, and identity-only semantic intents. Drag/drop, commands, packaged editors,
-saved-view codecs/UI, component labs, kitchen sink, and showcase applications remain later work.
-ADR-014 records the shared UI pointer-capture lifecycle that later Kanban dragging will build on; it
-does not mark Kanban drag/drop as implemented.
+implemented Phase C board. The implementation preserves package authority, responsive exact-cell
+projection, sparse sessions, one optional swimlane axis, generic bounded cards, semantic atomic
+requests, bounded degradation, and generation-bound capture. Phase C adds card and structural drag,
+placement/eligibility, one operation coordinator, pending/publication/undo lifecycle, reviewed locale
+overlays, host evidence, and the standalone kitchen sink. Commands, packaged editors, saved-view
+codecs/UI, and consumer component labs remain later work.
 
 ## Decision log
 

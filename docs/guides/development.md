@@ -1,6 +1,6 @@
 # Development workflow
 
-> **Last Updated**: 2026-08-04
+> **Last Updated**: 2026-08-12
 
 ## Branch and package conventions
 
@@ -9,9 +9,10 @@ feature branches using Conventional Commits. Public SDK packages live under `pac
 TypeScript, target Node.js 22+, and expose only supported package entry points.
 
 The Kanban implementation lives in `packages/kanban/`. Its package shell, authority contracts,
-revisioned eager/windowed source, bounded presentation, and workflow-structure layers are
-implemented. Later scene geometry, interaction, locale publication, dialog, and docs work follows
-the Data Grid and Code Editor precedents while retaining Kanban's own public contracts.
+revisioned eager/windowed source, bounded presentation, workflow structure, canonical scene,
+interaction, operation coordinator, drag/drop, locale publication, testing entry point, and host
+evidence are implemented. Later dialog, command, saved-view, and consumer-doc work follows the Data
+Grid and Code Editor precedents while retaining Kanban's own public contracts.
 
 ## Specification-first sequence
 
@@ -43,8 +44,7 @@ viewport plus resize/maximize/restore states.
 
 The package also requires:
 
-- a Kanban-specific kitchen sink;
-- a polished standalone showcase suitable for public demonstration;
+- the existing Kanban-specific kitchen sink and polished standalone showcase kept truthful as phases grow;
 - locale/theme/color-depth/ASCII and pointer/keyboard interaction labs;
 - plugin source-impact review followed by `yarn plugin:update` when mapped; and
 - `yarn plugin:check` before completion.
