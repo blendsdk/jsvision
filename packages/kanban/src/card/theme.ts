@@ -12,6 +12,10 @@ export const KANBAN_THEME_ROLES = Object.freeze([
   'swimlane.header.focused',
   'swimlane.separator',
   'card.normal',
+  'card.accent-1',
+  'card.accent-2',
+  'card.accent-3',
+  'card.accent-4',
   'card.focused',
   'card.selected',
   'card.focused-selected',
@@ -46,6 +50,9 @@ export const KANBAN_THEME_ROLES = Object.freeze([
 /** One allowlisted package-local semantic role. */
 export type KanbanThemeRole = (typeof KANBAN_THEME_ROLES)[number];
 
+/** Optional additive card-accent roles introduced without invalidating existing complete theme literals. */
+export type KanbanCardAccentRole = Extract<KanbanThemeRole, `card.accent-${number}`>;
+
 /** One non-color distinction retained when terminal color is unavailable or insufficient. */
 export type KanbanNonColorCue =
   | { readonly kind: 'marker'; readonly glyph: string }
@@ -70,7 +77,10 @@ export interface KanbanTheme {
   /** Exact contract version understood by this package release. */
   readonly contractVersion: 1;
   /** Complete token map for every allowlisted semantic role. */
-  readonly roles: Readonly<Record<KanbanThemeRole, KanbanThemeToken>>;
+  readonly roles: Readonly<
+    Record<Exclude<KanbanThemeRole, KanbanCardAccentRole>, KanbanThemeToken> &
+      Partial<Record<KanbanCardAccentRole, KanbanThemeToken>>
+  >;
 }
 
 /** Caller overrides applied above mapped Core roles during safe theme resolution. */

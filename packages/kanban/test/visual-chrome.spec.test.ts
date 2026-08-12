@@ -10,7 +10,7 @@ import { createApplication } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import { afterEach, expect, test } from 'vitest';
 
-import { KanbanBoard, createEagerKanbanDataSource, createKanbanTheme } from '../src/index.js';
+import { KanbanBoard, createEagerKanbanDataSource, createKanbanTheme, resolveKanbanThemeRole } from '../src/index.js';
 import type { KanbanCardAdapter, KanbanQuery } from '../src/index.js';
 
 interface VisualCard {
@@ -56,6 +56,7 @@ afterEach(() => {
 function mountVisualBoard(
   caps = CAPS,
   headerAlignment: 'start' | 'center' = 'start',
+  accentTheme = false,
 ): { readonly app: Application; readonly board: KanbanBoard<VisualCard> } {
   const source = createEagerKanbanDataSource(() => CARDS, {
     columns: () => [
@@ -68,7 +69,12 @@ function mountVisualBoard(
   const board = new KanbanBoard({
     source,
     query: () => QUERY,
-    card: CARD,
+    card: accentTheme
+      ? { ...CARD, styleOf: () => ({ revision: 'accent', surfaceRole: 'card.accent-1' as const }) }
+      : CARD,
+    ...(accentTheme
+      ? { theme: () => createKanbanTheme(classicTheme, { 'card.accent-1': { fg: '#010101', bg: '#000000' } }) }
+      : {}),
     density: () => 'compact',
     structure: () => ({
       revision: `visual-${headerAlignment}`,
@@ -237,7 +243,10 @@ test('card text and empty interior cells should retain the card surface backgrou
   const target = cardTarget(board, 1);
   const card = board.inspection().visibleCards.find(({ cardKey }) => cardKey === 1);
   if (card === undefined) throw new Error('Expected the focused card descriptor.');
-  const expectedBackground = createKanbanTheme(classicTheme).roles[card.descriptor.surfaceRole].style.bg;
+  const theme = createKanbanTheme(classicTheme);
+  const expectedBackground = resolveKanbanThemeRole(theme, card.descriptor.surfaceRole, 'card.normal', {
+    colorDepth: CAPS.colorDepth,
+  }).style.bg;
   const rows = app.loop.renderRoot.buffer().rows();
   const titleCell = rows[origin.y + target.y + 1]?.[origin.x + target.x + 2];
   const emptyCell = rows[origin.y + target.y + 1]?.[origin.x + target.x + target.width - 2];
@@ -245,4 +254,14 @@ test('card text and empty interior cells should retain the card surface backgrou
   expect(titleCell?.char).not.toBe(' ');
   expect(titleCell?.bg).toEqual(expectedBackground);
   expect(emptyCell?.bg).toEqual(expectedBackground);
+});
+
+test('rendered accents apply capability contrast fallback instead of raw unreadable colors', () => {
+  const { app, board } = mountVisualBoard(CAPS, 'start', true);
+  const target = cardTarget(board, 1);
+  const origin = app.loop.renderRoot.originOf(board.viewport);
+  if (origin === null) throw new Error('Expected a mounted board viewport.');
+  const cell = app.loop.renderRoot.buffer().get(origin.x + target.x + 2, origin.y + target.y + 1);
+  const normal = createKanbanTheme(classicTheme).roles['card.normal'].style;
+  expect(cell).toMatchObject({ fg: normal.fg, bg: normal.bg });
 });

@@ -31,6 +31,7 @@ const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
 const KANBAN = entry('../../kanban/src/index.ts');
+const KANBAN_TESTING = entry('../../kanban/src/testing.ts');
 const REPOSITORY_ROOT = entry('../../../');
 
 /** Reads one UTF-8 repository artifact through a path fixed by this specification. */
@@ -51,6 +52,7 @@ test('ST-A1: the API reference covers exactly the public barrel surface', () => 
     ...barrelExports(WEB),
     ...barrelExports(FILES),
     ...barrelExports(KANBAN),
+    ...barrelExports(KANBAN_TESTING),
   ]);
   expect([...surface].filter((n) => !documented.has(n))).toEqual([]); // nothing missing
   expect([...documented].filter((n) => !surface.has(n))).toEqual([]); // nothing invented
@@ -123,6 +125,7 @@ test('ST-A8: the canonical API generator registers the complete Kanban package c
     'files',
     'web',
     'kanban',
+    'kanban-testing',
   ]);
   expect(CATEGORIES.find(({ slug }) => slug === 'kanban')).toEqual({
     slug: 'kanban',
@@ -176,7 +179,7 @@ test('ST-B-X-07: closure docs describe mounted interaction and register the incr
   expect(readme).toContain('createKanbanInteractionController');
   expect(readme).not.toContain('This release is the publishable read-only foundation.');
   expect(architecture).toContain('KanbanInteractionFacade');
-  expect(architecture).toContain('keyboard and pointer');
+  expect(architecture).toMatch(/keyboard and pointer/iu);
   expect(skillArchitecture).toContain('selection');
   expect(skillArchitecture).toContain('application intent');
   expect(skillArchitecture).not.toContain('Phase A provides read-only projection');

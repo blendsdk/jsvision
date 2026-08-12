@@ -36,6 +36,7 @@ describe('Kanban theme resolver implementation', () => {
 
     for (const role of KANBAN_THEME_ROLES) {
       const token = theme.roles[role];
+      if (token === undefined) throw new Error(`Expected generated token for ${role}.`);
       expect(token.cues.length).toBeGreaterThan(0);
       expect(Object.isFrozen(token)).toBe(true);
       expect(Object.isFrozen(token.style)).toBe(true);

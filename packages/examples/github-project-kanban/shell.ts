@@ -34,7 +34,8 @@ import {
   subMenu,
 } from '@jsvision/ui';
 import type { DesktopApplication, Group } from '@jsvision/ui';
-import type { KanbanBoard } from '@jsvision/kanban';
+import type { KanbanBoard, KanbanTheme } from '@jsvision/kanban';
+import { createKanbanTheme } from '@jsvision/kanban';
 
 import {
   DEFAULT_GITHUB_PROJECT_URL,
@@ -82,6 +83,10 @@ export interface GitHubProjectKanbanApp {
   currentUrl(): string;
   /** Returns the active theme's menu label. */
   currentTheme(): string;
+  /** Returns whether the showcase window currently fills the desktop. */
+  isMaximized(): boolean;
+  /** Toggles the showcase window between its maximized and restored geometry. */
+  toggleMaximize(): void;
 }
 
 /** One named built-in theme exposed through the app's Theme menu. */
@@ -109,6 +114,16 @@ const THEMES: readonly ThemeChoice[] = Object.freeze([
   { id: 'workbench', label: 'Workbench', theme: workbenchTheme },
   { id: 'horizon', label: 'Horizon', theme: horizonTheme },
 ]);
+
+/** Derives colorful, contrast-preserving Kanban accents from one application theme. */
+function githubKanbanTheme(theme: Theme): KanbanTheme {
+  return createKanbanTheme(theme, {
+    'card.accent-1': { bg: theme.progressFill.fg, fg: theme.progressFill.bg },
+    'card.accent-2': { bg: theme.warningText.fg, fg: theme.warningText.bg },
+    'card.accent-3': { bg: theme.dangerText.fg, fg: theme.dangerText.bg },
+    'card.accent-4': { bg: theme.statusBar.bg, fg: theme.statusBar.fg },
+  });
+}
 
 /** Builds the complete project, theme, and help menu. */
 function buildMenu(): ReturnType<typeof menuBar> {
@@ -168,6 +183,7 @@ export function createGitHubProjectKanbanApp(
   const activity = signal('Preparing public GitHub project…');
   const loadedUrl = signal(options.initialUrl ?? DEFAULT_GITHUB_PROJECT_URL);
   const themeName = signal('Classic');
+  const boardTheme = signal(githubKanbanTheme(classicTheme));
   const host = col({ padding: 1, gap: 1, background: 'window' });
   const app = createApplication({
     caps,
@@ -192,7 +208,7 @@ export function createGitHubProjectKanbanApp(
   /** Mounts one authoritative snapshot while retaining its cards only in local app state. */
   function showSnapshot(snapshot: GitHubProjectSnapshot): void {
     mounted?.dispose();
-    mounted = createLocalGitHubProjectBoard(snapshot);
+    mounted = createLocalGitHubProjectBoard(snapshot, boardTheme);
     clearHost(host);
     const content = col(
       {},
@@ -287,8 +303,10 @@ export function createGitHubProjectKanbanApp(
   for (const choice of THEMES) {
     app.onCommand(`${GITHUB_KANBAN_COMMANDS.themePrefix}${choice.id}`, () => {
       app.setTheme(choice.theme);
+      boardTheme.set(githubKanbanTheme(choice.theme));
       themeName.set(choice.label);
       activity.set(`${choice.label} theme · project data unchanged`);
+      mounted?.announce(`${choice.label} theme · project data unchanged`);
     });
   }
 
@@ -301,5 +319,10 @@ export function createGitHubProjectKanbanApp(
     activity: () => mounted?.activity() ?? activity(),
     currentUrl: loadedUrl,
     currentTheme: themeName,
+    isMaximized: () => window.isZoomed(),
+    toggleMaximize: () => {
+      window.zoom();
+      app.loop.renderRoot.flush();
+    },
   };
 }

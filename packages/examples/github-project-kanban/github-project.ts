@@ -6,6 +6,14 @@ export const DEFAULT_GITHUB_PROJECT_URL = 'https://github.com/orgs/nodejs/projec
 const API_VERSION = '2026-03-10';
 const NO_STATUS_COLUMN_ID = 'github-no-status';
 const MAX_PAGES = 100;
+const MAX_PAGE_MEMBERS = 100;
+const MAX_PROJECT_ITEMS = 10_000;
+const MAX_FIELDS = 256;
+const MAX_STATUS_OPTIONS = 256;
+const MAX_CARD_MEMBERS = 64;
+const MAX_GENERATED_URL_BYTES = 16 * 1024;
+const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+const MAX_LOAD_BYTES = 32 * 1024 * 1024;
 
 /** Canonical parts of a public organization or user GitHub Projects URL. */
 export interface GitHubProjectLocation {
@@ -83,8 +91,8 @@ export interface GitHubProjectHttpResponse {
   readonly statusText: string;
   /** Response headers, including GitHub pagination links. */
   readonly headers: GitHubProjectHttpHeaders;
-  /** Parses the JSON response body. */
-  json(): Promise<unknown>;
+  /** Required byte stream so limits can be enforced before the complete JSON body is allocated. */
+  readonly body: ReadableStream<Uint8Array>;
 }
 
 /** Injectable HTTP boundary used by tests and by the native-fetch default. */
@@ -165,8 +173,8 @@ export function parseGitHubProjectUrl(value: string): GitHubProjectLocation {
 }
 
 /** Native public GitHub transport with the current REST media type and API version. */
-const nativeTransport: GitHubProjectTransport = (url, options) =>
-  fetch(url, {
+const nativeTransport: GitHubProjectTransport = async (url, options) => {
+  const response = await fetch(url, {
     headers: {
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': API_VERSION,
@@ -174,6 +182,15 @@ const nativeTransport: GitHubProjectTransport = (url, options) =>
     },
     ...(options.signal === undefined ? {} : { signal: options.signal }),
   });
+  if (response.body === null) throw new GitHubProjectLoadError('GitHub returned an unreadable project response.');
+  return {
+    ok: response.ok,
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+    body: response.body,
+  };
+};
 
 /** Returns whether an untrusted JSON value is a plain record-like object. */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -220,14 +237,49 @@ function statusColor(value: unknown): GitHubProjectStatusColor {
 }
 
 /** Throws a concise GitHub HTTP error, including the unauthenticated rate-limit case. */
-async function checkedJson(response: GitHubProjectHttpResponse): Promise<unknown> {
+interface LoadBudget {
+  bytes: number;
+}
+
+/** Reads and parses one response while enforcing declared, actual, and cumulative byte ceilings. */
+async function checkedJson(response: GitHubProjectHttpResponse, budget: LoadBudget): Promise<unknown> {
   if (!response.ok) {
     const suffix = response.status === 403 ? ' The public GitHub API rate limit may have been reached.' : '';
     throw new GitHubProjectLoadError(`GitHub returned ${response.status} ${response.statusText}.${suffix}`);
   }
   try {
-    return await response.json();
-  } catch {
+    const declared = Number(response.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
+      throw new GitHubProjectLoadError('GitHub returned a project response that is too large.');
+    }
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const next = await reader.read();
+        if (next.done) break;
+        bytes += next.value.byteLength;
+        if (bytes > MAX_RESPONSE_BYTES || budget.bytes + bytes > MAX_LOAD_BYTES) {
+          await reader.cancel();
+          throw new GitHubProjectLoadError('GitHub returned a project response that is too large.');
+        }
+        chunks.push(next.value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    budget.bytes += bytes;
+    const merged = new Uint8Array(bytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(merged));
+  } catch (error: unknown) {
+    if (error instanceof GitHubProjectLoadError) throw error;
+    if (error instanceof Error && error.name === 'AbortError') throw error;
     throw new GitHubProjectLoadError('GitHub returned an unreadable project response.');
   }
 }
@@ -254,13 +306,18 @@ async function loadCollection(
   initialUrl: string,
   transport: GitHubProjectTransport,
   signal: AbortSignal | undefined,
+  budget: LoadBudget,
+  maximumMembers: number,
 ): Promise<readonly unknown[]> {
   const values: unknown[] = [];
   let url: string | undefined = initialUrl;
   for (let page = 0; url !== undefined && page < MAX_PAGES; page += 1) {
     const response = await transport(url, signal === undefined ? {} : { signal });
-    const body = await checkedJson(response);
+    const body = await checkedJson(response, budget);
     if (!Array.isArray(body)) throw new GitHubProjectLoadError('GitHub returned an invalid project collection.');
+    if (body.length > MAX_PAGE_MEMBERS || values.length + body.length > maximumMembers) {
+      throw new GitHubProjectLoadError('The project is too large for this playground session.');
+    }
     values.push(...body);
     url = nextPage(response.headers.get('link'));
   }
@@ -278,6 +335,7 @@ function fieldValue(item: Record<string, unknown>, name: string): unknown {
 /** Reads compact assignee records from a GitHub field value. */
 function assignees(value: unknown): readonly { readonly id: string; readonly label: string }[] {
   if (!Array.isArray(value)) return [];
+  if (value.length > MAX_CARD_MEMBERS) throw new GitHubProjectLoadError('A project item has too many assignees.');
   return value.flatMap((candidate) => {
     if (!isRecord(candidate)) return [];
     const id = identifier(candidate.id) ?? displayString(candidate.node_id);
@@ -289,6 +347,7 @@ function assignees(value: unknown): readonly { readonly id: string; readonly lab
 /** Reads compact label records from a GitHub field value. */
 function labels(value: unknown): readonly { readonly id: string; readonly label: string }[] {
   if (!Array.isArray(value)) return [];
+  if (value.length > MAX_CARD_MEMBERS) throw new GitHubProjectLoadError('A project item has too many labels.');
   return value.flatMap((candidate) => {
     if (!isRecord(candidate)) return [];
     const id = identifier(candidate.id) ?? displayString(candidate.node_id);
@@ -363,9 +422,11 @@ export async function loadGitHubProject(
 ): Promise<GitHubProjectSnapshot> {
   const location = parseGitHubProjectUrl(projectUrl);
   const transport = options.transport ?? nativeTransport;
+  const budget: LoadBudget = { bytes: 0 };
   const apiBase = `https://api.github.com/${location.ownerKind}/${location.owner}/projectsV2/${location.projectNumber}`;
   const projectBody = await checkedJson(
     await transport(apiBase, options.signal === undefined ? {} : { signal: options.signal }),
+    budget,
   );
   if (!isRecord(projectBody)) throw new GitHubProjectLoadError('GitHub returned an invalid project record.');
   const projectId = displayString(projectBody.node_id) ?? identifier(projectBody.id);
@@ -374,10 +435,13 @@ export async function loadGitHubProject(
     throw new GitHubProjectLoadError('GitHub returned a project without an identity or title.');
   }
 
-  const fields = await loadCollection(`${apiBase}/fields?per_page=100`, transport, options.signal);
+  const fields = await loadCollection(`${apiBase}/fields?per_page=100`, transport, options.signal, budget, MAX_FIELDS);
   const statusField = fields.find(
     (field) => isRecord(field) && displayString(field.name) === 'Status' && field.data_type === 'single_select',
   );
+  if (isRecord(statusField) && Array.isArray(statusField.options) && statusField.options.length > MAX_STATUS_OPTIONS) {
+    throw new GitHubProjectLoadError('The project has too many status options.');
+  }
   const configuredColumns =
     isRecord(statusField) && Array.isArray(statusField.options)
       ? statusField.options.flatMap((option) => {
@@ -393,7 +457,10 @@ export async function loadGitHubProject(
   const itemUrl = `${apiBase}${itemPath}?per_page=100${
     fieldIds.length === 0 ? '' : `&fields=${encodeURIComponent(fieldIds.join(','))}`
   }`;
-  const items = await loadCollection(itemUrl, transport, options.signal);
+  if (new TextEncoder().encode(itemUrl).byteLength > MAX_GENERATED_URL_BYTES) {
+    throw new GitHubProjectLoadError('The generated GitHub request is too large.');
+  }
+  const items = await loadCollection(itemUrl, transport, options.signal, budget, MAX_PROJECT_ITEMS);
   const cards = items.flatMap((item) => {
     const card = projectCard(item, configuredColumns);
     return card === undefined ? [] : [card];

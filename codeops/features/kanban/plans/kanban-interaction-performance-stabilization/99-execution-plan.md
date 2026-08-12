@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 20:00 CEST
-> **Progress**: 31/46 tasks (67%)
+> **Last Updated**: 2026-08-12 20:34 CEST
+> **Progress**: 38/46 tasks (83%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -423,9 +423,10 @@ inventory contract, and `yarn verify:local` are green.
 
 ### Step 5.1: Reactive visual system
 
-- [ ] 5.1.1 Supply the GitHub board with a reactive `KanbanTheme` derived from the current application
+- [x] 5.1.1 Supply the GitHub board with a reactive `KanbanTheme` derived from the current application
       theme so every theme-menu choice updates board surfaces, cards, focus, labels, and drag overlays.
-- [ ] 5.1.2 Implement AR-45's four generic `card.accent-1`…`card.accent-4` roles as an additive public theme
+      Completed: 2026-08-12 20:34 CEST.
+- [x] 5.1.2 Implement AR-45's four generic `card.accent-1`…`card.accent-4` roles as an additive public theme
       capability. Preserve source compatibility for existing complete `KanbanTheme` literals by making accent
       tokens optional at the caller-input boundary; `createKanbanTheme` supplies all four, while resolution of
       a missing accent deterministically falls back to `card.normal` and records the fallback. Retain
@@ -433,17 +434,19 @@ inventory contract, and `yarn verify:local` are green.
       focused/selected states add border/title/attribute/non-color cues. Map GitHub statuses deliberately into
       these families, preserve every exact status through bounded text/glyph/attribute cues, and verify
       truecolor, 256, 16, mono, `NO_COLOR`, Unicode, and ASCII behavior. Never repurpose read-only, WIP,
-      operation, warning, or error roles as arbitrary status colors.
-- [ ] 5.1.3 Present title, status, type, labels, assignees, repository, and item reference in a clear bounded
+      operation, warning, or error roles as arbitrary status colors. Completed: 2026-08-12 20:34 CEST.
+- [x] 5.1.3 Present title, status, type, labels, assignees, repository, and item reference in a clear bounded
       priority order; ellipsize by terminal display cells and degrade optional rows before core identity.
-- [ ] 5.1.4 Tune card density, lane width, spacing, and instructions at 80×24 so several cards remain visible
+      Completed: 2026-08-12 20:34 CEST.
+- [x] 5.1.4 Tune card density, lane width, spacing, and instructions at 80×24 so several cards remain visible
       without making the board feel empty, while keeping focused-card affordances and drag gaps obvious.
+      Completed: 2026-08-12 20:34 CEST.
 
 ### Step 5.2: Application interaction
 
-- [ ] 5.2.1 Prove local accepted moves update source order and column immediately, reconcile once, remain
-      draggable afterward, and never write to GitHub.
-- [ ] 5.2.2 Keep URL loading, refresh, cancellation, error dialogs, theme menu, activity feedback, resize,
+- [x] 5.2.1 Prove local accepted moves update source order and column immediately, reconcile once, remain
+      draggable afterward, and never write to GitHub. Completed: 2026-08-12 20:34 CEST.
+- [x] 5.2.2 Keep URL loading, refresh, cancellation, error dialogs, theme menu, activity feedback, resize,
       maximize/restore, and local-board disposal responsive while a board is mounted. Enforce these app-local
       ceilings: 100 pages, 100 collection members per page, 10,000 total project items, 256 fields, 256 status
       options, 64 labels and 64 assignees per card, 16 KiB generated URL, 4 MiB per response body, and 32 MiB
@@ -452,13 +455,30 @@ inventory contract, and `yarn verify:local` are green.
       it is absent, invalid, under-reported, or chunked, before `JSON.parse`. Cancel the reader and reject with
       `GitHubProjectLoadError` on overflow, and count cumulative bytes across the complete load. Validate each
       page before spreading and totals before append; reject oversized authoritative collections. Bound
-      optional metadata only when omission is represented truthfully.
-- [ ] 5.2.3 Expand focused application specifications to cover the deterministic injected 84-card fixture,
+      optional metadata only when omission is represented truthfully. Completed: 2026-08-12 20:34 CEST.
+- [x] 5.2.3 Expand focused application specifications to cover the deterministic injected 84-card fixture,
       oversized/malformed response arrays and pagination, declared and undeclared oversized bodies, false
       and under-reported `Content-Length`, chunked over-limit bodies, exact boundary and multi-byte UTF-8
       values, cumulative cross-request overflow, theme/capability changes, rich/adversarial cards, scroll
       stability, per-event drag/drop, and responsive layouts. Keep live GitHub network access outside
-      automated oracles.
+      automated oracles. Completed: 2026-08-12 20:34 CEST.
+
+**Phase 5 quality review:** The independent correctness review reported zero Critical and three Major findings:
+capability/contrast resolution was not used by the actual paint path, the optional body-less transport path
+could allocate an unbounded JSON string, and the scaled application oracle did not prove all claimed
+interaction/capability behavior. All three findings were accepted under auto-design. A separate auditor could
+not be dispatched because the active collaboration thread limit was exhausted; the correctness reviewer also
+reviewed the response-limit security boundary.
+
+**Required single re-review:** The reviewer confirmed the paint-path remediation closed with no new Critical or
+Major regression, but retained two Majors: `response.text()` still allocated before checking its byte count, and
+the application test did not prove pre-resize capture or an actual terminal-capability fallback. The final
+permitted remediation removed the text fallback and made a byte stream mandatory at the transport boundary;
+native fetch now rejects a missing stream. The scaled oracle now observes a live compact ghost before resize and
+its removal afterward, and a separate 84-card monochrome-capability render asserts the painted card background
+uses the mapped Core fallback rather than its truecolor accent. No third review was requested, per the one
+re-review limit. Final verification at 2026-08-12 21:00 CEST: 770 Kanban tests, 440 examples tests, both package
+typechecks, Kanban build, plugin update/check, dependency/documentation checks, and `yarn verify:local` passed.
 
 ## Phase 6: Closure and user acceptance
 

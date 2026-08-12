@@ -41,6 +41,10 @@ const CORE_ROLE_BY_KANBAN: Readonly<Record<KanbanThemeRole, CoreThemeRoleName>> 
   'swimlane.header.focused': 'listFocused',
   'swimlane.separator': 'listDivider',
   'card.normal': 'listNormal',
+  'card.accent-1': 'listNormal',
+  'card.accent-2': 'listNormal',
+  'card.accent-3': 'listNormal',
+  'card.accent-4': 'listNormal',
   'card.focused': 'listFocused',
   'card.selected': 'listSelected',
   'card.focused-selected': 'listFocused',
@@ -275,10 +279,11 @@ export function resolveKanbanTheme(coreTheme: Theme, overrides?: KanbanThemeOver
         else style = freezeStyle(override as ThemeRole);
       }
     }
+    const accentFallback = role.startsWith('card.accent-') ? roles['card.normal'] : undefined;
     roles[role] = Object.freeze({
       style: freezeStyle(style),
-      mappedFallback: freezeStyle(mapped),
-      terminalFallback: freezeStyle(terminal),
+      mappedFallback: freezeStyle(accentFallback?.style ?? mapped),
+      terminalFallback: freezeStyle(accentFallback?.terminalFallback ?? terminal),
       cues: cueFor(role),
     });
   }
@@ -355,7 +360,8 @@ export function resolveKanbanThemeRole(
 ): KanbanResolvedThemeRole {
   const requestedKnown = typeof requestedRole === 'string' && THEME_ROLE_SET.has(requestedRole);
   const role = requestedKnown ? (requestedRole as KanbanThemeRole) : fallbackRole;
-  const token = theme.roles[role];
+  const requestedToken = theme.roles[role];
+  const token = requestedToken ?? theme.roles['card.normal'];
   const cues = Object.freeze(token.cues.map((cue) => Object.freeze({ ...cue }))) as readonly [
     KanbanNonColorCue,
     ...KanbanNonColorCue[],
@@ -373,7 +379,7 @@ export function resolveKanbanThemeRole(
     readonly style: ThemeRole;
     readonly fallback: KanbanResolvedThemeRole['fallback'];
   }[] = [
-    { style: token.style, fallback: requestedKnown ? 'none' : 'family' },
+    { style: token.style, fallback: requestedKnown && requestedToken !== undefined ? 'none' : 'family' },
     { style: token.mappedFallback, fallback: 'mapped-core' },
     { style: token.terminalFallback, fallback: 'family' },
     { style: EMERGENCY_STYLE, fallback: 'emergency' },

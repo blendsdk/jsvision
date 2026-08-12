@@ -6,6 +6,7 @@ import type {
   KanbanRequest,
   KanbanRequestResult,
   KanbanStructurePolicy,
+  KanbanTheme,
 } from '@jsvision/kanban';
 
 import type {
@@ -25,38 +26,47 @@ export interface LocalGitHubProjectBoard {
   readonly cards: () => readonly GitHubProjectCard[];
   /** Current user-facing interaction feedback. */
   readonly activity: () => string;
+  /** Replaces visible application feedback without changing board data. */
+  readonly announce: (message: string) => void;
   /** Releases the operation subscription owned by this board instance. */
   dispose(): void;
 }
 
 /** Maps GitHub's compact status palette to semantic roles that adapt to every JSVision theme. */
-function roleForStatus(
-  color: GitHubProjectStatusColor,
-): 'card.normal' | 'card.read-only' | 'wip.warning' | 'wip.error' {
-  if (color === 'RED' || color === 'PINK') return 'wip.error';
-  if (color === 'YELLOW' || color === 'ORANGE') return 'wip.warning';
-  if (color === 'PURPLE' || color === 'GRAY') return 'card.read-only';
-  return 'card.normal';
+function roleForStatus(color: GitHubProjectStatusColor): `card.accent-${1 | 2 | 3 | 4}` {
+  if (color === 'BLUE' || color === 'GREEN') return 'card.accent-1';
+  if (color === 'YELLOW' || color === 'ORANGE') return 'card.accent-2';
+  if (color === 'RED' || color === 'PINK') return 'card.accent-3';
+  return 'card.accent-4';
 }
 
 /** Rich but bounded GitHub card presentation shared by every loaded project. */
 const GITHUB_CARD_ADAPTER = createStandardKanbanCardAdapter<string, GitHubProjectCardData>({
   fields: {
-    labels: { label: 'Labels', priority: 1 },
-    type: { label: 'Type', priority: 2 },
+    assignees: { label: 'People', priority: 1 },
+    labels: { label: 'Labels', priority: 2 },
+    type: { label: 'Type', priority: 3 },
   },
   summaries: [
     { fieldId: 'repository', label: 'Repo', priority: 1 },
     { fieldId: 'reference', label: 'Item', priority: 2 },
   ],
   styleOf: (card, state) => {
-    if (state.focused && state.selected) {
-      return { revision: 'focused-selected', surfaceRole: 'card.focused-selected', markerRole: 'card.selected' };
-    }
-    if (state.focused) return { revision: 'focused', surfaceRole: 'card.focused', markerRole: 'card.focused' };
-    if (state.selected) return { revision: 'selected', surfaceRole: 'card.selected', markerRole: 'card.selected' };
     const role = roleForStatus(card.custom?.statusColor ?? 'GRAY');
-    return { revision: `github-${card.custom?.statusColor ?? 'GRAY'}`, surfaceRole: role, borderRole: role };
+    const stateRole =
+      state.focused && state.selected
+        ? 'card.focused-selected'
+        : state.focused
+          ? 'card.focused'
+          : state.selected
+            ? 'card.selected'
+            : role;
+    return {
+      revision: `github-${card.custom?.statusColor ?? 'GRAY'}-${stateRole}`,
+      surfaceRole: role,
+      borderRole: stateRole,
+      markerRole: stateRole,
+    };
   },
 });
 
@@ -117,7 +127,10 @@ function describeIntent(intent: KanbanInteractionIntent): string {
  * @param snapshot Authoritative GitHub snapshot to copy into local playground state.
  * @returns Board, observable local cards and feedback, plus explicit cleanup.
  */
-export function createLocalGitHubProjectBoard(snapshot: GitHubProjectSnapshot): LocalGitHubProjectBoard {
+export function createLocalGitHubProjectBoard(
+  snapshot: GitHubProjectSnapshot,
+  theme?: () => KanbanTheme,
+): LocalGitHubProjectBoard {
   const cards = signal(Object.freeze([...snapshot.cards]));
   const activity = signal('Drag a card or use Ctrl+Shift+Arrow · changes stay local');
   const columns = Object.freeze(
@@ -148,14 +161,16 @@ export function createLocalGitHubProjectBoard(snapshot: GitHubProjectSnapshot): 
     source,
     query: () => BASE_QUERY,
     card: GITHUB_CARD_ADAPTER,
+    cardPresentation: () => ({ selection: { fieldIds: ['labels', 'assignees', 'type'] } }),
     structure: () => structure,
     dispatcher,
     operationEligibility: () => Object.freeze({ kind: 'allowed' }),
+    ...(theme === undefined ? {} : { theme }),
     presentation: () => ({
       revision: 'github-rich-v1',
-      cardRows: 9,
+      cardRows: 5,
       cardGap: 1,
-      metadataFields: 3,
+      metadataFields: 4,
       labelRows: 1,
       summarySections: 1,
       checklistMode: 'hidden',
@@ -173,5 +188,5 @@ export function createLocalGitHubProjectBoard(snapshot: GitHubProjectSnapshot): 
     disposed = true;
     unsubscribe();
   };
-  return { board, cards, activity, dispose };
+  return { board, cards, activity, announce: activity.set, dispose };
 }

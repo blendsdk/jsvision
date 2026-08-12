@@ -3,6 +3,7 @@ import type { Color } from '@jsvision/core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KANBAN_THEME_ROLES, createKanbanTheme, resolveKanbanTheme, resolveKanbanThemeRole } from '../src/index.js';
+import type { KanbanTheme } from '../src/index.js';
 
 const EXPECTED_ROLES = [
   'board.surface',
@@ -15,6 +16,10 @@ const EXPECTED_ROLES = [
   'swimlane.header.focused',
   'swimlane.separator',
   'card.normal',
+  'card.accent-1',
+  'card.accent-2',
+  'card.accent-3',
+  'card.accent-4',
   'card.focused',
   'card.selected',
   'card.focused-selected',
@@ -132,4 +137,41 @@ describe('Kanban semantic theme contract', () => {
     expect(resolved.style).not.toHaveProperty('application.secret-role');
     expect(resolved.cues.length).toBeGreaterThan(0);
   });
+});
+it('supplies four optional card accents with legacy card-normal fallback', () => {
+  const theme = createKanbanTheme(classicTheme, { 'card.accent-1': { bg: '#005f87', fg: '#ffffff' } });
+  expect(KANBAN_THEME_ROLES).toEqual(expect.arrayContaining(['card.accent-1', 'card.accent-4']));
+  expect(theme.roles['card.accent-1']?.style.bg).toBe('#005f87');
+  expect(theme.roles['card.accent-2']?.mappedFallback).toEqual(theme.roles['card.normal'].style);
+
+  const { 'card.accent-2': omitted, ...legacyRoles } = theme.roles;
+  expect(omitted).toBeDefined();
+  const legacy: KanbanTheme = { ...theme, roles: legacyRoles };
+  const resolved = resolveKanbanThemeRole(legacy, 'card.accent-2', 'card.normal', { colorDepth: 'truecolor' });
+  expect(resolved.role).toBe('card.accent-2');
+  expect(resolved.style).toEqual(theme.roles['card.normal'].style);
+});
+
+it.each(['truecolor', '256', '16', 'mono'] as const)(
+  'keeps card accent identity and redundant cues at %s depth',
+  (colorDepth) => {
+    const theme = createKanbanTheme(classicTheme, {
+      'card.accent-3': { bg: '#af0000', fg: '#ffffff' },
+    });
+    const resolved = resolveKanbanThemeRole(theme, 'card.accent-3', 'card.normal', { colorDepth });
+    expect(resolved.role).toBe('card.accent-3');
+    expect(resolved.cues.length).toBeGreaterThan(0);
+    if (colorDepth === 'mono') expect(resolved.contrastRatio).toBeUndefined();
+    else expect(resolved.contrastRatio).toBeGreaterThanOrEqual(4.5);
+  },
+);
+
+it('keeps accent identity with mapped styling when NO_COLOR is active', () => {
+  const theme = createKanbanTheme(classicTheme);
+  const resolved = resolveKanbanThemeRole(theme, 'card.accent-4', 'card.normal', {
+    colorDepth: 'truecolor',
+    noColor: true,
+  });
+  expect(resolved).toMatchObject({ role: 'card.accent-4', fallback: 'mapped-core' });
+  expect(resolved.cues.length).toBeGreaterThan(0);
 });

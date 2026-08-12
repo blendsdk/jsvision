@@ -3,6 +3,7 @@ import type { ThemeRole, WidthMode } from '@jsvision/core';
 import type { DrawContext } from '@jsvision/ui';
 
 import type { KanbanTheme, KanbanThemeRole } from '../card/theme.js';
+import { resolveKanbanThemeRole } from '../card/theme-resolver.js';
 import {
   KANBAN_CARD_FRAME_COLUMNS,
   KANBAN_CARD_FRAME_INSET,
@@ -19,8 +20,11 @@ import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanOverlayProjection } from './overlay-projector.js';
 
 /** Returns the already-resolved terminal style for one allowlisted semantic role. */
-function style(theme: KanbanTheme, role: KanbanThemeRole) {
-  return theme.roles[role].style;
+function style(ctx: DrawContext, theme: KanbanTheme, role: KanbanThemeRole) {
+  return resolveKanbanThemeRole(theme, role, 'card.normal', {
+    colorDepth: ctx.caps.colorDepth,
+    noColor: ctx.caps.colorDepth === 'mono',
+  }).style;
 }
 
 /** Crops safe text by terminal cells without emitting a partial wide glyph. */
@@ -174,7 +178,7 @@ function drawWorkflowChrome(ctx: DrawContext, projection: KanbanViewportProjecti
   const topLeftJunction = boxDrawing ? '┌' : '+';
   const topMiddleJunction = boxDrawing ? '┬' : '+';
   const topRightJunction = boxDrawing ? '┐' : '+';
-  const separatorStyle = style(theme, 'column.separator');
+  const separatorStyle = style(ctx, theme, 'column.separator');
   const firstBoardColumnId = projection.scene?.columns[0]?.columnId;
   const lastBoardColumnId = projection.scene?.columns.at(-1)?.columnId;
 
@@ -262,7 +266,7 @@ function drawOverlayFrame(
   const horizontal = variant === 'dashed' ? (unicode ? '┄' : '-') : unicode ? '━' : '=';
   const vertical = variant === 'dashed' ? (unicode ? '┆' : ':') : unicode ? '┃' : '!';
   const corner = unicode ? (variant === 'dashed' ? '·' : '◆') : '+';
-  const token = style(theme, role);
+  const token = style(ctx, theme, role);
   ctx.fillRect(rect.x, rect.y, rect.width, rect.height, ' ', token);
   ctx.fillRect(rect.x, rect.y, rect.width, 1, horizontal, token);
   if (rect.height > 1) ctx.fillRect(rect.x, rect.y + rect.height - 1, rect.width, 1, horizontal, token);
@@ -297,7 +301,7 @@ function drawOverlays(
         overlay.structure.marker.width,
         overlay.structure.marker.height,
         ctx.caps.glyphs.boxDrawing ? '◆' : '>',
-        style(theme, 'drop-target.valid'),
+        style(ctx, theme, 'drop-target.valid'),
       );
     }
     drawOverlayFrame(ctx, overlay.structure.ghost, 'card.ghost', theme, 'heavy');
@@ -306,14 +310,14 @@ function drawOverlays(
         overlay.structure.ghost.x + 1,
         overlay.structure.ghost.y,
         cropCellText(overlay.structure.id, 0, overlay.structure.ghost.width - 2, ctx.caps.unicode.widthMode),
-        style(theme, 'card.ghost'),
+        style(ctx, theme, 'card.ghost'),
       );
     }
   }
   for (const pending of overlay.pending) {
     const marker = ctx.caps.glyphs.boxDrawing ? pending.unicodeMarker : pending.asciiMarker;
     const key = pending.state === 'accepted' ? 'kanban.operation.accepted' : 'kanban.operation.pending';
-    const token = style(theme, 'operation.pending');
+    const token = style(ctx, theme, 'operation.pending');
     ctx.fillRect(pending.rect.x, pending.rect.y, pending.rect.width, pending.rect.height, ' ', token);
     ctx.text(
       pending.rect.x,
@@ -335,7 +339,7 @@ function drawOverlays(
           ? 'drop-target.warning'
           : 'drop-target.invalid';
     const marker = ctx.caps.glyphs.boxDrawing ? overlay.gap.unicodeMarker : overlay.gap.asciiMarker;
-    const token = style(theme, role);
+    const token = style(ctx, theme, role);
     ctx.fillRect(overlay.gap.rect.x, overlay.gap.rect.y, overlay.gap.rect.width, overlay.gap.rect.height, ' ', token);
     ctx.text(
       overlay.gap.rect.x,
@@ -359,12 +363,12 @@ function drawOverlays(
       overlay.ghost.rect.x + 1,
       overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),
       cropCellText(primaryLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
-      style(theme, 'card.ghost'),
+      style(ctx, theme, 'card.ghost'),
     );
   }
   for (const feedback of overlay.feedback) {
     const marker = ctx.caps.glyphs.boxDrawing ? feedback.unicodeMarker : feedback.asciiMarker;
-    const token = style(theme, 'operation.rejected');
+    const token = style(ctx, theme, 'operation.rejected');
     ctx.fillRect(feedback.rect.x, feedback.rect.y, feedback.rect.width, feedback.rect.height, ' ', token);
     ctx.text(
       feedback.rect.x,
@@ -384,7 +388,7 @@ export function drawKanbanViewport(
   theme: KanbanTheme,
   translate: (key: string, params?: Readonly<Record<string, string | number>>) => string = (key) => key,
 ): void {
-  ctx.fill(' ', style(theme, 'board.surface'));
+  ctx.fill(' ', style(ctx, theme, 'board.surface'));
   for (const column of projection.columns) {
     ctx.fillRect(
       column.rect.x,
@@ -392,7 +396,7 @@ export function drawKanbanViewport(
       column.rect.width,
       column.rect.height,
       ' ',
-      style(theme, 'column.surface'),
+      style(ctx, theme, 'column.surface'),
     );
     if (column.rect.height > 0) {
       ctx.fillRect(
@@ -401,7 +405,7 @@ export function drawKanbanViewport(
         column.rect.width,
         KANBAN_WORKFLOW_HEADER_SEPARATOR_ROW,
         ' ',
-        style(theme, 'column.header'),
+        style(ctx, theme, 'column.header'),
       );
       const count = column.count?.quality === 'unknown' || column.count === undefined ? '' : ` ${column.count.value}`;
       const label = `${column.label}${count}`;
@@ -415,7 +419,7 @@ export function drawKanbanViewport(
         column.rect.x + placement.leftInset,
         KANBAN_WORKFLOW_HEADER_LABEL_ROW,
         cropCellText(label, placement.leadingCells, placement.maximumCells, ctx.caps.unicode.widthMode),
-        style(theme, 'column.header'),
+        style(ctx, theme, 'column.header'),
       );
     }
   }
@@ -426,7 +430,7 @@ export function drawKanbanViewport(
         : chrome.variant === 'hybrid'
           ? 'swimlane.header'
           : 'swimlane.surface';
-    ctx.fillRect(chrome.x, chrome.y, chrome.width, chrome.height, ' ', style(theme, surfaceRole));
+    ctx.fillRect(chrome.x, chrome.y, chrome.width, chrome.height, ' ', style(ctx, theme, surfaceRole));
     const firstBoardColumn = projection.columns.find(
       ({ columnId }) => columnId === projection.scene?.columns[0]?.columnId,
     );
@@ -436,15 +440,15 @@ export function drawKanbanViewport(
       chrome.x + labelInset,
       chrome.y,
       cropCellText(chrome.label, 0, Math.max(0, chrome.width - labelInset), ctx.caps.unicode.widthMode),
-      style(theme, chrome.sticky ? 'swimlane.header.focused' : 'swimlane.header'),
+      style(ctx, theme, chrome.sticky ? 'swimlane.header.focused' : 'swimlane.header'),
     );
   }
   drawFocusedCardShadows(ctx, projection);
   for (const card of projection.cards) {
     const descriptor = card.descriptor;
     const focused = descriptor.marker.cues.includes('focused');
-    const surfaceStyle = style(theme, descriptor.surfaceRole);
-    const rawBorderStyle = style(theme, descriptor.borderRole);
+    const surfaceStyle = style(ctx, theme, descriptor.surfaceRole);
+    const rawBorderStyle = style(ctx, theme, descriptor.borderRole);
     const borderStyle = cardContentStyle(rawBorderStyle, surfaceStyle);
     ctx.fillRect(card.rect.x, card.rect.y, card.rect.width, card.rect.height, ' ', surfaceStyle);
     drawCardFrame(ctx, card, cardFrameGlyphs(focused, ctx.caps.glyphs.boxDrawing), borderStyle);
@@ -461,7 +465,7 @@ export function drawKanbanViewport(
             card.rect.x + x,
             card.rect.y + row,
             text,
-            cardContentStyle(style(theme, span.role), surfaceStyle, focused && span.role === 'content.title'),
+            cardContentStyle(style(ctx, theme, span.role), surfaceStyle, focused && span.role === 'content.title'),
           );
         }
       }
@@ -473,7 +477,7 @@ export function drawKanbanViewport(
         card.rect.x + markerColumn,
         card.rect.y + markerRow,
         descriptor.marker.glyph,
-        cardContentStyle(style(theme, descriptor.marker.role), surfaceStyle),
+        cardContentStyle(style(ctx, theme, descriptor.marker.role), surfaceStyle),
       );
     }
   }
@@ -517,7 +521,7 @@ export function drawKanbanViewport(
       x + leftInset,
       y,
       cropCellText(projectedState.label, leadingCells, maximumWidth, ctx.caps.unicode.widthMode),
-      style(theme, role),
+      style(ctx, theme, role),
     );
   }
   drawWorkflowChrome(ctx, projection, theme);

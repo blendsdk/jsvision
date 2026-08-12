@@ -312,7 +312,7 @@ const KANBAN_STRUCTURE_PRESENTATION_LIMITS: KanbanStructurePresentationLimits
 Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
 
 ```ts
-const KANBAN_THEME_ROLES: readonly ["board.surface", "column.surface", "column.header", "column.header.focused", "column.separator", "swimlane.surface", "swimlane.header", "swimlane.header.focused", "swimlane.separator", "card.normal", "card.focused", "card.selected", "card.focused-selected", "card.read-only", "card.grabbed", "card.source-placeholder", "card.ghost", "drop-target.valid", "drop-target.warning", "drop-target.invalid", "operation.pending", "operation.rejected", "wip.warning", "wip.error", "dod.indicator", "state.loading", "state.refreshing", "state.partial", "state.empty", "state.error", "state.retry", "content.title", "content.status", "content.metadata", "content.label", "content.summary", "checklist.complete", "checklist.incomplete", "checklist.progress"]
+const KANBAN_THEME_ROLES: readonly ["board.surface", "column.surface", "column.header", "column.header.focused", "column.separator", "swimlane.surface", "swimlane.header", "swimlane.header.focused", "swimlane.separator", "card.normal", "card.accent-1", "card.accent-2", "card.accent-3", "card.accent-4", "card.focused", "card.selected", "card.focused-selected", "card.read-only", "card.grabbed", "card.source-placeholder", "card.ghost", "drop-target.valid", "drop-target.warning", "drop-target.invalid", "operation.pending", "operation.rejected", "wip.warning", "wip.error", "dod.indicator", "state.loading", "state.refreshing", "state.partial", "state.empty", "state.error", "state.retry", "content.title", "content.status", "content.metadata", "content.label", "content.summary", "checklist.complete", "checklist.incomplete", "checklist.progress"]
 ```
 
 ## KANBAN_TIMING_DEFAULTS
@@ -505,6 +505,14 @@ Presentation state for one application extension action.
 
 ```ts
 type KanbanCapabilityState = 'allowed' | 'disabled' | 'hidden'
+```
+
+## KanbanCardAccentRole
+
+Optional additive card-accent roles introduced without invalidating existing complete theme literals.
+
+```ts
+type KanbanCardAccentRole = Extract<KanbanThemeRole, `card.accent-${number}`>
 ```
 
 ## KanbanCardAction
@@ -4810,7 +4818,10 @@ Versioned complete package-local semantic palette consumed by card descriptors.
 ```ts
 interface KanbanTheme {
   contractVersion: 1;   // Exact contract version understood by this package release.
-  roles: Readonly<Record<KanbanThemeRole, KanbanThemeToken>>;   // Complete token map for every allowlisted semantic role.
+  roles: Readonly<
+    Record<Exclude<KanbanThemeRole, KanbanCardAccentRole>, KanbanThemeToken> &
+      Partial<Record<KanbanCardAccentRole, KanbanThemeToken>>
+  >;   // Complete token map for every allowlisted semantic role.
 }
 ```
 
