@@ -229,6 +229,10 @@ decision changed.
 **Ruling provenance:** AI — delegated by `--auto-design`; technical specification and testing-instrumentation
 corrections only, with no new application behavior or widened modification scope.
 
+**Required re-review:** PASS. The single independent remediation re-review confirmed RV-001, RV-002,
+RV-003/PE-001, and PE-002 closed, found no new Critical or Major issue, and passed all four focused
+viewport-scale tests. No third review was run.
+
 ## Phase 2: Stabilize variable-height projection
 
 ### Step 2.1: Sparse geometry correction
