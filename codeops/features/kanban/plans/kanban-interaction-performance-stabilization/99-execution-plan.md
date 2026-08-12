@@ -4,7 +4,7 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 21:05 CEST
+> **Last Updated**: 2026-08-12 21:48 CEST
 > **Progress**: 44/46 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 
@@ -512,6 +512,22 @@ typechecks, Kanban build, plugin update/check, dependency/documentation checks, 
       resize cancellation/fresh drag, maximize/restore, and every supplied theme.
 - [ ] 6.8 Present the corrected app to the user for the mandatory interaction acceptance gate; resume the
       regular roadmap only after explicit approval.
+
+**Manual acceptance remediation:** The first 248×54 native-terminal attempt failed because cards did not
+activate or begin dragging. Input diagnostics proved a valid SGR primary-down report reached the host at the
+clicked coordinate; an automatic focus-gained report had initially hidden that evidence, so diagnostics now
+ignore focus-only housekeeping chunks. Exact 248×54 mounted coverage proved painted cards and hit targets align.
+The remaining automated-oracle defect was that it injected `move` before `drag`, unlike a real button-event
+terminal. The pointer router now adopts a first held-button `drag` report even when coalescing has moved it beyond
+the pressed card, and immediately applies that report to the controller. The showcase oracle now exercises
+terminal-realistic down→drag→drag→up input. The native-terminal matrix and user acceptance remain open pending
+retest of this remediation.
+
+**Remediation quality review:** PASS at 2026-08-12 21:49 CEST with zero Critical or Major findings. The
+independent reviewer confirmed source identity, scene revision, generation-bound capture, current-geometry drop
+resolution, failure cancellation, and click completion remain guarded. Final automated evidence: 792 Core tests,
+771 Kanban tests, 441 examples tests, 26 Kanban end-to-end tests, all focused typechecks, plugin regeneration and
+integrity checks, and `yarn verify:local` passed.
 
 ## Verification summary
 

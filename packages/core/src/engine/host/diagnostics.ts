@@ -152,6 +152,16 @@ function toHex(bytes: Uint8Array): string {
 }
 
 /**
+ * Returns whether a chunk contains only the automatic terminal focus-gained or focus-lost report.
+ *
+ * Focus reporting is enabled before diagnostics attach, so many terminals immediately send one of
+ * these reports. It is host housekeeping rather than evidence that keyboard or pointer input works.
+ */
+export function isTerminalFocusOnlyChunk(bytes: Uint8Array): boolean {
+  return bytes.length === 3 && bytes[0] === 0x1b && bytes[1] === 0x5b && (bytes[2] === 0x49 || bytes[2] === 0x4f);
+}
+
+/**
  * Start the input diagnostics if {@link INPUT_DIAG_ENV} is set, writing the
  * opening snapshot to its file immediately and returning a handle that records
  * the first input arrival. Returns `null` when the flag is off, so callers gate
@@ -194,9 +204,10 @@ export function createInputDiagnostics(params: {
   return {
     noteInput(chunk: Uint8Array | string): void {
       if (logged) return;
-      logged = true;
       try {
         const bytes = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
+        if (isTerminalFocusOnlyChunk(bytes)) return;
+        logged = true;
         appendFileSync(path, `\ninput received: ${bytes.length} byte(s): ${toHex(bytes)}\n`);
       } catch {
         // Best-effort: never let a diagnostic write disrupt the input pump.

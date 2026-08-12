@@ -318,11 +318,11 @@ export class KanbanPointerRouter {
     }
     const pending = this.#pending;
     if (pending === undefined) return false;
+    const heldButtonReport = input.kind === 'drag';
     if (
       input.button !== 0 ||
-      input.target === undefined ||
       !revisionEqual(pending.sceneRevision, input.sceneRevision) ||
-      !targetEqual(pending.target, input.target) ||
+      (!heldButtonReport && (input.target === undefined || !targetEqual(pending.target, input.target))) ||
       !validPoint(pending.originPoint) ||
       !validPoint(input.point)
     ) {
@@ -423,6 +423,18 @@ export class KanbanPointerRouter {
       if (this.#activeDrag?.generation === pending.generation) this.#activeDrag = undefined;
       capture.release();
       return false;
+    }
+    // A real terminal's first held-button motion is already a `drag` report and may have crossed
+    // into another card or gap. Apply that report to the newly adopted controller immediately;
+    // otherwise its semantic target would not be retained until a second motion report arrives.
+    if (input.kind === 'drag') {
+      const updated = structural
+        ? (this.#sink.updateStructureDrag?.(pending.generation, input.point, input.target) ?? true)
+        : (this.#sink.updateCardDrag?.(pending.generation, input.point, input.target) ?? true);
+      if (!updated) {
+        this.#cancelActive('explicit');
+        return false;
+      }
     }
     return true;
   }

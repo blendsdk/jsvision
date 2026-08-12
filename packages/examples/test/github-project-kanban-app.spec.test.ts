@@ -208,9 +208,9 @@ test('should keep the deterministic 84-card showcase responsive through resize a
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...cancelledDown });
   showcase.app.loop.dispatch({
     type: 'mouse',
-    kind: 'move',
+    kind: 'drag',
     button: 0,
-    x: cancelledDown.x + 3,
+    x: cancelledDown.x + 20,
     y: cancelledDown.y,
   });
   expect(inspectKanbanDragFrame(board.viewport).ghost).toBeDefined();
@@ -232,7 +232,8 @@ test('should keep the deterministic 84-card showcase responsive through resize a
   }
   const down = { x: origin.x + source.x + 2, y: origin.y + source.y + 1 };
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
-  showcase.app.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: down.x + 3, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: down.x + 3, y: down.y });
+  expect(inspectKanbanDragFrame(board.viewport).ghost).toBeDefined();
   showcase.app.loop.dispatch({
     type: 'mouse',
     kind: 'drag',
@@ -240,6 +241,7 @@ test('should keep the deterministic 84-card showcase responsive through resize a
     x: origin.x + destination.x + 2,
     y: origin.y + destination.y + Math.max(1, destination.height - 1),
   });
+  expect(inspectKanbanDragFrame(board.viewport).gap).toBeDefined();
   showcase.app.loop.dispatch({
     type: 'mouse',
     kind: 'up',
@@ -296,4 +298,45 @@ test('should paint the scaled showcase through monochrome capability fallbacks',
   expect(board.inspection().visibleCards[0]?.descriptor.surfaceRole).toMatch(/^card\.accent-/u);
   expect(titleCell?.bg).toBe(classicTheme.listNormal.bg);
   expect(titleCell?.bg).not.toBe(classicTheme.progressFill.fg);
+});
+
+test('should keep painted cards and pointer targets aligned in a 248 by 54 terminal', async () => {
+  const scaled = scaledProjectSnapshot();
+  const columns = [
+    ...scaled.columns,
+    { columnId: 'review', label: 'Review', revision: 1, color: 'BLUE' as const },
+    { columnId: 'released', label: 'Released', revision: 1, color: 'GREEN' as const },
+  ];
+  const snapshot = {
+    ...scaled,
+    columns,
+    cards: scaled.cards.map((card, index) => ({ ...card, columnId: columns[index % columns.length]!.columnId })),
+  };
+  const showcase = createGitHubProjectKanbanApp(CAPS, {
+    viewport: { width: 248, height: 54 },
+    loader: () => Promise.resolve(snapshot),
+  });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  await showcase.load(SOURCE_URL);
+  await settleBoard();
+  showcase.app.loop.renderRoot.flush();
+  const board = showcase.activeBoard();
+  const origin = board === undefined ? null : showcase.app.loop.renderRoot.originOf(board.viewport);
+  if (board === undefined || origin === null) throw new Error('Expected a mounted wide board.');
+  const clicked = board
+    .inspection()
+    .actionTargets.find(
+      ({ kind, x, y, width, height }) =>
+        kind === 'card' &&
+        149 >= origin.x + x &&
+        149 < origin.x + x + width &&
+        9 >= origin.y + y &&
+        9 < origin.y + y + height,
+    );
+  if (clicked?.cardKey === undefined) throw new Error('Expected a card beneath terminal cell 150,10.');
+
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 150, y: 10 });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, x: 150, y: 10 });
+
+  expect(board.inspection().interaction.focused).toMatchObject({ kind: 'card', cardKey: clicked.cardKey });
 });

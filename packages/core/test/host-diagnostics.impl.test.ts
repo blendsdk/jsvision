@@ -9,7 +9,11 @@
  */
 import { test, expect } from 'vitest';
 
-import { resolveInputDiagPath, collectInputDiagnostics } from '../src/engine/host/diagnostics.js';
+import {
+  collectInputDiagnostics,
+  isTerminalFocusOnlyChunk,
+  resolveInputDiagPath,
+} from '../src/engine/host/diagnostics.js';
 import type { InputDiagSnapshot } from '../src/engine/host/diagnostics.js';
 import { resolveCapabilities } from '../src/engine/capability/index.js';
 
@@ -89,4 +93,13 @@ test('the report surfaces the known terminal keys when present', () => {
   const report = collectInputDiagnostics(snapshot({ env: { TERM: 'xterm-256color', TERM_PROGRAM: 'vscode' } }));
   expect(report).toContain('TERM: xterm-256color');
   expect(report).toContain('TERM_PROGRAM: vscode');
+});
+
+test('input liveness ignores automatic focus-only reports but retains meaningful input', () => {
+  const bytes = (...values: number[]): Uint8Array => Uint8Array.from(values);
+
+  expect(isTerminalFocusOnlyChunk(bytes(0x1b, 0x5b, 0x49))).toBe(true);
+  expect(isTerminalFocusOnlyChunk(bytes(0x1b, 0x5b, 0x4f))).toBe(true);
+  expect(isTerminalFocusOnlyChunk(bytes(0x1b, 0x5b, 0x49, 0x1b, 0x5b, 0x3c))).toBe(false);
+  expect(isTerminalFocusOnlyChunk(new TextEncoder().encode('a'))).toBe(false);
 });

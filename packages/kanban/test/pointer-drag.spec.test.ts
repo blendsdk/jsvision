@@ -206,6 +206,43 @@ describe('card drag press and threshold contract', () => {
     expect(sink.completeCard).not.toHaveBeenCalled();
   });
 
+  it('starts from a real terminal drag report even when motion skips beyond the pressed card', () => {
+    const sink = {
+      ...gestureSink(selection(selectionEntry(1))),
+      updateCardDrag: vi.fn(() => true),
+    };
+    const capture = captureHarness(14);
+    const router = new KanbanPointerRouter(sink);
+    const source = cardTarget(1);
+
+    router.route({
+      kind: 'down',
+      button: 0,
+      ctrl: false,
+      point: { x: 5, y: 5 },
+      target: source,
+      sceneRevision: 'scene-r1',
+      acquireCapture: capture.acquire,
+    });
+    expect(
+      router.route({
+        kind: 'drag',
+        button: 0,
+        ctrl: false,
+        point: { x: 25, y: 5 },
+        target: cardTarget(2),
+        sceneRevision: 'scene-r1',
+        acquireCapture: capture.acquire,
+      }),
+    ).toBe(true);
+
+    expect(sink.beginCardDrag).toHaveBeenCalledOnce();
+    expect(sink.beginCardDrag).toHaveBeenCalledWith(
+      expect.objectContaining({ originPoint: { x: 5, y: 5 }, point: { x: 25, y: 5 } }),
+    );
+    expect(sink.updateCardDrag).toHaveBeenCalledWith(expect.any(Number), { x: 25, y: 5 }, cardTarget(2));
+  });
+
   it('starts immediately at threshold zero and fails closed without capture or card evidence', () => {
     const capture = captureHarness(13);
     const target = cardTarget(1);
