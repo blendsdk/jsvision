@@ -138,6 +138,15 @@ function expectGeometryIntegrity(
   }
 }
 
+/** Captures card rectangles by identity without retaining live projection objects. */
+function cardGeometry(inspection: KanbanViewportInspection): ReadonlyMap<string | number, string> {
+  return new Map(
+    inspection.regions
+      .filter((region) => region.kind === 'card' && region.cardKey !== undefined)
+      .map((region) => [region.cardKey ?? '', `${region.x},${region.y},${region.width},${region.height}`] as const),
+  );
+}
+
 describe('mounted mixed-height viewport sequence', () => {
   // Click, two-axis scrolling, shrink/grow, and restore must remain one continuous usable board session.
   it('should remain operable through click, wheel, horizontal scroll, resize, and restore', () => {
@@ -208,5 +217,28 @@ describe('mounted mixed-height viewport sequence', () => {
     inspect();
     application.loop.resize({ width: 80, height: 24 });
     inspect();
+  });
+
+  // Focusing one card changes its visual state, not the layout or fragments of unrelated residents below it.
+  it('should keep unrelated resident geometry stable and focus damage local after a click', () => {
+    const { application, board } = mountedFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const before = cardGeometry(board.inspection());
+    const point = absoluteCardPoint(application, board, fixture.named.short);
+
+    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...point });
+    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...point });
+
+    const afterInspection = board.inspection();
+    const after = cardGeometry(afterInspection);
+    expect(afterInspection.interaction.focused).toMatchObject({ kind: 'card', cardKey: fixture.named.short });
+    for (const [cardKey, geometry] of before) {
+      if (cardKey === fixture.named.short) continue;
+      expect(after.get(cardKey)).toBe(geometry);
+    }
+    expect(afterInspection.damage.some(({ kind }) => kind === 'whole-viewport')).toBe(false);
+    expect(
+      afterInspection.damage.every(({ cardKey }) => cardKey === undefined || cardKey === fixture.named.short),
+    ).toBe(true);
   });
 });

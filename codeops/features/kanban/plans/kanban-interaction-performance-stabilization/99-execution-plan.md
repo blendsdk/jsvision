@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:45 CEST
-> **Progress**: 3/46 tasks (7%)
+> **Last Updated**: 2026-08-12 16:47 CEST
+> **Progress**: 4/46 tasks (9%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -170,8 +170,8 @@ checkpoint `0bd32c9d2`; `git status --short` was empty. The checkpoint was pushe
 - [x] 1.1.3 Add geometry assertions for monotonic card order, configured gaps, non-overlap, finite clipped
       rectangles, one card per logical identity, and exact paint/hit-region parity. ✅ (completed:
       2026-08-12 16:45)
-- [ ] 1.1.4 Add a focus-damage specification proving unrelated resident card geometry and lower fragments
-      remain unchanged after a click.
+- [x] 1.1.4 Add a focus-damage specification proving unrelated resident card geometry and lower fragments
+      remain unchanged after a click. ✅ (completed: 2026-08-12 16:47)
 - [ ] 1.1.5 Add a mounted per-event EventLoop drag trace proving that each pointer dispatch returns only
       after one compact framed title row positioned from the exact pointer-relative grab offset, a bounded
       selected-count cue when multiple, no blank trailing row, and a gap-only target appear in both the
