@@ -76,21 +76,28 @@ export const SHOWCASE_CARD_ADAPTER = createStandardKanbanCardAdapter<string, Sho
     { fieldId: 'risks', label: 'Risks', priority: 2 },
   ],
   styleOf: (card, state) => {
-    if (state.focused && state.selected) {
-      return { revision: 'focused-selected', surfaceRole: 'card.focused-selected', markerRole: 'card.selected' };
-    }
-    if (state.focused) return { revision: 'focused', surfaceRole: 'card.focused', markerRole: 'card.focused' };
-    if (state.selected) return { revision: 'selected', surfaceRole: 'card.selected', markerRole: 'card.selected' };
-    if (card.status === 'Blocked') {
-      return { revision: 'blocked', surfaceRole: 'wip.error', borderRole: 'wip.error', markerRole: 'wip.error' };
-    }
-    if (card.status === 'In progress') {
-      return { revision: 'active', surfaceRole: 'wip.warning', borderRole: 'wip.warning', markerRole: 'wip.warning' };
-    }
-    if (card.status === 'Done') {
-      return { revision: 'done', surfaceRole: 'card.read-only', borderRole: 'card.read-only' };
-    }
-    return { revision: 'ready', surfaceRole: 'card.normal', borderRole: 'card.normal' };
+    const surfaceRole =
+      card.status === 'Blocked'
+        ? 'card.accent-3'
+        : card.status === 'In progress'
+          ? 'card.accent-2'
+          : card.status === 'Done'
+            ? 'card.accent-4'
+            : 'card.accent-1';
+    const interactionRole =
+      state.focused && state.selected
+        ? 'card.focused-selected'
+        : state.focused
+          ? 'card.focused'
+          : state.selected
+            ? 'card.selected'
+            : surfaceRole;
+    return {
+      revision: `${card.status ?? 'ready'}-${interactionRole}`,
+      surfaceRole,
+      borderRole: interactionRole,
+      markerRole: interactionRole,
+    };
   },
 });
 

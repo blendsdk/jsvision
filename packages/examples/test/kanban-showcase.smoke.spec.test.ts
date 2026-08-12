@@ -233,7 +233,7 @@ test('the swimlane story should render intact labels and accept a card in the em
   const down = { x: origin.x + source.x + 1, y: origin.y + source.y + 1 };
   const destination = { x: origin.x + backlogHeader.x + 2, y: origin.y + unassignedHeader.y + 2 };
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
-  showcase.app.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: down.x + 2, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: down.x + 2, y: down.y });
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...destination });
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...destination });
   for (let attempt = 0; attempt < 20; attempt += 1) await Promise.resolve();
@@ -283,6 +283,9 @@ test('the delivery story should apply a valid card drag without showing rejectio
   showcase.app.loop.renderRoot.flush();
 
   const board = showcase.activeBoard();
+  const initialCards = board.inspection().visibleCards;
+  expect(initialCards.find(({ cardKey }) => cardKey === 101)?.descriptor.surfaceRole).toBe('card.accent-1');
+  expect(initialCards.find(({ cardKey }) => cardKey === 102)?.descriptor.surfaceRole).toBe('card.accent-2');
   const origin = showcase.app.loop.renderRoot.originOf(board.viewport);
   const source = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 101);
   const destination = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 102);
@@ -292,7 +295,14 @@ test('the delivery story should apply a valid card drag without showing rejectio
   const down = { x: origin.x + source.x + 1, y: origin.y + source.y + 1 };
   const target = { x: origin.x + destination.x + 1, y: origin.y + destination.y + 1 };
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
-  showcase.app.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: down.x + 2, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...down });
+  showcase.app.loop.renderRoot.flush();
+  expect(board.inspection().visibleCards.find(({ cardKey }) => cardKey === 101)?.descriptor).toMatchObject({
+    surfaceRole: 'card.accent-1',
+    borderRole: 'card.focused-selected',
+  });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: down.x + 2, y: down.y });
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...target });
   showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...target });
   for (let attempt = 0; attempt < 20; attempt += 1) await Promise.resolve();
@@ -300,7 +310,33 @@ test('the delivery story should apply a valid card drag without showing rejectio
 
   const moved = board.inspection().visibleCards.find(({ cardKey }) => cardKey === 101);
   expect(moved?.address.columnId).toBe('active');
+  expect(moved?.descriptor.surfaceRole).toBe('card.accent-1');
   expect(showcase.app.loop.renderRoot.buffer().toString()).not.toContain('Move rejected');
+
+  const secondSource = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 101);
+  const secondDestination = board
+    .inspection()
+    .actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 104);
+  const secondOrigin = showcase.app.loop.renderRoot.originOf(board.viewport);
+  if (secondOrigin === null || secondSource === undefined || secondDestination === undefined) {
+    throw new Error('Expected the accepted card to remain draggable after publication reconciliation.');
+  }
+  const secondDown = { x: secondOrigin.x + secondSource.x + 1, y: secondOrigin.y + secondSource.y + 1 };
+  const secondTarget = {
+    x: secondOrigin.x + secondDestination.x + 1,
+    y: secondOrigin.y + secondDestination.y + 1,
+  };
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...secondDown });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, x: secondDown.x + 2, y: secondDown.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...secondTarget });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...secondTarget });
+  for (let attempt = 0; attempt < 20; attempt += 1) await Promise.resolve();
+  showcase.app.loop.renderRoot.flush();
+
+  expect(board.inspection().visibleCards.find(({ cardKey }) => cardKey === 101)?.address.columnId).toBe('done');
+  const revision = board.inspection().interaction.revision;
+  showcase.app.loop.dispatch({ type: 'key', key: 'left', ctrl: false, alt: false, shift: false });
+  expect(board.inspection().interaction.revision).toBeGreaterThan(revision);
 });
 
 test('the modern interaction story drives warning and blocked targets through real pointer input', async () => {

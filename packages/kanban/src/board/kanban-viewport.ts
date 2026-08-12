@@ -396,6 +396,8 @@ export class KanbanViewport<TCard> extends View {
   #anchorSourceRevision: KanbanRevision | undefined;
   #anchorSourceGeneration: number | undefined;
   #interactionStructureRevision: KanbanRevision = 'default';
+  #interactionSceneFingerprint = '';
+  #interactionSceneGeneration = 0;
   #lastDragPolicyRevision: KanbanRevision | undefined;
   #queryViewRevision: KanbanRevision | undefined;
   #anchorInputs:
@@ -1084,17 +1086,18 @@ export class KanbanViewport<TCard> extends View {
             this.bounds.height,
           ]);
     if (geometry === undefined) {
+      const targets = Object.freeze([
+        Object.freeze({
+          target: Object.freeze({ kind: 'board-state' as const }),
+          sceneIndex: 0,
+          centerColumn: Math.max(0, (this.bounds.width - 1) / 2),
+          centerRow: Math.max(0, (this.bounds.height - 1) / 2),
+          enabled: true,
+        }),
+      ]);
       return Object.freeze({
-        revision,
-        targets: Object.freeze([
-          Object.freeze({
-            target: Object.freeze({ kind: 'board-state' as const }),
-            sceneIndex: 0,
-            centerColumn: Math.max(0, (this.bounds.width - 1) / 2),
-            centerRow: Math.max(0, (this.bounds.height - 1) / 2),
-            enabled: true,
-          }),
-        ]),
+        revision: this.#boundedInteractionSceneRevision(JSON.stringify([revision, [['board-state', true]]])),
+        targets,
         viewportContentHeight: Math.max(0, this.bounds.height - this.#metrics.stickyRows),
       });
     }
@@ -1153,27 +1156,44 @@ export class KanbanViewport<TCard> extends View {
         }),
       );
     }
+    const fingerprint = JSON.stringify([
+      revision,
+      targets.map((entry) => {
+        const target = entry.target;
+        if (target.kind === 'board-state') return [target.kind, entry.enabled];
+        if (target.kind === 'column-header') return [target.kind, target.columnId, entry.enabled];
+        if (target.kind === 'swimlane-header') return [target.kind, target.swimlaneId, entry.enabled];
+        return [
+          target.kind,
+          typeof target.cardKey,
+          target.cardKey,
+          target.address.columnId,
+          target.address.swimlaneId ?? null,
+          entry.enabled,
+        ];
+      }),
+    ]);
     return Object.freeze({
-      revision: JSON.stringify([
-        revision,
-        targets.map((entry) => {
-          const target = entry.target;
-          if (target.kind === 'board-state') return [target.kind, entry.enabled];
-          if (target.kind === 'column-header') return [target.kind, target.columnId, entry.enabled];
-          if (target.kind === 'swimlane-header') return [target.kind, target.swimlaneId, entry.enabled];
-          return [
-            target.kind,
-            typeof target.cardKey,
-            target.cardKey,
-            target.address.columnId,
-            target.address.swimlaneId ?? null,
-            entry.enabled,
-          ];
-        }),
-      ]),
+      revision: this.#boundedInteractionSceneRevision(fingerprint),
       targets: Object.freeze(targets),
       viewportContentHeight: Math.max(0, this.bounds.height - geometry.contentOrigin.y),
     });
+  }
+
+  /**
+   * Converts bounded retained-scene evidence into a small equality-only public revision.
+   *
+   * Card identities may each use the full supported identifier budget. Publishing their complete
+   * concatenation as a revision can therefore exceed the revision contract even though every target
+   * is valid. The private fingerprint preserves exact change detection, while callers receive only a
+   * finite generation that is always valid at the public interaction boundary.
+   */
+  #boundedInteractionSceneRevision(fingerprint: string): number {
+    if (fingerprint === this.#interactionSceneFingerprint) return this.#interactionSceneGeneration;
+    this.#interactionSceneFingerprint = fingerprint;
+    this.#interactionSceneGeneration =
+      this.#interactionSceneGeneration >= Number.MAX_SAFE_INTEGER ? 1 : this.#interactionSceneGeneration + 1;
+    return this.#interactionSceneGeneration;
   }
 
   /** Returns current query/session revision evidence without exposing source resources. */

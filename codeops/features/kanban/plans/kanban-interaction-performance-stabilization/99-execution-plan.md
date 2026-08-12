@@ -4,7 +4,7 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 21:48 CEST
+> **Last Updated**: 2026-08-12 23:17 CEST
 > **Progress**: 44/46 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 
@@ -117,7 +117,9 @@ automated gate passes and the user accepts the native-terminal interaction revie
 - `packages/kanban/test/perf-kanban-bench.spec.test.ts`
 - `scripts/check-performance.mjs`
 - `packages/examples/github-project-kanban/**`
+- `packages/examples/kanban-window-lab/**` as the focused real-window pointer-isolation application
 - `packages/examples/test/github-project-kanban*.spec.test.ts`
+- `packages/examples/test/kanban-window-lab.spec.test.ts`
 - `packages/examples/test/perf-gate.spec.test.ts`
 - Mapped canonical skill references and generated plugin outputs reported by `yarn plugin:update`
 - This execution plan and `codeops/features/kanban/00-roadmap.md`
@@ -516,18 +518,45 @@ typechecks, Kanban build, plugin update/check, dependency/documentation checks, 
 **Manual acceptance remediation:** The first 248×54 native-terminal attempt failed because cards did not
 activate or begin dragging. Input diagnostics proved a valid SGR primary-down report reached the host at the
 clicked coordinate; an automatic focus-gained report had initially hidden that evidence, so diagnostics now
-ignore focus-only housekeeping chunks. Exact 248×54 mounted coverage proved painted cards and hit targets align.
-The remaining automated-oracle defect was that it injected `move` before `drag`, unlike a real button-event
-terminal. The pointer router now adopts a first held-button `drag` report even when coalescing has moved it beyond
-the pressed card, and immediately applies that report to the controller. The showcase oracle now exercises
-terminal-realistic down→drag→drag→up input. The native-terminal matrix and user acceptance remain open pending
-retest of this remediation.
+ignore focus-only housekeeping chunks. A live-data inspection then reproduced the real failure: the navigation
+scene concatenated every visible target identity into its public revision. Real GitHub item IDs pushed that
+revision beyond the component's 2,048-byte contract, controller setup failed closed, and the board remained
+painted but non-interactive. Navigation scenes now retain their exact bounded fingerprint privately and publish
+only a finite equality generation. The deterministic 84-card fixture uses realistic long GitHub identities and
+proves click activation at 248×54.
 
-**Remediation quality review:** PASS at 2026-08-12 21:49 CEST with zero Critical or Major findings. The
-independent reviewer confirmed source identity, scene revision, generation-bound capture, current-geometry drop
-resolution, failure cancellation, and click completion remain guarded. Final automated evidence: 792 Core tests,
-771 Kanban tests, 441 examples tests, 26 Kanban end-to-end tests, all focused typechecks, plugin regeneration and
-integrity checks, and `yarn verify:local` passed.
+The interim pointer-router widening that adopted a first coalesced drag after it had already crossed to another
+target was removed after native testing exposed a kitchen-sink freeze regression. The original target-identity
+guard remains in force; a native down→in-card drag→destination drag→up trace succeeds without re-entrant drag
+adoption. A focused `demo:kanban-window` application proves a translated desktop-managed `Window` accepts click,
+two successive drops, later keyboard input, and Alt-X, isolating the host window from GitHub loading and scale.
+Native PTY checks also completed two successive delivery-story drops plus keyboard input and Alt-X without a
+freeze. Showcase focus now preserves each card's status accent surface and layers focus/selection through its
+border, marker, bold title, and shadow cues.
+
+The broader native-terminal matrix and explicit user acceptance remain open; these partial native observations
+do not close Tasks 6.7 or 6.8.
+
+**Superseded remediation review:** The 2026-08-12 21:49 review passed the interim cross-target first-drag
+adoption, but subsequent native use exposed a terminal-freezing regression. That implementation and its
+synthetic oracle were removed; their passing review is retained here only as superseded history and is not
+closure evidence.
+
+**Current regression-remediation quality review:** The independent reviewer reported zero Critical and one
+Major finding: application tests used a held-button `move` event that native SGR input cannot emit, and the
+Window lab claimed repeated drag after only one drop. The finding was accepted under auto-design. Router and
+application oracles now use down→in-source drag→destination drag→up, and the translated Window lab performs two
+accepted drops before proving later keyboard input. The required single re-review passed with zero new Critical
+or Major findings. Final automated evidence: 770 Kanban unit tests pass in a timing-safe single-worker run,
+442 examples tests pass, 26 Kanban end-to-end tests pass with two unchanged platform skips, the isolated
+performance gate passes, both package typechecks pass, and plugin regeneration/integrity checks pass.
+
+Three stale demo processes created before the rollback were found consuming approximately one CPU core each
+after their terminals had closed. They ignored SIGTERM and were force-terminated by exact PID; no persistent
+application data existed to lose. After rebuilding the Kanban package with the rollback, later native GitHub,
+kitchen-sink, and Window-lab runs exited cleanly and left no matching process. The parallel full-suite timing
+attempts made while those processes were alive are invalid evidence; the isolated and single-worker reruns above
+are the recorded gates.
 
 ## Verification summary
 

@@ -157,11 +157,16 @@ describe('card drag press and threshold contract', () => {
     expect(sink.completeCard).toHaveBeenCalledOnce();
   });
 
-  it('starts exactly one captured drag on the first cell transition at the default threshold', () => {
-    const sink = gestureSink(selection(selectionEntry(1)));
+  it('starts and completes one native down-drag-drag-up sequence when the first drag remains on the source', () => {
+    const sink = {
+      ...gestureSink(selection(selectionEntry(1))),
+      updateCardDrag: vi.fn(() => true),
+      releaseCardDrag: vi.fn(() => true),
+    };
     const capture = captureHarness(12);
     const router = new KanbanPointerRouter(sink);
     const target = cardTarget(1);
+    const destination = cardTarget(2);
 
     router.route({
       kind: 'down',
@@ -174,7 +179,7 @@ describe('card drag press and threshold contract', () => {
     });
     expect(
       router.route({
-        kind: 'move',
+        kind: 'drag',
         button: 0,
         ctrl: false,
         point: { x: 6, y: 5 },
@@ -193,54 +198,32 @@ describe('card drag press and threshold contract', () => {
       }),
     );
     expect(router.pending()).toBeUndefined();
-    expect(
-      router.route({
-        kind: 'up',
-        button: 0,
-        ctrl: false,
-        point: { x: 6, y: 5 },
-        target,
-        sceneRevision: 'scene-r1',
-      }),
-    ).toBe(false);
-    expect(sink.completeCard).not.toHaveBeenCalled();
-  });
-
-  it('starts from a real terminal drag report even when motion skips beyond the pressed card', () => {
-    const sink = {
-      ...gestureSink(selection(selectionEntry(1))),
-      updateCardDrag: vi.fn(() => true),
-    };
-    const capture = captureHarness(14);
-    const router = new KanbanPointerRouter(sink);
-    const source = cardTarget(1);
-
-    router.route({
-      kind: 'down',
-      button: 0,
-      ctrl: false,
-      point: { x: 5, y: 5 },
-      target: source,
-      sceneRevision: 'scene-r1',
-      acquireCapture: capture.acquire,
-    });
+    const gestureGeneration = sink.beginCardDrag.mock.calls[0]?.[0].generation;
     expect(
       router.route({
         kind: 'drag',
         button: 0,
         ctrl: false,
-        point: { x: 25, y: 5 },
-        target: cardTarget(2),
+        point: { x: 12, y: 5 },
+        target: destination,
         sceneRevision: 'scene-r1',
-        acquireCapture: capture.acquire,
+        gestureGeneration,
       }),
     ).toBe(true);
-
-    expect(sink.beginCardDrag).toHaveBeenCalledOnce();
-    expect(sink.beginCardDrag).toHaveBeenCalledWith(
-      expect.objectContaining({ originPoint: { x: 5, y: 5 }, point: { x: 25, y: 5 } }),
-    );
-    expect(sink.updateCardDrag).toHaveBeenCalledWith(expect.any(Number), { x: 25, y: 5 }, cardTarget(2));
+    expect(sink.updateCardDrag).toHaveBeenCalledWith(gestureGeneration, { x: 12, y: 5 }, destination);
+    expect(
+      router.route({
+        kind: 'up',
+        button: 0,
+        ctrl: false,
+        point: { x: 12, y: 5 },
+        target: destination,
+        sceneRevision: 'scene-r1',
+        gestureGeneration,
+      }),
+    ).toBe(true);
+    expect(sink.completeCard).not.toHaveBeenCalled();
+    expect(sink.releaseCardDrag).toHaveBeenCalledWith(gestureGeneration);
   });
 
   it('starts immediately at threshold zero and fails closed without capture or card evidence', () => {
