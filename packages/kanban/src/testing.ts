@@ -61,6 +61,7 @@ export type {
 export type { KanbanCardDropMap, KanbanCardDropTarget, KanbanCardDropTargetKind } from './interaction/drag-types.js';
 export {
   observeKanbanViewportOperations,
+  setKanbanViewportProjectionPassLimitForTesting,
   readKanbanDragFrameSnapshot as inspectKanbanDragFrame,
   readKanbanViewportOperationSnapshot as inspectKanbanViewportOperations,
   readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,

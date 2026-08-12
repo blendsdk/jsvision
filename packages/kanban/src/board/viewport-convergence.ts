@@ -54,8 +54,16 @@ export function resolveKanbanProjectionConvergenceFailure(
           ),
           changedRegions: Object.freeze([Object.freeze({ ...options.bounds })]),
         });
+  const scene =
+    source.scene === undefined
+      ? undefined
+      : Object.freeze({
+          ...source.scene,
+          cells: Object.freeze([]),
+          cards: Object.freeze([]),
+        });
   const projection: KanbanViewportProjection = Object.freeze({
-    ...(source.scene === undefined ? {} : { scene: source.scene }),
+    ...(scene === undefined ? {} : { scene }),
     ...(geometry === undefined ? {} : { geometry }),
     columns: source.columns,
     cards: Object.freeze([]),

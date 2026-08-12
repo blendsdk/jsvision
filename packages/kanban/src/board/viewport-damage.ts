@@ -168,6 +168,20 @@ function sceneCardRect(geometry: KanbanSceneGeometry, cardKey: CardKey): Readonl
   return geometry.cards.find((card) => card.cardKey === cardKey);
 }
 
+/** Compares semantic scene content while ignoring its equality-only revision marker. */
+function sceneContentEqual(previous: KanbanScene, current: KanbanScene): boolean {
+  const { revision: _previousRevision, ...previousContent } = previous;
+  const { revision: _currentRevision, ...currentContent } = current;
+  return JSON.stringify(previousContent) === JSON.stringify(currentContent);
+}
+
+/** Compares authoritative geometry while ignoring revision and explicit damage evidence. */
+function geometryContentEqual(previous: KanbanSceneGeometry, current: KanbanSceneGeometry): boolean {
+  const { revision: _previousRevision, changedRegions: _previousChanged, ...previousContent } = previous;
+  const { revision: _currentRevision, changedRegions: _currentChanged, ...currentContent } = current;
+  return JSON.stringify(previousContent) === JSON.stringify(currentContent);
+}
+
 /**
  * Computes bounded semantic-scene damage and preserves card-local descriptor invalidation.
  *
@@ -239,7 +253,11 @@ export function calculateKanbanSceneDamage(options: CalculateKanbanSceneDamageOp
       if (clipped !== undefined) structural.push(clipped);
       if (structural.length > options.maximumRegions) return whole(options.bounds);
     }
-    return structural.length === 0 ? whole(options.bounds) : Object.freeze(structural);
+    if (structural.length > 0) return Object.freeze(structural);
+    return sceneContentEqual(options.previousScene, options.currentScene) &&
+      geometryContentEqual(options.previousGeometry, options.currentGeometry)
+      ? Object.freeze([])
+      : whole(options.bounds);
   }
   return Object.freeze([]);
 }

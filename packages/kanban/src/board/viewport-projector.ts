@@ -413,6 +413,7 @@ function projectDescriptors<TCard>(
   const retainedKeys: KanbanDescriptorCacheKey[] = [];
   const omitted: OmittedDescriptorDemand<TCard>[] = [];
   const formatting = options.formatting ?? defaultFormatting(options.i18n);
+  const formattingRevision = referenceRevision(options.formatting ?? options.i18n);
   const descriptorLimit = options.descriptorLimit ?? KANBAN_LIMITS.retainedDescriptors.safe;
   const firstColumnId = options.source.widths.columns[0]?.columnId;
   for (const cell of options.source.cells) {
@@ -468,6 +469,7 @@ function projectDescriptors<TCard>(
           : { presentationRevision: mandatory.presentationRevision }),
         presentationPolicyRevision: budget.revision,
         presentationSelectionFingerprint: `card:${typeof mandatory.cardKey}:${String(mandatory.cardKey)}`,
+        formattingRevision,
         width,
         rowBudget: budget.cardRows,
         density: options.density,

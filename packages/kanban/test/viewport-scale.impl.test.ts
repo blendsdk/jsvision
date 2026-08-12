@@ -62,8 +62,8 @@ describe('viewport scale implementation', () => {
 
     const passes = observation.snapshot().projectionPasses;
     expect(passes).toEqual([
-      { ordinal: 1, heightQuality: 'mixed', measuredRows: 16, estimatedRows: 44 },
-      { ordinal: 2, heightQuality: 'mixed', measuredRows: 20, estimatedRows: 40 },
+      { ordinal: 1, heightQuality: 'measured', measuredRows: 40, estimatedRows: 0 },
+      { ordinal: 2, heightQuality: 'measured', measuredRows: 40, estimatedRows: 0 },
     ]);
     observation.dispose();
     expect(inspectKanbanViewportOperations(viewport).projectionPasses).toEqual([]);
@@ -123,6 +123,19 @@ describe('viewport scale implementation', () => {
     expect(scale.heightAllocatedEntries).toBeLessThanOrEqual(limits.retainedDescriptors * 3);
     expect(scale.damageRegions).toBeLessThanOrEqual(limits.retainedDescriptors);
     expect(scale.sceneWindowCells).toBe(0);
+
+    for (let step = 0; step < 12; step += 1) {
+      viewport.scrollBy({ y: 60 });
+      render.flush();
+      for (const request of fixture.controller.pendingRanges()) fixture.controller.resolveRange(request.requestId);
+      await Promise.resolve();
+      render.flush();
+      if (viewport.metrics().visibleCardRanges.some(({ start }) => start > 0)) break;
+    }
+    await vi.waitFor(() => {
+      render.flush();
+      expect(viewport.metrics().visibleCardRanges.some(({ start }) => start > 0)).toBe(true);
+    });
     render.unmount();
     fixture.dispose();
   });

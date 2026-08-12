@@ -100,6 +100,22 @@ describe('viewport descriptor cache and damage implementation', () => {
     expect(disposed).toEqual([2, 1, 3]);
   });
 
+  it('does not reuse a descriptor across formatting-context revisions', () => {
+    const cache = new KanbanDescriptorCache(2);
+    let creations = 0;
+    const create = (formattingRevision: string): KanbanCardDescriptor =>
+      cache.getOrCreate({ ...cacheKey(1), formattingRevision }, () => {
+        creations += 1;
+        return descriptor(1);
+      });
+
+    const english = create('formatting-en');
+    expect(create('formatting-en')).toBe(english);
+    expect(create('formatting-nl')).not.toBe(english);
+    expect(creations).toBe(2);
+    cache.dispose();
+  });
+
   it('clips descriptor damage and uses one bounded scroll-exposed region', () => {
     const card = Object.freeze({
       columnId: 'ready',

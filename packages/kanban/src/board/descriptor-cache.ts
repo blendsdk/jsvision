@@ -28,6 +28,8 @@ export interface KanbanDescriptorCacheKey {
   readonly presentationPolicyRevision: KanbanRevision;
   /** Stable fingerprint of the resolved per-card optional-section selection. */
   readonly presentationSelectionFingerprint: string;
+  /** Optional equality-only application formatting-context revision. */
+  readonly formattingRevision?: KanbanRevision;
   /** Optional equality-only semantic style revision. */
   readonly styleRevision?: KanbanRevision;
   /** Exact descriptor width in terminal cells. */
@@ -62,6 +64,8 @@ export interface KanbanDescriptorInvalidation {
   readonly presentationPolicyRevision?: KanbanRevision;
   /** Match one per-card optional-section selection fingerprint. */
   readonly presentationSelectionFingerprint?: string;
+  /** Match one optional application formatting-context revision. */
+  readonly formattingRevision?: KanbanRevision;
   /** Match one semantic style revision. */
   readonly styleRevision?: KanbanRevision;
   /** Match one theme revision. */
@@ -101,6 +105,7 @@ function canCarryDescriptorAcrossCursorRevision(previous: SnapshotKey, current: 
     previous.presentationRevision === current.presentationRevision &&
     previous.presentationPolicyRevision === current.presentationPolicyRevision &&
     previous.presentationSelectionFingerprint === current.presentationSelectionFingerprint &&
+    previous.formattingRevision === current.formattingRevision &&
     previous.styleRevision === current.styleRevision &&
     previous.width === current.width &&
     previous.rowBudget === current.rowBudget &&
@@ -181,6 +186,7 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
   let presentationRevision: KanbanRevision | undefined;
   let presentationPolicyRevision: KanbanRevision;
   let presentationSelectionFingerprint: string;
+  let formattingRevision: KanbanRevision | undefined;
   let styleRevision: KanbanRevision | undefined;
   let themeRevision: KanbanRevision;
   let capabilityRevision: KanbanRevision;
@@ -197,6 +203,9 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
       rawPresentationRevision === undefined ? undefined : snapshotKanbanRevision(rawPresentationRevision);
     presentationPolicyRevision = snapshotKanbanRevision(ownValue(value, 'presentationPolicyRevision'));
     presentationSelectionFingerprint = selectionFingerprint(ownValue(value, 'presentationSelectionFingerprint'));
+    const rawFormattingRevision = ownValue(value, 'formattingRevision');
+    formattingRevision =
+      rawFormattingRevision === undefined ? undefined : snapshotKanbanRevision(rawFormattingRevision);
     const rawStyleRevision = ownValue(value, 'styleRevision');
     styleRevision = rawStyleRevision === undefined ? undefined : snapshotKanbanRevision(rawStyleRevision);
     themeRevision = snapshotKanbanRevision(ownValue(value, 'themeRevision'));
@@ -222,6 +231,7 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
     presentationRevision === undefined ? null : tagged(presentationRevision),
     tagged(presentationPolicyRevision),
     presentationSelectionFingerprint,
+    formattingRevision === undefined ? null : tagged(formattingRevision),
     styleRevision === undefined ? null : tagged(styleRevision),
     width,
     rowBudget,
@@ -239,6 +249,7 @@ function snapshotKey(value: KanbanDescriptorCacheKey): SnapshotKey {
     ...(presentationRevision === undefined ? {} : { presentationRevision }),
     presentationPolicyRevision,
     presentationSelectionFingerprint,
+    ...(formattingRevision === undefined ? {} : { formattingRevision }),
     ...(styleRevision === undefined ? {} : { styleRevision }),
     width,
     rowBudget,
@@ -327,6 +338,7 @@ function matches(key: SnapshotKey, selector: Readonly<Record<string, unknown>>):
       key.presentationPolicyRevision === selector.presentationPolicyRevision) &&
     (selector.presentationSelectionFingerprint === undefined ||
       key.presentationSelectionFingerprint === selector.presentationSelectionFingerprint) &&
+    (selector.formattingRevision === undefined || key.formattingRevision === selector.formattingRevision) &&
     (selector.styleRevision === undefined || key.styleRevision === selector.styleRevision) &&
     (selector.themeRevision === undefined || key.themeRevision === selector.themeRevision) &&
     (selector.capabilityRevision === undefined || key.capabilityRevision === selector.capabilityRevision) &&
@@ -452,6 +464,7 @@ export class KanbanDescriptorCache {
       'presentationRevision',
       'presentationPolicyRevision',
       'presentationSelectionFingerprint',
+      'formattingRevision',
       'styleRevision',
       'themeRevision',
       'capabilityRevision',
@@ -478,6 +491,7 @@ export class KanbanDescriptorCache {
         'rendererRevision',
         'presentationRevision',
         'presentationPolicyRevision',
+        'formattingRevision',
         'styleRevision',
         'themeRevision',
         'capabilityRevision',

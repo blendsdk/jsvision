@@ -439,7 +439,7 @@ describe('board authority and lifecycle implementation', () => {
     await board.revealCard(1, 'start');
     render.flush();
     expect(board.viewport.metrics()).toMatchObject({
-      offsets: { y: 150 },
+      offsets: { y: 120 },
       extentQuality: { y: 'lower-bound' },
     });
 

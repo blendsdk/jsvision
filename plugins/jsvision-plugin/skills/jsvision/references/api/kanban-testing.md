@@ -190,6 +190,7 @@ interface KanbanDescriptorCacheKey {
   presentationRevision?: KanbanRevision;   // Optional application presentation revision for this card.
   presentationPolicyRevision: KanbanRevision;   // Equality-only resolved presentation-policy revision.
   presentationSelectionFingerprint: string;   // Stable fingerprint of the resolved per-card optional-section selection.
+  formattingRevision?: KanbanRevision;   // Optional equality-only application formatting-context revision.
   styleRevision?: KanbanRevision;   // Optional equality-only semantic style revision.
   width: number;   // Exact descriptor width in terminal cells.
   rowBudget: number;   // Maximum descriptor rows.
@@ -254,6 +255,7 @@ interface KanbanDescriptorInvalidation {
   presentationRevision?: KanbanRevision;   // Match one optional card presentation revision.
   presentationPolicyRevision?: KanbanRevision;   // Match one resolved presentation-policy revision.
   presentationSelectionFingerprint?: string;   // Match one per-card optional-section selection fingerprint.
+  formattingRevision?: KanbanRevision;   // Match one optional application formatting-context revision.
   styleRevision?: KanbanRevision;   // Match one semantic style revision.
   themeRevision?: KanbanRevision;   // Match one theme revision.
   capabilityRevision?: KanbanRevision;   // Match one capability revision.
@@ -1186,4 +1188,12 @@ Routes the fixed Phase B keyboard subset and reports synchronous event-loop acce
 
 ```ts
 routeKanbanKeyInput(input: KanbanKeyInput, sink: KanbanKeyInputSink): boolean
+```
+
+## setKanbanViewportProjectionPassLimitForTesting
+
+Overrides one mounted viewport's projection-pass ceiling for deterministic failure tests.
+
+```ts
+setKanbanViewportProjectionPassLimitForTesting(viewport: object, limit: number): void
 ```

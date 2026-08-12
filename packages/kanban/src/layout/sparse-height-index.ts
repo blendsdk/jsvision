@@ -270,6 +270,11 @@ export class KanbanSparseHeightIndex {
     for (const [retainedKey, measurement] of this.#measurements) {
       if (measurement.logicalIndex === logicalIndex) this.#measurements.delete(retainedKey);
     }
+    for (const [retainedKey, identity] of this.#identities) {
+      if (retainedKey !== cardKey && identity.logicalIndex === logicalIndex) {
+        this.#identities.delete(retainedKey);
+      }
+    }
     this.#measurements.set(cardKey, Object.freeze({ cardKey, logicalIndex, height }));
     this.#retainIdentity(
       stableAnchor ??

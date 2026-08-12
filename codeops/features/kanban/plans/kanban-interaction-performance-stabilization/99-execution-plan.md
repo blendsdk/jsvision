@@ -271,6 +271,25 @@ viewport-scale tests. No third review was run.
       visible edges, compatible/incompatible fallback generations, revision invalidation, and repeated
       down/up scroll cycles. ✅ (completed: 2026-08-12 17:46)
 
+### Phase 2 quality review remediation
+
+| Finding | Severity | Ruling | Resolution |
+|---|---|---|---|
+| RV-004 / PE-003 | Major | Accepted (duplicate) | Re-measure the second projection and invoke containment when that authoritative check still changes sparse geometry. |
+| RV-005 | Major | Accepted | Include the application formatting context in frame compatibility and descriptor-cache identity. |
+| RV-006 | Major | Accepted | Remove semantic scene cards/cells as well as geometry and hit authority from incompatible fallback frames. |
+| RV-007 | Major | Accepted | Replace stale retained identities that collide with a revised card at the same logical index. |
+| RV-008 | Major | Accepted | Make revision-only focus updates produce no whole-viewport damage when semantic scene and geometry content are unchanged. |
+| RV-009 / PE-004 | Major | Accepted (duplicate) | Add mounted compatible/incompatible containment, formatting replacement, non-zero sparse range, repeated scroll, and exact geometry evidence. |
+
+**Ruling provenance:** AI — delegated by `--auto-design`; every ruling is a necessary correctness,
+cache-compatibility, containment, or testing correction within the confirmed Phase 2 scope. No finding was
+waived, dismissed, or used to expand product behavior.
+
+**Remediation verification:** PASS at 2026-08-12 18:19 CEST. Kanban typecheck, 39 focused Phase 2 tests,
+plugin update/check, and `yarn verify:local` are green. One permitted independent re-review remains required
+before Phase 3 may start.
+
 ## Phase 3: Make mouse interaction and repaint immediate
 
 ### Step 3.1: Pointer and overlay behavior

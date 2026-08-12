@@ -59,6 +59,21 @@ describe('sparse height index implementation', () => {
     heights.dispose();
   });
 
+  it('replaces stale retained identity when a revised card occupies the same logical index', () => {
+    const heights = index();
+    heights.measure({ cardKey: 'old-card', logicalIndex: 5, height: 4 });
+    heights.invalidateRevisions({
+      sourceRevision: 'source-v2',
+      cursorRevision: 'cursor-v2',
+      presentationRevision: 'presentation-v1',
+    });
+    heights.measure({ cardKey: 'new-card', logicalIndex: 5, height: 7 });
+
+    expect(heights.identitiesInRange(0, 10)).toEqual([{ cardKey: 'new-card', logicalIndex: 5 }]);
+    expect(heights.interactionIdentity('old-card')).toBeUndefined();
+    heights.dispose();
+  });
+
   it('matches a naive bounded prefix model across deterministic measurement patterns', () => {
     for (let seed = 1; seed <= 20; seed += 1) {
       const logicalLength = 64;

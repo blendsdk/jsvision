@@ -71,6 +71,8 @@ export interface KanbanViewportOperationInspectionControl {
   readonly disable: () => void;
   /** Reads detached evidence accumulated since recording was enabled. */
   readonly read: () => KanbanViewportOperationSnapshot;
+  /** Overrides the production pass ceiling for deterministic containment tests. */
+  readonly setProjectionPassLimit: (limit: number) => void;
 }
 
 /** One explicitly active testing observation of mounted viewport operations. */
@@ -193,4 +195,24 @@ export function observeKanbanViewportOperations(viewport: object): KanbanViewpor
       control.disable();
     },
   });
+}
+
+/**
+ * Overrides one mounted viewport's projection-pass ceiling for deterministic failure tests.
+ *
+ * Values from zero through two are accepted. Production rendering always uses two unless a test
+ * explicitly invokes this helper through the testing-only package entry point.
+ *
+ * @example
+ * ```ts
+ * setKanbanViewportProjectionPassLimitForTesting(board.viewport, 0);
+ * board.viewport.invalidate();
+ * render.flush();
+ * ```
+ */
+export function setKanbanViewportProjectionPassLimitForTesting(viewport: object, limit: number): void {
+  if (!Number.isSafeInteger(limit) || limit < 0 || limit > 2) throw new RangeError('limit must be 0, 1, or 2');
+  const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
+  if (control === undefined) throw new KanbanDisposedResourceError();
+  control.setProjectionPassLimit(limit);
 }

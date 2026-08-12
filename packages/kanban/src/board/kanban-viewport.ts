@@ -136,6 +136,26 @@ function bootstrapCardHeight(presentation: ResolvedKanbanPresentationBudget): nu
   return framedKanbanCardHeight(Math.min(1, presentation.cardRows));
 }
 
+/** Maps one full stack row, including presentation gaps, to a logical card in logarithmic work. */
+function logicalIndexAtStackRow(index: KanbanSparseHeightIndex, row: number, cardGap: number): number {
+  const logicalLength = index.snapshot().logicalLength;
+  if (logicalLength === 0) return 0;
+  let low = 0;
+  let high = logicalLength - 1;
+  while (low < high) {
+    const middle = low + Math.ceil((high - low) / 2);
+    const descriptorRow = index.rowAt(middle).value;
+    const gapRows =
+      middle > Math.floor((Number.MAX_SAFE_INTEGER - descriptorRow) / Math.max(1, cardGap))
+        ? Number.MAX_SAFE_INTEGER
+        : middle * cardGap;
+    const stackRow = Math.min(Number.MAX_SAFE_INTEGER, descriptorRow + gapRows);
+    if (stackRow <= row) low = middle;
+    else high = middle - 1;
+  }
+  return low;
+}
+
 /** Stable process-local identities for reactive objects that lack equality revisions. */
 const PROJECTION_INPUT_IDENTITIES = new WeakMap<object, number>();
 let nextProjectionInputIdentity = 1;
@@ -308,6 +328,7 @@ export class KanbanViewport<TCard> extends View {
   #heightProjections: readonly KanbanViewportCellHeightProjection[] = Object.freeze([]);
   #projectionPasses: KanbanViewportProjectionPassSnapshot[] = [];
   #operationInspectionEnabled = false;
+  #projectionPassLimit = 2;
   #descriptorCacheDisposed = false;
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
@@ -328,6 +349,7 @@ export class KanbanViewport<TCard> extends View {
         readonly relativeRow: number;
       }
     | undefined;
+  #pendingVerticalAnchorRow: number | undefined;
   #horizontalAnchorOffset = 0;
   #anchorSourceRevision: KanbanRevision | undefined;
   #anchorSourceGeneration: number | undefined;
@@ -445,6 +467,9 @@ export class KanbanViewport<TCard> extends View {
         this.#projectionPasses.length = 0;
       },
       read: () => this.#operationSnapshot(),
+      setProjectionPassLimit: (limit) => {
+        this.#projectionPassLimit = limit;
+      },
     });
     this.focusable = true;
     this.onMount(() => {
@@ -571,7 +596,7 @@ export class KanbanViewport<TCard> extends View {
       this.#snapshot = snapshot;
     }
     const resolvedPresentation = resolveKanbanPresentation(presentation ?? density, this.#limits);
-    const projectionFingerprint = this.#projectionFingerprint(
+    let projectionFingerprint = this.#projectionFingerprint(
       snapshot,
       resolvedPresentation,
       theme,
@@ -579,6 +604,7 @@ export class KanbanViewport<TCard> extends View {
       ctx.caps,
       interaction,
       rendererRevision,
+      formatting,
     );
     let projectionAttempts = 0;
     let convergenceContained = false;
@@ -591,7 +617,7 @@ export class KanbanViewport<TCard> extends View {
         convergenceContained = true;
         return this.#failedProjectionFallback;
       }
-      if (projectionAttempts >= 2) {
+      if (projectionAttempts >= this.#projectionPassLimit) {
         convergenceContained = true;
         return this.#containProjectionConvergence(projectionFingerprint, latestAttempt);
       }
@@ -645,8 +671,42 @@ export class KanbanViewport<TCard> extends View {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
     }
+    projectionFingerprint = this.#projectionFingerprint(
+      snapshot,
+      resolvedPresentation,
+      theme,
+      i18n,
+      ctx.caps,
+      interaction,
+      rendererRevision,
+      formatting,
+    );
     if (measured.corrected || restoredVerticalIdentity) {
       projection = project(snapshot, activeHeightProjections);
+    }
+    if (!convergenceContained && projectionAttempts === 2) {
+      const verified = this.#measureSparseHeights(
+        snapshot,
+        projection,
+        resolvedPresentation.revision,
+        resolvedPresentation.cardGap,
+        bootstrapCardHeight(resolvedPresentation),
+      );
+      activeHeightProjections = verified.projections;
+      this.#heightProjections = activeHeightProjections;
+      if (verified.corrected) {
+        projectionFingerprint = this.#projectionFingerprint(
+          snapshot,
+          resolvedPresentation,
+          theme,
+          i18n,
+          ctx.caps,
+          interaction,
+          rendererRevision,
+          formatting,
+        );
+        projection = project(snapshot, activeHeightProjections);
+      }
     }
     if (!convergenceContained) {
       this.#completedAuthoritativeProjection = projection;
@@ -734,6 +794,7 @@ export class KanbanViewport<TCard> extends View {
     capabilities: object,
     interaction: ReturnType<KanbanViewportInteractionBinding['snapshot']> | undefined,
     rendererRevision: KanbanRevision | undefined,
+    formatting: KanbanCardFormattingContext | undefined,
   ): string {
     return JSON.stringify([
       this.bounds,
@@ -748,6 +809,7 @@ export class KanbanViewport<TCard> extends View {
       rendererRevision ?? null,
       projectionInputIdentity(theme),
       projectionInputIdentity(i18n),
+      formatting === undefined ? null : projectionInputIdentity(formatting),
       projectionInputIdentity(capabilities),
       interaction ?? null,
       this.#options.cardPresentation === undefined ? null : projectionInputIdentity(this.#options.cardPresentation),
@@ -1570,10 +1632,15 @@ export class KanbanViewport<TCard> extends View {
         const address = Object.freeze({ columnId, swimlaneId: activeSwimlane.swimlaneId });
         const retained = this.#heightIndices.get(canonicalizeKanbanCellAddress(address));
         if (retained === undefined || retained.logicalLength === 0) return [];
-        const start = retained.index.indexAt(Math.max(0, cardOffset - overscanRows)).logicalIndex;
+        const start = logicalIndexAtStackRow(
+          retained.index,
+          Math.max(0, cardOffset - overscanRows),
+          presentation.cardGap,
+        );
         const end = Math.min(
           retained.logicalLength,
-          retained.index.indexAt(cardOffset + this.bounds.height + overscanRows).logicalIndex + 1,
+          logicalIndexAtStackRow(retained.index, cardOffset + this.bounds.height + overscanRows, presentation.cardGap) +
+            1,
         );
         return [Object.freeze({ address, start, end })];
       }),
@@ -1606,8 +1673,11 @@ export class KanbanViewport<TCard> extends View {
       snapshot.cells.flatMap((cell) => {
         const retained = this.#heightIndices.get(canonicalizeKanbanCellAddress(cell.address));
         if (retained === undefined || retained.logicalLength === 0) return [];
-        const start = retained.index.indexAt(startRow).logicalIndex;
-        const end = Math.min(retained.logicalLength, retained.index.indexAt(endRow).logicalIndex + 1);
+        const start = logicalIndexAtStackRow(retained.index, startRow, presentation.cardGap);
+        const end = Math.min(
+          retained.logicalLength,
+          logicalIndexAtStackRow(retained.index, endRow, presentation.cardGap) + 1,
+        );
         return [Object.freeze({ address: Object.freeze({ ...cell.address }), start, end })];
       }),
     );
@@ -1796,6 +1866,7 @@ export class KanbanViewport<TCard> extends View {
         this.#anchorController = undefined;
         const y = Math.max(0, this.#logicalCardRow(location.address, location.index, density) - anchor.relativeRow);
         this.#recordLocatedExtent(y);
+        this.#pendingVerticalAnchorRow = anchor.relativeRow;
         this.#focusedColumnAnchor = location.address.columnId;
         this.#imperativeFocusedColumnAnchor = location.address.columnId;
         this.#horizontalColumnAnchor = location.address.columnId;
@@ -1815,6 +1886,7 @@ export class KanbanViewport<TCard> extends View {
   #cancelAnchorRelocation(): void {
     this.#anchorController?.abort();
     this.#anchorController = undefined;
+    this.#pendingVerticalAnchorRow = undefined;
   }
 
   /** Returns one source column's logical horizontal start without opening an unretained cursor. */
@@ -1879,11 +1951,24 @@ export class KanbanViewport<TCard> extends View {
       ...(nearest.swimlaneId === undefined ? {} : { swimlaneId: nearest.swimlaneId }),
     });
     const logicalRow = this.#logicalCardRow(address, nearest.index, density);
+    const projectedRelativeRow = logicalRow - this.#requestedOffsets.y;
+    const retainedRelativeRow = this.#pendingVerticalAnchorRow ?? projectedRelativeRow;
+    if (this.#pendingVerticalAnchorRow !== undefined) {
+      if (projectedRelativeRow === this.#pendingVerticalAnchorRow) {
+        this.#pendingVerticalAnchorRow = undefined;
+      } else {
+        this.#requestedOffsets = Object.freeze({
+          ...this.#requestedOffsets,
+          y: Math.max(0, logicalRow - this.#pendingVerticalAnchorRow),
+        });
+        this.invalidate();
+      }
+    }
     this.#verticalAnchor = Object.freeze({
       cardKey: nearest.descriptor.cardKey,
       address,
       index: nearest.index,
-      relativeRow: logicalRow - this.#requestedOffsets.y,
+      relativeRow: retainedRelativeRow,
     });
   }
 
@@ -1998,9 +2083,30 @@ export class KanbanViewport<TCard> extends View {
     let corrected = false;
     const projections: KanbanViewportCellHeightProjection[] = [];
     for (const cell of snapshot.cells) {
-      const cards = projection.cards.filter(
-        (card) => card.columnId === cell.address.columnId && card.swimlaneId === cell.address.swimlaneId,
-      );
+      const cards =
+        projection.scene === undefined
+          ? projection.cards
+              .filter((card) => card.columnId === cell.address.columnId && card.swimlaneId === cell.address.swimlaneId)
+              .map((card) =>
+                Object.freeze({
+                  cardKey: card.descriptor.cardKey,
+                  index: card.index,
+                  height: framedKanbanCardHeight(card.descriptor.measuredHeight),
+                }),
+              )
+          : projection.scene.cards
+              .filter(
+                (card) =>
+                  card.address.columnId === cell.address.columnId &&
+                  card.address.swimlaneId === cell.address.swimlaneId,
+              )
+              .map((card) =>
+                Object.freeze({
+                  cardKey: card.cardKey,
+                  index: card.logicalIndex,
+                  height: card.descriptor.measuredHeight,
+                }),
+              );
       const length = cell.cursor.length();
       const highestResident = cards.reduce((maximum, card) => Math.max(maximum, card.index + 1), 0);
       const logicalLength = Math.max(cell.range.end, highestResident, length.kind === 'unknown' ? 0 : length.value);
@@ -2033,16 +2139,16 @@ export class KanbanViewport<TCard> extends View {
         }
       }
       for (const card of cards) {
-        const before = retained.index.anchorFor(card.descriptor.cardKey);
-        const stable = this.#verticalAnchor?.cardKey === card.descriptor.cardKey;
+        const before = retained.index.anchorFor(card.cardKey);
+        const stable = this.#verticalAnchor?.cardKey === card.cardKey;
         retained.index.measure({
-          cardKey: card.descriptor.cardKey,
+          cardKey: card.cardKey,
           logicalIndex: card.index,
-          height: framedKanbanCardHeight(card.descriptor.measuredHeight),
+          height: card.height,
           ...(stable
             ? {
                 anchor: {
-                  cardKey: card.descriptor.cardKey,
+                  cardKey: card.cardKey,
                   logicalIndex: card.index,
                   viewportRow: Math.max(0, this.#verticalAnchor?.relativeRow ?? 0),
                 },
@@ -2050,24 +2156,22 @@ export class KanbanViewport<TCard> extends View {
             : {}),
         });
         if (
-          (before === undefined && framedKanbanCardHeight(card.descriptor.measuredHeight) !== estimatedCardHeight) ||
-          (before !== undefined &&
-            before.quality === 'exact' &&
-            before.height !== framedKanbanCardHeight(card.descriptor.measuredHeight))
+          (before === undefined && card.height !== estimatedCardHeight) ||
+          (before !== undefined && before.quality === 'exact' && before.height !== card.height)
         ) {
           corrected = true;
         }
       }
       if (cards.length > 0) {
-        projections.push(
-          Object.freeze({
-            address: Object.freeze({ ...cell.address }),
-            projection: createKanbanVerticalHeightProjection({
-              index: retained.index,
-              cards: retained.index.identitiesInRange(cell.range.start, cell.range.end),
-            }),
-          }),
-        );
+        const nextProjection = createKanbanVerticalHeightProjection({
+          index: retained.index,
+          cards: retained.index.identitiesInRange(cell.range.start, cell.range.end),
+        });
+        const previousProjection = this.#heightProjections.find(
+          ({ address }) => address.columnId === cell.address.columnId && address.swimlaneId === cell.address.swimlaneId,
+        )?.projection;
+        if (JSON.stringify(previousProjection) !== JSON.stringify(nextProjection)) corrected = true;
+        projections.push(Object.freeze({ address: Object.freeze({ ...cell.address }), projection: nextProjection }));
       }
     }
 

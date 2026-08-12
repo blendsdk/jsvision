@@ -5,6 +5,7 @@ import type { KanbanViewportProjection } from '../src/board/viewport-projector.j
 
 /** Creates minimal authoritative geometry containing chrome plus interactive card/cell regions. */
 function projection(): KanbanViewportProjection {
+  const address = Object.freeze({ columnId: 'ready' });
   const header = Object.freeze({
     kind: 'workflow-header' as const,
     x: 0,
@@ -25,6 +26,24 @@ function projection(): KanbanViewportProjection {
     actionable: false as const,
   });
   return Object.freeze({
+    scene: Object.freeze({
+      revision: 'scene-v1',
+      queryGeneration: 1,
+      sessionRevision: 'session-v1',
+      columns: Object.freeze([]),
+      swimlanes: Object.freeze([]),
+      cells: Object.freeze([
+        Object.freeze({
+          address,
+          cursorRevision: 'cursor-v1',
+          state: Object.freeze({ kind: 'ready' as const }),
+          cards: Object.freeze([]),
+        }),
+      ]),
+      cards: Object.freeze([]),
+      states: Object.freeze([]),
+      detached: Object.freeze({}),
+    }),
     geometry: Object.freeze({
       revision: 'geometry-v1',
       requestedVariant: 'hybrid',
@@ -92,6 +111,8 @@ describe('viewport convergence containment', () => {
     expect(result.projection.regions.map(({ kind }) => kind)).toEqual(['workflow-header']);
     expect(result.projection.geometry?.cards).toEqual([]);
     expect(result.projection.geometry?.cells).toEqual([]);
+    expect(result.projection.scene?.cards).toEqual([]);
+    expect(result.projection.scene?.cells).toEqual([]);
     expect(result.projection.geometry?.changedRegions).toEqual([{ x: 0, y: 0, width: 32, height: 12 }]);
   });
 });
