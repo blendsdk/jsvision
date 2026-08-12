@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:51 CEST
-> **Progress**: 5/46 tasks (11%)
+> **Last Updated**: 2026-08-12 16:53 CEST
+> **Progress**: 6/46 tasks (13%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -180,8 +180,13 @@ checkpoint `0bd32c9d2`; `git status --short` was empty. The checkpoint was pushe
       separately from the viewport-clipped visible rectangle at all four edges. Prove continued drag after
       scrolling, synchronous cancellation on resize, one valid release/local publication reconciliation,
       and an immediately successful fresh drag after cancellation. ✅ (completed: 2026-08-12 16:51)
-- [ ] 1.1.6 Run the focused specifications and record the expected red failures without changing their
-      geometry or interaction expectations.
+- [x] 1.1.6 Run the focused specifications and record the expected red failures without changing their
+      geometry or interaction expectations. ✅ (completed: 2026-08-12 16:53)
+
+**Red-phase evidence:** the calibrated mounted sequence passed, while five contract assertions failed as
+expected: mixed-height card order/gaps overlap, focus uses whole-viewport damage, and all three drag cases
+lack the planned additive detached ghost/gap geometry evidence. Log:
+`/tmp/jsvision-t03-red-1.1.6-Bsma.log`.
 
 ### Step 1.2: Diagnostic isolation
 

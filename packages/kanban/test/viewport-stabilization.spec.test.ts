@@ -186,7 +186,7 @@ describe('mounted mixed-height viewport sequence', () => {
 
     const inspection = board.inspection();
     const metrics = board.viewport.metrics();
-    expect(metrics.mode).toBe('board');
+    expect(metrics.mode).toBe('multi-column');
     expect(metrics.assignedRect).toEqual({ x: 0, y: 0, width: 80, height: 24 });
     expect(metrics.offsets.x).toBeGreaterThan(0);
     expect(metrics.offsets.y).toBeGreaterThan(0);

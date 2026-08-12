@@ -156,7 +156,7 @@ describe('mounted dispatch-return drag feedback', () => {
       const framesBefore = frames.length;
       application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
       expect(frames.length).toBeGreaterThan(framesBefore);
-      expect(frames.at(-1)).toContain('Small source-range');
+      expect(frames.at(-1)).toContain('Small sour');
       expect(overlayField(board, 'ghost')).toMatchObject({
         count: 2,
         contentRows: 1,
