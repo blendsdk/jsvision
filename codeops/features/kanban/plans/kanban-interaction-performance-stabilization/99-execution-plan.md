@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 17:00 CEST
-> **Progress**: 8/46 tasks (17%)
+> **Last Updated**: 2026-08-12 17:01 CEST
+> **Progress**: 9/46 tasks (20%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -196,14 +196,22 @@ lack the planned additive detached ghost/gap geometry evidence. Log:
 - [x] 1.2.2 Prove whether focus damage inflation originates in height convergence, identity restoration,
       overlay composition, damage calculation, or more than one stage; record the result in this plan. ✅
       (completed: 2026-08-12 17:00)
-- [ ] 1.2.3 Prove whether real drag unreliability remains after geometry is valid or is fully explained by
-      corrupted hit maps; keep any independent input defect in Phase 3 scope.
+- [x] 1.2.3 Prove whether real drag unreliability remains after geometry is valid or is fully explained by
+      corrupted hit maps; keep any independent input defect in Phase 3 scope. ✅ (completed:
+      2026-08-12 17:01)
 
 **Focus-damage isolation:** both pointer-down and pointer-up produce whole-viewport semantic damage while
 every card rectangle—including the focused card—remains byte-for-byte stable and no drag/operation overlay
 exists. The inflation therefore originates in `calculateKanbanSceneDamage`: a visual/interaction revision
 with no geometry `changedRegions` falls through to the whole-viewport safety branch. Height convergence,
 identity restoration, and overlay composition are not additional causes for this focused-click trace.
+
+**Drag isolation:** ordinary captured pointer samples already emit a current recognizable ghost frame before
+dispatch returns, so no separate delayed-paint defect was reproduced. Invalid overlapping card geometry
+does corrupt the hit/drop map and explains unreliable card/gap targeting. One independent input defect
+remains for Phase 3: the wheel branch unconditionally calls `pointerRouter.cancel()` before scrolling, so an
+active captured drag cannot survive wheel input. The missing detached ghost/gap fields are a testing-bridge
+evidence gap, not proof of another runtime input failure.
 
 ## Phase 2: Stabilize variable-height projection
 
