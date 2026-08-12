@@ -66,6 +66,18 @@ function pushDamage(
 ): boolean {
   const clipped = clip(rect, bounds, kind);
   if (clipped === undefined) return true;
+  if (
+    target.some(
+      (current) =>
+        current.kind === clipped.kind &&
+        current.x === clipped.x &&
+        current.y === clipped.y &&
+        current.width === clipped.width &&
+        current.height === clipped.height,
+    )
+  ) {
+    return true;
+  }
   target.push(clipped);
   return target.length <= MAXIMUM_DAMAGE_REGIONS;
 }
@@ -280,7 +292,9 @@ export function calculateKanbanViewportDamage(
 
   const damage: KanbanDamageRegion[] = [];
   if (JSON.stringify(previous.overlay) !== JSON.stringify(options.current.overlay)) {
-    for (const rect of changedOverlayRects(previous, options.current)) {
+    const changedRects = changedOverlayRects(previous, options.current);
+    if (changedRects.length > MAXIMUM_DAMAGE_REGIONS) return whole(options.bounds);
+    for (const rect of changedRects) {
       if (!pushDamage(damage, rect, options.bounds, 'overlay')) return whole(options.bounds);
     }
   }

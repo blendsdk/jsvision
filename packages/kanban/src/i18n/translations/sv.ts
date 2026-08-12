@@ -29,7 +29,7 @@ export const kanbanSv = createKanbanTranslationCatalog('sv', {
 /** Official reviewed Swedish Phase C Kanban overlay. */
 export const kanbanPhaseCSv = createKanbanPhaseCTranslationCatalog('sv', {
   'kanban.drag.card': 'Flyttar kort',
-  'kanban.drag.cards': 'Flyttar ${count} kort',
+  'kanban.drag.cards': '${count} kort',
   'kanban.drop.allowed': 'Flytta hit',
   'kanban.drop.warning': 'Flytta med varning',
   'kanban.drop.blocked': 'Flytt blockerad',

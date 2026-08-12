@@ -245,6 +245,16 @@ function controllerMethods(controller: unknown): {
   });
 }
 
+/** Returns whether a controller result requires asynchronous queue ownership. */
+function isPromiseLike<TResult>(value: unknown): value is PromiseLike<TResult> {
+  if (!((typeof value === 'object' && value !== null) || typeof value === 'function')) return false;
+  try {
+    return typeof Reflect.get(value, 'then') === 'function';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Concrete stable facade owned by one board for its complete construction-to-disposal lifetime.
  *
@@ -513,8 +523,22 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   }
 
   /** Queues one operation behind the same ordering authority used by controller transitions. */
-  #schedule<TResult>(operation: () => Promise<TResult>): Promise<TResult> {
-    const result = this.#transitionActive ? this.#queue.then(operation) : operation();
+  #schedule<TResult>(operation: () => Promise<TResult> | TResult): Promise<TResult> {
+    if (!this.#transitionActive) {
+      try {
+        const immediate = operation();
+        if (!isPromiseLike<TResult>(immediate)) return Promise.resolve(immediate);
+        return this.#trackAsynchronous(immediate);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    return this.#trackAsynchronous(this.#queue.then(operation));
+  }
+
+  /** Tracks one genuinely asynchronous operation as the facade's serialization tail. */
+  #trackAsynchronous<TResult>(operation: PromiseLike<TResult>): Promise<TResult> {
+    const result = Promise.resolve(operation);
     this.#transitionActive = true;
     const tail = result.then(
       () => undefined,
@@ -572,10 +596,10 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
   #executeTransition(
     command: KanbanInteractionTransition,
     afterPublish?: (result: KanbanInteractionResult) => void,
-  ): Promise<KanbanInteractionResult> {
+  ): Promise<KanbanInteractionResult> | KanbanInteractionResult {
     const controller = this.#controller;
     if (controller === undefined || this.#failed || this.#disposed) {
-      return Promise.resolve(unavailable(this.#lastSnapshot));
+      return unavailable(this.#lastSnapshot);
     }
     const before = this.#lastSnapshot;
     let raw: unknown;
@@ -583,38 +607,37 @@ export class KanbanInteractionFacadeOwner implements KanbanInteractionFacade {
       raw = controller.transition(command);
     } catch {
       this.#observe('interaction-transition-failed');
-      return Promise.resolve(unavailable(this.#lastSnapshot));
+      return unavailable(this.#lastSnapshot);
     }
-    return Promise.resolve(raw).then(
-      (value) => {
-        if (this.#disposed || this.#failed || this.#controller !== controller) {
-          return unavailable(this.#lastSnapshot);
+    const settle = (value: unknown): KanbanInteractionResult => {
+      if (this.#disposed || this.#failed || this.#controller !== controller) {
+        return unavailable(this.#lastSnapshot);
+      }
+      try {
+        const settled = snapshotKanbanInteractionResult(value);
+        if (
+          (settled.kind === 'unchanged' && !interactionSnapshotsEqual(settled.snapshot, before)) ||
+          (settled.kind === 'changed' &&
+            (settled.snapshot.revision <= before.revision || interactionSnapshotStateEqual(settled.snapshot, before)))
+        ) {
+          throw new KanbanInvalidSourcePublicationError();
         }
-        try {
-          const settled = snapshotKanbanInteractionResult(value);
-          if (
-            (settled.kind === 'unchanged' && !interactionSnapshotsEqual(settled.snapshot, before)) ||
-            (settled.kind === 'changed' &&
-              (settled.snapshot.revision <= before.revision || interactionSnapshotStateEqual(settled.snapshot, before)))
-          ) {
-            throw new KanbanInvalidSourcePublicationError();
-          }
-          this.#publish(settled.snapshot);
-          afterPublish?.(settled);
-          return settled;
-        } catch {
-          this.#observe('interaction-transition-failed');
-          return unavailable(this.#lastSnapshot);
-        }
-      },
-      () => {
-        if (this.#disposed || this.#failed || this.#controller !== controller) {
-          return unavailable(this.#lastSnapshot);
-        }
+        this.#publish(settled.snapshot);
+        afterPublish?.(settled);
+        return settled;
+      } catch {
         this.#observe('interaction-transition-failed');
         return unavailable(this.#lastSnapshot);
-      },
-    );
+      }
+    };
+    if (!isPromiseLike(raw)) return settle(raw);
+    return Promise.resolve(raw).then(settle, () => {
+      if (this.#disposed || this.#failed || this.#controller !== controller) {
+        return unavailable(this.#lastSnapshot);
+      }
+      this.#observe('interaction-transition-failed');
+      return unavailable(this.#lastSnapshot);
+    });
   }
 
   /** Refreshes facade state after an injected controller reports publication. */

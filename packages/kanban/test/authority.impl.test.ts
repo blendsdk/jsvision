@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { KanbanInvalidSemanticValueError, dispatchKanbanRequest, reconcileKanbanPublication } from '../src/index.js';
+import { dispatchKanbanRequestImmediate } from '../src/contract/authority.js';
 import { KanbanBoardAuthority } from '../src/board/board-authority.js';
 import type {
   KanbanExtensionRequest,
@@ -38,6 +39,18 @@ function expectation(operationId = 'review-1'): KanbanPublicationExpectation {
 }
 
 describe('dispatcher implementation boundary', () => {
+  it('settles a synchronous application result before returning to the caller', () => {
+    const original = request();
+    const result = dispatchKanbanRequestImmediate(
+      original,
+      (received) => ({ kind: 'accepted', operationId: received.operationId }),
+      { capabilities: {} },
+    );
+
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(result).toEqual({ kind: 'accepted', operationId: original.operationId });
+  });
+
   it('passes detached frozen request and capability snapshots while preserving the live signal', async () => {
     const original = request();
     const capabilities = { extensions: { 'example.review': { state: 'disabled' as const } } };

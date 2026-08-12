@@ -4,6 +4,7 @@
  * Every pointer sample is inspected immediately after `dispatch()` returns. No explicit render flush,
  * promise, timer, source settlement, or later input may be required to make its visual result observable.
  */
+import { serialize } from '@jsvision/core';
 import type { ScreenBuffer } from '@jsvision/core';
 import { createApplication, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
@@ -14,6 +15,7 @@ import type { KanbanQuery, KanbanRequest } from '../src/index.js';
 import {
   createKanbanStabilizationFixture,
   inspectKanbanDragFrame,
+  inspectKanbanViewportScale,
   type KanbanStabilizationCard,
 } from '../src/testing.js';
 
@@ -28,6 +30,7 @@ const applications: Application[] = [];
 
 afterEach(() => {
   for (const application of applications.splice(0)) application.loop.dispose();
+  vi.useRealTimers();
 });
 
 /** Converts one immutable terminal frame to stable plain-text evidence. */
@@ -49,7 +52,22 @@ function locallyMovedCards(
   const replacements = cards
     .filter(({ key }) => moved.has(key))
     .map((card) => Object.freeze({ ...card, columnId: request.target.columnId, presentationRevision: 2 }));
-  return Object.freeze([...retained, ...replacements]);
+  const targetIndexes = retained.flatMap((card, index) => (card.columnId === request.target.columnId ? [index] : []));
+  const position = request.position;
+  const insertionIndex =
+    position.kind === 'start'
+      ? (targetIndexes[0] ?? retained.length)
+      : position.kind === 'end'
+        ? (targetIndexes.at(-1) ?? retained.length - 1) + 1
+        : position.kind === 'between'
+          ? (() => {
+              const afterIndex = retained.findIndex(({ key }) => key === position.afterCardKey);
+              if (afterIndex >= 0) return afterIndex;
+              const beforeIndex = retained.findIndex(({ key }) => key === position.beforeCardKey);
+              return beforeIndex >= 0 ? beforeIndex + 1 : retained.length;
+            })()
+          : retained.length;
+  return Object.freeze([...retained.slice(0, insertionIndex), ...replacements, ...retained.slice(insertionIndex)]);
 }
 
 /** Complete mounted mixed-height board with synchronous accepted local publication. */
@@ -58,6 +76,7 @@ function mountedDragFixture(): {
   readonly board: KanbanBoard<KanbanStabilizationCard>;
   readonly cards: ReturnType<typeof signal<readonly KanbanStabilizationCard[]>>;
   readonly frames: readonly string[];
+  readonly buffers: readonly ScreenBuffer[];
   readonly dispatches: ReturnType<typeof vi.fn>;
 } {
   const fixture = createKanbanStabilizationFixture();
@@ -83,9 +102,33 @@ function mountedDragFixture(): {
   const application = createApplication({ content: board, viewport: { width: 80, height: 24 }, caps: CAPS });
   applications.push(application);
   const mutableFrames: string[] = [];
-  application.loop.onFrame = (buffer) => mutableFrames.push(frameText(buffer));
+  const mutableBuffers: ScreenBuffer[] = [];
+  application.loop.onFrame = (buffer) => {
+    mutableFrames.push(frameText(buffer));
+    mutableBuffers.push(buffer.clone());
+  };
   application.loop.renderRoot.flush();
-  return Object.freeze({ application, board, cards, frames: mutableFrames, dispatches });
+  return Object.freeze({ application, board, cards, frames: mutableFrames, buffers: mutableBuffers, dispatches });
+}
+
+/** Counts changed cells and contiguous row runs between two real terminal buffers. */
+function frameDiff(previous: ScreenBuffer, current: ScreenBuffer): { readonly cells: number; readonly runs: number } {
+  let cells = 0;
+  let runs = 0;
+  const previousRows = previous.rows();
+  const currentRows = current.rows();
+  for (let y = 0; y < current.height; y += 1) {
+    let inRun = false;
+    for (let x = 0; x < current.width; x += 1) {
+      const changed = JSON.stringify(previousRows[y]?.[x]) !== JSON.stringify(currentRows[y]?.[x]);
+      if (changed) {
+        cells += 1;
+        if (!inRun) runs += 1;
+      }
+      inRun = changed;
+    }
+  }
+  return Object.freeze({ cells, runs });
 }
 
 /** Finds one visible whole-card target or fails with a useful fixture message. */
@@ -206,19 +249,25 @@ describe('mounted dispatch-return drag feedback', () => {
     if (origin === null) throw new Error('Expected mounted viewport origin.');
 
     const samples = [
-      eventPoint(application, board, source.x + 9, source.y + 2),
-      eventPoint(application, board, 1, source.y + 3),
-      eventPoint(application, board, board.viewport.bounds.width - 1, source.y + 3),
-      eventPoint(application, board, source.x + 7, 1),
-      eventPoint(application, board, source.x + 7, board.viewport.bounds.height - 1),
+      { point: eventPoint(application, board, source.x + 9, source.y + 2), expectsGap: true },
+      { point: eventPoint(application, board, 1, source.y + 3), expectsGap: true },
+      {
+        point: eventPoint(application, board, board.viewport.bounds.width - 1, source.y + 3),
+        expectsGap: true,
+      },
+      { point: eventPoint(application, board, source.x + 7, 1), expectsGap: false },
+      {
+        point: eventPoint(application, board, source.x + 7, board.viewport.bounds.height - 1),
+        expectsGap: true,
+      },
     ];
     for (const sample of samples) {
       const framesBefore = frames.length;
-      application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
+      application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample.point });
       expect(frames.length).toBeGreaterThan(framesBefore);
       const rawOrigin = {
-        x: sample.x - origin.x - grabOffset.x,
-        y: sample.y - origin.y - grabOffset.y,
+        x: sample.point.x - origin.x - grabOffset.x,
+        y: sample.point.y - origin.y - grabOffset.y,
       };
       const ghost = compactGhost(board);
       expect(ghost).toEqual({
@@ -232,7 +281,8 @@ describe('mounted dispatch-return drag feedback', () => {
       const visibleContentWidth = Math.max(0, ghost.visibleRect.width - 2);
       const expectedTitle = 'Small source-range control'.slice(0, visibleContentWidth);
       expect(frameRect(emitted, ghost.visibleRect)).toContain(expectedTitle);
-      expect(overlayField(board, 'gap')).toMatchObject({ rect: { height: 1 } });
+      if (sample.expectsGap) expect(overlayField(board, 'gap')).toMatchObject({ rect: { height: 1 } });
+      else expect(overlayField(board, 'gap')).toBeUndefined();
     }
   });
 
@@ -244,6 +294,9 @@ describe('mounted dispatch-return drag feedback', () => {
     application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ctrl: true, ...siblingPoint });
     application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ctrl: true, ...siblingPoint });
     const source = cardTarget(board, fixture.named.short);
+    const sourcePoint = eventPoint(application, board, source.x + 1, source.y + 1);
+    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ctrl: true, ...sourcePoint });
+    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ctrl: true, ...sourcePoint });
     beginDrag(application, board, fixture.named.short);
     const sample = eventPoint(application, board, source.x + 8, source.y + 2);
 
@@ -256,6 +309,52 @@ describe('mounted dispatch-return drag feedback', () => {
     const cue = frameRect(emitted, ghost.visibleRect);
     expect(cue.match(/2 cards/g)).toHaveLength(1);
     expect(cue).not.toContain('Small source-range control');
+  });
+
+  it('should bound leaf composition and real terminal output to changed visible cells', () => {
+    const { application, board, buffers } = mountedDragFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const source = cardTarget(board, fixture.named.short);
+    beginDrag(application, board, fixture.named.short);
+    const before = buffers.at(-1);
+    if (before === undefined) throw new Error('Expected a pre-move terminal buffer.');
+
+    const sample = eventPoint(application, board, source.x + 10, source.y + 2);
+    application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
+    const after = buffers.at(-1);
+    if (after === undefined || after === before) throw new Error('Expected a post-move terminal buffer.');
+    const diff = frameDiff(before, after);
+    const output = serialize(after, before, { caps: CAPS });
+    const scale = inspectKanbanViewportScale(board.viewport);
+
+    expect(scale.projectedCards).toBe(board.inspection().visibleCards.length);
+    expect(scale.projectedCards).toBeLessThan(84);
+    expect(diff.cells).toBeGreaterThan(0);
+    expect(diff.cells).toBeLessThan(before.width * before.height);
+    expect(diff.runs).toBeGreaterThan(0);
+    expect(diff.runs).toBeLessThanOrEqual(diff.cells);
+    expect(new TextEncoder().encode(output).byteLength).toBeGreaterThan(0);
+  });
+
+  it('should publish mounted autoscroll geometry before an injected timer tick returns', () => {
+    vi.useFakeTimers();
+    const { application, board, frames } = mountedDragFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const source = cardTarget(board, fixture.named.short);
+    beginDrag(application, board, fixture.named.short);
+    const edge = eventPoint(application, board, board.viewport.bounds.width - 1, source.y + 2);
+    application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...edge });
+    const beforeFrames = frames.length;
+    const beforeOffset = board.viewport.metrics().offsets.x;
+
+    vi.advanceTimersByTime(50);
+
+    expect(board.viewport.metrics().offsets.x).toBeGreaterThan(beforeOffset);
+    expect(frames.length).toBeGreaterThan(beforeFrames);
+    expect(inspectKanbanDragFrame(board.viewport)).toMatchObject({
+      ghost: { contentRows: 1 },
+      gap: { rect: { height: 1 } },
+    });
   });
 
   // Wheel scrolling keeps capture alive; release publishes one local move and leaves the card draggable.

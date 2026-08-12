@@ -29,7 +29,7 @@ export const kanbanIt = createKanbanTranslationCatalog('it', {
 /** Official reviewed Italian Phase C Kanban overlay. */
 export const kanbanPhaseCIt = createKanbanPhaseCTranslationCatalog('it', {
   'kanban.drag.card': 'Spostamento scheda',
-  'kanban.drag.cards': 'Spostamento di ${count} schede',
+  'kanban.drag.cards': '${count} schede',
   'kanban.drop.allowed': 'Sposta qui',
   'kanban.drop.warning': 'Sposta con avviso',
   'kanban.drop.blocked': 'Spostamento bloccato',

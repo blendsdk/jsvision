@@ -83,11 +83,11 @@ function settleExactNativePromise(value: Promise<KanbanRequestResult>): Promise<
  * Promise subclasses, modified Promise instances, cross-realm promises, and arbitrary thenables are
  * rejected as malformed results without invoking their `then` members.
  */
-export async function dispatchKanbanRequest(
+export function dispatchKanbanRequestImmediate(
   request: KanbanRequest,
   dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown,
   context: KanbanRequestContext,
-): Promise<KanbanRequestResult> {
+): Promise<KanbanRequestResult> | KanbanRequestResult {
   const snapshot = snapshotKanbanRequest(request);
   const capturedContext = snapshotKanbanRequestContext(context);
   let dispatched: unknown;
@@ -98,15 +98,19 @@ export async function dispatchKanbanRequest(
   }
 
   if (isExactNativePromise(dispatched)) {
-    try {
-      const settlement = await settleExactNativePromise(dispatched);
-      if (settlement.kind === 'rejected') {
-        return createKanbanRejectedResult(snapshot.operationId, 'dispatcher-failed');
-      }
-      dispatched = settlement.value;
-    } catch {
-      return createKanbanRejectedResult(snapshot.operationId, 'invalid-dispatch-result');
-    }
+    return settleExactNativePromise(dispatched).then(
+      (settlement) => {
+        if (settlement.kind === 'rejected') {
+          return createKanbanRejectedResult(snapshot.operationId, 'dispatcher-failed');
+        }
+        try {
+          return snapshotKanbanRequestResult(settlement.value, snapshot.operationId);
+        } catch {
+          return createKanbanRejectedResult(snapshot.operationId, 'invalid-dispatch-result');
+        }
+      },
+      () => createKanbanRejectedResult(snapshot.operationId, 'invalid-dispatch-result'),
+    );
   }
   try {
     return snapshotKanbanRequestResult(dispatched, snapshot.operationId);
@@ -116,9 +120,40 @@ export async function dispatchKanbanRequest(
 }
 
 /**
+ * Validate and dispatch one request through the stable Promise-based public contract.
+ *
+ * Synchronous callers may use the package-internal immediate variant so mounted input can publish
+ * its complete result in the same event-loop cycle without changing this public return type.
+ *
+ * @example
+ * ```ts
+ * const result = await dispatchKanbanRequest(
+ *   request,
+ *   (snapshot) => ({ kind: 'accepted', operationId: snapshot.operationId }),
+ *   context,
+ * );
+ * ```
+ */
+export async function dispatchKanbanRequest(
+  request: KanbanRequest,
+  dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown,
+  context: KanbanRequestContext,
+): Promise<KanbanRequestResult> {
+  return await dispatchKanbanRequestImmediate(request, dispatcher, context);
+}
+
+/**
  * Clear publication metadata after matching or contradictory authoritative data arrives.
  *
  * The helper is pure: it receives no application records and never mutates the pending collection.
+ *
+ * @example
+ * ```ts
+ * const next = reconcileKanbanPublication(pending, {
+ *   kind: 'confirmed',
+ *   operationId: createKanbanOperationId('move-42'),
+ * });
+ * ```
  */
 export function reconcileKanbanPublication(
   pending: readonly KanbanPublicationExpectation[],

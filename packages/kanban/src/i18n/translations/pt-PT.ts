@@ -29,7 +29,7 @@ export const kanbanPtPT = createKanbanTranslationCatalog('pt-PT', {
 /** Official reviewed European Portuguese Phase C Kanban overlay. */
 export const kanbanPhaseCPtPT = createKanbanPhaseCTranslationCatalog('pt-PT', {
   'kanban.drag.card': 'A mover cartão',
-  'kanban.drag.cards': 'A mover ${count} cartões',
+  'kanban.drag.cards': '${count} cartões',
   'kanban.drop.allowed': 'Mover para aqui',
   'kanban.drop.warning': 'Mover com aviso',
   'kanban.drop.blocked': 'Movimento bloqueado',

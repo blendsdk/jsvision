@@ -29,7 +29,7 @@ export const kanbanFr = createKanbanTranslationCatalog('fr', {
 /** Official reviewed French Phase C Kanban overlay. */
 export const kanbanPhaseCFr = createKanbanPhaseCTranslationCatalog('fr', {
   'kanban.drag.card': 'Déplacement de la carte',
-  'kanban.drag.cards': 'Déplacement de ${count} cartes',
+  'kanban.drag.cards': '${count} cartes',
   'kanban.drop.allowed': 'Déplacer ici',
   'kanban.drop.warning': 'Déplacer avec avertissement',
   'kanban.drop.blocked': 'Déplacement bloqué',

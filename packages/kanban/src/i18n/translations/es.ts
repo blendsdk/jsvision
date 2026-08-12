@@ -29,7 +29,7 @@ export const kanbanEs = createKanbanTranslationCatalog('es', {
 /** Official reviewed Spanish Phase C Kanban overlay. */
 export const kanbanPhaseCEs = createKanbanPhaseCTranslationCatalog('es', {
   'kanban.drag.card': 'Moviendo tarjeta',
-  'kanban.drag.cards': 'Moviendo ${count} tarjetas',
+  'kanban.drag.cards': '${count} tarjetas',
   'kanban.drop.allowed': 'Mover aquí',
   'kanban.drop.warning': 'Mover con advertencia',
   'kanban.drop.blocked': 'Movimiento bloqueado',

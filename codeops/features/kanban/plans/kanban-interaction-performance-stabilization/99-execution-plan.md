@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 17:01 CEST
-> **Progress**: 9/46 tasks (20%)
+> **Last Updated**: 2026-08-12 19:39 CEST
+> **Progress**: 24/46 tasks (52%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -296,31 +296,65 @@ reported no performance regression. No third review was run.
 
 ## Phase 3: Make mouse interaction and repaint immediate
 
+> **Phase baseline tree**: 2af8c256d03c161d129e51846e27e02810e71840
+> **Scope mode**: strict
+> **Expected modification set**: Kanban pointer/drag/overlay/damage implementation, focused Kanban tests,
+> semantic-host and host transport harnesses required by this phase, generated JSVision skill/plugin references
+> affected by testing exports, and this execution plan/roadmap. Unrelated packages and product behavior are
+> excluded.
+
 ### Step 3.1: Pointer and overlay behavior
 
-- [ ] 3.1.1 Route every normalized captured pointer move through one current geometry generation and
+- [x] 3.1.1 Route every normalized captured pointer move through one current geometry generation and
       update one compact framed title row from the exact pointer-relative grab offset, plus a bounded selected
-      count when multiple, with no blank trailing row.
-- [ ] 3.1.2 Recompute the active semantic slot only from valid gaps/edges and preserve one-cell hysteresis
-      without allowing a marker to settle inside a card body.
-- [ ] 3.1.3 Ensure click, drag start, each captured pointer move, target change, autoscroll tick, cancel, and
+      count when multiple, with no blank trailing row. Completed: 2026-08-12 19:00 CEST.
+- [x] 3.1.2 Recompute the active semantic slot only from valid gaps/edges and preserve one-cell hysteresis
+      without allowing a marker to settle inside a card body. Completed: 2026-08-12 19:00 CEST.
+- [x] 3.1.3 Ensure click, drag start, each captured pointer move, target change, autoscroll tick, cancel, and
       release publish their complete visible result before the owning dispatch/tick returns, with no explicit
-      flush or asynchronous data dependency.
-- [ ] 3.1.4 Make focus/selection semantic damage minimal and make scroll/drag damage include every old/new
+      flush or asynchronous data dependency. Completed: 2026-08-12 19:00 CEST.
+- [x] 3.1.4 Make focus/selection semantic damage minimal and make scroll/drag damage include every old/new
       affected region exactly once, leaving no stale cells or unrelated bottom fragments. Separately assert
       visible-set-bounded Kanban leaf composition and final changed-cell/run/byte output; do not claim the
-      semantic rectangles are consumed as Core/UI region-clipping inputs.
-- [ ] 3.1.5 Verify capture loss, outside release, resize cancellation, source change, Escape, modal entry,
-      disposal, and immediate next drag remain deterministic after the geometry repair.
+      semantic rectangles are consumed as Core/UI region-clipping inputs. Completed: 2026-08-12 19:00 CEST.
+- [x] 3.1.5 Verify capture loss, outside release, resize cancellation, source change, Escape, modal entry,
+      disposal, and immediate next drag remain deterministic after the geometry repair. Completed: 2026-08-12
+      19:00 CEST.
 
 ### Step 3.2: Host evidence
 
-- [ ] 3.2.1 Extend the existing semantic-host board and drag transport harnesses with real Unix PTY and
+- [x] 3.2.1 Extend the existing semantic-host board and drag transport harnesses with real Unix PTY and
       browser/xterm traces for click, wheel, grab, individually observed pointer moves, gap transition, drop,
-      and post-drop redraw using the mixed-height fixture.
-- [ ] 3.2.2 Keep platform-scoped ConPTY-equivalent evidence aligned with the same semantic outcomes; report
-      an unavailable host honestly rather than substituting a pipe test.
-- [ ] 3.2.3 Run focused pointer, rendering, damage, capture, and host suites and correct all regressions.
+      and post-drop redraw using the mixed-height fixture. Completed: 2026-08-12 19:15 CEST.
+- [x] 3.2.2 Keep platform-scoped ConPTY-equivalent evidence aligned with the same semantic outcomes; report
+      an unavailable host honestly rather than substituting a pipe test. Completed: 2026-08-12 19:15 CEST.
+- [x] 3.2.3 Run focused pointer, rendering, damage, capture, and host suites and correct all regressions.
+      Completed: 2026-08-12 19:15 CEST.
+
+### Phase 3 quality review remediation
+
+The independent correctness review and audit reported no Critical finding and identified five Major
+correctness/evidence gaps: the moved set could inherit an unrelated prior selection; fallback targeting could
+escape valid cell ownership; accepted overlays could retire from destination identity without exact placement;
+host milestones were not all derived from the mounted board; and the synchronous dispatch helper leaked from
+the package entry point. The audit additionally required real changed-cell/run/byte evidence and a mounted
+autoscroll-tick frame boundary.
+
+Under `--auto-design`, all findings were accepted. The implementation now uses the pointer router's concrete
+dragged set, confines nearest fallback to the containing semantic cell, fails closed at unproven window
+boundaries, republishes the exact requested order in the application-owned host fixture, derives every host
+milestone from mounted evidence, keeps the immediate dispatcher package-internal, measures real buffer/output
+deltas, and runs timer-owned autoscroll through the mounted EventLoop's synchronous paint boundary.
+
+**Required re-review:** The single permitted remediation re-review closed the moved-set, host-evidence,
+public-boundary, and autoscroll findings. It found two remaining Major edge cases: adjacent-cell nearest-target
+selection and false logical boundary confirmation at a windowed `start`/`end`. Both were accepted and corrected
+by address-scoped nearest selection plus logical-index/fail-closed publication checks. No third review was run.
+
+**Final remediation verification:** PASS at 2026-08-12 19:39 CEST. UI and Kanban typechecks, 2,047 UI tests,
+758 Kanban tests, focused real-buffer and exact-placement tests, and direct/browser-xterm/Unix-PTY host evidence
+are green. Plugin update/check, documentation checks, and `yarn verify:local` are green; the final two edge fixes
+are covered by focused tests and are included in the final package re-run before commit.
 
 ## Phase 4: Prove the responsiveness budget
 

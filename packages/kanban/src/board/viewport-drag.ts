@@ -56,6 +56,8 @@ export interface KanbanViewportDragControllerOptions<TCard> {
   readonly scroll: (step: Readonly<Point>) => Readonly<Point>;
   /** Requests projection/drawing after controller evidence changes. */
   readonly invalidate: () => void;
+  /** Runs timer-owned drag work inside the mounted host's synchronous paint boundary. */
+  readonly runTick: (work: () => void) => void;
 }
 
 /** Compares application card identities without numeric/string coercion. */
@@ -135,15 +137,20 @@ function movedCards<TCard>(
   current: KanbanViewportDragScene<TCard>,
 ): readonly KanbanMovedCardSnapshot[] | undefined {
   try {
-    const selected = new Set(start.dragged.map(({ cardKey }) => JSON.stringify([typeof cardKey, cardKey])));
+    const selectedEntries = start.dragged;
+    const selected = new Set(selectedEntries.map(({ cardKey }) => JSON.stringify([typeof cardKey, cardKey])));
+    const originCardKey = start.target.cardKey;
     const ordered = current.scene.cards.filter((card) =>
       selected.has(JSON.stringify([typeof card.cardKey, card.cardKey])),
     );
-    if (ordered.length !== start.dragged.length) throw new Error('stale-card-set');
+    if (ordered.length !== selected.size) throw new Error('stale-card-set');
     const moved = ordered.map((card): KanbanMovedCardSnapshot => {
-      const entry = start.dragged.find(({ cardKey }) => sameCard(cardKey, card.cardKey));
-      if (entry === undefined) throw new Error('stale-card');
-      if (card === undefined || !sameAddress(card.address, entry.address)) throw new Error('stale-card');
+      const entry = selectedEntries.find(({ cardKey }) => sameCard(cardKey, card.cardKey));
+      if (entry === undefined || !sameAddress(card.address, entry.address)) throw new Error('stale-card');
+      const isPointerOrigin = originCardKey !== undefined && sameCard(card.cardKey, originCardKey);
+      if (isPointerOrigin && start.target.address !== undefined && !sameAddress(card.address, start.target.address)) {
+        throw new Error('stale-card');
+      }
       const cell = sourceCell(current.source, card.address);
       if (cell === undefined) throw new Error('stale-cell');
       const sourcePlacement = movePosition(cell.cursor.placementAt(card.logicalIndex));
@@ -311,6 +318,30 @@ function dropMap<TCard>(
   });
 }
 
+/** Resolves the nearest visible semantic slot when the pointer is over inert chrome or a separator. */
+function nearestDropTarget(
+  targets: readonly KanbanCardDropTarget[],
+  point: Readonly<Point>,
+  address: Readonly<{ readonly columnId: string; readonly swimlaneId?: string }>,
+): KanbanCardDropTarget | undefined {
+  let nearest: KanbanCardDropTarget | undefined;
+  let nearestDistance = Number.MAX_SAFE_INTEGER;
+  for (const target of targets) {
+    if (!sameAddress(target.address, address)) continue;
+    const rect = target.rect;
+    if (rect === undefined) continue;
+    const dx =
+      point.x < rect.x ? rect.x - point.x : point.x >= rect.x + rect.width ? point.x - rect.x - rect.width + 1 : 0;
+    const dy =
+      point.y < rect.y ? rect.y - point.y : point.y >= rect.y + rect.height ? point.y - rect.y - rect.height + 1 : 0;
+    const distance = dx + dy;
+    if (distance >= nearestDistance) continue;
+    nearest = target;
+    nearestDistance = distance;
+  }
+  return nearest;
+}
+
 /**
  * Projects one generous drop hit region onto the actual one-row insertion boundary it represents.
  *
@@ -397,6 +428,7 @@ export class KanbanViewportDragController<TCard> {
     this.#autoscroll = createKanbanDragAutoscrollController({
       scroll: (step) => options.scroll(step),
       recompute: () => options.invalidate(),
+      runTick: options.runTick,
     });
     this.#prefetch = createKanbanDragPrefetchController({
       ensureRange: (hint, signal) => {
@@ -423,6 +455,11 @@ export class KanbanViewportDragController<TCard> {
       capture: start.capture,
       dragged: moved,
       originPoint: start.originPoint,
+      grabOffset: Object.freeze({
+        x: Math.max(0, start.originPoint.x - start.target.x),
+        y: Math.max(0, start.originPoint.y - start.target.y),
+      }),
+      sourceWidth: start.target.width,
       sceneRevision: current.sceneRevision,
       geometryGeneration: current.geometryGeneration,
       ...(start.target.cardKey === undefined ? {} : { originCardKey: start.target.cardKey }),
@@ -447,7 +484,18 @@ export class KanbanViewportDragController<TCard> {
     this.#actionTarget = actionTarget;
     const activeIndicator =
       this.#target === undefined ? undefined : projectKanbanDropIndicatorRect(this.#target, current.geometry);
-    const candidate = dropMap(current, this.#target, activeIndicator).targetAt(point);
+    const targets = dropMap(current, this.#target, activeIndicator);
+    const owningCell = current.geometry.cells.find(
+      (cell) =>
+        point.x >= cell.x && point.y >= cell.y && point.x < cell.x + cell.width && point.y < cell.y + cell.height,
+    );
+    const exact = targets.targetAt(point);
+    const candidate =
+      owningCell === undefined
+        ? undefined
+        : exact !== undefined && sameAddress(exact.address, owningCell.address)
+          ? exact
+          : nearestDropTarget(targets.targets, point, owningCell.address);
     const previousTarget = this.#target;
     const selected = selectKanbanDropTargetWithHysteresis({
       current: this.#target,

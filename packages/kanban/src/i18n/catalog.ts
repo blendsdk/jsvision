@@ -195,7 +195,7 @@ export interface KanbanPhaseCMessageMap {
 /** Canonical English messages for modern pointer-drag and operation overlays. */
 export const KANBAN_PHASE_C_ENGLISH_MESSAGES = Object.freeze({
   'kanban.drag.card': 'Moving card',
-  'kanban.drag.cards': 'Moving ${count} cards',
+  'kanban.drag.cards': '${count} cards',
   'kanban.drop.allowed': 'Move here',
   'kanban.drop.warning': 'Move with warning',
   'kanban.drop.blocked': 'Move blocked',

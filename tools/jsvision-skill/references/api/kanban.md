@@ -614,6 +614,7 @@ Immutable, renderer-neutral description of one terminal card.
 interface KanbanCardDescriptor {
   cardKey: CardKey;   // Stable application-owned card identity.
   presentationRevision?: KanbanRevision;   // Equality-only revision used to create this descriptor.
+  dragTitle?: string;   // Optional complete safe title used by compact drag feedback when the visible row is clipped.
   width: number;   // Exact width in terminal cells.
   measuredHeight: number;   // Number of rows occupied by this descriptor.
   surfaceRole: KanbanThemeRole;   // Semantic role for the card interior.
@@ -5076,6 +5077,7 @@ identityChanges(): KanbanIdentityChangeBatch | undefined
 focusedNavigator(): KanbanFocusedColumnNavigator | undefined
 interactionScene(): KanbanNavigationSnapshot
 interactionRevisions(): KanbanInteractionRevisions
+interactionQueryFiltered(): boolean
 interactionStructureRevision(): KanbanRevision
 interactionEligibleSelection(): readonly KanbanEligibleSelectionCandidate[]
 revealInteractionTarget(target: KanbanFocusTarget, options?: { readonly signal?: AbortSignal }): Promise<KanbanInteractionAcquisitionResult>
@@ -5973,7 +5975,7 @@ createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(options: Sta
 
 ## dispatchKanbanRequest
 
-Validate and dispatch one raw request without consulting UX capabilities or mutating records.
+Validate and dispatch one request through the stable Promise-based public contract.
 
 ```ts
 dispatchKanbanRequest(request: KanbanRequest, dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown, context: KanbanRequestContext): Promise<KanbanRequestResult>

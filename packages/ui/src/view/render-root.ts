@@ -252,6 +252,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private readonly caps: CapabilityProfile;
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
+  private readonly runTaskSeam?: (work: () => void) => void;
   private readonly healFocusSeam?: (group: View) => void;
   private readonly onViewUnmountingSeam?: (view: View) => void | (() => void);
 
@@ -273,6 +274,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.theme = opts.theme ?? defaultTheme;
     this.logger = opts.logger ?? createLogger();
     this.scheduler = opts.schedule ?? ((flush): void => queueMicrotask(flush));
+    this.runTaskSeam = opts.runTask;
     this.healFocusSeam = opts.healFocus;
     this.onViewUnmountingSeam = opts.onViewUnmounting;
     this.current = new ScreenBuffer(size.width, size.height, BLANK);
@@ -372,6 +374,15 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   markRelayout(): void {
     this.needsReflow = true;
     this.scheduleFlush();
+  }
+
+  /** @internal ViewHost — enter the attached event loop's synchronous frame boundary when available. */
+  runTask(work: () => void): void {
+    if (this.runTaskSeam === undefined) {
+      work();
+      return;
+    }
+    this.runTaskSeam(work);
   }
 
   private scheduleFlush(): void {

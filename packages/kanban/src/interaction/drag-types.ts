@@ -124,6 +124,10 @@ export interface KanbanDragGhostEvidence {
   readonly cardKey: CardKey;
   /** Viewport-local ghost anchor after clipping and pointer offset. */
   readonly point: Readonly<Point>;
+  /** Pointer offset from the source card's framed top-left corner. */
+  readonly grabOffset?: Readonly<Point>;
+  /** Source card width retained so the compact ghost does not resize when the source scrolls away. */
+  readonly width?: number;
   /** Number of cards represented atomically by the bounded ghost. */
   readonly count: number;
 }

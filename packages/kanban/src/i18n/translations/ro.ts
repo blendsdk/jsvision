@@ -29,7 +29,7 @@ export const kanbanRo = createKanbanTranslationCatalog('ro', {
 /** Official reviewed Romanian Phase C Kanban overlay. */
 export const kanbanPhaseCRo = createKanbanPhaseCTranslationCatalog('ro', {
   'kanban.drag.card': 'Se mută cardul',
-  'kanban.drag.cards': 'Se mută ${count} carduri',
+  'kanban.drag.cards': '${count} carduri',
   'kanban.drop.allowed': 'Mută aici',
   'kanban.drop.warning': 'Mută cu avertisment',
   'kanban.drop.blocked': 'Mutare blocată',

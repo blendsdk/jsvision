@@ -4,7 +4,7 @@
  * Symbols are added here only after their owning module has specification coverage. Testing helpers
  * remain available exclusively from `@jsvision/kanban/testing`.
  */
-export * from './contract/authority.js';
+export { dispatchKanbanRequest, reconcileKanbanPublication } from './contract/authority.js';
 export * from './contract/capability.js';
 export * from './contract/error.js';
 export * from './contract/identity.js';

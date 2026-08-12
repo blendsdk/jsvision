@@ -341,6 +341,7 @@ class EventLoopImpl implements EventLoop {
           this.paint();
         });
       },
+      runTask: (work) => this.runTick(work),
       // When a group removes the currently focused child, move focus into that group (to its first
       // focusable descendant, or nowhere) inside a tick, so the focus change and its repaint stay
       // consistent. A view tree used without a loop leaves this unset and just clears its pointer.

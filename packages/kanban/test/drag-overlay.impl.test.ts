@@ -314,7 +314,7 @@ describe('overlay composition internals', () => {
     });
 
     expect(missingDrag.overlay.placeholders).toEqual([]);
-    expect(missingDrag.overlay.ghost).toMatchObject({ cardKey: 999, label: '#999' });
+    expect(missingDrag.overlay.ghost).toBeUndefined();
     expect(pending.overlay.pending[0]).toMatchObject({ cardKeys: [], count: 1, rect: { width: 16 } });
   });
 
@@ -542,9 +542,110 @@ describe('overlay composition internals', () => {
     expect(offscreen.cards.map(({ descriptor: value }) => value.cardKey)).not.toContain(1);
     expect(offscreen.overlay.placeholders).toHaveLength(1);
   });
+
+  it('retires an accepted overlay only after authoritative order matches the exact requested slot', () => {
+    const source = authoritative();
+    const moved = source.cards.find(({ descriptor: value }) => value.cardKey === 1);
+    const target = source.cards.find(({ descriptor: value }) => value.cardKey === 2);
+    if (moved === undefined || target === undefined) throw new Error('Expected operation projection fixtures.');
+    const accepted = (position: 'start' | 'end'): KanbanOperationSnapshot =>
+      Object.freeze({
+        operationId: createKanbanOperationId(`accepted-${position}`),
+        kind: 'card-move',
+        state: 'accepted',
+        affected: Object.freeze([Object.freeze({ kind: 'card' as const, cardKey: 1 })]),
+        projection: Object.freeze({
+          kind: 'card-move' as const,
+          state: 'accepted' as const,
+          cardKeys: Object.freeze([1]),
+          sources: Object.freeze([Object.freeze({ columnId: 'doing' })]),
+          target: Object.freeze({ columnId: 'doing' }),
+          position: Object.freeze({ kind: position, cursorRevision: 1 }),
+        }),
+      });
+    const doingCard = (card: typeof moved, index: number) =>
+      Object.freeze({
+        ...card,
+        columnId: 'doing',
+        index,
+        rect: Object.freeze({ ...card.rect, x: 19, y: 3 + index * 5 }),
+      });
+    const startPublished = Object.freeze({
+      ...source,
+      cards: Object.freeze([doingCard(moved, 0), doingCard(target, 1)]),
+    });
+    const wrongRank = Object.freeze({ ...source, cards: Object.freeze([doingCard(target, 0), doingCard(moved, 1)]) });
+    const windowedStart = Object.freeze({
+      ...source,
+      cards: Object.freeze([
+        Object.freeze({ ...doingCard(moved, 0), index: 50 }),
+        Object.freeze({ ...doingCard(target, 1), index: 51 }),
+      ]),
+    });
+
+    const settled = composeKanbanViewportOverlay({
+      authoritative: startPublished,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [accepted('start')],
+    });
+    const retained = composeKanbanViewportOverlay({
+      authoritative: wrongRank,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [accepted('start')],
+    });
+    const retainedWindowBoundary = composeKanbanViewportOverlay({
+      authoritative: windowedStart,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [accepted('start')],
+    });
+    const retainedUnknownEnd = composeKanbanViewportOverlay({
+      authoritative: wrongRank,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'comfortable',
+      operations: [accepted('end')],
+    });
+
+    expect(settled.overlay.pending).toEqual([]);
+    expect(settled.cards.map(({ descriptor: value }) => value.cardKey)).toEqual([1, 2]);
+    expect(retained.overlay.pending).toHaveLength(1);
+    expect(retained.overlay.pending[0]).toMatchObject({ state: 'accepted', cardKeys: [1] });
+    expect(retainedWindowBoundary.overlay.pending).toHaveLength(1);
+    expect(retainedUnknownEnd.overlay.pending).toHaveLength(1);
+  });
 });
 
 describe('overlay drawing and damage internals', () => {
+  it('reports each old and new ghost rectangle exactly once', () => {
+    const before = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: drag(),
+    });
+    const current = drag();
+    const after = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: { ...current, ghost: { ...current.ghost, point: { x: 28, y: 8 } } },
+    });
+
+    const damage = calculateKanbanViewportDamage({
+      previous: before,
+      current: after,
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      previousOffsets: { x: 0, y: 0 },
+      currentOffsets: { x: 0, y: 0 },
+    });
+    const identities = damage.map(({ kind, x, y, width, height }) => JSON.stringify([kind, x, y, width, height]));
+
+    expect(new Set(identities).size).toBe(identities.length);
+    expect(damage.filter(({ kind }) => kind === 'overlay')).toHaveLength(2);
+  });
+
   it('draws Unicode/color and ASCII/mono ghosts with explicit non-color target cues', () => {
     const projection = composeKanbanViewportOverlay({
       authoritative: authoritative(),
@@ -555,10 +656,10 @@ describe('overlay drawing and damage internals', () => {
     const unicode = mountedFrame(projection);
     const ascii = mountedFrame(projection, true);
 
-    expect(unicode.text()).toContain('Numeric source');
-    expect(unicode.text()).toContain('▶ Numeric source');
+    expect(unicode.text()).toContain('Num');
+    expect(unicode.text()).toContain('▶ Move here');
     expect(unicode.text()).toMatch(/[◆━┃]/u);
-    expect(ascii.text()).toContain('> Numeric source');
+    expect(ascii.text()).toContain('> Move here');
     expect(ascii.text()).toMatch(/[+=!]/u);
     unicode.render.unmount();
     ascii.render.unmount();
@@ -582,9 +683,10 @@ describe('overlay drawing and damage internals', () => {
     const unicode = mountedFrame(projection);
     const ascii = mountedFrame(projection, true);
 
-    expect(unicode.text()).toContain('Moving 3 cards');
+    expect(projection.overlay.ghost?.label).toBe('3 cards');
+    expect(unicode.text()).toContain('3 c');
     expect(unicode.text()).not.toContain('Numeric source');
-    expect(ascii.text()).toContain('Moving 3 cards');
+    expect(ascii.text()).toContain('3 c');
     expect(ascii.text()).not.toContain('Numeric source');
     unicode.render.unmount();
     ascii.render.unmount();

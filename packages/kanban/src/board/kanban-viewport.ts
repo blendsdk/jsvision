@@ -87,11 +87,13 @@ import type {
 import { readViewportHostChromeRows } from './viewport-host-chrome.js';
 import {
   registerKanbanViewportOperationReader,
+  registerKanbanViewportDragFrameReader,
   registerKanbanViewportScaleReader,
   unregisterKanbanViewportOperationReader,
   unregisterKanbanViewportScaleReader,
 } from './viewport-scale-inspection.js';
 import type {
+  KanbanDragFrameSnapshot,
   KanbanViewportOperationSnapshot,
   KanbanViewportProjectionPassSnapshot,
   KanbanViewportScaleSnapshot,
@@ -406,6 +408,11 @@ export class KanbanViewport<TCard> extends View {
         return Object.freeze({ x: after.x - before.x, y: after.y - before.y });
       },
       invalidate: () => this.invalidate(),
+      runTick: (work) => {
+        const runTask = this.host?.runTask;
+        if (runTask === undefined) work();
+        else runTask.call(this.host, work);
+      },
     });
     this.#structuralDragController = new KanbanStructuralDragController({
       readScene: () => this.#structuralDragScene(),
@@ -457,6 +464,7 @@ export class KanbanViewport<TCard> extends View {
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
+    registerKanbanViewportDragFrameReader(this, () => this.#dragFrameSnapshot());
     registerKanbanViewportOperationReader(this, {
       enable: () => {
         this.#operationInspectionEnabled = true;
@@ -866,11 +874,19 @@ export class KanbanViewport<TCard> extends View {
   /** Routes wheel input first, then the fixed keyboard and bounded click-family interaction subsets. */
   override onEvent(event: DispatchEvent): void {
     if (event.event.type === 'wheel') {
-      this.#pointerRouter.cancel();
       if (this.#disposed || this.#metrics.mode === 'minimum-size') return;
       const direction = event.event.dir;
+      // A captured card needs row-by-row wheel movement so its current source and destination
+      // geometry remain observable between samples. Ordinary browsing keeps the faster three-row step.
+      const step = this.#dragController.snapshot().kind === 'idle' ? 3 : 1;
       this.scrollBy(
-        direction === 'up' ? { y: -3 } : direction === 'down' ? { y: 3 } : direction === 'left' ? { x: -3 } : { x: 3 },
+        direction === 'up'
+          ? { y: -step }
+          : direction === 'down'
+            ? { y: step }
+            : direction === 'left'
+              ? { x: -step }
+              : { x: step },
       );
       event.handled = true;
       return;
@@ -1057,6 +1073,11 @@ export class KanbanViewport<TCard> extends View {
       queryGeneration: this.#snapshot?.generation ?? 0,
       ...(this.#queryViewRevision === undefined ? {} : { viewRevision: this.#queryViewRevision }),
     });
+  }
+
+  /** Returns whether search or field filters currently narrow the authoritative query session. */
+  interactionQueryFiltered(): boolean {
+    return this.#snapshot?.filtered ?? false;
   }
 
   /** Returns the current structure-policy revision used to classify visibility reconciliation. */
@@ -1823,6 +1844,9 @@ export class KanbanViewport<TCard> extends View {
       columnId: card.columnId,
       ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
     });
+    // A cross-cell move changes the card's stack coordinate by design. Keeping the viewport offset
+    // stable preserves every lane and leaves the accepted card at the insertion gap the user chose.
+    if (canonicalizeKanbanCellAddress(address) !== canonicalizeKanbanCellAddress(anchor.address)) return false;
     const target = Math.max(0, this.#logicalCardRow(address, card.index, density) - anchor.relativeRow);
     if (target === this.#requestedOffsets.y) return false;
     this.#requestedOffsets = Object.freeze({ ...this.#requestedOffsets, y: target });
@@ -2186,7 +2210,10 @@ export class KanbanViewport<TCard> extends View {
         ),
       );
       const retained =
-        owner === undefined ? undefined : this.#heightIndices.get(canonicalizeKanbanCellAddress(owner.address));
+        owner === undefined ||
+        canonicalizeKanbanCellAddress(owner.address) !== canonicalizeKanbanCellAddress(anchor.address)
+          ? undefined
+          : this.#heightIndices.get(canonicalizeKanbanCellAddress(owner.address));
       const exact = retained?.index.anchorFor(anchor.cardKey);
       if (exact !== undefined) {
         const target = Math.max(
@@ -2238,6 +2265,37 @@ export class KanbanViewport<TCard> extends View {
       actionTargets: this.#projection?.actionTargets.length ?? 0,
       operationOverlays: (overlay?.pending.length ?? 0) + (overlay?.feedback.length ?? 0),
       transientOverlayMembers: cardDragMembers + structuralDragMembers,
+    });
+  }
+
+  /** Creates detached pointer-overlay evidence without exposing card payloads or mutable projection state. */
+  #dragFrameSnapshot(): KanbanDragFrameSnapshot {
+    const scale = this.#scaleSnapshot();
+    const projection = this.#projection;
+    const ghost = projection?.overlay?.ghost;
+    const gap = projection?.overlay?.gap;
+    return Object.freeze({
+      transientOverlayMembers: scale.transientOverlayMembers,
+      operationOverlays: scale.operationOverlays,
+      damageRegions: scale.damageRegions,
+      ...(ghost === undefined
+        ? {}
+        : {
+            ghost: Object.freeze({
+              count: ghost.count,
+              contentRows: 1 as const,
+              rawOrigin: Object.freeze({ ...(ghost.rawOrigin ?? ghost.anchor) }),
+              visibleRect: Object.freeze({ ...ghost.rect }),
+            }),
+          }),
+      ...(gap === undefined
+        ? {}
+        : {
+            gap: Object.freeze({
+              slotId: gap.slotId,
+              rect: Object.freeze({ ...gap.rect }),
+            }),
+          }),
     });
   }
 

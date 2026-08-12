@@ -165,6 +165,8 @@ export interface KanbanCardDescriptor {
   readonly cardKey: CardKey;
   /** Equality-only revision used to create this descriptor. */
   readonly presentationRevision?: KanbanRevision;
+  /** Optional complete safe title used by compact drag feedback when the visible row is clipped. */
+  readonly dragTitle?: string;
   /** Exact width in terminal cells. */
   readonly width: number;
   /** Number of rows occupied by this descriptor. */
@@ -268,6 +270,7 @@ function regionsOverlap(left: KanbanCardRegion, right: KanbanCardRegion): boolea
 export function validateKanbanCardDescriptor(descriptor: KanbanCardDescriptor, context: KanbanCardRenderContext): void {
   requireDescriptor(descriptor.cardKey === context.cardKey);
   requireDescriptor(descriptor.presentationRevision === context.presentationRevision);
+  requireDescriptor(descriptor.dragTitle === undefined || isSafeText(descriptor.dragTitle));
   requireDescriptor(Number.isSafeInteger(context.width) && context.width > 0);
   requireDescriptor(Number.isSafeInteger(context.rowBudget) && context.rowBudget > 0);
   requireDescriptor(descriptor.width === context.width);

@@ -1,4 +1,4 @@
-import { dispatchKanbanRequest } from '../contract/authority.js';
+import { dispatchKanbanRequestImmediate } from '../contract/authority.js';
 import { snapshotKanbanCapabilities } from '../contract/capability.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
 import { createKanbanOperationId } from '../contract/identity.js';
@@ -305,7 +305,7 @@ export class KanbanOperationCoordinator {
         });
       }
       const completion = this.#confirmAndDispatch(operation, proposal, capturedExpected, capturedEligibility);
-      return Object.freeze({ operationId: id.operationId, completion });
+      return Object.freeze({ operationId: id.operationId, completion: Promise.resolve(completion) });
     } catch (error) {
       if (operation !== undefined) this.#operations.delete(id.operationId);
       this.#startedAt.delete(id.operationId);
@@ -318,12 +318,12 @@ export class KanbanOperationCoordinator {
   }
 
   /** Confirm when required, revalidate current ownership, then expose pending state before dispatch. */
-  async #confirmAndDispatch(
+  #confirmAndDispatch(
     operation: ActiveKanbanOperation,
     proposal: KanbanRequestProposal,
     expected: KanbanRequestExpectedRevisions,
     eligibility: KanbanEligibility,
-  ): Promise<KanbanRequestResult> {
+  ): Promise<KanbanRequestResult> | KanbanRequestResult {
     if (eligibility.kind === 'blocked' || eligibility.kind === 'unavailable') {
       return this.#finishBeforeDispatch(operation, {
         kind: 'cancelled',
@@ -334,59 +334,71 @@ export class KanbanOperationCoordinator {
     const classification = classifyKanbanRequestConfirmation(proposal, eligibility);
     if (classification.kind !== 'not-required') {
       if (operation.applicationConfirmed) return this.#dispatch(operation);
-      const settlement = await settleKanbanConfirmation(this.#confirm, {
+      return this.#confirmBeforeDispatch(operation, proposal, expected, eligibility, classification);
+    }
+    return this.#dispatch(operation);
+  }
+
+  /** Settles the deliberately asynchronous confirmation path before dispatch. */
+  async #confirmBeforeDispatch(
+    operation: ActiveKanbanOperation,
+    proposal: KanbanRequestProposal,
+    expected: KanbanRequestExpectedRevisions,
+    eligibility: KanbanEligibility,
+    classification: Exclude<ReturnType<typeof classifyKanbanRequestConfirmation>, { readonly kind: 'not-required' }>,
+  ): Promise<KanbanRequestResult> {
+    const settlement = await settleKanbanConfirmation(this.#confirm, {
+      operationId: operation.id.operationId,
+      proposal,
+      affected: operation.subjects.affected,
+      expected,
+      eligibility: classification,
+      signal: operation.request.signal,
+    });
+    if (settlement !== 'approved') {
+      return this.#finishBeforeDispatch(operation, {
+        kind: 'cancelled',
         operationId: operation.id.operationId,
-        proposal,
-        affected: operation.subjects.affected,
-        expected,
-        eligibility: classification,
-        signal: operation.request.signal,
+        code: settlement === 'declined' ? 'confirmation-declined' : 'confirmation-invalid',
       });
-      if (settlement !== 'approved') {
-        return this.#finishBeforeDispatch(operation, {
-          kind: 'cancelled',
-          operationId: operation.id.operationId,
-          code: settlement === 'declined' ? 'confirmation-declined' : 'confirmation-invalid',
-        });
-      }
-      if (this.#revalidate === undefined) {
-        return this.#finishBeforeDispatch(operation, {
-          kind: 'cancelled',
-          operationId: operation.id.operationId,
-          code: 'confirmation-stale',
-        });
-      }
-      let current: KanbanEligibility;
-      try {
-        const authority = snapshotKanbanOperationAuthoritySnapshot(this.#revalidate(proposal, expected));
-        if (!kanbanExpectedRevisionsEqual(expected, authority.expected)) {
-          return this.#finishBeforeDispatch(operation, {
-            kind: 'cancelled',
-            operationId: operation.id.operationId,
-            code: 'confirmation-stale',
-          });
-        }
-        current = authority.eligibility;
-      } catch {
+    }
+    if (this.#revalidate === undefined) {
+      return this.#finishBeforeDispatch(operation, {
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: 'confirmation-stale',
+      });
+    }
+    let current: KanbanEligibility;
+    try {
+      const authority = snapshotKanbanOperationAuthoritySnapshot(this.#revalidate(proposal, expected));
+      if (!kanbanExpectedRevisionsEqual(expected, authority.expected)) {
         return this.#finishBeforeDispatch(operation, {
           kind: 'cancelled',
           operationId: operation.id.operationId,
           code: 'confirmation-stale',
         });
       }
-      if (!confirmationStillApplies(eligibility, current)) {
-        return this.#finishBeforeDispatch(operation, {
-          kind: 'cancelled',
-          operationId: operation.id.operationId,
-          code: current.kind === 'blocked' || current.kind === 'unavailable' ? current.code : 'confirmation-stale',
-        });
-      }
+      current = authority.eligibility;
+    } catch {
+      return this.#finishBeforeDispatch(operation, {
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: 'confirmation-stale',
+      });
+    }
+    if (!confirmationStillApplies(eligibility, current)) {
+      return this.#finishBeforeDispatch(operation, {
+        kind: 'cancelled',
+        operationId: operation.id.operationId,
+        code: current.kind === 'blocked' || current.kind === 'unavailable' ? current.code : 'confirmation-stale',
+      });
     }
     return this.#dispatch(operation);
   }
 
   /** Expose pending state, then recheck reentrant cancellation before application dispatch. */
-  async #dispatch(operation: ActiveKanbanOperation): Promise<KanbanRequestResult> {
+  #dispatch(operation: ActiveKanbanOperation): Promise<KanbanRequestResult> | KanbanRequestResult {
     if (!this.#isCurrent(operation)) {
       return Object.freeze({
         kind: 'cancelled',
@@ -411,10 +423,12 @@ export class KanbanOperationCoordinator {
         code: 'operation-cancelled',
       });
     }
-    const result = await dispatchKanbanRequest(operation.request, this.#dispatcher, {
+    const result = dispatchKanbanRequestImmediate(operation.request, this.#dispatcher, {
       capabilities: currentCapabilities(this.#capabilities),
     });
-    return this.#settleDispatcher(operation, result);
+    return result instanceof Promise
+      ? result.then((settled) => this.#settleDispatcher(operation, settled))
+      : this.#settleDispatcher(operation, result);
   }
 
   /** Release a current reservation and publish one pre-dispatch cancellation. */

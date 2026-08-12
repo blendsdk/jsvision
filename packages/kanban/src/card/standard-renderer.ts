@@ -241,6 +241,7 @@ export function composeStandardKanbanCard(
   return Object.freeze({
     cardKey: snapshot.cardKey,
     ...(snapshot.presentationRevision === undefined ? {} : { presentationRevision: snapshot.presentationRevision }),
+    dragTitle: snapshot.title,
     width: context.width,
     measuredHeight: rows.length,
     surfaceRole: resolvedStyle.surfaceRole,

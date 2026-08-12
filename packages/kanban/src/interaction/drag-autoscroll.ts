@@ -36,6 +36,8 @@ export interface KanbanDragAutoscrollControllerOptions {
   readonly scroll: (step: Readonly<Point>, generation: KanbanDragGeneration) => Readonly<Point>;
   /** Rebuilds current geometry and semantic targets after successful movement. */
   readonly recompute: (generation: KanbanDragGeneration) => void;
+  /** Runs a scheduled tick inside the mounted host's synchronous paint boundary. */
+  readonly runTick?: (work: () => void) => void;
 }
 
 /** Public controller for one timer and one current drag generation. */
@@ -139,6 +141,7 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
   readonly #scheduler: KanbanDragAutoscrollScheduler;
   readonly #scroll: KanbanDragAutoscrollControllerOptions['scroll'];
   readonly #recompute: KanbanDragAutoscrollControllerOptions['recompute'];
+  readonly #runTick: NonNullable<KanbanDragAutoscrollControllerOptions['runTick']>;
   #active: ActiveAutoscroll | undefined;
   #timer: unknown;
   #scheduling = false;
@@ -148,6 +151,7 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
     this.#scheduler = options.scheduler ?? HOST_SCHEDULER;
     this.#scroll = options.scroll;
     this.#recompute = options.recompute;
+    this.#runTick = options.runTick ?? ((work) => work());
   }
 
   /** Updates edge-zone ownership without creating duplicate timers. */
@@ -187,7 +191,7 @@ class DefaultKanbanDragAutoscrollController implements KanbanDragAutoscrollContr
           deliveredSynchronously = true;
           return;
         }
-        this.#tick();
+        this.#runTick(() => this.#tick());
       }, KANBAN_DRAG_AUTOSCROLL_INTERVAL_MS);
       this.#scheduling = false;
       if (deliveredSynchronously) {

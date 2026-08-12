@@ -1,3 +1,5 @@
+import type { Point, Rect } from '@jsvision/ui';
+
 import { KanbanDisposedResourceError } from '../contract/error.js';
 
 /** Counter-only mounted scale evidence exposed exclusively through the testing package entry point. */
@@ -40,6 +42,24 @@ export interface KanbanDragFrameSnapshot {
   readonly operationOverlays: number;
   /** Damage rectangles produced by the most recent frame projection. */
   readonly damageRegions: number;
+  /** Current compact card ghost geometry, when a visible drag ghost exists. */
+  readonly ghost?: Readonly<{
+    /** Number of cards represented atomically. */
+    readonly count: number;
+    /** Fixed number of rows between the compact ghost frame borders. */
+    readonly contentRows: 1;
+    /** Complete pointer-relative origin before viewport clipping. */
+    readonly rawOrigin: Readonly<Point>;
+    /** Exact clipped rectangle emitted by the current viewport frame. */
+    readonly visibleRect: Readonly<Rect>;
+  }>;
+  /** Current semantic insertion-gap geometry, when a visible target exists. */
+  readonly gap?: Readonly<{
+    /** Stable target slot identity. */
+    readonly slotId: string;
+    /** Exact clipped one-row insertion marker. */
+    readonly rect: Readonly<Rect>;
+  }>;
 }
 
 /** Payload-free quality evidence for one projection pass in the latest completed viewport frame. */
@@ -62,6 +82,9 @@ export interface KanbanViewportOperationSnapshot {
 
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
 const VIEWPORT_SCALE_READERS = new WeakMap<object, () => KanbanViewportScaleSnapshot>();
+
+/** Mounted viewport instances mapped to detached drag-frame geometry readers. */
+const VIEWPORT_DRAG_FRAME_READERS = new WeakMap<object, () => KanbanDragFrameSnapshot>();
 
 /** Testing-only controls that activate expensive operation evidence only while a test observes it. */
 export interface KanbanViewportOperationInspectionControl {
@@ -103,6 +126,12 @@ export function registerKanbanViewportScaleReader(viewport: object, read: () => 
  */
 export function unregisterKanbanViewportScaleReader(viewport: object): void {
   VIEWPORT_SCALE_READERS.delete(viewport);
+  VIEWPORT_DRAG_FRAME_READERS.delete(viewport);
+}
+
+/** Registers one live viewport's detached drag-frame evidence reader for testing. */
+export function registerKanbanViewportDragFrameReader(viewport: object, read: () => KanbanDragFrameSnapshot): void {
+  VIEWPORT_DRAG_FRAME_READERS.set(viewport, read);
 }
 
 /** Registers one live viewport's additive operation reader for the testing-only entry point. */
@@ -142,6 +171,8 @@ export function readKanbanViewportScaleSnapshot(viewport: object): KanbanViewpor
  * ```
  */
 export function readKanbanDragFrameSnapshot(viewport: object): KanbanDragFrameSnapshot {
+  const read = VIEWPORT_DRAG_FRAME_READERS.get(viewport);
+  if (read !== undefined) return read();
   const snapshot = readKanbanViewportScaleSnapshot(viewport);
   return Object.freeze({
     transientOverlayMembers: snapshot.transientOverlayMembers,

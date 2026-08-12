@@ -138,9 +138,11 @@ function snapshotDescriptor(descriptor: KanbanCardDescriptor): KanbanCardDescrip
   const sourceOmittedSections = sourceDegradation.omittedSections;
   const omittedSections = copyBoundedArray(sourceOmittedSections, 9, (section) => section);
   const presentationRevision = descriptor.presentationRevision;
+  const dragTitle = descriptor.dragTitle;
   return Object.freeze({
     cardKey: descriptor.cardKey,
     ...(presentationRevision === undefined ? {} : { presentationRevision }),
+    ...(dragTitle === undefined ? {} : { dragTitle }),
     width: descriptor.width,
     measuredHeight: descriptor.measuredHeight,
     surfaceRole: descriptor.surfaceRole,
@@ -183,6 +185,7 @@ export function createFallbackKanbanCardDescriptor(
   const descriptor: KanbanCardDescriptor = {
     cardKey: context.cardKey,
     ...(context.presentationRevision === undefined ? {} : { presentationRevision: context.presentationRevision }),
+    dragTitle: title,
     width: context.width,
     measuredHeight: includeStatus ? 2 : 1,
     surfaceRole: 'state.error',

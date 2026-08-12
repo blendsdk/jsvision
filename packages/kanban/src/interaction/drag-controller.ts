@@ -23,6 +23,8 @@ const BEGIN_KEYS = new Set([
   'dragged',
   'originCardKey',
   'originPoint',
+  'grabOffset',
+  'sourceWidth',
   'sceneRevision',
   'geometryGeneration',
   'viewRevision',
@@ -40,6 +42,10 @@ export interface KanbanCardDragBegin {
   readonly originCardKey?: CardKey;
   /** Viewport-local point where the press began. */
   readonly originPoint: Readonly<Point>;
+  /** Pointer offset from the source card's framed top-left corner. */
+  readonly grabOffset?: Readonly<Point>;
+  /** Positive source width used by the compact ghost after the source leaves the viewport. */
+  readonly sourceWidth?: number;
   /** Scene revision that owns the source evidence. */
   readonly sceneRevision: KanbanRevision;
   /** Geometry generation used for target discovery. */
@@ -201,7 +207,13 @@ function initialOverlay(begin: KanbanCardDragBegin): KanbanDragOverlayEvidence {
   return Object.freeze({
     generation: begin.generation,
     geometryGeneration: begin.geometryGeneration,
-    ghost: createKanbanDragGhostEvidence(begin.dragged, begin.originPoint, begin.originCardKey),
+    ghost: createKanbanDragGhostEvidence(
+      begin.dragged,
+      begin.originPoint,
+      begin.originCardKey,
+      begin.grabOffset,
+      begin.sourceWidth,
+    ),
     placeholders: placeholders(begin.dragged),
   });
 }
@@ -236,6 +248,17 @@ export class KanbanCardDragController {
       validateKanbanDataKeys(properties, BEGIN_KEYS);
       const currentGeneration = generation(properties.generation);
       const originPoint = point(properties.originPoint);
+      const grabOffset = properties.grabOffset === undefined ? undefined : point(properties.grabOffset);
+      const sourceWidth =
+        properties.sourceWidth === undefined
+          ? undefined
+          : typeof properties.sourceWidth === 'number' &&
+              Number.isSafeInteger(properties.sourceWidth) &&
+              properties.sourceWidth > 0
+            ? properties.sourceWidth
+            : (() => {
+                throw new RangeError('Invalid Kanban drag source width.');
+              })();
       const dragged = draggedCards(properties.dragged);
       const sceneRevision = snapshotKanbanRevision(properties.sceneRevision);
       const geometryGeneration = generation(properties.geometryGeneration);
@@ -258,6 +281,8 @@ export class KanbanCardDragController {
         capture,
         dragged,
         originPoint,
+        ...(grabOffset === undefined ? {} : { grabOffset }),
+        ...(sourceWidth === undefined ? {} : { sourceWidth }),
         sceneRevision,
         geometryGeneration,
         ...(originCardKey === undefined ? {} : { originCardKey }),

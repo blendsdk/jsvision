@@ -207,6 +207,8 @@ function boardState(
 interface KanbanInteractionReconcileEvidence {
   /** Source and query generation owning the scene. */
   readonly revisions: KanbanInteractionRevisions;
+  /** Whether search or field filters narrow this query generation. */
+  readonly queryFiltered: boolean;
   /** Structure policy revision controlling grouping, collapse, and visibility. */
   readonly structureRevision: KanbanRevision;
   /** Exact assigned geometry and responsive-mode revision used for resize reconciliation. */
@@ -247,6 +249,7 @@ export class KanbanBoard<TCard> extends Group {
   #disposeBindings: (() => void) | undefined;
   #disposeInteractionChrome: (() => void) | undefined;
   #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
+  #interactionReconcileGeneration = 0;
   #automaticReconcileReady: boolean;
   #disposed = false;
   #everMounted = false;
@@ -577,6 +580,7 @@ export class KanbanBoard<TCard> extends Group {
           ]);
     const current = Object.freeze({
       revisions,
+      queryFiltered: this.viewport.interactionQueryFiltered(),
       structureRevision,
       geometryRevision,
       deletionFingerprint,
@@ -602,6 +606,9 @@ export class KanbanBoard<TCard> extends Group {
     if (this.#interactionFacade.snapshot().pendingNavigation !== undefined) return;
     this.#interactionReconcileEvidence = current;
     if (!queryChanged && !structureChanged && !sourceChanged && !geometryChanged && !deletionsChanged) return;
+    if (queryChanged && previous.queryFiltered && !current.queryFiltered && !structureChanged && !deletionsChanged) {
+      return;
+    }
     const changes = deletionsChanged ? (identityChanges?.changes ?? []) : [];
     const deletedCardKeys = changes.flatMap((change) => (change.kind === 'deleted-card' ? [change.cardKey] : []));
     const deletedColumnIds = changes.flatMap((change) => (change.kind === 'deleted-column' ? [change.columnId] : []));
@@ -617,12 +624,17 @@ export class KanbanBoard<TCard> extends Group {
           : sourceChanged
             ? 'source-publication'
             : 'geometry';
-    void this.#interactionFacade.transition({
-      kind: 'reconcile',
+    const command = Object.freeze({
+      kind: 'reconcile' as const,
       reason,
       ...(deletedCardKeys.length === 0 ? {} : { deletedCardKeys }),
       ...(deletedColumnIds.length === 0 ? {} : { deletedColumnIds }),
       ...(deletedSwimlaneIds.length === 0 ? {} : { deletedSwimlaneIds }),
+    });
+    const reconciliationGeneration = ++this.#interactionReconcileGeneration;
+    void Promise.resolve().then(async () => {
+      if (this.#disposed || this.#interactionReconcileGeneration !== reconciliationGeneration) return;
+      await this.#interactionFacade.transition(command);
     });
   }
 

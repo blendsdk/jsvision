@@ -97,7 +97,13 @@ function drag(eligibility: KanbanDragOverlayEvidence['gap'] extends infer _T ? '
   return Object.freeze({
     generation: 7,
     geometryGeneration: 3,
-    ghost: Object.freeze({ cardKey: 1, point: Object.freeze({ x: 37, y: 10 }), count: 1 }),
+    ghost: Object.freeze({
+      cardKey: 1,
+      point: Object.freeze({ x: 37, y: 10 }),
+      grabOffset: Object.freeze({ x: 3, y: 1 }),
+      width: 18,
+      count: 1,
+    }),
     placeholders: Object.freeze([
       Object.freeze({ address: Object.freeze({ columnId: 'ready' }), cardKeys: Object.freeze([1]) }),
     ]),
@@ -163,14 +169,14 @@ describe('drag overlay composition', () => {
     expect(source.cards[0]?.rect).toEqual({ x: 1, y: 3, width: 18, height: 4 });
   });
 
-  // A lifted card follows the pointer continuously; resident-card overlap must not teleport it elsewhere.
-  it('should keep the ghost at one stable pointer offset while it remains inside viewport bounds', () => {
+  // A lifted card keeps the exact source-relative grab point; resident overlap must not teleport it elsewhere.
+  it('should keep the ghost at the captured pointer-relative grab offset inside viewport bounds', () => {
     const evidence = drag();
     const result = compose({
       drag: { ...evidence, ghost: { ...evidence.ghost, point: { x: 10, y: 5 } } },
     });
 
-    expect(result.overlay.ghost?.rect).toEqual({ x: 11, y: 1, width: 18, height: 3 });
+    expect(result.overlay.ghost?.rect).toEqual({ x: 7, y: 4, width: 18, height: 3 });
   });
 
   it('should replace the drag in the same tick with one source-ordered pending block', () => {

@@ -22,6 +22,7 @@ interface HostEvidence {
 interface SemanticTraceResult {
   readonly evidence: HostEvidence;
   readonly semantic: {
+    readonly observedSteps: readonly string[];
     readonly thresholdCrossed: boolean;
     readonly targetChanges: readonly string[];
     readonly autoscroll: readonly string[];
@@ -96,6 +97,16 @@ describe('Phase C semantic host parity', () => {
     expect(semantics(browser)).toEqual(semantics(direct));
     expect(semantics(direct)).toEqual({
       thresholdCrossed: true,
+      observedSteps: [
+        'mixed-height',
+        'click',
+        'wheel',
+        'grab',
+        'pointer-moves',
+        'gap-transition',
+        'drop',
+        'post-drop-redraw',
+      ],
       targetChanges: ['allowed:doing/alpha'],
       autoscroll: ['right:slow'],
       cancellations: ['focus-lost'],
@@ -144,4 +155,13 @@ describe('Phase C semantic host parity', () => {
       expect(semantics(native)).toEqual(semantics(direct));
     },
   );
+
+  it('reports the platform-opposite native transport as unavailable', async () => {
+    const api = traceApi();
+    const unavailable: Transport = process.platform === 'win32' ? 'unix-pty' : 'windows-conpty';
+
+    await expect(
+      api.replayKanbanSemanticPointerTrace(api.createKanbanStandardPointerTrace(), { transport: unavailable }),
+    ).rejects.toThrow('unavailable');
+  });
 });

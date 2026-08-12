@@ -40,6 +40,8 @@ export function createKanbanDragGhostEvidence(
   dragged: readonly KanbanMovedCardSnapshot[],
   point: Readonly<Point>,
   originCardKey?: string | number,
+  grabOffset: Readonly<Point> = Object.freeze({ x: 0, y: 0 }),
+  width = 12,
 ): KanbanDragGhostEvidence {
   const origin = dragged[0];
   if (origin === undefined) throw new RangeError('A Kanban drag ghost requires at least one card.');
@@ -48,6 +50,8 @@ export function createKanbanDragGhostEvidence(
   return Object.freeze({
     cardKey: ghost.cardKey,
     point: Object.freeze({ x: point.x, y: point.y }),
+    grabOffset: Object.freeze({ x: grabOffset.x, y: grabOffset.y }),
+    width,
     count: dragged.length,
   });
 }

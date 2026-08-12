@@ -305,6 +305,22 @@ interface KanbanDragFrameSnapshot {
   transientOverlayMembers: number;   // Card and structural drag overlay members retained in the current frame.
   operationOverlays: number;   // Pending and terminal operation overlays retained in the current frame.
   damageRegions: number;   // Damage rectangles produced by the most recent frame projection.
+  ghost?: Readonly<{
+    /** Number of cards represented atomically. */
+    readonly count: number;
+    /** Fixed number of rows between the compact ghost frame borders. */
+    readonly contentRows: 1;
+    /** Complete pointer-relative origin before viewport clipping. */
+    readonly rawOrigin: Readonly<Point>;
+    /** Exact clipped rectangle emitted by the current viewport frame. */
+    readonly visibleRect: Readonly<Rect>;
+  }>;   // Current compact card ghost geometry, when a visible drag ghost exists.
+  gap?: Readonly<{
+    /** Stable target slot identity. */
+    readonly slotId: string;
+    /** Exact clipped one-row insertion marker. */
+    readonly rect: Readonly<Rect>;
+  }>;   // Current semantic insertion-gap geometry, when a visible target exists.
 }
 ```
 
@@ -314,7 +330,7 @@ Detached decoded input retained by the deterministic drag harness.
 
 ```ts
 interface KanbanDragHarness {
-  accept(event: unknown): void;   // Appends one sanitized mouse or focus event and ignores payload-bearing input.
+  accept(event: unknown): void;   // Appends one sanitized mouse, wheel, or focus event and ignores payload-bearing input.
   events(): readonly KanbanDragHarnessEvent[];   // Returns a frozen copy of accepted payload-free events.
   dispose(): void;   // Clears all retained events.
 }
@@ -325,7 +341,7 @@ interface KanbanDragHarness {
 Payload-free input kinds retained by the public host harness.
 
 ```ts
-type KanbanDragHarnessEvent = MouseEvent | FocusEvent
+type KanbanDragHarnessEvent = MouseEvent | FocusEvent | WheelEvent
 ```
 
 ## KanbanDropCardInput
@@ -747,6 +763,10 @@ Payload-free semantic result shared by every supported host adapter.
 interface KanbanSemanticPointerResult {
   evidence: KanbanSemanticHostEvidence;   // Host evidence kept separate from semantic equality.
   semantic: {
+    /** Host-observed interaction milestones covered by the standard trace. */
+    readonly observedSteps: readonly (
+      'mixed-height' | 'click' | 'wheel' | 'grab' | 'pointer-moves' | 'gap-transition' | 'drop' | 'post-drop-redraw'
+    )[];
     readonly thresholdCrossed: boolean;
     readonly targetChanges: readonly string[];
     readonly autoscroll: readonly string[];

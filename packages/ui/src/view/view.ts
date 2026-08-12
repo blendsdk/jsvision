@@ -29,6 +29,13 @@ export interface ViewHost {
   /** Mark the tree as needing a reflow and schedule a frame. */
   markRelayout(): void;
   /**
+   * Run externally scheduled view work inside the host's synchronous frame boundary when available.
+   * A standalone render root executes the callback directly.
+   *
+   * @internal
+   */
+  runTask?(work: () => void): void;
+  /**
    * Re-home focus after `group` lost its currently-focused child to removal. Optional: wired only
    * when an event loop is attached (it owns the focus manager). A standalone render root leaves it
    * unset, so `Group.remove` just clears its focus pointer.

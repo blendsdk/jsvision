@@ -149,6 +149,38 @@ function slotIdentity(target: KanbanCellAddress, position: KanbanMovePosition): 
   return JSON.stringify([target.columnId, target.swimlaneId ?? null, ...placement]);
 }
 
+/** Returns whether visible authoritative order exactly satisfies an accepted move placement. */
+function acceptedMoveIsPublished(
+  semantic: Extract<NonNullable<KanbanOperationSnapshot['projection']>, { readonly kind: 'card-move' }>,
+  targetCards: KanbanVisibleCellIndex | undefined,
+): boolean {
+  const cards = targetCards?.cards ?? [];
+  const moved = semantic.cardKeys.map(cardIdentity);
+  const movedSet = new Set(moved);
+  const first = cards.findIndex((card) => movedSet.has(cardIdentity(card.descriptor.cardKey)));
+  if (first < 0 || first + moved.length > cards.length) return false;
+  const actual = cards.slice(first, first + moved.length).map((card) => cardIdentity(card.descriptor.cardKey));
+  if (actual.some((identity, index) => identity !== moved[index])) return false;
+  if (cards.filter((card) => movedSet.has(cardIdentity(card.descriptor.cardKey))).length !== moved.length) return false;
+  const firstLogicalIndex = cards[first]?.index;
+  if (semantic.position.kind === 'start') return firstLogicalIndex === 0;
+  // A visible window does not carry proof that its final resident card is the logical cell end.
+  if (semantic.position.kind === 'end') return false;
+  if (semantic.position.kind === 'window-edge') return false;
+  const before = cards[first - 1]?.descriptor.cardKey ?? null;
+  const after = cards[first + moved.length]?.descriptor.cardKey ?? null;
+  const beforeMatches =
+    semantic.position.beforeCardKey === null
+      ? firstLogicalIndex === 0
+      : typeof before === typeof semantic.position.beforeCardKey && before === semantic.position.beforeCardKey;
+  // A null successor denotes logical end, which a bounded visible window cannot prove.
+  const afterMatches =
+    semantic.position.afterCardKey !== null &&
+    typeof after === typeof semantic.position.afterCardKey &&
+    after === semantic.position.afterCardKey;
+  return beforeMatches && afterMatches;
+}
+
 /** Selects a fixed package-owned localization key for one terminal outcome. */
 function feedbackKey(state: 'rejected' | 'cancelled' | 'superseded'): string {
   return state === 'rejected'
@@ -208,6 +240,14 @@ export function projectKanbanOperations(
   let columnLookups = 0;
 
   for (const operation of operations) {
+    const semantic = operation.projection;
+    const acceptedMovePublished =
+      operation.state === 'accepted' &&
+      semantic?.kind === 'card-move' &&
+      acceptedMoveIsPublished(semantic, cardsByCell.get(cellIdentity(semantic.target)));
+    // Once authoritative data contains every moved identity in the destination, rendering another
+    // pending block would hide the real cards for one frame and make immediate follow-up input inert.
+    if (acceptedMovePublished) continue;
     for (const affected of operation.affected) {
       if (affected.kind === 'card') blockedCardKeys.add(cardIdentity(affected.cardKey));
       else if (affected.kind === 'column') blockedColumnIds.add(affected.columnId);

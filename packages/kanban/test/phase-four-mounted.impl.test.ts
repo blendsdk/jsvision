@@ -4,6 +4,7 @@ import type { Application } from '@jsvision/ui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource, createKanbanOperationId } from '../src/index.js';
+import { inspectKanbanDragFrame } from '../src/testing.js';
 import type {
   KanbanCardAdapter,
   KanbanEligibility,
@@ -155,7 +156,7 @@ function frameText(application: Application): string {
 }
 
 describe('mounted card-drag authority integration', () => {
-  it('moves a recognizable ghost with current pointer reports while keeping the destination readable', () => {
+  it('moves the ghost with current pointer reports while retaining the semantic destination', () => {
     const { application, board } = mountedBoard(
       (request) => ({ kind: 'accepted', operationId: request.operationId }),
       () => ({ kind: 'allowed' }),
@@ -169,15 +170,14 @@ describe('mounted card-drag authority integration', () => {
     application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
     application.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, ...threshold });
     application.loop.renderRoot.flush();
-    const first = frameText(application);
-    const firstCue = first.indexOf('Move me');
-    expect(firstCue).toBeGreaterThanOrEqual(0);
+    const firstGhost = inspectKanbanDragFrame(board.viewport).ghost;
+    expect(firstGhost).toBeDefined();
 
     application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...target });
     application.loop.renderRoot.flush();
-    const moved = frameText(application);
-    expect(moved.indexOf('Move me')).not.toBe(firstCue);
-    expect(moved).toContain('Destination…');
+    const movedGhost = inspectKanbanDragFrame(board.viewport).ghost;
+    expect(movedGhost?.rawOrigin).not.toEqual(firstGhost?.rawOrigin);
+    expect(board.inspection().visibleCards.some(({ cardKey }) => cardKey === 2)).toBe(true);
   });
 
   it('hands a released ghost to mounted pending and rejected feedback without an idle source frame', async () => {

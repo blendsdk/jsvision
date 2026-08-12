@@ -29,7 +29,7 @@ export const kanbanPl = createKanbanTranslationCatalog('pl', {
 /** Official reviewed Polish Phase C Kanban overlay. */
 export const kanbanPhaseCPl = createKanbanPhaseCTranslationCatalog('pl', {
   'kanban.drag.card': 'Przenoszenie karty',
-  'kanban.drag.cards': 'Przenoszenie ${count} kart',
+  'kanban.drag.cards': '${count} kart',
   'kanban.drop.allowed': 'Przenieś tutaj',
   'kanban.drop.warning': 'Przenieś z ostrzeżeniem',
   'kanban.drop.blocked': 'Przenoszenie zablokowane',

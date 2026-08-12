@@ -89,6 +89,11 @@ export interface RenderRootOptions {
    * `flush()` instead.
    */
   schedule?: (flush: () => void) => void;
+  /**
+   * @internal Runs timer-owned view work inside the attached event loop's synchronous paint boundary.
+   * Standalone render roots omit this seam and execute such work directly through their view host.
+   */
+  runTask?: (work: () => void) => void;
   /** Where a widget's `draw()` errors are logged; defaults to a disabled logger (silent). */
   logger?: Logger;
   /**

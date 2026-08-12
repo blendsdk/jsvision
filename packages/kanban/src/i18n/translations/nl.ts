@@ -55,7 +55,7 @@ export const kanbanPhaseBNl = createKanbanPhaseBTranslationCatalog('nl', {
 /** Official reviewed Dutch Phase C Kanban overlay. */
 export const kanbanPhaseCNl = createKanbanPhaseCTranslationCatalog('nl', {
   'kanban.drag.card': 'Kaart verplaatsen',
-  'kanban.drag.cards': '${count} kaarten verplaatsen',
+  'kanban.drag.cards': '${count} kaarten',
   'kanban.drop.allowed': 'Hierheen verplaatsen',
   'kanban.drop.warning': 'Verplaatsen met waarschuwing',
   'kanban.drop.blocked': 'Verplaatsing geblokkeerd',

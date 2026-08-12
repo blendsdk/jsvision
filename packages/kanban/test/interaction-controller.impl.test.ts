@@ -223,6 +223,34 @@ describe('default interaction controller lifecycle', () => {
 });
 
 describe('interaction facade transition serialization', () => {
+  it('publishes a synchronous accepted transition before accept returns', () => {
+    let current = KANBAN_NEUTRAL_INTERACTION_SNAPSHOT;
+    const changed: KanbanInteractionSnapshot = Object.freeze({
+      revision: 1,
+      focused: Object.freeze({ kind: 'column-header', columnId: 'ready' }),
+      selectedCardKeys: Object.freeze([]),
+    });
+    const controller: KanbanInteractionController = {
+      snapshot: () => current,
+      transition: () => {
+        current = changed;
+        return Object.freeze({ kind: 'changed', snapshot: changed });
+      },
+      subscribe: () => () => undefined,
+      dispose: () => undefined,
+    };
+    const facade = new KanbanInteractionFacadeOwner({
+      snapshotEligibleSelection: () =>
+        Object.freeze({ entries: Object.freeze([]), sessionRevision: 0, queryGeneration: 0 }),
+      invalidate: () => undefined,
+    });
+    facade.attach(controller);
+
+    expect(facade.accept({ kind: 'navigate', direction: 'down' })).toBe(true);
+    expect(facade.snapshot()).toEqual(changed);
+    facade.dispose();
+  });
+
   it('starts one owned transition at a time and publishes each validated settlement in order', async () => {
     const first = deferred<KanbanInteractionResult>();
     const second = deferred<KanbanInteractionResult>();

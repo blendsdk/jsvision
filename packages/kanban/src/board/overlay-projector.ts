@@ -56,6 +56,8 @@ export interface KanbanProjectedDragGhost {
   readonly count: number;
   /** Current viewport-local pointer anchor retained for exact frame damage. */
   readonly anchor: Readonly<{ x: number; y: number }>;
+  /** Unclipped top-left origin derived from the pointer and captured grab offset. */
+  readonly rawOrigin?: Readonly<{ x: number; y: number }>;
   /** Fixed identity/count label safe for inspection. */
   readonly label: string;
   /** Bounded safe resident title cue, absent for identity fallback. */
@@ -442,11 +444,14 @@ function safeGhostCue(value: string): string | undefined {
 
 /** Reads one bounded descriptor section without retaining the descriptor itself in overlay state. */
 function descriptorCue(card: KanbanProjectedCard | undefined, section: 'title' | 'status'): string | undefined {
+  if (section === 'title' && card?.descriptor.dragTitle !== undefined) {
+    return safeGhostCue(card.descriptor.dragTitle);
+  }
   const row = card?.descriptor.rows.find((candidate) => candidate.section === section);
   return row === undefined ? undefined : safeGhostCue(row.spans.map(({ text }) => text).join(' '));
 }
 
-/** Creates one viewport-bounded ghost that follows the pointer at a stable one-cell offset. */
+/** Creates one clipped ghost that keeps the pointer at its exact source-relative grab position. */
 function projectGhost(
   projection: KanbanViewportProjection,
   drag: KanbanDragOverlayEvidence,
@@ -455,17 +460,17 @@ function projectGhost(
   if (bounds.width < 1 || bounds.height < 1) return undefined;
   const ghostIdentity = cardIdentity(drag.ghost.cardKey);
   const origin = projection.cards.find((card) => cardIdentity(card.descriptor.cardKey) === ghostIdentity);
-  const width = Math.min(bounds.width, Math.max(3, Math.min(20, origin?.rect.width ?? 12)));
+  const width = Math.max(3, Math.min(20, drag.ghost.width ?? origin?.rect.width ?? 12));
   // One content row between the top and bottom frame is enough to identify either one title or an
   // atomic multi-card count. The ghost deliberately does not inherit the source card's full height.
-  const height = Math.min(bounds.height, 3);
-  const clampX = (x: number): number => Math.min(Math.max(bounds.x, x), bounds.x + bounds.width - width);
-  const clampY = (y: number): number => Math.min(Math.max(bounds.y, y), bounds.y + bounds.height - height);
-  // Avoidance scoring made the ghost teleport between cards and distant viewport edges as overlap
-  // scores changed. A lifted card may cover resident content briefly, just like a graphical Kanban;
-  // continuous pointer tracking is the more important interaction guarantee.
-  const placement = { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y - height - 1) };
-  const rect = clip({ ...placement, width, height }, bounds);
+  const height = 3;
+  // Keep the complete origin outside the viewport when necessary. Clamping would detach the frame
+  // from the pointer near an edge; clipping preserves both pointer fidelity and safe drawing.
+  const rawOrigin = Object.freeze({
+    x: drag.ghost.point.x - (drag.ghost.grabOffset?.x ?? 0),
+    y: drag.ghost.point.y - (drag.ghost.grabOffset?.y ?? 0),
+  });
+  const rect = clip({ ...rawOrigin, width, height }, bounds);
   if (rect === undefined) return undefined;
   const identity = typeof drag.ghost.cardKey === 'number' ? String(drag.ghost.cardKey) : drag.ghost.cardKey;
   const title = descriptorCue(origin, 'title');
@@ -473,6 +478,7 @@ function projectGhost(
     cardKey: drag.ghost.cardKey,
     count: drag.ghost.count,
     anchor: drag.ghost.point,
+    rawOrigin,
     label: drag.ghost.count === 1 ? `#${identity}` : `${drag.ghost.count} cards`,
     ...(title === undefined ? {} : { title }),
     rect,
