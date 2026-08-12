@@ -258,8 +258,9 @@ viewport-scale tests. No third review was run.
       drag evidence, publish a current-bounds noninteractive non-overlapping fallback, damage and observe it
       once, and retry only after a new external invalidation or revision—never through a self-invalidating loop.
       ✅ (completed: 2026-08-12 17:34)
-- [ ] 2.1.4 Keep sparse index storage, source-range resolution, and correction work bounded by resident
-      descriptors plus configured overscan; never enumerate an unknown or 100,000-card logical cell.
+- [x] 2.1.4 Keep sparse index storage, source-range resolution, and correction work bounded by resident
+      descriptors plus configured overscan; never enumerate an unknown or 100,000-card logical cell. ✅
+      (completed: 2026-08-12 17:35)
 - [ ] 2.1.5 Preserve vertical card identity and relative row across wheel, resize, source publication, and
       measured-height correction without allowing a stale anchor to reorder the stack.
 - [ ] 2.1.6 Align clipping, content extent, hit maps, drop maps, and drag source/target geometry to the one
