@@ -58,6 +58,8 @@ export interface KanbanViewportDragControllerOptions<TCard> {
   readonly invalidate: () => void;
   /** Runs timer-owned drag work inside the mounted host's synchronous paint boundary. */
   readonly runTick: (work: () => void) => void;
+  /** Optional testing-only sink for one bounded drag-target recomputation. */
+  readonly inspectTargets?: (dropRegions: number) => void;
 }
 
 /** Compares application card identities without numeric/string coercion. */
@@ -485,6 +487,7 @@ export class KanbanViewportDragController<TCard> {
     const activeIndicator =
       this.#target === undefined ? undefined : projectKanbanDropIndicatorRect(this.#target, current.geometry);
     const targets = dropMap(current, this.#target, activeIndicator);
+    this.#options.inspectTargets?.(targets.targets.length);
     const owningCell = current.geometry.cells.find(
       (cell) =>
         point.x >= cell.x && point.y >= cell.y && point.x < cell.x + cell.width && point.y < cell.y + cell.height,

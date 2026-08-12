@@ -7,6 +7,7 @@
 export * from './testing/cursor-harness.js';
 export * from './testing/descriptor-cache-harness.js';
 export * from './testing/eager-fixture.js';
+export * from './testing/frame-host-fixture.js';
 export * from './testing/instrumentation.js';
 export * from './testing/query-harness.js';
 export * from './testing/stabilization-fixture.js';
@@ -61,13 +62,16 @@ export type {
 export type { KanbanCardDropMap, KanbanCardDropTarget, KanbanCardDropTargetKind } from './interaction/drag-types.js';
 export {
   observeKanbanViewportOperations,
+  invalidateKanbanViewportProjectionForTesting,
   setKanbanViewportProjectionPassLimitForTesting,
   readKanbanDragFrameSnapshot as inspectKanbanDragFrame,
   readKanbanViewportOperationSnapshot as inspectKanbanViewportOperations,
   readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,
   type KanbanDragFrameSnapshot,
+  type KanbanViewportOperationDeltaSnapshot,
   type KanbanViewportOperationSnapshot,
   type KanbanViewportOperationObserver,
+  type KanbanViewportOperationWorkSnapshot,
   type KanbanViewportProjectionPassSnapshot,
   type KanbanViewportScaleSnapshot,
 } from './board/viewport-scale-inspection.js';

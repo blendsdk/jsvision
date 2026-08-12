@@ -4,7 +4,6 @@
  * Every pointer sample is inspected immediately after `dispatch()` returns. No explicit render flush,
  * promise, timer, source settlement, or later input may be required to make its visual result observable.
  */
-import { serialize } from '@jsvision/core';
 import type { ScreenBuffer } from '@jsvision/core';
 import { createApplication, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
@@ -14,8 +13,10 @@ import { KanbanBoard, createEagerKanbanDataSource, createStandardKanbanCardAdapt
 import type { KanbanQuery, KanbanRequest } from '../src/index.js';
 import {
   createKanbanStabilizationFixture,
+  createKanbanFrameHostFixture,
   inspectKanbanDragFrame,
   inspectKanbanViewportScale,
+  observeKanbanViewportOperations,
   type KanbanStabilizationCard,
 } from '../src/testing.js';
 
@@ -109,26 +110,6 @@ function mountedDragFixture(): {
   };
   application.loop.renderRoot.flush();
   return Object.freeze({ application, board, cards, frames: mutableFrames, buffers: mutableBuffers, dispatches });
-}
-
-/** Counts changed cells and contiguous row runs between two real terminal buffers. */
-function frameDiff(previous: ScreenBuffer, current: ScreenBuffer): { readonly cells: number; readonly runs: number } {
-  let cells = 0;
-  let runs = 0;
-  const previousRows = previous.rows();
-  const currentRows = current.rows();
-  for (let y = 0; y < current.height; y += 1) {
-    let inRun = false;
-    for (let x = 0; x < current.width; x += 1) {
-      const changed = JSON.stringify(previousRows[y]?.[x]) !== JSON.stringify(currentRows[y]?.[x]);
-      if (changed) {
-        cells += 1;
-        if (!inRun) runs += 1;
-      }
-      inRun = changed;
-    }
-  }
-  return Object.freeze({ cells, runs });
 }
 
 /** Finds one visible whole-card target or fails with a useful fixture message. */
@@ -323,17 +304,68 @@ describe('mounted dispatch-return drag feedback', () => {
     application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...sample });
     const after = buffers.at(-1);
     if (after === undefined || after === before) throw new Error('Expected a post-move terminal buffer.');
-    const diff = frameDiff(before, after);
-    const output = serialize(after, before, { caps: CAPS });
+    const host = createKanbanFrameHostFixture(CAPS);
+    const diff = host.capture('pointer-frame-1', before, after);
     const scale = inspectKanbanViewportScale(board.viewport);
 
     expect(scale.projectedCards).toBe(board.inspection().visibleCards.length);
     expect(scale.projectedCards).toBeLessThan(84);
-    expect(diff.cells).toBeGreaterThan(0);
-    expect(diff.cells).toBeLessThan(before.width * before.height);
-    expect(diff.runs).toBeGreaterThan(0);
-    expect(diff.runs).toBeLessThanOrEqual(diff.cells);
-    expect(new TextEncoder().encode(output).byteLength).toBeGreaterThan(0);
+    expect(diff.operationId).toBe('pointer-frame-1');
+    expect(diff.renderRoot.changedCells).toBeGreaterThan(0);
+    expect(diff.renderRoot.changedCells).toBeLessThan(before.width * before.height);
+    expect(diff.renderRoot.changedRuns).toBeGreaterThan(0);
+    expect(diff.renderRoot.changedRuns).toBeLessThanOrEqual(diff.renderRoot.changedCells);
+    expect(diff.renderRoot.utf8Bytes).toBeGreaterThan(0);
+    expect(diff.host).toEqual(diff.renderRoot);
+    host.dispose();
+  });
+
+  it('should keep 84-card click, wheel, and captured target work proportional to visible residents', () => {
+    const { application, board } = mountedDragFixture();
+    const fixture = createKanbanStabilizationFixture();
+    const scale = inspectKanbanViewportScale(board.viewport);
+    const visible = scale.projectedCards;
+    const residentBudget = scale.retainedDescriptors;
+    const source = cardTarget(board, fixture.named.short);
+    const point = eventPoint(application, board, source.x + 2, source.y + 1);
+
+    const click = observeKanbanViewportOperations(board.viewport, 'click-84');
+    application.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...point });
+    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...point });
+    const clickWork = click.snapshot();
+    click.dispose();
+
+    beginDrag(application, board, fixture.named.short);
+    const pointer = observeKanbanViewportOperations(board.viewport, 'pointer-84');
+    const destination = eventPoint(application, board, source.x + 8, source.y + 3);
+    application.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...destination });
+    const pointerWork = pointer.snapshot();
+    pointer.dispose();
+    application.loop.dispatch({ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false });
+
+    const wheel = observeKanbanViewportOperations(board.viewport, 'wheel-84');
+    application.loop.dispatch({ type: 'wheel', dir: 'down', shift: false, alt: false, ctrl: false, ...point });
+    const wheelWork = wheel.snapshot();
+    wheel.dispose();
+
+    expect([clickWork.operationId, wheelWork.operationId, pointerWork.operationId]).toEqual([
+      'click-84',
+      'wheel-84',
+      'pointer-84',
+    ]);
+    for (const observed of [clickWork.work, wheelWork.work, pointerWork.work]) {
+      expect(observed.residentDescriptors).toBeLessThanOrEqual(residentBudget * 4);
+      expect(observed.residentGroupingVisits).toBe(observed.residentDescriptors);
+      expect(observed.heightMeasurements).toBeLessThanOrEqual(residentBudget * 4);
+      expect(observed.hitRegions).toBeLessThanOrEqual(residentBudget * 8);
+      expect(observed.drawnCards).toBeLessThanOrEqual(visible * 4);
+      expect(observed.drawnCardRows).toBeLessThan(80 * 24 * 4);
+      expect(observed.semanticDamageCells).toBeLessThanOrEqual(80 * 24 * 4);
+    }
+    expect(pointerWork.work.dragTargetRecomputations).toBeGreaterThan(0);
+    expect(pointerWork.work.dragTargetRecomputations).toBeLessThanOrEqual(2);
+    expect(pointerWork.work.dropRegions).toBeGreaterThan(0);
+    expect(pointerWork.work.dropRegions).toBeLessThanOrEqual(residentBudget * 4);
   });
 
   it('should publish mounted autoscroll geometry before an injected timer tick returns', () => {

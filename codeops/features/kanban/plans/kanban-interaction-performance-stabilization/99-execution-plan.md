@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 19:39 CEST
-> **Progress**: 24/46 tasks (52%)
+> **Last Updated**: 2026-08-12 20:00 CEST
+> **Progress**: 31/46 tasks (67%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -360,7 +360,7 @@ are covered by focused tests and are included in the final package re-run before
 
 ### Step 4.1: Deterministic bounds
 
-- [ ] 4.1.1 Preserve the existing exported `KanbanViewportScaleSnapshot` shape. Add a separate additive
+- [x] 4.1.1 Preserve the existing exported `KanbanViewportScaleSnapshot` shape. Add a separate additive
       testing-only viewport operation/work-delta snapshot for resident descriptors, height measurements,
       projection passes, hit/drop regions, semantic damage cells, bounded draw work, and drag-target
       recomputations; retain source reads/ranges in `windowed-fixture`; and collect changed cells/runs/bytes
@@ -369,30 +369,55 @@ are covered by focused tests and are included in the final package re-run before
       and make no Core/UI production instrumentation or public API change. Define operation deltas from
       monotonic before/after counters, correlate the evidence by fixture operation ID, distinguish composed
       changed cells, serialized runs, and UTF-8 output bytes, and unregister the additional reader on disposal.
-- [ ] 4.1.2 Assert steady click, wheel, pointer move, and drag-target changes are proportional to visible
-      descriptors plus finite overscan for the 84-card reproduction fixture.
-- [ ] 4.1.3 Re-run the existing 5,000 eager-card and 100,000 logical-card fixtures with variable heights and
-      prove no visible operation performs a full logical-card scan.
-- [ ] 4.1.4 Add an explicit regression guard against accidental per-cell repeated filtering of the full
-      visible projection where an indexed resident grouping can be reused.
+      Completed: 2026-08-12 20:00 CEST.
+- [x] 4.1.2 Assert steady click, wheel, pointer move, and drag-target changes are proportional to visible
+      descriptors plus finite overscan for the 84-card reproduction fixture. Completed: 2026-08-12 20:00 CEST.
+- [x] 4.1.3 Re-run the existing 5,000 eager-card and 100,000 logical-card fixtures with variable heights and
+      prove no visible operation performs a full logical-card scan. Completed: 2026-08-12 20:00 CEST.
+- [x] 4.1.4 Add an explicit regression guard against accidental per-cell repeated filtering of the full
+      visible projection where an indexed resident grouping can be reused. Completed: 2026-08-12 20:00 CEST.
 
 ### Step 4.2: Controlled timing
 
-- [ ] 4.2.1 Add `packages/kanban/test/perf-kanban-bench.spec.test.ts`, a deliberate Kanban performance
+- [x] 4.2.1 Add `packages/kanban/test/perf-kanban-bench.spec.test.ts`, a deliberate Kanban performance
       test that builds the deterministic 80×24 mixed-height
       fixture outside timed regions, discards 20 warmups, records 200 samples, consumes output through a
       fake sink, and reports CPU/runtime/date, source mode, visible counts, descriptor mix, capabilities,
-      terminal harness, and iteration metadata.
-- [ ] 4.2.2 Measure two layers separately: steady invalidation through Kanban projection/draw, and one
+      terminal harness, and iteration metadata. Completed: 2026-08-12 20:00 CEST.
+- [x] 4.2.2 Measure two layers separately: steady invalidation through Kanban projection/draw, and one
       normalized captured pointer sample through synchronous EventLoop dispatch, overlay projection,
       `RenderRoot` compose/diff, and the in-memory host diff. Exclude terminal I/O. Assert each local median
       at or below 16 ms and report each p95 against 33 ms without enforcing machine timing in shared CI.
-- [ ] 4.2.3 Register the Kanban benchmark in `scripts/check-performance.mjs`, update
+      Completed: 2026-08-12 20:00 CEST.
+- [x] 4.2.3 Register the Kanban benchmark in `scripts/check-performance.mjs`, update
       `packages/examples/test/perf-gate.spec.test.ts` to assert its exact package/path/serial inventory, run
       that contract test, and run
       `yarn workspace @jsvision/kanban test test/perf-kanban-bench.spec.test.ts --maxWorkers=1`. Register the
       exact tuple `['workspace', '@jsvision/kanban', 'test', 'test/perf-kanban-bench.spec.test.ts',
-      '--maxWorkers=1']`.
+      '--maxWorkers=1']`. Completed: 2026-08-12 20:00 CEST.
+
+### Phase 4 quality review remediation
+
+The independent correctness review and audit reported no Critical finding and identified six distinct Major
+gaps: reactive descriptor invalidation could be hidden by authoritative reuse; the initial timing layer measured
+reuse rather than projection; correlated observers could overlap; eager-source scans lacked independent evidence;
+resident-index counters underreported actual lookups and could not guard an uninstrumented repeated filter; and
+the original operation snapshot type had been extended incompatibly. Two Minor precision gaps covered mixed-height
+fixture drift and overlapping semantic-damage rectangles.
+
+Under `--auto-design`, all findings were accepted. Descriptor-content generation now invalidates reuse, the
+controlled benchmark explicitly invalidates only authoritative geometry and proves projector work, observations
+reject overlap, the eager fixture asserts zero steady adapter rescans, lookup counters increment at execution
+sites with a source-level repeated-filter guard, and correlated deltas use a separate additive snapshot type.
+The benchmark asserts a mixed descriptor set and semantic-damage evidence counts the clipped union of cells.
+The representative timing fixture uses zero optional overscan so the normative layer measures its 20 retained
+visible/boundary descriptors rather than prefetch policy; ordinary scale tests continue to prove finite overscan.
+
+**Required re-review:** PASS at 2026-08-12 20:20 CEST. Both independent reviewers confirmed every Major
+finding closed with no new Critical or Major issue. The controlled re-review measured authoritative projection
+at 12.92 ms median and pointer-to-second-host-diff at 10.88 ms median; the final local run measured 11.20 ms and
+9.67 ms respectively. All 763 Kanban tests, typecheck, plugin update/check, documentation checks, performance
+inventory contract, and `yarn verify:local` are green.
 
 ## Phase 5: Restore showcase quality
 

@@ -74,10 +74,42 @@ export interface KanbanViewportProjectionPassSnapshot {
   readonly estimatedRows: number;
 }
 
-/** Additive testing-only operation evidence kept separate from the stable scale snapshot. */
+/** Stable projection-pass evidence retained for source compatibility with existing testing consumers. */
 export interface KanbanViewportOperationSnapshot {
   /** Every projection attempt performed by the latest completed frame, in execution order. */
   readonly projectionPasses: readonly KanbanViewportProjectionPassSnapshot[];
+}
+
+/** Additive testing-only operation delta returned by an explicitly correlated observation. */
+export interface KanbanViewportOperationDeltaSnapshot extends KanbanViewportOperationSnapshot {
+  /** Caller-owned payload-free identity correlating this delta with one fixture action. */
+  readonly operationId: string;
+  /** Monotonic-counter deltas accumulated since this observation was enabled. */
+  readonly work: KanbanViewportOperationWorkSnapshot;
+}
+
+/** Payload-free work deltas for one explicitly observed mounted operation. */
+export interface KanbanViewportOperationWorkSnapshot {
+  /** Resident descriptors visited by projection passes. */
+  readonly residentDescriptors: number;
+  /** Exact resident descriptors inserted into the reusable cell index. */
+  readonly residentGroupingVisits: number;
+  /** Cell-index lookups used instead of repeated full-resident filtering. */
+  readonly residentCellLookups: number;
+  /** Resident card heights measured by the sparse height authority. */
+  readonly heightMeasurements: number;
+  /** Final hit regions produced by authoritative projection. */
+  readonly hitRegions: number;
+  /** Drop regions examined by captured drag-target recomputation. */
+  readonly dropRegions: number;
+  /** Cells covered by exact semantic damage rectangles. */
+  readonly semanticDamageCells: number;
+  /** Visible card leaves handed to the viewport renderer. */
+  readonly drawnCards: number;
+  /** Visible clipped card rows handed to the viewport renderer. */
+  readonly drawnCardRows: number;
+  /** Captured drag-target recomputations. */
+  readonly dragTargetRecomputations: number;
 }
 
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
@@ -89,25 +121,30 @@ const VIEWPORT_DRAG_FRAME_READERS = new WeakMap<object, () => KanbanDragFrameSna
 /** Testing-only controls that activate expensive operation evidence only while a test observes it. */
 export interface KanbanViewportOperationInspectionControl {
   /** Starts recording subsequent projection work for this viewport. */
-  readonly enable: () => void;
+  readonly enable: (operationId: string) => void;
   /** Stops recording and releases retained operation evidence. */
   readonly disable: () => void;
   /** Reads detached evidence accumulated since recording was enabled. */
-  readonly read: () => KanbanViewportOperationSnapshot;
+  readonly read: () => KanbanViewportOperationDeltaSnapshot;
   /** Overrides the production pass ceiling for deterministic containment tests. */
   readonly setProjectionPassLimit: (limit: number) => void;
+  /** Invalidates only reusable authoritative projection state for controlled timing tests. */
+  readonly invalidateProjection: () => void;
 }
 
 /** One explicitly active testing observation of mounted viewport operations. */
 export interface KanbanViewportOperationObserver {
   /** Reads detached evidence accumulated by this observation. */
-  readonly snapshot: () => KanbanViewportOperationSnapshot;
+  readonly snapshot: () => KanbanViewportOperationDeltaSnapshot;
   /** Stops the observation idempotently and releases retained evidence. */
   readonly dispose: () => void;
 }
 
 /** Mounted viewport instances mapped to opt-in operation-only testing controls. */
 const VIEWPORT_OPERATION_CONTROLS = new WeakMap<object, KanbanViewportOperationInspectionControl>();
+
+/** Viewports with one active correlated observation; overlapping baselines are rejected. */
+const ACTIVE_OPERATION_OBSERVATIONS = new WeakSet<object>();
 
 /**
  * Registers one live viewport's private counter reader for the testing-only entry point.
@@ -145,6 +182,7 @@ export function registerKanbanViewportOperationReader(
 /** Removes one disposed viewport from the additive operation registry. */
 export function unregisterKanbanViewportOperationReader(viewport: object): void {
   VIEWPORT_OPERATION_CONTROLS.delete(viewport);
+  ACTIVE_OPERATION_OBSERVATIONS.delete(viewport);
 }
 
 /**
@@ -193,7 +231,7 @@ export function readKanbanDragFrameSnapshot(viewport: object): KanbanDragFrameSn
 export function readKanbanViewportOperationSnapshot(viewport: object): KanbanViewportOperationSnapshot {
   const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
   if (control === undefined) throw new KanbanDisposedResourceError();
-  return control.read();
+  return Object.freeze({ projectionPasses: control.read().projectionPasses });
 }
 
 /**
@@ -210,10 +248,16 @@ export function readKanbanViewportOperationSnapshot(viewport: object): KanbanVie
  * observation.dispose();
  * ```
  */
-export function observeKanbanViewportOperations(viewport: object): KanbanViewportOperationObserver {
+export function observeKanbanViewportOperations(
+  viewport: object,
+  operationId = 'kanban-operation',
+): KanbanViewportOperationObserver {
   const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
   if (control === undefined) throw new KanbanDisposedResourceError();
-  control.enable();
+  if (!/^[a-z0-9][a-z0-9._:-]{0,127}$/u.test(operationId)) throw new RangeError('Invalid operation identity.');
+  if (ACTIVE_OPERATION_OBSERVATIONS.has(viewport)) throw new RangeError('An operation observation is already active.');
+  ACTIVE_OPERATION_OBSERVATIONS.add(viewport);
+  control.enable(operationId);
   let active = true;
   return Object.freeze({
     snapshot: () => {
@@ -224,6 +268,7 @@ export function observeKanbanViewportOperations(viewport: object): KanbanViewpor
       if (!active) return;
       active = false;
       control.disable();
+      ACTIVE_OPERATION_OBSERVATIONS.delete(viewport);
     },
   });
 }
@@ -246,4 +291,23 @@ export function setKanbanViewportProjectionPassLimitForTesting(viewport: object,
   const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
   if (control === undefined) throw new KanbanDisposedResourceError();
   control.setProjectionPassLimit(limit);
+}
+
+/**
+ * Invalidates reusable authoritative geometry without changing source, descriptor, or height state.
+ *
+ * This testing-only seam allows a controlled benchmark to measure projection and drawing without adding
+ * scroll, source mutation, or descriptor-rebuild work to the timed region.
+ *
+ * @example
+ * ```ts
+ * invalidateKanbanViewportProjectionForTesting(board.viewport);
+ * board.viewport.invalidate();
+ * render.flush();
+ * ```
+ */
+export function invalidateKanbanViewportProjectionForTesting(viewport: object): void {
+  const control = VIEWPORT_OPERATION_CONTROLS.get(viewport);
+  if (control === undefined) throw new KanbanDisposedResourceError();
+  control.invalidateProjection();
 }

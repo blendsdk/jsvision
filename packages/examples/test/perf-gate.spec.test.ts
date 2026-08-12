@@ -17,10 +17,13 @@ test('the serial performance command uses the cross-platform authoritative runne
   expect(runner).toContain("JSVISION_PERF_CHECK: '1'");
   expect(runner).toContain("const useShell = process.platform === 'win32'");
   expect(runner).toContain('shell: useShell');
-  expect(runner.match(/--maxWorkers=1/g)).toHaveLength(4);
+  expect(runner.match(/--maxWorkers=1/g)).toHaveLength(5);
   expect(runner).toContain('@jsvision/core');
   expect(runner).toContain('@jsvision/ui');
   expect(runner).toContain('@jsvision/datagrid');
+  expect(runner).toContain(
+    "['workspace', '@jsvision/kanban', 'test', 'test/perf-kanban-bench.spec.test.ts', '--maxWorkers=1']",
+  );
   expect(runner).toContain('@jsvision/code-editor');
   expect(runner).toContain('test/code-editor-architecture.spec.test.ts');
   expect(runner).toContain('src/quality.perf.test.ts');

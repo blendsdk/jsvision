@@ -196,6 +196,20 @@ export interface ProjectKanbanViewportOptions<TCard> {
   readonly cache: KanbanDescriptorCache;
   /** Optional already-redacted diagnostic sink. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Optional testing-only sink for payload-free resident projection work. */
+  readonly inspectWork?: (work: KanbanViewportProjectionWork) => void;
+}
+
+/** Payload-free resident grouping and hit-projection work from one authoritative pass. */
+export interface KanbanViewportProjectionWork {
+  /** Resident descriptors admitted by the bounded descriptor projector. */
+  readonly residentDescriptors: number;
+  /** Descriptors inserted once into the reusable semantic-cell index. */
+  readonly residentGroupingVisits: number;
+  /** Semantic-cell lookups used while building the canonical scene. */
+  readonly residentCellLookups: number;
+  /** Final bounded pointer hit regions. */
+  readonly hitRegions: number;
 }
 
 /** One descriptor plus its cursor identity before canonical scene construction. */
@@ -551,10 +565,16 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       requiredHeight,
       message: options.i18n.t('kanban.layout.minimum-size', { params: { width: 18, height: requiredHeight } }),
     });
+    options.inspectWork?.(
+      Object.freeze({ residentDescriptors: 0, residentGroupingVisits: 0, residentCellLookups: 0, hitRegions: 0 }),
+    );
     return stateOnly('minimum-size', minimum.message.text);
   }
   if (options.source.visibleColumns.length === 0) {
     options.cache.retain([]);
+    options.inspectWork?.(
+      Object.freeze({ residentDescriptors: 0, residentGroupingVisits: 0, residentCellLookups: 0, hitRegions: 0 }),
+    );
     return stateOnly('no-columns', stateLabel(options.i18n, 'no-columns'));
   }
 
@@ -562,14 +582,25 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
   const descriptorLimit = options.descriptorLimit ?? KANBAN_LIMITS.retainedDescriptors.safe;
   const projected = projectDescriptors(options, budget);
   options.cache.retain(projected.retainedKeys);
-  const residentsByCell = new Map<KanbanViewportSourceCell<TCard>, readonly ResidentDescriptor<TCard>[]>();
-  const omittedByCell = new Map(projected.omitted.map(({ cell, count }) => [cell, count] as const));
-  for (const cell of options.source.cells) {
-    residentsByCell.set(
-      cell,
-      projected.residents.filter((resident) => resident.cell === cell),
-    );
+  let residentGroupingVisits = 0;
+  let residentCellLookups = 0;
+  const mutableResidentsByCell = new Map<KanbanViewportSourceCell<TCard>, ResidentDescriptor<TCard>[]>();
+  for (const resident of projected.residents) {
+    residentGroupingVisits += 1;
+    residentCellLookups += 1;
+    const residents = mutableResidentsByCell.get(resident.cell) ?? [];
+    residents.push(resident);
+    mutableResidentsByCell.set(resident.cell, residents);
   }
+  const residentsByCell = new Map<KanbanViewportSourceCell<TCard>, readonly ResidentDescriptor<TCard>[]>(
+    [...mutableResidentsByCell].map(([cell, residents]) => [cell, Object.freeze(residents)] as const),
+  );
+  const omittedByCell = new Map(projected.omitted.map(({ cell, count }) => [cell, count] as const));
+  /** Reads one indexed cell bucket while recording the actual lookup operation. */
+  const residentsFor = (cell: KanbanViewportSourceCell<TCard>): readonly ResidentDescriptor<TCard>[] => {
+    residentCellLookups += 1;
+    return residentsByCell.get(cell) ?? [];
+  };
   const scene = buildKanbanScene({
     revision: JSON.stringify([
       options.source.publication.revision,
@@ -590,7 +621,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       address: cell.address,
       cursorRevision: cell.cursor.revision(),
       state: cell.cursor.state(),
-      cards: (residentsByCell.get(cell) ?? []).map(({ index, descriptor }) => ({
+      cards: residentsFor(cell).map(({ index, descriptor }) => ({
         cardKey: descriptor.cardKey,
         logicalIndex: index,
         entityRevision: descriptor.presentationRevision ?? cell.cursor.revision(),
@@ -680,7 +711,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
   const states: KanbanProjectedState[] = [];
   for (const cell of options.source.cells) {
     const state = cell.cursor.state();
-    const hasCards = (residentsByCell.get(cell)?.length ?? 0) > 0;
+    const hasCards = residentsFor(cell).length > 0;
     if (state.kind === 'ready' && hasCards) continue;
     const kind: KanbanProjectedState['kind'] =
       state.kind === 'error'
@@ -713,13 +744,22 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
       }),
     );
   }
+  const actionTargets = scopedActionTargets(options.source, geometry, states, hits.targets, descriptorLimit);
+  options.inspectWork?.(
+    Object.freeze({
+      residentDescriptors: projected.residents.length,
+      residentGroupingVisits,
+      residentCellLookups,
+      hitRegions: actionTargets.length,
+    }),
+  );
   return Object.freeze({
     scene,
     geometry,
     columns,
     cards,
     regions: sceneRegions(geometry),
-    actionTargets: scopedActionTargets(options.source, geometry, states, hits.targets, descriptorLimit),
+    actionTargets,
     states: Object.freeze(states),
   });
 }

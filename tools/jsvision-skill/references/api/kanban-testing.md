@@ -440,6 +440,41 @@ interface KanbanFakeClockHandle {
 }
 ```
 
+## KanbanFrameDiffSnapshot
+
+Exact changed-cell, contiguous-run, and encoded-byte evidence for one terminal diff.
+
+```ts
+interface KanbanFrameDiffSnapshot {
+  changedCells: number;   // Cells whose complete rendered value changed.
+  changedRuns: number;   // Contiguous changed runs across terminal rows.
+  utf8Bytes: number;   // UTF-8 bytes emitted by the real Core serializer.
+}
+```
+
+## KanbanFrameHostFixture
+
+Stateful in-memory host that serializes every accepted frame against its own prior buffer.
+
+```ts
+interface KanbanFrameHostFixture {
+  capture: (operationId: string, before: ScreenBuffer, after: ScreenBuffer) => KanbanFrameHostSnapshot;   // Captures one real before/after RenderRoot pair and advances the independent host buffer.
+  dispose: () => void;   // Releases the retained host buffer; later capture calls fail closed.
+}
+```
+
+## KanbanFrameHostSnapshot
+
+Correlated RenderRoot and stateful fake-host diff evidence for one fixture operation.
+
+```ts
+interface KanbanFrameHostSnapshot {
+  operationId: string;   // Caller-owned payload-free operation identity.
+  renderRoot: KanbanFrameDiffSnapshot;   // Diff from the caller's real before/after RenderRoot buffers.
+  host: KanbanFrameDiffSnapshot;   // Independent diff produced by the stateful in-memory host sink.
+}
+```
+
 ## KanbanKeyInput
 
 Normalized terminal key evidence accepted by the Phase B keyboard router.
@@ -876,24 +911,54 @@ interface KanbanUnknownDropEdgeInput {
 }
 ```
 
+## KanbanViewportOperationDeltaSnapshot
+
+Additive testing-only operation delta returned by an explicitly correlated observation.
+
+```ts
+interface KanbanViewportOperationDeltaSnapshot {
+  operationId: string;   // Caller-owned payload-free identity correlating this delta with one fixture action.
+  work: KanbanViewportOperationWorkSnapshot;   // Monotonic-counter deltas accumulated since this observation was enabled.
+}
+```
+
 ## KanbanViewportOperationObserver
 
 One explicitly active testing observation of mounted viewport operations.
 
 ```ts
 interface KanbanViewportOperationObserver {
-  snapshot: () => KanbanViewportOperationSnapshot;   // Reads detached evidence accumulated by this observation.
+  snapshot: () => KanbanViewportOperationDeltaSnapshot;   // Reads detached evidence accumulated by this observation.
   dispose: () => void;   // Stops the observation idempotently and releases retained evidence.
 }
 ```
 
 ## KanbanViewportOperationSnapshot
 
-Additive testing-only operation evidence kept separate from the stable scale snapshot.
+Stable projection-pass evidence retained for source compatibility with existing testing consumers.
 
 ```ts
 interface KanbanViewportOperationSnapshot {
   projectionPasses: readonly KanbanViewportProjectionPassSnapshot[];   // Every projection attempt performed by the latest completed frame, in execution order.
+}
+```
+
+## KanbanViewportOperationWorkSnapshot
+
+Payload-free work deltas for one explicitly observed mounted operation.
+
+```ts
+interface KanbanViewportOperationWorkSnapshot {
+  residentDescriptors: number;   // Resident descriptors visited by projection passes.
+  residentGroupingVisits: number;   // Exact resident descriptors inserted into the reusable cell index.
+  residentCellLookups: number;   // Cell-index lookups used instead of repeated full-resident filtering.
+  heightMeasurements: number;   // Resident card heights measured by the sparse height authority.
+  hitRegions: number;   // Final hit regions produced by authoritative projection.
+  dropRegions: number;   // Drop regions examined by captured drag-target recomputation.
+  semanticDamageCells: number;   // Cells covered by exact semantic damage rectangles.
+  drawnCards: number;   // Visible card leaves handed to the viewport renderer.
+  drawnCardRows: number;   // Visible clipped card rows handed to the viewport renderer.
+  dragTargetRecomputations: number;   // Captured drag-target recomputations.
 }
 ```
 
@@ -1106,6 +1171,14 @@ Creates an isolated deterministic drag clock.
 createKanbanFakeClock(): KanbanFakeClock
 ```
 
+## createKanbanFrameHostFixture
+
+Creates a deterministic second host-diff sink over real terminal buffers and Core serialization.
+
+```ts
+createKanbanFrameHostFixture(caps: CapabilityProfile): KanbanFrameHostFixture
+```
+
 ## createKanbanOperationLifecycleHarness
 
 Creates a payload-free operation lifecycle recorder.
@@ -1178,12 +1251,20 @@ Reads counter-only bounded scale evidence for a live Kanban viewport.
 inspectKanbanViewportScale(viewport: object): KanbanViewportScaleSnapshot
 ```
 
+## invalidateKanbanViewportProjectionForTesting
+
+Invalidates reusable authoritative geometry without changing source, descriptor, or height state.
+
+```ts
+invalidateKanbanViewportProjectionForTesting(viewport: object): void
+```
+
 ## observeKanbanViewportOperations
 
 Enables payload-free projection diagnostics until the returned observer is disposed.
 
 ```ts
-observeKanbanViewportOperations(viewport: object): KanbanViewportOperationObserver
+observeKanbanViewportOperations(viewport: object, operationId = 'kanban-operation'): KanbanViewportOperationObserver
 ```
 
 ## projectKanbanCardDropMap

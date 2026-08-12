@@ -1,7 +1,7 @@
 import { classicTheme } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
 import { View, signal } from '@jsvision/ui';
-import type { DispatchEvent, DrawContext, Signal, Size2D } from '@jsvision/ui';
+import type { DispatchEvent, DrawContext, Rect, Signal, Size2D } from '@jsvision/ui';
 
 import type { KanbanCardPresentationAdapter } from '../card/adapter.js';
 import type { KanbanCardDensity, KanbanCardRenderer } from '../card/descriptor.js';
@@ -94,7 +94,8 @@ import {
 } from './viewport-scale-inspection.js';
 import type {
   KanbanDragFrameSnapshot,
-  KanbanViewportOperationSnapshot,
+  KanbanViewportOperationDeltaSnapshot,
+  KanbanViewportOperationWorkSnapshot,
   KanbanViewportProjectionPassSnapshot,
   KanbanViewportScaleSnapshot,
 } from './viewport-scale-inspection.js';
@@ -170,6 +171,29 @@ function projectionInputIdentity(value: object): number {
   nextProjectionInputIdentity = nextProjectionInputIdentity === Number.MAX_SAFE_INTEGER ? 1 : created + 1;
   PROJECTION_INPUT_IDENTITIES.set(value, created);
   return created;
+}
+
+/** Returns a payload-free identity for one resident source value. */
+function residentValueIdentity(value: unknown): string | number {
+  if ((typeof value === 'object' && value !== null) || typeof value === 'function') {
+    return projectionInputIdentity(value);
+  }
+  return `${typeof value}:${String(value)}`;
+}
+
+/** Counts the union of clipped semantic damage cells without double-counting overlapping rectangles. */
+function distinctDamageCells(regions: readonly Readonly<Rect>[], bounds: Readonly<Size2D>): number {
+  const cells = new Set<number>();
+  for (const region of regions) {
+    const left = Math.max(0, region.x);
+    const top = Math.max(0, region.y);
+    const right = Math.min(bounds.width, region.x + region.width);
+    const bottom = Math.min(bounds.height, region.y + region.height);
+    for (let y = top; y < bottom; y += 1) {
+      for (let x = left; x < right; x += 1) cells.add(y * bounds.width + x);
+    }
+  }
+  return cells.size;
 }
 
 /** Construction options shared by standalone viewports and the board shell. */
@@ -330,8 +354,24 @@ export class KanbanViewport<TCard> extends View {
   #heightProjections: readonly KanbanViewportCellHeightProjection[] = Object.freeze([]);
   #projectionPasses: KanbanViewportProjectionPassSnapshot[] = [];
   #operationInspectionEnabled = false;
+  #operationInspectionId = 'kanban-operation';
+  #operationTotals: KanbanViewportOperationWorkSnapshot = Object.freeze({
+    residentDescriptors: 0,
+    residentGroupingVisits: 0,
+    residentCellLookups: 0,
+    heightMeasurements: 0,
+    hitRegions: 0,
+    dropRegions: 0,
+    semanticDamageCells: 0,
+    drawnCards: 0,
+    drawnCardRows: 0,
+    dragTargetRecomputations: 0,
+  });
+  #operationBaseline: KanbanViewportOperationWorkSnapshot = this.#operationTotals;
   #projectionPassLimit = 2;
   #descriptorCacheDisposed = false;
+  #descriptorContentRevision = 0;
+  #skipResidentReuseInspectionOnce = false;
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
   readonly #metricsVersion = signal(0);
@@ -382,7 +422,10 @@ export class KanbanViewport<TCard> extends View {
     this.#options = options;
     this.#limits = validateKanbanLimitOptions(options.limits);
     this.#descriptorCache = new KanbanDescriptorCache(Math.max(1, this.#limits.retainedDescriptors), {
-      onReactiveInvalidated: () => this.invalidate(),
+      onReactiveInvalidated: () => {
+        this.#descriptorContentRevision = Math.min(Number.MAX_SAFE_INTEGER, this.#descriptorContentRevision + 1);
+        this.invalidate();
+      },
     });
     this.#interactionBinding = new KanbanViewportInteractionBinding(options.interaction);
     if (options.interaction === undefined) {
@@ -412,6 +455,10 @@ export class KanbanViewport<TCard> extends View {
         const runTask = this.host?.runTask;
         if (runTask === undefined) work();
         else runTask.call(this.host, work);
+      },
+      inspectTargets: (dropRegions) => {
+        if (!this.#operationInspectionEnabled) return;
+        this.#addOperationWork({ dropRegions, dragTargetRecomputations: 1 });
       },
     });
     this.#structuralDragController = new KanbanStructuralDragController({
@@ -466,17 +513,26 @@ export class KanbanViewport<TCard> extends View {
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
     registerKanbanViewportDragFrameReader(this, () => this.#dragFrameSnapshot());
     registerKanbanViewportOperationReader(this, {
-      enable: () => {
+      enable: (operationId) => {
         this.#operationInspectionEnabled = true;
+        this.#operationInspectionId = operationId;
+        this.#operationBaseline = this.#operationTotals;
         this.#projectionPasses.length = 0;
       },
       disable: () => {
         this.#operationInspectionEnabled = false;
+        this.#operationInspectionId = 'kanban-operation';
+        this.#operationBaseline = this.#operationTotals;
         this.#projectionPasses.length = 0;
       },
       read: () => this.#operationSnapshot(),
       setProjectionPassLimit: (limit) => {
         this.#projectionPassLimit = limit;
+      },
+      invalidateProjection: () => {
+        this.#completedProjectionFingerprint = undefined;
+        this.#completedAuthoritativeProjection = undefined;
+        this.#skipResidentReuseInspectionOnce = true;
       },
     });
     this.focusable = true;
@@ -604,8 +660,13 @@ export class KanbanViewport<TCard> extends View {
       this.#snapshot = snapshot;
     }
     const resolvedPresentation = resolveKanbanPresentation(presentation ?? density, this.#limits);
+    let residentIdentity = this.#skipResidentReuseInspectionOnce
+      ? Object.freeze({ reusable: false, values: Object.freeze([]) })
+      : this.#residentProjectionIdentity(snapshot);
+    this.#skipResidentReuseInspectionOnce = false;
     let projectionFingerprint = this.#projectionFingerprint(
       snapshot,
+      residentIdentity.values,
       resolvedPresentation,
       theme,
       i18n,
@@ -655,6 +716,17 @@ export class KanbanViewport<TCard> extends View {
         identity,
         ...(interaction === undefined ? {} : { interaction }),
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
+        ...(this.#operationInspectionEnabled
+          ? {
+              inspectWork: (work) =>
+                this.#addOperationWork({
+                  residentDescriptors: work.residentDescriptors,
+                  residentGroupingVisits: work.residentGroupingVisits,
+                  residentCellLookups: work.residentCellLookups,
+                  hitRegions: work.hitRegions,
+                }),
+            }
+          : {}),
       });
       latestAttempt = projected;
       this.#recordProjectionPass(source, heightProjections, projected);
@@ -662,33 +734,44 @@ export class KanbanViewport<TCard> extends View {
     };
     if (this.#operationInspectionEnabled) this.#projectionPasses.length = 0;
     let activeHeightProjections = this.#heightProjections;
-    let projection = project(snapshot, activeHeightProjections);
-    const measured = convergenceContained
-      ? Object.freeze({ projections: activeHeightProjections, corrected: false })
-      : this.#measureSparseHeights(
-          snapshot,
-          projection,
-          resolvedPresentation.revision,
-          resolvedPresentation.cardGap,
-          bootstrapCardHeight(resolvedPresentation),
-        );
+    const reusableProjection =
+      !shouldRestoreIdentity &&
+      residentIdentity.reusable &&
+      this.#completedProjectionFingerprint === projectionFingerprint &&
+      this.#completedAuthoritativeProjection !== undefined
+        ? this.#completedAuthoritativeProjection
+        : undefined;
+    const reusableAuthoritativeProjection = reusableProjection !== undefined;
+    let projection = reusableProjection ?? project(snapshot, activeHeightProjections);
+    const measured =
+      reusableAuthoritativeProjection || convergenceContained
+        ? Object.freeze({ projections: activeHeightProjections, corrected: false })
+        : this.#measureSparseHeights(
+            snapshot,
+            projection,
+            resolvedPresentation.revision,
+            resolvedPresentation.cardGap,
+            bootstrapCardHeight(resolvedPresentation),
+          );
     activeHeightProjections = measured.projections;
     this.#heightProjections = activeHeightProjections;
     const restoredVerticalIdentity = shouldRestoreIdentity && this.#restoreVerticalIdentity(projection, density);
     if (restoredVerticalIdentity) {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
+      residentIdentity = this.#residentProjectionIdentity(snapshot);
+      projectionFingerprint = this.#projectionFingerprint(
+        snapshot,
+        residentIdentity.values,
+        resolvedPresentation,
+        theme,
+        i18n,
+        ctx.caps,
+        interaction,
+        rendererRevision,
+        formatting,
+      );
     }
-    projectionFingerprint = this.#projectionFingerprint(
-      snapshot,
-      resolvedPresentation,
-      theme,
-      i18n,
-      ctx.caps,
-      interaction,
-      rendererRevision,
-      formatting,
-    );
     if (measured.corrected || restoredVerticalIdentity) {
       projection = project(snapshot, activeHeightProjections);
     }
@@ -703,16 +786,6 @@ export class KanbanViewport<TCard> extends View {
       activeHeightProjections = verified.projections;
       this.#heightProjections = activeHeightProjections;
       if (verified.corrected) {
-        projectionFingerprint = this.#projectionFingerprint(
-          snapshot,
-          resolvedPresentation,
-          theme,
-          i18n,
-          ctx.caps,
-          interaction,
-          rendererRevision,
-          formatting,
-        );
         projection = project(snapshot, activeHeightProjections);
       }
     }
@@ -775,6 +848,13 @@ export class KanbanViewport<TCard> extends View {
       previousOffsets: this.#projectionOffsets,
       currentOffsets: this.#metrics.offsets,
     });
+    if (this.#operationInspectionEnabled) {
+      this.#addOperationWork({
+        semanticDamageCells: distinctDamageCells(this.#damage, this.bounds),
+        drawnCards: composedProjection.cards.length,
+        drawnCardRows: composedProjection.cards.reduce((total, card) => total + card.rect.height, 0),
+      });
+    }
     this.#projection = composedProjection;
     this.#projectionOffsets = this.#metrics.offsets;
     this.#anchorSourceRevision = snapshot.publication.revision;
@@ -796,6 +876,7 @@ export class KanbanViewport<TCard> extends View {
   /** Builds a complete equality fingerprint for authoritative geometry reuse. */
   #projectionFingerprint(
     snapshot: KanbanViewportSourceSnapshot<TCard>,
+    residentIdentity: readonly (readonly [string, number, string | number])[],
     presentation: ResolvedKanbanPresentationBudget,
     theme: KanbanTheme,
     i18n: I18n,
@@ -813,6 +894,8 @@ export class KanbanViewport<TCard> extends View {
       snapshot.structure.revision,
       snapshot.widths,
       snapshot.cells.map((cell) => [cell.address, cell.range, cell.cursor.revision()]),
+      residentIdentity,
+      this.#descriptorContentRevision,
       presentation.revision,
       rendererRevision ?? null,
       projectionInputIdentity(theme),
@@ -823,6 +906,33 @@ export class KanbanViewport<TCard> extends View {
       this.#options.cardPresentation === undefined ? null : projectionInputIdentity(this.#options.cardPresentation),
       this.#options.renderer === undefined ? null : projectionInputIdentity(this.#options.renderer),
     ]);
+  }
+
+  /**
+   * Captures bounded resident record identities before reusing authoritative card descriptors.
+   *
+   * Cursor revisions describe placement, but an eager application may replace a card without moving it.
+   * Comparing only the visible-plus-overscan record references keeps overlay-only frames fast while ensuring
+   * changed card content and entity revisions are projected before drag reconciliation. An unreadable resident
+   * disables reuse so the normal projector can contain the source failure.
+   */
+  #residentProjectionIdentity(snapshot: KanbanViewportSourceSnapshot<TCard>): Readonly<{
+    readonly reusable: boolean;
+    readonly values: readonly (readonly [string, number, string | number])[];
+  }> {
+    const values: Array<readonly [string, number, string | number]> = [];
+    let reusable = true;
+    for (const cell of snapshot.cells) {
+      const address = canonicalizeKanbanCellAddress(cell.address);
+      for (let index = cell.range.start; index < cell.range.end; index += 1) {
+        try {
+          values.push(Object.freeze([address, index, residentValueIdentity(cell.cursor.cardAt(index))]));
+        } catch {
+          reusable = false;
+        }
+      }
+    }
+    return Object.freeze({ reusable, values: Object.freeze(values) });
   }
 
   /** Contains an unexpected third projection attempt without publishing stale interactive geometry. */
@@ -2106,31 +2216,45 @@ export class KanbanViewport<TCard> extends View {
 
     let corrected = false;
     const projections: KanbanViewportCellHeightProjection[] = [];
+    const cardsByCell = new Map<
+      string,
+      Array<{ readonly cardKey: CardKey; readonly index: number; readonly height: number }>
+    >();
+    const retainCard = (
+      address: KanbanCellAddress,
+      card: { readonly cardKey: CardKey; readonly index: number; readonly height: number },
+    ): void => {
+      const key = canonicalizeKanbanCellAddress(address);
+      const retained = cardsByCell.get(key) ?? [];
+      retained.push(Object.freeze(card));
+      cardsByCell.set(key, retained);
+    };
+    if (projection.scene === undefined) {
+      for (const card of projection.cards) {
+        retainCard(
+          {
+            columnId: card.columnId,
+            ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+          },
+          {
+            cardKey: card.descriptor.cardKey,
+            index: card.index,
+            height: framedKanbanCardHeight(card.descriptor.measuredHeight),
+          },
+        );
+      }
+    } else {
+      for (const card of projection.scene.cards) {
+        retainCard(card.address, {
+          cardKey: card.cardKey,
+          index: card.logicalIndex,
+          height: card.descriptor.measuredHeight,
+        });
+      }
+    }
     for (const cell of snapshot.cells) {
-      const cards =
-        projection.scene === undefined
-          ? projection.cards
-              .filter((card) => card.columnId === cell.address.columnId && card.swimlaneId === cell.address.swimlaneId)
-              .map((card) =>
-                Object.freeze({
-                  cardKey: card.descriptor.cardKey,
-                  index: card.index,
-                  height: framedKanbanCardHeight(card.descriptor.measuredHeight),
-                }),
-              )
-          : projection.scene.cards
-              .filter(
-                (card) =>
-                  card.address.columnId === cell.address.columnId &&
-                  card.address.swimlaneId === cell.address.swimlaneId,
-              )
-              .map((card) =>
-                Object.freeze({
-                  cardKey: card.cardKey,
-                  index: card.logicalIndex,
-                  height: card.descriptor.measuredHeight,
-                }),
-              );
+      const cards = cardsByCell.get(canonicalizeKanbanCellAddress(cell.address)) ?? [];
+      if (this.#operationInspectionEnabled) this.#addOperationWork({ heightMeasurements: cards.length });
       const length = cell.cursor.length();
       const highestResident = cards.reduce((maximum, card) => Math.max(maximum, card.index + 1), 0);
       const logicalLength = Math.max(cell.range.end, highestResident, length.kind === 'unknown' ? 0 : length.value);
@@ -2299,6 +2423,42 @@ export class KanbanViewport<TCard> extends View {
     });
   }
 
+  /** Adds bounded testing-only work to lifetime-monotonic counters without wrapping. */
+  #addOperationWork(delta: Partial<KanbanViewportOperationWorkSnapshot>): void {
+    const add = (current: number, increment = 0): number => Math.min(Number.MAX_SAFE_INTEGER, current + increment);
+    const current = this.#operationTotals;
+    this.#operationTotals = Object.freeze({
+      residentDescriptors: add(current.residentDescriptors, delta.residentDescriptors),
+      residentGroupingVisits: add(current.residentGroupingVisits, delta.residentGroupingVisits),
+      residentCellLookups: add(current.residentCellLookups, delta.residentCellLookups),
+      heightMeasurements: add(current.heightMeasurements, delta.heightMeasurements),
+      hitRegions: add(current.hitRegions, delta.hitRegions),
+      dropRegions: add(current.dropRegions, delta.dropRegions),
+      semanticDamageCells: add(current.semanticDamageCells, delta.semanticDamageCells),
+      drawnCards: add(current.drawnCards, delta.drawnCards),
+      drawnCardRows: add(current.drawnCardRows, delta.drawnCardRows),
+      dragTargetRecomputations: add(current.dragTargetRecomputations, delta.dragTargetRecomputations),
+    });
+  }
+
+  /** Subtracts one observation baseline from lifetime-monotonic work counters. */
+  #operationWorkDelta(): KanbanViewportOperationWorkSnapshot {
+    const current = this.#operationTotals;
+    const baseline = this.#operationBaseline;
+    return Object.freeze({
+      residentDescriptors: current.residentDescriptors - baseline.residentDescriptors,
+      residentGroupingVisits: current.residentGroupingVisits - baseline.residentGroupingVisits,
+      residentCellLookups: current.residentCellLookups - baseline.residentCellLookups,
+      heightMeasurements: current.heightMeasurements - baseline.heightMeasurements,
+      hitRegions: current.hitRegions - baseline.hitRegions,
+      dropRegions: current.dropRegions - baseline.dropRegions,
+      semanticDamageCells: current.semanticDamageCells - baseline.semanticDamageCells,
+      drawnCards: current.drawnCards - baseline.drawnCards,
+      drawnCardRows: current.drawnCardRows - baseline.drawnCardRows,
+      dragTargetRecomputations: current.dragTargetRecomputations - baseline.dragTargetRecomputations,
+    });
+  }
+
   /** Records measured-versus-estimated sparse row use for one projection attempt. */
   #recordProjectionPass(
     source: KanbanViewportSourceSnapshot<TCard>,
@@ -2346,10 +2506,12 @@ export class KanbanViewport<TCard> extends View {
   }
 
   /** Returns detached projection-pass evidence for the latest completed frame. */
-  #operationSnapshot(): KanbanViewportOperationSnapshot {
+  #operationSnapshot(): KanbanViewportOperationDeltaSnapshot {
     if (this.#disposed) throw new KanbanDisposedResourceError();
     return Object.freeze({
+      operationId: this.#operationInspectionId,
       projectionPasses: Object.freeze(this.#projectionPasses.map((pass) => Object.freeze({ ...pass }))),
+      work: this.#operationWorkDelta(),
     });
   }
 }
