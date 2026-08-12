@@ -36,6 +36,11 @@ viewport from becoming the operation state machine (AR-C03/C04/C05/C12/C16).
 | 03-06 | [Integration and Delivery](03-06-integration-delivery.md) | Board/viewport wiring, testing subpath, host/docs/plugin delivery |
 | 07 | [Testing Strategy](07-testing-strategy.md) | Requirements-derived immutable specification oracles |
 | 08-01 | [Phase 1 Quality Review](08-phase-1-quality-review.md) | Independent capture-lifecycle findings and auto-design rulings |
+| 08-02 | [Phase 2 Quality Review](09-phase-2-quality-review.md) | Request and placement contract findings and closure |
+| 08-03 | [Phase 3 Quality Review](10-phase-3-quality-review.md) | Operation lifecycle and security findings and closure |
+| 08-04 | [Phase 4 Quality Review](11-phase-4-quality-review.md) | Card drag and mounted interaction findings and closure |
+| 08-05 | [Phase 5 Quality Review](12-phase-5-quality-review.md) | Projection, rendering, and bounded-work findings and closure |
+| 08-06 | [Phase 6 Quality Review](13-phase-6-quality-review.md) | Structural parity, lifecycle, and scale findings and closure |
 | 99 | [Execution Plan](99-execution-plan.md) | Ordered specification-first task checklist |
 
 ## Quick Reference
