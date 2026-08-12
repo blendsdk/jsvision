@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 20:34 CEST
-> **Progress**: 38/46 tasks (83%)
+> **Last Updated**: 2026-08-12 21:05 CEST
+> **Progress**: 44/46 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -482,19 +482,29 @@ typechecks, Kanban build, plugin update/check, dependency/documentation checks, 
 
 ## Phase 6: Closure and user acceptance
 
-- [ ] 6.1 Run `yarn workspace @jsvision/kanban typecheck`, focused/new Kanban specification and
+- [x] 6.1 Run `yarn workspace @jsvision/kanban typecheck`, focused/new Kanban specification and
       implementation tests, and
       `yarn workspace @jsvision/kanban test test/perf-kanban-bench.spec.test.ts --maxWorkers=1`.
-- [ ] 6.2 Run `yarn workspace @jsvision/kanban test` and `yarn workspace @jsvision/kanban test:e2e`.
-- [ ] 6.3 Run `yarn workspace @jsvision/kanban check:deps` and
+      Completed: 2026-08-12 21:00 CEST; 38 focused tests and the controlled performance test passed.
+- [x] 6.2 Run `yarn workspace @jsvision/kanban test` and `yarn workspace @jsvision/kanban test:e2e`.
+      Completed: 2026-08-12 21:02 CEST; 770 unit tests and 26 end-to-end tests passed, with the two
+      platform-scoped skips retained.
+- [x] 6.3 Run `yarn workspace @jsvision/kanban check:deps` and
       `yarn workspace @jsvision/kanban check:docs`.
-- [ ] 6.4 Run `yarn workspace @jsvision/examples typecheck`, focused deterministic GitHub/Kanban showcase
+      Completed: 2026-08-12 21:02 CEST; no native runtime dependency or public-documentation defect
+      was found.
+- [x] 6.4 Run `yarn workspace @jsvision/examples typecheck`, focused deterministic GitHub/Kanban showcase
       tests, and `yarn workspace @jsvision/examples test test/perf-gate.spec.test.ts --maxWorkers=1`.
-- [ ] 6.5 Review every mapped plugin-impact reference, run `yarn plugin:update`, inspect generated changes,
+      Completed: 2026-08-12 21:03 CEST; examples typecheck, 27 focused specifications, and all three
+      performance-runner contract tests passed.
+- [x] 6.5 Review every mapped plugin-impact reference, run `yarn plugin:update`, inspect generated changes,
       and run `yarn plugin:check`.
-- [ ] 6.6 Run exact `yarn perf:check`, then `yarn verify:local`; CI remains authoritative for full
+      Completed: 2026-08-12 21:04 CEST; regeneration was idempotent and every plugin integrity check passed.
+- [x] 6.6 Run exact `yarn perf:check`, then `yarn verify:local`; CI remains authoritative for full
       `yarn verify`. Record an honest skip instead of timing evidence when the environment declares
       `CI` or `TUI_SKIP_PERF`; T-03 still requires one actionable controlled local result before closure.
+      Completed: 2026-08-12 21:05 CEST in the controlled local environment; the exact cross-package
+      performance runner and changed-file verification both passed without a skip.
 - [ ] 6.7 Load the live Node.js project only for the native-terminal manual matrix and record the app
       command, project URL and observation time, OS/CPU/runtime, terminal/host/version/capabilities, viewport
       sizes, complete theme inventory, and expected/actual outcome for click, wheel down/up, horizontal
