@@ -251,12 +251,13 @@ viewport-scale tests. No third review was run.
       authority and resolved presentation/density. Define a conservative bootstrap range before exact
       measurements exist; retain exact measurements by card identity and revision. ✅ (completed: 2026-08-12
       17:29)
-- [ ] 2.1.3 Converge within exactly two total projections: one initial pass plus at most one measurement
+- [x] 2.1.3 Converge within exactly two total projections: one initial pass plus at most one measurement
       correction. If that ceiling fails, reuse the previous completed frame only when a complete
       compatibility fingerprint matches bounds, source/query/layout, presentation, theme/capabilities,
       interaction, and geometry revisions. Otherwise atomically cancel capture, clear affected card/hit/drop/
       drag evidence, publish a current-bounds noninteractive non-overlapping fallback, damage and observe it
       once, and retry only after a new external invalidation or revision—never through a self-invalidating loop.
+      ✅ (completed: 2026-08-12 17:34)
 - [ ] 2.1.4 Keep sparse index storage, source-range resolution, and correction work bounded by resident
       descriptors plus configured overscan; never enumerate an unknown or 100,000-card logical cell.
 - [ ] 2.1.5 Preserve vertical card identity and relative row across wheel, resize, source publication, and

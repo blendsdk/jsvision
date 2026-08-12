@@ -11,7 +11,7 @@ import { resolveKanbanPresentation } from '../card/presentation-policy.js';
 import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
-import { KanbanDisposedResourceError } from '../contract/error.js';
+import { KanbanDisposedResourceError, KanbanInvalidGeometryError } from '../contract/error.js';
 import { createKanbanExtensionId } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
@@ -133,6 +133,20 @@ export interface KanbanIdentityInput {
 /** Returns the smallest valid framed descriptor used for conservative bootstrap acquisition. */
 function bootstrapCardHeight(presentation: ResolvedKanbanPresentationBudget): number {
   return framedKanbanCardHeight(Math.min(1, presentation.cardRows));
+}
+
+/** Stable process-local identities for reactive objects that lack equality revisions. */
+const PROJECTION_INPUT_IDENTITIES = new WeakMap<object, number>();
+let nextProjectionInputIdentity = 1;
+
+/** Returns one stable opaque identity without inspecting a reactive object's implementation. */
+function projectionInputIdentity(value: object): number {
+  const retained = PROJECTION_INPUT_IDENTITIES.get(value);
+  if (retained !== undefined) return retained;
+  const created = nextProjectionInputIdentity;
+  nextProjectionInputIdentity = nextProjectionInputIdentity === Number.MAX_SAFE_INTEGER ? 1 : created + 1;
+  PROJECTION_INPUT_IDENTITIES.set(value, created);
+  return created;
 }
 
 /** Construction options shared by standalone viewports and the board shell. */
@@ -273,6 +287,10 @@ export class KanbanViewport<TCard> extends View {
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
   #projection: KanbanViewportProjection | undefined;
   #projectionCandidate: KanbanViewportProjection | undefined;
+  #completedAuthoritativeProjection: KanbanViewportProjection | undefined;
+  #completedProjectionFingerprint: string | undefined;
+  #failedProjectionFingerprint: string | undefined;
+  #failedProjectionFallback: KanbanViewportProjection | undefined;
   #projectionOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
   #damage: readonly KanbanDamageRegion[] = Object.freeze([]);
   #metrics: KanbanViewportMetrics = emptyMetrics();
@@ -551,10 +569,32 @@ export class KanbanViewport<TCard> extends View {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
     }
+    const resolvedPresentation = resolveKanbanPresentation(presentation ?? density, this.#limits);
+    const projectionFingerprint = this.#projectionFingerprint(
+      snapshot,
+      resolvedPresentation,
+      theme,
+      i18n,
+      ctx.caps,
+      interaction,
+      rendererRevision,
+    );
+    let projectionAttempts = 0;
+    let convergenceContained = false;
+    let latestAttempt: KanbanViewportProjection | undefined;
     const project = (
       source: KanbanViewportSourceSnapshot<TCard>,
       heightProjections: readonly KanbanViewportCellHeightProjection[],
     ): KanbanViewportProjection => {
+      if (this.#failedProjectionFingerprint === projectionFingerprint && this.#failedProjectionFallback !== undefined) {
+        convergenceContained = true;
+        return this.#failedProjectionFallback;
+      }
+      if (projectionAttempts >= 2) {
+        convergenceContained = true;
+        return this.#containProjectionConvergence(projectionFingerprint, latestAttempt);
+      }
+      projectionAttempts += 1;
       const swimlanePresentation = this.#resolveSwimlanePresentation(source);
       const projected = projectKanbanViewport({
         source,
@@ -581,29 +621,37 @@ export class KanbanViewport<TCard> extends View {
         ...(interaction === undefined ? {} : { interaction }),
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
       });
+      latestAttempt = projected;
       this.#recordProjectionPass(source, heightProjections, projected);
       return projected;
     };
     if (this.#operationInspectionEnabled) this.#projectionPasses.length = 0;
     let activeHeightProjections = this.#heightProjections;
     let projection = project(snapshot, activeHeightProjections);
-    const resolvedPresentation = resolveKanbanPresentation(presentation ?? density, this.#limits);
-    const measured = this.#measureSparseHeights(
-      snapshot,
-      projection,
-      resolvedPresentation.revision,
-      resolvedPresentation.cardGap,
-      bootstrapCardHeight(resolvedPresentation),
-    );
+    const measured = convergenceContained
+      ? Object.freeze({ projections: activeHeightProjections, corrected: false })
+      : this.#measureSparseHeights(
+          snapshot,
+          projection,
+          resolvedPresentation.revision,
+          resolvedPresentation.cardGap,
+          bootstrapCardHeight(resolvedPresentation),
+        );
     activeHeightProjections = measured.projections;
     this.#heightProjections = activeHeightProjections;
-    if (measured.corrected) {
-      projection = project(snapshot, activeHeightProjections);
-    }
-    if (shouldRestoreIdentity && this.#restoreVerticalIdentity(projection, density)) {
+    const restoredVerticalIdentity = shouldRestoreIdentity && this.#restoreVerticalIdentity(projection, density);
+    if (restoredVerticalIdentity) {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
+    }
+    if (measured.corrected || restoredVerticalIdentity) {
       projection = project(snapshot, activeHeightProjections);
+    }
+    if (!convergenceContained) {
+      this.#completedAuthoritativeProjection = projection;
+      this.#completedProjectionFingerprint = projectionFingerprint;
+      this.#failedProjectionFingerprint = undefined;
+      this.#failedProjectionFallback = undefined;
     }
     const anchoredCardDeleted =
       this.#verticalAnchor !== undefined &&
@@ -674,6 +722,84 @@ export class KanbanViewport<TCard> extends View {
     } catch {
       // Reconciliation failure cannot corrupt viewport projection or source ownership.
     }
+  }
+
+  /** Builds a complete equality fingerprint for authoritative geometry reuse. */
+  #projectionFingerprint(
+    snapshot: KanbanViewportSourceSnapshot<TCard>,
+    presentation: ResolvedKanbanPresentationBudget,
+    theme: KanbanTheme,
+    i18n: I18n,
+    capabilities: object,
+    interaction: ReturnType<KanbanViewportInteractionBinding['snapshot']> | undefined,
+    rendererRevision: KanbanRevision | undefined,
+  ): string {
+    return JSON.stringify([
+      this.bounds,
+      this.#requestedOffsets,
+      snapshot.generation,
+      snapshot.publication.revision,
+      this.#queryViewRevision ?? null,
+      snapshot.structure.revision,
+      snapshot.widths,
+      snapshot.cells.map((cell) => [cell.address, cell.range, cell.cursor.revision()]),
+      presentation.revision,
+      rendererRevision ?? null,
+      projectionInputIdentity(theme),
+      projectionInputIdentity(i18n),
+      projectionInputIdentity(capabilities),
+      interaction ?? null,
+      this.#options.cardPresentation === undefined ? null : projectionInputIdentity(this.#options.cardPresentation),
+      this.#options.renderer === undefined ? null : projectionInputIdentity(this.#options.renderer),
+    ]);
+  }
+
+  /** Contains an unexpected third projection attempt without publishing stale interactive geometry. */
+  #containProjectionConvergence(
+    fingerprint: string,
+    latestAttempt: KanbanViewportProjection | undefined,
+  ): KanbanViewportProjection {
+    this.#pointerRouter.cancel('explicit');
+    cancelKanbanViewportOperations(this);
+    if (this.#completedProjectionFingerprint === fingerprint && this.#completedAuthoritativeProjection !== undefined) {
+      return this.#completedAuthoritativeProjection;
+    }
+    const source = latestAttempt ?? this.#completedAuthoritativeProjection;
+    if (source === undefined) throw new KanbanInvalidGeometryError();
+    const retainedRegions = Object.freeze(
+      source.regions.filter((region) => region.kind !== 'card' && region.kind !== 'cell'),
+    );
+    const geometry =
+      source.geometry === undefined
+        ? undefined
+        : Object.freeze({
+            ...source.geometry,
+            cells: Object.freeze([]),
+            cards: Object.freeze([]),
+            regions: Object.freeze(
+              source.geometry.regions.filter((region) => region.kind !== 'card' && region.kind !== 'cell'),
+            ),
+            changedRegions: Object.freeze([
+              Object.freeze({ x: 0, y: 0, width: this.bounds.width, height: this.bounds.height }),
+            ]),
+          });
+    const fallback: KanbanViewportProjection = Object.freeze({
+      ...(source.scene === undefined ? {} : { scene: source.scene }),
+      ...(geometry === undefined ? {} : { geometry }),
+      columns: source.columns,
+      cards: Object.freeze([]),
+      regions: retainedRegions,
+      actionTargets: Object.freeze([]),
+      states: source.states,
+    });
+    this.#failedProjectionFingerprint = fingerprint;
+    this.#failedProjectionFallback = fallback;
+    try {
+      this.#options.observe?.(Object.freeze({ code: 'projection-convergence-failed', scope: 'renderer' }));
+    } catch {
+      // Diagnostic callbacks cannot prevent safe noninteractive containment.
+    }
+    return fallback;
   }
 
   /** Cancels hidden transient ownership and emits one fixed redacted overlay failure observation. */
@@ -1091,6 +1217,10 @@ export class KanbanViewport<TCard> extends View {
     this.#snapshot = undefined;
     this.#projection = undefined;
     this.#projectionCandidate = undefined;
+    this.#completedAuthoritativeProjection = undefined;
+    this.#completedProjectionFingerprint = undefined;
+    this.#failedProjectionFingerprint = undefined;
+    this.#failedProjectionFallback = undefined;
     this.#damage = Object.freeze([]);
   }
 
