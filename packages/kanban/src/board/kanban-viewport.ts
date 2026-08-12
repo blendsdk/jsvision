@@ -11,7 +11,7 @@ import { resolveKanbanPresentation } from '../card/presentation-policy.js';
 import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
-import { KanbanDisposedResourceError, KanbanInvalidGeometryError } from '../contract/error.js';
+import { KanbanDisposedResourceError } from '../contract/error.js';
 import { createKanbanExtensionId } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
@@ -58,6 +58,7 @@ import { KANBAN_MINIMUM_VIEWPORT_ROWS, KANBAN_WORKFLOW_HEADER_ROWS } from '../la
 import { KanbanDescriptorCache } from './descriptor-cache.js';
 import { readKanbanIdentityInput } from './board-state.js';
 import { calculateKanbanViewportDamage } from './viewport-damage.js';
+import { resolveKanbanProjectionConvergenceFailure } from './viewport-convergence.js';
 import { composeKanbanViewportOverlay } from './overlay-projector.js';
 import { createKanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanViewportInspection } from './viewport-inspection.js';
@@ -761,37 +762,19 @@ export class KanbanViewport<TCard> extends View {
   ): KanbanViewportProjection {
     this.#pointerRouter.cancel('explicit');
     cancelKanbanViewportOperations(this);
-    if (this.#completedProjectionFingerprint === fingerprint && this.#completedAuthoritativeProjection !== undefined) {
-      return this.#completedAuthoritativeProjection;
-    }
-    const source = latestAttempt ?? this.#completedAuthoritativeProjection;
-    if (source === undefined) throw new KanbanInvalidGeometryError();
-    const retainedRegions = Object.freeze(
-      source.regions.filter((region) => region.kind !== 'card' && region.kind !== 'cell'),
-    );
-    const geometry =
-      source.geometry === undefined
-        ? undefined
-        : Object.freeze({
-            ...source.geometry,
-            cells: Object.freeze([]),
-            cards: Object.freeze([]),
-            regions: Object.freeze(
-              source.geometry.regions.filter((region) => region.kind !== 'card' && region.kind !== 'cell'),
-            ),
-            changedRegions: Object.freeze([
-              Object.freeze({ x: 0, y: 0, width: this.bounds.width, height: this.bounds.height }),
-            ]),
-          });
-    const fallback: KanbanViewportProjection = Object.freeze({
-      ...(source.scene === undefined ? {} : { scene: source.scene }),
-      ...(geometry === undefined ? {} : { geometry }),
-      columns: source.columns,
-      cards: Object.freeze([]),
-      regions: retainedRegions,
-      actionTargets: Object.freeze([]),
-      states: source.states,
+    const containment = resolveKanbanProjectionConvergenceFailure({
+      fingerprint,
+      ...(this.#completedProjectionFingerprint === undefined
+        ? {}
+        : { completedFingerprint: this.#completedProjectionFingerprint }),
+      ...(this.#completedAuthoritativeProjection === undefined
+        ? {}
+        : { completed: this.#completedAuthoritativeProjection }),
+      ...(latestAttempt === undefined ? {} : { latest: latestAttempt }),
+      bounds: { x: 0, y: 0, width: this.bounds.width, height: this.bounds.height },
     });
+    if (containment.reusedCompleted) return containment.projection;
+    const fallback = containment.projection;
     this.#failedProjectionFingerprint = fingerprint;
     this.#failedProjectionFallback = fallback;
     try {
