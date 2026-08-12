@@ -2081,7 +2081,7 @@ export class KanbanViewport<TCard> extends View {
             address: Object.freeze({ ...cell.address }),
             projection: createKanbanVerticalHeightProjection({
               index: retained.index,
-              cards: cards.map((card) => ({ cardKey: card.descriptor.cardKey, logicalIndex: card.index })),
+              cards: retained.index.identitiesInRange(cell.range.start, cell.range.end),
             }),
           }),
         );

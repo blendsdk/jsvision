@@ -45,6 +45,20 @@ describe('sparse height index implementation', () => {
     heights.dispose();
   });
 
+  it('projects only retained source-ordered identities inside a logical range', () => {
+    const heights = index();
+    heights.measure({ cardKey: 'card-9', logicalIndex: 9, height: 5 });
+    heights.measure({ cardKey: 'card-3', logicalIndex: 3, height: 7 });
+    heights.measure({ cardKey: 'card-6', logicalIndex: 6, height: 4 });
+
+    expect(heights.identitiesInRange(4, 10)).toEqual([
+      { cardKey: 'card-6', logicalIndex: 6 },
+      { cardKey: 'card-9', logicalIndex: 9 },
+    ]);
+    expect(heights.identitiesInRange(10, 20)).toEqual([]);
+    heights.dispose();
+  });
+
   it('matches a naive bounded prefix model across deterministic measurement patterns', () => {
     for (let seed = 1; seed <= 20; seed += 1) {
       const logicalLength = 64;

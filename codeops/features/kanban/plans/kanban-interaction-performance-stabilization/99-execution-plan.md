@@ -264,8 +264,8 @@ viewport-scale tests. No third review was run.
 - [x] 2.1.5 Preserve vertical card identity and relative row across wheel, resize, source publication, and
       measured-height correction without allowing a stale anchor to reorder the stack. ✅ (completed:
       2026-08-12 17:37)
-- [ ] 2.1.6 Align clipping, content extent, hit maps, drop maps, and drag source/target geometry to the one
-      final authoritative height projection selected for the frame.
+- [x] 2.1.6 Align clipping, content extent, hit maps, drop maps, and drag source/target geometry to the one
+      final authoritative height projection selected for the frame. ✅ (completed: 2026-08-12 17:42)
 - [ ] 2.1.7 Run Phase 1 geometry specifications until green, then add implementation cases for bootstrap and
       measured source ranges at non-zero offsets, estimate transitions, newly resident tall cards, partially
       visible edges, compatible/incompatible fallback generations, revision invalidation, and repeated

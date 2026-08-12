@@ -4166,6 +4166,7 @@ anchor(anchor: KanbanSparseHeightAnchor): KanbanSparseHeightAnchor
 anchorFor(cardKey: CardKey): KanbanSparseHeightRetainedAnchor | undefined
 unload(cardKey: CardKey): void
 interactionIdentity(cardKey: CardKey): Readonly<{ cardKey: CardKey; logicalIndex: number }> | undefined
+identitiesInRange(start: number, end: number): readonly Readonly<{ cardKey: CardKey; logicalIndex: number }>[]
 reconcile(input: KanbanSparseHeightReconciliation): void
 invalidateRevisions(input: KanbanSparseHeightRevisionInput): number
 rowAt(logicalIndex: number): KanbanSparseHeightPosition

@@ -345,6 +345,30 @@ export class KanbanSparseHeightIndex {
       : Object.freeze({ cardKey: identity.cardKey, logicalIndex: identity.logicalIndex });
   }
 
+  /**
+   * Returns retained identities inside one bounded half-open logical range in source order.
+   *
+   * The result never enumerates unloaded logical positions; work is proportional only to retained
+   * interaction identities.
+   *
+   * @example
+   * ```ts
+   * const residents = index.identitiesInRange(20, 40);
+   * ```
+   */
+  identitiesInRange(start: number, end: number): readonly Readonly<{ cardKey: CardKey; logicalIndex: number }>[] {
+    this.#active();
+    const rangeStart = boundedInteger(start);
+    const rangeEnd = boundedInteger(end);
+    if (rangeEnd < rangeStart || rangeEnd > this.#logicalLength) throw new KanbanInvalidGeometryError();
+    return Object.freeze(
+      [...this.#identities.values()]
+        .filter(({ logicalIndex }) => logicalIndex >= rangeStart && logicalIndex < rangeEnd)
+        .sort((left, right) => left.logicalIndex - right.logicalIndex)
+        .map(({ cardKey, logicalIndex }) => Object.freeze({ cardKey, logicalIndex })),
+    );
+  }
+
   /** Applies an authoritative reorder or deletion without retaining caller-owned state. */
   reconcile(input: KanbanSparseHeightReconciliation): void {
     this.#active();
