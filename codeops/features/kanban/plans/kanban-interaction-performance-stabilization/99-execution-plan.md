@@ -583,6 +583,44 @@ with two unchanged platform skips, both typechecks, exact `yarn perf:check`, dep
 plugin update/check, and `yarn verify:local` pass. The single permitted remediation re-review passed: both
 Majors are closed and no new Critical or Major issue was found.
 
+**Clamped-anchor runtime remediation:** Continued native acceptance proved the timing change did not eliminate
+the post-drop freeze. A detached GitHub demo remained at approximately 105% CPU with stdin, stdout, and stderr
+bound to a deleted PTY, confirming an application busy loop rather than missing terminal mouse reports. The
+root cause is vertical-anchor relocation after source publication: when the focused card moves near the start
+of a lane, preserving its former screen row can require a negative scroll offset. Metrics correctly clamp that
+request to row zero, but pending-anchor retention previously invalidated again because the impossible relative
+row still differed, producing an unbounded render-microtask chain. AR-47 now requires one clamped settlement:
+accept the nearest projected row and clear pending relocation when the clamped target cannot change the current
+offset. A specification-owned scheduler oracle moves a focused card above a scrolled viewport; the former code
+exhausts 32 frames with callbacks still queued, while the corrected code reaches row zero and becomes idle.
+Tasks 6.7 and 6.8 remain open until the user repeats the native interaction and explicitly accepts it.
+
+**Clamped-anchor quality review remediation:** The independent correctness review found one Major in the first
+implementation: it used possibly stale maximum extents before current projection metrics were published and
+could therefore abandon a positive variable-height correction that became reachable later in the frame. The
+finding was accepted under auto-design. Settlement is now deliberately limited to the invariant lower bound:
+only a non-positive requested row while already at row zero clears pending relocation. Positive corrections
+retain the prior retry path and cannot be rejected using stale maximum extents. Focused re-verification is
+pending the required single re-review. The added variable-height oracle also exposed that an asynchronously
+located anchor could briefly be absent while another card was visible; applying the pending row to that fallback
+card prematurely looked like a negative correction. Pending settlement is now identity-strict and waits until
+its own anchor is projected. Mixed-height acquisition also proved the authoritative resident range can arrive
+after the one frame that first observes a source revision. Missing-anchor relocation therefore remains eligible
+after that frame through pending state, but the required re-review found unconditional locator eligibility could
+repeat during ordinary scrolling or persistently unloaded results. The finding was accepted: only a source
+change may launch the one locator, while later pending frames wait for bounded cursor acquisition without
+launching another. The oracle covers both top-clamped termination and reachable downward row preservation with
+mixed descriptor heights. Performance re-review also found deletion cleared only the anchor while leaving its
+pending row and locator ownership behind. That finding was accepted: authoritative anchor deletion now invokes
+the same atomic relocation cancellation used by imperative navigation, with focused scheduler-quiescence
+coverage. An ordinary-scroll oracle separately proves an offscreen retained anchor launches zero locators. The
+final audit found that a second source move could otherwise leave the first expected address/index pending
+forever. Pending ownership is now generation/revision-bound; a newer publication atomically supersedes it and
+admits one replacement lookup. A consecutive-relocation scheduler oracle proves the unresolved first request is
+aborted, the newest move wins, and the scheduler idles. The final required re-review passed with no Critical or
+Major findings. Focused scheduler specifications (5), Kanban typecheck, GitHub application specifications (20),
+examples typecheck, plugin update/check, the repository performance gate, and `yarn verify:local` all pass.
+
 Three stale demo processes created before the rollback were found consuming approximately one CPU core each
 after their terminals had closed. They ignored SIGTERM and were force-terminated by exact PID; no persistent
 application data existed to lose. After rebuilding the Kanban package with the rollback, later native GitHub,

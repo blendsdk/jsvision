@@ -413,6 +413,13 @@ export class KanbanViewport<TCard> extends View {
   #metricsFingerprint = '';
   #revealController: AbortController | undefined;
   #anchorController: AbortController | undefined;
+  #anchorControllerGeneration: number | undefined;
+  #anchorControllerRevision: KanbanRevision | undefined;
+  #anchorRelocationAttemptGeneration: number | undefined;
+  #anchorRelocationAttemptRevision: KanbanRevision | undefined;
+  #pendingVerticalAnchorLocation: Readonly<{ readonly address: KanbanCellAddress; readonly index: number }> | undefined;
+  #pendingVerticalAnchorGeneration: number | undefined;
+  #pendingVerticalAnchorRevision: KanbanRevision | undefined;
   #everMounted = false;
   #releasedLifecycle = false;
   #disposed = false;
@@ -652,6 +659,17 @@ export class KanbanViewport<TCard> extends View {
       this.#anchorSourceRevision !== undefined &&
       (this.#anchorSourceRevision !== snapshot.publication.revision ||
         this.#anchorSourceGeneration !== snapshot.generation);
+    if (sourceChanged) {
+      const stalePending =
+        this.#pendingVerticalAnchorRow !== undefined &&
+        (this.#pendingVerticalAnchorGeneration !== snapshot.generation ||
+          this.#pendingVerticalAnchorRevision !== snapshot.publication.identityChanges.revision);
+      const staleLocator =
+        this.#anchorController !== undefined &&
+        (this.#anchorControllerGeneration !== snapshot.generation ||
+          this.#anchorControllerRevision !== snapshot.publication.identityChanges.revision);
+      if (stalePending || staleLocator) this.#cancelAnchorRelocation();
+    }
     if (this.#dragController.sourceChangeRelevant()) this.#pointerRouter.cancel('source-change');
     if (sourceChanged && this.#structuralDragController.snapshot().kind !== 'idle') {
       this.#pointerRouter.cancel('source-change');
@@ -802,10 +820,18 @@ export class KanbanViewport<TCard> extends View {
       snapshot.publication.identityChanges.changes.some(
         (change) => change.kind === 'deleted-card' && change.cardKey === this.#verticalAnchor?.cardKey,
       );
-    if (anchoredCardDeleted) this.#verticalAnchor = undefined;
+    if (anchoredCardDeleted) {
+      this.#verticalAnchor = undefined;
+      this.#cancelAnchorRelocation();
+    }
     const relocatingAnchor =
-      sourceChanged &&
-      this.#relocateMissingVerticalAnchor(projection, snapshot.generation, snapshot.publication.revision, density);
+      (sourceChanged || this.#pendingVerticalAnchorRow !== undefined) &&
+      this.#relocateMissingVerticalAnchor(
+        projection,
+        snapshot.generation,
+        snapshot.publication.identityChanges.revision,
+        density,
+      );
     const focusedCardKey = identity.focusedCardKey;
     const focusedCard = projection.cards.find((card) => card.descriptor.cardKey === focusedCardKey);
     if (focusedCard !== undefined) this.#focusedColumnAnchor = focusedCard.columnId;
@@ -1311,9 +1337,10 @@ export class KanbanViewport<TCard> extends View {
     const cardKey = snapshotKanbanRevealKey(key);
     const resolvedAlignment = snapshotKanbanRevealAlignment(alignment);
     const anchorOwnsRelocation =
-      this.#anchorController !== undefined &&
-      !this.#anchorController.signal.aborted &&
-      this.#verticalAnchor?.cardKey === cardKey;
+      this.#verticalAnchor?.cardKey === cardKey &&
+      ((this.#anchorController !== undefined && !this.#anchorController.signal.aborted) ||
+        this.#pendingVerticalAnchorRow !== undefined ||
+        this.#anchorRelocationAttemptRevision !== undefined);
     if (!anchorOwnsRelocation) this.#cancelAnchorRelocation();
     this.#revealController?.abort();
     const controller = new AbortController();
@@ -1924,7 +1951,7 @@ export class KanbanViewport<TCard> extends View {
         previous.i18n !== i18n ||
         previous.theme !== theme ||
         previous.capabilities !== capabilities);
-    if (changed && this.#verticalAnchor !== undefined) {
+    if (changed && this.#verticalAnchor !== undefined && this.#pendingVerticalAnchorRow === undefined) {
       this.#requestedOffsets = Object.freeze({
         ...this.#requestedOffsets,
         y: Math.max(
@@ -1987,21 +2014,42 @@ export class KanbanViewport<TCard> extends View {
   #relocateMissingVerticalAnchor(
     projection: KanbanViewportProjection,
     sourceGeneration: number,
-    sourceRevision: KanbanRevision,
+    identityRevision: KanbanRevision,
     density: KanbanCardDensity,
   ): boolean {
     const source = this.#source;
     const anchor = this.#verticalAnchor;
+    if (source === undefined || anchor === undefined) return false;
+    if (this.#pendingVerticalAnchorRow !== undefined) {
+      const expected = this.#pendingVerticalAnchorLocation;
+      const resident = projection.cards.find((candidate) => candidate.descriptor.cardKey === anchor.cardKey);
+      if (
+        expected !== undefined &&
+        resident !== undefined &&
+        resident.index === expected.index &&
+        canonicalizeKanbanCellAddress({
+          columnId: resident.columnId,
+          ...(resident.swimlaneId === undefined ? {} : { swimlaneId: resident.swimlaneId }),
+        }) === canonicalizeKanbanCellAddress(expected.address)
+      ) {
+        return false;
+      }
+      return true;
+    }
+    if (this.#anchorController !== undefined && !this.#anchorController.signal.aborted) return true;
     if (
-      source === undefined ||
-      anchor === undefined ||
-      projection.cards.some((candidate) => candidate.descriptor.cardKey === anchor.cardKey)
+      this.#anchorRelocationAttemptGeneration === sourceGeneration &&
+      this.#anchorRelocationAttemptRevision === identityRevision
     ) {
       return false;
     }
     this.#anchorController?.abort();
     const controller = new AbortController();
     this.#anchorController = controller;
+    this.#anchorControllerGeneration = sourceGeneration;
+    this.#anchorControllerRevision = identityRevision;
+    this.#anchorRelocationAttemptGeneration = sourceGeneration;
+    this.#anchorRelocationAttemptRevision = identityRevision;
     void source.locateCard(anchor.cardKey, controller.signal).then(
       (location) => {
         if (
@@ -2009,18 +2057,30 @@ export class KanbanViewport<TCard> extends View {
           this.#disposed ||
           this.#anchorController !== controller ||
           this.#snapshot?.generation !== sourceGeneration ||
-          this.#snapshot?.publication.revision !== sourceRevision ||
+          this.#snapshot?.publication.identityChanges.revision !== identityRevision ||
           this.#verticalAnchor?.cardKey !== anchor.cardKey ||
           (location.kind !== 'found' && location.kind !== 'unloaded') ||
           location.index === undefined
         ) {
-          if (this.#anchorController === controller) this.#anchorController = undefined;
+          if (this.#anchorController === controller) {
+            this.#anchorController = undefined;
+            this.#anchorControllerGeneration = undefined;
+            this.#anchorControllerRevision = undefined;
+          }
           return;
         }
         this.#anchorController = undefined;
+        this.#anchorControllerGeneration = undefined;
+        this.#anchorControllerRevision = undefined;
         const y = Math.max(0, this.#logicalCardRow(location.address, location.index, density) - anchor.relativeRow);
         this.#recordLocatedExtent(y);
         this.#pendingVerticalAnchorRow = anchor.relativeRow;
+        this.#pendingVerticalAnchorLocation = Object.freeze({
+          address: Object.freeze({ ...location.address }),
+          index: location.index,
+        });
+        this.#pendingVerticalAnchorGeneration = sourceGeneration;
+        this.#pendingVerticalAnchorRevision = identityRevision;
         this.#focusedColumnAnchor = location.address.columnId;
         this.#imperativeFocusedColumnAnchor = location.address.columnId;
         this.#horizontalColumnAnchor = location.address.columnId;
@@ -2029,7 +2089,11 @@ export class KanbanViewport<TCard> extends View {
         this.invalidate();
       },
       () => {
-        if (this.#anchorController === controller) this.#anchorController = undefined;
+        if (this.#anchorController === controller) {
+          this.#anchorController = undefined;
+          this.#anchorControllerGeneration = undefined;
+          this.#anchorControllerRevision = undefined;
+        }
         // Cancellation and unsupported locators leave the last bounded projection intact.
       },
     );
@@ -2040,7 +2104,14 @@ export class KanbanViewport<TCard> extends View {
   #cancelAnchorRelocation(): void {
     this.#anchorController?.abort();
     this.#anchorController = undefined;
+    this.#anchorControllerGeneration = undefined;
+    this.#anchorControllerRevision = undefined;
+    this.#anchorRelocationAttemptGeneration = undefined;
+    this.#anchorRelocationAttemptRevision = undefined;
     this.#pendingVerticalAnchorRow = undefined;
+    this.#pendingVerticalAnchorLocation = undefined;
+    this.#pendingVerticalAnchorGeneration = undefined;
+    this.#pendingVerticalAnchorRevision = undefined;
   }
 
   /** Returns one source column's logical horizontal start without opening an unretained cursor. */
@@ -2096,8 +2167,25 @@ export class KanbanViewport<TCard> extends View {
     identity: KanbanIdentityInput,
     density: KanbanCardDensity,
   ): void {
+    const pendingLocation = this.#pendingVerticalAnchorLocation;
+    const pendingAnchor =
+      this.#pendingVerticalAnchorRow === undefined ||
+      this.#verticalAnchor === undefined ||
+      pendingLocation === undefined
+        ? undefined
+        : projection.cards.find(
+            (card) =>
+              card.descriptor.cardKey === this.#verticalAnchor?.cardKey &&
+              card.index === pendingLocation.index &&
+              canonicalizeKanbanCellAddress({
+                columnId: card.columnId,
+                ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
+              }) === canonicalizeKanbanCellAddress(pendingLocation.address),
+          );
+    if (this.#pendingVerticalAnchorRow !== undefined && pendingAnchor === undefined) return;
     const focused = projection.cards.find((card) => card.descriptor.cardKey === identity.focusedCardKey);
-    const nearest = focused ?? [...projection.cards].sort((left, right) => left.rect.y - right.rect.y)[0];
+    const nearest =
+      pendingAnchor ?? focused ?? [...projection.cards].sort((left, right) => left.rect.y - right.rect.y)[0];
     if (nearest === undefined) return;
     if (this.#focusedColumnAnchor === undefined) this.#focusedColumnAnchor = nearest.columnId;
     const address = Object.freeze({
@@ -2106,16 +2194,27 @@ export class KanbanViewport<TCard> extends View {
     });
     const logicalRow = this.#logicalCardRow(address, nearest.index, density);
     const projectedRelativeRow = logicalRow - this.#requestedOffsets.y;
-    const retainedRelativeRow = this.#pendingVerticalAnchorRow ?? projectedRelativeRow;
+    let retainedRelativeRow = this.#pendingVerticalAnchorRow ?? projectedRelativeRow;
     if (this.#pendingVerticalAnchorRow !== undefined) {
       if (projectedRelativeRow === this.#pendingVerticalAnchorRow) {
         this.#pendingVerticalAnchorRow = undefined;
+        this.#pendingVerticalAnchorLocation = undefined;
+        this.#pendingVerticalAnchorGeneration = undefined;
+        this.#pendingVerticalAnchorRevision = undefined;
       } else {
-        this.#requestedOffsets = Object.freeze({
-          ...this.#requestedOffsets,
-          y: Math.max(0, logicalRow - this.#pendingVerticalAnchorRow),
-        });
-        this.invalidate();
+        const requestedRow = logicalRow - this.#pendingVerticalAnchorRow;
+        if (requestedRow <= 0 && this.#requestedOffsets.y === 0) {
+          // A negative offset can never preserve the old row, regardless of later extent refinement.
+          // Accept the top-clamped row instead of scheduling the same impossible correction forever.
+          retainedRelativeRow = projectedRelativeRow;
+          this.#pendingVerticalAnchorRow = undefined;
+          this.#pendingVerticalAnchorLocation = undefined;
+          this.#pendingVerticalAnchorGeneration = undefined;
+          this.#pendingVerticalAnchorRevision = undefined;
+        } else {
+          this.#requestedOffsets = Object.freeze({ ...this.#requestedOffsets, y: Math.max(0, requestedRow) });
+          this.invalidate();
+        }
       }
     }
     this.#verticalAnchor = Object.freeze({
@@ -2344,7 +2443,7 @@ export class KanbanViewport<TCard> extends View {
     }
 
     const anchor = this.#verticalAnchor;
-    if (corrected && anchor !== undefined) {
+    if (corrected && anchor !== undefined && this.#pendingVerticalAnchorRow === undefined) {
       const owner = snapshot.cells.find((cell) =>
         projection.cards.some(
           (card) =>

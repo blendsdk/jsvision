@@ -554,6 +554,49 @@ during RD authoring must reopen this register before the affected requirement is
 - **Reopen triggers:** Native acceptance finds ordinary long-lane traversal too slow, a supported host still
   starves input at eight frames per second, or measured host backpressure supports a simpler stronger cadence.
 
+### AR-47 — Clamped vertical-anchor settlement
+
+- **Authority:** AI — delegated by `--auto-design` during execution remediation.
+- **Eligibility:** Internal failure recovery and performance engineering within the approved responsive
+  scrolling and focus-retention behavior; no public API or product-scope change.
+- **Objective:** Preserve a scrolled card's screen row when possible without allowing an unreachable anchor
+  position to keep the terminal render scheduler permanently busy.
+- **Decision:** When a relocated vertical anchor would require a negative offset and the viewport is already at
+  row zero, the viewport accepts the top-clamped projected row, clears pending relocation, and becomes idle.
+  Positive targets retain the existing correction behavior until current projection metrics establish their
+  reachable extent; potentially stale maximum extents never decide anchor abandonment. A pending row belongs
+  exclusively to its anchored card and cannot be settled against an unrelated nearest visible card while that
+  anchor's requested range is still loading. A source change may launch one missing-anchor locator; after it
+  publishes a pending row, later frames wait for bounded cursor acquisition without launching another locator.
+  Ordinary scrolling never starts source-relocation work. Authoritative deletion atomically clears the anchor,
+  pending row, and live locator so stale ownership cannot suppress future anchor capture. Pending expectations
+  and active locator are bound to their source generation and identity revision; a newer publication cancels
+  stale ownership and may launch exactly one replacement locator. Relocation attempts are bounded to one per
+  identity revision so a persistently unresolved card cannot create a locator or repaint loop.
+- **Evidence:** A live 248×54 GitHub board jumped to row zero after a scrolled drop and left its detached Node
+  process consuming approximately one CPU core. A deterministic scheduler oracle reproduces the mechanism:
+  moving the focused card above a scrolled viewport exhausts a 32-frame bound with repaint callbacks still
+  queued before remediation, and settles below that bound with no queued callback afterward.
+- **Rejected alternatives:** A general render-frame watchdog would hide the invalid anchor state and could
+  suppress legitimate asynchronous view work. Clearing every anchor after a move would discard achievable
+  focus-position preservation.
+- **Strongest counterargument:** Accepting a clamped row means the focused card can visibly shift toward the
+  viewport edge after a source move.
+- **Confidence:** High; the state-machine defect, visual jump, persistent repaint queue, and CPU symptom align.
+- **Hardening:** The independent correctness review found that the first implementation consulted potentially
+  stale maximum extents before current projection metrics were published. The accepted remediation narrows the
+  terminal condition to the invariant zero lower bound. The strengthened oracle then exposed delayed resident
+  publication, so relocation is identity-strict and remains active beyond the first source-change frame.
+  The required re-review found that unconditional locator eligibility could repeat during ordinary scrolling or
+  unloaded results; the accepted remediation limits admission to source change and makes pending settlement a
+  locator-free wait. The final re-review found no Critical or Major issue after a deferred-locator oracle proved
+  that a newer publication aborts the unresolved request, admits one replacement, settles the newest location,
+  and leaves the scheduler idle.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-anchor-runtime-20260813`.
+- **Reopen triggers:** Native acceptance still freezes after a scrolled drop, a reachable anchor loses its prior
+  row, or a supported variable-height layout demonstrates a different stable clamped target.
+
 ## Auto-design context
 
 - **Authority:** Eligible technical design decisions may be resolved by AI under `--auto-design`.
