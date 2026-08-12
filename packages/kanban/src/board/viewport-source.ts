@@ -8,7 +8,7 @@ import { createKanbanColumnId } from '../contract/identity.js';
 import { KANBAN_LIMITS, validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
 import type { KanbanObservation } from '../contract/observation.js';
-import { snapshotKanbanRevision } from '../contract/revision.js';
+import { kanbanRevisionsEqual, snapshotKanbanRevision } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanCardAdapter } from '../card/adapter.js';
 import type { KanbanCount } from '../source/counts.js';
@@ -71,10 +71,32 @@ export interface KanbanGroupedAxisWindow {
   readonly queryGeneration: number;
   /** Query-session revision that owns the learned row geometry. */
   readonly sessionRevision: KanbanRevision;
+  /** Resolved presentation revision used to calculate grouped card ranges. */
+  readonly presentationRevision: KanbanRevision;
   /** Visible semantic swimlane range intersecting the viewport. */
   readonly requestedSwimlaneRange: { readonly start: number; readonly end: number };
-  /** Bounded logical card starts for cells in the active partially scrolled swimlane. */
-  readonly cardStarts: readonly { readonly address: KanbanCellAddress; readonly start: number }[];
+  /** Bounded logical card ranges for cells in the active partially scrolled swimlane. */
+  readonly cardRanges: readonly {
+    readonly address: KanbanCellAddress;
+    readonly start: number;
+    readonly end: number;
+  }[];
+}
+
+/** Revision-bound per-cell logical ranges selected by the viewport's sparse height authority. */
+export interface KanbanCardRangeWindow {
+  /** Query generation that owns these ranges. */
+  readonly queryGeneration: number;
+  /** Query-session revision that owns these ranges. */
+  readonly sessionRevision: KanbanRevision;
+  /** Resolved presentation revision used to translate terminal rows. */
+  readonly presentationRevision: KanbanRevision;
+  /** Bounded per-cell logical ranges including finite vertical overscan. */
+  readonly ranges: readonly {
+    readonly address: KanbanCellAddress;
+    readonly start: number;
+    readonly end: number;
+  }[];
 }
 
 /** Preliminary column plus logical swimlane-index coordinate. */
@@ -136,7 +158,7 @@ const SCENE_WINDOW_HINT_KEYS = new Set(['queryGeneration', 'sessionRevision', 'r
 /** Exact aggregate row members. */
 const SCENE_WINDOW_ROW_KEYS = new Set(['start', 'end', 'extent', 'quality']);
 /** Exact mounted card-start members. */
-const GROUPED_CARD_START_KEYS = new Set(['address', 'start']);
+const CARD_RANGE_KEYS = new Set(['address', 'start', 'end']);
 
 /** Validates one non-negative safe scene-window integer. */
 function sceneWindowInteger(value: unknown, maximum = Number.MAX_SAFE_INTEGER): number {
@@ -192,22 +214,46 @@ function sceneWindowHint(value: unknown): KanbanSceneWindowLayoutHint {
 /** Detaches the viewport-owned grouped-axis window before it affects cursor acquisition. */
 function groupedAxisWindow(value: KanbanGroupedAxisWindow | undefined): KanbanGroupedAxisWindow | undefined {
   if (value === undefined) return undefined;
-  const cardStarts = snapshotKanbanDataArray(value.cardStarts, KANBAN_LIMITS.retainedCursors.safe).map((entry) => {
-    const properties = snapshotKanbanDataProperties(entry, GROUPED_CARD_START_KEYS.size);
-    validateKanbanDataKeys(properties, GROUPED_CARD_START_KEYS);
-    if (Object.keys(properties).length !== GROUPED_CARD_START_KEYS.size) throw new KanbanInvalidGeometryError();
-    return Object.freeze({
-      address: snapshotKanbanCellAddress(properties.address),
-      start: sceneWindowInteger(properties.start),
-    });
-  });
-  const keys = cardStarts.map(({ address }) => canonicalizeKanbanCellAddress(address));
+  const cardRanges = snapshotCardRanges(value.cardRanges);
+  const keys = cardRanges.map(({ address }) => canonicalizeKanbanCellAddress(address));
   if (new Set(keys).size !== keys.length) throw new KanbanInvalidGeometryError();
   return Object.freeze({
     queryGeneration: sceneWindowInteger(value.queryGeneration),
     sessionRevision: snapshotKanbanRevision(value.sessionRevision),
+    presentationRevision: snapshotKanbanRevision(value.presentationRevision),
     requestedSwimlaneRange: sceneWindowRange(value.requestedSwimlaneRange),
-    cardStarts: Object.freeze(cardStarts),
+    cardRanges,
+  });
+}
+
+/** Snapshots bounded non-overlapping logical ranges without reading application card values. */
+function snapshotCardRanges(
+  value: readonly { readonly address: KanbanCellAddress; readonly start: number; readonly end: number }[],
+): KanbanCardRangeWindow['ranges'] {
+  const ranges = snapshotKanbanDataArray(value, KANBAN_LIMITS.retainedCursors.safe).map((entry) => {
+    const properties = snapshotKanbanDataProperties(entry, CARD_RANGE_KEYS.size);
+    validateKanbanDataKeys(properties, CARD_RANGE_KEYS);
+    if (Object.keys(properties).length !== CARD_RANGE_KEYS.size) throw new KanbanInvalidGeometryError();
+    const start = sceneWindowInteger(properties.start);
+    const end = sceneWindowInteger(properties.end);
+    if (end < start || end - start > KANBAN_LIMITS.ensureRangeCards.absolute) {
+      throw new KanbanInvalidGeometryError();
+    }
+    return Object.freeze({ address: snapshotKanbanCellAddress(properties.address), start, end });
+  });
+  const keys = ranges.map(({ address }) => canonicalizeKanbanCellAddress(address));
+  if (new Set(keys).size !== keys.length) throw new KanbanInvalidGeometryError();
+  return Object.freeze(ranges);
+}
+
+/** Detaches optional revision-compatible ungrouped range evidence. */
+function cardRangeWindow(value: KanbanCardRangeWindow | undefined): KanbanCardRangeWindow | undefined {
+  if (value === undefined) return undefined;
+  return Object.freeze({
+    queryGeneration: sceneWindowInteger(value.queryGeneration),
+    sessionRevision: snapshotKanbanRevision(value.sessionRevision),
+    presentationRevision: snapshotKanbanRevision(value.presentationRevision),
+    ranges: snapshotCardRanges(value.ranges),
   });
 }
 
@@ -316,8 +362,12 @@ export interface KanbanViewportSourceRequest<TCard> {
   readonly horizontalOffset: number;
   /** Current vertical card-content offset. */
   readonly verticalOffset: number;
-  /** Conservative terminal-row stride used to translate offsets into bounded source ranges. */
-  readonly cardStride: number;
+  /** Conservative framed card height used only before compatible sparse ranges exist. */
+  readonly estimatedCardHeight: number;
+  /** Resolved empty rows between cards used by bootstrap range translation. */
+  readonly cardGap: number;
+  /** Resolved presentation revision owning bootstrap and sparse range geometry. */
+  readonly presentationRevision: KanbanRevision;
   /** Preferred source column when responsive geometry enters focused mode. */
   readonly focusedColumnId?: string;
   /** Workflow columns excluded before any sparse cursor is opened. */
@@ -328,6 +378,8 @@ export interface KanbanViewportSourceRequest<TCard> {
   readonly sceneWindowLayoutHint?: KanbanSceneWindowLayoutHint;
   /** Optional learned grouped-axis projection compatible with `sceneWindowLayoutHint`. */
   readonly groupedAxisWindow?: KanbanGroupedAxisWindow;
+  /** Optional revision-bound per-cell logical ranges for an ungrouped projection. */
+  readonly cardRangeWindow?: KanbanCardRangeWindow;
 }
 
 /** Safe retained state for one sparse source cell. */
@@ -597,8 +649,11 @@ export class KanbanViewportSource<TCard> {
     const height = cellCount(request.height);
     const horizontalOffset = cellCount(request.horizontalOffset);
     const verticalOffset = cellCount(request.verticalOffset);
-    const cardStride = cellCount(request.cardStride);
-    if (cardStride === 0) throw new KanbanInvalidGeometryError();
+    const estimatedCardHeight = cellCount(request.estimatedCardHeight);
+    const cardGap = cellCount(request.cardGap);
+    const cardStride = estimatedCardHeight + cardGap;
+    if (!Number.isSafeInteger(cardStride) || cardStride === 0) throw new KanbanInvalidGeometryError();
+    const presentationRevision = snapshotKanbanRevision(request.presentationRevision);
     const publication = this.#session.snapshot();
     if (this.#countRevision !== publication.revision) {
       this.#knownColumnCounts.clear();
@@ -606,6 +661,7 @@ export class KanbanViewportSource<TCard> {
     }
     this.#rememberColumnCounts();
     const axisWindow = groupedAxisWindow(request.groupedAxisWindow);
+    const rangeWindow = cardRangeWindow(request.cardRangeWindow);
     const structurePolicy = snapshotKanbanStructurePolicy<TCard>(
       request.structure ?? Object.freeze({ revision: publication.revision, columns: Object.freeze([]) }),
     );
@@ -666,8 +722,16 @@ export class KanbanViewportSource<TCard> {
     let sceneWindow: KanbanSceneWindowResult | undefined;
     let retainedAddresses: readonly KanbanCellAddress[];
     const compatibleAxis =
-      axisWindow?.queryGeneration === this.#session.generation() && axisWindow.sessionRevision === publication.revision
+      axisWindow?.queryGeneration === this.#session.generation() &&
+      kanbanRevisionsEqual(axisWindow.sessionRevision, publication.revision) &&
+      kanbanRevisionsEqual(axisWindow.presentationRevision, presentationRevision)
         ? axisWindow
+        : undefined;
+    const compatibleRanges =
+      rangeWindow?.queryGeneration === this.#session.generation() &&
+      kanbanRevisionsEqual(rangeWindow.sessionRevision, publication.revision) &&
+      kanbanRevisionsEqual(rangeWindow.presentationRevision, presentationRevision)
+        ? rangeWindow
         : undefined;
     if (this.#query.groupBy === undefined || swimlanes.visible.length === 0) {
       retainedAddresses = Object.freeze(retainedColumnIds.map((columnId) => Object.freeze({ columnId })));
@@ -712,14 +776,16 @@ export class KanbanViewportSource<TCard> {
       const retained = this.#cells.get(canonicalizeKanbanCellAddress(address));
       if (retained === undefined) continue;
       const knownLength = retained.cursor.length();
-      const groupedStart = compatibleAxis?.cardStarts.find(
+      const selectedRange = (compatibleAxis?.cardRanges ?? compatibleRanges?.ranges)?.find(
         (candidate) => canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(address),
-      )?.start;
-      const cellRangeStart = groupedStart === undefined ? rangeStart : Math.max(0, groupedStart - overscanCards);
+      );
+      const cellRangeStart = selectedRange?.start ?? rangeStart;
+      const selectedCount = selectedRange === undefined ? requestedCards : selectedRange.end - selectedRange.start;
+      const boundedCount = Math.min(this.#limits.ensureRangeCards, selectedCount);
       const rangeEnd =
         knownLength.kind === 'exact'
-          ? Math.min(knownLength.value, cellRangeStart + requestedCards)
-          : cellRangeStart + requestedCards;
+          ? Math.min(knownLength.value, cellRangeStart + boundedCount)
+          : cellRangeStart + boundedCount;
       const range = Object.freeze({ address, start: Math.min(cellRangeStart, rangeEnd), end: rangeEnd });
       const state = retained.cursor.state();
       if (state.kind !== 'error' && retained.cursor.needsRange(range.start, range.end)) {

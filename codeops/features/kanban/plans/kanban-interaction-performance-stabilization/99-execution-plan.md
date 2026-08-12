@@ -246,10 +246,11 @@ viewport-scale tests. No third review was run.
 
 - [x] 2.1.1 Preserve the current measured height projection through every same-frame reproject, including
       source/layout identity restoration and drag reprojection. ✅ (completed: 2026-08-12 17:20)
-- [ ] 2.1.2 Replace both the fixed two-row descriptor estimate and fixed-stride source-window acquisition
+- [x] 2.1.2 Replace both the fixed two-row descriptor estimate and fixed-stride source-window acquisition
       with revision-bound declarative logical/per-cell ranges derived from the viewport's one sparse height
       authority and resolved presentation/density. Define a conservative bootstrap range before exact
-      measurements exist; retain exact measurements by card identity and revision.
+      measurements exist; retain exact measurements by card identity and revision. ✅ (completed: 2026-08-12
+      17:29)
 - [ ] 2.1.3 Converge within exactly two total projections: one initial pass plus at most one measurement
       correction. If that ceiling fails, reuse the previous completed frame only when a complete
       compatibility fingerprint matches bounds, source/query/layout, presentation, theme/capabilities,

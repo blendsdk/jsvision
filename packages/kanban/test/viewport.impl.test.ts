@@ -165,7 +165,7 @@ describe('viewport descriptor cache and damage implementation', () => {
 });
 
 describe('viewport source metric and ownership implementation', () => {
-  it('rejects stale grouped card starts atomically after query replacement', () => {
+  it('uses compatible grouped card ranges and rejects them atomically after query replacement', () => {
     const cards = Array.from({ length: 20 }, (_, id) => ({ id, columnId: 'ready', team: 'team-a' }));
     const source = createEagerKanbanDataSource(() => cards, {
       columns: () => [{ columnId: 'ready', label: 'Ready', revision: 1 }],
@@ -189,21 +189,51 @@ describe('viewport source metric and ownership implementation', () => {
       height: 12,
       horizontalOffset: 0,
       verticalOffset: 0,
-      cardStride: 3,
+      estimatedCardHeight: 2,
+      cardGap: 1,
+      presentationRevision: 'comfortable-v1',
     });
+    const groupedAxisWindow = {
+      queryGeneration: first.generation,
+      sessionRevision: first.publication.revision,
+      presentationRevision: 'comfortable-v1',
+      requestedSwimlaneRange: { start: 0, end: 1 },
+      cardRanges: [{ address: { columnId: 'ready', swimlaneId: 'team-a' }, start: 10, end: 14 }],
+    } as const;
+    const compatible = viewportSource.refresh({
+      width: 40,
+      height: 12,
+      horizontalOffset: 0,
+      verticalOffset: 0,
+      estimatedCardHeight: 2,
+      cardGap: 1,
+      presentationRevision: 'comfortable-v1',
+      groupedAxisWindow,
+    });
+    expect(compatible.cells[0]?.range).toMatchObject({ start: 10, end: 14 });
+
+    const stalePresentation = viewportSource.refresh({
+      width: 40,
+      height: 12,
+      horizontalOffset: 0,
+      verticalOffset: 0,
+      estimatedCardHeight: 3,
+      cardGap: 1,
+      presentationRevision: 'comfortable-v2',
+      groupedAxisWindow,
+    });
+    expect(stalePresentation.cells[0]?.range.start).toBe(0);
+
     viewportSource.replaceQuery({ filters: [], sort: [], groupBy: 'team', viewRevision: 2 });
     const current = viewportSource.refresh({
       width: 40,
       height: 12,
       horizontalOffset: 0,
       verticalOffset: 0,
-      cardStride: 3,
-      groupedAxisWindow: {
-        queryGeneration: first.generation,
-        sessionRevision: first.publication.revision,
-        requestedSwimlaneRange: { start: 0, end: 1 },
-        cardStarts: [{ address: { columnId: 'ready', swimlaneId: 'team-a' }, start: 10 }],
-      },
+      estimatedCardHeight: 2,
+      cardGap: 1,
+      presentationRevision: 'comfortable-v1',
+      groupedAxisWindow,
     });
 
     expect(current.generation).not.toBe(first.generation);
@@ -290,7 +320,9 @@ describe('viewport source metric and ownership implementation', () => {
       height: 6,
       horizontalOffset: 0,
       verticalOffset: 0,
-      cardStride: 3,
+      estimatedCardHeight: 2,
+      cardGap: 1,
+      presentationRevision: 'comfortable-v1',
     });
 
     const metrics = createKanbanViewportMetrics({

@@ -622,7 +622,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
     columnWidths: options.presentationColumnWidths ?? options.source.widths.columns,
     columnGap: options.source.widths.separatorWidth,
     cardGap: budget.cardGap,
-    estimatedCardHeight: framedKanbanCardHeight(2),
+    estimatedCardHeight: framedKanbanCardHeight(Math.min(1, budget.cardRows)),
     ...(options.heightProjections === undefined ? {} : { heightProjections: options.heightProjections }),
     ...(options.railWidth === undefined ? {} : { railWidth: options.railWidth }),
     ...(options.customChrome === undefined ? {} : { customChrome: options.customChrome }),

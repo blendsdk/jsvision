@@ -425,6 +425,24 @@ export function resolveKanbanVerticalProjectionExtent(
 }
 
 /**
+ * Resolves sparse vertical extent with an already validated presentation gap.
+ *
+ * This variant lets mounted custom presentation policies use their exact gap instead of being
+ * approximated by a named density preset.
+ *
+ * @example
+ * ```ts
+ * const extent = resolveKanbanVerticalProjectionExtentWithGap(projection, 2);
+ * ```
+ */
+export function resolveKanbanVerticalProjectionExtentWithGap(
+  projection: KanbanVerticalHeightProjection,
+  cardGap: number,
+): KanbanVerticalProjectionExtent {
+  return projectionExtent(snapshotKanbanVerticalHeightProjection(projection), cellCount(cardGap));
+}
+
+/**
  * Projects sticky headers and a bounded source-ordered card stack into exact terminal cells.
  *
  * Returned regions are clipped to the assigned rectangle. Resting gaps are full-width and never

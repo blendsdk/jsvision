@@ -6194,6 +6194,14 @@ Adds density-owned global resting gaps to a detached sparse descriptor extent.
 resolveKanbanVerticalProjectionExtent(projection: KanbanVerticalHeightProjection, density: KanbanCardDensity): KanbanVerticalProjectionExtent
 ```
 
+## resolveKanbanVerticalProjectionExtentWithGap
+
+Resolves sparse vertical extent with an already validated presentation gap.
+
+```ts
+resolveKanbanVerticalProjectionExtentWithGap(projection: KanbanVerticalHeightProjection, cardGap: number): KanbanVerticalProjectionExtent
+```
+
 ## setKanbanViewportInteractionEvidenceListener
 
 Registers or clears one owning board listener without widening consumer construction options.

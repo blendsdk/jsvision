@@ -1,6 +1,8 @@
 import type { Rect } from '@jsvision/ui';
 
 import type { KanbanCardDensity } from '../card/descriptor.js';
+import type { KanbanPresentationInput } from '../card/presentation-policy.js';
+import { resolveKanbanPresentation } from '../card/presentation-policy.js';
 import { KanbanInvalidGeometryError } from '../contract/error.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
 import { framedKanbanCardHeight } from '../layout/card-geometry.js';
@@ -8,7 +10,7 @@ import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metri
 import { clampKanbanScroll } from '../layout/scroll-model.js';
 import type { KanbanVerticalHeightProjection } from '../layout/vertical-projector.js';
 import {
-  resolveKanbanVerticalProjectionExtent,
+  resolveKanbanVerticalProjectionExtentWithGap,
   snapshotKanbanVerticalHeightProjection,
 } from '../layout/vertical-projector.js';
 import { KANBAN_WORKFLOW_HEADER_ROWS, KANBAN_WORKFLOW_TRAILING_BOUNDARY_COLUMNS } from '../layout/workflow-geometry.js';
@@ -39,6 +41,8 @@ export interface CreateKanbanViewportMetricsOptions<TCard> {
   readonly offsets: KanbanViewportPoint;
   /** Current resting card-gap policy. */
   readonly density: KanbanCardDensity;
+  /** Optional resolved custom or named presentation used for exact bootstrap spacing. */
+  readonly presentation?: KanbanPresentationInput;
   /** Effective finite overscan. */
   readonly overscan: KanbanViewportPoint;
   /** Locator-proven lower vertical extent used only while cursor length remains inexact. */
@@ -53,15 +57,17 @@ function saturatedMultiply(left: number, right: number): number {
 }
 
 /** Returns the default row stride used before every card has a measured descriptor. */
-function estimatedStride(_density: KanbanCardDensity): number {
-  return framedKanbanCardHeight(2) + 1;
+function estimatedStride(presentation: KanbanPresentationInput): number {
+  const budget = resolveKanbanPresentation(presentation);
+  return framedKanbanCardHeight(Math.min(1, budget.cardRows)) + budget.cardGap;
 }
 
 /** Estimates a complete uniform card stack without inventing a trailing resting gap. */
-function estimatedLengthExtent(length: number, density: KanbanCardDensity): number {
+function estimatedLengthExtent(length: number, presentation: KanbanPresentationInput): number {
   if (length === 0) return 0;
-  const stride = estimatedStride(density);
-  const trailingGap = 1;
+  const budget = resolveKanbanPresentation(presentation);
+  const stride = estimatedStride(presentation);
+  const trailingGap = budget.cardGap;
   return Math.max(0, saturatedMultiply(length, stride) - trailingGap);
 }
 
@@ -93,7 +99,7 @@ function ownValue(record: object, key: string): unknown {
 function sparseVerticalContentExtent<TCard>(
   source: KanbanViewportSourceSnapshot<TCard>,
   projections: readonly KanbanViewportCellHeightProjection[],
-  density: KanbanCardDensity,
+  presentation: KanbanPresentationInput,
 ): { readonly value: number; readonly quality: 'exact' | 'unknown' } {
   const sourceCells = new Map(source.cells.map((cell) => [canonicalizeKanbanCellAddress(cell.address), cell]));
   const rowExtents = new Map<string, number>();
@@ -115,7 +121,10 @@ function sparseVerticalContentExtent<TCard>(
       throw new KanbanInvalidGeometryError();
     }
     seen.add(key);
-    const extent = resolveKanbanVerticalProjectionExtent(projection, density);
+    const extent = resolveKanbanVerticalProjectionExtentWithGap(
+      projection,
+      resolveKanbanPresentation(presentation).cardGap,
+    );
     if (extent.quality !== 'exact') allExact = false;
     const rowKey = address.swimlaneId ?? '';
     if (address.swimlaneId !== undefined) grouped = true;
@@ -126,7 +135,7 @@ function sparseVerticalContentExtent<TCard>(
     if (swimlaneId === undefined) continue;
     const length = cell.cursor.length();
     if (length.kind === 'unknown') continue;
-    const estimate = estimatedLengthExtent(length.value, density);
+    const estimate = estimatedLengthExtent(length.value, presentation);
     if (estimate > (rowExtents.get(swimlaneId) ?? 0)) {
       rowExtents.set(swimlaneId, estimate);
       allExact = false;
@@ -149,11 +158,11 @@ function sparseVerticalContentExtent<TCard>(
 function verticalContentExtent<TCard>(
   source: KanbanViewportSourceSnapshot<TCard>,
   projection: KanbanViewportProjection | undefined,
-  density: KanbanCardDensity,
+  presentation: KanbanPresentationInput,
   heightProjections: readonly KanbanViewportCellHeightProjection[] | undefined,
 ): { readonly value: number; readonly quality: 'exact' | 'lower-bound' | 'unknown' } {
-  if (heightProjections !== undefined) return sparseVerticalContentExtent(source, heightProjections, density);
-  const stride = estimatedStride(density);
+  if (heightProjections !== undefined) return sparseVerticalContentExtent(source, heightProjections, presentation);
+  const stride = estimatedStride(presentation);
   let maximum = 0;
   let allExact = source.widths.columns.length === 0 || source.cells.length === source.widths.columns.length;
   let hasBound = false;
@@ -162,7 +171,7 @@ function verticalContentExtent<TCard>(
     if (length.kind !== 'exact') allExact = false;
     if (length.kind !== 'unknown') {
       hasBound = true;
-      maximum = Math.max(maximum, estimatedLengthExtent(length.value, density));
+      maximum = Math.max(maximum, estimatedLengthExtent(length.value, presentation));
     }
   }
   for (const card of projection?.cards ?? []) {
@@ -186,7 +195,12 @@ export function createKanbanViewportMetrics<TCard>(
 ): KanbanViewportMetrics {
   const stickyRows = options.source.visibleColumns.length === 0 ? 0 : KANBAN_WORKFLOW_HEADER_ROWS;
   const cardViewportHeight = Math.max(0, options.bounds.height - stickyRows);
-  const content = verticalContentExtent(options.source, options.projection, options.density, options.heightProjections);
+  const content = verticalContentExtent(
+    options.source,
+    options.projection,
+    options.presentation ?? options.density,
+    options.heightProjections,
+  );
   const effectiveQuality =
     content.quality === 'unknown' && (options.minimumVerticalExtent ?? 0) > 0 ? 'lower-bound' : content.quality;
   const projectedVerticalExtent = Math.max(

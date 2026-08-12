@@ -61,7 +61,10 @@ describe('viewport scale implementation', () => {
     render.flush();
 
     const passes = observation.snapshot().projectionPasses;
-    expect(passes).toEqual([{ ordinal: 1, heightQuality: 'mixed', measuredRows: 16, estimatedRows: 44 }]);
+    expect(passes).toEqual([
+      { ordinal: 1, heightQuality: 'mixed', measuredRows: 16, estimatedRows: 44 },
+      { ordinal: 2, heightQuality: 'mixed', measuredRows: 20, estimatedRows: 40 },
+    ]);
     observation.dispose();
     expect(inspectKanbanViewportOperations(viewport).projectionPasses).toEqual([]);
     render.unmount();
@@ -106,8 +109,8 @@ describe('viewport scale implementation', () => {
     expect(metrics.materializedCards).toBe(requestedCards);
     expect(metrics.materializedCards).toBeLessThan(100_000);
     expect(metrics.cardAtReads).toBeGreaterThan(0);
-    // Mount, settlement, and descriptor publication may each read the same bounded retained window.
-    expect(metrics.cardAtReads).toBeLessThanOrEqual(requestedCards * 3);
+    // Mount, settlement, descriptor publication, and one height correction may read the same bounded window.
+    expect(metrics.cardAtReads).toBeLessThanOrEqual(requestedCards * 4);
     expect(metrics.ensureRangeCalls).toBe(requests.length);
     expect(metrics.createdCursors).toBeLessThanOrEqual(limits.retainedCursors);
     expect(metrics.requestedRanges.every(({ start, end }) => end - start <= limits.ensureRangeCards)).toBe(true);
