@@ -235,10 +235,17 @@ viewport-scale tests. No third review was run.
 
 ## Phase 2: Stabilize variable-height projection
 
+> **Phase baseline tree**: fc371e8f58b5750e0e337ce853d17bf09bbdbcd1
+> **Scope mode**: strict
+> **Expected modification set**: Kanban viewport/source/layout implementation and focused tests, the
+> testing-only instrumentation needed by this phase, generated JSVision skill/plugin references affected by
+> those public testing exports, and this execution plan/roadmap. Core/UI and unrelated package changes are
+> excluded unless a later task's existing text explicitly requires them.
+
 ### Step 2.1: Sparse geometry correction
 
-- [ ] 2.1.1 Preserve the current measured height projection through every same-frame reproject, including
-      source/layout identity restoration and drag reprojection.
+- [x] 2.1.1 Preserve the current measured height projection through every same-frame reproject, including
+      source/layout identity restoration and drag reprojection. ✅ (completed: 2026-08-12 17:20)
 - [ ] 2.1.2 Replace both the fixed two-row descriptor estimate and fixed-stride source-window acquisition
       with revision-bound declarative logical/per-cell ranges derived from the viewport's one sparse height
       authority and resolved presentation/density. Define a conservative bootstrap range before exact

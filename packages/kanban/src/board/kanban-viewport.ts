@@ -547,7 +547,7 @@ export class KanbanViewport<TCard> extends View {
     }
     const project = (
       source: KanbanViewportSourceSnapshot<TCard>,
-      heightProjections: readonly KanbanViewportCellHeightProjection[] = this.#heightProjections,
+      heightProjections: readonly KanbanViewportCellHeightProjection[],
     ): KanbanViewportProjection => {
       const swimlanePresentation = this.#resolveSwimlanePresentation(source);
       const projected = projectKanbanViewport({
@@ -579,21 +579,23 @@ export class KanbanViewport<TCard> extends View {
       return projected;
     };
     if (this.#operationInspectionEnabled) this.#projectionPasses.length = 0;
-    let projection = project(snapshot);
+    let activeHeightProjections = this.#heightProjections;
+    let projection = project(snapshot, activeHeightProjections);
     const measured = this.#measureSparseHeights(
       snapshot,
       projection,
       resolveKanbanPresentation(presentation ?? density).revision,
       resolveKanbanPresentation(presentation ?? density).cardGap,
     );
-    this.#heightProjections = measured.projections;
+    activeHeightProjections = measured.projections;
+    this.#heightProjections = activeHeightProjections;
     if (measured.corrected) {
-      projection = project(snapshot, measured.projections);
+      projection = project(snapshot, activeHeightProjections);
     }
     if (shouldRestoreIdentity && this.#restoreVerticalIdentity(projection, density)) {
       snapshot = this.#refreshClamped(collapsedColumnIds, identity.focusedColumnId, density, structure) ?? snapshot;
       this.#snapshot = snapshot;
-      projection = project(snapshot);
+      projection = project(snapshot, activeHeightProjections);
     }
     const anchoredCardDeleted =
       this.#verticalAnchor !== undefined &&

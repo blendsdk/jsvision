@@ -63,6 +63,7 @@ describe('viewport scale implementation', () => {
     const passes = observation.snapshot().projectionPasses;
     expect(passes).toEqual([{ ordinal: 1, heightQuality: 'mixed', measuredRows: 16, estimatedRows: 44 }]);
     observation.dispose();
+    expect(inspectKanbanViewportOperations(viewport).projectionPasses).toEqual([]);
     render.unmount();
   });
 
