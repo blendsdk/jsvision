@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:53 CEST
-> **Progress**: 6/46 tasks (13%)
+> **Last Updated**: 2026-08-12 16:57 CEST
+> **Progress**: 7/46 tasks (15%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -190,9 +190,9 @@ lack the planned additive detached ghost/gap geometry evidence. Log:
 
 ### Step 1.2: Diagnostic isolation
 
-- [ ] 1.2.1 Extend the existing testing-only weak-map scale/snapshot bridge to identify every projection
+- [x] 1.2.1 Extend the existing testing-only weak-map scale/snapshot bridge to identify every projection
       pass that uses measured versus estimated heights without changing production inspection or exposing
-      card payloads.
+      card payloads. ✅ (completed: 2026-08-12 16:57)
 - [ ] 1.2.2 Prove whether focus damage inflation originates in height convergence, identity restoration,
       overlay composition, damage calculation, or more than one stage; record the result in this plan.
 - [ ] 1.2.3 Prove whether real drag unreliability remains after geometry is valid or is fully explained by

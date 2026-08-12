@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createEagerKanbanDataSource, KanbanViewport, validateKanbanLimitOptions } from '../src/index.js';
 import type { KanbanCardAdapter, KanbanColumnMeta, KanbanQuery } from '../src/index.js';
-import { createWindowedKanbanFixture, inspectKanbanViewportScale } from '../src/testing.js';
+import {
+  createKanbanStabilizationFixture,
+  createWindowedKanbanFixture,
+  inspectKanbanViewportOperations,
+  inspectKanbanViewportScale,
+} from '../src/testing.js';
 
 interface ScaleCard {
   readonly id: number;
@@ -29,6 +34,43 @@ function columns(count: number): readonly KanbanColumnMeta[] {
 }
 
 describe('viewport scale implementation', () => {
+  it('reports measured-versus-estimated quality for every projection pass in the completed frame', () => {
+    const fixture = createKanbanStabilizationFixture();
+    const source = createEagerKanbanDataSource(() => fixture.cards, {
+      columns: () => fixture.columns,
+      keyOf: (card) => card.key,
+      columnOf: (card) => card.columnId,
+    });
+    const viewport = new KanbanViewport({
+      source,
+      query: () => QUERY,
+      card: {
+        keyOf: (card) => card.key,
+        titleOf: (card) => card.title,
+        statusOf: (card) => card.status,
+      },
+    });
+    viewport.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 80, height: 24 } });
+    const host = new Group();
+    host.add(viewport);
+    const render = createRenderRoot({ width: 80, height: 24 }, { caps: CAPS });
+    render.mount(host);
+    render.flush();
+
+    const passes = inspectKanbanViewportOperations(viewport).projectionPasses;
+    expect(passes.length).toBeGreaterThan(0);
+    expect(passes.map(({ ordinal }) => ordinal)).toEqual(passes.map((_, index) => index + 1));
+    expect(
+      passes.every(
+        ({ heightQuality, measuredRows, estimatedRows }) =>
+          (heightQuality === 'estimated' && measuredRows === 0) ||
+          (heightQuality === 'measured' && estimatedRows === 0) ||
+          (heightQuality === 'mixed' && measuredRows > 0 && estimatedRows > 0),
+      ),
+    ).toBe(true);
+    render.unmount();
+  });
+
   it('materializes and reads only settled visible-plus-overscan ranges from 100,000 cards', async () => {
     const fixture = createWindowedKanbanFixture<ScaleCard>({
       logicalCardCount: 100_000,

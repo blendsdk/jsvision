@@ -61,7 +61,10 @@ export type {
 export type { KanbanCardDropMap, KanbanCardDropTarget, KanbanCardDropTargetKind } from './interaction/drag-types.js';
 export {
   readKanbanDragFrameSnapshot as inspectKanbanDragFrame,
+  readKanbanViewportOperationSnapshot as inspectKanbanViewportOperations,
   readKanbanViewportScaleSnapshot as inspectKanbanViewportScale,
   type KanbanDragFrameSnapshot,
+  type KanbanViewportOperationSnapshot,
+  type KanbanViewportProjectionPassSnapshot,
   type KanbanViewportScaleSnapshot,
 } from './board/viewport-scale-inspection.js';

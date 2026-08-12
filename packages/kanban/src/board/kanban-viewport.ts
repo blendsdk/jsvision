@@ -83,8 +83,17 @@ import type {
   KanbanViewportSourceSnapshot,
 } from './viewport-source.js';
 import { readViewportHostChromeRows } from './viewport-host-chrome.js';
-import { registerKanbanViewportScaleReader, unregisterKanbanViewportScaleReader } from './viewport-scale-inspection.js';
-import type { KanbanViewportScaleSnapshot } from './viewport-scale-inspection.js';
+import {
+  registerKanbanViewportOperationReader,
+  registerKanbanViewportScaleReader,
+  unregisterKanbanViewportOperationReader,
+  unregisterKanbanViewportScaleReader,
+} from './viewport-scale-inspection.js';
+import type {
+  KanbanViewportOperationSnapshot,
+  KanbanViewportProjectionPassSnapshot,
+  KanbanViewportScaleSnapshot,
+} from './viewport-scale-inspection.js';
 import { KanbanViewportInteractionBinding } from './viewport-interaction.js';
 import type { KanbanViewportInputAdapter, KanbanViewportInteractionAdapter } from './viewport-interaction.js';
 import { normalizeKanbanViewportPointerInput } from './viewport-input.js';
@@ -272,6 +281,7 @@ export class KanbanViewport<TCard> extends View {
     { readonly logicalLength: number; readonly index: KanbanSparseHeightIndex }
   >();
   #heightProjections: readonly KanbanViewportCellHeightProjection[] = Object.freeze([]);
+  #projectionPasses: readonly KanbanViewportProjectionPassSnapshot[] = Object.freeze([]);
   #descriptorCacheDisposed = false;
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
@@ -399,6 +409,7 @@ export class KanbanViewport<TCard> extends View {
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
     registerKanbanViewportScaleReader(this, () => this.#scaleSnapshot());
+    registerKanbanViewportOperationReader(this, () => this.#operationSnapshot());
     this.focusable = true;
     this.onMount(() => {
       this.#everMounted = true;
@@ -527,6 +538,7 @@ export class KanbanViewport<TCard> extends View {
       source: KanbanViewportSourceSnapshot<TCard>,
       heightProjections: readonly KanbanViewportCellHeightProjection[] = this.#heightProjections,
     ): KanbanViewportProjection => {
+      this.#recordProjectionPass(source, heightProjections);
       const swimlanePresentation = this.#resolveSwimlanePresentation(source);
       return projectKanbanViewport({
         source,
@@ -554,6 +566,7 @@ export class KanbanViewport<TCard> extends View {
         ...(this.#options.observe === undefined ? {} : { observe: this.#options.observe }),
       });
     };
+    this.#projectionPasses = Object.freeze([]);
     let projection = project(snapshot);
     const measured = this.#measureSparseHeights(
       snapshot,
@@ -1045,6 +1058,8 @@ export class KanbanViewport<TCard> extends View {
     for (const entry of this.#heightIndices.values()) entry.index.dispose();
     this.#heightIndices.clear();
     this.#heightProjections = Object.freeze([]);
+    this.#projectionPasses = Object.freeze([]);
+    unregisterKanbanViewportOperationReader(this);
     unregisterKanbanViewportScaleReader(this);
     disposeKanbanViewportMoveReader(this);
     this.#descriptorCacheDisposed = true;
@@ -1937,6 +1952,43 @@ export class KanbanViewport<TCard> extends View {
       actionTargets: this.#projection?.actionTargets.length ?? 0,
       operationOverlays: (overlay?.pending.length ?? 0) + (overlay?.feedback.length ?? 0),
       transientOverlayMembers: cardDragMembers + structuralDragMembers,
+    });
+  }
+
+  /** Records measured-versus-estimated sparse row use for one projection attempt. */
+  #recordProjectionPass(
+    source: KanbanViewportSourceSnapshot<TCard>,
+    projections: readonly KanbanViewportCellHeightProjection[],
+  ): void {
+    let measuredRows = 0;
+    let estimatedRows = 0;
+    if (projections.length === 0) {
+      estimatedRows = source.cells.reduce((total, cell) => total + Math.max(0, cell.range.end - cell.range.start), 0);
+    } else {
+      for (const { projection } of projections) {
+        for (const row of projection.rows) {
+          if (row.descriptorRow.quality === 'exact') measuredRows += 1;
+          else estimatedRows += 1;
+        }
+      }
+    }
+    const heightQuality = measuredRows === 0 ? 'estimated' : estimatedRows === 0 ? 'measured' : 'mixed';
+    this.#projectionPasses = Object.freeze([
+      ...this.#projectionPasses,
+      Object.freeze({
+        ordinal: this.#projectionPasses.length + 1,
+        heightQuality,
+        measuredRows,
+        estimatedRows,
+      }),
+    ]);
+  }
+
+  /** Returns detached projection-pass evidence for the latest completed frame. */
+  #operationSnapshot(): KanbanViewportOperationSnapshot {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    return Object.freeze({
+      projectionPasses: Object.freeze(this.#projectionPasses.map((pass) => Object.freeze({ ...pass }))),
     });
   }
 }

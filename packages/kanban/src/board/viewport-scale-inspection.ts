@@ -42,8 +42,29 @@ export interface KanbanDragFrameSnapshot {
   readonly damageRegions: number;
 }
 
+/** Payload-free quality evidence for one projection pass in the latest completed viewport frame. */
+export interface KanbanViewportProjectionPassSnapshot {
+  /** One-based pass position within the completed frame. */
+  readonly ordinal: number;
+  /** Whether this pass used only estimates, only exact measurements, or a mixture of both. */
+  readonly heightQuality: 'estimated' | 'mixed' | 'measured';
+  /** Exact sparse rows consumed by this pass. */
+  readonly measuredRows: number;
+  /** Estimated sparse rows consumed by this pass. */
+  readonly estimatedRows: number;
+}
+
+/** Additive testing-only operation evidence kept separate from the stable scale snapshot. */
+export interface KanbanViewportOperationSnapshot {
+  /** Every projection attempt performed by the latest completed frame, in execution order. */
+  readonly projectionPasses: readonly KanbanViewportProjectionPassSnapshot[];
+}
+
 /** Mounted viewport instances mapped to counter-only testing snapshots without exposing private state. */
 const VIEWPORT_SCALE_READERS = new WeakMap<object, () => KanbanViewportScaleSnapshot>();
+
+/** Mounted viewport instances mapped to operation-only testing evidence. */
+const VIEWPORT_OPERATION_READERS = new WeakMap<object, () => KanbanViewportOperationSnapshot>();
 
 /**
  * Registers one live viewport's private counter reader for the testing-only entry point.
@@ -62,6 +83,19 @@ export function registerKanbanViewportScaleReader(viewport: object, read: () => 
  */
 export function unregisterKanbanViewportScaleReader(viewport: object): void {
   VIEWPORT_SCALE_READERS.delete(viewport);
+}
+
+/** Registers one live viewport's additive operation reader for the testing-only entry point. */
+export function registerKanbanViewportOperationReader(
+  viewport: object,
+  read: () => KanbanViewportOperationSnapshot,
+): void {
+  VIEWPORT_OPERATION_READERS.set(viewport, read);
+}
+
+/** Removes one disposed viewport from the additive operation registry. */
+export function unregisterKanbanViewportOperationReader(viewport: object): void {
+  VIEWPORT_OPERATION_READERS.delete(viewport);
 }
 
 /**
@@ -94,4 +128,19 @@ export function readKanbanDragFrameSnapshot(viewport: object): KanbanDragFrameSn
     operationOverlays: snapshot.operationOverlays,
     damageRegions: snapshot.damageRegions,
   });
+}
+
+/**
+ * Reads payload-free projection-pass evidence for one live mounted viewport.
+ *
+ * @example
+ * ```ts
+ * const operations = inspectKanbanViewportOperations(board.viewport);
+ * expect(operations.projectionPasses.length).toBeLessThanOrEqual(2);
+ * ```
+ */
+export function readKanbanViewportOperationSnapshot(viewport: object): KanbanViewportOperationSnapshot {
+  const read = VIEWPORT_OPERATION_READERS.get(viewport);
+  if (read === undefined) throw new KanbanDisposedResourceError();
+  return read();
 }
