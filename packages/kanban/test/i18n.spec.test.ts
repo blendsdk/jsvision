@@ -6,6 +6,9 @@ import {
   KANBAN_ACCELERATOR_MANIFEST,
   KANBAN_ENGLISH_CATALOG,
   KANBAN_ENGLISH_MESSAGES,
+  KANBAN_PHASE_C_ENGLISH_CATALOG,
+  KANBAN_PHASE_C_ENGLISH_MESSAGES,
+  KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
   KANBAN_PLACEHOLDER_MANIFEST,
   createEnglishKanbanI18n,
 } from '../src/index.js';
@@ -32,6 +35,27 @@ const EXPECTED_KEYS = [
 ] as const;
 
 const EXPECTED_LOCALES = ['en', 'nl', 'de', 'fr', 'es', 'it', 'pt-PT', 'pl', 'ro', 'sv'] as const;
+const EXPECTED_PHASE_C_KEYS = [
+  'kanban.drag.card',
+  'kanban.drag.cards',
+  'kanban.drop.allowed',
+  'kanban.drop.blocked',
+  'kanban.drop.unavailable',
+  'kanban.drop.warning',
+  'kanban.operation.accepted',
+  'kanban.operation.cancelled',
+  'kanban.operation.conflict',
+  'kanban.operation.definition-of-done',
+  'kanban.operation.filtered-placement',
+  'kanban.operation.pending',
+  'kanban.operation.rejected',
+  'kanban.operation.reorder',
+  'kanban.operation.sorted-placement',
+  'kanban.operation.stale-placement',
+  'kanban.operation.superseded',
+  'kanban.operation.transition-blocked',
+  'kanban.operation.wip-blocked',
+] as const;
 
 /** Returns the sorted key inventory used for exact catalog parity assertions. */
 function keysOf(catalog: Catalog): string[] {
@@ -121,5 +145,65 @@ describe('Kanban Phase A catalog contract', () => {
 
     const after = createI18n({ locale: 'nl' });
     expect(after.t('kanban.board.label')).toBe('kanban.board.label');
+  });
+});
+
+describe('Kanban Phase C operation overlay catalog contract', () => {
+  it('publishes the exact English drag, target, lifecycle, and placeholder vocabulary', () => {
+    expect(Object.keys(KANBAN_PHASE_C_ENGLISH_MESSAGES).sort()).toEqual(EXPECTED_PHASE_C_KEYS);
+    expect(keysOf(KANBAN_PHASE_C_ENGLISH_CATALOG)).toEqual(EXPECTED_PHASE_C_KEYS);
+    expect(KANBAN_PHASE_C_PLACEHOLDER_MANIFEST).toEqual({ 'kanban.drag.cards': ['count'] });
+    expect(Object.isFrozen(KANBAN_PHASE_C_ENGLISH_MESSAGES)).toBe(true);
+    expect(Object.isFrozen(KANBAN_PHASE_C_ENGLISH_CATALOG)).toBe(true);
+    expect(Object.isFrozen(KANBAN_PHASE_C_PLACEHOLDER_MANIFEST)).toBe(true);
+  });
+
+  it('provides one complete immutable Phase C overlay for every official locale', async () => {
+    const locales = await import('../src/i18n/locales.js');
+    const names = [
+      'kanbanPhaseCEn',
+      'kanbanPhaseCNl',
+      'kanbanPhaseCDe',
+      'kanbanPhaseCFr',
+      'kanbanPhaseCEs',
+      'kanbanPhaseCIt',
+      'kanbanPhaseCPtPT',
+      'kanbanPhaseCPl',
+      'kanbanPhaseCRo',
+      'kanbanPhaseCSv',
+    ] as const;
+    const overlays = names.map((name) => Reflect.get(locales, name) as Catalog | undefined);
+
+    expect(overlays.every((catalog) => catalog !== undefined)).toBe(true);
+    expect(overlays.map((catalog) => catalog?.locale)).toEqual(EXPECTED_LOCALES);
+    for (const catalog of overlays) {
+      if (catalog === undefined) throw new Error('Missing official Phase C Kanban translation overlay.');
+      expect(keysOf(catalog)).toEqual(EXPECTED_PHASE_C_KEYS);
+      expect(
+        validateCatalog(catalog, {
+          mode: 'strict',
+          official: true,
+          referenceCatalog: KANBAN_PHASE_C_ENGLISH_CATALOG,
+          placeholderManifest: KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
+          acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
+        }),
+      ).toEqual([]);
+      expect(Object.isFrozen(catalog)).toBe(true);
+      expect(Object.isFrozen(catalog.messages)).toBe(true);
+    }
+  });
+
+  it('composes Phase C overlays into isolated locale services without process-global registration', async () => {
+    const locales = await import('../src/i18n/locales.js');
+    const before = createI18n({ locale: 'de' });
+    const foundation = locales.kanbanDe;
+    const phaseB = locales.kanbanPhaseBDe;
+    const phaseC = Reflect.get(locales, 'kanbanPhaseCDe') as Catalog | undefined;
+    expect(phaseC).toBeDefined();
+    if (phaseC === undefined) throw new Error('Missing German Phase C overlay.');
+
+    const isolated = createI18n({ locale: 'de', catalogs: [foundation, phaseB, phaseC] });
+    expect(isolated.t('kanban.drag.cards', { params: { count: 3 } })).not.toBe('kanban.drag.cards');
+    expect(before.t('kanban.drag.cards', { params: { count: 3 } })).toBe('kanban.drag.cards');
   });
 });

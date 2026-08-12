@@ -50,7 +50,7 @@ describe('configuration-driven i18n package registration', () => {
       readonly packages: readonly {
         readonly name: string;
         readonly symbolPrefix: string;
-        readonly overlaySymbolPrefix?: string;
+        readonly overlaySymbolPrefixes?: readonly string[];
       }[];
       readonly locales: readonly string[];
     };
@@ -58,7 +58,7 @@ describe('configuration-driven i18n package registration', () => {
     expect(config.packages).toContainEqual({
       name: 'kanban',
       symbolPrefix: 'kanban',
-      overlaySymbolPrefix: 'kanbanPhaseB',
+      overlaySymbolPrefixes: ['kanbanPhaseB', 'kanbanPhaseC'],
     });
     expect(config.packages).toHaveLength(6);
     expect(config.locales).toHaveLength(10);
@@ -69,8 +69,13 @@ describe('configuration-driven i18n package registration', () => {
     const reviews = readFileSync(join(repoRoot, 'scripts/check-i18n-reviews.mjs'), 'utf8');
     expect(generator).not.toMatch(/packages\.length\s*!==\s*4|40 explicit/u);
     expect(generator).toMatch(/config\.packages\.length\s*\*\s*config\.locales\.length/u);
+    expect(generator).toContain('overlaySymbolPrefixes');
+    expect(generator).not.toMatch(/overlaySymbolPrefix(?!es)/u);
     expect(reviews).not.toMatch(/36 digest-bound|All 36/u);
     expect(reviews).toContain('i18n-locale-exports.json');
+    expect(readFileSync(join(repoRoot, 'packages/kanban/src/locales/en.ts'), 'utf8')).toMatch(
+      /export \{ kanbanEn, kanbanPhaseBEn, kanbanPhaseCEn \}/u,
+    );
   });
 
   test('records disclosed AI-assisted review evidence for every configured non-English catalog', () => {
@@ -120,12 +125,33 @@ describe('configuration-driven i18n package registration', () => {
       kanbanPhaseBRo,
       kanbanPhaseBSv,
     ];
+    const localeModule: unknown = await import(
+      pathToFileURL(join(repoRoot, 'packages', 'kanban', 'src', 'i18n', 'locales.js')).href
+    );
+    const phaseCNames = [
+      'kanbanPhaseCNl',
+      'kanbanPhaseCDe',
+      'kanbanPhaseCFr',
+      'kanbanPhaseCEs',
+      'kanbanPhaseCIt',
+      'kanbanPhaseCPtPT',
+      'kanbanPhaseCPl',
+      'kanbanPhaseCRo',
+      'kanbanPhaseCSv',
+    ] as const;
+    if (typeof localeModule !== 'object' || localeModule === null) throw new Error('Invalid Kanban locale module.');
+    const phaseCOverlays = phaseCNames.map((name) => Reflect.get(localeModule, name) as Catalog | undefined);
+    expect(phaseCOverlays.every((catalog) => catalog !== undefined)).toBe(true);
     const catalogs = foundations.map((foundation, index) => ({
       packageName: 'kanban',
       catalog: {
         schema: foundation.schema,
         locale: foundation.locale,
-        messages: { ...foundation.messages, ...overlays[index].messages },
+        messages: {
+          ...foundation.messages,
+          ...overlays[index].messages,
+          ...(phaseCOverlays[index]?.messages ?? {}),
+        },
       },
     }));
 

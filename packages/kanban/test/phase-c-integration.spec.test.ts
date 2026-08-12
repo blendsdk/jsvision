@@ -1,6 +1,8 @@
 /** Specification coverage for Phase C cross-input operations and cancellation-first integration. */
 import { createApplication, resolveCapabilities } from '@jsvision/ui';
 import type { Application, DispatchEvent } from '@jsvision/ui';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, KanbanViewport, createEagerKanbanDataSource } from '../src/index.js';
@@ -35,6 +37,7 @@ const CARD: KanbanCardAdapter<Card> = Object.freeze({
   presentationRevisionOf: (card: Card) => card.revision,
 });
 const applications: Application[] = [];
+const repoRoot = join(import.meta.dirname, '..', '..', '..');
 
 afterEach(() => {
   for (const application of applications.splice(0)) application.loop.dispose();
@@ -416,5 +419,59 @@ describe('Phase C board setup and standalone lifecycle', () => {
     expect(() => application.loop.renderRoot.mount(board)).toThrow();
     const late = key(board, 'right', { ctrl: true, shift: true });
     expect(late.handled).toBe(false);
+  });
+});
+
+describe('Phase C production, testing, documentation, and plugin delivery boundary', () => {
+  it('keeps host tooling and deterministic harnesses out of the production entry graph', () => {
+    const productionEntry = readFileSync(join(repoRoot, 'packages/kanban/src/index.ts'), 'utf8');
+    const testingEntry = readFileSync(join(repoRoot, 'packages/kanban/src/testing.ts'), 'utf8');
+    const manifest = JSON.parse(readFileSync(join(repoRoot, 'packages/kanban/package.json'), 'utf8')) as {
+      readonly dependencies?: Readonly<Record<string, string>>;
+      readonly devDependencies?: Readonly<Record<string, string>>;
+      readonly exports?: Readonly<Record<string, unknown>>;
+    };
+
+    expect(manifest.exports).toHaveProperty('.');
+    expect(manifest.exports).toHaveProperty('./testing');
+    expect(manifest.dependencies).not.toHaveProperty('node-pty');
+    expect(manifest.dependencies).not.toHaveProperty('@xterm/headless');
+    expect(manifest.dependencies).not.toHaveProperty('@jsvision/web');
+    expect(manifest.devDependencies).toMatchObject({
+      'node-pty': expect.stringMatching(/^\^1\.1\.0$/u),
+      '@xterm/headless': expect.stringMatching(/^\^6\.0\.0$/u),
+      '@jsvision/web': '1.5.2',
+    });
+    expect(productionEntry).not.toMatch(/testing\/|node-pty|@xterm\/headless|@jsvision\/web/u);
+    for (const helper of [
+      'createKanbanFakeClock',
+      'createKanbanDragHarness',
+      'createKanbanDispatcherHarness',
+      'createKanbanOperationLifecycleHarness',
+      'createKanbanStandardPointerTrace',
+      'replayKanbanSemanticPointerTrace',
+    ]) {
+      expect(testingEntry, `${helper} must be exported only from @jsvision/kanban/testing`).toContain(helper);
+      expect(productionEntry).not.toContain(helper);
+    }
+  });
+
+  it('publishes separate generated testing API evidence while keeping the production plugin surface clean', () => {
+    const testingApiRoot = join(repoRoot, 'packages/docs-site/api/kanban-testing');
+    const i18nIndex = readFileSync(join(repoRoot, 'packages/docs-site/reference/i18n-entry-points.md'), 'utf8');
+    const pluginApi = readFileSync(join(repoRoot, 'tools/jsvision-skill/references/api/kanban.md'), 'utf8');
+    const pluginTesting = join(repoRoot, 'tools/jsvision-skill/references/api/kanban-testing.md');
+
+    expect(existsSync(testingApiRoot)).toBe(true);
+    expect(existsSync(pluginTesting)).toBe(true);
+    expect(i18nIndex).toContain('kanbanPhaseCEn');
+    expect(i18nIndex).toContain('kanbanPhaseCSv');
+    expect(pluginApi).toContain('KANBAN_PHASE_C_ENGLISH_CATALOG');
+    expect(pluginApi).not.toContain('createKanbanStandardPointerTrace');
+    if (existsSync(pluginTesting)) {
+      const testingReference = readFileSync(pluginTesting, 'utf8');
+      expect(testingReference).toContain('createKanbanStandardPointerTrace');
+      expect(testingReference).toContain('replayKanbanSemanticPointerTrace');
+    }
   });
 });

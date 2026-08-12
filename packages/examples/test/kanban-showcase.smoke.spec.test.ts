@@ -20,6 +20,50 @@ const WIDTH = 72;
 const HEIGHT = 20;
 const disposeApps: (() => void)[] = [];
 
+type PhaseCScenario = 'warning' | 'blocked' | 'pending' | 'rejected' | 'publication' | 'bulk' | 'autoscroll';
+
+interface PhaseCScenarioEvidence {
+  readonly inputOrigin: 'pointer';
+  readonly targetState?: 'warning' | 'blocked';
+  readonly dispatcherCalls: number;
+  readonly confirmationCalls: number;
+  readonly lifecycleStates: readonly string[];
+  readonly movedCardKeys: readonly (string | number)[];
+  readonly sourceChangedBeforePublication: boolean;
+  readonly sourceChangedAfterPublication: boolean;
+  readonly scrollBefore: { readonly x: number; readonly y: number };
+  readonly scrollAfter: { readonly x: number; readonly y: number };
+  readonly activity: string;
+}
+
+interface PhaseCShowcaseDriver {
+  exercise(scenario: PhaseCScenario): Promise<PhaseCScenarioEvidence>;
+  snapshot(): {
+    readonly disposed: boolean;
+    readonly timers: number;
+    readonly captureLeases: number;
+    readonly subscriptions: number;
+  };
+}
+
+/** Reads the deterministic driver that performs real pointer input against the active showcase board. */
+function phaseCDriver(showcase: ReturnType<typeof createKanbanShowcase>): PhaseCShowcaseDriver {
+  const value: unknown = Reflect.get(showcase, 'phaseC');
+  expect(value, 'the real showcase must expose its bounded Phase C verification driver').toBeTypeOf('function');
+  if (typeof value !== 'function') throw new Error('Missing Phase C showcase verification driver.');
+  const driver: unknown = Reflect.apply(value, showcase, []);
+  if (typeof driver !== 'object' || driver === null) throw new Error('Invalid Phase C showcase driver.');
+  const exercise: unknown = Reflect.get(driver, 'exercise');
+  const snapshot: unknown = Reflect.get(driver, 'snapshot');
+  if (typeof exercise !== 'function' || typeof snapshot !== 'function') {
+    throw new Error('Incomplete Phase C showcase driver.');
+  }
+  return {
+    exercise: (scenario) => Promise.resolve(Reflect.apply(exercise, driver, [scenario]) as PhaseCScenarioEvidence),
+    snapshot: () => Reflect.apply(snapshot, driver, []) as ReturnType<PhaseCShowcaseDriver['snapshot']>,
+  };
+}
+
 afterEach(() => {
   for (const dispose of disposeApps.splice(0)) dispose();
 });
@@ -32,7 +76,7 @@ function paintedCells(rows: readonly { readonly char: string }[][]): number {
 }
 
 // A permanent kitchen sink must always contain at least one real, uniquely addressable story.
-test('the registry should expose uniquely identified Phase B stories', () => {
+test('the registry should expose uniquely identified shipped-capability stories', () => {
   expect(KANBAN_STORIES.length).toBeGreaterThanOrEqual(4);
   expect(new Set(KANBAN_STORIES.map(({ id }) => id)).size).toBe(KANBAN_STORIES.length);
   for (const story of KANBAN_STORIES) {
@@ -41,6 +85,14 @@ test('the registry should expose uniquely identified Phase B stories', () => {
     expect(story.title).toBeTruthy();
     expect(story.blurb).toBeTruthy();
   }
+});
+
+test('the registry should include one truthful modern interaction story', () => {
+  const story = KANBAN_STORIES.find(({ id }) => id === 'kanban/modern-interaction');
+  expect(story).toBeDefined();
+  expect(story?.title).toMatch(/drag|interaction|operation/iu);
+  expect(story?.blurb).toMatch(/warning|blocked/iu);
+  expect(story?.blurb).toMatch(/pending|publication/iu);
 });
 
 // Dense localized fixtures must expose bounded detail rather than silently dropping every optional section.
@@ -130,4 +182,102 @@ test('the interaction story should report real keyboard and mouse activation', a
     for (let attempt = 0; attempt < 10; attempt += 1) await Promise.resolve();
   }
   expect(showcase.activeActivity()).toMatch(/open-card.*pointer/u);
+});
+
+test('the modern interaction story drives warning and blocked targets through real pointer input', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  expect(storyIndex).toBeGreaterThanOrEqual(0);
+  showcase.selectStory(storyIndex);
+  const driver = phaseCDriver(showcase);
+
+  const warning = await driver.exercise('warning');
+  expect(warning).toMatchObject({
+    inputOrigin: 'pointer',
+    targetState: 'warning',
+    dispatcherCalls: 1,
+    confirmationCalls: 1,
+  });
+  expect(warning.lifecycleStates).toContain('pending');
+
+  const blocked = await driver.exercise('blocked');
+  expect(blocked).toMatchObject({
+    inputOrigin: 'pointer',
+    targetState: 'blocked',
+    dispatcherCalls: 0,
+    confirmationCalls: 0,
+  });
+  expect(blocked.lifecycleStates).toEqual([]);
+});
+
+test('the modern interaction story shows pending, rejection, and authoritative publication honestly', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+  const driver = phaseCDriver(showcase);
+
+  const pending = await driver.exercise('pending');
+  expect(pending.lifecycleStates).toEqual(['proposed', 'pending']);
+  expect(pending.sourceChangedBeforePublication).toBe(false);
+  expect(
+    showcase
+      .activeBoard()
+      .operationSnapshot()
+      .some(({ state }) => state === 'pending'),
+  ).toBe(true);
+
+  const rejected = await driver.exercise('rejected');
+  expect(rejected.lifecycleStates).toEqual(['proposed', 'pending', 'rejected']);
+  expect(rejected.sourceChangedAfterPublication).toBe(false);
+  expect(rejected.activity).toMatch(/rejected/iu);
+
+  const publication = await driver.exercise('publication');
+  expect(publication.lifecycleStates).toEqual(['proposed', 'pending', 'accepted', 'committed']);
+  expect(publication.sourceChangedBeforePublication).toBe(false);
+  expect(publication.sourceChangedAfterPublication).toBe(true);
+  expect(publication.activity).toMatch(/published|committed/iu);
+});
+
+test('the modern interaction story demonstrates atomic bulk drag and deterministic edge autoscroll', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+  const driver = phaseCDriver(showcase);
+
+  const bulk = await driver.exercise('bulk');
+  expect(bulk.inputOrigin).toBe('pointer');
+  expect(bulk.movedCardKeys.length).toBeGreaterThan(1);
+  expect(new Set(bulk.movedCardKeys).size).toBe(bulk.movedCardKeys.length);
+  expect(bulk.dispatcherCalls).toBe(1);
+
+  const autoscroll = await driver.exercise('autoscroll');
+  expect(autoscroll.inputOrigin).toBe('pointer');
+  expect(autoscroll.scrollAfter.x + autoscroll.scrollAfter.y).toBeGreaterThan(
+    autoscroll.scrollBefore.x + autoscroll.scrollBefore.y,
+  );
+});
+
+test('the modern interaction story remains responsive and releases drag resources on story teardown', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+  const driver = phaseCDriver(showcase);
+  await driver.exercise('pending');
+
+  showcase.app.loop.resize({ width: 48, height: 16 });
+  showcase.app.loop.renderRoot.flush();
+  expect(showcase.activeBoard().viewport.metrics().mode).not.toBe('minimum-size');
+  showcase.app.loop.resize({ width: 80, height: 24 });
+  showcase.app.loop.renderRoot.flush();
+  expect(showcase.activeBoard().inspection().visibleCards.length).toBeGreaterThan(0);
+
+  showcase.selectStory(storyIndex === 0 ? 1 : 0);
+  expect(driver.snapshot()).toEqual({ disposed: true, timers: 0, captureLeases: 0, subscriptions: 0 });
 });

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-12 01:59 CEST
-> **Progress**: 104/124 tasks (84%)
+> **Last Updated**: 2026-08-12 02:08 CEST
+> **Progress**: 110/124 tasks (89%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -425,18 +425,31 @@ projection. The single fix-scoped re-review closed every finding with no new Cri
 
 ## Phase 7: Host evidence, i18n, docs, plugin, and closure
 
+> **Phase baseline tree**: `63ebc98846b9ce683b13853a59a3b2458963ce50`
+> **Scope mode**: strict
+> **Confirmed scope baseline**: Phase C host-equivalence evidence, public testing helpers, translated
+> operation overlays, authoritative delivery documentation, and incremental permanent showcase without
+> importing the complete RD-09–15 application surfaces.
+> **Expected modification set**: `packages/kanban/{src,test,README.md,CHANGELOG.md,package.json}`,
+> `packages/examples/kanban-showcase/**`, the owning Examples smoke specification, locale/review/API
+> generators and generated outputs, `.github/workflows/ci.yml`, architecture/plugin/roadmap artifacts,
+> `yarn.lock`, and this execution plan.
+
 ### Step 7.1: Specification tests
 
 **Reference**: 03-05 §I18n; 03-06 §Testing/Hosts/Docs · ST-C-INT-04/08..10 · AR-C17–C20
 **Objective**: Freeze honest host parity and complete public-delivery evidence before adding the native
 harness and showcase updates.
 
-- [ ] 7.1.1 `[spec-author]` Add test-local semantic pointer-trace/replay expectations and direct-loop/browser-xterm equivalence oracle, intentionally red until public helpers exist — `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts`
-- [ ] 7.1.2 `[spec-author]` Add Unix real-PTY and platform-scoped Windows ConPTY evidence assertions that reject pipe-backed masquerading — `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts`
-- [ ] 7.1.3 `[spec-author]` Add CI contract assertions requiring designated Node 22 Ubuntu/macOS/Windows Kanban host E2E with non-skippable platform evidence — `packages/kanban/test/host-ci-contract.spec.test.ts`
-- [ ] 7.1.4 `[spec-author]` Add Phase C locale/catalog/placeholder/review, ordered multiple-overlay generator, and production-vs-testing export/docs/API/plugin assertions — `packages/kanban/test/i18n.spec.test.ts`, `packages/kanban/test/phase-c-integration.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts`
-- [ ] 7.1.5 `[spec-author]` Extend the real Examples showcase smoke specification for drag/lifecycle/responsive truthfulness before story changes — `packages/examples/test/kanban-showcase.smoke.spec.test.ts`
-- [ ] 7.1.6 Run focused host/i18n/Examples delivery specifications and record expected red behavior; stop before dependency installation if authorization is absent
+- [x] 7.1.1 `[spec-author]` Add test-local semantic pointer-trace/replay expectations and direct-loop/browser-xterm equivalence oracle, intentionally red until public helpers exist — `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts` ✅ (completed: 2026-08-12 02:08)
+- [x] 7.1.2 `[spec-author]` Add Unix real-PTY and platform-scoped Windows ConPTY evidence assertions that reject pipe-backed masquerading — `packages/kanban/test/e2e/phase-c-hosts.e2e.test.ts` ✅ (completed: 2026-08-12 02:08)
+- [x] 7.1.3 `[spec-author]` Add CI contract assertions requiring designated Node 22 Ubuntu/macOS/Windows Kanban host E2E with non-skippable platform evidence — `packages/kanban/test/host-ci-contract.spec.test.ts` ✅ (completed: 2026-08-12 02:08)
+- [x] 7.1.4 `[spec-author]` Add Phase C locale/catalog/placeholder/review, ordered multiple-overlay generator, and production-vs-testing export/docs/API/plugin assertions — `packages/kanban/test/i18n.spec.test.ts`, `packages/kanban/test/phase-c-integration.spec.test.ts`, `packages/i18n/test/i18n-package-registration.spec.test.ts` ✅ (completed: 2026-08-12 02:08)
+- [x] 7.1.5 `[spec-author]` Extend the real Examples showcase smoke specification for drag/lifecycle/responsive truthfulness before story changes — `packages/examples/test/kanban-showcase.smoke.spec.test.ts` ✅ (completed: 2026-08-12 02:08)
+- [x] 7.1.6 Run focused host/i18n/Examples delivery specifications and record expected red behavior; stop before dependency installation if authorization is absent ✅ (completed: 2026-08-12 02:08)
+  - Red evidence: Kanban unit 6 failed / 17 passed; host E2E 2 failed / 1 platform-scoped skip;
+    i18n registration 3 failed / 1 passed; Examples showcase 5 failed / 8 passed. Kanban and
+    Examples typechecks, formatting, diff checks, and `yarn verify:local` passed.
 
 ### Step 7.2: Implementation
 
