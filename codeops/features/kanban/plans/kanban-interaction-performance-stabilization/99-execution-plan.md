@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:47 CEST
-> **Progress**: 4/46 tasks (9%)
+> **Last Updated**: 2026-08-12 16:51 CEST
+> **Progress**: 5/46 tasks (11%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -172,14 +172,14 @@ checkpoint `0bd32c9d2`; `git status --short` was empty. The checkpoint was pushe
       2026-08-12 16:45)
 - [x] 1.1.4 Add a focus-damage specification proving unrelated resident card geometry and lower fragments
       remain unchanged after a click. ✅ (completed: 2026-08-12 16:47)
-- [ ] 1.1.5 Add a mounted per-event EventLoop drag trace proving that each pointer dispatch returns only
+- [x] 1.1.5 Add a mounted per-event EventLoop drag trace proving that each pointer dispatch returns only
       after one compact framed title row positioned from the exact pointer-relative grab offset, a bounded
       selected-count cue when multiple, no blank trailing row, and a gap-only target appear in both the
       emitted/serialized frame and detached overlay evidence, with no explicit flush, promise, timer, load,
       settlement, or later event. Assert the raw origin as `normalized pointer - captured grab offset`
       separately from the viewport-clipped visible rectangle at all four edges. Prove continued drag after
       scrolling, synchronous cancellation on resize, one valid release/local publication reconciliation,
-      and an immediately successful fresh drag after cancellation.
+      and an immediately successful fresh drag after cancellation. ✅ (completed: 2026-08-12 16:51)
 - [ ] 1.1.6 Run the focused specifications and record the expected red failures without changing their
       geometry or interaction expectations.
 
