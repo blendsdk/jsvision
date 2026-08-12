@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision Kanban
 
-> **Status**: ✅ GATE PASSED — 43 of 43 items resolved; scope confirmed for RD authoring
-> **Last Updated**: 2026-08-03 19:05
+> **Status**: ✅ GATE PASSED — 45 of 45 items resolved; scope confirmed for implementation
+> **Last Updated**: 2026-08-12
 > **Feature-Set**: kanban (`codeops/features/kanban/`)
 > **Mode**: auto-design
 > **Root Invocation ID**: `kanban-20260803-01`
@@ -52,6 +52,8 @@
 | 41 | Layout / composition | How strongly must Kanban and its included dialogs use JSVision's layout DSL? | Best-effort DSL use / DSL-first with named exceptions / bespoke geometry throughout | **User requires maximum use of the public JSVision layout DSL and responsive UI everywhere; ordinary Kanban/dialog composition must use DSL flow/stack/measurement, with raw cell geometry limited to documented window-manager, framework-overlay, virtualized canvas, hit-test, and transient drag-layer exceptions** | ✅ Resolved |
 | 42 | Public architecture | What public component, source, request, identity, and export topology preserves DSL responsiveness, bounded windowing, and application authority? | Monolithic view or view-per-card / board plus viewport; flat, cell, or session source; callbacks or request dispatcher; one barrel or many subpaths | **Authority: AI — `KanbanBoard<T>` is a DSL-composed group around one measured `KanbanViewport<T>` leaf; a board query session exposes sparse lazy cell cursors; one discriminated atomic request dispatcher owns application-data mutations while pure local view transitions remain separate; public terminology is column/swimlane; the canonical main barrel exports models/UI/dialogs with locale and testing subpaths only** | ✅ Resolved |
 | 43 | Public defaults / bounds | Which exact default keys, geometry timings, data bounds, and resource limits keep the first public contract usable and safe without deferring decisions to planning? | Leave to implementation / unbounded / centralized conservative defaults with host-lowerable limits | **Authority: AI — freeze the centralized classified limits and keymap in AR-43/RD-14: every resource has a safe default, standard ceiling, and absolute maximum; immutable safety bounds remain fixed; geometry timings are explicit; Primary resolves to Command on capable macOS browser hosts and Ctrl elsewhere/native; destructive/configuration actions are unbound by default** | ✅ Resolved |
+| 44 | UX / drag ghost | After native visual review, what bounded content should the card drag ghost retain? | Earlier title/status fragment / compact framed title-only ghost | **User approved one compact framed card title, plus bounded selected count when multiple, with no status row or blank trailing row; pointer-relative tracking and theme/capability fallbacks remain unchanged** | ✅ Resolved |
+| 45 | Theme / application accents | How can the approved colorful showcase represent status families without lying through read-only/WIP/error roles? | Repurpose state roles / one neutral surface with text cues / four bounded neutral accent roles | **User authorized four generic application-neutral `card.accent-1`…`card.accent-4` roles with deterministic legacy fallback, exact text/non-color status cues, and focus/selection composition that preserves the accent surface** | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -87,6 +89,18 @@ acceptance batch. Exact prototype-derived constants remain governed by AR-34 and
 **AR-40:** The user explicitly approved M17–M26. Comfortable and spacious densities reserve a
 one-row card gutter; compact density may reclaim it at rest but expands the active target during a
 drag. Swimlane headers remain controls and never double as ambiguous card insertion targets.
+
+**AR-44:** During native visual review after Phase C, the user explicitly approved a smaller drag ghost:
+one framed title row, a bounded multi-selection count when applicable, and no status or blank trailing row.
+This later decision supersedes only the earlier ghost-content detail in AR-39/RD-07; capture, pointer-relative
+tracking, placeholder, insertion-gap, autoscroll, cancellation, accessibility, and host-evidence guarantees
+remain unchanged.
+
+**AR-45:** During the T-03 preflight re-scan, codebase evidence proved that the closed inventory had no
+truthful neutral roles for the approved colorful status showcase. The user explicitly authorized the
+recommended bounded public expansion through completion. Four application-neutral accents are added with
+source-compatible optional caller tokens, deterministic `card.normal` fallback, exact text/non-color status
+cues, and focus/selection composition that never replaces the accent surface or repurposes state roles.
 
 **AR-37:** The user explicitly approved F1–F18. Filtering remains a view projection; WIP and
 structural counts use authoritative data; focus and selection never leave invisible destructive
@@ -462,6 +476,55 @@ during RD authoring must reopen this register before the affected requirement is
 - **Root invocation ID:** `kanban-20260803-01`.
 - **Reopen triggers:** Phase-A/C prototypes demonstrate clipped mandatory content, measurable starvation,
   unavoidable host key conflicts, or a security/performance failure at a stated bound.
+
+### AR-44 — Compact title-only card drag ghost
+
+- **Authority:** User — approved during native visual review after Phase C implementation.
+- **Objective:** Keep pointer drag feedback recognizable and contemporary without wasting a terminal row or
+  obscuring the target beneath an oversized lifted card.
+- **Decision:** A card drag ghost is one compact framed title row and, for an atomic multi-card drag, one
+  bounded selected-count cue. It contains no separate status row and no blank trailing row. The title remains
+  sanitized, display-cell bounded, clipped to the viewport, and positioned from the pointer-relative grab
+  offset. Existing Unicode/ASCII, monochrome/color, border, source-placeholder, and target-gap cues remain.
+- **Evidence:** The user manually reviewed the implemented title/status form, reported the unnecessary row,
+  approved the compact title-only correction, and subsequently accepted the stabilization preflight's
+  traceability synchronization.
+- **Rejected alternative:** Restoring the earlier title/status fragment would reverse the later approved
+  native visual result without adding information needed to identify the moving card.
+- **Confidence:** High; this is a direct recorded user choice and the current renderer/specification already
+  implement it.
+- **Reopen triggers:** Multi-card identity becomes ambiguous in native review, title-only fallback becomes
+  unrecognizable in a supported capability profile, or the user requests richer drag content.
+
+### AR-45 — Bounded application-neutral card accents
+
+- **Authority:** User — explicitly authorized during the T-03 Iteration-2 preflight scope gate.
+- **Objective:** Keep the showcase and consumer boards colorful while preserving truthful state semantics,
+  accessibility cues, and compatibility for existing `KanbanTheme` values.
+- **Decision:** Add exactly four generic roles, `card.accent-1` through `card.accent-4`. They communicate
+  application-owned visual grouping only and never imply read-only, warning, error, WIP, or operation state.
+  Accent entries are optional at the caller-input boundary so existing complete theme literals continue to
+  typecheck; `createKanbanTheme` produces all four, and missing accents resolve to `card.normal` with bounded
+  fallback evidence. `contractVersion: 1` remains. Focus/selection compose through border, title, attributes,
+  and non-color cues while retaining the accent surface. Exact status remains bounded visible text and a
+  non-color cue across every supported color/glyph profile.
+- **Evidence:** The closed inventory contains only one neutral normal surface; the existing GitHub demo obtains
+  four colors by repurposing read-only, WIP-warning, and WIP-error roles whose names, Core fallbacks, and cues
+  carry false semantics. One neutral surface cannot meet the user's explicit colorful-showcase outcome.
+- **Rejected alternatives:** State-role repurposing is semantically and accessibly false. One surface plus
+  text/glyph cues is truthful but fails the approved showcase outcome. A general custom-token registry is a
+  materially larger compatibility and validation surface than four bounded accents.
+- **Strongest counterargument:** Four roles enlarge the public union and are less flexible than arbitrary
+  application tokens.
+- **Confidence:** High; the bounded addition is the smallest option satisfying truthful semantics, color,
+  compatibility, and terminal fallbacks.
+- **Hardening:** The independent Iteration-2 challenger converged and required legacy fallback plus preserving
+  accent surfaces across focus/selection.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-preflight-20260812`.
+- **Reopen triggers:** Existing theme literals fail source/runtime compatibility, four accents cannot retain
+  readable fallbacks in a supported profile, or a future separately approved generic token API supersedes
+  the bounded inventory.
 
 ## Auto-design context
 

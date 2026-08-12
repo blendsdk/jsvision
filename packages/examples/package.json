@@ -44,6 +44,7 @@
     "demo:kitchen": "tsx kitchen-sink/main.ts",
     "demo:datagrid": "tsx datagrid-showcase/main.ts",
     "demo:kanban": "tsx kanban-showcase/main.ts",
+    "demo:github-kanban": "tsx github-project-kanban/main.ts",
     "demo:code-editor": "tsx code-editor-demo/main.ts",
     "demo:i18n": "tsx i18n-demo/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts",

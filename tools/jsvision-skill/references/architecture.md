@@ -32,16 +32,19 @@ The board uses JSVision's layout DSL around one exact-cell viewport leaf and can
 on a surface or inside an application-owned window. Its canonical sparse scene drives scrolling,
 clipped variable-height cards, damage, and semantic hit targets. Mounted keyboard and pointer input
 supports spatial navigation, bounded selection, activation, context, descriptor actions, retry, and
-wheel scrolling. Unknown and Alt-modified keys remain available to the containing application;
-move/drag reports cancel click tracking because drag/drop is not active yet.
+wheel scrolling. Unknown and Alt-modified keys remain available to the containing application. A
+primary card press stays click-eligible until bounded movement crosses the configured drag
+threshold; the mounted viewport then owns pointer capture, stable lifted-card feedback, semantic
+before/after gap targeting, edge autoscroll, and atomic release through the application dispatcher.
 
 Receive `open-card`, `open-context`, and `scoped-action` through `onInteraction`, or use the stable
 `board.interaction()` facade programmatically. Each application intent contains semantic identities,
 origin, closed scope, and a detached eligible selection snapshot; it never contains records or grants
 mutation authority. Keep data changes behind the application-owned `KanbanRequest` dispatcher and
 publish the authoritative result through the source. A standalone incremental kitchen sink now
-demonstrates shipped board, card, swimlane, responsive, keyboard, and pointer behavior. Drag/drop,
-commands, card editors, lane-configuration UI, and docs-site component labs remain later surfaces.
+demonstrates shipped board, card, swimlane, responsive, keyboard, pointer-drag, application-owned
+publication, and operation-lifecycle behavior. Commands, card editors, lane-configuration UI, and
+docs-site component labs remain later surfaces.
 See the exact current API in [api/kanban.md](api/kanban.md).
 
 ## Clipboard boundary

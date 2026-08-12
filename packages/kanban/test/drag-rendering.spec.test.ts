@@ -155,10 +155,22 @@ describe('drag overlay composition', () => {
     expect(result.overlay.placeholders).toHaveLength(1);
     expect(result.overlay.gap).toMatchObject({ eligibility: { kind: 'allowed' }, rect: { height: 1 } });
     expect(result.overlay.ghost).toMatchObject({ cardKey: 1, count: 1 });
+    expect(result.overlay.ghost?.rect.height).toBe(3);
+    expect(result.overlay.ghost).not.toHaveProperty('status');
     expect(result.overlay.ghost?.rect.x).toBeLessThan(40);
     expect(result.overlay.ghost?.rect.y).toBeLessThan(12);
     expect(source.cards).toHaveLength(2);
     expect(source.cards[0]?.rect).toEqual({ x: 1, y: 3, width: 18, height: 4 });
+  });
+
+  // A lifted card follows the pointer continuously; resident-card overlap must not teleport it elsewhere.
+  it('should keep the ghost at one stable pointer offset while it remains inside viewport bounds', () => {
+    const evidence = drag();
+    const result = compose({
+      drag: { ...evidence, ghost: { ...evidence.ghost, point: { x: 10, y: 5 } } },
+    });
+
+    expect(result.overlay.ghost?.rect).toEqual({ x: 11, y: 1, width: 18, height: 3 });
   });
 
   it('should replace the drag in the same tick with one source-ordered pending block', () => {

@@ -91,6 +91,10 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
   let disposedStories = 0;
   let focusActiveStory = (): void => {};
   const focusedStory = signal(0);
+  const activeStory = signal(0);
+  const storyItems = signal(
+    KANBAN_STORIES.map((story, index) => `${index === 0 ? '>' : ' '} ${story.category} · ${story.title}`),
+  );
   const storyHost = col({ padding: 0 });
 
   /** Changes story through a single seam shared by the list, menus, keys, and tests. */
@@ -113,6 +117,13 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     });
     activeIndex = index;
     focusedStory.set(index);
+    activeStory.set(index);
+    storyItems.set(
+      KANBAN_STORIES.map(
+        (candidate, candidateIndex) =>
+          `${candidateIndex === index ? '>' : ' '} ${candidate.category} · ${candidate.title}`,
+      ),
+    );
     storyHost.add(grow(activeBuild!.view));
     storyHost.invalidateLayout();
     activeBuild!.phaseC?.bind({
@@ -123,8 +134,9 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
   }
 
   const navigator = new ListBox({
-    items: signal(KANBAN_STORIES.map((story) => `${story.category} · ${story.title}`)),
+    items: storyItems,
     focused: focusedStory,
+    selected: activeStory,
     typeAhead: true,
     onSelect: (index) => {
       selectStory(index);

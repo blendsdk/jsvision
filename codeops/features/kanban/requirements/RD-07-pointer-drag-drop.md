@@ -80,11 +80,12 @@ current set/release/has-capture API alone cannot satisfy the recovery guarantee.
 
 ### Ghost and source placeholder — Complexity L
 
-The ghost is clipped to the viewport, offset from the pointer so the active target remains visible, and
-contains a bounded card identity (title/status markers) plus selected count when multiple. It never
-duplicates unbounded card content. The source position retains a placeholder/non-color marker so the
-user sees origin and the stack does not collapse unexpectedly. Theme/capability fallbacks preserve a
-recognizable border/marker in monochrome/ASCII.
+The ghost is clipped to the viewport, follows the pointer-relative grab offset without covering the active
+target, and contains one compact framed title plus a selected count when multiple. It has no blank trailing
+row and never duplicates status or other card content. The source position retains a placeholder/non-color
+marker so the user sees origin and the stack does not collapse unexpectedly. Theme/capability fallbacks
+preserve a recognizable border/marker in monochrome/ASCII. This compact form supersedes the earlier
+title/status-fragment design after native visual review (AR-44).
 
 ### Drop target geometry — Complexity XL
 
@@ -153,6 +154,7 @@ cancelled release dispatches nothing and restores source layout/focus in one set
 | Unknown edge | Guess / block/prefetch | Block and prefetch | Prevent wrong rank | AR #32, #31 |
 | Bulk | One / selection | Atomic selection | Productivity without partial state | AR #15, #31 |
 | Timing | Deferred / fixed safe defaults | 50 ms zones, 500 ms expansion | Deterministic modern feedback | AR #43 |
+| Ghost content | Title/status fragment / compact title-only | Compact framed title plus multi-count | Native visual review found the extra row unnecessarily large | AR #44 |
 
 ---
 
@@ -173,8 +175,9 @@ cancelled release dispatches nothing and restores source layout/focus in one set
 1. [x] With the one-cell default, zero Manhattan movement produces click selection and zero move requests;
    the first cell transition (`abs(dx) + abs(dy) >= 1`) starts exactly one captured drag for the active
    button/generation.
-2. [x] A drag frame contains one bounded ghost, one source placeholder, and at most one active insertion
-   gap; moving between targets leaves no old ghost/gap cells in the settled frame.
+2. [x] A drag frame contains one compact title-only ghost (plus bounded selected count when multiple), one
+   source placeholder, and at most one active insertion gap; it has no blank trailing row, and moving
+   between targets leaves no old ghost/gap cells in the settled frame.
 3. [x] Comfortable/spacious gutter coordinates win over card-half fallback and map to the correct
    between anchors.
 4. [x] Moving one cell inside the configured hysteresis band retains the target; crossing its boundary

@@ -90,7 +90,7 @@ The stable role families are:
 | Region/state | Required distinction |
 |---|---|
 | Board/column/swimlane surfaces | Background, separators, focused header/group |
-| Card | Normal, focused, selected, focused+selected, disabled/read-only |
+| Card | Normal, four application-neutral accents, focused, selected, focused+selected, disabled/read-only |
 | Operation | Grabbed/source placeholder, ghost, valid/warning/invalid target, pending, rejected |
 | Policy/state | WIP warning/error, DoD indicator, loading/partial/empty/error/retry |
 | Content | Title, status, metadata, labels, summaries, checklist complete/incomplete/progress |
@@ -102,6 +102,15 @@ For truecolor it measures the resolved RGB pair directly. For 256 colors it meas
 helpers use redmean distance and the lower palette index on ties, making quantization deterministic.
 Quantized RGB objects are encoded as lowercase six-digit `#rrggbb` values before calling
 `contrastRatio`.
+
+The four bounded application-neutral roles are `card.accent-1` through `card.accent-4`. They communicate
+visual grouping only and never imply warning, error, WIP, read-only, or operation state. Existing
+`KanbanTheme` literals remain source-compatible: accent tokens are optional at the caller-input boundary,
+`createKanbanTheme` resolves all four, and a missing accent falls back deterministically to `card.normal`
+with resolution evidence. This additive capability retains `contractVersion: 1`. Focus and selection compose
+over the chosen accent surface through border, title, attribute, and non-color cues instead of replacing its
+status grouping. Exact application status remains visible text/non-color data, never inferred from an accent
+number (AR-45).
 Malformed colors reject before resolution. A terminal-default color makes `toRgb` unresolvable and
 `contrastRatio` return `NaN`; `NaN` is unsafe and immediately advances the fallback chain.
 
@@ -166,6 +175,7 @@ visibly neutralized according to the shared sanitization contract before measure
 | Width | JS length / display cells | Display cells | Unicode correctness | AR #23, #34, #41 |
 | Fallback | Unicode only / ASCII | Capability-aware ASCII | Host compatibility | AR #23 |
 | Claims | Broad screen reader / scoped | Scoped terminal boundary | Evidence accuracy | AR #23 |
+| Card accents | Repurpose state roles / one surface / four neutral accents | Four bounded neutral accents with legacy fallback | Colorful grouping without false state semantics | AR #45 |
 
 ---
 
@@ -217,3 +227,6 @@ visibly neutralized according to the shared sanitization contract before measure
     claim of ARIA, WCAG conformance, or universal screen-reader semantics.
 16. [ ] Locale/theme/glyph imports perform zero filesystem/network/global registration side effects until
     the application explicitly composes them.
+17. [ ] All four neutral accent roles preserve readable status text and distinct non-color status cues across
+    focus/selected combinations and truecolor/256/16/mono/`NO_COLOR` plus Unicode/ASCII profiles; a legacy
+    theme with no accent entries resolves each to `card.normal` without a type or runtime break.

@@ -24,7 +24,7 @@ export const INTERACTION_STORY: KanbanStory = {
     });
     const view = col(
       { padding: { left: 1, right: 1, top: 0, bottom: 0 }, gap: 1 },
-      fixed(new Text('No card data mutates here: the board emits a bounded semantic intent to the application.'), 2),
+      fixed(new Text('Activation emits semantic intents; dragging publishes an application-owned card move.'), 2),
       grow(board),
       fixed(new Text(() => `Last intent: ${activity()}`), 2),
     );

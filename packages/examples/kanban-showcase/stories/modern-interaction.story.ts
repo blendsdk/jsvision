@@ -218,7 +218,7 @@ function buildModernInteractionStory() {
     host.flush();
   }
 
-  /** Selects exactly two visible cards, then leaves the final move initiation to pointer input. */
+  /** Selects exactly two visible cards and returns a stable destination in another workflow lane. */
   async function prepareBulkSelection(
     host: KanbanPhaseCPointerHost,
   ): Promise<Readonly<{ sourceKey: string | number; destinationKey: string | number }>> {
@@ -226,9 +226,10 @@ function buildModernInteractionStory() {
     const visible = board.inspection().actionTargets.filter(({ kind }) => kind === 'card');
     const first = visible[0];
     const sameCell = visible.filter(({ address }) => address?.columnId === first?.address?.columnId);
-    const destination = sameCell[2];
-    if (first?.cardKey === undefined || destination?.cardKey === undefined) {
-      throw new Error('The modern Kanban story needs three visible cards in one cell for atomic drag.');
+    const companion = sameCell[1];
+    const destination = visible.find(({ address }) => address?.columnId !== first?.address?.columnId);
+    if (first?.cardKey === undefined || companion?.cardKey === undefined || destination?.cardKey === undefined) {
+      throw new Error('The modern Kanban story needs two source cards and a visible destination for atomic drag.');
     }
     const point = absolutePoint(host, first);
     host.dispatch({ type: 'mouse', kind: 'down', button: 0, ...point });

@@ -1,4 +1,4 @@
-import { signal } from '@jsvision/ui';
+import { onCleanup, signal } from '@jsvision/ui';
 import { KanbanBoard, createEagerKanbanDataSource, createStandardKanbanCardAdapter } from '@jsvision/kanban';
 import type {
   KanbanCardDensity,
@@ -6,6 +6,8 @@ import type {
   KanbanInteractionIntent,
   KanbanPresentationInput,
   KanbanQuery,
+  KanbanRequest,
+  KanbanRequestResult,
   KanbanStructurePolicy,
   KanbanSwimlanePresentationInput,
   StandardCard,
@@ -94,6 +96,82 @@ export const SHOWCASE_CARD_ADAPTER = createStandardKanbanCardAdapter<string, Sho
 
 const BASE_QUERY: KanbanQuery = Object.freeze({ filters: [], sort: [] });
 
+/** Compares card identities without coercing numbers and strings into the same application key. */
+function sameCardKey(left: string | number, right: string | number): boolean {
+  return typeof left === typeof right && left === right;
+}
+
+/** Returns whether one showcase card belongs to the request's exact semantic destination cell. */
+function belongsToTarget(card: ShowcaseCard, request: Extract<KanbanRequest, { readonly kind: 'card-move' }>): boolean {
+  if (card.columnId !== request.target.columnId) return false;
+  if (request.target.swimlaneId === undefined) return true;
+  const team = card.custom?.team ?? 'unassigned';
+  return team === request.target.swimlaneId;
+}
+
+/** Finds the application array position represented by one stable-neighbor move placement. */
+function insertionIndex(
+  cards: readonly ShowcaseCard[],
+  request: Extract<KanbanRequest, { readonly kind: 'card-move' }>,
+): number {
+  const firstTarget = cards.findIndex((card) => belongsToTarget(card, request));
+  let lastTarget = -1;
+  for (let index = cards.length - 1; index >= 0; index -= 1) {
+    const candidate = cards[index];
+    if (candidate === undefined || !belongsToTarget(candidate, request)) continue;
+    lastTarget = index;
+    break;
+  }
+  const position = request.position;
+  if (position.kind === 'start') return firstTarget < 0 ? cards.length : firstTarget;
+  if (position.kind === 'end') return lastTarget < 0 ? cards.length : lastTarget + 1;
+  if (position.kind === 'between') {
+    const afterCardKey = position.afterCardKey;
+    const after = afterCardKey === null ? -1 : cards.findIndex((card) => sameCardKey(card.key, afterCardKey));
+    if (after >= 0) return after;
+    const beforeCardKey = position.beforeCardKey;
+    const before = beforeCardKey === null ? -1 : cards.findIndex((card) => sameCardKey(card.key, beforeCardKey));
+    return before >= 0 ? before + 1 : firstTarget < 0 ? cards.length : firstTarget;
+  }
+  const neighbor = cards.findIndex((card) => sameCardKey(card.key, position.neighborCardKey));
+  if (neighbor >= 0) return position.edge === 'before' ? neighbor : neighbor + 1;
+  return position.edge === 'before'
+    ? firstTarget < 0
+      ? cards.length
+      : firstTarget
+    : lastTarget < 0
+      ? cards.length
+      : lastTarget + 1;
+}
+
+/** Applies a validated card move to the showcase's application-owned immutable array. */
+function applyCardMove(
+  cards: readonly ShowcaseCard[],
+  request: Extract<KanbanRequest, { readonly kind: 'card-move' }>,
+  grouped: boolean,
+): readonly ShowcaseCard[] {
+  const movedKeys = request.moved.map(({ cardKey }) => cardKey);
+  const moved = request.moved.flatMap(({ cardKey }) => {
+    const card = cards.find((candidate) => sameCardKey(candidate.key, cardKey));
+    if (card === undefined) return [];
+    const team = request.target.swimlaneId === 'unassigned' ? undefined : request.target.swimlaneId;
+    return [
+      Object.freeze({
+        ...card,
+        columnId: request.target.columnId,
+        ...(grouped
+          ? {
+              custom: Object.freeze({ ...card.custom, ...(team === undefined ? { team: undefined } : { team }) }),
+            }
+          : {}),
+      }),
+    ];
+  });
+  const remaining = cards.filter((card) => !movedKeys.some((cardKey) => sameCardKey(card.key, cardKey)));
+  const index = insertionIndex(remaining, request);
+  return Object.freeze([...remaining.slice(0, index), ...moved, ...remaining.slice(index)]);
+}
+
 /** Converts one semantic interaction into bounded, non-payload showcase feedback. */
 function describeIntent(intent: KanbanInteractionIntent): string {
   if (intent.kind === 'open-card') return `open-card · ${intent.origin} · card ${String(intent.cardKey)}`;
@@ -108,7 +186,8 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
 } {
   const activity = signal(options.initialActivity);
   const grouped = options.swimlanes !== undefined;
-  const source = createEagerKanbanDataSource(() => options.cards, {
+  const cards = signal(Object.freeze([...options.cards]));
+  const source = createEagerKanbanDataSource(cards, {
     columns: () => SHOWCASE_COLUMNS,
     ...(grouped
       ? {
@@ -155,14 +234,33 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
         }
       : {}),
   };
+  /** Accepts supported showcase moves and publishes their application-owned source mutation. */
+  const dispatcher = (request: KanbanRequest): KanbanRequestResult => {
+    if (request.kind !== 'card-move') {
+      return Object.freeze({ kind: 'rejected', operationId: request.operationId, code: 'showcase-unsupported' });
+    }
+    cards.set(applyCardMove(cards(), request, grouped));
+    activity.set(
+      `Moved ${request.moved.length} card${request.moved.length === 1 ? '' : 's'} to ${request.target.columnId}`,
+    );
+    return Object.freeze({ kind: 'accepted', operationId: request.operationId });
+  };
   const board = new KanbanBoard({
     source,
     query: () => (grouped ? { ...BASE_QUERY, groupBy: 'team' } : BASE_QUERY),
     card: SHOWCASE_CARD_ADAPTER,
     structure: () => structure,
+    dispatcher,
     ...(options.density === undefined ? {} : { density: () => options.density! }),
     ...(options.presentation === undefined ? {} : { presentation: () => options.presentation! }),
     onInteraction: (intent) => activity.set(describeIntent(intent)),
   });
+  const unsubscribeOperations = board.subscribeOperations((snapshot) => {
+    if (snapshot.state !== 'accepted') return;
+    // Reconcile on the next microtask so the coordinator has completed its accepted transition
+    // before the application confirms that the reactive source publication is authoritative.
+    queueMicrotask(() => board.reconcilePublication({ kind: 'confirmed', operationId: snapshot.operationId }));
+  });
+  onCleanup(unsubscribeOperations);
   return { board, activity };
 }

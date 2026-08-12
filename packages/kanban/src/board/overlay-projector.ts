@@ -446,7 +446,7 @@ function descriptorCue(card: KanbanProjectedCard | undefined, section: 'title' |
   return row === undefined ? undefined : safeGhostCue(row.spans.map(({ text }) => text).join(' '));
 }
 
-/** Creates one viewport-bounded ghost sized from the visible origin card or a compact fallback. */
+/** Creates one viewport-bounded ghost that follows the pointer at a stable one-cell offset. */
 function projectGhost(
   projection: KanbanViewportProjection,
   drag: KanbanDragOverlayEvidence,
@@ -456,68 +456,56 @@ function projectGhost(
   const ghostIdentity = cardIdentity(drag.ghost.cardKey);
   const origin = projection.cards.find((card) => cardIdentity(card.descriptor.cardKey) === ghostIdentity);
   const width = Math.min(bounds.width, Math.max(3, Math.min(20, origin?.rect.width ?? 12)));
-  const height = Math.min(bounds.height, Math.max(2, Math.min(4, origin?.rect.height ?? 3)));
+  // One content row between the top and bottom frame is enough to identify either one title or an
+  // atomic multi-card count. The ghost deliberately does not inherit the source card's full height.
+  const height = Math.min(bounds.height, 3);
   const clampX = (x: number): number => Math.min(Math.max(bounds.x, x), bounds.x + bounds.width - width);
   const clampY = (y: number): number => Math.min(Math.max(bounds.y, y), bounds.y + bounds.height - height);
-  const candidates = [
-    { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y + 1) },
-    { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y - height - 1) },
-    { x: clampX(drag.ghost.point.x + 1), y: clampY(bounds.y + bounds.height - height) },
-    { x: clampX(drag.ghost.point.x - width - 1), y: clampY(drag.ghost.point.y + 1) },
-    { x: clampX(drag.ghost.point.x - width - 1), y: clampY(bounds.y + bounds.height - height) },
-  ];
-  const moved = new Set(drag.placeholders.flatMap(({ cardKeys }) => cardKeys.map(cardIdentity)));
-  const obstacles = [
-    ...projection.cards.flatMap((card) => (moved.has(cardIdentity(card.descriptor.cardKey)) ? [] : [card.rect])),
-    ...(drag.gap === undefined ? [] : [drag.gap.rect]),
-  ];
-  const overlap = (candidate: Readonly<{ x: number; y: number }>): number =>
-    obstacles.reduce((total, obstacle) => {
-      const overlapWidth = Math.max(
-        0,
-        Math.min(candidate.x + width, obstacle.x + obstacle.width) - Math.max(candidate.x, obstacle.x),
-      );
-      const overlapHeight = Math.max(
-        0,
-        Math.min(candidate.y + height, obstacle.y + obstacle.height) - Math.max(candidate.y, obstacle.y),
-      );
-      return total + overlapWidth * overlapHeight;
-    }, 0);
-  const preferred = candidates[0]!;
-  const score = (candidate: Readonly<{ x: number; y: number }>): number =>
-    overlap(candidate) * 2 + Math.abs(candidate.x - preferred.x) + Math.abs(candidate.y - preferred.y);
-  const placement = candidates.reduce((best, candidate) => (score(candidate) < score(best) ? candidate : best));
+  // Avoidance scoring made the ghost teleport between cards and distant viewport edges as overlap
+  // scores changed. A lifted card may cover resident content briefly, just like a graphical Kanban;
+  // continuous pointer tracking is the more important interaction guarantee.
+  const placement = { x: clampX(drag.ghost.point.x + 1), y: clampY(drag.ghost.point.y - height - 1) };
   const rect = clip({ ...placement, width, height }, bounds);
   if (rect === undefined) return undefined;
   const identity = typeof drag.ghost.cardKey === 'number' ? String(drag.ghost.cardKey) : drag.ghost.cardKey;
   const title = descriptorCue(origin, 'title');
-  const status = descriptorCue(origin, 'status');
   return Object.freeze({
     cardKey: drag.ghost.cardKey,
     count: drag.ghost.count,
     anchor: drag.ghost.point,
     label: drag.ghost.count === 1 ? `#${identity}` : `${drag.ghost.count} cards`,
     ...(title === undefined ? {} : { title }),
-    ...(status === undefined ? {} : { status }),
     rect,
   });
 }
 
-/** Creates one clipped active gap; compact mode guarantees at least one visible target row. */
+/** Creates one clipped active gap from its already resolved insertion boundary. */
 function projectGap(
   drag: KanbanDragOverlayEvidence,
-  density: KanbanCardDensity,
+  projection: KanbanViewportProjection,
   bounds: Readonly<Rect>,
   translate?: (messageKey: string) => string,
 ): KanbanProjectedDropGap | undefined {
   const gap = drag.gap;
   if (gap === undefined) return undefined;
-  const expanded = {
-    ...gap.rect,
-    y: Math.max(bounds.y, gap.rect.y - (density === 'compact' ? 2 : 1)),
-    height: 1,
-  };
-  const rect = clip(expanded, bounds);
+  const intersectedCard = projection.cards.find(
+    (card) => inCell(card, gap.address) && gap.rect.y >= card.rect.y && gap.rect.y < card.rect.y + card.rect.height,
+  );
+  // A defensive final snap guarantees that even a broad edge/fallback target can never paint its
+  // cue through card content. The pointer half chooses the adjacent boundary deterministically.
+  const insertionRect =
+    intersectedCard === undefined
+      ? { ...gap.rect, height: 1 }
+      : {
+          x: intersectedCard.rect.x,
+          y:
+            drag.ghost.point.y < intersectedCard.rect.y + Math.ceil(intersectedCard.rect.height / 2)
+              ? intersectedCard.rect.y - 1
+              : intersectedCard.rect.y + intersectedCard.rect.height,
+          width: intersectedCard.rect.width,
+          height: 1,
+        };
+  const rect = clip(insertionRect, bounds);
   return rect === undefined
     ? undefined
     : Object.freeze({
@@ -625,7 +613,8 @@ export function composeKanbanViewportOverlay(
         if (visibleIdentities.has(identity)) projectedIdentities.add(identity);
       }
     }
-    const gap = drag === undefined ? undefined : projectGap(drag, options.density, options.bounds, options.translate);
+    const gap =
+      drag === undefined ? undefined : projectGap(drag, options.authoritative, options.bounds, options.translate);
     const cards = Object.freeze(
       options.authoritative.cards
         .filter((card) => !projectedIdentities.has(cardIdentity(card.descriptor.cardKey)))

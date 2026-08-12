@@ -184,6 +184,9 @@ interface SwimlanePlacement {
   readonly cardHeight: number;
 }
 
+/** Rows reserved so an expanded empty swimlane remains a visible and usable drop destination. */
+const KANBAN_EMPTY_SWIMLANE_CONTENT_ROWS = 2;
+
 /** Places one framed card inside the fixed horizontal padding and optional leading board boundary. */
 function laneCardRect(
   card: KanbanSceneCard,
@@ -243,6 +246,17 @@ function clip(value: Readonly<Rect>, bounds: Readonly<Rect>, minimumY = bounds.y
   const bottom = Math.min(add(value.y, value.height), add(bounds.y, bounds.height));
   if (right <= x || bottom <= y) return undefined;
   return Object.freeze({ x, y, width: right - x, height: bottom - y });
+}
+
+/**
+ * Clips a framed card while suppressing a lone border row at either viewport edge.
+ *
+ * Two rows are the smallest useful fragment: they retain a border plus visible card content. A
+ * single row looks like an interactive card but cannot communicate its identity or selection state.
+ */
+function clipCard(value: Readonly<Rect>, bounds: Readonly<Rect>, minimumY: number): Readonly<Rect> | undefined {
+  const clipped = clip(value, bounds, minimumY);
+  return clipped !== undefined && clipped.height >= 2 ? clipped : undefined;
 }
 
 function cellsForSwimlane(scene: KanbanScene, swimlaneId: string): readonly KanbanSceneCell[] {
@@ -454,18 +468,24 @@ export function projectKanbanSceneGeometry(
   const semanticRows: readonly { readonly swimlaneId?: string }[] =
     scene.swimlanes.length === 0 ? Object.freeze([Object.freeze({})]) : scene.swimlanes;
   for (const swimlane of semanticRows) {
-    const cellHeight = Math.max(
-      0,
-      ...cellsForPlacement(scene, swimlane.swimlaneId).map(
-        (cell) =>
-          sparseCardPlacements(
-            cell.cards,
-            cardGap,
-            estimatedCardHeight,
-            heightProjectionFor(options.heightProjections, cell.address),
-          ).extent,
-      ),
-    );
+    const placementCells = cellsForPlacement(scene, swimlane.swimlaneId);
+    // Collapsed rows deliberately have no retained cells and remain header-only. Expanded empty rows
+    // retain cells, so they receive enough content geometry to remain useful drop destinations.
+    const cellHeight =
+      placementCells.length === 0
+        ? 0
+        : Math.max(
+            KANBAN_EMPTY_SWIMLANE_CONTENT_ROWS,
+            ...placementCells.map(
+              (cell) =>
+                sparseCardPlacements(
+                  cell.cards,
+                  cardGap,
+                  estimatedCardHeight,
+                  heightProjectionFor(options.heightProjections, cell.address),
+                ).extent,
+            ),
+          );
     const customRows = swimlane.swimlaneId === undefined ? undefined : customBySwimlane.get(swimlane.swimlaneId)?.rows;
     const chromeRows = swimlane.swimlaneId === undefined ? 0 : (customRows ?? 1);
     const height = resolvedVariant === 'rail' ? Math.max(1, cellHeight) : add(chromeRows, cellHeight);
@@ -610,7 +630,7 @@ export function projectKanbanSceneGeometry(
           cardTop,
           sourceCard.address.columnId === scene.columns[0]?.columnId,
         );
-        const cardRect = clip(descriptorRect, bounds, cardMinimumY);
+        const cardRect = clipCard(descriptorRect, bounds, cardMinimumY);
         if (cardRect !== undefined) {
           cards.push(
             Object.freeze({
@@ -664,7 +684,7 @@ export function projectKanbanSceneGeometry(
             cardTop,
             sourceCard.address.columnId === scene.columns[0]?.columnId,
           );
-          const cardRect = clip(descriptorRect, bounds, contentOriginY);
+          const cardRect = clipCard(descriptorRect, bounds, contentOriginY);
           if (cardRect !== undefined) {
             cards.push(
               Object.freeze({

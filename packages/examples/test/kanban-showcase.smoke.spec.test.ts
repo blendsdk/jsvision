@@ -76,6 +76,15 @@ function paintedCells(rows: readonly { readonly char: string }[][]): number {
   return count;
 }
 
+/** Joins a render buffer into the terminal text visible to a showcase visitor. */
+function screenText(showcase: ReturnType<typeof createKanbanShowcase>): string {
+  return showcase.app.loop.renderRoot
+    .buffer()
+    .rows()
+    .map((row) => row.map(({ char }) => char).join(''))
+    .join('\n');
+}
+
 // A permanent kitchen sink must always contain at least one real, uniquely addressable story.
 test('the registry should expose uniquely identified shipped-capability stories', () => {
   expect(KANBAN_STORIES.length).toBeGreaterThanOrEqual(4);
@@ -158,6 +167,84 @@ test('the shell should open the first story and remain responsive while stories 
   expect(showcase.activeBoard().viewport.metrics().mode).not.toBe('minimum-size');
 });
 
+// The navigator must distinguish the mounted story from a row that is merely under the list cursor.
+test('the shell should mark the active story with a persistent non-color cue', () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/interaction-lab');
+  if (storyIndex < 0) throw new Error('Expected the interaction story.');
+
+  showcase.selectStory(storyIndex);
+  showcase.app.loop.renderRoot.flush();
+
+  expect(screenText(showcase)).toMatch(/> Interaction · Key/u);
+});
+
+// A clipped card must expose meaningful content before it appears or accepts pointer interaction.
+test('the modern interaction story should suppress a frame-only card fragment at the viewport edge', () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/modern-interaction');
+  if (storyIndex < 0) throw new Error('Expected the modern interaction story.');
+  showcase.selectStory(storyIndex);
+  showcase.app.loop.renderRoot.flush();
+  const board = showcase.activeBoard();
+
+  board.scrollTo({ y: 29 });
+  showcase.app.loop.renderRoot.flush();
+  expect(board.inspection().visibleCards.some(({ cardKey }) => cardKey === 33)).toBe(false);
+  expect(board.inspection().actionTargets.some(({ kind, cardKey }) => kind === 'card' && cardKey === 33)).toBe(false);
+
+  board.scrollTo({ y: 30 });
+  showcase.app.loop.renderRoot.flush();
+  expect(board.inspection().visibleCards.some(({ cardKey }) => cardKey === 33)).toBe(true);
+  expect(board.inspection().actionTargets).toEqual(
+    expect.arrayContaining([expect.objectContaining({ kind: 'card', cardKey: 33, height: 2 })]),
+  );
+});
+
+// Empty grouped rows remain named, visually separate, and usable as semantic card destinations.
+test('the swimlane story should render intact labels and accept a card in the empty Unassigned row', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/team-swimlanes');
+  if (storyIndex < 0) throw new Error('Expected the swimlane story.');
+  showcase.selectStory(storyIndex);
+  showcase.app.loop.renderRoot.flush();
+  const board = showcase.activeBoard();
+  const before = screenText(showcase);
+
+  expect(before).toContain('| Platform team');
+  expect(before).toContain('| Experience team');
+  expect(before).toContain('| Unassigned');
+  expect(before).not.toMatch(/No cardsteam|\|xperience team|\|nassigned/u);
+
+  const source = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 201);
+  const origin = showcase.app.loop.renderRoot.originOf(board.viewport);
+  const unassignedHeader = board
+    .inspection()
+    .actionTargets.find(({ kind, swimlaneId }) => kind === 'swimlane-header' && swimlaneId === 'unassigned');
+  const backlogHeader = board
+    .inspection()
+    .actionTargets.find(({ kind, columnId }) => kind === 'workflow-header' && columnId === 'backlog');
+  if (source === undefined || origin === null || unassignedHeader === undefined || backlogHeader === undefined) {
+    throw new Error('Expected a mounted source card and empty Unassigned destination cell.');
+  }
+  const down = { x: origin.x + source.x + 1, y: origin.y + source.y + 1 };
+  const destination = { x: origin.x + backlogHeader.x + 2, y: origin.y + unassignedHeader.y + 2 };
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: down.x + 2, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...destination });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...destination });
+  for (let attempt = 0; attempt < 20; attempt += 1) await Promise.resolve();
+  showcase.app.loop.renderRoot.flush();
+
+  expect(board.inspection().visibleCards.find(({ cardKey }) => cardKey === 201)?.address).toEqual({
+    columnId: 'backlog',
+    swimlaneId: 'unassigned',
+  });
+});
+
 // Keyboard and mouse activation remain semantic application intents; the showcase reports without faking mutation.
 test('the interaction story should report real keyboard and mouse activation', async () => {
   const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
@@ -184,6 +271,36 @@ test('the interaction story should report real keyboard and mouse activation', a
     for (let attempt = 0; attempt < 10; attempt += 1) await Promise.resolve();
   }
   expect(showcase.activeActivity()).toMatch(/open-card.*pointer/u);
+});
+
+// Ordinary showcase boards are real application-owned examples, so a valid pointer move must publish data.
+test('the delivery story should apply a valid card drag without showing rejection feedback', async () => {
+  const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  const storyIndex = KANBAN_STORIES.findIndex(({ id }) => id === 'kanban/delivery-board');
+  if (storyIndex < 0) throw new Error('Expected the delivery story.');
+  showcase.selectStory(storyIndex);
+  showcase.app.loop.renderRoot.flush();
+
+  const board = showcase.activeBoard();
+  const origin = showcase.app.loop.renderRoot.originOf(board.viewport);
+  const source = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 101);
+  const destination = board.inspection().actionTargets.find(({ kind, cardKey }) => kind === 'card' && cardKey === 102);
+  if (origin === null || source === undefined || destination === undefined) {
+    throw new Error('Expected mounted source and destination cards.');
+  }
+  const down = { x: origin.x + source.x + 1, y: origin.y + source.y + 1 };
+  const target = { x: origin.x + destination.x + 1, y: origin.y + destination.y + 1 };
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...down });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: down.x + 2, y: down.y });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'drag', button: 0, ...target });
+  showcase.app.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...target });
+  for (let attempt = 0; attempt < 20; attempt += 1) await Promise.resolve();
+  showcase.app.loop.renderRoot.flush();
+
+  const moved = board.inspection().visibleCards.find(({ cardKey }) => cardKey === 101);
+  expect(moved?.address.columnId).toBe('active');
+  expect(showcase.app.loop.renderRoot.buffer().toString()).not.toContain('Move rejected');
 });
 
 test('the modern interaction story drives warning and blocked targets through real pointer input', async () => {

@@ -131,7 +131,9 @@ descriptors. The package validates package-local `KanbanThemeRole` names and app
 contrast/fallback resolver for truecolor,
 256, 16, monochrome, `NO_COLOR`, and ASCII profiles. Color never carries the only status, selection,
 pending, invalid, or WIP meaning. Focus makes the standard card title bold while preserving its
-resolved semantic foreground and card-surface background.
+resolved semantic foreground and card-surface background. Application-neutral accent surfaces remain in
+place across focus and selection; border/title/attribute/non-color cues compose those interaction states
+without repurposing warning, error, WIP, read-only, or operation roles (AR-45).
 
 ---
 

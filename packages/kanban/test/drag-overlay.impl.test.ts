@@ -146,7 +146,7 @@ function drag(cardKey: string | number = 1): KanbanDragOverlayEvidence {
     gap: Object.freeze({
       slotId: 'doing:end',
       address: Object.freeze({ columnId: 'doing' }),
-      rect: Object.freeze({ x: 19, y: 5, width: 16, height: 2 }),
+      rect: Object.freeze({ x: 19, y: 7, width: 16, height: 1 }),
       eligibility: Object.freeze({ kind: 'allowed' as const }),
     }),
   });
@@ -280,7 +280,7 @@ describe('overlay composition internals', () => {
 
     expect(result.cards.map(({ descriptor: value }) => value.cardKey)).toEqual(['1', 2]);
     expect(result.actionTargets.map(({ cardKey }) => cardKey)).toEqual([2]);
-    expect(result.cards.find(({ descriptor: value }) => value.cardKey === 2)?.rect.y).toBe(4);
+    expect(result.cards.find(({ descriptor: value }) => value.cardKey === 2)?.rect.y).toBe(3);
     expect(result.overlay.affectedStacks.map(({ columnId }) => columnId).sort()).toEqual(['doing', 'ready']);
   });
 
@@ -556,15 +556,15 @@ describe('overlay drawing and damage internals', () => {
     const ascii = mountedFrame(projection, true);
 
     expect(unicode.text()).toContain('Numeric source');
-    expect(unicode.text()).toContain('▶ Move here');
+    expect(unicode.text()).toContain('▶ Numeric source');
     expect(unicode.text()).toMatch(/[◆━┃]/u);
-    expect(ascii.text()).toContain('> Move here');
+    expect(ascii.text()).toContain('> Numeric source');
     expect(ascii.text()).toMatch(/[+=!]/u);
     unicode.render.unmount();
     ascii.render.unmount();
   });
 
-  it('draws localized bulk count and recognizable resident cues in Unicode and ASCII frames', () => {
+  it('draws a compact localized bulk count without duplicating resident details', () => {
     const evidence = drag();
     const projection = composeKanbanViewportOverlay({
       authoritative: authoritative(),
@@ -583,9 +583,9 @@ describe('overlay drawing and damage internals', () => {
     const ascii = mountedFrame(projection, true);
 
     expect(unicode.text()).toContain('Moving 3 cards');
-    expect(unicode.text()).toContain('Numeric source');
+    expect(unicode.text()).not.toContain('Numeric source');
     expect(ascii.text()).toContain('Moving 3 cards');
-    expect(ascii.text()).toContain('Numeric source');
+    expect(ascii.text()).not.toContain('Numeric source');
     unicode.render.unmount();
     ascii.render.unmount();
   });

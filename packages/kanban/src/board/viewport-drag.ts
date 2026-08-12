@@ -279,7 +279,11 @@ function dropCell<TCard>(
 }
 
 /** Purely projects the current scene into one target map. */
-function dropMap<TCard>(current: KanbanViewportDragScene<TCard>, active: KanbanCardDropTarget | undefined) {
+function dropMap<TCard>(
+  current: KanbanViewportDragScene<TCard>,
+  active: KanbanCardDropTarget | undefined,
+  activeIndicator?: Readonly<Rect>,
+) {
   const cells = current.geometry.cells.flatMap((geometry) => {
     const cell = dropCell(current, geometry);
     return cell === undefined ? [] : [cell];
@@ -294,17 +298,78 @@ function dropMap<TCard>(current: KanbanViewportDragScene<TCard>, active: KanbanC
       width: current.viewport.x + current.viewport.width,
       height: current.viewport.y + current.viewport.height,
     }),
-    ...(current.density !== 'compact' || active?.rect === undefined
+    ...(current.density !== 'compact' || active === undefined || activeIndicator === undefined
       ? {}
       : {
           activeGap: Object.freeze({
             address: active.address,
-            rect: Object.freeze({ x: active.rect.x, y: active.rect.y, width: active.rect.width, height: 1 }),
+            rect: activeIndicator,
             position: active.position,
             eligibility: active.eligibility,
           }),
         }),
   });
+}
+
+/**
+ * Projects one generous drop hit region onto the actual one-row insertion boundary it represents.
+ *
+ * Card halves remain easy mouse targets, but their visible cue belongs immediately before or after
+ * the complete card. This separation prevents a pointer over the middle of a card from painting a
+ * misleading insertion line through its content.
+ */
+export function projectKanbanDropIndicatorRect(
+  target: KanbanCardDropTarget,
+  geometry: Pick<KanbanSceneGeometry, 'cells' | 'cards'>,
+): Readonly<Rect> | undefined {
+  const cell = geometry.cells.find((candidate) => sameAddress(candidate.address, target.address));
+  if (cell === undefined) return undefined;
+  const cellCards = geometry.cards
+    .filter((candidate) => sameAddress(candidate.address, target.address))
+    .sort((left, right) => left.logicalIndex - right.logicalIndex);
+  const targetCardKey = target.cardKey;
+  const card =
+    targetCardKey === undefined
+      ? undefined
+      : cellCards.find(
+          (candidate) => sameCard(candidate.cardKey, targetCardKey) && sameAddress(candidate.address, target.address),
+        );
+  const targetRect = target.rect;
+  const position = target.position;
+  const afterCardKey = position.kind === 'between' ? position.afterCardKey : null;
+  const beforeCardKey = position.kind === 'between' ? position.beforeCardKey : null;
+  const beforeCard =
+    afterCardKey !== null
+      ? cellCards.find((candidate) => sameCard(candidate.cardKey, afterCardKey))
+      : position.kind === 'window-edge' && position.edge === 'before'
+        ? cellCards.find((candidate) => sameCard(candidate.cardKey, position.neighborCardKey))
+        : position.kind === 'start'
+          ? cellCards[0]
+          : target.kind === 'card-before'
+            ? card
+            : undefined;
+  const afterCard =
+    beforeCardKey !== null
+      ? cellCards.find((candidate) => sameCard(candidate.cardKey, beforeCardKey))
+      : position.kind === 'window-edge' && position.edge === 'after'
+        ? cellCards.find((candidate) => sameCard(candidate.cardKey, position.neighborCardKey))
+        : position.kind === 'end'
+          ? cellCards[cellCards.length - 1]
+          : target.kind === 'card-after'
+            ? card
+            : undefined;
+  const anchor = beforeCard ?? afterCard;
+  if (anchor !== undefined) {
+    const boundary = beforeCard !== undefined ? anchor.y - 1 : anchor.y + anchor.height;
+    return Object.freeze({
+      x: anchor.x,
+      y: Math.min(Math.max(cell.y, boundary), cell.y + cell.height - 1),
+      width: anchor.width,
+      height: 1,
+    });
+  }
+  if (targetRect === undefined) return undefined;
+  return Object.freeze({ x: targetRect.x, y: targetRect.y, width: targetRect.width, height: 1 });
 }
 
 /** Owns all render-neutral mounted card-drag resources for one viewport. */
@@ -380,7 +445,9 @@ export class KanbanViewportDragController<TCard> {
     const previousPoint = this.#point;
     this.#point = Object.freeze({ x: point.x, y: point.y });
     this.#actionTarget = actionTarget;
-    const candidate = dropMap(current, this.#target).targetAt(point);
+    const activeIndicator =
+      this.#target === undefined ? undefined : projectKanbanDropIndicatorRect(this.#target, current.geometry);
+    const candidate = dropMap(current, this.#target, activeIndicator).targetAt(point);
     const previousTarget = this.#target;
     const selected = selectKanbanDropTargetWithHysteresis({
       current: this.#target,
@@ -389,10 +456,13 @@ export class KanbanViewportDragController<TCard> {
       geometryGeneration: current.geometryGeneration,
     });
     this.#target = this.#evaluateTarget(selected);
+    const gapRect =
+      this.#target === undefined ? undefined : projectKanbanDropIndicatorRect(this.#target, current.geometry);
     this.#drag.propose({
       generation,
       point,
       target: this.#target,
+      gapRect,
       sceneRevision: current.sceneRevision,
       geometryGeneration: current.geometryGeneration,
     });
@@ -458,7 +528,7 @@ export class KanbanViewportDragController<TCard> {
       if (this.#target !== undefined && this.#target.kind !== 'unknown-edge') {
         const target = this.#target;
         if (
-          !dropMap(current, target).targets.some(
+          !dropMap(current, target, projectKanbanDropIndicatorRect(target, current.geometry)).targets.some(
             (candidate) =>
               candidate.kind === target.kind &&
               sameAddress(candidate.address, target.address) &&

@@ -115,6 +115,11 @@ describe('card drag release contract', () => {
         },
       });
     }
+    if (outcome === 'outside') {
+      const snapshot = controller.snapshot();
+      expect(snapshot.kind).toBe('dragging');
+      if (snapshot.kind !== 'idle') expect('gap' in snapshot.overlay).toBe(false);
+    }
 
     expect(controller.release({ generation: 7, sceneRevision: 'scene-r1', geometryGeneration: 3 })).toBe(false);
     expect(commitProposal).not.toHaveBeenCalled();

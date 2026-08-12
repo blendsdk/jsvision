@@ -52,8 +52,10 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
   horizontal and vertical separators; cards have matching horizontal padding, coherent surfaces,
   single resting and double focused frames, bold focused titles, contained focused shadows, one-row
   gaps in every named density, symmetric standard-card text padding, and distinct ASCII fallbacks.
-  Drag/drop, commands, and package-owned
-  editing/configuration dialogs remain later surfaces. The monorepo's incremental kitchen sink runs with
+  Mounted card drag/drop provides thresholded pointer capture, a stable lifted-card ghost, semantic
+  before/after insertion cues, edge autoscroll, atomic selected-card moves, and application-owned
+  dispatch/publication. Commands and package-owned editing/configuration dialogs remain later
+  surfaces. The monorepo's incremental kitchen sink runs with
   `yarn workspace @jsvision/examples demo:kanban`. See [api/kanban.md](api/kanban.md).
 
 ## Feedback

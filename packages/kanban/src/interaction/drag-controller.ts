@@ -1,4 +1,4 @@
-import type { Point, PointerCaptureLease } from '@jsvision/ui';
+import type { Point, PointerCaptureLease, Rect } from '@jsvision/ui';
 
 import {
   snapshotKanbanDataArray,
@@ -56,6 +56,8 @@ export interface KanbanCardDragProposalUpdate {
   readonly point?: Readonly<Point>;
   /** Current target, or absence when the pointer is outside a target. */
   readonly target?: KanbanCardDropTarget;
+  /** One-row visual insertion cue derived separately from the target's generous hit rectangle. */
+  readonly gapRect?: Readonly<Rect>;
   /** Current scene revision after any drag-owned scrolling and reprojection. */
   readonly sceneRevision?: KanbanRevision;
   /** Current geometry generation after any drag-owned scrolling and reprojection. */
@@ -281,8 +283,9 @@ export class KanbanCardDragController {
       active.geometryGeneration = generation(update.geometryGeneration);
     }
     const currentPoint = update.point === undefined ? active.overlay.ghost.point : point(update.point);
+    const { gap: _previousGap, ...overlayWithoutGap } = active.overlay;
     active.overlay = Object.freeze({
-      ...active.overlay,
+      ...overlayWithoutGap,
       geometryGeneration: active.geometryGeneration,
       ghost: Object.freeze({ ...active.overlay.ghost, point: currentPoint }),
       ...(update.target === undefined
@@ -291,7 +294,7 @@ export class KanbanCardDragController {
             gap: Object.freeze({
               slotId: update.target.slotId,
               address: update.target.address,
-              rect: update.target.rect ?? Object.freeze({ x: 0, y: 0, width: 0, height: 0 }),
+              rect: update.gapRect ?? update.target.rect ?? Object.freeze({ x: 0, y: 0, width: 0, height: 0 }),
               eligibility: update.target.eligibility,
             }),
           }),

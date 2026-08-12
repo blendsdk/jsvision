@@ -15,6 +15,7 @@ import type { KanbanPointerDragStart } from '../src/testing.js';
 import { projectKanbanCardDropMap } from '../src/interaction/drop-map.js';
 import { selectKanbanDropTargetWithHysteresis } from '../src/interaction/drop-hysteresis.js';
 import { createKanbanDragPrefetchController } from '../src/interaction/drag-prefetch.js';
+import { projectKanbanDropIndicatorRect } from '../src/board/viewport-drag.js';
 
 /** One selected card with complete semantic and revision evidence. */
 function selectionEntry(cardKey: number, logicalColumn = 'ready'): KanbanSelectionEntry {
@@ -729,6 +730,38 @@ describe('semantic card drop-map target contract', () => {
     expect(map.targets.filter(({ kind }) => kind === 'active-gap')).toHaveLength(1);
     expect(map.targetAt({ x: 10, y: 7 })).toMatchObject({ kind: 'active-gap' });
     expect(map.targets.some(({ kind }) => kind === 'resting-gutter')).toBe(false);
+  });
+});
+
+describe('visible card drop indicator contract', () => {
+  const geometry = Object.freeze({
+    cells: Object.freeze([
+      Object.freeze({ address: Object.freeze({ columnId: 'ready' }), x: 0, y: 2, width: 20, height: 16 }),
+    ]),
+    cards: Object.freeze([
+      Object.freeze({
+        cardKey: 1,
+        address: Object.freeze({ columnId: 'ready' }),
+        logicalIndex: 0,
+        descriptorColumnOffset: 0,
+        descriptorRowOffset: 0,
+        x: 1,
+        y: 4,
+        width: 18,
+        height: 4,
+      }),
+    ]),
+  });
+  const map = projectKanbanCardDropMap({ density: 'compact', cells: [populatedDropCell()] });
+
+  // Card halves are generous pointer targets, but the visible cue must occupy a real insertion row.
+  it('places card-half indicators only before or after the complete card rectangle', () => {
+    const before = map.targets.find(({ kind, cardKey }) => kind === 'card-before' && cardKey === 1);
+    const after = map.targets.find(({ kind, cardKey }) => kind === 'card-after' && cardKey === 1);
+    if (before === undefined || after === undefined) throw new Error('Expected both card-half targets.');
+
+    expect(projectKanbanDropIndicatorRect(before, geometry)).toEqual({ x: 1, y: 3, width: 18, height: 1 });
+    expect(projectKanbanDropIndicatorRect(after, geometry)).toEqual({ x: 1, y: 8, width: 18, height: 1 });
   });
 });
 

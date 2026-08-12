@@ -310,6 +310,23 @@ function drawOverlays(
       );
     }
   }
+  for (const pending of overlay.pending) {
+    const marker = ctx.caps.glyphs.boxDrawing ? pending.unicodeMarker : pending.asciiMarker;
+    const key = pending.state === 'accepted' ? 'kanban.operation.accepted' : 'kanban.operation.pending';
+    const token = style(theme, 'operation.pending');
+    ctx.fillRect(pending.rect.x, pending.rect.y, pending.rect.width, pending.rect.height, ' ', token);
+    ctx.text(
+      pending.rect.x,
+      pending.rect.y,
+      cropCellText(`${marker} ${translate(key)}`, 0, pending.rect.width, ctx.caps.unicode.widthMode),
+      token,
+    );
+  }
+  if (overlay.ghost !== undefined) {
+    drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
+  }
+  // The insertion cue is the precise release destination, so it stays readable even when the
+  // lifted-card ghost overlaps the same terminal row.
   if (overlay.gap !== undefined) {
     const role: KanbanThemeRole =
       overlay.gap.visualState === 'valid'
@@ -332,45 +349,18 @@ function drawOverlays(
       token,
     );
   }
-  for (const pending of overlay.pending) {
-    const marker = ctx.caps.glyphs.boxDrawing ? pending.unicodeMarker : pending.asciiMarker;
-    const key = pending.state === 'accepted' ? 'kanban.operation.accepted' : 'kanban.operation.pending';
-    const token = style(theme, 'operation.pending');
-    ctx.fillRect(pending.rect.x, pending.rect.y, pending.rect.width, pending.rect.height, ' ', token);
-    ctx.text(
-      pending.rect.x,
-      pending.rect.y,
-      cropCellText(`${marker} ${translate(key)}`, 0, pending.rect.width, ctx.caps.unicode.widthMode),
-      token,
-    );
-  }
-  if (overlay.ghost !== undefined) {
-    drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
+  if (overlay.ghost !== undefined && overlay.ghost.rect.width > 2) {
     const countLabel =
       overlay.ghost.count === 1 ? overlay.ghost.label : translate('kanban.drag.cards', { count: overlay.ghost.count });
-    const residentCue = [overlay.ghost.title, overlay.ghost.status].filter(
-      (value): value is string => value !== undefined,
+    const primaryLabel = overlay.ghost.count > 1 ? countLabel : (overlay.ghost.title ?? countLabel);
+    // Paint recognizable content last. If a gap crosses this row, its marker remains in the first
+    // cell while the title/count remains readable inside the compact ghost.
+    ctx.text(
+      overlay.ghost.rect.x + 1,
+      overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),
+      cropCellText(primaryLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
+      style(theme, 'card.ghost'),
     );
-    const cueLabel = residentCue.join(' · ');
-    // A bulk count is the atomic-operation cue, so it owns the first row on narrow terminals.
-    // Recognizable resident content uses a second row only when the ghost has room for both.
-    const primaryLabel = overlay.ghost.count > 1 || cueLabel.length === 0 ? countLabel : cueLabel;
-    if (overlay.ghost.rect.width > 2) {
-      ctx.text(
-        overlay.ghost.rect.x + 1,
-        overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),
-        cropCellText(primaryLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
-        style(theme, 'card.ghost'),
-      );
-      if (overlay.ghost.count > 1 && cueLabel.length > 0 && overlay.ghost.rect.height > 3) {
-        ctx.text(
-          overlay.ghost.rect.x + 1,
-          overlay.ghost.rect.y + 2,
-          cropCellText(cueLabel, 0, overlay.ghost.rect.width - 2, ctx.caps.unicode.widthMode),
-          style(theme, 'card.ghost'),
-        );
-      }
-    }
   }
   for (const feedback of overlay.feedback) {
     const marker = ctx.caps.glyphs.boxDrawing ? feedback.unicodeMarker : feedback.asciiMarker;
@@ -437,10 +427,15 @@ export function drawKanbanViewport(
           ? 'swimlane.header'
           : 'swimlane.surface';
     ctx.fillRect(chrome.x, chrome.y, chrome.width, chrome.height, ' ', style(theme, surfaceRole));
+    const firstBoardColumn = projection.columns.find(
+      ({ columnId }) => columnId === projection.scene?.columns[0]?.columnId,
+    );
+    // The first cell is the board boundary and the second is the standard lane padding.
+    const labelInset = firstBoardColumn?.rect.x === chrome.x && firstBoardColumn.contentOffset === 0 ? 2 : 0;
     ctx.text(
-      chrome.x,
+      chrome.x + labelInset,
       chrome.y,
-      cropCellText(chrome.label, 0, chrome.width, ctx.caps.unicode.widthMode),
+      cropCellText(chrome.label, 0, Math.max(0, chrome.width - labelInset), ctx.caps.unicode.widthMode),
       style(theme, chrome.sticky ? 'swimlane.header.focused' : 'swimlane.header'),
     );
   }
@@ -487,8 +482,14 @@ export function drawKanbanViewport(
       projectedState.columnId === undefined
         ? undefined
         : projection.columns.find((candidate) => candidate.columnId === projectedState.columnId);
-    const x = column?.rect.x ?? 0;
-    const y = column === undefined ? 0 : Math.min(KANBAN_WORKFLOW_HEADER_ROWS, Math.max(0, ctx.size.height - 1));
+    const cell = projection.geometry?.cells.find(
+      ({ address }) =>
+        address.columnId === projectedState.address?.columnId &&
+        address.swimlaneId === projectedState.address?.swimlaneId,
+    );
+    const x = cell?.x ?? column?.rect.x ?? 0;
+    const y =
+      cell?.y ?? (column === undefined ? 0 : Math.min(KANBAN_WORKFLOW_HEADER_ROWS, Math.max(0, ctx.size.height - 1)));
     const role: KanbanThemeRole =
       projectedState.kind === 'no-columns' ||
       projectedState.kind === 'empty' ||
@@ -502,12 +503,16 @@ export function drawKanbanViewport(
               ? 'state.refreshing'
               : 'state.partial';
     const contentOffset = column?.contentOffset ?? 0;
-    const leftInset = column === undefined ? 0 : Math.max(0, KANBAN_LANE_HORIZONTAL_PADDING - contentOffset);
+    const leadingBoundary =
+      column !== undefined && column.columnId === projection.scene?.columns[0]?.columnId && column.contentOffset === 0
+        ? 1
+        : 0;
+    const leftInset =
+      column === undefined ? 0 : Math.max(0, KANBAN_LANE_HORIZONTAL_PADDING + leadingBoundary - contentOffset);
     const leadingCells = Math.max(0, contentOffset - KANBAN_LANE_HORIZONTAL_PADDING);
+    const stateWidth = cell?.width ?? column?.rect.width;
     const maximumWidth =
-      column?.rect.width === undefined
-        ? ctx.size.width
-        : Math.max(0, column.rect.width - leftInset - KANBAN_LANE_HORIZONTAL_PADDING);
+      stateWidth === undefined ? ctx.size.width : Math.max(0, stateWidth - leftInset - KANBAN_LANE_HORIZONTAL_PADDING);
     ctx.text(
       x + leftInset,
       y,
