@@ -2,10 +2,10 @@
 
 > **Implements**: kanban/T-03
 > **Type**: Task (lightweight) · **Feature**: kanban
-> **Status**: Backlog
+> **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 15:11 CEST
-> **Progress**: 0/46 tasks (0%)
+> **Last Updated**: 2026-08-12 16:40 CEST
+> **Progress**: 1/46 tasks (2%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -128,6 +128,12 @@ baseline checkpoint commit must leave it clean. Record the checkpoint ref and `g
 this plan. If verification fails, fix only the pre-existing user-directed work and repeat the gate; do not
 begin T-03 specification work on an unverified or uncommitted baseline.
 
+**Execution baseline:** the preflighted artifact hash matched
+`0ebdbf6e21dd0c229f03b70ce01c4be57c4602dcac6ab017aab05f1b632f1093`. Focused Kanban and
+examples tests, package typechecks, plugin synchronization/check, and `yarn verify:local` passed before
+checkpoint `0bd32c9d2`; `git status --short` was empty. The checkpoint was pushed to
+`origin/feat/kanban` before T-03 specification work began.
+
 ## Execution rules
 
 - Follow specification tests → expected red → implementation → green → implementation/performance tests.
@@ -145,12 +151,19 @@ begin T-03 specification work on an unverified or uncommitted baseline.
 
 ## Phase 1: Freeze the real regression
 
+> **Phase baseline tree**: 266f18a0c3e7b40f6333ffb57b28183c0b560970
+> **Scope mode**: strict
+> **Expected modification set**: the Phase 1 fixture/specification, testing-only diagnostic bridge, this
+> execution plan, and the Kanban feature roadmap paths named by Tasks 1.1.1–1.2.3. Existing production
+> behavior may be read for diagnosis but is not modified in this phase.
+
 ### Step 1.1: Specification fixtures
 
-- [ ] 1.1.1 Create one deterministic injected 84-card, five-column GitHub-shaped fixture containing named
+- [x] 1.1.1 Create one deterministic injected 84-card, five-column GitHub-shaped fixture containing named
       short/tall/dense cases, multiple labels, assignees, summaries, empty columns, every GitHub status,
       bounded hostile control/bidi text, wide/combining glyphs, and longest supported-locale strings. Keep
-      focused parser/sanitizer cases separate, and never use live network data as an automated oracle.
+      focused parser/sanitizer cases separate, and never use live network data as an automated oracle. ✅
+      (completed: 2026-08-12 16:40)
 - [ ] 1.1.2 Add a mounted viewport specification that performs click, repeated wheel down/up, horizontal
       scroll, narrow/wide resize, and restore sequences against the real fixture.
 - [ ] 1.1.3 Add geometry assertions for monotonic card order, configured gaps, non-overlap, finite clipped

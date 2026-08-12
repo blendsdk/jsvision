@@ -9,6 +9,7 @@ export * from './testing/descriptor-cache-harness.js';
 export * from './testing/eager-fixture.js';
 export * from './testing/instrumentation.js';
 export * from './testing/query-harness.js';
+export * from './testing/stabilization-fixture.js';
 export * from './testing/windowed-fixture.js';
 export * from './testing/board-setup-harness.js';
 export {
