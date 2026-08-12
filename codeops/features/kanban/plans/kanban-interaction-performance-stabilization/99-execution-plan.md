@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-12 16:57 CEST
-> **Progress**: 7/46 tasks (15%)
+> **Last Updated**: 2026-08-12 17:00 CEST
+> **Progress**: 8/46 tasks (17%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -193,10 +193,17 @@ lack the planned additive detached ghost/gap geometry evidence. Log:
 - [x] 1.2.1 Extend the existing testing-only weak-map scale/snapshot bridge to identify every projection
       pass that uses measured versus estimated heights without changing production inspection or exposing
       card payloads. ✅ (completed: 2026-08-12 16:57)
-- [ ] 1.2.2 Prove whether focus damage inflation originates in height convergence, identity restoration,
-      overlay composition, damage calculation, or more than one stage; record the result in this plan.
+- [x] 1.2.2 Prove whether focus damage inflation originates in height convergence, identity restoration,
+      overlay composition, damage calculation, or more than one stage; record the result in this plan. ✅
+      (completed: 2026-08-12 17:00)
 - [ ] 1.2.3 Prove whether real drag unreliability remains after geometry is valid or is fully explained by
       corrupted hit maps; keep any independent input defect in Phase 3 scope.
+
+**Focus-damage isolation:** both pointer-down and pointer-up produce whole-viewport semantic damage while
+every card rectangle—including the focused card—remains byte-for-byte stable and no drag/operation overlay
+exists. The inflation therefore originates in `calculateKanbanSceneDamage`: a visual/interaction revision
+with no geometry `changedRegions` falls through to the whole-viewport safety branch. Height convergence,
+identity restoration, and overlay composition are not additional causes for this focused-click trace.
 
 ## Phase 2: Stabilize variable-height projection
 
