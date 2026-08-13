@@ -8,7 +8,7 @@
 import type { MouseEvent } from '@jsvision/core';
 import type { ScreenBuffer } from '@jsvision/core';
 import { resolveCapabilities } from '@jsvision/core';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import { createApplication, View, Window } from '../src/index.js';
 import type { DrawContext, Rect } from '../src/index.js';
@@ -115,6 +115,74 @@ test('a Window outline override retains content geometry and paints only the lat
   expect(window.layout.rect).toEqual({ x: 2, y: 1, width: 19, height: 11 });
   expect(window.resizeCalls).toBe(1);
   expect(window.resizing()).toBe(false);
+});
+
+test('dense outline motion paints immediately, coalesces to the latest candidate, and releases exactly', () => {
+  vi.useFakeTimers();
+  try {
+    const { app, window, content } = fixture();
+    window.resizeMode = 'outline';
+    app.loop.dispatch(mouse('down', 15, 8));
+    const drawsAfterPreviewMount = content.draws;
+
+    app.loop.dispatch(mouse('drag', 20, 11));
+    expect(app.loop.renderRoot.buffer().get(20, 11)?.char).toBe('┘');
+
+    app.loop.dispatch(mouse('drag', 22, 12));
+    app.loop.dispatch(mouse('drag', 24, 13));
+    expect(app.loop.renderRoot.buffer().get(20, 11)?.char).toBe('┘');
+    expect(app.loop.renderRoot.buffer().get(24, 13)?.char).not.toBe('┘');
+    expect(content.draws).toBe(drawsAfterPreviewMount);
+
+    vi.advanceTimersByTime(32);
+    expect(app.loop.renderRoot.buffer().get(20, 11)?.char).toBe('┘');
+    vi.advanceTimersByTime(1);
+    expect(app.loop.renderRoot.buffer().get(24, 13)?.char).toBe('┘');
+    expect(app.loop.renderRoot.buffer().get(20, 11)?.char).not.toBe('┘');
+
+    app.loop.dispatch(mouse('drag', 26, 14));
+    app.loop.dispatch(mouse('up', 26, 14));
+    expect(window.layout.rect).toEqual({ x: 2, y: 1, width: 25, height: 14 });
+    expect(window.resizeCalls).toBe(1);
+    expect(window.resizing()).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test('reversal-heavy outline motion remains bounded and still commits the newest candidate', () => {
+  vi.useFakeTimers();
+  try {
+    const { app, window } = fixture();
+    window.resizeMode = 'outline';
+    app.loop.dispatch(mouse('down', 15, 8));
+
+    let changedFrames = 0;
+    for (const point of [
+      { x: 22, y: 12 },
+      { x: 20, y: 11 },
+      { x: 24, y: 13 },
+      { x: 19, y: 10 },
+      { x: 26, y: 14 },
+      { x: 21, y: 12 },
+    ]) {
+      app.loop.dispatch(mouse('drag', point.x, point.y));
+      if (app.loop.renderRoot.serialize() !== '') changedFrames += 1;
+    }
+
+    expect(changedFrames).toBeLessThanOrEqual(2);
+    vi.advanceTimersByTime(33);
+    expect(app.loop.renderRoot.buffer().get(21, 12)?.char).toBe('┘');
+
+    app.loop.dispatch(mouse('drag', 25, 14));
+    app.loop.dispatch(mouse('up', 25, 14));
+    expect(window.layout.rect).toEqual({ x: 2, y: 1, width: 24, height: 14 });
+    expect(window.resizeCalls).toBe(1);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 test('the Desktop outline default is inherited and an explicit Window live mode overrides it', () => {

@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-13 18:20 CEST
-> **Progress**: 56/58 tasks (97%)
+> **Last Updated**: 2026-08-14 00:53 CEST
+> **Progress**: 62/64 tasks (97%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -739,6 +739,51 @@ typechecks, build/dependency/JSDoc checks, plugin update/check, and the exact pe
 full-suite processes accidentally started during verification produced invalid timing failures under CPU
 contention; both were terminated by exact PID and every affected test passed in the isolated rerun.
 
+## Phase 9: Deferred Window outline output stabilization
+
+> **Phase baseline tree**: 8307115a4fedf588940a6a70235bb9a6d1b7c29d
+> **Scope mode**: strict
+> **Expected modification set**: Window outline preview implementation and focused tests under
+> `packages/ui/`, mapped plugin outputs if required, the ambiguity register, and this execution plan.
+
+Native acceptance confirms Kanban drop interaction now works, but rapidly resizing an `outline` Window can
+leave transient frame artifacts across the terminal until release triggers the final full compose. This is a
+blocking correction to the already-approved deferred resize behavior, not a new Kanban feature.
+
+- [x] 9.1 Add an immutable Window specification proving a dense resize-motion burst paints the first changed
+      candidate immediately, coalesces intermediate candidates within the 33-millisecond frame budget, paints
+      the newest candidate at the boundary, and commits that newest rectangle on release. ✅ (completed:
+      2026-08-14 00:37)
+- [x] 9.2 Run the focused specification and record the expected red failure against per-report outline repaint.
+      The second dense drag report replaced the first preview immediately, so the coalescing assertion failed
+      while the four pre-existing outline specifications remained green. ✅ (completed: 2026-08-14 00:37)
+- [x] 9.3 Implement the smallest lifecycle-safe preview cadence inside the existing paint-only outline without
+      changing live mode, public resize APIs, outline shape, hosted content geometry, or release semantics. ✅
+      (completed: 2026-08-14 00:39)
+- [x] 9.4 Run focused Window specifications and implementation hardening for cancellation, capture loss,
+      removal, unchanged candidates, and delayed-callback cleanup. Ten focused Window tests and the UI
+      typecheck pass; capture loss removes the pending timer and cannot revive preview chrome. ✅ (completed:
+      2026-08-14 00:39)
+- [x] 9.5 Run UI typecheck/build/unit/dependency/JSDoc gates, affected examples tests/typecheck, plugin
+      update/check, exact `yarn perf:check`, and `yarn verify:local`. Completed with 2,057 UI tests, ten focused
+      application tests, both typechecks, UI build/dependency/JSDoc checks, plugin regeneration/integrity, the
+      isolated repository performance runner, and changed-file verification green. ✅ (completed:
+      2026-08-14 00:44)
+- [x] 9.6 Complete correctness and performance quality review, remediate accepted Critical/Major findings under
+      auto-design, and rerun applicable gates before returning to native acceptance. Final verification passes
+      2,058 UI tests, eleven focused Window tests, ten focused application tests, typechecks/build, dependency
+      and JSDoc checks, plugin update/check, the isolated performance runner, and `yarn verify:local`. ✅
+      (completed: 2026-08-14 00:53)
+
+**Phase 9 quality remediation:** The correctness reviewer reported no Critical or Major finding and one Minor:
+wall-clock rollback could stretch the preview delay. The performance reviewer reported the same clock issue as
+Minor and one Major: unlimited immediate direction reversals allowed oscillating pointer jitter to bypass the
+cadence and restore per-report perimeter output. Both were accepted. Cadence now uses monotonic time with a
+clamped delay, permits at most one immediate reversal per interval, and coalesces further oscillation to the
+newest candidate. A reversal-heavy fake-timer oracle failed red against the bypass and passes after the fix,
+alongside exact release and cancellation cleanup. The required single re-review closed the Major and found no
+new Critical or Major issue.
+
 ## Verification summary
 
 | Gate | Required evidence |
@@ -752,6 +797,6 @@ contention; both were terminated by exact PID and every affected test passed in 
 
 ## Completion rule
 
-T-03 is complete only when all 58 tasks are checked, every automated gate passes, no unresolved geometry
+T-03 is complete only when all 64 tasks are checked, every automated gate passes, no unresolved geometry
 or input-sequencing defect remains, and the user explicitly accepts the real-terminal interaction. A
 visually attractive demo alone cannot close this task.

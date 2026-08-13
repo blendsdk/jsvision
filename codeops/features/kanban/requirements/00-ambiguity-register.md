@@ -677,6 +677,45 @@ during RD authoring must reopen this register before the affected requirement is
 - **Reopen triggers:** A supported unknown/lower-bound source still busy-loops, a reachable positive correction
   loses its prior row, or an exact upper clamp retains deferred render work after the confirming pass.
 
+### AR-50 — Bounded deferred-resize preview cadence
+
+- **Authority:** AI — delegated by `--auto-design` during execution remediation.
+- **Eligibility:** Internal rendering/performance engineering within the approved deferred Window resize
+  behavior; committed geometry, public mode selection, release semantics, and visual candidate shape remain
+  unchanged.
+- **Objective:** Keep the outline preview responsive without allowing dense native mouse reports to enqueue
+  perimeter damage faster than a terminal can paint it, which presents as stale borders and screen bleeding.
+- **Decision:** Paint the first changed resize candidate immediately. Within each later 33-millisecond interval,
+  permit at most one immediate direction-reversal repaint and coalesce every further same-direction or
+  oscillating candidate to the newest rectangle at the boundary. Release always commits the latest gesture
+  candidate synchronously, whether or not its preview interval elapsed. Finish, cancellation, capture loss,
+  removal, replacement, stop, and disposal cancel pending preview work before removing ownership. Cadence uses
+  a monotonic clock and clamps every scheduled delay to the interval.
+- **Evidence:** `Desktop.onEvent()` currently calls `ResizeOutline.update()` for every captured mouse report,
+  and `update()` immediately invalidates the full-desktop overlay. Each resulting frame restores the previous
+  perimeter and draws the next perimeter. For a 248×54 candidate this can damage hundreds of cells per native
+  report. The host preserves every emitted diff, so a dense input burst can create an output backlog even though
+  each retained buffer and the final release frame are correct.
+- **Rejected alternatives:** Full-screen restoration from the captured base makes per-report CPU work scale with
+  terminal area. Live content recompose defeats the approved deferred mode. Changing the outline to sparse
+  corners weakens its visual contract. Optimistically forcing synchronized-output mode is unsafe capability
+  policy and does not bound output backlog on terminals that support it. A general host backpressure queue is a
+  broader concurrency/API change than this gesture-specific defect requires.
+- **Strongest counterargument:** A 33-millisecond cap may place the outline one pointer sample behind on a very
+  fast display.
+- **Confidence:** High; the input-to-invalidation path and perimeter-sized damage are direct code evidence, and
+  30 Hz is within the existing 33-millisecond interactive frame budget while release remains exact.
+- **Hardening:** The deeper option search retained the transparent full outline and rejected changing either its
+  shape or committed behavior. The performance review found that unlimited immediate reversals let natural
+  pointer jitter bypass the cadence. The accepted correction limits the bypass to one reversal per interval,
+  uses monotonic time, clamps the delay, and adds a reversal-heavy bounded-frame oracle. The required single
+  re-review closed the Major and reported no new Critical or Major finding. Immediate first motion and
+  synchronous release remain, so coalescing cannot feel inert or commit stale geometry.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-window-outline-bleed-20260814`.
+- **Reopen triggers:** Native motion still accumulates stale outlines, preview latency exceeds one interval, a
+  delayed callback paints after ownership ends, or release commits anything other than the newest candidate.
+
 ## Auto-design context
 
 - **Authority:** Eligible technical design decisions may be resolved by AI under `--auto-design`.

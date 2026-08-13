@@ -1,7 +1,7 @@
 /** Implementation hardening for deferred Window resize ownership and cleanup. */
 import type { MouseEvent } from '@jsvision/core';
 import { resolveCapabilities } from '@jsvision/core';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import { createApplication, Window } from '../src/index.js';
 
@@ -89,4 +89,28 @@ test('reentrant capture replacement cancels an unpublished outline without relea
   expect(window.dragging()).toBe(false);
   expect(window.resizeCalls).toBe(0);
   expect(app.desktop.children).toEqual([window]);
+});
+
+test('capture loss cancels a coalesced outline repaint before it can revive preview chrome', () => {
+  vi.useFakeTimers();
+  try {
+    const { app, window } = fixture();
+    const committed = { ...window.layout.rect };
+
+    app.loop.dispatch(mouse('down', 15, 8));
+    app.loop.dispatch(mouse('drag', 20, 11));
+    app.loop.dispatch(mouse('drag', 22, 12));
+    expect(vi.getTimerCount()).toBe(1);
+
+    app.loop.releaseCapture();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(33);
+
+    expect(window.layout.rect).toEqual(committed);
+    expect(window.resizeCalls).toBe(0);
+    expect(window.resizing()).toBe(false);
+    expect(app.desktop.children).toEqual([window]);
+  } finally {
+    vi.useRealTimers();
+  }
 });
