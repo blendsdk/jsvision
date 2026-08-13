@@ -39,6 +39,20 @@ export interface WindowManager {
   beginResizeLeft(w: Window): void;
 }
 
+/**
+ * Mouse-driven Window resize presentation.
+ *
+ * `live` reflows hosted content during pointer motion. `outline` repaints only a frame candidate and
+ * commits the real Window geometry on release.
+ *
+ * @example
+ * import { Window } from '@jsvision/ui';
+ *
+ * const boardWindow = new Window('Board');
+ * boardWindow.resizeMode = 'outline';
+ */
+export type WindowResizeMode = 'live' | 'outline';
+
 /** Default restored size for a window with no explicit rect (degenerate guard). */
 const FALLBACK_RECT: Rect = { x: 0, y: 0, width: 10, height: 3 };
 
@@ -88,6 +102,11 @@ export class Window extends Group {
    */
   readonly dragging: Signal<boolean>;
   /**
+   * `true` only during a corner-resize gesture. Unlike {@link dragging}, title-bar movement leaves
+   * this signal `false`, allowing content or chrome to distinguish resizing from movement.
+   */
+  readonly resizing: Signal<boolean>;
+  /**
    * `true` when this is the active (top-most, focused) window, `false` when it sits behind another.
    * The desktop keeps it in sync as windows are raised, added, and removed; the frame chrome reads
    * it to switch between the active and inactive look. A standalone window defaults to `true`.
@@ -99,6 +118,11 @@ export class Window extends Group {
   movable = true;
   /** Whether the window can be resized via the corner grips. */
   resizable = true;
+  /**
+   * Mouse resize presentation for this Window. `undefined` inherits the owning Desktop's mode;
+   * standalone Windows and Desktops default to `live`.
+   */
+  resizeMode?: WindowResizeMode;
   /** Whether the window can be maximized/restored (shows the zoom box). */
   zoomable = true;
   /** Whether the window can be closed (shows the close box). */
@@ -128,6 +152,7 @@ export class Window extends Group {
     super();
     this.title = signal(title ?? '');
     this.dragging = signal(false);
+    this.resizing = signal(false);
     this.active = signal(true); // standalone default; a desktop takes over maintaining it
     // Bind the reactive title so a title change repaints the frame. Bound on mount, because the
     // view's reactive scope does not exist yet in the constructor.

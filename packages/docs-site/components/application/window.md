@@ -20,6 +20,7 @@ import { createApplication, Text, Window, at } from '@jsvision/ui';
 const app = createApplication();
 const window = new Window('Output');
 window.setLayout({ rect: { x: 3, y: 2, width: 40, height: 10 } });
+window.resizeMode = 'outline'; // defer expensive content reflow until mouse release
 window.add(at(new Text('Build complete'), 0, 0, 30, 1));
 app.desktop.addWindow(window);
 ```
@@ -37,10 +38,11 @@ Press **Alt+Z** to zoom or restore the specimen and **Alt+C** to test its protec
 | Member                                         | Purpose                                                  |
 | ---------------------------------------------- | -------------------------------------------------------- |
 | `title: Signal<string>`                        | Reactive centered frame title.                           |
-| `active`, `dragging`                           | Reactive window-manager state.                           |
+| `active`, `dragging`, `resizing`               | Reactive activation and gesture state.                   |
 | `number`                                       | Optional 1–9 accelerator displayed in the frame.         |
 | `movable`, `resizable`, `zoomable`, `closable` | Enable individual frame affordances.                     |
 | `minWidth`, `minHeight`                        | Gesture-enforced resize floor.                           |
+| `resizeMode`                                   | Inherit Desktop resize behavior or select a local mode.  |
 | `zoom()` / `isZoomed()`                        | Toggle and inspect maximized state.                      |
 | `close()`                                      | Ask the owning `Desktop` to remove this closable window. |
 
@@ -76,8 +78,20 @@ placement. Tiling and cascading clear saved zoom state before arranging.
 ## Moving and resizing
 
 Title dragging moves a movable window. Corner grips resize from the right or left while respecting
-minimum dimensions and pointer capture. `dragging()` is true for the gesture duration, enabling
-content to defer expensive redraws.
+minimum dimensions and pointer capture. `dragging()` is true for move and resize gestures;
+`resizing()` identifies only corner resizing.
+
+The default `live` mode updates the Window rectangle and reflows its content for every pointer
+position. Use `outline` for a Kanban, Data Grid, editor, or another expensive responsive workspace:
+the committed Window remains unchanged while a frame-only size preview follows the pointer, then the
+latest rectangle is applied once on release.
+
+```ts
+window.resizeMode = 'outline';
+```
+
+An unset Window mode inherits `app.desktop.resizeMode`. Capture loss cancels an outline without
+committing its candidate.
 
 Viewport resizing keeps zoomed windows maximized and clamps their restore target back on-screen.
 Non-zoomed windows retain their authored rectangle even if it overflows.
@@ -87,6 +101,7 @@ Non-zoomed windows retain their authored rectangle even if it overflows.
 - Add and remove windows through `Desktop` so manager, active state, and focus remain consistent.
 - Give every window useful focusable content and a concise, reactive title.
 - Set minimum dimensions from actual content needs, not frame size alone.
+- Prefer `outline` when live reflow cannot keep pace with terminal mouse reports.
 - Disable close only when another discoverable route cannot reopen the surface.
 - Use dialogs for modal validation and short-lived decisions.
 

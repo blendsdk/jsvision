@@ -140,6 +140,7 @@ test('should render a loaded public project as a visible live Kanban', async () 
   expect(screenText(showcase)).toMatch(/Todo\s+\|\s+In Progress/u);
   expect(screenText(showcase)).toMatch(/Labels: good/u);
   expect(showcase.localCards()[0]?.assignees).toEqual([{ id: 'user-1', label: 'octocat' }]);
+  expect(showcase.app.desktop.activeWindow()?.resizeMode).toBe('outline');
 });
 
 // Every built-in theme command must repaint the complete app while preserving project state.

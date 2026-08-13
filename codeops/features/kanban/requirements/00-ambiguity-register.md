@@ -597,6 +597,40 @@ during RD authoring must reopen this register before the affected requirement is
 - **Reopen triggers:** Native acceptance still freezes after a scrolled drop, a reachable anchor loses its prior
   row, or a supported variable-height layout demonstrates a different stable clamped target.
 
+### AR-48 — Deferred outline window resizing
+
+- **Authority:** User — explicitly approved during native GitHub Kanban acceptance on 2026-08-13.
+- **Objective:** Keep mouse-driven resizing responsive for windows containing expensive responsive components
+  without forcing those components to reflow and repaint for every terminal mouse report.
+- **Decision:** `Window` gains a public `live | outline` resize mode. `live` remains the compatibility default.
+  A window may opt into `outline`, and a Desktop may provide the inherited default for its windows. During an
+  outline resize, the committed Window and its content geometry do not change; a topmost frame-only candidate
+  tracks the pointer and shows bounded size feedback. Mouse-up applies the latest minimum-clamped candidate once,
+  invokes the normal resize hook once, and removes the preview. Capture loss or lifecycle interruption removes
+  the preview without committing it. Moving a window and keyboard/viewport resizing keep their current behavior.
+- **Evidence:** Native resizing of the GitHub showcase Window visibly lagged behind the pointer. Current Desktop
+  handling applies every captured move directly to `layout.rect`, while both resize helpers immediately invoke
+  `onResized()` and invalidate layout, forcing the hosted Kanban through live responsive reflow per mouse report.
+- **Rejected alternatives:** Merely hiding content after changing the real rect retains the expensive reflow.
+  Throttling alone still creates intermediate content layouts, adds timing-dependent behavior, and can preserve
+  an input backlog. Replacing live resize globally would be a compatibility change without migration evidence.
+- **Strongest counterargument:** A deferred outline gives less continuous content feedback than live resize.
+- **Confidence:** High; the existing event and layout path directly establishes the repeated-work mechanism, and
+  the mode is additive and reversible.
+- **Hardening:** Independent correctness and performance reviews found the first preview blanked the accumulated
+  candidate area, making output proportional to swept area despite avoiding content reflow. The accepted fix
+  captures the pre-gesture composed frame and restores only the previous perimeter before drawing the next
+  transparent-interior perimeter. A generation-bound capture lease also cancels synchronously across host,
+  modal, unmount, replacement, stop, and disposal boundaries. The strengthened oracle proves interior and swept
+  pixels remain exact and changed cells are bounded by the current outline perimeter. The required correctness
+  re-review then found that reentrant replacement could make the candidate lease inactive before acquisition
+  returned. The final fix cancels that unpublished gesture without releasing the winning replacement; capture-loss
+  callbacks use the same ownership-safe cleanup path. A focused race oracle and the full repository gates pass.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-window-resize-20260813`.
+- **Reopen triggers:** Outline motion still reflows hosted content, release commits more than once, a lost capture
+  leaves stale chrome, or native acceptance still observes delayed pointer tracking.
+
 ## Auto-design context
 
 - **Authority:** Eligible technical design decisions may be resolved by AI under `--auto-design`.

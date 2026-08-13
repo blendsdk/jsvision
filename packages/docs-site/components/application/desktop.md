@@ -36,6 +36,7 @@ active/front window; **Alt+T** toggles the arrangement.
 | Member                                       | Purpose                                               |
 | -------------------------------------------- | ----------------------------------------------------- |
 | `shadow`                                     | Apply drop shadows to current and future windows.     |
+| `resizeMode`                                 | Default `live` or `outline` mouse resize behavior.    |
 | `activeWindow()`                             | Return the currently active/front window or `null`.   |
 | `addWindow(window)` / `removeWindow(window)` | Manage ownership, active state, focus, and repaint.   |
 | `raise(window)`                              | Bring an owned window to the front and focus into it. |
@@ -55,6 +56,9 @@ rectangles.
 
 Windows may overlap or extend beyond an edge. Choose minimum dimensions that leave frame controls
 and content usable.
+
+Set `app.desktop.resizeMode = 'outline'` when most windows host expensive responsive content. An
+individual Window can override that default with its own `resizeMode`; an unset Window inherits it.
 
 ## Activation and z-order
 

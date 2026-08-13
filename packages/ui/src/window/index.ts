@@ -7,6 +7,6 @@
  * that, not from the package entry point.
  */
 export { Window } from './window.js';
-export type { WindowManager } from './window.js';
+export type { WindowManager, WindowResizeMode } from './window.js';
 export { drawFrame, frameTitleMinimumWidth, frameZoneAt } from './frame.js';
 export type { FrameZone, FrameState, WindowFlags, FrameRole } from './frame.js';

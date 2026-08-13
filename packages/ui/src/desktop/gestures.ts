@@ -17,8 +17,22 @@ export const MIN_HEIGHT = 3;
 /** An in-progress drag: moving a window, resizing its bottom-right corner, or resizing its bottom-left. */
 export type Gesture =
   | { kind: 'move'; target: Window; grabDX: number; grabDY: number } // offset of the grab point within the window
-  | { kind: 'resize'; target: Window; originX: number; originY: number } // bottom-right — top-left stays fixed
-  | { kind: 'resize-left'; target: Window; anchorRight: number; originY: number }; // bottom-left — right edge + top stay fixed
+  | {
+      kind: 'resize';
+      target: Window;
+      originX: number;
+      originY: number;
+      mode: 'live' | 'outline';
+      candidate: Rect;
+    }
+  | {
+      kind: 'resize-left';
+      target: Window;
+      anchorRight: number;
+      originY: number;
+      mode: 'live' | 'outline';
+      candidate: Rect;
+    };
 
 /**
  * The window's current rect, or a minimum-size fallback if it has none yet.
@@ -55,17 +69,27 @@ export function applyMove(g: Extract<Gesture, { kind: 'move' }>, local: Point, d
  * @param local The desktop-local pointer position.
  */
 export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Point): void {
+  commitResize(g.target, resizeCandidate(g, local));
+}
+
+/** Calculate a bottom-right resize candidate without mutating or reflowing the Window. */
+export function resizeCandidate(g: Extract<Gesture, { kind: 'resize' }>, local: Point): Rect {
   const rect = rectOf(g.target);
   const width = Math.max(g.target.minWidth, local.x - g.originX + 1);
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
-  g.target.setLayout({ rect: { x: rect.x, y: rect.y, width, height } });
-  g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
+  return { x: rect.x, y: rect.y, width, height };
+}
+
+/** Apply one committed resize and notify subclasses after the new rectangle is authoritative. */
+export function commitResize(target: Window, rect: Rect): void {
+  target.setLayout({ rect });
+  target.onResized(); // re-pin the window's children to the new size before the repaint reads them
   // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
   // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
   // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
   // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
   // pass that sees it.
-  g.target.invalidateLayout();
+  target.invalidateLayout();
 }
 
 /**
@@ -78,15 +102,13 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
  * @param local The desktop-local pointer position.
  */
 export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, local: Point): void {
+  commitResize(g.target, resizeLeftCandidate(g, local));
+}
+
+/** Calculate a bottom-left resize candidate without mutating or reflowing the Window. */
+export function resizeLeftCandidate(g: Extract<Gesture, { kind: 'resize-left' }>, local: Point): Rect {
   const x = Math.min(local.x, g.anchorRight - g.target.minWidth + 1);
   const width = g.anchorRight - x + 1;
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
-  g.target.setLayout({ rect: { x, y: g.originY, width, height } });
-  g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
-  // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
-  // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
-  // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
-  // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
-  // pass that sees it.
-  g.target.invalidateLayout();
+  return { x, y: g.originY, width, height };
 }

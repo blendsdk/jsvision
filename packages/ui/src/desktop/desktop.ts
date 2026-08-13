@@ -12,19 +12,35 @@
  * {@link Desktop.addWindow}.
  */
 import { Group } from '../view/index.js';
-import type { DrawContext, DispatchEvent, View, Point } from '../view/index.js';
-import type { Size2D } from '../layout/index.js';
+import type { DrawContext, DispatchEvent, View, Point, RenderRoot } from '../view/index.js';
+import type { Rect, Size2D } from '../layout/index.js';
+import type { PointerCaptureLease } from '../event/index.js';
 import { Window } from '../window/index.js';
+import type { WindowResizeMode } from '../window/index.js';
 import { Commands } from '../status/index.js';
-import { applyMove, applyResize, applyResizeLeft, MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
+import {
+  applyMove,
+  applyResize,
+  applyResizeLeft,
+  commitResize,
+  resizeCandidate,
+  resizeLeftCandidate,
+  MIN_WIDTH,
+  MIN_HEIGHT,
+} from './gestures.js';
 import type { Gesture } from './gestures.js';
 import { cascade, tile, nextWindow, prevWindow, windowByNumber } from './arrange.js';
+import { ResizeOutline } from './resize-outline.js';
 
 /**
  * The slice of the event loop the desktop needs, injected by `createApplication`: pointer capture for
  * drag/resize, command emit/enablement, and focus for raise-on-click.
  */
 export interface DesktopLoopSeam {
+  /** Current composed frame used to restore cells beneath a paint-only resize outline. */
+  readonly renderRoot: Pick<RenderRoot, 'buffer'>;
+  /** Acquire cleanup-aware pointer capture when the host supports generation-bound ownership. */
+  acquireCapture?(view: View, onLost: () => void): PointerCaptureLease;
   /** Capture the pointer to a view for the duration of a drag or resize. */
   setCapture(view: View): void;
   /** Release the pointer capture. */
@@ -41,6 +57,11 @@ export interface DesktopLoopSeam {
 
 /** Matches the Alt+digit window-switch keys (1–9). */
 const DIGIT_KEY = /^[1-9]$/;
+
+/** Whether two complete Window rectangles describe the same committed geometry. */
+function sameRect(left: Readonly<Rect>, right: Readonly<Rect>): boolean {
+  return left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
+}
 
 /**
  * The window manager and desktop background. Its children are its windows, in back-to-front order.
@@ -78,6 +99,13 @@ export class Desktop extends Group {
   protected active: Window | null = null;
   /** @internal The in-flight drag/resize, or `null` when none. */
   protected gesture: Gesture | null = null;
+  /** Generation-bound capture for the current gesture when supplied by the attached EventLoop. */
+  protected gestureCapture: PointerCaptureLease | null = null;
+  /** @internal Paint-only top layer retained so deferred pointer motion never changes layout. */
+  protected readonly resizeOutline = new ResizeOutline();
+
+  /** Default mouse resize presentation inherited by Windows without an explicit override. */
+  resizeMode: WindowResizeMode = 'live';
 
   /** @internal Backing field for {@link shadow}. */
   protected _shadow = false;
@@ -142,6 +170,7 @@ export class Desktop extends Group {
 
   /** Remove a window from the desktop; the next window down becomes active. */
   removeWindow(w: Window): void {
+    if (this.gesture?.target === w) this.cancelGesture();
     const wasActive = this.active === w;
     this.remove(w);
     if (wasActive) {
@@ -165,8 +194,12 @@ export class Desktop extends Group {
   raise(w: Window): void {
     const i = this.children.indexOf(w);
     if (i === -1) return;
-    this.children.splice(i, 1);
-    this.children.push(w);
+    const zOrderChanged = i !== this.children.length - 1;
+    const activeChanged = this.active !== w;
+    if (zOrderChanged) {
+      this.children.splice(i, 1);
+      this.children.push(w);
+    }
     // Exactly one window is active at a time: deactivate the previous one and activate this one.
     if (this.active !== null && this.active !== w) this.active.active.set(false);
     w.active.set(true);
@@ -174,7 +207,7 @@ export class Desktop extends Group {
     // Focus into the window so the inner view that owns the caret and highlight gets focus, not the
     // window group itself. A window with no focusable child falls back to focusing itself.
     this.loop?.focusInto(w);
-    this.invalidateLayout(); // z-order changed — repaint so both frames re-theme
+    if (zOrderChanged || activeChanged) this.invalidateLayout();
   }
 
   /** Cascade all windows from the top-left. */
@@ -210,20 +243,33 @@ export class Desktop extends Group {
   /** Start dragging a window: record the grab offset and capture the pointer. */
   beginMove(w: Window, grabLocal: Point): void {
     if (!w.movable) return;
+    this.cancelGesture();
     w.commitPlacement(); // fix a still-centered window into its rect before dragging it
     this.gesture = { kind: 'move', target: w, grabDX: grabLocal.x, grabDY: grabLocal.y };
     w.dragging.set(true);
-    this.loop?.setCapture(this);
+    this.captureGesture();
   }
 
   /** Start resizing a window from its bottom-right corner: fix the top-left and capture the pointer. */
   beginResize(w: Window): void {
     if (!w.resizable) return;
+    this.cancelGesture();
     w.commitPlacement(); // fix a still-centered window into its rect so the top-left is known
     const rect = w.layout.rect ?? { x: 0, y: 0, width: 0, height: 0 };
-    this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y };
+    const mode = w.resizeMode ?? this.resizeMode;
+    this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y, mode, candidate: { ...rect } };
     w.dragging.set(true);
-    this.loop?.setCapture(this);
+    w.resizing.set(true);
+    if (mode === 'outline') {
+      const base = this.loop?.renderRoot.buffer().clone();
+      if (base === undefined) {
+        this.cancelGesture();
+        return;
+      }
+      this.add(this.resizeOutline);
+      this.resizeOutline.begin(rect, base);
+    }
+    this.captureGesture();
   }
 
   /**
@@ -232,11 +278,30 @@ export class Desktop extends Group {
    */
   beginResizeLeft(w: Window): void {
     if (!w.resizable) return;
+    this.cancelGesture();
     w.commitPlacement(); // fix a still-centered window into its rect so the right edge is known
     const rect = w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
-    this.gesture = { kind: 'resize-left', target: w, anchorRight: rect.x + rect.width - 1, originY: rect.y };
+    const mode = w.resizeMode ?? this.resizeMode;
+    this.gesture = {
+      kind: 'resize-left',
+      target: w,
+      anchorRight: rect.x + rect.width - 1,
+      originY: rect.y,
+      mode,
+      candidate: { ...rect },
+    };
     w.dragging.set(true);
-    this.loop?.setCapture(this);
+    w.resizing.set(true);
+    if (mode === 'outline') {
+      const base = this.loop?.renderRoot.buffer().clone();
+      if (base === undefined) {
+        this.cancelGesture();
+        return;
+      }
+      this.add(this.resizeOutline);
+      this.resizeOutline.begin(rect, base);
+    }
+    this.captureGesture();
   }
 
   /**
@@ -250,21 +315,43 @@ export class Desktop extends Group {
       // If the pointer capture was lost externally mid-drag (a modal opened, the window was removed),
       // the drag is stale — drop it so the window does not jump.
       if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
-        this.gesture.target.dragging.set(false);
-        this.gesture = null;
+        this.cancelGesture(false);
         return;
       }
       if ((inner.kind === 'move' || inner.kind === 'drag') && ev.local !== undefined) {
         if (this.gesture.kind === 'move') applyMove(this.gesture, ev.local, this.bounds.width, this.bounds.height);
-        else if (this.gesture.kind === 'resize') applyResize(this.gesture, ev.local);
-        else applyResizeLeft(this.gesture, ev.local);
+        else if (this.gesture.kind === 'resize') {
+          this.gesture.candidate = resizeCandidate(this.gesture, ev.local);
+          if (this.gesture.mode === 'outline') this.resizeOutline.update(this.gesture.candidate);
+          else applyResize(this.gesture, ev.local);
+        } else {
+          this.gesture.candidate = resizeLeftCandidate(this.gesture, ev.local);
+          if (this.gesture.mode === 'outline') this.resizeOutline.update(this.gesture.candidate);
+          else applyResizeLeft(this.gesture, ev.local);
+        }
         ev.handled = true;
         return;
       }
       if (inner.kind === 'up') {
-        this.gesture.target.dragging.set(false);
+        const gesture = this.gesture;
+        if (
+          gesture.kind !== 'move' &&
+          gesture.mode === 'outline' &&
+          !sameRect(gesture.target.layout.rect ?? gesture.candidate, gesture.candidate)
+        ) {
+          commitResize(gesture.target, gesture.candidate);
+        }
+        gesture.target.dragging.set(false);
+        gesture.target.resizing.set(false);
+        if (gesture.kind !== 'move' && gesture.mode === 'outline') {
+          this.resizeOutline.finish();
+          this.remove(this.resizeOutline);
+        }
         this.gesture = null;
-        this.loop?.releaseCapture();
+        const capture = this.gestureCapture;
+        this.gestureCapture = null;
+        if (capture?.active()) capture.release();
+        else this.loop?.releaseCapture();
         ev.handled = true;
         return;
       }
@@ -281,6 +368,49 @@ export class Desktop extends Group {
     if (inner.type === 'key' && inner.alt && DIGIT_KEY.test(inner.key)) {
       this.focusWindowNumber(Number(inner.key));
       ev.handled = true;
+    }
+  }
+
+  /** Capture pointer ownership and subscribe to lifecycle loss when the EventLoop exposes a lease. */
+  protected captureGesture(): void {
+    const loop = this.loop;
+    if (loop === null) return;
+    if (loop.acquireCapture === undefined) {
+      loop.setCapture(this);
+      return;
+    }
+    try {
+      const lease = loop.acquireCapture(this, () => this.cancelGesture(false));
+      if (lease.active()) this.gestureCapture = lease;
+      else this.cancelGesture(false);
+    } catch {
+      // A modal/lifecycle boundary may begin between the frame press and capture acquisition. The
+      // gesture has not received pointer ownership, so restore its pre-gesture state immediately.
+      this.cancelGesture(false);
+    }
+  }
+
+  /**
+   * Cancel an owned gesture and restore any pixels covered by its deferred preview.
+   *
+   * @param releaseOwnedCapture Release this Desktop's capture when cancellation originates locally.
+   *   Capture-loss callbacks pass `false` because a reentrant replacement may already own capture.
+   */
+  protected cancelGesture(releaseOwnedCapture = true): void {
+    const gesture = this.gesture;
+    if (gesture === null) return;
+    const capture = this.gestureCapture;
+    this.gesture = null;
+    this.gestureCapture = null;
+    gesture.target.dragging.set(false);
+    gesture.target.resizing.set(false);
+    if (gesture.kind !== 'move' && gesture.mode === 'outline') {
+      this.resizeOutline.finish();
+      this.remove(this.resizeOutline);
+    }
+    if (releaseOwnedCapture) {
+      if (capture?.active()) capture.release();
+      else this.loop?.releaseCapture();
     }
   }
 

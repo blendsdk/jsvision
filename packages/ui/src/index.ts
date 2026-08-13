@@ -124,6 +124,7 @@ export type {
   FocusHostAware,
 } from './router/index.js';
 export { Window, frameTitleMinimumWidth } from './window/index.js';
+export type { WindowResizeMode } from './window/index.js';
 export { MenuBar, MenuPopup, menuBar, subMenu, item, separator, menuSpacer } from './menu/index.js';
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
 export { findDuplicateAccelerators, reportDuplicateAccelerators } from './menu/index.js';

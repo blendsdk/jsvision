@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-13 00:12 CEST
-> **Progress**: 44/46 tasks (96%)
+> **Last Updated**: 2026-08-13 15:18 CEST
+> **Progress**: 50/52 tasks (96%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -121,6 +121,9 @@ automated gate passes and the user accepts the native-terminal interaction revie
 - `packages/examples/test/github-project-kanban*.spec.test.ts`
 - `packages/examples/test/kanban-window-lab.spec.test.ts`
 - `packages/examples/test/perf-gate.spec.test.ts`
+- `packages/ui/src/{desktop,window}/**` for the approved deferred window-resize mode and frame-only preview
+- Focused Window/Desktop specification and implementation tests under `packages/ui/test/`
+- `packages/docs-site/components/application/{window,desktop}.md` for the public resize-mode guidance
 - Mapped canonical skill references and generated plugin outputs reported by `yarn plugin:update`
 - This execution plan and `codeops/features/kanban/00-roadmap.md`
 
@@ -621,6 +624,56 @@ aborted, the newest move wins, and the scheduler idles. The final required re-re
 Major findings. Focused scheduler specifications (5), Kanban typecheck, GitHub application specifications (20),
 examples typecheck, plugin update/check, the repository performance gate, and `yarn verify:local` all pass.
 
+## Phase 7: Deferred window-resize remediation
+
+> **Phase baseline tree**: 8482c48ee4d8dc13a7143a694cef2267b280fd36
+> **Scope mode**: strict
+> **Expected modification set**: `packages/ui/src/{desktop,window}/**`, focused Window/Desktop tests under
+> `packages/ui/test/`, `packages/examples/github-project-kanban/**`, focused GitHub application tests,
+> `packages/docs-site/components/application/{window,desktop}.md`, generated plugin outputs, the ambiguity
+> register, and this execution plan.
+
+This phase is a user-approved blocking expansion discovered during native Kanban acceptance. It must complete
+before Tasks 6.7 and 6.8 resume. AR-48 keeps compatibility through live resize while adding an opt-in deferred
+outline that does not mutate or reflow the real Window until release.
+
+- [x] 7.1 Add immutable Window/Desktop specification tests proving `live` remains the default, a per-window
+      `outline` override and Desktop-level default retain the committed window/content geometry during captured
+      motion, a frame-only candidate follows both resize corners with minimum-size clamping, and mouse-up commits
+      exactly the latest candidate once. ✅ (completed: 2026-08-13 14:35)
+- [x] 7.2 Run the focused specification tests and record the expected red phase against the absent public mode
+      and preview behavior. The focused run failed all four oracles for the absent Desktop default, resize-only
+      signal, retained geometry, and deferred candidate. ✅ (completed: 2026-08-13 14:38)
+- [x] 7.3 Implement the documented `WindowResizeMode` API, Desktop inheritance/override resolution, resize-only
+      gesture state, topmost frame-only candidate presentation, single-release commit, and synchronous cleanup
+      after capture loss/removal/disposal without changing title-move behavior. ✅ (completed: 2026-08-13 14:48)
+- [x] 7.4 Run the focused specification tests and public package typecheck; correct production behavior rather
+      than weakening the immutable oracle until the green phase passes. All four specifications and the UI
+      typecheck pass. ✅ (completed: 2026-08-13 14:48)
+- [x] 7.5 Add implementation hardening for unchanged candidate positions, cancellation, both resize corners,
+      focus/z-order, minimum sizes, and live-mode compatibility; enable `outline` in the GitHub showcase and
+      document the mode on the Window/Desktop component pages. All 2,054 UI tests, 8 focused GitHub application
+      tests, UI/examples/docs typechecks, UI dependency and JSDoc checks pass. ✅ (completed: 2026-08-13 14:57)
+- [x] 7.6 Run focused UI and GitHub application tests, UI/examples typechecks, plugin update/check, exact
+      `yarn perf:check`, dependency/documentation checks, and `yarn verify:local`; complete the required
+      correctness and performance quality review before returning the app to native acceptance. ✅
+      (completed: 2026-08-13 15:18)
+
+**Phase 7 quality remediation:** Correctness and performance reviewers independently reported the same Major:
+the first preview filled the union of all candidate rectangles, blanking hosted/overlapping content and making
+terminal damage proportional to swept area. The finding was accepted. The preview now captures the exact
+pre-gesture frame, restores only the prior outline perimeter, and draws a transparent-interior candidate with
+bounded size feedback. A strengthened immutable oracle proves interior and swept-away pixels remain unchanged
+and the current-frame delta is bounded by the candidate perimeter. The Desktop also uses the EventLoop's
+generation-bound capture lease so host, modal, replacement, unmount, stop, and disposal loss cancel immediately.
+The performance re-review passed. The correctness re-review found one final Major: a previous capture owner's
+loss callback could reentrantly replace the Desktop's candidate lease before acquisition returned, leaving an
+outline gesture active without capture. The accepted fix cancels an inactive candidate without releasing the
+winning replacement and likewise avoids releasing a new owner from later loss callbacks. A focused regression
+oracle covers that exact race. CodeOps permits no third review after the required single re-review; the final
+eight focused Window tests, all 2,054 UI tests, UI build/typecheck/dependency/JSDoc gates, eight GitHub app tests,
+examples/docs typechecks, plugin update/check, exact repository performance gate, and `yarn verify:local` pass.
+
 Three stale demo processes created before the rollback were found consuming approximately one CPU core each
 after their terminals had closed. They ignored SIGTERM and were force-terminated by exact PID; no persistent
 application data existed to lose. After rebuilding the Kanban package with the rollback, later native GitHub,
@@ -641,6 +694,6 @@ are the recorded gates.
 
 ## Completion rule
 
-T-03 is complete only when all 46 tasks are checked, every automated gate passes, no unresolved geometry
+T-03 is complete only when all 52 tasks are checked, every automated gate passes, no unresolved geometry
 or input-sequencing defect remains, and the user explicitly accepts the real-terminal interaction. A
 visually attractive demo alone cannot close this task.

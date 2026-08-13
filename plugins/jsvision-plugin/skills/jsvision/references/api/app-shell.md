@@ -110,6 +110,7 @@ The window manager and desktop background.
 ```ts
 new Desktop()   // extends Group
 // methods & signals:
+resizeMode: WindowResizeMode
 shadow: boolean
 handleViewportResize(): void
 attachLoop(seam: DesktopLoopSeam): void
@@ -143,6 +144,8 @@ The slice of the event loop the desktop needs, injected by `createApplication`: 
 
 ```ts
 interface DesktopLoopSeam {
+  renderRoot: Pick<RenderRoot, 'buffer'>;   // Current composed frame used to restore cells beneath a paint-only resize outline.
+  acquireCapture?(view: View, onLost: () => void): PointerCaptureLease;   // Acquire cleanup-aware pointer capture when the host supports generation-bound ownership.
   setCapture(view: View): void;   // Capture the pointer to a view for the duration of a drag or resize.
   releaseCapture(): void;   // Release the pointer capture.
   emitCommand(command: string, arg?: unknown): void;   // Emit a command through the loop.
@@ -417,10 +420,12 @@ new Window(title?: string)   // extends Group
 layout: Readonly<LayoutProps>
 title: Signal<string>
 dragging: Signal<boolean>
+resizing: Signal<boolean>
 active: Signal<boolean>
 number?: number
 movable
 resizable
+resizeMode?: WindowResizeMode
 zoomable
 closable
 minWidth
@@ -433,6 +438,14 @@ zoom(): void
 onDesktopResize(size: Size2D): void
 close(): void
 selectByClick(): void
+```
+
+## WindowResizeMode
+
+Mouse-driven Window resize presentation.
+
+```ts
+type WindowResizeMode = 'live' | 'outline'
 ```
 
 ## buildKeymap

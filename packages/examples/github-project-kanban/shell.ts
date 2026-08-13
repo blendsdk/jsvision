@@ -194,6 +194,7 @@ export function createGitHubProjectKanbanApp(
   });
   const window = new Window('◆ GitHub Project Kanban · public playground');
   window.closable = false;
+  window.resizeMode = 'outline';
   window.minWidth = 36;
   window.minHeight = 12;
   window.setLayout({ rect: { x: 0, y: 0, width: app.desktop.bounds.width, height: app.desktop.bounds.height } });
