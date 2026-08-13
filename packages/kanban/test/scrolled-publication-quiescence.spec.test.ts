@@ -131,6 +131,100 @@ test('a focused card moved above a scrolled viewport settles at the clamped top 
   render.unmount();
 });
 
+test('a focused card moved below the maximum vertical extent settles at the clamped bottom offset', async () => {
+  const focused: Card = Object.freeze({ key: 1, columnId: 'doing', title: 'Focused card' });
+  const destination: Card = Object.freeze({ key: 2, columnId: 'done', title: 'Destination card' });
+  const cards = signal<readonly Card[]>(Object.freeze([focused, destination]));
+  const source = createEagerKanbanDataSource(cards, {
+    columns: () => [
+      { columnId: 'doing', label: 'Doing', revision: 1 },
+      { columnId: 'done', label: 'Done', revision: 1 },
+    ],
+    keyOf: (card) => card.key,
+    columnOf: (card) => card.columnId,
+  });
+  const board = new KanbanBoard({
+    source,
+    query: () => ({ filters: [], sort: [] }),
+    card: CARD,
+    presentation: () => PRESENTATION,
+    identity: () => ({ selectedCardKeys: [1], focusedCardKey: 1 }),
+  });
+  board.setLayout({ position: 'fill' });
+  const host = new Group();
+  host.add(board);
+  const callbacks: Array<() => void> = [];
+  const render = createRenderRoot(
+    { width: 80, height: 24 },
+    { caps: CAPS, schedule: (callback) => callbacks.push(callback) },
+  );
+  render.mount(host);
+  await settle(callbacks, 32);
+  expect(board.viewport.metrics().offsets.y).toBe(0);
+
+  cards.set(Object.freeze([destination, Object.freeze({ ...focused, columnId: 'done' })]));
+  const frames = await settle(callbacks, 32);
+
+  expect(callbacks).toHaveLength(0);
+  expect(frames).toBeGreaterThanOrEqual(2);
+  expect(frames).toBeLessThan(32);
+  expect(board.viewport.metrics().offsets.y).toBe(0);
+  expect(cardRow(board, 1)).toBeGreaterThan(cardRow(board, 2) ?? Number.MAX_SAFE_INTEGER);
+  render.unmount();
+});
+
+test('an upper clamp uses authoritative measured extent after a projection-less refresh', async () => {
+  const focused: Card = Object.freeze({
+    key: 1,
+    columnId: 'doing',
+    title: 'Measured focused card',
+    detail: 'Retained measured detail',
+  });
+  const destination: Card = Object.freeze({
+    key: 2,
+    columnId: 'done',
+    title: 'Measured destination',
+    detail: 'Retained measured detail',
+  });
+  const cards = signal<readonly Card[]>(Object.freeze([focused, destination]));
+  const source = createEagerKanbanDataSource(cards, {
+    columns: () => [
+      { columnId: 'doing', label: 'Doing', revision: 1 },
+      { columnId: 'done', label: 'Done', revision: 1 },
+    ],
+    keyOf: (card) => card.key,
+    columnOf: (card) => card.columnId,
+  });
+  const board = new KanbanBoard({
+    source,
+    query: () => ({ filters: [], sort: [] }),
+    card: CARD,
+    presentation: () => PRESENTATION,
+    identity: () => ({ selectedCardKeys: [1], focusedCardKey: 1 }),
+  });
+  board.setLayout({ position: 'fill' });
+  const host = new Group();
+  host.add(board);
+  const callbacks: Array<() => void> = [];
+  const render = createRenderRoot(
+    { width: 80, height: 10 },
+    { caps: CAPS, schedule: (callback) => callbacks.push(callback) },
+  );
+  render.mount(host);
+  await settle(callbacks, 32);
+
+  cards.set(Object.freeze([destination, Object.freeze({ ...focused, columnId: 'done' })]));
+  const frames = await settle(callbacks, 32);
+
+  expect(callbacks).toHaveLength(0);
+  expect(frames).toBeGreaterThanOrEqual(2);
+  expect(frames).toBeLessThan(32);
+  expect(board.viewport.metrics().extentQuality.y).toBe('exact');
+  expect(board.viewport.metrics().extents.y).toBeGreaterThan(0);
+  expect(board.viewport.metrics().offsets.y).toBe(board.viewport.metrics().extents.y);
+  render.unmount();
+});
+
 test('a reachable variable-height relocation preserves its prior row and becomes idle', async () => {
   const cards = signal<readonly Card[]>(
     Array.from({ length: 40 }, (_, key) => ({

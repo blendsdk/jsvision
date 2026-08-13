@@ -631,6 +631,52 @@ during RD authoring must reopen this register before the affected requirement is
 - **Reopen triggers:** Outline motion still reflows hosted content, release commits more than once, a lost capture
   leaves stale chrome, or native acceptance still observes delayed pointer tracking.
 
+### AR-49 — Proven upper-clamped anchor settlement
+
+- **Authority:** AI — delegated by `--auto-design` during execution remediation.
+- **Eligibility:** Internal failure recovery and scheduler-progress engineering within the already approved
+  responsive scrolling and focus-retention behavior; no public API, product scope, or compatibility change.
+- **Objective:** Preserve a moved focused card's former screen row when reachable without allowing an
+  unreachable positive offset to schedule an unbounded terminal repaint chain.
+- **Decision:** A positive pending-anchor correction records the requested row and the current authoritative
+  projection-metrics token before requesting its one corrective repaint. Only the end-of-draw publication that
+  includes the current completed projection and sparse-height evidence advances that token; bootstrap, reactive,
+  and clamping-only metric refreshes do not. The viewport may accept the nearest bottom-clamped row only on a
+  later pass whose post-attempt metrics have exact vertical extent, still clamp that same request at the exact
+  maximum, and leave the projected row different from the preferred row. Unknown/lower-bound extents and
+  corrections made reachable by newly measured geometry retain the existing retry behavior. Clearing,
+  superseding, deleting, or replacing pending relocation clears the correction-attempt provenance atomically.
+- **Evidence:** Two live detached kitchen-sink processes consumed 113–114% CPU. An inspector CPU profile showed
+  each microtask repainting the Kanban; debugger breakpoints identified every replacement microtask as
+  `KanbanViewport.#rememberVerticalAnchor()` invalidating from its positive-offset branch. A deterministic
+  80×24 oracle moves the focused card to the end of a short destination lane whose exact maximum vertical offset
+  is zero and reproduces one callback still queued after all 32 bounded frames.
+- **Rejected alternatives:** Consulting the current exact extent immediately inside `#rememberVerticalAnchor`
+  is unsafe because final current-projection metrics publish later in the draw. Clearing every positive pending
+  correction discards reachable row preservation. A generic render watchdog hides invalid state and may suppress
+  unrelated legitimate asynchronous view work.
+- **Strongest counterargument:** The extra provenance state makes anchor settlement more complex and accepts a
+  shifted row after one confirming repaint rather than immediately.
+- **Confidence:** High; the live scheduling call stack, deterministic red oracle, and exact state branch agree.
+- **Hardening:** An independent blind challenger rejected immediate exact-extent settlement because the metrics
+  available at that point may predate current variable-height measurement. The adopted publication-token guard
+  requires a later metrics pass derived after the correction attempt and preserves retries whenever extent
+  evidence is not exact or the requested row becomes reachable. The phase correctness review then found that a
+  general metrics token could be advanced by a projection-stale refresh. The accepted remediation narrows the
+  token to the current authoritative projection publication and requires at least the corrective and confirming
+  frames in the deterministic oracle. The required re-review found that a later projection-less refresh could
+  still overwrite the metrics object consulted by settlement without advancing the narrowed token. The final
+  remediation binds the token to a separate immutable proof containing source generation, identity revision,
+  exact extent quality/value, and the authoritative clamped offset; projection-less refreshes can overwrite live
+  metrics but cannot manufacture or alter that proof. Exact empty cells now publish their zero-height sparse
+  projection so a lane emptied by the move contributes complete authoritative evidence. Unmeasured nonempty
+  cells remain unpublished to preserve bounded source reads and prevent stale query lower bounds. Per the
+  one-re-review limit, no third review was requested.
+- **Policy version:** 1.
+- **Root invocation ID:** `kanban-t03-upper-clamp-runtime-20260813`.
+- **Reopen triggers:** A supported unknown/lower-bound source still busy-loops, a reachable positive correction
+  loses its prior row, or an exact upper clamp retains deferred render work after the confirming pass.
+
 ## Auto-design context
 
 - **Authority:** Eligible technical design decisions may be resolved by AI under `--auto-design`.

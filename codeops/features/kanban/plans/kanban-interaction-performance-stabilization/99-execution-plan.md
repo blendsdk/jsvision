@@ -4,8 +4,8 @@
 > **Type**: Task (lightweight) · **Feature**: kanban
 > **Status**: Executing
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-13 15:18 CEST
-> **Progress**: 50/52 tasks (96%)
+> **Last Updated**: 2026-08-13 18:20 CEST
+> **Progress**: 56/58 tasks (97%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -681,6 +681,64 @@ kitchen-sink, and Window-lab runs exited cleanly and left no matching process. T
 attempts made while those processes were alive are invalid evidence; the isolated and single-worker reruns above
 are the recorded gates.
 
+## Phase 8: Kitchen-sink post-drop quiescence remediation
+
+> **Phase baseline tree**: e277bb7d7bde183eabf3339ff990a1d7c197f49d
+> **Scope mode**: strict
+> **Expected modification set**: focused kitchen-sink specification/implementation tests under
+> `packages/examples/test/`, the smallest necessary application or Kanban scheduler/relocation correction,
+> mapped plugin outputs if a public SDK path changes, the ambiguity register, and this execution plan.
+
+Native acceptance after the Window resize remediation confirms that the GitHub application now behaves
+normally, but the standalone Kanban kitchen sink can still monopolize the terminal after a card drop. This is
+a release-blocking necessary correction inside the existing interaction-responsiveness acceptance contract;
+Tasks 6.7 and 6.8 remain open until this phase verifies and the user repeats the native check.
+
+**Initial isolation evidence:** three detached kitchen-sink processes were found with deleted PTYs while each
+consumed approximately 114–119% CPU, confirming a persistent application busy loop. They had no recoverable
+application state and were terminated by exact PID after SIGTERM could not stop them. After clearing that CPU
+load, a deterministic mounted delivery-story drop drained its deferred paint queue below 32 frames, retained
+no callback, and accepted later keyboard input. Three real 248×54 PTY traces—including cell-by-cell native SGR
+drag reports—moved cards, emitted only bounded output, stayed near 2–3% CPU, and exited on Alt-X. The remaining
+trigger is therefore gesture/state-specific and is not reproduced by an ordinary first cross-lane drop.
+
+- [x] 8.1 Add an immutable native-shaped kitchen-sink specification that performs a real mounted drop, then
+      proves deferred rendering becomes idle within a finite bound and later keyboard/quit input remains
+      serviceable. ✅ (completed: 2026-08-13 17:52)
+- [x] 8.2 Run the focused specification and record the expected red failure without weakening the scheduler
+      quiescence or later-input assertions. The exact upper-clamped relocation oracle exhausted all 32 bounded
+      frames with one repaint callback still queued. ✅ (completed: 2026-08-13 17:54)
+- [x] 8.3 Diagnose the exact state owner that repeatedly invalidates after the accepted publication, record the
+      eligible runtime decision in the ambiguity register, and implement the smallest shared correction. ✅
+      (completed: 2026-08-13 18:01)
+- [x] 8.4 Run the focused specification green, add implementation hardening for the diagnosed boundary, and
+      verify a second drop plus teardown cannot revive pending work. The seven anchor-settlement specifications,
+      repeated bottom-gap kitchen-sink integration, teardown check, rebuilt runtime package, and a real 248×54
+      PTY trace all pass; the native process stayed near 2.8% CPU and exited on Alt-X. ✅ (completed:
+      2026-08-13 18:01)
+- [x] 8.5 Run focused Kanban/examples tests, affected package typechecks/build/checks, plugin update/check when
+      mapped, exact `yarn perf:check`, and `yarn verify:local`. Completed with 781 Kanban unit tests, 26 E2E
+      tests with two unchanged platform skips, focused application tests, both package typechecks, Kanban
+      build/dependency/JSDoc checks, plugin regeneration/integrity, the exact performance runner, and changed-file
+      verification green. ✅ (completed: 2026-08-13 18:20)
+- [x] 8.6 Complete the required correctness and performance quality review, remediate accepted Critical/Major
+      findings under auto-design, and re-run the applicable gates before returning to native acceptance. ✅
+      (completed: 2026-08-13 18:20)
+
+**Post-drop quality review remediation:** The performance reviewer passed the bounded-work change with no
+Critical or Major finding. The correctness reviewer found one Major: a general metric-publication token could
+be advanced by a projection-less refresh and falsely prove that the positive clamp had been remeasured. The
+accepted remediation restricted provenance to current projection metrics. The required re-review then found
+that the mutable live metrics object could still be overwritten after that token advanced. The final fix binds
+the token to an immutable proof containing generation, identity revision, extent quality/value, and clamped
+offset. It also publishes sparse zero-height evidence for exact empty cells; it deliberately does not publish
+unmeasured nonempty cells, preserving query-replacement and 100,000-card bounded-work contracts. Per the
+one-re-review limit, no third review was requested. Final verification passes 781 Kanban unit tests, 26 E2E
+tests with two unchanged platform skips, the focused mounted kitchen-sink/window/GitHub tests, both affected
+typechecks, build/dependency/JSDoc checks, plugin update/check, and the exact performance runner. The duplicate
+full-suite processes accidentally started during verification produced invalid timing failures under CPU
+contention; both were terminated by exact PID and every affected test passed in the isolated rerun.
+
 ## Verification summary
 
 | Gate | Required evidence |
@@ -694,6 +752,6 @@ are the recorded gates.
 
 ## Completion rule
 
-T-03 is complete only when all 52 tasks are checked, every automated gate passes, no unresolved geometry
+T-03 is complete only when all 58 tasks are checked, every automated gate passes, no unresolved geometry
 or input-sequencing defect remains, and the user explicitly accepts the real-terminal interaction. A
 visually attractive demo alone cannot close this task.

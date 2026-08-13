@@ -375,6 +375,19 @@ export class KanbanViewport<TCard> extends View {
   readonly #defaultI18n = createEnglishKanbanI18n();
   readonly #defaultTheme = createKanbanTheme(classicTheme);
   readonly #metricsVersion = signal(0);
+  /** Changes only after current authoritative projection metrics publish at the end of a draw pass. */
+  #authoritativeMetricsToken = 0;
+  /** Immutable proof retained separately from projection-less metric refreshes performed before the next draw. */
+  #authoritativeMetricsProof:
+    | {
+        readonly token: number;
+        readonly generation: number;
+        readonly identityRevision: KanbanRevision;
+        readonly extentY: number;
+        readonly extentQualityY: KanbanViewportMetrics['extentQuality']['y'];
+        readonly offsetY: number;
+      }
+    | undefined;
   #requestedOffsets: KanbanViewportPoint = Object.freeze({ x: 0, y: 0 });
   #locatedVerticalExtent = 0;
   #locatedExtentGeneration: number | undefined;
@@ -420,6 +433,9 @@ export class KanbanViewport<TCard> extends View {
   #pendingVerticalAnchorLocation: Readonly<{ readonly address: KanbanCellAddress; readonly index: number }> | undefined;
   #pendingVerticalAnchorGeneration: number | undefined;
   #pendingVerticalAnchorRevision: KanbanRevision | undefined;
+  /** Positive correction awaiting a later metrics publication before an exact upper clamp may settle it. */
+  #pendingVerticalAnchorCorrection:
+    { readonly requestedRow: number; readonly authoritativeMetricsToken: number } | undefined;
   #everMounted = false;
   #releasedLifecycle = false;
   #disposed = false;
@@ -2081,6 +2097,7 @@ export class KanbanViewport<TCard> extends View {
         });
         this.#pendingVerticalAnchorGeneration = sourceGeneration;
         this.#pendingVerticalAnchorRevision = identityRevision;
+        this.#pendingVerticalAnchorCorrection = undefined;
         this.#focusedColumnAnchor = location.address.columnId;
         this.#imperativeFocusedColumnAnchor = location.address.columnId;
         this.#horizontalColumnAnchor = location.address.columnId;
@@ -2108,10 +2125,16 @@ export class KanbanViewport<TCard> extends View {
     this.#anchorControllerRevision = undefined;
     this.#anchorRelocationAttemptGeneration = undefined;
     this.#anchorRelocationAttemptRevision = undefined;
+    this.#clearPendingVerticalAnchor();
+  }
+
+  /** Clears the preferred row and every piece of provenance that can schedule its correction. */
+  #clearPendingVerticalAnchor(): void {
     this.#pendingVerticalAnchorRow = undefined;
     this.#pendingVerticalAnchorLocation = undefined;
     this.#pendingVerticalAnchorGeneration = undefined;
     this.#pendingVerticalAnchorRevision = undefined;
+    this.#pendingVerticalAnchorCorrection = undefined;
   }
 
   /** Returns one source column's logical horizontal start without opening an unretained cursor. */
@@ -2196,22 +2219,39 @@ export class KanbanViewport<TCard> extends View {
     const projectedRelativeRow = logicalRow - this.#requestedOffsets.y;
     let retainedRelativeRow = this.#pendingVerticalAnchorRow ?? projectedRelativeRow;
     if (this.#pendingVerticalAnchorRow !== undefined) {
+      const authoritativeProof = this.#authoritativeMetricsProof;
       if (projectedRelativeRow === this.#pendingVerticalAnchorRow) {
-        this.#pendingVerticalAnchorRow = undefined;
-        this.#pendingVerticalAnchorLocation = undefined;
-        this.#pendingVerticalAnchorGeneration = undefined;
-        this.#pendingVerticalAnchorRevision = undefined;
+        this.#clearPendingVerticalAnchor();
       } else {
         const requestedRow = logicalRow - this.#pendingVerticalAnchorRow;
         if (requestedRow <= 0 && this.#requestedOffsets.y === 0) {
           // A negative offset can never preserve the old row, regardless of later extent refinement.
           // Accept the top-clamped row instead of scheduling the same impossible correction forever.
           retainedRelativeRow = projectedRelativeRow;
-          this.#pendingVerticalAnchorRow = undefined;
-          this.#pendingVerticalAnchorLocation = undefined;
-          this.#pendingVerticalAnchorGeneration = undefined;
-          this.#pendingVerticalAnchorRevision = undefined;
+          this.#clearPendingVerticalAnchor();
+        } else if (
+          this.#pendingVerticalAnchorCorrection?.requestedRow === requestedRow &&
+          authoritativeProof !== undefined &&
+          this.#pendingVerticalAnchorCorrection.authoritativeMetricsToken !== authoritativeProof.token &&
+          authoritativeProof.generation === this.#pendingVerticalAnchorGeneration &&
+          this.#pendingVerticalAnchorRevision !== undefined &&
+          kanbanRevisionsEqual(authoritativeProof.identityRevision, this.#pendingVerticalAnchorRevision) &&
+          authoritativeProof.extentQualityY === 'exact' &&
+          requestedRow > authoritativeProof.extentY &&
+          authoritativeProof.offsetY === authoritativeProof.extentY
+        ) {
+          // The correction has already passed through a later exact metrics publication and still
+          // cannot exceed the authoritative maximum. Accept the bottom-clamped row; consulting the
+          // metrics before that confirming pass could discard newly measured variable-height extent.
+          retainedRelativeRow = projectedRelativeRow;
+          this.#clearPendingVerticalAnchor();
         } else {
+          if (this.#pendingVerticalAnchorCorrection?.requestedRow !== requestedRow) {
+            this.#pendingVerticalAnchorCorrection = Object.freeze({
+              requestedRow,
+              authoritativeMetricsToken: this.#authoritativeMetricsToken,
+            });
+          }
           this.#requestedOffsets = Object.freeze({ ...this.#requestedOffsets, y: Math.max(0, requestedRow) });
           this.invalidate();
         }
@@ -2296,6 +2336,18 @@ export class KanbanViewport<TCard> extends View {
       minimumVerticalExtent: this.#locatedVerticalExtent,
     });
     this.#metrics = metrics;
+    if (projection !== undefined) {
+      this.#authoritativeMetricsToken =
+        this.#authoritativeMetricsToken === Number.MAX_SAFE_INTEGER ? 0 : this.#authoritativeMetricsToken + 1;
+      this.#authoritativeMetricsProof = Object.freeze({
+        token: this.#authoritativeMetricsToken,
+        generation: snapshot.generation,
+        identityRevision: snapshot.publication.identityChanges.revision,
+        extentY: metrics.extents.y,
+        extentQualityY: metrics.extentQuality.y,
+        offsetY: metrics.offsets.y,
+      });
+    }
     this.#requestedOffsets = this.#metrics.offsets;
     const fingerprint = JSON.stringify([
       metrics.assignedRect,
@@ -2429,7 +2481,10 @@ export class KanbanViewport<TCard> extends View {
           corrected = true;
         }
       }
-      if (cards.length > 0) {
+      // An exact empty cursor contributes proven zero-height evidence even though it has no card to
+      // retain. Do not publish unmeasured nonempty cells: their estimates add range work and can
+      // preserve obsolete lower bounds when an application replaces its query.
+      if (cards.length > 0 || (length.kind === 'exact' && length.value === 0)) {
         const nextProjection = createKanbanVerticalHeightProjection({
           index: retained.index,
           cards: retained.index.identitiesInRange(cell.range.start, cell.range.end),
