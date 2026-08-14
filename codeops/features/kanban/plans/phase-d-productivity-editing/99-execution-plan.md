@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 17:45 CEST
-> **Progress**: 33/125 tasks (26%)
+> **Last Updated**: 2026-08-14 17:48 CEST
+> **Progress**: 34/125 tasks (27%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -153,7 +153,14 @@ fix-scoped Major findings corrected with zero Critical findings.
 - [x] 3.1.2 `[spec-author]` Add resolver, draft isolation, abort generations, first-error focus, exact request, resubmit, stale/reload/contradictory publication, and cleanup oracles — `packages/kanban/test/editor-session.spec.test.ts` ✅ (completed: 2026-08-14 17:39)
 - [x] 3.1.3 `[spec-author]` Add identity exclusivity, view mode, authoritative publication, and hostile-value oracles — `packages/kanban/test/security/editor-boundary.spec.test.ts` ✅ (completed: 2026-08-14 17:42)
 - [x] 3.1.4 `[spec-author]` Add exact dependency and built packed-consumer oracles for generic-only, missing peer, and Zod 4 standard adapter — package-boundary and consumer-contract specs ✅ (completed: 2026-08-14 17:45)
-- [ ] 3.1.5 Run the focused specifications and record expected red failures
+- [x] 3.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-14 17:48)
+
+**Red evidence (2026-08-14 17:48 CEST):** Kanban built successfully, then the focused editor schema,
+session, security-boundary, dependency, and packed-consumer run executed 23 cases. Eighteen expected
+Phase 3 cases failed: all 15 editor cases require the absent schema/session/coordinator/standard-adapter
+APIs; the dependency oracle requires Forms plus the Zod peer/dev topology; and both packed consumers
+require the absent generic/standard editor declarations and runtime. Five unchanged package-boundary
+cases passed. No import-transform, matcher, fixture, or command failure masked the missing behavior.
 
 ### Step 3.2: Implementation
 

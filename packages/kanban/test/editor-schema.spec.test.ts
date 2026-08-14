@@ -170,6 +170,8 @@ describe('Kanban editor schema specification', () => {
 
   // Invalid schema graphs and collections must reject before any partial editor state is exposed.
   it('rejects duplicate identities, missing sections, visibility cycles, and over-bound choices atomically', () => {
+    expect(createKanbanCardEditorSchema).toBeTypeOf('function');
+    expect(KanbanInvalidEditorSchemaError).toBeTypeOf('function');
     const base = {
       revision: 'ticket-schema-v1',
       sections: [{ sectionId: 'main', labelId: 'app.sections.main', order: 0 }],
@@ -198,6 +200,8 @@ describe('Kanban editor schema specification', () => {
 
   // Serialized or application-provided identifiers may select only known field kinds and complete controls.
   it('rejects unknown kinds and custom controls without measured disposable ownership', () => {
+    expect(createKanbanCardEditorSchema).toBeTypeOf('function');
+    expect(KanbanInvalidEditorSchemaError).toBeTypeOf('function');
     expect(() =>
       createKanbanCardEditorSchema({
         revision: 'ticket-schema-v1',
