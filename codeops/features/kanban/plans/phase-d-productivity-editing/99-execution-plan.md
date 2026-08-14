@@ -304,7 +304,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 - [x] 6.2.5 Implement conflict-validating semantic-Primary keymap/defaults and atomic replacement — `packages/kanban/src/command/keymap.ts`, `defaults.ts` ✅ (completed: 2026-08-15 01:25)
 - [x] 6.2.6 Implement pure capability provider containment and read-only preset — `packages/kanban/src/command/capability.ts`, `types.ts` ✅ (completed: 2026-08-15 01:31)
 - [x] 6.2.7 Implement one board action router with typed same-action recursion rejection across completed producer seams — command router and board action binding ✅ (completed: 2026-08-15 01:43)
-- [ ] 6.2.8 Implement localized help/status labels and pointer/action adapters without private mutation paths — command help and viewport input
+- [x] 6.2.8 Implement localized help/status labels and pointer/action adapters without private mutation paths — command help and viewport input ✅ (completed: 2026-08-15 01:54)
 - [ ] 6.2.9 Export/document actions and make phase-local specifications green; defer DA-09 event assertions to Phase 7 — Kanban barrel
 
 ### Step 6.3: Implementation tests and hardening
