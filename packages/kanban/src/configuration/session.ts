@@ -267,6 +267,7 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
   let disposed = false;
   let generation = 0;
   let structure: KanbanConfigurationSnapshot;
+  let publicationDuringResolve: KanbanConfigurationSnapshot | undefined;
   let position: unknown = { kind: 'end' };
   const state: SessionState = {
     record: 'loading',
@@ -309,6 +310,10 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
     if (disposed) return;
     try {
       const validated = createKanbanConfigurationSnapshot(next);
+      if (state.record === 'loading') {
+        publicationDuringResolve = validated;
+        return;
+      }
       if (state.dirty || state.submission === 'dispatching') {
         structure = validated;
         state.record = 'stale';
@@ -329,7 +334,9 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
     return invalidSession();
   }
   try {
-    structure = createKanbanConfigurationSnapshot(await options.source.resolve());
+    const resolved = createKanbanConfigurationSnapshot(await options.source.resolve());
+    structure = publicationDuringResolve ?? resolved;
+    publicationDuringResolve = undefined;
     rebase(structure);
   } catch {
     unsubscribe();

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 23:10 CEST
-> **Progress**: 68/125 tasks (54%)
+> **Last Updated**: 2026-08-14 23:14 CEST
+> **Progress**: 69/125 tasks (55%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -258,7 +258,7 @@ initialize successfully; no unrelated runtime, matcher, or transform failure mas
 
 ### Step 5.3: Implementation tests and hardening
 
-- [ ] 5.3.1 Add builder exact-shape, normalization, callback failure, stale, and disposal tests — `packages/kanban/test/configuration-builders.impl.test.ts`, `configuration-dialog.impl.test.ts`
+- [x] 5.3.1 Add builder exact-shape, normalization, callback failure, stale, and disposal tests — `packages/kanban/test/configuration-builders.impl.test.ts`, `configuration-dialog.impl.test.ts` ✅ (completed: 2026-08-14 23:14)
 - [ ] 5.3.2 Run focused Kanban/UI/Forms build/typecheck/tests/E2E/docs and `yarn verify:local`
 
 **Verify**: focused configuration/security/E2E suites; affected package gates; `yarn verify:local`
