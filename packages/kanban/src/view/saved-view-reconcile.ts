@@ -470,7 +470,7 @@ export function reconcileKanbanSavedView(
       },
       0,
     );
-    const provenance = Object.freeze({ raw });
+    const provenance = Object.freeze({ raw, resolved });
     return Object.freeze<KanbanReconciledSavedView>({
       kind: 'reconciled',
       raw,

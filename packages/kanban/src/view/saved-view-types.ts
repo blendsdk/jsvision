@@ -1,6 +1,7 @@
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanColumnId, KanbanExtensionId, KanbanFieldId, KanbanSwimlaneId } from '../contract/identity.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
+import type { KanbanRequestProposal, KanbanRequestResult } from '../contract/request.js';
 import type { KanbanViewRegistry } from './registry.js';
 import type { KanbanSearchPolicy, KanbanViewState } from './types.js';
 
@@ -270,6 +271,8 @@ export interface KanbanSavedViewReconciliationContext {
 export interface KanbanSavedViewProvenance {
   /** Exact detached envelope that produced the resolved state. */
   readonly raw: KanbanSavedViewV1;
+  /** Exact resolved baseline used to detect later facet edits during capture. */
+  readonly resolved: KanbanViewState;
 }
 
 /** Successfully reconciled raw envelope and current controller-ready state. */
@@ -289,3 +292,39 @@ export interface KanbanReconciledSavedView {
 /** Deterministic reconciliation result that cannot partially mutate a live controller. */
 export type KanbanSavedViewReconciliationResult =
   KanbanReconciledSavedView | { readonly kind: 'rejected'; readonly diagnostic: KanbanSavedViewDiagnostic };
+
+/** Capture behavior for controller state with optional retained raw provenance. */
+export type KanbanSavedViewCaptureMode = 'preserve' | 'resave';
+
+/** Options supplied when capturing one durable controller snapshot. */
+export interface KanbanSavedViewCaptureOptions {
+  /** Optional user-facing saved-view name. */
+  readonly name?: string;
+  /** Optional inert namespaced application extension data. */
+  readonly extensions?: Readonly<Record<KanbanExtensionId, KanbanSemanticValue>>;
+  /** `resave` writes only current resolved values; the default preserves safe raw provenance. */
+  readonly mode?: KanbanSavedViewCaptureMode;
+}
+
+/** Application authority seam used by the optional saved-view store helper. */
+export interface KanbanSavedViewStoreOptions {
+  /** Dispatches one validated saved-view proposal through the owning board or application coordinator. */
+  readonly request: (proposal: KanbanRequestProposal) => KanbanRequestResult | Promise<KanbanRequestResult>;
+}
+
+/** Store outcome including the package-owned disposed/unavailable state. */
+export type KanbanSavedViewStoreResult =
+  | KanbanRequestResult
+  | { readonly kind: 'unavailable'; readonly code: 'saved-view-store-disposed' | 'saved-view-store-request-failed' };
+
+/** Disposable proposal helper for application-owned saved-view persistence. */
+export interface KanbanSavedViewStore {
+  /** Saves or replaces one view through application authority. */
+  save(viewId: string, view: KanbanSavedViewV1): Promise<KanbanSavedViewStoreResult>;
+  /** Renames one application-owned saved view. */
+  rename(viewId: string, label: string): Promise<KanbanSavedViewStoreResult>;
+  /** Deletes one application-owned saved view. */
+  delete(viewId: string): Promise<KanbanSavedViewStoreResult>;
+  /** Makes future calls unavailable without owning application persistence. */
+  dispose(): void;
+}
