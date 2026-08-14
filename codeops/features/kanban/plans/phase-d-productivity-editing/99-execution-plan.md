@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 13:43 CEST
-> **Progress**: 13/125 tasks (10%)
+> **Last Updated**: 2026-08-14 13:46 CEST
+> **Progress**: 14/125 tasks (11%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -82,7 +82,7 @@ registry, chrome, additive comparator query, and transactional binding behavior 
 
 ### Step 1.3: Implementation tests and hardening
 
-- [ ] 1.3.1 Add controller/registry/scheduler boundary and allocation tests — `packages/kanban/test/view-state.impl.test.ts`
+- [x] 1.3.1 Add controller/registry/scheduler boundary and allocation tests — `packages/kanban/test/view-state.impl.test.ts` ✅ (completed: 2026-08-14 13:46)
 - [ ] 1.3.2 Run focused Kanban typecheck/tests and `yarn verify:local`
 
 **Verify**: focused `view-state`/`view-chrome`/security tests; `yarn workspace @jsvision/kanban typecheck`; `yarn verify:local`
