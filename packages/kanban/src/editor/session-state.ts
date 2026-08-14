@@ -37,3 +37,20 @@ export interface MutableKanbanEditorFieldState {
 
 /** Validated record publication buffered while initial resolution is pending. */
 export type BufferedKanbanEditorRecordPublication<TCard> = KanbanEditorRecordPublication<TCard>;
+
+/** Retains only the latest value and clears it atomically when reconciliation takes ownership. */
+export class KanbanEditorLatestValue<TValue> {
+  #value: TValue | undefined;
+
+  /** Replaces the buffered value without growing retained history. */
+  replace(value: TValue): void {
+    this.#value = value;
+  }
+
+  /** Clears and returns the latest buffered value. */
+  take(): TValue | undefined {
+    const value = this.#value;
+    this.#value = undefined;
+    return value;
+  }
+}

@@ -121,6 +121,30 @@ describe('Kanban editor session race hardening', () => {
     session.dispose();
   });
 
+  it('should not dispatch when proposal preparation observes a newer record', async () => {
+    const records = source(CARD, 'card-r1');
+    const baseAdapter = adapter();
+    const request = vi.fn();
+    const session = await createKanbanEditorSession({
+      mode: 'edit',
+      cardKey: CARD.id,
+      adapter: {
+        ...baseAdapter,
+        proposal: (result) => {
+          records.publish({ kind: 'record', card: { ...CARD, title: 'Remote' }, revision: 'card-r2' });
+          return baseAdapter.proposal(result);
+        },
+      },
+      resolver: records.resolver,
+      authority: { request },
+    });
+    await session.setValue('title', 'Local').settled;
+
+    await expect(session.submit()).resolves.toEqual({ kind: 'stale' });
+    expect(request).not.toHaveBeenCalled();
+    session.dispose();
+  });
+
   it('should commit a matching publication that arrives before authority acceptance settles', async () => {
     const records = source(CARD, 'card-r1');
     const request = vi.fn((): KanbanRequestResult => {

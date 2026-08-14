@@ -2,7 +2,7 @@
 
 > **Phase baseline tree**: `3fb1d2ab3d93ce3ef553e58edd78ed3c43bf1c12`
 > **Scope mode**: strict
-> **Status**: REMEDIATION VERIFIED — fix-scoped re-review pending
+> **Status**: COMPLETE — remediation and the single fix-scoped re-review are verified
 
 ## Independent findings
 
@@ -36,3 +36,17 @@ coverage. Kanban build/typecheck/dependency/documentation checks, the focused ed
 116 Forms tests, plugin synchronization/parity, and `yarn verify:local` all pass. The implementation is
 split into bounded actor, asynchronous-work, field, and notifier modules; no source file exceeds the
 700-line ceiling.
+
+## Fix-scoped re-review
+
+Correctness and security found no remaining Critical or Major defect. The API/concurrency lens found one
+remaining Major: proposal preparation exposed `dispatching` before authority invocation, allowing a
+synchronous stale publication to be buffered while an obsolete request still escaped. Auto-design accepted
+the correction without waiver. The actor now remains interruptible through proposal construction, re-checks
+its generation afterward, and exposes `dispatching` only after authority invocation has begun. A red-then-green
+regression test proves that a proposal callback publishing a newer revision emits no request and returns
+`stale`.
+
+The deterministic post-correction gate passes 47 focused Kanban tests, 116 Forms tests, Kanban build/typecheck/
+dependency/documentation checks, plugin synchronization/parity, and `yarn verify:local`. Per policy, no third
+review was run.

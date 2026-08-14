@@ -392,8 +392,12 @@
   application code remains responsible for honoring the supplied abort signal to stop external work.
 - **Confidence:** High — each decision directly closes an observed state-machine or boundary failure and has a
   focused regression test plus cross-package verification.
-- **Hardening:** Three independent lenses reviewed the complete Phase 3 diff. The accepted correction is subject
-  to the single mandatory fix-scoped re-review before Phase 4 starts.
+- **Hardening:** Three independent lenses reviewed the complete Phase 3 diff. The single fix-scoped re-review
+  found one remaining pre-dispatch publication race: the actor exposed `dispatching` before authority
+  invocation. Auto-design accepted the correction; proposal preparation now remains interruptible, generation
+  is rechecked before invocation, and the dispatching notification occurs only after the authority call has
+  begun. Focused red-then-green coverage and the complete deterministic Phase 3 gate pass. No third review was
+  run, as required by the quality policy.
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** Authority gains cancellable request ownership, resolver publications become sequenced event

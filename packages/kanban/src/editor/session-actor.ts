@@ -41,7 +41,11 @@ import type {
   KanbanEditorSubmissionState,
   KanbanEditorSubmitResult,
 } from './types.js';
-import { NO_KANBAN_EDITOR_DIAGNOSTICS, settledKanbanEditorValueOutcome } from './session-state.js';
+import {
+  KanbanEditorLatestValue,
+  NO_KANBAN_EDITOR_DIAGNOSTICS,
+  settledKanbanEditorValueOutcome,
+} from './session-state.js';
 import type { BufferedKanbanEditorRecordPublication, MutableKanbanEditorFieldState } from './session-state.js';
 
 /**
@@ -71,7 +75,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
   #submissionController: AbortController | undefined;
   #dispatchPublication: BufferedKanbanEditorRecordPublication<TCard> | undefined;
   #reloadController: AbortController | undefined;
-  #reloadPublication: BufferedKanbanEditorRecordPublication<TCard> | undefined;
+  readonly #reloadPublication = new KanbanEditorLatestValue<BufferedKanbanEditorRecordPublication<TCard>>();
   #disposed = false;
 
   /** Constructs a session from one already validated initial resolver result. */
@@ -113,7 +117,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
   publish(publication: BufferedKanbanEditorRecordPublication<TCard>): void {
     if (this.#disposed) return;
     if (this.#reloadController !== undefined && !this.#reloadController.signal.aborted) {
-      this.#reloadPublication = publication;
+      this.#reloadPublication.replace(publication);
       return;
     }
     if (this.#submission.kind === 'dispatching') {
@@ -331,8 +335,6 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
       return Object.freeze({ kind: 'invalid', fieldId: firstInvalid.fieldId });
     }
 
-    this.#submission = Object.freeze({ kind: 'dispatching' });
-    this.#notify();
     let proposal: KanbanRequestProposal;
     try {
       const result = Object.freeze({
@@ -362,10 +364,14 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
         throw new KanbanInvalidSemanticValueError();
       }
     } catch {
-      return this.#failSubmission();
+      return this.#submissionIsCurrent(generation, submissionController)
+        ? this.#failSubmission()
+        : this.#interruptedSubmissionResult();
     }
+    if (!this.#submissionIsCurrent(generation, submissionController)) return this.#interruptedSubmissionResult();
 
     let requested: Promise<KanbanRequestResult>;
+    this.#submission = Object.freeze({ kind: 'dispatching' });
     try {
       requested = Promise.resolve(this.#options.authority.request(proposal));
     } catch {
@@ -374,6 +380,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
       }
       return Object.freeze({ kind: 'failed' });
     }
+    this.#notify();
     const awaited = await awaitEditorWork(requested, submissionController.signal);
     if (!this.#submissionIsCurrent(generation, submissionController) || awaited.kind === 'aborted') {
       return this.#interruptedSubmissionResult();
@@ -404,7 +411,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     if (this.#record.kind !== 'stale') return Object.freeze({ kind: 'failed' });
     const controller = new AbortController();
     this.#reloadController = controller;
-    this.#reloadPublication = undefined;
+    this.#reloadPublication.take();
     const generation = ++this.#submissionGeneration;
     this.#abortFieldValidations();
     let pending: Promise<KanbanEditorResolveResult<TCard>>;
@@ -412,7 +419,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
       pending = Promise.resolve(this.#options.resolver.resolve(this.#cardKey, { signal: controller.signal }));
     } catch {
       this.#reloadController = undefined;
-      const publication = this.#takeReloadPublication();
+      const publication = this.#reloadPublication.take();
       if (publication?.kind === 'deleted') {
         this.#applyPublication(publication);
         return Object.freeze({ kind: 'deleted' });
@@ -429,7 +436,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
       return Object.freeze({ kind: 'disposed' });
     }
     this.#reloadController = undefined;
-    const publication = this.#takeReloadPublication();
+    const publication = this.#reloadPublication.take();
     if (publication?.kind === 'deleted') {
       this.#applyPublication(publication);
       return Object.freeze({ kind: 'deleted' });
@@ -473,7 +480,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     this.#reloadController?.abort();
     this.#reloadController = undefined;
     this.#dispatchPublication = undefined;
-    this.#reloadPublication = undefined;
+    this.#reloadPublication.take();
     this.#abortFieldValidations();
     if (this.#submission.kind === 'awaiting-publication') {
       try {
@@ -634,13 +641,6 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     if (publication === undefined) this.#notify();
     else this.#applyPublication(publication);
     return Object.freeze({ kind: 'failed' });
-  }
-
-  /** Takes the latest reload-time publication without relying on async control-flow inference. */
-  #takeReloadPublication(): BufferedKanbanEditorRecordPublication<TCard> | undefined {
-    const publication = this.#reloadPublication;
-    this.#reloadPublication = undefined;
-    return publication;
   }
 
   /** Rebases the complete draft and clears all touched/error state after explicit authority. */
