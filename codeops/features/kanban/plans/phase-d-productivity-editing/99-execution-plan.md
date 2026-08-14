@@ -316,7 +316,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 ## Phase 7: Ordered events and application-owned history
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `45f5b0643`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: RD-12 normalized events/observation separation/history integration only.
 > **Expected modification set**: `src/event/*.ts`, operation/board/interaction publication hooks, focused tests, i18n, barrel, and this plan.
@@ -326,7 +326,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 **Reference**: 03-06 §Event model–History · ST-DH-01…DH-10 · AR-D10/D11/D13
 
-- [ ] 7.1.1 `[spec-author]` Add lifecycle ordering/terminal outcome/observable-state/key-identity oracles — `packages/kanban/test/events-history.spec.test.ts`
+- [x] 7.1.1 `[spec-author]` Add lifecycle ordering/terminal outcome/observable-state/key-identity oracles — `packages/kanban/test/events-history.spec.test.ts` ✅ (completed: 2026-08-15 01:45)
 - [ ] 7.1.2 `[spec-author]` Add subscriber failure/redaction/observation-separation/reentrancy oracles — `packages/kanban/test/security/event-boundary.spec.test.ts`
 - [ ] 7.1.3 `[spec-author]` Add undo/redo availability/fresh-request/rejection/no-snapshot oracles — `packages/kanban/test/history.spec.test.ts`
 - [ ] 7.1.4 `[spec-author]` Add dispose/late-settlement/custom-action event lifecycle oracles — `packages/kanban/test/event-lifecycle.spec.test.ts`
