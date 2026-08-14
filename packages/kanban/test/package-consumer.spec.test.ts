@@ -17,7 +17,7 @@ const COMMAND_TIMEOUT_MS = 60_000;
 /** Bound for captured child-process output. */
 const MAX_COMMAND_OUTPUT_BYTES = 1_048_576;
 /** Runtime workspace packages npm would install for a published Kanban consumer. */
-const WORKSPACE_DEPENDENCIES = Object.freeze(['core', 'i18n', 'ui']);
+const WORKSPACE_DEPENDENCIES = Object.freeze(['core', 'forms', 'i18n', 'ui']);
 /** Declaration-only dependencies required by Core's host-facing public types. */
 const TYPE_DEPENDENCIES = Object.freeze([
   { source: ['@types', 'node'], destination: ['@types', 'node'] },
@@ -136,6 +136,7 @@ function prepareConsumer(work: string, pack: PackResult): string {
     const source = realpathSync(join(REPOSITORY_ROOT, 'node_modules', ...dependency.source));
     installPackedPackage(work, consumer, source, dependency.destination);
   }
+  installPackedPackage(work, consumer, realpathSync(join(REPOSITORY_ROOT, 'node_modules', 'zod')), ['zod']);
   return consumer;
 }
 

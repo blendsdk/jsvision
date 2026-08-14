@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@jsvision/kanban": "*"
+    "@jsvision/kanban": "*",
+    "zod": "^4"
   }
 }

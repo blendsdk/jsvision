@@ -3,9 +3,11 @@ import {
   createKanbanInteractionController,
   createKanbanOperationIdRegistry,
   createKanbanRequestEnvelope,
+  createStandardKanbanEditorAdapter,
   resolveKanbanPresentation,
   snapshotKanbanRequestProposal,
 } from '@jsvision/kanban';
+import { z } from 'zod';
 import type {
   KanbanExtensionRequest,
   KanbanInteractionControllerFactory,
@@ -55,6 +57,10 @@ const legacyRequest: KanbanExtensionRequest<'example.review', { readonly cardKey
 const adoptedLegacy = createKanbanRequestEnvelope(legacyRequest);
 const operationIds = createKanbanOperationIdRegistry({ factory: () => 'packed-operation-1' });
 const operationLease = operationIds.acquire();
+const editor = createStandardKanbanEditorAdapter({
+  fields: ['title', 'status'],
+  schema: z.object({ title: z.string(), status: z.string() }),
+});
 const catalogs = [kanbanEn, kanbanNl, kanbanDe, kanbanFr, kanbanEs, kanbanIt, kanbanPtPT, kanbanPl, kanbanRo, kanbanSv];
 const overlays = [
   kanbanPhaseBEn,
@@ -80,6 +86,7 @@ if (
   adoptedLegacy.signal !== legacyRequest.signal ||
   operationLease.operationId !== 'packed-operation-1' ||
   !operationLease.active() ||
+  editor.schema.fields.length !== 2 ||
   typeof createKanbanInteractionController !== 'function' ||
   typeof resolveKanbanPresentation !== 'function' ||
   typeof createWindowedKanbanFixture !== 'function' ||

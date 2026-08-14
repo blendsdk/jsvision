@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +19,7 @@ const MAX_COMMAND_OUTPUT_BYTES = 1_048_576;
 /** Publishable root documentation and metadata accepted beside compiled output. */
 const ALLOWED_ROOT_FILES = new Set(['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE']);
 /** Workspace runtime dependencies npm would install beside the packed Kanban package. */
-const KANBAN_WORKSPACE_DEPENDENCIES = Object.freeze(['core', 'i18n', 'ui']);
+const KANBAN_WORKSPACE_DEPENDENCIES = Object.freeze(['core', 'forms', 'i18n', 'ui']);
 /** Node declaration packages required by Core's published host-facing types. */
 const CONSUMER_TYPE_DEPENDENCIES = Object.freeze([
   { source: ['@types', 'node'], destination: ['@types', 'node'] },
@@ -127,6 +127,11 @@ function typescriptCompiler(): string {
   return path;
 }
 
+/** Installs the repository's real Zod package as the isolated consumer-provided peer. */
+function installZodPeer(work: string, consumer: string): void {
+  installPackedPackage(work, consumer, realpathSync(join(REPOSITORY_ROOT, 'node_modules', 'zod')), ['zod']);
+}
+
 describe('packed Kanban public-entry contract', () => {
   it(
     'should typecheck and execute the complete public contract from the real tarball',
@@ -198,10 +203,76 @@ describe('packed Kanban public-entry contract', () => {
           const source = realpathSync(join(REPOSITORY_ROOT, 'node_modules', ...dependency.source));
           installPackedPackage(work, consumer, source, dependency.destination);
         }
+        installZodPeer(work, consumer);
 
         run(typescriptCompiler(), ['-p', 'tsconfig.json'], consumer);
         const output = run(process.execPath, ['index.ts'], consumer);
         expect(output.trim()).toBe('kanban-contract-ok');
+      } finally {
+        rmSync(work, { recursive: true, force: true });
+      }
+    },
+    COMMAND_TIMEOUT_MS * 3,
+  );
+
+  // Generic editor types must compile without Zod, while loading the standard runtime diagnoses the missing peer.
+  it(
+    'should isolate generic editor types and diagnose a missing standard-editor Zod peer',
+    () => {
+      const work = mkdtempSync(join(tmpdir(), 'jsvision-kanban-editor-peer-'));
+      try {
+        const pack = packInto(work);
+        const consumer = join(work, 'consumer');
+        mkdirSync(join(consumer, 'node_modules', '@jsvision', 'kanban'), { recursive: true });
+        const tar = process.platform === 'win32' ? 'tar.exe' : 'tar';
+        run(
+          tar,
+          [
+            '-xzf',
+            join(work, pack.filename),
+            '-C',
+            join(consumer, 'node_modules', '@jsvision', 'kanban'),
+            '--strip-components=1',
+          ],
+          work,
+        );
+        for (const packageName of KANBAN_WORKSPACE_DEPENDENCIES) {
+          installPackedDependency(work, consumer, packageName);
+        }
+        for (const dependency of CONSUMER_TYPE_DEPENDENCIES) {
+          installPackedPackage(
+            work,
+            consumer,
+            realpathSync(join(REPOSITORY_ROOT, 'node_modules', ...dependency.source)),
+            dependency.destination,
+          );
+        }
+        cpSync(join(FIXTURE_ROOT, 'tsconfig.json'), join(consumer, 'tsconfig.json'));
+        writeFileSync(
+          join(consumer, 'index.ts'),
+          `import type { KanbanCardEditorAdapter, KanbanCardEditorSchema } from '@jsvision/kanban';
+interface Card { readonly id: string; readonly title: string }
+interface Draft { readonly title: string }
+declare const adapter: KanbanCardEditorAdapter<Card, Draft>;
+const schema: KanbanCardEditorSchema<Card, Draft> = adapter.schema;
+void schema;
+`,
+        );
+
+        run(typescriptCompiler(), ['-p', 'tsconfig.json'], consumer);
+        const missingPeer = spawnSync(
+          process.execPath,
+          ['--input-type=module', '--eval', `await import('@jsvision/kanban')`],
+          {
+            cwd: consumer,
+            encoding: 'utf8',
+            maxBuffer: MAX_COMMAND_OUTPUT_BYTES,
+            timeout: COMMAND_TIMEOUT_MS,
+            windowsHide: true,
+          },
+        );
+        expect(missingPeer.status).not.toBe(0);
+        expect(`${missingPeer.stderr}\n${missingPeer.stdout}`).toMatch(/(?:zod|peer dependency)/iu);
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

@@ -197,7 +197,8 @@ describe('Kanban package boundary', () => {
     expect(String(scripts['test:e2e'])).not.toContain('--passWithNoTests');
   });
 
-  it('should keep the Phase A runtime dependency surface exact and workspace-aligned', () => {
+  // The standard editor owns Forms at runtime while generic contracts keep Zod behind one compatible peer.
+  it('should keep the editor dependency surface exact and workspace-aligned', () => {
     const manifest = readJsonObject(join(PACKAGE_ROOT, 'package.json'));
     const workspaceManifest = readJsonObject(join(REPOSITORY_ROOT, 'package.json'));
     const workspaceVersion = workspaceManifest.version;
@@ -207,14 +208,15 @@ describe('Kanban package boundary', () => {
 
     expect(dependencies).toEqual({
       '@jsvision/core': workspaceVersion,
+      '@jsvision/forms': workspaceVersion,
       '@jsvision/i18n': workspaceVersion,
       '@jsvision/ui': workspaceVersion,
     });
     expect(dependencies.zod).toBeUndefined();
-    expect(dependencies['@jsvision/forms']).toBeUndefined();
-    expect(isJsonObject(peerDependencies) ? peerDependencies.zod : undefined).toBeUndefined();
+    expect(peerDependencies).toEqual({ zod: '^4' });
     expect(isJsonObject(peerDependencies) ? peerDependencies['@jsvision/forms'] : undefined).toBeUndefined();
     expect(devDependencies.vitest).toMatch(/^\^4\./u);
+    expect(devDependencies.zod).toMatch(/^\^4\./u);
     expect(devDependencies['@types/node']).toBeDefined();
 
     for (const dependency of Object.keys(dependencies)) {
