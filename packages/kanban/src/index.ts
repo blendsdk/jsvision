@@ -28,6 +28,11 @@ export type { KanbanStandardCardCompositionContext } from './card/standard-rende
 export * from './card/theme.js';
 export * from './card/theme-resolver.js';
 export { createKanbanEditorCoordinator } from './editor/coordinator.js';
+export {
+  createKanbanEditorControlBinding,
+  type KanbanEditorControlBinding,
+  type KanbanEditorControlBindingOptions,
+} from './editor/controls.js';
 export { createKanbanEditorControlRegistry } from './editor/registry.js';
 export { createKanbanCardEditorSchema, type KanbanCardEditorSchemaOptions } from './editor/schema.js';
 export { createKanbanEditorSession } from './editor/session.js';

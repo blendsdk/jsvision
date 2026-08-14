@@ -54,6 +54,16 @@ class CoordinatedKanbanEditorSession implements KanbanEditorSession {
     return this.#session.fieldState(fieldId);
   }
 
+  /** Returns one immutable semantic field value from the underlying draft. */
+  fieldValue(fieldId: KanbanFieldId) {
+    return this.#session.fieldValue(fieldId);
+  }
+
+  /** Delegates stable focus identity updates without exposing coordinator ownership. */
+  focusField(fieldId: KanbanFieldId): boolean {
+    return this.#session.focusField(fieldId);
+  }
+
   /** Delegates one failure-contained field mutation. */
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult {
     return this.#session.setValue(fieldId, value);

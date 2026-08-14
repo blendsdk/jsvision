@@ -445,3 +445,34 @@
 - **Reopen triggers:** Product scope later requires the standard modal and inspector to remain simultaneously
   mounted, applications cannot detach typed results safely, or create identity must become a persisted card key
   before submission.
+
+### AR-D34 — Standard and custom field-control binding boundary (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Additive control-binding architecture inside the approved generic editor and custom-control
+  scope; it does not change card schemas, host authority, persistence, or user-visible acceptance criteria.
+- **Objective:** Give every standard field kind one reactive implementation while allowing application controls
+  to participate without receiving the full draft or privileged host capabilities.
+- **Evidence:** The session already owns parsing, validation, focus identity, immutable semantic snapshots, and
+  cancellation. The custom-control registry already validates measurement and cleanup. Passing raw drafts or
+  host objects to controls would duplicate authority and contradict the bounded field-context requirement.
+- **Decision:** The session exposes immutable semantic `fieldValue` and bounded `focusField` operations. Standard
+  bindings and registered custom factories receive the same narrow context: field identity, mode, immutable value
+  and state readers, `setValue`, `focus`, and a lifetime abort signal. Standard controls mirror session state
+  through package-owned signals; custom controls retain required bounded measurement and idempotent disposal.
+  Registry factories accept an optional context for source compatibility with existing zero-argument factories,
+  while package dialog composition always supplies the context.
+- **Rejected alternatives:** Passing the complete typed draft leaks unrelated application data and lets controls
+  bypass field parsing. Passing the session itself grants submit/reload/disposal authority. Maintaining a second
+  Forms-owned draft creates two competing sources of truth and risks stale writes during record publication.
+- **Strongest counterargument:** Semantic values erase a custom field's compile-time value type. A typed custom
+  control can validate and narrow its own registered value domain, while the narrow boundary keeps heterogeneous
+  schemas safe and prevents authority expansion.
+- **Confidence:** High.
+- **Hardening:** The dialog API challenges independently converged on one session authority and a narrow custom
+  replacement/control boundary. The design reuses existing session validation and registry cleanup rather than
+  introducing a parallel state owner.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Custom controls require a separately approved capability model, field values can no longer
+  be represented by bounded semantic snapshots, or the UI package adds a first-class generic form-control adapter.

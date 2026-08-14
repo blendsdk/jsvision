@@ -1975,6 +1975,48 @@ interface KanbanEditorContext {
 }
 ```
 
+## KanbanEditorControlBinding
+
+One disposable view binding consumed by the responsive editor dialog.
+
+```ts
+interface KanbanEditorControlBinding {
+  view: View;   // Mounted field view.
+  measure: (availableWidth: number) => KanbanEditorControlMeasurement;   // Returns terminal-cell geometry for the current available width.
+  diagnostics: () => readonly KanbanEditorDiagnostic[];   // Returns safe package diagnostics produced while constructing the binding.
+  dispose: () => void;   // Releases the session subscription, custom control, and cancellation signal idempotently.
+}
+```
+
+## KanbanEditorControlBindingOptions
+
+Options used to create one standard or registered custom field binding.
+
+```ts
+interface KanbanEditorControlBindingOptions<TCard, TDraft> {
+  field: KanbanCardEditorField<TDraft, unknown, TCard>;   // Validated field descriptor whose value is owned by `session`.
+  session: KanbanEditorSession;   // Session that remains the sole parser, validation, focus, and mutation authority.
+  controls?: KanbanEditorControlRegistry;   // Optional validated registry that owns application custom-control factories.
+  i18n?: I18n;   // Optional application translation service used for choice labels and safe fallback text.
+}
+```
+
+## KanbanEditorControlContext
+
+Bounded field/session seam supplied to one application custom-control factory.
+
+```ts
+interface KanbanEditorControlContext {
+  fieldId: KanbanFieldId;   // Stable field identity owned by this control instance.
+  mode: KanbanEditorMode;   // Current create, view, or edit behavior.
+  value: () => KanbanSemanticValue | undefined;   // Returns the latest immutable semantic field value when it can be represented safely.
+  state: () => KanbanEditorFieldState;   // Returns the latest immutable display, visibility, read-only, and diagnostic state.
+  setValue: (value: unknown) => KanbanEditorSetValueResult;   // Attempts a mutation through the same parser, validation, and generation boundary as standard controls.
+  focus: () => boolean;   // Records this field as the current focus identity when it is visible.
+  signal: AbortSignal;   // Live signal aborted when the mounted control is no longer authoritative.
+}
+```
+
 ## KanbanEditorControlInstance
 
 Measured custom control instance owned and disposed by one mounted field.
@@ -2006,7 +2048,7 @@ Application factory registered under one inert custom-control identity.
 ```ts
 interface KanbanEditorControlRegistration {
   controlId: string;   // Stable namespaced application control identity.
-  create: () => KanbanEditorControlInstance;   // Creates one measured disposable control instance.
+  create: (context?: KanbanEditorControlContext) => KanbanEditorControlInstance;   // Creates one measured disposable control instance.
 }
 ```
 
@@ -2240,6 +2282,8 @@ Disposable actor-style session shared by standard, custom, and inspector present
 interface KanbanEditorSession {
   snapshot(): KanbanEditorSessionSnapshot;   // Returns one coherent immutable session snapshot.
   fieldState(fieldId: KanbanFieldId): KanbanEditorFieldState;   // Returns immutable state for one schema field or a safe absent placeholder.
+  fieldValue(fieldId: KanbanFieldId): KanbanSemanticValue | undefined;   // Returns one immutable semantic field value, or `undefined` when absent or unsafe.
+  focusField(fieldId: KanbanFieldId): boolean;   // Updates the stable field focus identity when that field exists and is visible.
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult;   // Attempts one typed field mutation without coercing hostile values.
   submit(): Promise<KanbanEditorSubmitResult>;   // Validates and submits one full detached draft through application authority.
   reload(policy: KanbanEditorReloadPolicy): Promise<KanbanEditorReloadResult>;   // Explicitly discards a stale draft and reloads the latest authoritative record.
@@ -7560,6 +7604,14 @@ Creates a validated workflow-column identity.
 
 ```ts
 createKanbanColumnId(value: string): KanbanColumnId
+```
+
+## createKanbanEditorControlBinding
+
+Creates one reactive control binding for any validated editor field kind.
+
+```ts
+createKanbanEditorControlBinding<TCard, TDraft>(options: KanbanEditorControlBindingOptions<TCard, TDraft>): KanbanEditorControlBinding
 ```
 
 ## createKanbanEditorControlRegistry

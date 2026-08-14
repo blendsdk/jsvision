@@ -4,6 +4,7 @@ import { snapshotKanbanDataArray, snapshotKanbanDataProperties } from '../contra
 import { KanbanInvalidEditorSchemaError } from '../contract/error.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type {
+  KanbanEditorControlContext,
   KanbanEditorControlInstance,
   KanbanEditorControlMeasurement,
   KanbanEditorControlRegistration,
@@ -128,9 +129,9 @@ function snapshotRegistration(value: unknown): KanbanEditorControlRegistration {
   const create = properties.create;
   return Object.freeze({
     controlId: properties.controlId,
-    create: () => {
+    create: (context?: KanbanEditorControlContext) => {
       try {
-        return wrapInstance(Reflect.apply(create, undefined, []));
+        return wrapInstance(Reflect.apply(create, undefined, context === undefined ? [] : [context]));
       } catch (error) {
         if (error instanceof KanbanInvalidEditorSchemaError) throw error;
         return invalidRegistry();

@@ -81,7 +81,9 @@ function adapter(proposalKind: 'create' | 'update' = 'update'): KanbanCardEditor
           order: 0,
           read: (draft: TicketDraft) => draft.title,
           write: (_draft: TicketDraft, title: string) => ({ title }),
-          validate: [({ value }) => (value.length === 0 ? { code: 'required' } : undefined)],
+          validate: [
+            ({ value }: { readonly value: string }) => (value.length === 0 ? { code: 'required' } : undefined),
+          ],
         },
       ],
     }),
@@ -89,7 +91,7 @@ function adapter(proposalKind: 'create' | 'update' = 'update'): KanbanCardEditor
     snapshot: (draft) => ({ title: draft.title }),
     proposal: ({ snapshot }) =>
       proposalKind === 'create'
-        ? { kind: 'card-create', draft: snapshot }
+        ? { kind: 'card-create', target: { columnId: 'todo' }, draft: snapshot }
         : { kind: 'card-update', cardKey: CARD.id, patch: snapshot },
   };
 }

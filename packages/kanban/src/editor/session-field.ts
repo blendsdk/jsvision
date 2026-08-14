@@ -1,16 +1,21 @@
 import { canonicalizeKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanFieldId } from '../contract/identity.js';
+import { createKanbanFieldId } from '../contract/identity.js';
+import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
+import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import { invokeKanbanEditorAsyncCallback, invokeKanbanEditorCallback } from './registry.js';
 import { awaitEditorWork } from './session-async.js';
 import { sanitizeEditorDisplay, snapshotKanbanEditorDiagnostic } from './session-boundary.js';
 import type { MutableKanbanEditorFieldState } from './session-state.js';
 import type {
+  KanbanCardEditorSchema,
   KanbanCardEditorField,
   KanbanEditorDiagnostic,
   KanbanEditorFieldCallbackInput,
   KanbanEditorFieldState,
   KanbanEditorMode,
 } from './types.js';
+import { NO_KANBAN_EDITOR_DIAGNOSTICS } from './session-state.js';
 
 /** Session-owned values required to evaluate one field without exposing the actor. */
 export interface KanbanEditorFieldRuntime<TCard, TDraft> {
@@ -37,6 +42,69 @@ export function snapshotKanbanEditorFieldDiagnostics(
   state: MutableKanbanEditorFieldState,
 ): KanbanEditorFieldState['diagnostics'] {
   return Object.freeze([...state.presentationDiagnostics, ...state.validationDiagnostics]);
+}
+
+/** Returns immutable public state for one field, including safe placeholders for invalid identities. */
+export function snapshotKanbanEditorFieldState<TCard, TDraft>(
+  fieldId: KanbanFieldId,
+  schema: KanbanCardEditorSchema<TCard, TDraft>,
+  states: ReadonlyMap<KanbanFieldId, MutableKanbanEditorFieldState>,
+): KanbanEditorFieldState {
+  let normalized: KanbanFieldId;
+  try {
+    normalized = createKanbanFieldId(fieldId);
+  } catch {
+    return Object.freeze({
+      fieldId: '',
+      displayValue: '',
+      touched: false,
+      visible: false,
+      readOnly: true,
+      diagnostics: NO_KANBAN_EDITOR_DIAGNOSTICS,
+    });
+  }
+  const state = states.get(normalized);
+  if (schema.field(normalized) === undefined || state === undefined) {
+    return Object.freeze({
+      fieldId: normalized,
+      displayValue: '',
+      touched: false,
+      visible: false,
+      readOnly: true,
+      diagnostics: NO_KANBAN_EDITOR_DIAGNOSTICS,
+    });
+  }
+  return Object.freeze({
+    fieldId: state.fieldId,
+    displayValue: state.displayValue,
+    touched: state.touched,
+    visible: state.visible,
+    readOnly: state.readOnly,
+    diagnostics: snapshotKanbanEditorFieldDiagnostics(state),
+  });
+}
+
+/** Reads and snapshots one semantic field value without exposing a mutable application object. */
+export function snapshotKanbanEditorFieldValue<TCard, TDraft>(
+  fieldId: KanbanFieldId,
+  schema: KanbanCardEditorSchema<TCard, TDraft>,
+  draft: TDraft,
+): KanbanSemanticValue | undefined {
+  let normalized: KanbanFieldId;
+  try {
+    normalized = createKanbanFieldId(fieldId);
+  } catch {
+    return undefined;
+  }
+  const field = schema.field(normalized);
+  if (field === undefined) return undefined;
+  const value = readKanbanEditorField(field, draft);
+  if (value.kind === 'failure') return undefined;
+  try {
+    return snapshotKanbanSemanticValue(value.value);
+  } catch {
+    return undefined;
+  }
 }
 
 /** Builds bounded callback context for one detached field generation. */

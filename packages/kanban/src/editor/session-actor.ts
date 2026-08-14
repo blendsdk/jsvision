@@ -23,7 +23,8 @@ import {
   readKanbanEditorField,
   replaceKanbanEditorFieldGeneration,
   refreshKanbanEditorFieldPresentation,
-  snapshotKanbanEditorFieldDiagnostics,
+  snapshotKanbanEditorFieldState,
+  snapshotKanbanEditorFieldValue,
   validateKanbanEditorField,
 } from './session-field.js';
 import { KanbanEditorSessionNotifier } from './session-notifier.js';
@@ -187,38 +188,21 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
 
   /** Returns immutable state for one schema field or a safe absent placeholder. */
   fieldState(fieldId: KanbanFieldId): KanbanEditorFieldState {
-    let validFieldId: KanbanFieldId;
-    try {
-      validFieldId = createKanbanFieldId(fieldId);
-    } catch {
-      return Object.freeze({
-        fieldId: '',
-        displayValue: '',
-        touched: false,
-        visible: false,
-        readOnly: true,
-        diagnostics: NO_KANBAN_EDITOR_DIAGNOSTICS,
-      });
-    }
-    const state = this.#fields.get(validFieldId);
-    if (state === undefined) {
-      return Object.freeze({
-        fieldId: validFieldId,
-        displayValue: '',
-        touched: false,
-        visible: false,
-        readOnly: true,
-        diagnostics: NO_KANBAN_EDITOR_DIAGNOSTICS,
-      });
-    }
-    return Object.freeze({
-      fieldId: state.fieldId,
-      displayValue: state.displayValue,
-      touched: state.touched,
-      visible: state.visible,
-      readOnly: state.readOnly,
-      diagnostics: snapshotKanbanEditorFieldDiagnostics(state),
-    });
+    return snapshotKanbanEditorFieldState(fieldId, this.#options.adapter.schema, this.#fields);
+  }
+
+  /** Returns one immutable semantic field value without exposing the actor draft. */
+  fieldValue(fieldId: KanbanFieldId): KanbanSemanticValue | undefined {
+    return snapshotKanbanEditorFieldValue(fieldId, this.#options.adapter.schema, this.#draft);
+  }
+
+  /** Updates stable focus identity only for one currently visible schema field. */
+  focusField(fieldId: KanbanFieldId): boolean {
+    const state = this.fieldState(fieldId);
+    if (!state.visible) return false;
+    this.#focusedFieldId = state.fieldId;
+    this.#notify();
+    return true;
   }
 
   /** Attempts one typed field mutation and starts a new validation generation. */

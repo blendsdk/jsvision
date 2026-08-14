@@ -210,6 +210,24 @@ export interface KanbanEditorControlInstance {
   readonly dispose: () => void;
 }
 
+/** Bounded field/session seam supplied to one application custom-control factory. */
+export interface KanbanEditorControlContext {
+  /** Stable field identity owned by this control instance. */
+  readonly fieldId: KanbanFieldId;
+  /** Current create, view, or edit behavior. */
+  readonly mode: KanbanEditorMode;
+  /** Returns the latest immutable semantic field value when it can be represented safely. */
+  readonly value: () => KanbanSemanticValue | undefined;
+  /** Returns the latest immutable display, visibility, read-only, and diagnostic state. */
+  readonly state: () => KanbanEditorFieldState;
+  /** Attempts a mutation through the same parser, validation, and generation boundary as standard controls. */
+  readonly setValue: (value: unknown) => KanbanEditorSetValueResult;
+  /** Records this field as the current focus identity when it is visible. */
+  readonly focus: () => boolean;
+  /** Live signal aborted when the mounted control is no longer authoritative. */
+  readonly signal: AbortSignal;
+}
+
 /** Bounded layout evidence returned by a custom editor control. */
 export interface KanbanEditorControlMeasurement {
   /** Smallest usable control width in terminal cells. */
@@ -225,7 +243,7 @@ export interface KanbanEditorControlRegistration {
   /** Stable namespaced application control identity. */
   readonly controlId: string;
   /** Creates one measured disposable control instance. */
-  readonly create: () => KanbanEditorControlInstance;
+  readonly create: (context?: KanbanEditorControlContext) => KanbanEditorControlInstance;
 }
 
 /** Immutable custom-control registry consumed by schema validation and later dialogs. */
@@ -504,6 +522,10 @@ export interface KanbanEditorSession {
   snapshot(): KanbanEditorSessionSnapshot;
   /** Returns immutable state for one schema field or a safe absent placeholder. */
   fieldState(fieldId: KanbanFieldId): KanbanEditorFieldState;
+  /** Returns one immutable semantic field value, or `undefined` when absent or unsafe. */
+  fieldValue(fieldId: KanbanFieldId): KanbanSemanticValue | undefined;
+  /** Updates the stable field focus identity when that field exists and is visible. */
+  focusField(fieldId: KanbanFieldId): boolean;
   /** Attempts one typed field mutation without coercing hostile values. */
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult;
   /** Validates and submits one full detached draft through application authority. */
