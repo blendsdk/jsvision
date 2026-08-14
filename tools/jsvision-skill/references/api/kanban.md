@@ -2692,6 +2692,15 @@ interface KanbanLimitManifest {
   semanticArrayEntries: KanbanLimitRow;
   semanticObjectKeys: KanbanLimitRow;
   semanticStringBytes: KanbanLimitRow;
+  savedViewEncodedBytes: KanbanLimitRow;   // Maximum encoded size of one complete saved-view envelope.
+  savedViewDepth: KanbanLimitRow;   // Maximum nested container depth of one saved-view envelope.
+  savedViewArrayEntries: KanbanLimitRow;   // Maximum entries retained by any one saved-view array.
+  savedViewObjectKeys: KanbanLimitRow;   // Maximum enumerable keys retained by any one saved-view object.
+  savedViewStringBytes: KanbanLimitRow;   // Maximum UTF-8 size of one saved-view string or key.
+  savedViewMigrations: KanbanLimitRow;   // Maximum sequential migration adapters registered for one saved-view registry.
+  savedViewDiagnostics: KanbanLimitRow;   // Maximum non-fatal diagnostics returned by one saved-view reconciliation.
+  savedViewRegisteredIds: KanbanLimitRow;   // Maximum stable application identities inspected by one saved-view reconciliation context.
+  savedViewExtensions: KanbanLimitRow;   // Maximum inert namespaced extensions retained by one saved-view envelope.
   columns: KanbanLimitRow;
   swimlanes: KanbanLimitRow;
   retainedCursors: KanbanLimitRow;

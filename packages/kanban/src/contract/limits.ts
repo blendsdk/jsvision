@@ -19,6 +19,24 @@ export interface KanbanLimitManifest {
   readonly semanticArrayEntries: KanbanLimitRow;
   readonly semanticObjectKeys: KanbanLimitRow;
   readonly semanticStringBytes: KanbanLimitRow;
+  /** Maximum encoded size of one complete saved-view envelope. */
+  readonly savedViewEncodedBytes: KanbanLimitRow;
+  /** Maximum nested container depth of one saved-view envelope. */
+  readonly savedViewDepth: KanbanLimitRow;
+  /** Maximum entries retained by any one saved-view array. */
+  readonly savedViewArrayEntries: KanbanLimitRow;
+  /** Maximum enumerable keys retained by any one saved-view object. */
+  readonly savedViewObjectKeys: KanbanLimitRow;
+  /** Maximum UTF-8 size of one saved-view string or key. */
+  readonly savedViewStringBytes: KanbanLimitRow;
+  /** Maximum sequential migration adapters registered for one saved-view registry. */
+  readonly savedViewMigrations: KanbanLimitRow;
+  /** Maximum non-fatal diagnostics returned by one saved-view reconciliation. */
+  readonly savedViewDiagnostics: KanbanLimitRow;
+  /** Maximum stable application identities inspected by one saved-view reconciliation context. */
+  readonly savedViewRegisteredIds: KanbanLimitRow;
+  /** Maximum inert namespaced extensions retained by one saved-view envelope. */
+  readonly savedViewExtensions: KanbanLimitRow;
   readonly columns: KanbanLimitRow;
   readonly swimlanes: KanbanLimitRow;
   readonly retainedCursors: KanbanLimitRow;
@@ -135,6 +153,15 @@ export const KANBAN_LIMITS: KanbanLimitManifest = Object.freeze({
   semanticArrayEntries: limit(4_096, 16_384, 65_536),
   semanticObjectKeys: limit(256, 1_024, 4_096),
   semanticStringBytes: limit(16_384, 65_536, 262_144),
+  savedViewEncodedBytes: limit(262_144, 1_048_576, 4_194_304),
+  savedViewDepth: limit(16, 32, 64),
+  savedViewArrayEntries: limit(4_096, 16_384, 65_536),
+  savedViewObjectKeys: limit(256, 1_024, 4_096),
+  savedViewStringBytes: limit(16_384, 65_536, 262_144),
+  savedViewMigrations: limit(16, 32, 64),
+  savedViewDiagnostics: limit(256, 1_024, 4_096),
+  savedViewRegisteredIds: limit(1_024, 4_096, 16_384),
+  savedViewExtensions: limit(256, 1_024, 4_096),
   columns: limit(64, 256, 1_024),
   swimlanes: limit(128, 512, 2_048),
   retainedCursors: limit(64, 256, 1_024),

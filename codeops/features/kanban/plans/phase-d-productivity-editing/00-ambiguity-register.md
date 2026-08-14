@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 27 items resolved
-> **Last Updated**: 2026-08-14 14:28 CEST
+> **Status**: ✅ GATE PASSED — all 28 items resolved
+> **Last Updated**: 2026-08-14 14:49 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -44,6 +44,7 @@
 | AR-D25 | Technical · runtime | How should view registry lookup relate to source-owned evaluator authority? | Duplicate all source evaluators in the view controller / retain immutable bounded view metadata while source adapters own record evaluation | Keep quick-filter metadata and stable lookup in an immutable bounded view registry; keep sort/filter/group execution in source adapters and validate selected identities at the binding boundary | ✅ Resolved |
 | AR-D26 | Technical · runtime · complex | What exact candidate boundary preserves the usable viewport when query projection fails after session open? | Stage only a query session publication / stage a complete isolated viewport source through current-geometry refresh / mutate the live viewport and roll back | Stage a complete isolated viewport source through synchronous publication validation and one current-geometry refresh, then install it non-reentrantly, retire the exact old generation, and notify subscribers afterward | ✅ Resolved |
 | AR-D27 | Quality review · runtime · complex | How should the seven accepted Phase 1 Major findings be corrected without widening source authority or the public query protocol? | Parallel quick-filter query directives / executable filter builders / declarative quick-filter mappings plus focused transaction, presentation, ordering, and geometry corrections | Map quick filters to existing source-owned filters declaratively; apply every remaining focused correction and require one fix-scoped re-review | ✅ Resolved |
+| AR-D28 | Security limits · runtime | Which safe/standard/absolute budgets bound saved-view parsing, migration, diagnostics, registries, and extensions? | Independent saved-view budgets / shared semantic budgets plus saved-view-specific count limits | Reuse the shared semantic rows exactly for JSON shape and bytes; add fixed saved-view migration, diagnostic, registered-ID, and extension count rows; untrusted parsing always uses the safe class | ✅ Resolved |
 
 ## Resolution notes
 
@@ -233,3 +234,37 @@
 - **Reopen triggers:** An approved quick filter cannot be expressed by one source operator without semantic
   duplication, a remote protocol must retain original quick-filter identity for authorization, or source
   capability negotiation is added.
+
+### AR-D28 — Saved-view safety budgets (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; no security risk is waived.
+- **Eligibility:** Resource ceilings and their internal derivation are security and performance
+  mechanisms inside the already approved bounded saved-view format; product behavior and application
+  storage ownership remain unchanged.
+- **Objective:** Reject hostile allocation before retention while guaranteeing that every valid safe-class
+  durable controller state can be captured, parsed, and canonically serialized under one coherent budget.
+- **Evidence:** The semantic snapshot/canonicalizer already fixes safe/standard/absolute budgets for
+  encoded bytes, depth, arrays, object keys, and strings. Safe controller structure permits enough
+  columns, swimlanes, filters, and maximum-length identities that a separate 64 KiB envelope ceiling can
+  reject valid captures.
+- **Decision:** Saved-view JSON shape budgets reuse the exact semantic limit rows: encoded bytes
+  262,144/1,048,576/4,194,304; depth 16/32/64; arrays 4,096/16,384/65,536; object keys
+  256/1,024/4,096; and strings 16,384/65,536/262,144. Add saved-view-specific rows for migrations
+  16/32/64, diagnostics 256/1,024/4,096, registered IDs 1,024/4,096/16,384, and extensions
+  256/1,024/4,096. Untrusted parse APIs use the fixed safe projection; broader classes remain internal
+  ceilings unless a later public policy explicitly authorizes them.
+- **Rejected alternatives:** A 65,536-byte envelope cannot contain every otherwise-valid safe controller
+  state. Larger saved semantic depth/key/string budgets would accept extension values that the shared
+  semantic snapshot and serializer later reject. Refactoring the semantic walker to accept arbitrary
+  profiles adds complexity without an approved public need.
+- **Strongest counterargument:** A 262 KiB input permits more parser work per call than the initially
+  proposed 64 KiB ceiling.
+- **Confidence:** High — the final limits align with existing hardened traversal code and retain exact
+  category-specific ceilings.
+- **Hardening:** The independent challenger found both the valid-round-trip failure and parser/serializer
+  acceptance mismatch in the initial proposal. The revised design incorporates both findings and keeps
+  the untrusted entry point on the conservative safe class.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A valid safe-class captured envelope exceeds the shared safe encoded budget, or
+  saved-view canonicalization stops using the shared semantic-value validation path.
