@@ -22,7 +22,13 @@ export {
   type TerminalLike,
 } from './host.js';
 export { buildBrowserCaps, type BrowserCapsOptions } from './caps.js';
-export { mountApp, type MountAppOptions, type MountedApp } from './mount.js';
+export { mountApp, type BrowserDomMountOptions, type MountAppOptions, type MountedApp } from './mount.js';
+export {
+  createBrowserDomInputAdapter,
+  type BrowserDomInputAdapter,
+  type BrowserDomInputAdapterOptions,
+  type BrowserDomInputSurface,
+} from './dom-input.js';
 export { createBrowserFileSystem, type BrowserFileSystemOptions, type FileTree } from './virtual-fs.js';
 export { attachKeyReclaim, UNRECLAIMABLE_CHORDS, type KeyReclaimOptions } from './key-reclaim.js';
 export { setClipboard, type ClipboardBridge } from './clipboard.js';

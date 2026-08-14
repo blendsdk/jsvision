@@ -14,6 +14,8 @@ import type { Application } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
 import { createBrowserHost } from './host.js';
 import type { BrowserHost, BrowserKeyEvent, TerminalLike } from './host.js';
+import { createBrowserDomInputAdapter } from './dom-input.js';
+import type { BrowserDomInputAdapter, BrowserDomInputSurface } from './dom-input.js';
 import { setClipboard } from './clipboard.js';
 import type { ClipboardBridge } from './clipboard.js';
 
@@ -25,6 +27,29 @@ import type { ClipboardBridge } from './clipboard.js';
 export interface HostElement {
   /** The element's tag name (e.g. `'DIV'`) — present on every DOM element. */
   readonly tagName: string;
+  /** Optional DOM capture listener available on real browser elements. */
+  addEventListener?(type: string, listener: (event: unknown) => void, options?: boolean): void;
+  /** Optional matching listener removal. */
+  removeEventListener?(type: string, listener: (event: unknown) => void, options?: boolean): void;
+  /** Optional browser geometry used to map pointer coordinates to terminal cells. */
+  getBoundingClientRect?(): {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+  };
+  /** Optional pointer-capture operation. */
+  setPointerCapture?(pointerId: number): void;
+  /** Optional pointer-release operation. */
+  releasePointerCapture?(pointerId: number): void;
+}
+
+/** Optional pre-xterm DOM input configuration for {@link mountApp}. */
+export interface BrowserDomMountOptions {
+  /** Explicit terminal surface; defaults to the mount element when it exposes the required DOM methods. */
+  readonly surface?: BrowserDomInputSurface;
+  /** Platform label; defaults to `navigator.platform` when the browser exposes it. */
+  readonly platform?: string;
 }
 
 /** Options for {@link mountApp}. */
@@ -50,6 +75,8 @@ export interface MountAppOptions {
    * available. Inject a bridge for non-DOM hosts and deterministic permission/error tests.
    */
   readonly clipboard?: ClipboardBridge;
+  /** Set false to force ordinary xterm input, or supply DOM input overrides. */
+  readonly domInput?: false | BrowserDomMountOptions;
 }
 
 /** The handle returned by {@link mountApp}. */
@@ -58,8 +85,39 @@ export interface MountedApp {
   readonly term: TerminalLike;
   /** The browser host driving the terminal. */
   readonly host: BrowserHost;
+  /** Pre-xterm adapter, including `available: false` on headless/fallback hosts. */
+  readonly domInput: BrowserDomInputAdapter;
   /** Release host input, the app loop, browser bridges, resize handling, and the optional terminal. */
   dispose(): void;
+}
+
+/** Uses a real mount element as the DOM input surface only when every required method is present. */
+function surfaceFromElement(element: HostElement): BrowserDomInputSurface | undefined {
+  if (
+    element.addEventListener === undefined ||
+    element.removeEventListener === undefined ||
+    element.getBoundingClientRect === undefined
+  ) {
+    return undefined;
+  }
+  return {
+    addEventListener: element.addEventListener.bind(element),
+    removeEventListener: element.removeEventListener.bind(element),
+    getBoundingClientRect: element.getBoundingClientRect.bind(element),
+    ...(element.setPointerCapture === undefined ? {} : { setPointerCapture: element.setPointerCapture.bind(element) }),
+    ...(element.releasePointerCapture === undefined
+      ? {}
+      : { releasePointerCapture: element.releasePointerCapture.bind(element) }),
+  };
+}
+
+/** Reads the browser platform without making it a requirement for headless hosts. */
+function defaultBrowserPlatform(): string {
+  try {
+    return typeof navigator === 'undefined' ? '' : navigator.platform;
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -94,7 +152,24 @@ export function mountApp(options: MountAppOptions): MountedApp {
   }
 
   const loop = app.loop;
-  const host = createBrowserHost({ term, caps, onInput: (event) => loop.dispatch(event) });
+  const domOptions = options.domInput === false ? undefined : options.domInput;
+  const domInput = createBrowserDomInputAdapter({
+    ...(domOptions?.surface === undefined
+      ? { surface: options.domInput === false ? undefined : surfaceFromElement(options.element) }
+      : { surface: domOptions.surface }),
+    cells: () => ({
+      columns: loop.renderRoot.buffer().width,
+      rows: loop.renderRoot.buffer().height,
+    }),
+    platform: domOptions?.platform ?? defaultBrowserPlatform(),
+    onInput: (event) => loop.dispatch(event),
+  });
+  const host = createBrowserHost({
+    term,
+    caps,
+    onInput: (event) => loop.dispatch(event),
+    acceptInput: domInput.acceptTerminalInput,
+  });
 
   // Point the loop's output sinks at the host (the browser mirror of run()).
   loop.onFrame = (buffer) => host.render(buffer);
@@ -116,10 +191,12 @@ export function mountApp(options: MountAppOptions): MountedApp {
   return {
     term,
     host,
+    domInput,
     dispose(): void {
       // Mirror run()'s shutdown for a detached browser surface: stop the loop's painter and unmount
       // the view tree so every view's onCleanup fires (releasing timers/subscriptions) before the
       // terminal goes. Without this a long-lived page leaks an app's reactive tree on every close.
+      domInput.dispose();
       host.dispose();
       loop.dispose();
       loop.writeClipboardText = undefined;

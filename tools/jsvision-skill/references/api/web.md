@@ -16,6 +16,61 @@ interface BrowserCapsOptions {
 }
 ```
 
+## BrowserDomInputAdapter
+
+Abortable browser input adapter and one-event terminal deduplication seam.
+
+```ts
+interface BrowserDomInputAdapter {
+  available: boolean;   // Whether a DOM surface was available and listeners were installed.
+  acceptTerminalInput: (event: InputEvent) => boolean;   // Returns false for the one matching SGR mouse event already emitted from DOM input.
+  dispose: () => void;   // Removes listeners, capture bookkeeping, and pending dedupe state.
+}
+```
+
+## BrowserDomInputAdapterOptions
+
+Options for one browser DOM input adapter.
+
+```ts
+interface BrowserDomInputAdapterOptions {
+  surface?: BrowserDomInputSurface;   // Optional browser surface; omission selects documented terminal-input fallback.
+  cells: () => { readonly columns: number; readonly rows: number };   // Current terminal cell geometry used for client-to-cell conversion.
+  platform: string;   // Browser platform label; `darwin`/`mac*` resolves semantic Primary to Command.
+  onInput: (event: InputEvent) => void;   // Sink for normalized Core input events emitted before xterm encoding.
+}
+```
+
+## BrowserDomInputSurface
+
+Browser surface operations needed by the pre-xterm input adapter.
+
+```ts
+interface BrowserDomInputSurface {
+  addEventListener(type: string, listener: (event: unknown) => void, options?: boolean): void;   // Registers a capture listener before xterm translates the same DOM event.
+  removeEventListener(type: string, listener: (event: unknown) => void, options?: boolean): void;   // Removes one previously registered capture listener.
+  getBoundingClientRect(): {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+  };   // Returns the terminal surface rectangle in browser client coordinates.
+  setPointerCapture?(pointerId: number): void;   // Captures a pressed pointer so drag/up remain observable outside the surface.
+  releasePointerCapture?(pointerId: number): void;   // Releases one previously captured pointer.
+}
+```
+
+## BrowserDomMountOptions
+
+Optional pre-xterm DOM input configuration for mountApp.
+
+```ts
+interface BrowserDomMountOptions {
+  surface?: BrowserDomInputSurface;   // Explicit terminal surface; defaults to the mount element when it exposes the required DOM methods.
+  platform?: string;   // Platform label; defaults to `navigator.platform` when the browser exposes it.
+}
+```
+
 ## BrowserFileSystemOptions
 
 Options for createBrowserFileSystem.
@@ -50,6 +105,7 @@ interface BrowserHostOptions {
   term: TerminalLike;   // The terminal to render into and read input from (any object satisfying TerminalLike).
   caps: CapabilityProfile;   // The capability profile driving `serialize()`/`decode()` (build one with `buildBrowserCaps`).
   onInput: (event: InputEvent) => void;   // Sink for decoded input events (wire to `loop.dispatch`).
+  acceptInput?: (event: InputEvent) => boolean;   // Optional pre-xterm filter; false suppresses one DOM event's matching terminal duplicate.
   timer?: TimerSeam;   // Timer seam; defaults to the global timers. Inject a fake to drive the lone-ESC flush in tests.
 }
 ```
@@ -123,6 +179,7 @@ interface MountAppOptions {
   term?: TerminalLike;   // A ready terminal to drive. A test passes an `@xterm/headless` `Terminal`; a browser app passes an opened `@xterm/xterm` one. Provide this **or** createTerminal.
   createTerminal?: () => TerminalLike;   // A factory used when `term` is omitted, e.g. `() => { const t = new Terminal({…}); t.open(el); return t; }`. Keeps the `@xterm/xterm` value-import in the caller's bundle.
   clipboard?: ClipboardBridge;   // Browser clipboard bridge used for outbound copy/cut. Defaults to `navigator.clipboard` when available. Inject a bridge for non-DOM hosts and deterministic permission/error tests.
+  domInput?: false | BrowserDomMountOptions;   // Set false to force ordinary xterm input, or supply DOM input overrides.
 }
 ```
 
@@ -134,6 +191,7 @@ The handle returned by mountApp.
 interface MountedApp {
   term: TerminalLike;   // The terminal the app was mounted onto.
   host: BrowserHost;   // The browser host driving the terminal.
+  domInput: BrowserDomInputAdapter;   // Pre-xterm adapter, including `available: false` on headless/fallback hosts.
   dispose(): void;   // Release host input, the app loop, browser bridges, resize handling, and the optional terminal.
 }
 ```
@@ -175,6 +233,14 @@ Build the browser CapabilityProfile: truecolor + UTF-8, with `colorDepth` overri
 
 ```ts
 buildBrowserCaps(options: BrowserCapsOptions = {}): CapabilityProfile
+```
+
+## createBrowserDomInputAdapter
+
+Creates a pre-xterm keyboard/pointer adapter with safe terminal-input fallback.
+
+```ts
+createBrowserDomInputAdapter(options: BrowserDomInputAdapterOptions): BrowserDomInputAdapter
 ```
 
 ## createBrowserFileSystem

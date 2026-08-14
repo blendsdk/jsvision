@@ -126,6 +126,8 @@ export interface BrowserHostOptions {
   readonly caps: CapabilityProfile;
   /** Sink for decoded input events (wire to `loop.dispatch`). */
   readonly onInput: (event: InputEvent) => void;
+  /** Optional pre-xterm filter; false suppresses one DOM event's matching terminal duplicate. */
+  readonly acceptInput?: (event: InputEvent) => boolean;
   /** Timer seam; defaults to the global timers. Inject a fake to drive the lone-ESC flush in tests. */
   readonly timer?: TimerSeam;
 }
@@ -181,7 +183,9 @@ export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
   function pump(data: string): void {
     const result = decode(encoder.encode(data), decoderState, { caps });
     decoderState = result.state;
-    for (const event of result.events) onInput(event);
+    for (const event of result.events) {
+      if (options.acceptInput?.(event) !== false) onInput(event);
+    }
 
     clearEscTimer();
     const carry = decoderState.carry;
@@ -191,7 +195,9 @@ export function createBrowserHost(options: BrowserHostOptions): BrowserHost {
         escTimer = null;
         const flushed = flush(decoderState, { caps });
         decoderState = flushed.state;
-        for (const event of flushed.events) onInput(event);
+        for (const event of flushed.events) {
+          if (options.acceptInput?.(event) !== false) onInput(event);
+        }
       }, ESC_TIMEOUT_MS);
     }
   }
