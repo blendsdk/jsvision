@@ -174,7 +174,9 @@ describe('Kanban editor responsive dialog', () => {
     const controls = descendants(dialog!);
     const scroller = controls.find((view): view is Scroller => view instanceof Scroller);
     const inputs = controls.filter((view): view is Input => view instanceof Input);
-    const buttons = controls.filter((view): view is Button => view instanceof Button);
+    const buttons = controls.filter(
+      (view): view is Button => view instanceof Button && view.state.visible && !view.state.disabled,
+    );
     expect(scroller).toBeDefined();
     expect(inputs).toHaveLength(FIELD_IDS.length);
     expect(buttons.length).toBeGreaterThanOrEqual(2);

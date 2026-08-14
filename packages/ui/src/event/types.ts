@@ -25,8 +25,8 @@ import type { FunctionKeyFallback } from './function-key-fallback.js';
  * resolve the `execView` promise. You rarely implement this yourself — `Dialog` already does.
  */
 export interface ModalHost {
-  /** Resolve the active `execView` promise with `result` (e.g. the command that closed the dialog). */
-  endModal(result: unknown): void;
+  /** Resolve this exact modal when active; legacy hosts may omit the result, while `false` means a nested modal owns the top. */
+  endModal(result: unknown): boolean | void;
   /** Whether a command is currently enabled (a dialog gates its close-on-command on this). */
   isCommandEnabled(command: string): boolean;
 }

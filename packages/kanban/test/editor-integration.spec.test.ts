@@ -13,6 +13,7 @@ import {
   createKanbanEditorCoordinator,
   openKanbanCardEditDialog,
   openKanbanCardInspector,
+  openKanbanCardViewDialog,
 } from '../src/index.js';
 import type {
   KanbanCardEditorAdapter,
@@ -142,8 +143,32 @@ describe('Kanban editor presentation integration', () => {
     expect(h.mounted()).toBeInstanceOf(Dialog);
     expect(containsInput(h.mounted()!)).toBe(false);
 
-    await context?.actions.cancel();
+    if (context?.mode !== 'edit') throw new Error('Expected edit replacement context.');
+    expect(Object.keys(context.actions).sort()).toEqual(['cancel', 'close', 'reload', 'submit']);
+    await context.actions.cancel();
     await expect(pending).resolves.toEqual({ kind: 'cancelled' });
+  });
+
+  it('should expose only Close to a read-only replacement', async () => {
+    const h = host();
+    const records = source();
+    let context: KanbanEditorDialogContext<Draft> | undefined;
+    const pending = openKanbanCardViewDialog(h.value, {
+      cardKey: CARD.id,
+      adapter: adapter(),
+      resolver: records.resolver,
+      coordinator: createKanbanEditorCoordinator(),
+      replacement: (next) => {
+        context = next;
+        return new Dialog({ title: 'Read-only ticket', width: 42, height: 10 });
+      },
+    });
+    await mounted();
+    if (context?.mode !== 'view') throw new Error('Expected view replacement context.');
+
+    expect(Object.keys(context.actions)).toEqual(['close']);
+    await context.actions.close();
+    await expect(pending).resolves.toEqual({ kind: 'closed' });
   });
 
   it('should reveal one existing inspector instead of creating a second draft or modal', async () => {
@@ -163,9 +188,13 @@ describe('Kanban editor presentation integration', () => {
     const second = await openKanbanCardInspector(options);
 
     expect(first.kind).toBe('opened');
-    expect(second).toMatchObject({ kind: 'already-open', session: first.session });
+    expect(second).toMatchObject({ kind: 'already-open' });
     expect(mountInspector).toHaveBeenCalledTimes(1);
-    expect(revealInspector).toHaveBeenCalledWith(first.session);
+    if (second.kind === 'already-open') {
+      expect(revealInspector).toHaveBeenCalledWith(second.session);
+      expect(second.session.snapshot()).toEqual(first.session.snapshot());
+      expect('dispose' in second.session).toBe(false);
+    }
 
     const h = host();
     await expect(
@@ -176,9 +205,9 @@ describe('Kanban editor presentation integration', () => {
         coordinator,
         completion: { kind: 'authority', authority: { request: vi.fn() } },
       }),
-    ).resolves.toMatchObject({ kind: 'already-open', session: first.session });
+    ).resolves.toMatchObject({ kind: 'already-open' });
     expect(h.mounted()).toBeUndefined();
-    first.session.dispose();
+    if (first.kind === 'opened') first.session.dispose();
     coordinator.dispose();
   });
 
@@ -200,6 +229,7 @@ describe('Kanban editor presentation integration', () => {
       },
     });
     await mounted();
+    if (context?.mode !== 'edit') throw new Error('Expected edit replacement context.');
     await context?.session.setValue('title', 'Local').settled;
     context?.session.focusField('title');
     records.replace({ ...CARD, title: 'Remote' }, 'card-r2');
@@ -235,6 +265,7 @@ describe('Kanban editor presentation integration', () => {
       },
     });
     await mounted();
+    if (context?.mode !== 'edit') throw new Error('Expected edit replacement context.');
     records.delete();
 
     await expect(context?.actions.submit()).resolves.toEqual({ kind: 'deleted' });

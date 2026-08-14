@@ -12,7 +12,9 @@ import type {
   KanbanEditorDiagnostic,
   KanbanEditorFieldState,
   KanbanEditorSession,
+  KanbanEditorSetValueResult,
 } from './types.js';
+import { resolveKanbanEditorMessage } from './presentation-text.js';
 
 /** Immutable empty diagnostic collection shared by successful standard bindings. */
 const NO_DIAGNOSTICS: readonly KanbanEditorDiagnostic[] = Object.freeze([]);
@@ -60,7 +62,7 @@ type MeasurableField = Pick<KanbanCardEditorField<unknown, unknown, unknown>, 'c
 /** A control-facing signal plus a package-only synchronization write that bypasses session mutation. */
 interface SessionSignal<T> {
   readonly value: Signal<T>;
-  readonly synchronize: (value: T) => void;
+  readonly synchronize: (value: T, force?: boolean) => void;
 }
 
 /** Creates one abortable, idempotent binding lifetime. */
@@ -80,7 +82,7 @@ function createBindingLifetime(): BindingLifetime {
 
 /** Resolves one label without retaining or evaluating arbitrary application objects. */
 function translate(i18n: I18n | undefined, messageId: string, defaultMessage = messageId): string {
-  return i18n?.t(messageId, { defaultMessage }) ?? defaultMessage;
+  return resolveKanbanEditorMessage(i18n, messageId, defaultMessage);
 }
 
 /** Produces canonical equality without allowing an invalid application value to escape. */
@@ -108,21 +110,36 @@ function selectedChoiceFlags(value: KanbanSemanticValue | undefined, field: Meas
 function sessionSignal<T>(options: {
   readonly initial: T;
   readonly lifetime: BindingLifetime;
-  readonly write: (value: T) => unknown;
+  readonly write: (value: T) => KanbanEditorSetValueResult;
+  readonly authoritative: () => T;
 }): SessionSignal<T> {
   const local = signal(options.initial);
+  let writing = false;
+  let correctableInvalid = false;
   const set = (value: T): void => {
     if (options.lifetime.disposed()) return;
-    // Mirror first so temporarily invalid text remains visible and can be corrected by the user.
+    // Suppress the synchronous session notification until the mutation outcome tells us whether the
+    // local value is a correctable parse error or must be restored from authoritative state.
+    writing = true;
     local.set(value);
-    options.write(value);
+    const result = options.write(value);
+    writing = false;
+    correctableInvalid = result.kind === 'invalid-value';
+    if (result.kind !== 'accepted' && result.kind !== 'invalid-value') local.set(options.authoritative());
   };
   const value = Object.assign(() => local(), {
     peek: () => local.peek(),
     set,
     update: (update: (previous: T) => T) => set(update(local.peek())),
   });
-  return { value, synchronize: (next) => local.set(next) };
+  return {
+    value,
+    synchronize: (next, force = false) => {
+      if (writing || (correctableInvalid && !force)) return;
+      correctableInvalid = false;
+      local.set(next);
+    },
+  };
 }
 
 /** Validates the public measurement input used by both standard and custom bindings. */
@@ -199,29 +216,56 @@ function createCustomBinding<TCard, TDraft>(
     focus: () => session.focusField(field.fieldId),
     signal: lifetime.controller.signal,
   });
+  let instance: ReturnType<typeof registration.create> | undefined;
+  let unsubscribe: (() => void) | undefined;
   try {
-    const instance = registration.create(context);
-    bindFocusIdentity(instance.view, session, field.fieldId);
-    synchronizeView(instance.view, session.fieldState(field.fieldId));
-    const unsubscribe = session.subscribe(() => {
-      if (!lifetime.disposed()) synchronizeView(instance.view, session.fieldState(field.fieldId));
+    instance = registration.create(context);
+    const mountedInstance = instance;
+    bindFocusIdentity(mountedInstance.view, session, field.fieldId);
+    synchronizeView(mountedInstance.view, session.fieldState(field.fieldId));
+    unsubscribe = session.subscribe(() => {
+      if (!lifetime.disposed()) {
+        synchronizeView(mountedInstance.view, session.fieldState(field.fieldId));
+        mountedInstance.view.invalidate();
+      }
     });
     let disposed = false;
     return Object.freeze({
       fieldId: field.fieldId,
-      view: instance.view,
-      measure: instance.measure,
+      view: mountedInstance.view,
+      measure: mountedInstance.measure,
       diagnostics: () => NO_DIAGNOSTICS,
       dispose: () => {
         if (disposed) return;
         disposed = true;
-        unsubscribe();
-        lifetime.dispose();
-        instance.dispose();
+        try {
+          unsubscribe?.();
+        } catch {
+          // Cleanup continues independently when an application unsubscriber throws.
+        }
+        try {
+          lifetime.dispose();
+        } finally {
+          try {
+            mountedInstance.dispose();
+          } catch {
+            // A hostile custom disposer cannot retain the package-owned cancellation lifetime.
+          }
+        }
       },
     });
   } catch {
+    try {
+      unsubscribe?.();
+    } catch {
+      // Cleanup continues independently when an application unsubscriber throws.
+    }
     lifetime.dispose();
+    try {
+      instance?.dispose();
+    } catch {
+      // A hostile custom disposer cannot prevent the payload-free fallback from mounting.
+    }
     return failedCustomBinding(field.fieldId, options.i18n);
   }
 }
@@ -248,7 +292,7 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
   const { field, session } = options;
   const lifetime = createBindingLifetime();
   const state = session.fieldState(field.fieldId);
-  let synchronizeValue: () => void;
+  let synchronizeValue: (force?: boolean) => void;
   let view: View;
 
   if (field.kind === 'boolean') {
@@ -256,8 +300,9 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
       initial: session.fieldValue(field.fieldId) === true,
       lifetime,
       write: (next) => session.setValue(field.fieldId, next),
+      authoritative: () => session.fieldValue(field.fieldId) === true,
     });
-    synchronizeValue = () => binding.synchronize(session.fieldValue(field.fieldId) === true);
+    synchronizeValue = (force) => binding.synchronize(session.fieldValue(field.fieldId) === true, force);
     view = new Switch({ value: binding.value, i18n: options.i18n, onLabel: '', offLabel: '' });
   } else if (field.kind === 'single-choice') {
     const binding = sessionSignal({
@@ -265,10 +310,14 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
       lifetime,
       write: (index) => {
         const choice = field.choices?.[index];
-        if (choice !== undefined) session.setValue(field.fieldId, choice.value);
+        return choice === undefined
+          ? session.setValue(field.fieldId, undefined)
+          : session.setValue(field.fieldId, choice.value);
       },
+      authoritative: () => selectedChoiceIndex(session.fieldValue(field.fieldId), field),
     });
-    synchronizeValue = () => binding.synchronize(selectedChoiceIndex(session.fieldValue(field.fieldId), field));
+    synchronizeValue = (force) =>
+      binding.synchronize(selectedChoiceIndex(session.fieldValue(field.fieldId), field), force);
     view = new RadioGroup({
       labels: (field.choices ?? []).map((choice) => translate(options.i18n, choice.labelId)),
       value: binding.value,
@@ -282,8 +331,10 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
           field.fieldId,
           (field.choices ?? []).filter((_, index) => flags[index] === true).map((choice) => choice.value),
         ),
+      authoritative: () => selectedChoiceFlags(session.fieldValue(field.fieldId), field),
     });
-    synchronizeValue = () => binding.synchronize(selectedChoiceFlags(session.fieldValue(field.fieldId), field));
+    synchronizeValue = (force) =>
+      binding.synchronize(selectedChoiceFlags(session.fieldValue(field.fieldId), field), force);
     view = new CheckGroup({
       labels: (field.choices ?? []).map((choice) => translate(options.i18n, choice.labelId)),
       value: binding.value,
@@ -293,10 +344,11 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
       initial: state.displayValue,
       lifetime,
       write: (next) => session.setValue(field.fieldId, field.kind === 'number' && next !== '' ? Number(next) : next),
+      authoritative: () => session.fieldState(field.fieldId).displayValue,
     });
-    synchronizeValue = () => {
+    synchronizeValue = (force) => {
       const next = session.fieldState(field.fieldId).displayValue;
-      if (next !== binding.value.peek()) binding.synchronize(next);
+      if (next !== binding.value.peek()) binding.synchronize(next, force);
     };
     view = field.kind === 'multiline' ? new Memo({ value: binding.value }) : new Input({ value: binding.value });
   }
@@ -305,8 +357,9 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
   bindFocusIdentity(view, session, field.fieldId);
   const unsubscribe = session.subscribe(() => {
     if (lifetime.disposed()) return;
-    synchronizeValue();
-    synchronizeView(view, session.fieldState(field.fieldId));
+    const nextState = session.fieldState(field.fieldId);
+    synchronizeValue(!nextState.touched && nextState.diagnostics.length === 0);
+    synchronizeView(view, nextState);
   });
   let disposed = false;
   return Object.freeze({
@@ -317,8 +370,11 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
     dispose: () => {
       if (disposed) return;
       disposed = true;
-      unsubscribe();
-      lifetime.dispose();
+      try {
+        unsubscribe();
+      } finally {
+        lifetime.dispose();
+      }
     },
   });
 }

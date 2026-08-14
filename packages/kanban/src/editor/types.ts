@@ -272,6 +272,8 @@ export interface KanbanCardEditorSchema<TCard, TDraft> {
 
 /** Detached validated draft evidence passed to an application adapter. */
 export interface KanbanEditorResult<TDraft> {
+  /** Mode that determines whether the adapter builds a create or update proposal. */
+  readonly mode: Exclude<KanbanEditorMode, 'view'>;
   /** Current typed session draft. */
   readonly draft: TDraft;
   /** Bounded semantic full-draft snapshot. */
@@ -554,6 +556,9 @@ export interface KanbanEditorSession<TDraft = unknown> {
   disposed(): boolean;
 }
 
+/** Non-owning editor-session view returned to callers that discover an existing claim. */
+export type KanbanEditorBorrowedSession<TDraft = unknown> = Omit<KanbanEditorSession<TDraft>, 'dispose'>;
+
 /** Presentation family claiming one card identity through the editor coordinator. */
 export type KanbanEditorKind = 'standard' | 'custom';
 
@@ -579,8 +584,8 @@ export interface KanbanEditorAlreadyOpen {
   readonly kind: 'already-open';
   /** Presentation family that owns the existing claim. */
   readonly editorKind: KanbanEditorKind;
-  /** Existing shared session suitable for focus or inspector reuse. */
-  readonly session: KanbanEditorSession;
+  /** Existing non-owning session suitable for focus, reveal, or inspector reuse. */
+  readonly session: KanbanEditorBorrowedSession;
 }
 
 /** Complete result of attempting an identity-exclusive editor acquisition. */

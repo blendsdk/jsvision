@@ -95,7 +95,9 @@ describe('Kanban editor security boundary specification', () => {
     if (standard.kind !== 'opened' || custom.kind !== 'already-open') {
       throw new Error('Expected one opened editor and one typed already-open outcome.');
     }
-    expect(custom.session).toBe(standard.session);
+    expect(custom.session).not.toBe(standard.session);
+    expect(custom.session.snapshot()).toEqual(standard.session.snapshot());
+    expect('dispose' in custom.session).toBe(false);
     standard.session.dispose();
     await expect(coordinator.open({ ...options, editorKind: 'custom' })).resolves.toMatchObject({ kind: 'opened' });
     coordinator.dispose();

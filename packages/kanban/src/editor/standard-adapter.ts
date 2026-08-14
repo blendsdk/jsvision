@@ -12,6 +12,8 @@ import { createKanbanCardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
+import { snapshotKanbanRequestProposal } from '../contract/request-validation.js';
+import type { KanbanCellAddress } from '../source/types.js';
 import { invokeKanbanEditorCallback } from './registry.js';
 import { createStandardKanbanEditorSchema, STANDARD_KANBAN_EDITOR_FIELDS } from './standard-schema.js';
 import type {
@@ -106,6 +108,7 @@ const ADAPTER_OPTION_KEYS = new Set([
   'additionalFields',
   'controls',
   'formatDate',
+  'create',
 ]);
 const STANDARD_CARD_KEYS = new Set([
   'key',
@@ -150,6 +153,36 @@ export interface StandardKanbanEditorAdapterOptions {
   readonly controls?: KanbanEditorControlRegistry;
   /** Optional formatter that converts opaque StandardCard dates into editable text. */
   readonly formatDate?: (value: unknown) => string;
+  /** Explicit defaults and semantic destination required when this adapter serves create mode. */
+  readonly create?: StandardKanbanEditorCreateOptions;
+}
+
+/** Safe scalar defaults used to initialize one standard create draft. */
+export interface StandardKanbanEditorCreateDefaults {
+  /** Required initial card title. */
+  readonly title: string;
+  /** Required initial workflow status. */
+  readonly status: string;
+  /** Optional initial description. */
+  readonly description?: string;
+  /** Optional initial work-item type. */
+  readonly type?: string;
+  /** Optional initial priority. */
+  readonly priority?: string;
+  /** Optional initial start-date text. */
+  readonly startDate?: string;
+  /** Optional initial due-date text. */
+  readonly dueDate?: string;
+  /** Optional initial estimate text. */
+  readonly estimate?: string;
+}
+
+/** Standard-card creation configuration with an application-owned semantic destination. */
+export interface StandardKanbanEditorCreateOptions {
+  /** Column and optional swimlane that receive the new card. */
+  readonly target: KanbanCellAddress;
+  /** Detached scalar defaults; collection fields start empty and remain editable. */
+  readonly defaults: StandardKanbanEditorCreateDefaults;
 }
 
 /** Standard adapter with an explicit disposable Forms factory for dialog composition. */
@@ -273,9 +306,51 @@ function dateText(value: unknown, format: ((value: unknown) => string) | undefin
 function createDraft(
   card: StandardKanbanEditableCard | undefined,
   formatDate: ((value: unknown) => string) | undefined,
+  create: StandardKanbanEditorCreateOptions | undefined,
 ): StandardKanbanEditorDraft {
   try {
-    if (card === undefined) throw new KanbanInvalidEditorSchemaError();
+    if (card === undefined) {
+      if (create === undefined) throw new KanbanInvalidEditorSchemaError();
+      const defaults = snapshotKanbanDataProperties(create.defaults, 8);
+      const allowed = new Set([
+        'title',
+        'status',
+        'description',
+        'type',
+        'priority',
+        'startDate',
+        'dueDate',
+        'estimate',
+      ]);
+      validateKanbanDataKeys(defaults, allowed);
+      if (typeof defaults.title !== 'string' || typeof defaults.status !== 'string') {
+        throw new KanbanInvalidEditorSchemaError();
+      }
+      for (const key of allowed) {
+        if (defaults[key] !== undefined && typeof defaults[key] !== 'string') {
+          throw new KanbanInvalidEditorSchemaError();
+        }
+      }
+      const optionalText = (key: string): string => {
+        const value = defaults[key];
+        return typeof value === 'string' ? value : '';
+      };
+      return Object.freeze({
+        key: createKanbanCardKey('new-card'),
+        title: defaults.title,
+        status: defaults.status,
+        description: optionalText('description'),
+        type: optionalText('type'),
+        priority: optionalText('priority'),
+        assignees: Object.freeze([]),
+        labels: Object.freeze([]),
+        startDate: optionalText('startDate'),
+        dueDate: optionalText('dueDate'),
+        estimate: optionalText('estimate'),
+        checklists: Object.freeze([]),
+        custom: null,
+      });
+    }
     const properties = snapshotKanbanDataProperties(card, STANDARD_CARD_KEYS.size);
     validateKanbanDataKeys(properties, STANDARD_CARD_KEYS);
     if (typeof properties.title !== 'string' || typeof properties.status !== 'string') {
@@ -361,6 +436,12 @@ export function createStandardKanbanEditorAdapter(
     if (options.formatDate !== undefined && typeof options.formatDate !== 'function') {
       throw new KanbanInvalidEditorSchemaError();
     }
+    const createProposal =
+      options.create === undefined
+        ? undefined
+        : snapshotKanbanRequestProposal({ kind: 'card-create', target: options.create.target, draft: null });
+    if (createProposal !== undefined && createProposal.kind !== 'card-create')
+      throw new KanbanInvalidEditorSchemaError();
     const fieldIds = [...selected, ...additionalFieldIds(additionalFields)];
     if (new Set(fieldIds).size !== fieldIds.length || fieldIds.length > KANBAN_LIMITS.cardFields.safe) {
       throw new KanbanInvalidEditorSchemaError();
@@ -376,9 +457,12 @@ export function createStandardKanbanEditorAdapter(
     const adapter: StandardKanbanEditorAdapter = {
       schema,
       formSchema,
-      create: (card: StandardKanbanEditableCard | undefined) => createDraft(card, options.formatDate),
+      create: (card: StandardKanbanEditableCard | undefined) => createDraft(card, options.formatDate, options.create),
       snapshot: (draft: StandardKanbanEditorDraft) => snapshotFormValues(rawFormValues(draft, schema.fields)),
-      proposal: (result) => ({ kind: 'card-update', cardKey: result.draft.key, patch: result.snapshot }),
+      proposal: (result) =>
+        result.mode === 'create' && createProposal?.kind === 'card-create'
+          ? { kind: 'card-create', target: createProposal.target, draft: result.snapshot }
+          : { kind: 'card-update', cardKey: result.draft.key, patch: result.snapshot },
       createForm: (draft: StandardKanbanEditorDraft) => {
         const form = createForm({ schema: formSchema, initial: rawFormValues(draft, schema.fields) });
         return Object.freeze({

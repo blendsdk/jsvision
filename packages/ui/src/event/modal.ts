@@ -36,6 +36,8 @@ export interface ModalManager {
   begin<R>(view: View, resolve: (result: R | undefined) => void): void;
   /** Close the top modal: restore the saved focus and resolve its promise. A no-op when none is open. */
   end<R>(result: R): void;
+  /** Close `view` only when it is the active modal; nested modals make this a safe no-op. */
+  endView<R>(view: View, result: R): boolean;
   /**
    * Permanently release every modal frame during loop disposal.
    *
@@ -80,10 +82,16 @@ export function createModalManager(focus: ModalFocus): ModalManager {
     frame.resolve(result);
   };
 
+  const endView = <R>(view: View, result: R): boolean => {
+    if (topView() !== view) return false;
+    end(result);
+    return true;
+  };
+
   const dispose = (): void => {
     if (stack.length > 0) generation += 1;
     for (const frame of stack.splice(0).reverse()) frame.resolve(undefined);
   };
 
-  return { version: () => generation, isActive, topView, begin, end, dispose };
+  return { version: () => generation, isActive, topView, begin, end, endView, dispose };
 }

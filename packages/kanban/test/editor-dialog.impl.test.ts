@@ -189,6 +189,7 @@ describe('Kanban editor dialog implementation boundaries', () => {
     });
     await mounted();
     if (context === undefined) throw new Error('Expected the custom editor context to mount.');
+    if (context.mode !== 'edit') throw new Error('Expected edit replacement context.');
     await context.session.setValue('title', 'Pending').settled;
 
     const first = context.actions.submit();

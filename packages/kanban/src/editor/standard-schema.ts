@@ -1,10 +1,9 @@
-import { Group } from '@jsvision/ui';
-
 import { KanbanInvalidEditorSchemaError } from '../contract/error.js';
 import type { KanbanFieldId } from '../contract/identity.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import type { StandardCard } from '../card/standard-card.js';
 import { createKanbanEditorControlRegistry } from './registry.js';
+import { createStandardChecklistControl, createStandardSummaryControl } from './standard-collection-controls.js';
 import { createKanbanCardEditorSchema } from './schema.js';
 import type {
   KanbanCardEditorField,
@@ -141,20 +140,11 @@ function controlIdOf(fieldId: StandardKanbanEditorFieldId): string | undefined {
 
 /** Builds one package custom-control registration for a collection-oriented standard field. */
 function collectionControl(fieldId: keyof typeof CONTROL_IDS) {
-  const rows = fieldId === 'checklists' ? 6 : 3;
   return Object.freeze({
     controlId: CONTROL_IDS[fieldId],
-    create: () => {
-      const view = new Group();
-      return Object.freeze({
-        view,
-        measure: (availableWidth: number) => ({
-          minimumWidth: 12,
-          preferredWidth: Math.max(12, Math.min(48, availableWidth)),
-          rows,
-        }),
-        dispose: () => undefined,
-      });
+    create: (context?: Parameters<typeof createStandardChecklistControl>[0]) => {
+      if (context === undefined) throw new KanbanInvalidEditorSchemaError();
+      return fieldId === 'checklists' ? createStandardChecklistControl(context) : createStandardSummaryControl(context);
     },
   });
 }

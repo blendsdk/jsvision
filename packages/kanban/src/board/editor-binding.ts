@@ -33,7 +33,17 @@ import type { KanbanInteractionHandler, KanbanInteractionIntent, KanbanOpenCardI
  */
 export interface KanbanBoardEditorBinding {
   /** Opens or reveals the editor for one card through the board's current operation authority. */
-  open(cardKey: CardKey, authority: KanbanEditorAuthority): unknown | PromiseLike<unknown>;
+  open(
+    cardKey: CardKey,
+    authority: KanbanEditorAuthority,
+    context?: KanbanBoardEditorOpenContext,
+  ): unknown | PromiseLike<unknown>;
+}
+
+/** Board-owned lifetime evidence supplied to one asynchronous editor open. */
+export interface KanbanBoardEditorOpenContext {
+  /** Aborts when the board is disposed before or during initial editor acquisition. */
+  readonly signal: AbortSignal;
 }
 
 /** Typed application services captured by {@link createKanbanBoardEditorBinding}. */
@@ -75,7 +85,11 @@ export function createKanbanBoardEditorBinding<TCard, TDraft>(
   options: CreateKanbanBoardEditorBindingOptions<TCard, TDraft>,
 ): KanbanBoardEditorBinding {
   return Object.freeze({
-    open: (cardKey: CardKey, authority: KanbanEditorAuthority): Promise<KanbanEditorDialogResult> =>
+    open: (
+      cardKey: CardKey,
+      authority: KanbanEditorAuthority,
+      context?: KanbanBoardEditorOpenContext,
+    ): Promise<KanbanEditorDialogResult> =>
       openKanbanCardEditDialog(options.host, {
         cardKey,
         adapter: options.adapter,
@@ -84,9 +98,18 @@ export function createKanbanBoardEditorBinding<TCard, TDraft>(
         completion: { kind: 'authority', authority },
         ...(options.confirm === undefined ? {} : { confirm: options.confirm }),
         ...(options.replacement === undefined ? {} : { replacement: options.replacement }),
-        ...(options.signal === undefined ? {} : { signal: options.signal }),
+        ...(context?.signal === undefined && options.signal === undefined
+          ? {}
+          : { signal: combineEditorSignals(context?.signal, options.signal) }),
       }),
   });
+}
+
+/** Combines application and board cancellation into one initial-acquisition signal. */
+function combineEditorSignals(first: AbortSignal | undefined, second: AbortSignal | undefined): AbortSignal {
+  if (first === undefined) return second ?? new AbortController().signal;
+  if (second === undefined || first === second) return first;
+  return AbortSignal.any([first, second]);
 }
 
 /** Options used internally to compose package editor activation with an application intent handler. */
@@ -99,6 +122,8 @@ export interface KanbanBoardEditorInteractionOptions {
   readonly application?: KanbanInteractionHandler;
   /** Optional payload-free board observation sink. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Board-owned lifetime that prevents delayed opens after disposal. */
+  readonly signal?: AbortSignal;
 }
 
 /** Returns whether one open-card intent requests the configured card editor. */
@@ -133,7 +158,12 @@ export function createKanbanBoardEditorInteractionHandler(
   return (intent): void => {
     if (requestsEditor(intent)) {
       void Promise.resolve()
-        .then(() => editor.open(intent.cardKey, options.authority))
+        .then(() => {
+          if (options.signal?.aborted === true) return;
+          return options.signal === undefined
+            ? editor.open(intent.cardKey, options.authority)
+            : editor.open(intent.cardKey, options.authority, Object.freeze({ signal: options.signal }));
+        })
         .catch(() => reportEditorFailure(options.observe));
     }
     options.application?.(intent);

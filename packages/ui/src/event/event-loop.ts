@@ -522,7 +522,7 @@ class EventLoopImpl implements EventLoop {
           // never receives a handle into a terminal loop.
           if (isModalHostAware(view)) {
             view.attachModalHost({
-              endModal: (result: unknown) => this.endModal(result),
+              endModal: (result: unknown) => this.endModalView(view, result),
               isCommandEnabled: (command: string) => this.isCommandEnabled(command),
             });
           }
@@ -534,6 +534,17 @@ class EventLoopImpl implements EventLoop {
 
   endModal<R>(result: R): void {
     this.runTick(() => this.endModalFrame(result));
+  }
+
+  /** Ends one exact modal only while it owns the top stack frame. */
+  private endModalView<R>(view: View, result: R): boolean {
+    let ended = false;
+    this.runTick(() => {
+      this.runCaptureBoundary('modal', () => {
+        ended = this.modal.endView(view, result);
+      });
+    });
+    return ended;
   }
 
   /** Close one modal through the same capture boundary used by public and quit-driven closure. */

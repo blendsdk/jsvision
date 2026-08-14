@@ -3,6 +3,7 @@ import type { KanbanRequestResult } from '../contract/request.js';
 import type {
   KanbanCardEditorAdapter,
   KanbanEditorAlreadyOpen,
+  KanbanEditorBorrowedSession,
   KanbanEditorAuthority,
   KanbanEditorCoordinator,
   KanbanEditorOpened,
@@ -11,16 +12,16 @@ import type {
 } from './types.js';
 
 /** Callback helper that keeps application session handlers usable across heterogeneous coordinators. */
-type KanbanInspectorCallback<TResult> = {
-  bivarianceHack(session: KanbanEditorSession): TResult;
+type KanbanInspectorCallback<TSession, TResult> = {
+  bivarianceHack(session: TSession): TResult;
 }['bivarianceHack'];
 
 /** Application-owned modeless presentation operations for one inspector identity. */
 export interface KanbanEditorInspectorPresentation {
   /** Mounts the first acquired session in an application-owned surface. */
-  readonly mount: KanbanInspectorCallback<void | Promise<void>>;
+  readonly mount: KanbanInspectorCallback<KanbanEditorSession, void | Promise<void>>;
   /** Reveals the existing application-owned surface for a repeated open. */
-  readonly reveal: KanbanInspectorCallback<void | Promise<void>>;
+  readonly reveal: KanbanInspectorCallback<KanbanEditorBorrowedSession, void | Promise<void>>;
 }
 
 /** Options for acquiring or revealing one application-owned modeless card inspector. */

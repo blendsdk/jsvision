@@ -194,6 +194,13 @@ describe('Kanban card editor dialogs', () => {
     expect(request).not.toHaveBeenCalled();
     expect(h.removed).toHaveLength(0);
     expect(h.loop.getFocused()).toBeInstanceOf(Input);
+    h.loop.renderRoot.flush();
+    const validationFrame = h.loop.renderRoot
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(validationFrame).toContain('required');
 
     h.loop.emitCommand(Commands.cancel);
     await pending;
@@ -260,6 +267,39 @@ describe('Kanban card editor dialogs', () => {
 
     await expect(pending).resolves.toEqual({ kind: 'result', value: { title: 'Nieuw werkitem' } });
     expect(detach).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retain the result-only dialog and show safe feedback when detachment fails', async () => {
+    const h = host();
+    const pending = openKanbanCardCreateDialog(h.value, {
+      claimId: 'new-ticket-failing-detach',
+      adapter: adapter('create'),
+      coordinator: createKanbanEditorCoordinator(),
+      confirm: async () => true,
+      completion: {
+        kind: 'result-only',
+        detach: () => {
+          throw new Error('private application detail');
+        },
+      },
+    });
+    await mounted();
+    replaceFocusedInput(h.loop, 'Valid title');
+
+    h.loop.emitCommand(Commands.ok);
+    await mounted();
+    h.loop.renderRoot.flush();
+    const painted = h.loop.renderRoot
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+
+    expect(painted).toContain('Unable to prepare result');
+    expect(painted).not.toContain('private application detail');
+    expect(h.removed).toHaveLength(0);
+    h.loop.emitCommand(Commands.cancel);
+    await expect(pending).resolves.toEqual({ kind: 'cancelled' });
   });
 
   it('should render view mode without editable controls or an Apply action', async () => {

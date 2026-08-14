@@ -285,7 +285,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
 
   /** Validates and returns one typed result without invoking application request authority. */
   async prepare(): Promise<KanbanEditorPrepareResult<TDraft>> {
-    const prepared = await this.#prepareSubmission();
+    const prepared = await this.#prepareSubmission(false);
     if (prepared.kind !== 'ready') return prepared;
     if (!this.#submissionIsCurrent(prepared.generation, prepared.controller)) {
       return interruptedKanbanEditorPreparationResult(this.#disposed, this.#record);
@@ -298,9 +298,10 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
 
   /** Validates the complete draft and submits one exact lifecycle-free proposal. */
   async submit(): Promise<KanbanEditorSubmitResult> {
-    const prepared = await this.#prepareSubmission();
+    const prepared = await this.#prepareSubmission(true);
     if (prepared.kind !== 'ready') return prepared;
     const { generation, controller: submissionController, proposal } = prepared;
+    if (proposal === undefined) return this.#failSubmission();
     if (!this.#submissionIsCurrent(generation, submissionController)) return this.#interruptedSubmissionResult();
 
     let requested: Promise<KanbanRequestResult>;
@@ -332,7 +333,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
   }
 
   /** Runs the validation and proposal boundary shared by both completion policies. */
-  async #prepareSubmission(): Promise<KanbanEditorPreparation<TDraft>> {
+  async #prepareSubmission(constructProposal: boolean): Promise<KanbanEditorPreparation<TDraft>> {
     if (this.#disposed) return Object.freeze({ kind: 'disposed' });
     if (this.#options.mode === 'view') return Object.freeze({ kind: 'read-only' });
     if (this.#record.kind === 'stale') return Object.freeze({ kind: 'stale' });
@@ -380,6 +381,7 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
         ...(this.#baseRevision === undefined ? {} : { baseRevision: this.#baseRevision }),
         mode: this.#options.mode,
         cardKey: this.#cardKey,
+        constructProposal,
       });
     } catch {
       if (this.#submissionIsCurrent(generation, submissionController)) this.#failSubmission();

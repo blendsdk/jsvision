@@ -332,6 +332,8 @@ export class KanbanBoard<TCard> extends Group {
   readonly #bindings: KanbanBoardBindings<TCard>;
   readonly #viewBinding: KanbanBoardViewBinding<TCard> | undefined;
   readonly #authority: KanbanBoardAuthority;
+  /** Cancels delayed or resolving editor opens when this board releases ownership. */
+  readonly #editorLifetime = new AbortController();
   readonly #interactionFacade: KanbanInteractionFacadeOwner;
   readonly #interactionFactory: KanbanInteractionControllerFactory | undefined;
   readonly #hasLegacyIdentity: boolean;
@@ -412,6 +414,7 @@ export class KanbanBoard<TCard> extends Group {
     });
     const interactionHandler = createKanbanBoardEditorInteractionHandler({
       authority: editorAuthority,
+      signal: this.#editorLifetime.signal,
       ...(options.editor === undefined ? {} : { editor: options.editor }),
       ...(options.onInteraction === undefined ? {} : { application: options.onInteraction }),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
@@ -641,6 +644,7 @@ export class KanbanBoard<TCard> extends Group {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#editorLifetime.abort();
     quiesceKanbanViewportInput(this.viewport);
     setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     disposeKanbanViewportOperations(this.viewport);

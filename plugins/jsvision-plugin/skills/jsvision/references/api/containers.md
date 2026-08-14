@@ -47,6 +47,7 @@ A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` c
 new Dialog(opts: DialogOptions = {})   // extends Window
 // methods & signals:
 acceleratorScope
+finishModal(result: unknown): boolean
 valid(command: string): boolean
 ```
 

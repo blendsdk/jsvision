@@ -51,11 +51,15 @@ export {
   type KanbanEditorDialogHandlers,
   type KanbanEditorDialogHost,
   type KanbanEditorDialogOptions,
+  type KanbanEditorDialogPresentation,
   type KanbanEditorDialogResult,
   type KanbanEditorDialogReplacement,
   type KanbanEditorDialogSubmitResult,
   type KanbanEditorDialogViewport,
   type KanbanEditorResultOnlyCompletion,
+  type KanbanEditorCreatedRecord,
+  type KanbanEditorCreatePublicationContext,
+  type KanbanEditorCreatePublicationResolver,
   type OpenKanbanCardCreateDialogOptions,
   type OpenKanbanCardEditDialogOptions,
   type OpenKanbanCardViewDialogOptions,
@@ -73,6 +77,8 @@ export {
   createStandardKanbanEditorAdapter,
   type StandardKanbanEditorAdapter,
   type StandardKanbanEditorAdapterOptions,
+  type StandardKanbanEditorCreateDefaults,
+  type StandardKanbanEditorCreateOptions,
   type StandardKanbanEditorForm,
   type StandardKanbanEditorFormField,
   type StandardKanbanFormFieldSchema,
@@ -128,6 +134,7 @@ export {
   createKanbanBoardEditorBinding,
   type CreateKanbanBoardEditorBindingOptions,
   type KanbanBoardEditorBinding,
+  type KanbanBoardEditorOpenContext,
 } from './board/editor-binding.js';
 export * from './board/kanban-viewport.js';
 export * from './board/kanban-board.js';

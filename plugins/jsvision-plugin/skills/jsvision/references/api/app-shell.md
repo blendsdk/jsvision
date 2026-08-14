@@ -311,7 +311,7 @@ The handle a self-closing modal view receives so it can close itself from its ow
 
 ```ts
 interface ModalHost {
-  endModal(result: unknown): void;   // Resolve the active `execView` promise with `result` (e.g. the command that closed the dialog).
+  endModal(result: unknown): boolean | void;   // Resolve this exact modal when active; legacy hosts may omit the result, while `false` means a nested modal owns the top.
   isCommandEnabled(command: string): boolean;   // Whether a command is currently enabled (a dialog gates its close-on-command on this).
 }
 ```

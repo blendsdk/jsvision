@@ -52,6 +52,7 @@
 | AR-D33 | Dialog API · runtime · complex | How should create/view/edit, result-only completion, custom replacement, and inspector ownership share one session without invalid option combinations? | One permissive invoker / separate typed invokers over one lifecycle engine / separate presentation-owned sessions | Export separate typed invokers over one coordinator-owned lifecycle, with provisional create claims, typed result detachment, and application-owned inspector docking | ✅ Resolved |
 | AR-D34 | Control binding · runtime · complex | What boundary lets standard and registered custom controls share reactive field state without exposing the complete draft or session authority? | Complete draft / complete session / narrow semantic field context | Expose immutable field values and focus identity through a narrow field context; retain parsing, validation, submission, and disposal authority in the session | ✅ Resolved |
 | AR-D35 | Board integration · runtime · complex | How should whole-card and checklist activation open the editor through the existing board authority without spreading editor draft generics through `KanbanBoard`? | Add editor generics to board options / application-only intent handling / type-erased board binding with typed factory | Add a narrow `open(cardKey, authority)` board binding and typed factory; compose it at the existing `open-card` intent boundary for whole-card and standard editor actions while preserving unrelated application intents | ✅ Resolved |
+| AR-D36 | Phase 4 quality · runtime · complex | How should editor ownership, nested modality, authority-backed creation, and responsive progressive UI converge without creating new data authority? | Patch each symptom locally / separate claims, borrowed facades, exact-modal completion, application publication correlation, and retained responsive controls / defer advertised workflows | Use distinct provisional/persisted claims, non-owning repeat-open facades, exact target-bound modal completion, an application create-publication resolver, retained responsive controls, and one serialized terminal lifecycle | ✅ Resolved |
 
 ## Resolution notes
 
@@ -516,3 +517,37 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** The board gains typed draft ownership, editor activation no longer converges on `open-card`,
   or a later public action router needs a materially different asynchronous result contract.
+
+### AR-D36 — Phase 4 editor quality convergence (runtime)
+
+- **Authority:** AI — delegated by `--auto-design` after the user accepted every Phase 4 Major correction.
+- **Eligibility:** Internal ownership, concurrency, cleanup, responsive composition, and additive typed seams inside
+  the confirmed editor/dialog integration scope; application records and persistence remain application-owned.
+- **Objective:** Make the card editor complete and safe under repeat opens, nested confirmation, resize, invalid
+  input, board disposal, host failures, and authority-backed creation without weakening TUI responsiveness.
+- **Evidence:** The coordinator used one key map for provisional and persisted identities; the event loop's injected
+  modal handle closed the stack top rather than its attached dialog; result-only preparation invoked proposal code;
+  standard creation lacked placement/defaults; dialog geometry and lifecycle UI were construction-time snapshots;
+  collection controls were empty groups; and no seam mapped an accepted create operation to its persisted card.
+- **Decision:** Split provisional and persisted claim maps and return a non-disposable borrowed facade to repeat
+  callers. Bind modal completion to its exact dialog and defer terminal closure while a nested modal owns the top.
+  Require authority-backed create dialogs to receive an application resolver that maps the operation to a bounded
+  persisted card publication. Keep retained field/button instances while remeasuring DSL/scroller geometry, expose
+  live replacement presentation getters, serialize terminal actions, and independently release every acquired
+  resource. Standard creation receives explicit defaults and semantic placement; standard collections render from
+  narrow field context and checklist mutations preserve item identities.
+- **Rejected alternatives:** Local symptom patches retain ownership races. A global modal close can terminate the
+  wrong dialog. Guessing a created identity or polling the board would take application data authority. Rebuilding
+  controls on resize loses focus/drafts, while deferral leaves accepted mainstream editor behavior absent.
+- **Strongest counterargument:** The additive API is larger and exact-modal completion touches the UI prerequisite.
+  That surface is necessary because no Kanban-only wrapper can make an already-created replacement `Dialog` close
+  its own modal frame safely when a nested confirmation is active.
+- **Confidence:** High — independent correctness, security, and concurrency reviews converged on the ownership
+  failures, and focused red/green contracts cover each new boundary.
+- **Hardening:** The strongest-option review rejected viewport data ownership, stack-top closure, session sharing
+  with destructive repeat ownership, and construction-time geometry. The resulting seams remain additive and
+  preserve the existing single request/session authority.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** UI gains a different target-addressable modal primitive, created-card publications cannot be
+  correlated by operation, or replacement views require a materially different public host capability.

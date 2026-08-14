@@ -19,7 +19,7 @@ export interface PreparedKanbanEditorSubmission<TDraft> {
   /** Typed result-only payload supplied to an application detacher. */
   readonly result: Extract<KanbanEditorPrepareResult<TDraft>, { readonly kind: 'prepared' }>;
   /** Validated lifecycle-free request proposal used only by authority completion. */
-  readonly proposal: KanbanRequestProposal;
+  readonly proposal?: KanbanRequestProposal;
   /** Submission generation that must remain authoritative. */
   readonly generation: number;
   /** Cancellation owner for this validation and dispatch generation. */
@@ -46,18 +46,22 @@ export interface PrepareKanbanEditorProposalOptions<TCard, TDraft> {
   readonly mode: KanbanEditorMode;
   /** Existing card identity or provisional create claim. */
   readonly cardKey: CardKey;
+  /** Whether authority submission requires proposal construction after validation. */
+  readonly constructProposal: boolean;
 }
 
 /** Creates one typed result and validates its adapter-produced request proposal. */
 export function prepareKanbanEditorProposal<TCard, TDraft>(
   options: PrepareKanbanEditorProposalOptions<TCard, TDraft>,
-): { readonly result: KanbanEditorResult<TDraft>; readonly proposal: KanbanRequestProposal } {
+): { readonly result: KanbanEditorResult<TDraft>; readonly proposal?: KanbanRequestProposal } {
   const result = Object.freeze({
+    mode: options.mode === 'create' ? ('create' as const) : ('edit' as const),
     draft: options.draft,
     snapshot: options.snapshot,
     changedFieldIds: options.changedFieldIds,
     ...(options.baseRevision === undefined ? {} : { baseRevision: options.baseRevision }),
   });
+  if (!options.constructProposal) return Object.freeze({ result });
   const proposed = options.adapter.proposal(result);
   const proposal = snapshotKanbanRequestProposal(
     proposed.kind === 'card-update' && options.baseRevision !== undefined

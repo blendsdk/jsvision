@@ -3,6 +3,7 @@ import type { CardKey, KanbanFieldId } from '../contract/identity.js';
 import type {
   KanbanEditorCoordinator,
   KanbanEditorCoordinatorOpenOptions,
+  KanbanEditorBorrowedSession,
   KanbanEditorFieldState,
   KanbanEditorKind,
   KanbanEditorOpenResult,
@@ -26,6 +27,27 @@ interface KanbanEditorClaim {
   readonly session: Promise<KanbanEditorSession>;
   /** Aborts package subscription ownership while initial resolution is pending. */
   readonly controller: AbortController;
+}
+
+/**
+ * Creates a non-owning facade over an existing session.
+ *
+ * Repeat openers may use the shared actor, but only the original claim owner may dispose it and
+ * release coordinator ownership.
+ */
+function borrowKanbanEditorSession<TDraft>(session: KanbanEditorSession<TDraft>): KanbanEditorBorrowedSession<TDraft> {
+  return Object.freeze({
+    snapshot: () => session.snapshot(),
+    fieldState: (fieldId: KanbanFieldId) => session.fieldState(fieldId),
+    fieldValue: (fieldId: KanbanFieldId) => session.fieldValue(fieldId),
+    focusField: (fieldId: KanbanFieldId) => session.focusField(fieldId),
+    setValue: (fieldId: KanbanFieldId, value: unknown) => session.setValue(fieldId, value),
+    prepare: () => session.prepare(),
+    submit: () => session.submit(),
+    reload: (policy: KanbanEditorReloadPolicy) => session.reload(policy),
+    subscribe: (listener: (snapshot: KanbanEditorSessionSnapshot) => void) => session.subscribe(listener),
+    disposed: () => session.disposed(),
+  });
 }
 
 /**
@@ -94,8 +116,11 @@ class CoordinatedKanbanEditorSession<TDraft> implements KanbanEditorSession<TDra
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    this.#session.dispose();
-    this.#release();
+    try {
+      this.#session.dispose();
+    } finally {
+      this.#release();
+    }
   }
 
   /** Reports wrapper or underlying disposal. */
@@ -106,7 +131,10 @@ class CoordinatedKanbanEditorSession<TDraft> implements KanbanEditorSession<TDra
 
 /** Identity-keyed coordinator implementation with pre-resolution claims. */
 class KanbanEditorCoordinatorActor implements KanbanEditorCoordinator {
-  readonly #claims = new Map<CardKey, KanbanEditorClaim>();
+  /** Claims for application-owned persisted identities. */
+  readonly #cardClaims = new Map<CardKey, KanbanEditorClaim>();
+  /** Provisional claims remain distinct even when their text matches a persisted key. */
+  readonly #createClaims = new Map<CardKey, KanbanEditorClaim>();
   #disposed = false;
 
   /** Opens one session or converges on the exact existing identity claim. */
@@ -118,11 +146,16 @@ class KanbanEditorCoordinatorActor implements KanbanEditorCoordinator {
       throw new TypeError('Invalid Kanban editor kind.');
     }
     const cardKey = createKanbanCardKey(options.cardKey);
-    const existing = this.#claims.get(cardKey);
+    const claims = options.mode === 'create' ? this.#createClaims : this.#cardClaims;
+    const existing = claims.get(cardKey);
     if (existing !== undefined) {
       const session = await existing.session;
       if (this.#disposed) return Object.freeze({ kind: 'disposed' });
-      return Object.freeze({ kind: 'already-open', editorKind: existing.editorKind, session });
+      return Object.freeze({
+        kind: 'already-open',
+        editorKind: existing.editorKind,
+        session: borrowKanbanEditorSession(session),
+      });
     }
 
     const controller = new AbortController();
@@ -133,20 +166,20 @@ class KanbanEditorCoordinatorActor implements KanbanEditorCoordinator {
     const session = createKanbanEditorSession({ ...options, signal: controller.signal }).then((resolved) => {
       const coordinated = new CoordinatedKanbanEditorSession(resolved, () => {
         controller.abort();
-        if (this.#claims.get(cardKey)?.marker === marker) this.#claims.delete(cardKey);
+        if (claims.get(cardKey)?.marker === marker) claims.delete(cardKey);
       });
       if (this.#disposed) coordinated.dispose();
       return coordinated;
     });
     void session.finally(() => options.signal?.removeEventListener('abort', abortFromCaller)).catch(() => undefined);
     const claim = Object.freeze({ marker, editorKind: options.editorKind, session, controller });
-    this.#claims.set(cardKey, claim);
+    claims.set(cardKey, claim);
     try {
       const resolved = await session;
       if (this.#disposed) return Object.freeze({ kind: 'disposed' });
       return Object.freeze({ kind: 'opened', editorKind: options.editorKind, session: resolved });
     } catch (error) {
-      if (this.#claims.get(cardKey) === claim) this.#claims.delete(cardKey);
+      if (claims.get(cardKey) === claim) claims.delete(cardKey);
       throw error;
     }
   }
@@ -155,8 +188,9 @@ class KanbanEditorCoordinatorActor implements KanbanEditorCoordinator {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    const claims = [...this.#claims.values()];
-    this.#claims.clear();
+    const claims = [...this.#cardClaims.values(), ...this.#createClaims.values()];
+    this.#cardClaims.clear();
+    this.#createClaims.clear();
     for (const claim of claims) {
       claim.controller.abort();
       void claim.session.then(

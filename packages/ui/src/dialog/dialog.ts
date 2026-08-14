@@ -147,6 +147,19 @@ export class Dialog extends Window implements ModalHostAware {
   }
 
   /**
+   * Completes this exact modal without accidentally closing a nested confirmation.
+   *
+   * @param result Value returned by this dialog's `execView` promise.
+   * @returns Whether this dialog owned the active modal frame and was completed.
+   */
+  finishModal(result: unknown): boolean {
+    if (this.modalHost === null) return false;
+    const ended = this.modalHost.endModal(result) !== false;
+    if (ended) this.modalHost = null;
+    return ended;
+  }
+
+  /**
    * Paint the frame in the `dialog` role. The inherited window flags remain opt-in, so ordinary
    * dialogs keep their fixed frame while a specialized modeless dialog can expose resize and zoom.
    */
@@ -239,9 +252,7 @@ export class Dialog extends Window implements ModalHostAware {
     if (this.modalHost === null) return; // modeless: there is no modal to end — the app decides
     if (!this.modalHost.isCommandEnabled(command)) return; // a disabled command is ignored
     if (this.valid(command)) {
-      this.modalHost.endModal(command);
-      // The modal session ended — release the host so this view reverts to a plain window.
-      this.modalHost = null;
+      this.finishModal(command);
     } else if (this.firstInvalid !== null) {
       ev.focusView?.(this.firstInvalid); // vetoed: keep open and refocus the first invalid control
     }
@@ -251,10 +262,7 @@ export class Dialog extends Window implements ModalHostAware {
   /** Resolve the modal to `cancel` (bypasses `valid()`), for the frame close-box and Esc. */
   protected resolveCancel(ev: DispatchEvent): void {
     if (this.modalHost === null) return;
-    this.modalHost.endModal(Commands.cancel);
-    // Clear the host so a dialog left mounted after its modal ends stops swallowing global Esc (and
-    // can no longer end an unrelated later modal); it reverts to a plain window.
-    this.modalHost = null;
+    this.finishModal(Commands.cancel);
     ev.handled = true;
   }
 }

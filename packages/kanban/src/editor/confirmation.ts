@@ -1,6 +1,7 @@
 import { confirm } from '@jsvision/ui';
 
 import type { KanbanEditorDialogHost } from './dialog.js';
+import { resolveKanbanEditorMessage } from './presentation-text.js';
 import type { KanbanEditorMode, KanbanEditorReloadResult, KanbanEditorSession } from './types.js';
 
 /** One package-owned decision that requires explicit user confirmation. */
@@ -25,13 +26,17 @@ export type KanbanEditorConfirmedReloadResult = KanbanEditorReloadResult | { rea
 /** Resolves package text for one confirmation request through the host translation service. */
 function confirmationText(host: KanbanEditorDialogHost, request: KanbanEditorConfirmationRequest): string {
   if (request.kind === 'reload-stale') {
-    return host.i18n.t('kanban.editor.confirm.reload-stale', {
-      defaultMessage: 'Reload the card and discard your local changes?',
-    });
+    return resolveKanbanEditorMessage(
+      host.i18n,
+      'kanban.editor.confirm.reload-stale',
+      'Reload the card and discard your local changes?',
+    );
   }
-  return host.i18n.t('kanban.editor.confirm.discard-draft', {
-    defaultMessage: 'Discard your unsaved card changes?',
-  });
+  return resolveKanbanEditorMessage(
+    host.i18n,
+    'kanban.editor.confirm.discard-draft',
+    'Discard your unsaved card changes?',
+  );
 }
 
 /**
@@ -49,7 +54,13 @@ export async function confirmKanbanEditorAction(
   request: KanbanEditorConfirmationRequest,
   replacement?: KanbanEditorConfirm,
 ): Promise<boolean> {
-  if (replacement === undefined) return confirm(host, confirmationText(host, request));
+  if (replacement === undefined) {
+    try {
+      return await confirm(host, confirmationText(host, request));
+    } catch {
+      return false;
+    }
+  }
   try {
     return (await replacement(Object.freeze(request))) === true;
   } catch {
