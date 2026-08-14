@@ -113,6 +113,10 @@ Phase D coverage contract.
 
 ### Actions, capabilities, and read-only
 
+Phase 6 proves the headless registry/router/keymap/capability contract. ST-DA-02's real board-producer
+parity and ST-DA-08's mounted responsive reachability complete with the Phase 8 integration oracles;
+the phase-local action specifications do not claim those mounted seams early.
+
 | # | Input / scenario | Expected output / behavior | Source |
 |---|---|---|---|
 | ST-DA-01 | Inspect package action inventory | Every action has stable ID, messages, applicability, capability, handler, and binding/unbound marker | RD-12 AC1 |

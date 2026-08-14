@@ -94,6 +94,8 @@ describe('browser DOM pointer input implementation', () => {
     adapter.dispose();
     expect(adapter.acceptTerminalInput(last)).toBe(true);
     expect(target.listeners.size).toBe(0);
+    expect(target.value.releasePointerCapture).toHaveBeenCalledWith(1);
+    expect(target.value.releasePointerCapture).toHaveBeenCalledWith(2);
     target.emit('pointerup', pointer('pointerup', { pointerId: 1 }));
     expect(events).toHaveLength(3);
   });
@@ -115,5 +117,20 @@ describe('browser DOM pointer input implementation', () => {
     target.emit('pointerdown', hostile);
     expect(clientX).toHaveBeenCalledOnce();
     expect(onInput).not.toHaveBeenCalled();
+  });
+
+  it('derives a standard drag button when a move arrives without retained pointerdown state', () => {
+    const target = surface();
+    const events: InputEvent[] = [];
+    createBrowserDomInputAdapter({
+      surface: target.value,
+      cells: () => ({ columns: 80, rows: 24 }),
+      platform: 'linux',
+      onInput: (event) => events.push(event),
+    });
+
+    target.emit('pointermove', pointer('pointermove', { button: -1, buttons: 1 }));
+
+    expect(events).toMatchObject([{ type: 'mouse', kind: 'drag', button: 0 }]);
   });
 });

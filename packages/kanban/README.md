@@ -29,6 +29,7 @@ import {
   type KanbanColumnMeta,
   type KanbanQuery,
 } from '@jsvision/kanban';
+import { UNRECLAIMABLE_CHORDS } from '@jsvision/web';
 
 interface WorkItem {
   readonly id: number;
@@ -211,24 +212,37 @@ const registry = createKanbanActionRegistry({
 });
 const keymap = createKanbanActionKeymap({
   registry,
-  host: { kind: 'terminal', platform: process.platform },
+  host: {
+    kind: 'browser',
+    platform: 'darwin',
+    unavailableChords: UNRECLAIMABLE_CHORDS,
+  },
+  initial: {
+    unbind: [{ chord: 'alt+m', actionId: 'kanban.card.grab' }],
+    bindings: [{ chord: 'primary+m', actionId: 'kanban.card.grab' }],
+  },
 });
 const router = createKanbanActionRouter({ registry });
 const input = createKanbanActionInputAdapter({
   keymap,
   router,
   context: () => ({
+    boardId: 'product-board',
     selection: { count: board.interaction().snapshot().selectedCardKeys.length },
-    source: { state: 'ready' },
+    source: { state: 'ready', queryRevision: 'query-r4' },
     view: {},
   }),
 });
 ```
 
 `Primary` resolves to Command on a macOS browser that preserves Meta input and to Ctrl on native
-terminals and other hosts. Runtime binding replacement is atomic: an exact conflict requires an
-override naming both the chord and the currently bound action, and visible help reads the same updated
-snapshot. Destructive and board-configuration actions are public but unbound by default.
+terminals and other hosts. Pass the browser host's known unavailable chords so construction and runtime
+replacement reject routes that cannot reach the application. Use `initial` to remap an unavailable
+package default atomically during construction. Later runtime replacement follows the same contract: an
+exact conflict requires an override naming both the chord and the currently bound action. To move a
+route, use `unbind` with its exact current chord and action in the same request as the new binding.
+Visible help reads only the successfully published snapshot. Destructive and board-configuration
+actions are public but unbound by default.
 
 Use `createKanbanReadOnlyCapabilityProvider()` for discoverable read-only presentation. It hides
 mutation pointer hit targets and disables mutation keyboard/menu routes while retaining navigation,
@@ -383,9 +397,11 @@ status-driven surfaces remain visually coherent. Standard-card rows reserve the 
 left and one matching blank cell before the right frame; ellipsis never occupies that trailing padding.
 Checklist content is a bounded card presentation; checklist-item editing remains application-owned.
 
-Package-owned card/lane editor dialogs, the command/keymap layer, and the full docs-site component
-course remain later phases. Application persistence and authorization intentionally remain outside the
-package. Nested grouping remains excluded because it does not preserve a legible TUI interaction model.
+Package-owned card/lane editor dialogs and the headless command/keymap layer are available. Direct
+board ownership of those productivity binders, complete action-message locale overlays, and the full
+docs-site component course remain integration work. Application persistence and authorization
+intentionally remain outside the package. Nested grouping remains excluded because it does not preserve
+a legible TUI interaction model.
 
 ## License
 

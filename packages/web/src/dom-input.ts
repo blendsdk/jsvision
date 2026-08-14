@@ -55,6 +55,11 @@ interface PointerValues {
   readonly meta: boolean;
 }
 
+/** Closed pointer-event inventory installed by this adapter. */
+const POINTER_EVENT_TYPES: ReadonlySet<string> = new Set(['pointerdown', 'pointermove', 'pointerup', 'pointercancel']);
+/** Core SGR low-bit value for pointer motion with no pressed button. */
+const NO_BUTTON = 3;
+
 /** Reads one property without coercing its value. */
 function property(value: object, key: string): unknown {
   try {
@@ -85,11 +90,12 @@ function pointerValues(value: object): PointerValues | undefined {
   const clientY = property(value, 'clientY');
   if (
     typeof type !== 'string' ||
+    !POINTER_EVENT_TYPES.has(type) ||
     typeof pointerId !== 'number' ||
     !Number.isSafeInteger(pointerId) ||
     typeof button !== 'number' ||
     !Number.isSafeInteger(button) ||
-    button < 0 ||
+    (button < 0 && !(type === 'pointermove' && button === -1)) ||
     button > 2 ||
     typeof buttons !== 'number' ||
     !Number.isSafeInteger(buttons) ||
@@ -155,6 +161,15 @@ function commandIsPrimary(platform: string): boolean {
   return normalized === 'darwin' || normalized.startsWith('mac');
 }
 
+/** Resolves the standard primary/right/middle button bitmask when move reports `button: -1`. */
+function changedButton(button: number, buttons: number): number | undefined {
+  if (button !== -1) return button;
+  if ((buttons & 1) !== 0) return 0;
+  if ((buttons & 2) !== 0) return 2;
+  if ((buttons & 4) !== 0) return 1;
+  return buttons === 0 ? NO_BUTTON : undefined;
+}
+
 /** Compares only identity and geometry encoded by both DOM and terminal SGR mouse paths. */
 function matchingMouse(left: MouseEvent, right: MouseEvent): boolean {
   return left.kind === right.kind && left.button === right.button && left.x === right.x && left.y === right.y;
@@ -180,6 +195,7 @@ export function createBrowserDomInputAdapter(options: BrowserDomInputAdapterOpti
   }
   const activeButtons = new Map<number, number>();
   let duplicate: MouseEvent | undefined;
+  let duplicateGeneration = 0;
   let disposed = false;
   const primaryIsMeta = commandIsPrimary(options.platform);
 
@@ -206,7 +222,8 @@ export function createBrowserDomInputAdapter(options: BrowserDomInputAdapterOpti
     if (values === undefined) return;
     const cell = terminalCell(surface, options.cells, values);
     if (cell === undefined) return;
-    const activeButton = activeButtons.get(values.pointerId) ?? values.button;
+    const activeButton = activeButtons.get(values.pointerId) ?? changedButton(values.button, values.buttons);
+    if (activeButton === undefined) return;
     const kind: MouseEvent['kind'] =
       values.type === 'pointerdown'
         ? 'down'
@@ -242,6 +259,11 @@ export function createBrowserDomInputAdapter(options: BrowserDomInputAdapterOpti
       }
     }
     duplicate = event;
+    duplicateGeneration += 1;
+    const pendingGeneration = duplicateGeneration;
+    queueMicrotask(() => {
+      if (duplicateGeneration === pendingGeneration) duplicate = undefined;
+    });
     preventDefault(raw);
     options.onInput(event);
   };
@@ -254,7 +276,10 @@ export function createBrowserDomInputAdapter(options: BrowserDomInputAdapterOpti
     available: true,
     acceptTerminalInput(event: InputEvent): boolean {
       if (disposed || duplicate === undefined || event.type !== 'mouse') return true;
-      if (!matchingMouse(duplicate, event)) return true;
+      if (!matchingMouse(duplicate, event)) {
+        duplicate = undefined;
+        return true;
+      }
       duplicate = undefined;
       return false;
     },
@@ -262,6 +287,14 @@ export function createBrowserDomInputAdapter(options: BrowserDomInputAdapterOpti
       if (disposed) return;
       disposed = true;
       duplicate = undefined;
+      duplicateGeneration += 1;
+      for (const pointerId of activeButtons.keys()) {
+        try {
+          surface.releasePointerCapture?.(pointerId);
+        } catch {
+          // Cleanup remains deterministic when a detached DOM surface rejects capture release.
+        }
+      }
       activeButtons.clear();
       surface.removeEventListener('keydown', keydown, true);
       for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {

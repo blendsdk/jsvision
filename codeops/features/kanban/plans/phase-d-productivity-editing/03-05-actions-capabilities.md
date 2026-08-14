@@ -58,11 +58,15 @@ policy, never authorization.
 
 ## Routing and feedback
 
-One board action router snapshots logical target/selection/capability once, returns
+One action router snapshots logical target/selection/capability once, returns
 `handled | disabled | hidden | unavailable | pending`, and emits localized feedback parameters.
 View actions call the RD-09 controller; mutations build proposals and call board authority; dialogs
 invoke public functions; interaction actions call the stable facade. Pointer affordances use action IDs
 instead of private mutation helpers.
+
+The command phase delivers this as a headless router and bounded input-adapter seam. Concrete board
+ownership, producer-origin wiring, contextual activate-as-open/drop dispatch, complete localized
+labels, and mounted responsive reachability are integration work in Phase 8.
 
 Synchronous invocation of the same action from its own handler rejects before mutation with a typed
 reentrant outcome. Different-action nesting is configurable with default depth 16 and hard maximum 64;
@@ -73,7 +77,8 @@ mutation/event work. Each accepted nested route snapshots capability once and ca
 
 `packages/core/src/engine/input/`, `packages/web/src/` host adapters and fixtures;
 `src/command/types.ts`, `actions.ts`, `registry.ts`, `keymap.ts`, `capability.ts`, `router.ts`,
-`defaults.ts`, `help.ts`, and small viewport/board action adapters.
+`defaults.ts`, `help.ts`, and the headless input adapter; small viewport/board binders are composed in
+Phase 8.
 
 ## Testing requirements
 

@@ -101,7 +101,9 @@ function metadata(id: KanbanPackageActionId): PackageActionMetadata {
             ? 'cell'
             : 'card'
           : area === 'selection'
-            ? 'selection'
+            ? action === 'toggle'
+              ? 'card'
+              : 'selection'
             : 'board';
   const bindings = DEFAULT_BINDINGS.get(id) ?? Object.freeze([]);
   return Object.freeze({

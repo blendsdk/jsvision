@@ -1,5 +1,6 @@
 /** Specification oracle for conflict-safe semantic-Primary Kanban keymaps and reactive help. */
 import { describe, expect, it, vi } from 'vitest';
+import { UNRECLAIMABLE_CHORDS } from '@jsvision/web';
 
 import { createKanbanActionKeymap, createKanbanActionRegistry } from '../src/index.js';
 import type { KanbanActionDefinition, KanbanActionKeyEvent } from '../src/index.js';
@@ -147,5 +148,92 @@ describe('Kanban action keymap', () => {
     expect(keymap.snapshot()).toBe(before);
     expect(keymap.resolve(key('f', { ctrl: true }))).toBe('kanban.search.focus');
     expect(keymap.help('kanban.search.focus')).toBe('Ctrl+F');
+  });
+
+  it('rejects host-unavailable routes with bounded evidence while terminal hosts may retain them', () => {
+    const unavailable = UNRECLAIMABLE_CHORDS.filter((chord) => chord === 'Ctrl+N');
+    const browserRegistry = createKanbanActionRegistry({
+      executePackageAction: () => ({ kind: 'handled' }),
+      extensions: [extension('acme.new', ['primary+n'])],
+    });
+
+    expect(() =>
+      createKanbanActionKeymap({
+        registry: browserRegistry,
+        host: { kind: 'browser', platform: 'linux', unavailableChords: unavailable },
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        name: 'KanbanActionKeymapUnavailableError',
+        route: { chord: 'ctrl+n', actionId: 'acme.new' },
+      }),
+    );
+    expect(
+      createKanbanActionKeymap({ registry: browserRegistry, host: { kind: 'terminal', platform: 'linux' } }).help(
+        'acme.new',
+      ),
+    ).toBe('Ctrl+N');
+  });
+
+  it('atomically unbinds one exact route and rebinds the action to an available chord', () => {
+    const registry = createKanbanActionRegistry({ executePackageAction: () => ({ kind: 'handled' }) });
+    const keymap = createKanbanActionKeymap({
+      registry,
+      host: { kind: 'browser', platform: 'linux', unavailableChords: ['Alt+M'] },
+      initial: {
+        unbind: [{ chord: 'alt+m', actionId: 'kanban.card.grab' }],
+        bindings: [{ chord: 'primary+m', actionId: 'kanban.card.grab' }],
+      },
+    });
+
+    expect(keymap.snapshot().revision).toBe(1);
+    expect(keymap.resolve(key('m', { alt: true }))).toBeUndefined();
+    expect(keymap.resolve(key('m', { ctrl: true }))).toBe('kanban.card.grab');
+    expect(keymap.help('kanban.card.grab')).toBe('Ctrl+M');
+  });
+
+  it('preserves the exact prior snapshot when an unbind does not match current ownership', () => {
+    const registry = createKanbanActionRegistry({ executePackageAction: () => ({ kind: 'handled' }) });
+    const keymap = createKanbanActionKeymap({ registry, host: { kind: 'terminal', platform: 'linux' } });
+    const before = keymap.snapshot();
+
+    expect(() =>
+      keymap.replace({
+        unbind: [{ chord: 'alt+m', actionId: 'kanban.card.open' }],
+        bindings: [{ chord: 'primary+m', actionId: 'kanban.card.grab' }],
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        name: 'KanbanActionKeymapConflictError',
+        conflict: { chord: 'alt+m', actionIds: ['kanban.card.grab', 'kanban.card.open'] },
+      }),
+    );
+    expect(keymap.snapshot()).toBe(before);
+  });
+
+  it('rejects oversized and control-bearing external chords without leaking or publishing them', () => {
+    const registry = createKanbanActionRegistry({ executePackageAction: () => ({ kind: 'handled' }) });
+    const keymap = createKanbanActionKeymap({ registry, host: { kind: 'terminal', platform: 'linux' } });
+    const before = keymap.snapshot();
+    const oversized = `primary+${'x'.repeat(257)}`;
+    const controlled = 'primary+secret\u001broute';
+
+    for (const chord of [oversized, controlled]) {
+      try {
+        keymap.replace({ bindings: [{ chord, actionId: 'kanban.help.open' }] });
+        throw new Error('Expected invalid chord rejection.');
+      } catch (error) {
+        expect(error).toMatchObject({ name: 'KanbanInvalidSemanticValueError' });
+        expect(String(error)).not.toContain(chord);
+      }
+      expect(keymap.snapshot()).toBe(before);
+    }
+
+    expect(() =>
+      createKanbanActionKeymap({
+        registry,
+        host: { kind: 'browser', platform: 'linux', unavailableChords: [controlled] },
+      }),
+    ).toThrowError(expect.objectContaining({ name: 'KanbanInvalidSemanticValueError' }));
   });
 });

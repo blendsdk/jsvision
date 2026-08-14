@@ -303,8 +303,8 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 - [x] 6.2.4 Implement bounded action registry and namespaced extension validation — `packages/kanban/src/command/registry.ts`, `actions.ts` ✅ (completed: 2026-08-15 01:16)
 - [x] 6.2.5 Implement conflict-validating semantic-Primary keymap/defaults and atomic replacement — `packages/kanban/src/command/keymap.ts`, `defaults.ts` ✅ (completed: 2026-08-15 01:25)
 - [x] 6.2.6 Implement pure capability provider containment and read-only preset — `packages/kanban/src/command/capability.ts`, `types.ts` ✅ (completed: 2026-08-15 01:31)
-- [x] 6.2.7 Implement one board action router with typed same-action recursion rejection across completed producer seams — command router and board action binding ✅ (completed: 2026-08-15 01:43)
-- [x] 6.2.8 Implement localized help/status labels and pointer/action adapters without private mutation paths — command help and viewport input ✅ (completed: 2026-08-15 01:54)
+- [x] 6.2.7 Implement one headless action router with typed same-action recursion rejection and a bounded board-binding seam — command router and action input adapter; concrete board ownership remains Phase 8 task 8.2.1 ✅ (completed: 2026-08-15 01:43)
+- [x] 6.2.8 Implement i18n-driven help/status resolution and pointer/action adapters without private mutation paths — command help and input adapter; complete message overlays and mounted input remain Phase 8 tasks 8.2.1–8.2.3 ✅ (completed: 2026-08-15 01:54)
 - [x] 6.2.9 Export/document actions and make phase-local specifications green; defer DA-09 event assertions to Phase 7 — Kanban barrel ✅ (completed: 2026-08-15 02:07)
 
 ### Step 6.3: Implementation tests and hardening
@@ -360,16 +360,16 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 **Reference**: 03-07 §Board composition–Examples · ST-DI-01…DI-05 · AR-D02/D07/D12/D14
 
-- [ ] 8.1.1 `[spec-author]` Add board construction/facet precedence/legacy compatibility/`cardPresentation` preservation/disposal and deferred DC-15 route oracles — `packages/kanban/test/phase-d-integration.spec.test.ts`
-- [ ] 8.1.2 `[spec-author]` Add 80×24/narrow/resize/maximize/restore dialog/chrome and no-clipping oracles — `packages/kanban/test/e2e/phase-d-productivity.e2e.test.ts`
+- [ ] 8.1.1 `[spec-author]` Add board construction/facet precedence/legacy compatibility/`cardPresentation` preservation/disposal, board/query-context matching, producer-origin parity, read-only hit-target, and deferred DC-15 route oracles — `packages/kanban/test/phase-d-integration.spec.test.ts`
+- [ ] 8.1.2 `[spec-author]` Add 80×24/narrow/resize/maximize/restore dialog/chrome, action reachability, localized labels, and no-clipping oracles — `packages/kanban/test/e2e/phase-d-productivity.e2e.test.ts`
 - [ ] 8.1.3 `[spec-author]` Add 2,000-card/8-column/4-swimlane/10-filter deterministic count budgets plus 20-warmup/200-iteration median ≤16 ms oracle — `packages/kanban/test/phase-d-performance.spec.test.ts`
 - [ ] 8.1.4 `[spec-author]` Add kitchen-sink and GitHub showcase typecheck/import/behavior smoke oracles — `packages/examples/test/kanban-phase-d.spec.test.ts`, `github-project-kanban-app.spec.test.ts`
 - [ ] 8.1.5 Run the focused specifications and record expected red failures
 
 ### Step 8.2: Implementation
 
-- [ ] 8.2.1 Compose optional binders and one controller-precedence effective view getter layer around one viewport — board productivity binding and board
-- [ ] 8.2.2 Add complete Phase D English message contract and typed catalog overlays — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/locales/en.ts`
+- [ ] 8.2.1 Compose optional binders, board-owned action routing for every origin, contextual activate-as-open/drop dispatch, read-only hit-target policy, and one controller-precedence effective view getter layer around one viewport — board productivity binding and board
+- [ ] 8.2.2 Add complete Phase D English message contract and typed catalog overlays without raw action-ID fallbacks in mounted UI — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/locales/en.ts`
 - [ ] 8.2.3 Synchronize all nine non-English locale modules with reviewed English fallback and accelerator manifests — `packages/kanban/src/locales/*.ts`
 - [ ] 8.2.4 Add only required semantic theme roles/fallbacks and non-color/ASCII cues — `packages/kanban/src/card/theme.ts`, `theme-resolver.ts`
 - [ ] 8.2.5 Add public testing fixtures for view/editor/config/action/event deterministic workflows — `packages/kanban/src/testing/phase-d-harness.ts`, `packages/kanban/src/testing.ts`

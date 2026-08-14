@@ -59,10 +59,11 @@ const REQUIRED_ACTION_IDS = [
 function moveInvocation(origin: KanbanActionOrigin): KanbanActionInvocation {
   return {
     actionId: 'kanban.card.move',
+    boardId: 'board-main',
     origin,
     target: { kind: 'card', cardKey: 42, revision: 'card-r1' },
     selection: { count: 1 },
-    source: { state: 'ready', revision: 'source-r1' },
+    source: { state: 'ready', revision: 'source-r1', queryRevision: 'query-r1' },
     view: { revision: 'view-r1' },
   };
 }

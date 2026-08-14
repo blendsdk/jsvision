@@ -11,12 +11,25 @@ import { KanbanBoardAuthority } from '../../src/board/board-authority.js';
 
 /** Produces one bounded invocation with identity/revision evidence but no application record payload. */
 function invocation(actionId: string, origin: KanbanActionInvocation['origin'] = 'keyboard'): KanbanActionInvocation {
+  const target: KanbanActionInvocation['target'] =
+    actionId === 'kanban.card.create'
+      ? { kind: 'cell', columnId: 'todo', swimlaneId: 'team-one' }
+      : actionId.startsWith('kanban.card.') || actionId === 'kanban.selection.toggle'
+        ? { kind: 'card', cardKey: 42, revision: 'card-r1' }
+        : actionId.startsWith('kanban.column.') && actionId !== 'kanban.column.add'
+          ? { kind: 'column', columnId: 'todo', revision: 'column-r1' }
+          : actionId.startsWith('kanban.swimlane.') && actionId !== 'kanban.swimlane.add'
+            ? { kind: 'swimlane', swimlaneId: 'team-one', revision: 'swimlane-r1' }
+            : actionId.startsWith('kanban.selection.')
+              ? { kind: 'selection', focusedCardKey: 42, revision: 'selection-r1' }
+              : { kind: 'board' };
   return {
     actionId,
+    boardId: 'board-main',
     origin,
-    target: { kind: 'card', cardKey: 42, revision: 'card-r1' },
+    target,
     selection: { count: 1 },
-    source: { state: 'ready', revision: 'source-r1' },
+    source: { state: 'ready', revision: 'source-r1', queryRevision: 'query-r1' },
     view: { revision: 'view-r1' },
   };
 }

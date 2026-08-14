@@ -1,6 +1,6 @@
 import type { KeyEvent } from '@jsvision/core';
 
-import type { CardKey, KanbanColumnId, KanbanSwimlaneId } from '../contract/identity.js';
+import type { CardKey, KanbanBoardId, KanbanColumnId, KanbanSwimlaneId } from '../contract/identity.js';
 import type { KanbanRevision } from '../contract/revision.js';
 
 /** Stable origin inventory shared by keyboard, pointer, chrome, and programmatic callers. */
@@ -23,7 +23,8 @@ export type KanbanActionInvocationTarget =
       readonly swimlaneId?: KanbanSwimlaneId;
     }
   | { readonly kind: 'column'; readonly columnId: KanbanColumnId; readonly revision?: KanbanRevision }
-  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId; readonly revision?: KanbanRevision };
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId; readonly revision?: KanbanRevision }
+  | { readonly kind: 'selection'; readonly focusedCardKey?: CardKey; readonly revision?: KanbanRevision };
 
 /** Bounded record-free selection evidence supplied to capabilities and handlers. */
 export interface KanbanActionSelectionSnapshot {
@@ -37,6 +38,8 @@ export interface KanbanActionSourceSnapshot {
   readonly state: 'ready' | 'loading' | 'error' | 'disposed';
   /** Optional equality-only source revision. */
   readonly revision?: KanbanRevision;
+  /** Optional equality-only revision of the active query projection. */
+  readonly queryRevision?: KanbanRevision;
 }
 
 /** Bounded active-view evidence supplied to capabilities and handlers. */
@@ -49,6 +52,8 @@ export interface KanbanActionViewSnapshot {
 export interface KanbanActionInvocation {
   /** Stable package or namespaced application action identity. */
   readonly actionId: string;
+  /** Exact board instance whose detached state produced this invocation. */
+  readonly boardId: KanbanBoardId;
   /** UI or programmatic route that initiated the action. */
   readonly origin: KanbanActionOrigin;
   /** Current logical target captured before capability evaluation. */
@@ -136,6 +141,26 @@ export interface KanbanActionDefinition {
   readonly handler: KanbanActionHandler;
 }
 
+/** Detached action metadata visible to capability policy without an executable handler reference. */
+export interface KanbanActionCapabilityDefinition {
+  /** Stable package ID or namespaced application extension ID. */
+  readonly id: string;
+  /** Help/menu grouping category. */
+  readonly category: KanbanActionCategory;
+  /** Translation message ID for the concise label. */
+  readonly labelMessageId: string;
+  /** Translation message ID for complete help. */
+  readonly helpMessageId: string;
+  /** Logical target kind required by the handler. */
+  readonly target: KanbanActionTargetKind;
+  /** Stable capability key passed to application policy. */
+  readonly capability: string;
+  /** Detached semantic default chords. */
+  readonly bindings: readonly string[];
+  /** Whether read-only policy classifies the package action as mutating. */
+  readonly mutation?: boolean;
+}
+
 /** Capability result returned synchronously before one action handler. */
 export type KanbanActionCapability =
   | { readonly state: 'allowed' }
@@ -145,7 +170,7 @@ export type KanbanActionCapability =
 /** Record-free context passed to a pure capability provider. */
 export interface KanbanActionCapabilityContext extends KanbanActionInvocation {
   /** Detached immutable action metadata. */
-  readonly definition: KanbanActionDefinition;
+  readonly definition: KanbanActionCapabilityDefinition;
 }
 
 /** Pure synchronous UI-eligibility provider; application authorization remains separate. */

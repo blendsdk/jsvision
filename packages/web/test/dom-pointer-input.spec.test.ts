@@ -97,7 +97,7 @@ describe('browser DOM input adapter', () => {
     expect(adapter.available).toBe(true);
   });
 
-  it('maps drag/up, clamps edge coordinates, and releases pointer capture', () => {
+  it('maps browser drag/up, preserves captured button and Meta, and releases pointer capture', () => {
     const target = surface();
     const events: InputEvent[] = [];
     const adapter = createBrowserDomInputAdapter({
@@ -107,12 +107,16 @@ describe('browser DOM input adapter', () => {
       onInput: (event) => events.push(event),
     });
     target.emit('pointerdown', pointer({ clientX: -500, clientY: -500, ctrlKey: true }));
-    target.emit('pointermove', pointer({ type: 'pointermove', clientX: 9000, clientY: 9000 }));
+    target.emit(
+      'pointermove',
+      pointer({ type: 'pointermove', button: -1, clientX: 9000, clientY: 9000, metaKey: true }),
+    );
+    expect(adapter.acceptTerminalInput({ type: 'mouse', kind: 'drag', button: 0, x: 80, y: 24 })).toBe(false);
     target.emit('pointerup', pointer({ type: 'pointerup', buttons: 0 }));
 
     expect(events).toMatchObject([
       { type: 'mouse', kind: 'down', x: 1, y: 1, ctrl: true, primary: true },
-      { type: 'mouse', kind: 'drag', x: 80, y: 24 },
+      { type: 'mouse', kind: 'drag', button: 0, x: 80, y: 24, meta: true },
       { type: 'mouse', kind: 'up', x: 41, y: 13 },
     ]);
     expect(target.value.releasePointerCapture).toHaveBeenCalledWith(7);
@@ -136,6 +140,38 @@ describe('browser DOM input adapter', () => {
     expect(adapter.acceptTerminalInput({ ...matching, x: 42 })).toBe(true);
     expect(adapter.acceptTerminalInput(matching)).toBe(true);
     expect(events).toHaveLength(1);
+  });
+
+  it('expires a pending DOM duplicate after its event-loop turn', async () => {
+    const target = surface();
+    const adapter = createBrowserDomInputAdapter({
+      surface: target.value,
+      cells: () => ({ columns: 80, rows: 24 }),
+      platform: 'linux',
+      onInput: () => undefined,
+    });
+    target.emit('pointerdown', pointer());
+    const matching = { type: 'mouse' as const, kind: 'down' as const, button: 0, x: 41, y: 13 };
+
+    await Promise.resolve();
+
+    expect(adapter.acceptTerminalInput(matching)).toBe(true);
+  });
+
+  it('normalizes no-button hover to the Core SGR value and suppresses its exact duplicate', () => {
+    const target = surface();
+    const events: InputEvent[] = [];
+    const adapter = createBrowserDomInputAdapter({
+      surface: target.value,
+      cells: () => ({ columns: 80, rows: 24 }),
+      platform: 'linux',
+      onInput: (event) => events.push(event),
+    });
+
+    target.emit('pointermove', pointer({ type: 'pointermove', button: -1, buttons: 0 }));
+
+    expect(events).toMatchObject([{ type: 'mouse', kind: 'move', button: 3, x: 41, y: 13 }]);
+    expect(adapter.acceptTerminalInput({ type: 'mouse', kind: 'move', button: 3, x: 41, y: 13 })).toBe(false);
   });
 
   it('fails over to ordinary terminal input when no DOM pointer surface is available', () => {

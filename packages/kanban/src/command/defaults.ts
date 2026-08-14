@@ -6,6 +6,8 @@ export interface KanbanActionKeymapHost {
   readonly kind: 'browser' | 'terminal';
   /** Lowercase operating-system platform name such as `linux` or `darwin`. */
   readonly platform: string;
+  /** Host-reserved chords that cannot reliably reach the application. */
+  readonly unavailableChords?: readonly string[];
 }
 
 /** Concrete modifier used for semantic `Primary` on one host. */

@@ -3,6 +3,9 @@ import { KanbanError } from './error.js';
 /** A stable application-owned card identity. Numbers and strings remain distinct keys. */
 export type CardKey = string | number;
 
+/** A validated application-owned board identity. */
+export type KanbanBoardId = string;
+
 /** A validated workflow-column identity. */
 export type KanbanColumnId = string;
 
@@ -26,7 +29,7 @@ export type KanbanOperationId = string;
 
 /** Structural identity categories accepted by the shared uniqueness validator. */
 export type KanbanIdentityKind =
-  'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation';
+  'board' | 'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation';
 
 declare const placementTokenBrand: unique symbol;
 
@@ -99,6 +102,11 @@ export function createKanbanCardKey(value: CardKey): CardKey {
     return Object.is(value, -0) ? 0 : value;
   }
   return validateIdentity('card', value);
+}
+
+/** Creates a validated application-owned board identity. */
+export function createKanbanBoardId(value: string): KanbanBoardId {
+  return validateIdentity('board', value);
 }
 
 /** Creates a validated workflow-column identity. */

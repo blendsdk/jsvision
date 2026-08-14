@@ -12,6 +12,7 @@ import type {
 function invocation(actionId: string): KanbanActionInvocation {
   return {
     actionId,
+    boardId: 'board-main',
     origin: 'programmatic',
     target: { kind: 'board' },
     selection: { count: 0 },
@@ -109,9 +110,10 @@ describe('Kanban action router implementation', () => {
     await expect(pending.completion).resolves.toEqual({ kind: 'disabled', code: 'action-failed' });
   });
 
-  it('freezes record-free capability context and fails closed on hostile invocations', () => {
+  it('freezes least-authority capability context and rejects inapplicable targets before policy', () => {
     const contexts: unknown[] = [];
-    const registry = createKanbanActionRegistry({ executePackageAction: () => ({ kind: 'handled' }) });
+    const handler = vi.fn(() => ({ kind: 'handled' as const }));
+    const registry = createKanbanActionRegistry({ executePackageAction: handler });
     const router = createKanbanActionRouter({
       registry,
       capability: (context) => {
@@ -121,14 +123,42 @@ describe('Kanban action router implementation', () => {
     });
     const valid = {
       ...invocation('kanban.help.open'),
-      target: { kind: 'card' as const, cardKey: 1, revision: 'r1' },
+      source: { state: 'ready' as const, revision: 'source-r1', queryRevision: 'query-r1' },
     };
     expect(router.invoke(valid)).toEqual({ kind: 'handled' });
     expect(Object.isFrozen(contexts[0])).toBe(true);
     expect(contexts[0]).not.toHaveProperty('record');
+    expect(contexts[0]).toMatchObject({ boardId: 'board-main', source: { queryRevision: 'query-r1' } });
+    expect(contexts[0]).not.toHaveProperty('definition.handler');
+
+    expect(router.invoke({ ...valid, target: { kind: 'card' as const, cardKey: 1, revision: 'r1' } })).toEqual({
+      kind: 'unavailable',
+      code: 'action-unavailable',
+    });
+    expect(contexts).toHaveLength(1);
+    expect(handler).toHaveBeenCalledOnce();
     expect(router.invoke({ ...valid, selection: { count: Number.MAX_SAFE_INTEGER } })).toEqual({
       kind: 'unavailable',
       code: 'action-unavailable',
     });
+  });
+
+  it('routes an explicit selection target without exposing selected records', () => {
+    const handler = vi.fn(() => ({ kind: 'handled' as const }));
+    const selectionAction = { ...extension('acme.selection', handler), target: 'selection' as const };
+    const registry = createKanbanActionRegistry({
+      executePackageAction: () => ({ kind: 'handled' }),
+      extensions: [selectionAction],
+    });
+    const router = createKanbanActionRouter({ registry });
+
+    expect(
+      router.invoke({
+        ...invocation('acme.selection'),
+        target: { kind: 'selection', focusedCardKey: 42, revision: 'selection-r1' },
+        selection: { count: 2 },
+      }),
+    ).toEqual({ kind: 'handled' });
+    expect(handler).toHaveBeenCalledOnce();
   });
 });

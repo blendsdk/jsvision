@@ -9,11 +9,14 @@ import type {
   KanbanActionInvocationTarget,
   KanbanActionViewSnapshot,
 } from './types.js';
+import type { KanbanBoardId } from '../contract/identity.js';
 import type { KanbanActionKeyEvent } from './types.js';
 import type { KanbanActionKeymap } from './keymap.js';
 
 /** Record-free live state captured immediately before one input-origin action route. */
 export interface KanbanActionInputContext {
+  /** Exact board instance that owns the current input snapshot. */
+  readonly boardId: KanbanBoardId;
   /** Current selection count only, never selected records. */
   readonly selection: KanbanActionSelectionSnapshot;
   /** Current bounded source lifecycle evidence. */
@@ -70,6 +73,7 @@ function invocation(
     const context = options.context();
     return Object.freeze({
       actionId,
+      boardId: context.boardId,
       origin,
       target,
       selection: context.selection,

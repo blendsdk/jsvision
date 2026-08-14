@@ -1,12 +1,18 @@
 import { snapshotKanbanLabel, snapshotKanbanReasonCode } from '../contract/capability.js';
 import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
-import { createKanbanCardKey, createKanbanColumnId, createKanbanSwimlaneId } from '../contract/identity.js';
+import {
+  createKanbanBoardId,
+  createKanbanCardKey,
+  createKanbanColumnId,
+  createKanbanSwimlaneId,
+} from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import { evaluateKanbanActionCapability } from './capability.js';
 import type {
   KanbanActionAffordance,
   KanbanActionCapability,
+  KanbanActionCapabilityDefinition,
   KanbanActionDefinition,
   KanbanActionInvocation,
   KanbanActionOrigin,
@@ -48,11 +54,11 @@ const ACTION_ORIGINS: ReadonlySet<string> = new Set([
   'programmatic',
 ]);
 /** Exact members accepted in one invocation. */
-const INVOCATION_KEYS = new Set(['actionId', 'origin', 'target', 'selection', 'source', 'view']);
+const INVOCATION_KEYS = new Set(['actionId', 'boardId', 'origin', 'target', 'selection', 'source', 'view']);
 /** Exact members accepted in one selection summary. */
 const SELECTION_KEYS = new Set(['count']);
 /** Exact members accepted in one source summary. */
-const SOURCE_KEYS = new Set(['state', 'revision']);
+const SOURCE_KEYS = new Set(['state', 'revision', 'queryRevision']);
 /** Exact members accepted in one view summary. */
 const VIEW_KEYS = new Set(['revision']);
 /** Exact members accepted by every target variant. */
@@ -62,6 +68,7 @@ const TARGET_KEYS: Readonly<Record<KanbanActionInvocationTarget['kind'], Readonl
   cell: new Set(['kind', 'columnId', 'swimlaneId']),
   column: new Set(['kind', 'columnId', 'revision']),
   swimlane: new Set(['kind', 'swimlaneId', 'revision']),
+  selection: new Set(['kind', 'focusedCardKey', 'revision']),
 });
 /** Exact keys accepted from each handler outcome variant. */
 const HANDLED_KEYS = new Set(['kind']);
@@ -164,6 +171,23 @@ function snapshotTarget(value: unknown): KanbanActionInvocationTarget {
       ...(revision === undefined ? {} : { revision }),
     });
   }
+  if (kind === 'selection') {
+    if (
+      properties.focusedCardKey !== undefined &&
+      typeof properties.focusedCardKey !== 'string' &&
+      typeof properties.focusedCardKey !== 'number'
+    ) {
+      throw new Error('Invalid selection target.');
+    }
+    const revision = optionalRevision(properties.revision);
+    return Object.freeze({
+      kind,
+      ...(properties.focusedCardKey === undefined
+        ? {}
+        : { focusedCardKey: createKanbanCardKey(properties.focusedCardKey) }),
+      ...(revision === undefined ? {} : { revision }),
+    });
+  }
   if (typeof properties.swimlaneId !== 'string') throw new Error('Invalid swimlane target.');
   const revision = optionalRevision(properties.revision);
   return Object.freeze({
@@ -177,7 +201,11 @@ function snapshotTarget(value: unknown): KanbanActionInvocationTarget {
 function snapshotInvocation(value: unknown): KanbanActionInvocation {
   const properties = snapshotKanbanDataProperties(value, INVOCATION_KEYS.size);
   validateKanbanDataKeys(properties, INVOCATION_KEYS);
-  if (!isBoundedActionId(properties.actionId) || !isActionOrigin(properties.origin)) {
+  if (
+    !isBoundedActionId(properties.actionId) ||
+    typeof properties.boardId !== 'string' ||
+    !isActionOrigin(properties.origin)
+  ) {
     throw new Error('Invalid action invocation.');
   }
   const selection = snapshotKanbanDataProperties(properties.selection, SELECTION_KEYS.size);
@@ -201,21 +229,43 @@ function snapshotInvocation(value: unknown): KanbanActionInvocation {
     throw new Error('Invalid action source summary.');
   }
   const sourceRevision = optionalRevision(source.revision);
+  const queryRevision = optionalRevision(source.queryRevision);
   const sourceSnapshot: KanbanActionSourceSnapshot = Object.freeze({
     state: source.state,
     ...(sourceRevision === undefined ? {} : { revision: sourceRevision }),
+    ...(queryRevision === undefined ? {} : { queryRevision }),
   });
   const view = snapshotKanbanDataProperties(properties.view, VIEW_KEYS.size);
   validateKanbanDataKeys(view, VIEW_KEYS);
   const viewRevision = optionalRevision(view.revision);
   return Object.freeze({
     actionId: properties.actionId,
+    boardId: createKanbanBoardId(properties.boardId),
     origin: properties.origin,
     target: snapshotTarget(properties.target),
     selection: Object.freeze({ count: selection.count }),
     source: sourceSnapshot,
     view: Object.freeze(viewRevision === undefined ? {} : { revision: viewRevision }),
   });
+}
+
+/** Detaches capability-visible metadata without exposing the executable handler. */
+function capabilityDefinition(definition: KanbanActionDefinition): KanbanActionCapabilityDefinition {
+  return Object.freeze({
+    id: definition.id,
+    category: definition.category,
+    labelMessageId: definition.labelMessageId,
+    helpMessageId: definition.helpMessageId,
+    target: definition.target,
+    capability: definition.capability,
+    bindings: Object.freeze([...definition.bindings]),
+    ...(definition.mutation === undefined ? {} : { mutation: definition.mutation }),
+  });
+}
+
+/** Reports whether detached target evidence matches the action's declared applicability. */
+function targetApplies(definition: KanbanActionDefinition, invocation: KanbanActionInvocation): boolean {
+  return definition.target === 'any' || definition.target === invocation.target.kind;
 }
 
 /** Returns true only for a direct native Promise with its original `then` method. */
@@ -281,7 +331,10 @@ function eligibility(
   definition: KanbanActionDefinition,
   invocation: KanbanActionInvocation,
 ): KanbanActionCapability {
-  return evaluateKanbanActionCapability(provider, Object.freeze({ ...invocation, definition }));
+  return evaluateKanbanActionCapability(
+    provider,
+    Object.freeze({ ...invocation, definition: capabilityDefinition(definition) }),
+  );
 }
 
 /**
@@ -309,7 +362,9 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
     try {
       const invocation = snapshotInvocation(input);
       const definition = options.registry.action(invocation.actionId);
-      return definition === undefined ? undefined : Object.freeze({ invocation, definition });
+      return definition === undefined || !targetApplies(definition, invocation)
+        ? undefined
+        : Object.freeze({ invocation, definition });
     } catch {
       return undefined;
     }

@@ -30,10 +30,11 @@ describe('Kanban browser action host', () => {
         if (event.type !== 'mouse' || event.kind !== 'down' || event.primary !== true) return;
         router.invoke({
           actionId: 'kanban.selection.toggle',
+          boardId: 'board-main',
           origin: 'pointer',
           target: { kind: 'card', cardKey: 42, revision: 'card-r1' },
           selection: { count: 0 },
-          source: { state: 'ready', revision: 'source-r1' },
+          source: { state: 'ready', revision: 'source-r1', queryRevision: 'query-r1' },
           view: { revision: 'view-r1' },
         });
       },

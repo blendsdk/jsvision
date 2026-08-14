@@ -406,7 +406,24 @@ Record-free context passed to a pure capability provider.
 
 ```ts
 interface KanbanActionCapabilityContext {
-  definition: KanbanActionDefinition;   // Detached immutable action metadata.
+  definition: KanbanActionCapabilityDefinition;   // Detached immutable action metadata.
+}
+```
+
+## KanbanActionCapabilityDefinition
+
+Detached action metadata visible to capability policy without an executable handler reference.
+
+```ts
+interface KanbanActionCapabilityDefinition {
+  id: string;   // Stable package ID or namespaced application extension ID.
+  category: KanbanActionCategory;   // Help/menu grouping category.
+  labelMessageId: string;   // Translation message ID for the concise label.
+  helpMessageId: string;   // Translation message ID for complete help.
+  target: KanbanActionTargetKind;   // Logical target kind required by the handler.
+  capability: string;   // Stable capability key passed to application policy.
+  bindings: readonly string[];   // Detached semantic default chords.
+  mutation?: boolean;   // Whether read-only policy classifies the package action as mutating.
 }
 ```
 
@@ -550,6 +567,7 @@ Record-free live state captured immediately before one input-origin action route
 
 ```ts
 interface KanbanActionInputContext {
+  boardId: KanbanBoardId;   // Exact board instance that owns the current input snapshot.
   selection: KanbanActionSelectionSnapshot;   // Current selection count only, never selected records.
   source: KanbanActionSourceSnapshot;   // Current bounded source lifecycle evidence.
   view: KanbanActionViewSnapshot;   // Current view revision evidence.
@@ -563,6 +581,7 @@ One immutable action invocation shared by every origin.
 ```ts
 interface KanbanActionInvocation {
   actionId: string;   // Stable package or namespaced application action identity.
+  boardId: KanbanBoardId;   // Exact board instance whose detached state produced this invocation.
   origin: KanbanActionOrigin;   // UI or programmatic route that initiated the action.
   target: KanbanActionInvocationTarget;   // Current logical target captured before capability evaluation.
   selection: KanbanActionSelectionSnapshot;   // Record-free selection summary.
@@ -585,6 +604,7 @@ type KanbanActionInvocationTarget = | { readonly kind: 'board' }
     }
   | { readonly kind: 'column'; readonly columnId: KanbanColumnId; readonly revision?: KanbanRevision }
   | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId; readonly revision?: KanbanRevision }
+  | { readonly kind: 'selection'; readonly focusedCardKey?: CardKey; readonly revision?: KanbanRevision }
 ```
 
 ## KanbanActionKeyBinding
@@ -649,6 +669,7 @@ Host facts used to resolve semantic `Primary` bindings.
 interface KanbanActionKeymapHost {
   kind: 'browser' | 'terminal';   // Browser hosts can preserve Command/Meta; terminal hosts cannot.
   platform: string;   // Lowercase operating-system platform name such as `linux` or `darwin`.
+  unavailableChords?: readonly string[];   // Host-reserved chords that cannot reliably reach the application.
 }
 ```
 
@@ -660,6 +681,7 @@ Options accepted by the conflict-validating action keymap.
 interface KanbanActionKeymapOptions {
   registry: KanbanActionRegistry;   // Stable package-plus-application action inventory.
   host: KanbanActionKeymapHost;   // Host facts used to resolve semantic `Primary`.
+  initial?: KanbanActionKeymapReplacement;   // Optional atomic remap applied before host-unavailable defaults are validated.
 }
 ```
 
@@ -682,6 +704,7 @@ Atomic runtime replacement request.
 interface KanbanActionKeymapReplacement {
   bindings: readonly KanbanActionKeymapReplacementBinding[];   // Routes to add or replace after validation.
   overrides?: readonly KanbanActionKeymapOverride[];   // Exact displacement approvals for conflicting existing routes.
+  unbind?: readonly KanbanActionKeymapUnbind[];   // Exact current routes to remove before adding replacement bindings.
 }
 ```
 
@@ -704,6 +727,27 @@ Immutable observable keymap state.
 interface KanbanActionKeymapSnapshot {
   revision: number;   // Monotonic replacement revision, beginning at one.
   bindings: readonly KanbanActionKeyBinding[];   // Complete ordered concrete routes.
+}
+```
+
+## KanbanActionKeymapUnavailableError
+
+Raised when a route is known to be unavailable on the current host.
+
+```ts
+new KanbanActionKeymapUnavailableError(chord: string, actionId: string)   // extends Error
+// methods & signals:
+route: KanbanActionKeyBinding
+```
+
+## KanbanActionKeymapUnbind
+
+Exact route removed as part of one atomic remap.
+
+```ts
+interface KanbanActionKeymapUnbind {
+  chord: string;   // Semantic or concrete chord currently owned by the action.
+  actionId: string;   // Exact action that must currently own the chord.
 }
 ```
 
@@ -817,6 +861,7 @@ Bounded source lifecycle evidence supplied to capabilities and handlers.
 interface KanbanActionSourceSnapshot {
   state: 'ready' | 'loading' | 'error' | 'disposed';   // Current source/query availability.
   revision?: KanbanRevision;   // Optional equality-only source revision.
+  queryRevision?: KanbanRevision;   // Optional equality-only revision of the active query projection.
 }
 ```
 
@@ -947,6 +992,14 @@ Board-owned lifetime evidence supplied to one asynchronous editor open.
 interface KanbanBoardEditorOpenContext {
   signal: AbortSignal;   // Aborts when the board is disposed before or during initial editor acquisition.
 }
+```
+
+## KanbanBoardId
+
+A validated application-owned board identity.
+
+```ts
+type KanbanBoardId = string
 ```
 
 ## KanbanBoardInspection
@@ -4043,7 +4096,7 @@ interface KanbanIdentityInput {
 Structural identity categories accepted by the shared uniqueness validator.
 
 ```ts
-type KanbanIdentityKind = 'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation'
+type KanbanIdentityKind = 'board' | 'card' | 'column' | 'swimlane' | 'field' | 'view' | 'checklist' | 'extension' | 'operation'
 ```
 
 ## KanbanInspectedCard
@@ -9058,6 +9111,14 @@ Creates a board binding that opens the standard or replaced edit dialog for acti
 
 ```ts
 createKanbanBoardEditorBinding<TCard, TDraft>(options: CreateKanbanBoardEditorBindingOptions<TCard, TDraft>): KanbanBoardEditorBinding
+```
+
+## createKanbanBoardId
+
+Creates a validated application-owned board identity.
+
+```ts
+createKanbanBoardId(value: string): KanbanBoardId
 ```
 
 ## createKanbanCardEditorSchema
