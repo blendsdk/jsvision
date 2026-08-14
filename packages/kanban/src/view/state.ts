@@ -48,7 +48,7 @@ const SWIMLANE_KEYS = new Set(['swimlaneId', 'visible', 'collapsed']);
 /** Exact members accepted for one ordered item envelope. */
 const ITEMS_KEYS = new Set(['items']);
 /** Exact members accepted for view presentation. */
-const PRESENTATION_KEYS = new Set(['density', 'cardFieldIds', 'checklist']);
+const PRESENTATION_KEYS = new Set(['density', 'cardFieldIds', 'summaryIds', 'checklist']);
 /** UTF-8 encoder used for committed search bounds. */
 const ENCODER = new TextEncoder();
 
@@ -199,7 +199,19 @@ function snapshotPresentation(value: unknown): KanbanViewPresentation {
     }),
     (entry) => entry,
   );
-  return Object.freeze({ density: snapshotDensity(properties.density), cardFieldIds, checklist: properties.checklist });
+  const summaryIds = unique(
+    arrayOf(properties.summaryIds, KANBAN_LIMITS.summarySections.safe, (entry) => {
+      if (typeof entry !== 'string') return invalidState();
+      return createKanbanFieldId(entry);
+    }),
+    (entry) => entry,
+  );
+  return Object.freeze({
+    density: snapshotDensity(properties.density),
+    cardFieldIds,
+    summaryIds,
+    checklist: properties.checklist,
+  });
 }
 
 /**

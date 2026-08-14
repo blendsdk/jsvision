@@ -300,6 +300,8 @@ export interface KanbanViewportViewCandidate<TCard> {
 
 /** @internal Prepared viewport-source swap owned by one controller transition. */
 export interface KanbanPreparedViewportView {
+  /** Source-count evidence staged for atomic publication before external controller subscribers. */
+  readonly summary: KanbanViewSummaryEvidence | undefined;
   /** Installs the candidate source and its validated current-geometry snapshot. */
   readonly commit: () => void;
   /** Confirms the candidate source and view revision are active. */
@@ -384,6 +386,15 @@ export class KanbanViewport<TCard> extends View {
   readonly #limits: KanbanResolvedLimits;
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
+  /** One prepared activation consumed by the reactive effect without reopening its source query. */
+  #preparedActivation:
+    | {
+        readonly source: KanbanViewportSource<TCard>;
+        readonly query: KanbanQuery;
+        readonly snapshot: KanbanViewportSourceSnapshot<TCard>;
+        consumed: boolean;
+      }
+    | undefined;
   #projection: KanbanViewportProjection | undefined;
   #projectionCandidate: KanbanViewportProjection | undefined;
   #completedAuthoritativeProjection: KanbanViewportProjection | undefined;
@@ -640,7 +651,8 @@ export class KanbanViewport<TCard> extends View {
       }
       this.bind(
         () => {
-          const query = snapshotKanbanQuery(options.query());
+          const queryInput = options.query();
+          const query = snapshotKanbanQuery(queryInput);
           this.#queryViewRevision = query.viewRevision;
           const collapsedColumnIds = options.collapsedColumnIds?.();
           const identity = readKanbanIdentityInput(options.identity);
@@ -653,6 +665,11 @@ export class KanbanViewport<TCard> extends View {
           void options.formatting?.();
           void options.renderer?.();
           void options.rendererRevision?.();
+          const prepared = this.#preparedActivation;
+          if (prepared !== undefined && prepared.source === this.#source) {
+            if (prepared.query.viewRevision === query.viewRevision) prepared.consumed = true;
+            return prepared.snapshot;
+          }
           this.#source?.replaceQuery(query);
           return this.#refresh(collapsedColumnIds, identity.focusedColumnId, density, structure);
         },
@@ -1162,6 +1179,10 @@ export class KanbanViewport<TCard> extends View {
   /** Returns current authoritative identity changes without exposing the query session. */
   identityChanges(): KanbanIdentityChangeBatch | undefined {
     if (this.#disposed) return undefined;
+    const prepared = this.#preparedActivation;
+    if (prepared?.source === this.#source) {
+      return this.#snapshot?.publication.identityChanges;
+    }
     const identity = readKanbanIdentityInput(this.#options.identity);
     const density = this.#options.density?.() ?? 'comfortable';
     return (
@@ -1802,6 +1823,7 @@ export class KanbanViewport<TCard> extends View {
     const activeSource = this.#source;
     if (activeSource === undefined) {
       return Object.freeze({
+        summary: this.#viewSummaryEvidence(),
         commit: () => undefined,
         verify: () => true,
         rollback: () => undefined,
@@ -1853,6 +1875,7 @@ export class KanbanViewport<TCard> extends View {
     const previousSnapshot = this.#snapshot;
     const previousProjection = this.#projection;
     const previousQueryViewRevision = this.#queryViewRevision;
+    const previousPreparedActivation = this.#preparedActivation;
     let installed = false;
     let candidateReleased = false;
     let previousReleased = false;
@@ -1862,25 +1885,40 @@ export class KanbanViewport<TCard> extends View {
       preparedSource.dispose();
     };
     return Object.freeze({
+      summary: this.#viewSummaryEvidence(stagedSnapshot, undefined),
       commit: () => {
         this.#source = preparedSource;
         this.#snapshot = stagedSnapshot;
+        this.#preparedActivation = {
+          source: preparedSource,
+          query: candidate.query,
+          snapshot: stagedSnapshot,
+          consumed: false,
+        };
         this.#projection = undefined;
         this.#queryViewRevision = candidate.query.viewRevision;
         this.#completedProjectionFingerprint = undefined;
         this.#completedAuthoritativeProjection = undefined;
         this.#skipResidentReuseInspectionOnce = true;
         installed = true;
-        this.invalidate();
       },
-      verify: () =>
-        installed && this.#source === preparedSource && this.#queryViewRevision === candidate.query.viewRevision,
+      verify: () => {
+        const verified =
+          installed &&
+          this.#source === preparedSource &&
+          this.#queryViewRevision === candidate.query.viewRevision &&
+          this.#preparedActivation?.source === preparedSource &&
+          this.#preparedActivation.consumed;
+        if (verified) this.#preparedActivation = undefined;
+        return verified;
+      },
       rollback: () => {
         if (!installed) return;
         this.#source = activeSource;
         this.#snapshot = previousSnapshot;
         this.#projection = previousProjection;
         this.#queryViewRevision = previousQueryViewRevision;
+        this.#preparedActivation = previousPreparedActivation;
         installed = false;
         releaseCandidate();
         this.invalidate();
@@ -1897,11 +1935,13 @@ export class KanbanViewport<TCard> extends View {
   }
 
   /** Converts committed source and projection state into payload-free view-summary evidence. */
-  #viewSummaryEvidence(): KanbanViewSummaryEvidence | undefined {
-    const snapshot = this.#snapshot;
+  #viewSummaryEvidence(
+    snapshot: KanbanViewportSourceSnapshot<TCard> | undefined = this.#snapshot,
+    projection: KanbanViewportProjection | undefined = this.#projection,
+  ): KanbanViewSummaryEvidence | undefined {
     if (snapshot === undefined) return undefined;
     const visibleKeys = new Set(
-      (this.#projection?.cards ?? []).map((card) =>
+      (projection?.cards ?? []).map((card) =>
         JSON.stringify([typeof card.descriptor.cardKey, card.descriptor.cardKey]),
       ),
     );
@@ -1933,7 +1973,7 @@ export class KanbanViewport<TCard> extends View {
         snapshot.publication.counts.total.quality === 'exact' &&
         exactResidentTotal === snapshot.publication.counts.total.value,
       filtered: snapshot.filtered,
-      visible: this.#projection?.cards.length ?? 0,
+      visible: projection?.cards.length ?? 0,
       selected,
     });
   }

@@ -69,6 +69,8 @@ export interface KanbanViewPresentation {
   readonly density: KanbanCardDensity;
   /** Optional ordered allowlist of application card fields. */
   readonly cardFieldIds: readonly KanbanFieldId[];
+  /** Optional ordered allowlist of application summary sections. */
+  readonly summaryIds: readonly KanbanFieldId[];
   /** Whether bounded checklist presentation is enabled. */
   readonly checklist: 'hidden' | 'progress' | 'preview';
 }

@@ -25,5 +25,5 @@ When you already know which widget you want, open its category page and copy the
 - [@jsvision/code-editor — terminal-native source editing](./code-editor.md) — The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability. (147 exports)
 - [@jsvision/web — browser runtime](./web.md) — Mount an app in an xterm.js terminal; the in-memory browser file system. (19 exports)
 - [@jsvision/files — file dialogs & editor](./files.md) — File/dir dialogs, the file-system seam, and the openers. (35 exports)
-- [@jsvision/kanban — responsive terminal task boards](./kanban.md) — Board and viewport composition, generic sources, cards, themes, localization, and application authority. (609 exports)
+- [@jsvision/kanban — responsive terminal task boards](./kanban.md) — Board and viewport composition, generic sources, cards, themes, localization, and application authority. (610 exports)
 - [@jsvision/kanban/testing — deterministic interaction harnesses](./kanban-testing.md) — Test-only clocks, host trace replay, dispatcher control, and operation lifecycle evidence. (101 exports)

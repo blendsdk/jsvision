@@ -3473,6 +3473,18 @@ interface KanbanQuerySession<TCard> {
 }
 ```
 
+## KanbanQuickFilterMapping
+
+Inert source-filter mapping retained by one named quick-filter registration.
+
+```ts
+interface KanbanQuickFilterMapping {
+  fieldId: KanbanFieldId;   // Application field evaluated by the active source adapter.
+  operatorId: KanbanExtensionId;   // Application-namespaced operator interpreted by the source adapter.
+  value?: KanbanSemanticValue;   // Optional fixed operand used when the active selection has no parameter.
+}
+```
+
 ## KanbanQuickFilterParameterCodec
 
 Parameter boundary for one registered quick filter.
@@ -3488,10 +3500,10 @@ interface KanbanQuickFilterParameterCodec {
 Application metadata and behavior for one named quick filter.
 
 ```ts
-interface KanbanQuickFilterRegistration<TCard = unknown> {
+interface KanbanQuickFilterRegistration {
   id: KanbanExtensionId;   // Stable application-namespaced quick-filter identity.
   labelId: string;   // Stable localized message identity displayed by package chrome.
-  predicate: (card: TCard, value?: KanbanSemanticValue) => boolean;   // Evaluates one card; registered code never enters a saved view.
+  filter: KanbanQuickFilterMapping;   // Declarative mapping to one source-owned field/operator filter.
   parameterCodec?: KanbanQuickFilterParameterCodec;   // Optional detached parameter validator.
   sensitive?: boolean;   // Whether diagnostics must suppress the parameter value.
   applicable?: () => boolean;   // Optional pure availability predicate for application context.
@@ -5374,6 +5386,7 @@ Construction options for one independent view controller.
 interface KanbanViewControllerOptions {
   initial?: KanbanViewControllerInitialState;   // Optional initial controller-owned facets.
   debounceMs?: number;   // Whole-millisecond search debounce; defaults to 150 ms.
+  registry?: KanbanViewRegistry;   // Optional declarative quick-filter registry interpreted into ordinary source filters.
 }
 ```
 
@@ -5401,6 +5414,7 @@ Durable card-presentation facets owned by one view.
 interface KanbanViewPresentation {
   density: KanbanCardDensity;   // Named card-density preset.
   cardFieldIds: readonly KanbanFieldId[];   // Optional ordered allowlist of application card fields.
+  summaryIds: readonly KanbanFieldId[];   // Optional ordered allowlist of application summary sections.
   checklist: 'hidden' | 'progress' | 'preview';   // Whether bounded checklist presentation is enabled.
 }
 ```
@@ -5410,9 +5424,9 @@ interface KanbanViewPresentation {
 Immutable behavior registry used by view state and standard chrome.
 
 ```ts
-interface KanbanViewRegistry<TCard = unknown> {
-  quickFilters: readonly KanbanQuickFilterRegistration<TCard>[];   // Detached ordered quick-filter registrations.
-  quickFilter(id: KanbanExtensionId): KanbanQuickFilterRegistration<TCard> | undefined;   // Looks up a quick filter without interpreting untrusted view data.
+interface KanbanViewRegistry {
+  quickFilters: readonly KanbanQuickFilterRegistration[];   // Detached ordered quick-filter registrations.
+  quickFilter(id: KanbanExtensionId): KanbanQuickFilterRegistration | undefined;   // Looks up a quick filter without interpreting untrusted view data.
 }
 ```
 
@@ -5421,8 +5435,8 @@ interface KanbanViewRegistry<TCard = unknown> {
 Input accepted by the bounded view registry constructor.
 
 ```ts
-interface KanbanViewRegistryOptions<TCard = unknown> {
-  quickFilters?: readonly KanbanQuickFilterRegistration<TCard>[];   // Finite named quick-filter registrations.
+interface KanbanViewRegistryOptions {
+  quickFilters?: readonly KanbanQuickFilterRegistration[];   // Finite named quick-filter registrations.
 }
 ```
 
@@ -6408,7 +6422,7 @@ createKanbanViewId(value: string): KanbanViewId
 Validates and detaches a finite application view registry without invoking registered behavior.
 
 ```ts
-createKanbanViewRegistry<TCard = unknown>(options: KanbanViewRegistryOptions<TCard> = {}): KanbanViewRegistry<TCard>
+createKanbanViewRegistry(options: KanbanViewRegistryOptions = {}): KanbanViewRegistry
 ```
 
 ## createPlacementToken

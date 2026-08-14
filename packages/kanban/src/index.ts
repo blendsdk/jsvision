@@ -110,6 +110,7 @@ export {
 } from './view/controller.js';
 export {
   createKanbanViewRegistry,
+  type KanbanQuickFilterMapping,
   type KanbanQuickFilterParameterCodec,
   type KanbanQuickFilterRegistration,
   type KanbanViewRegistry,

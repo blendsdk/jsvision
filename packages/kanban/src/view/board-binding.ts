@@ -3,8 +3,13 @@ import type { Signal } from '@jsvision/ui';
 
 import { KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH, KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH } from '../layout/width-solver.js';
 import type { KanbanCardDensity } from '../card/descriptor.js';
+import { resolveKanbanPresentation } from '../card/presentation-policy.js';
+import type { KanbanPresentationInput } from '../card/presentation-policy.js';
+import { validateKanbanLimitOptions } from '../contract/limits.js';
+import type { KanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanQuery } from '../source/types.js';
 import type { KanbanPreparedViewportView } from '../board/kanban-viewport.js';
+import type { KanbanViewportCardPresentation } from '../board/viewport-projector.js';
 import { snapshotKanbanStructurePolicy } from '../structure/policy.js';
 import type {
   KanbanColumnPolicy,
@@ -24,6 +29,12 @@ export interface KanbanBoardViewLegacyChannels<TCard> {
   readonly query: () => KanbanQuery;
   /** Existing density getter retained for boards without a controller. */
   readonly density?: () => KanbanCardDensity;
+  /** Existing rich-card budget composed with controller-owned checklist detail. */
+  readonly presentation?: () => KanbanPresentationInput;
+  /** Existing record-local selection and visual-state projection. */
+  readonly cardPresentation?: (card: TCard) => KanbanViewportCardPresentation | undefined;
+  /** Existing resource limits used to bound the effective rich-card budget. */
+  readonly limits?: KanbanLimitOptions;
   /** Existing structure policy whose non-view behavior remains application-owned. */
   readonly structure?: () => KanbanStructurePolicy<TCard>;
   /** Existing compatibility collapse getter. */
@@ -57,9 +68,12 @@ function composeWidth(
   base: KanbanColumnWidthPreference | undefined,
 ): KanbanColumnWidthPreference {
   return Object.freeze({
-    minimumWidth: Math.min(base?.minimumWidth ?? KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH, preferredWidth),
-    preferredWidth,
-    maximumWidth: Math.max(base?.maximumWidth ?? KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH, preferredWidth),
+    minimumWidth: base?.minimumWidth ?? KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH,
+    preferredWidth: Math.max(
+      base?.minimumWidth ?? KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH,
+      Math.min(preferredWidth, base?.maximumWidth ?? KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH),
+    ),
+    maximumWidth: base?.maximumWidth ?? KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH,
   });
 }
 
@@ -177,6 +191,42 @@ export class KanbanBoardViewBinding<TCard> {
     return this.#state().presentation.density;
   }
 
+  /** Returns the effective bounded card budget with controller-owned checklist detail. */
+  presentation(): KanbanPresentationInput {
+    const state = this.#state();
+    const limits = validateKanbanLimitOptions(this.#legacy.limits);
+    const base = resolveKanbanPresentation(this.#legacy.presentation?.() ?? state.presentation.density, limits);
+    const previewItems = state.presentation.checklist === 'preview' ? Math.min(2, limits.checklistItemsPerGroup) : 0;
+    return Object.freeze({
+      revision: composeKanbanViewRevision(base.revision, state.revision),
+      cardRows: base.cardRows,
+      cardGap: base.cardGap,
+      metadataFields: base.metadataFields,
+      labelRows: base.labelRows,
+      summarySections: base.summarySections,
+      checklistMode: state.presentation.checklist,
+      checklistPreviewItems: previewItems,
+      degradationOrder: base.degradationOrder,
+    });
+  }
+
+  /** Composes controller-owned ordered subsets with record-local checklist and visual state. */
+  cardPresentation(card: TCard): KanbanViewportCardPresentation | undefined {
+    const base = this.#legacy.cardPresentation?.(card);
+    const presentation = this.#state().presentation;
+    const fieldIds = presentation.cardFieldIds.length === 0 ? base?.selection?.fieldIds : presentation.cardFieldIds;
+    const summaryIds = presentation.summaryIds.length === 0 ? base?.selection?.summaryIds : presentation.summaryIds;
+    if (base === undefined && fieldIds === undefined && summaryIds === undefined) return undefined;
+    return Object.freeze({
+      selection: Object.freeze({
+        ...(fieldIds === undefined ? {} : { fieldIds }),
+        ...(summaryIds === undefined ? {} : { summaryIds }),
+        ...(base?.selection?.checklistIds === undefined ? {} : { checklistIds: base.selection.checklistIds }),
+      }),
+      ...(base?.visualState === undefined ? {} : { visualState: base.visualState }),
+    });
+  }
+
   /** Returns application workflow semantics overlaid by the complete controller view facets. */
   structure(): KanbanStructurePolicy<TCard> {
     return composeStructure(this.#legacy.structure?.(), this.#state());
@@ -215,12 +265,14 @@ export class KanbanBoardViewBinding<TCard> {
       structure,
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
     });
+    const candidateSummary = viewport?.summary === undefined ? undefined : createKanbanViewSummary(viewport.summary);
     let installed = false;
     return Object.freeze({
       commit: () => {
         viewport?.commit();
         this.#state.set(state);
         this.#query.set(query);
+        if (candidateSummary !== undefined) this.#summary.set(candidateSummary);
         installed = true;
       },
       verify: () =>

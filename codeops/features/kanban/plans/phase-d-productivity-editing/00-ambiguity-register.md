@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 26 items resolved
-> **Last Updated**: 2026-08-14 13:29 CEST
+> **Status**: ✅ GATE PASSED — all 27 items resolved
+> **Last Updated**: 2026-08-14 14:16 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -43,6 +43,7 @@
 | AR-D24 | Performance | What is the responsiveness pass/fail contract? | Qualitative / deterministic work bounds plus calibrated timing | Assert bounded query/repaint/reflow/session work and use the existing 16 ms median harness as secondary evidence | ✅ Resolved |
 | AR-D25 | Technical · runtime | How should view registry lookup relate to source-owned evaluator authority? | Duplicate all source evaluators in the view controller / retain immutable bounded view metadata while source adapters own record evaluation | Keep quick-filter metadata and stable lookup in an immutable bounded view registry; keep sort/filter/group execution in source adapters and validate selected identities at the binding boundary | ✅ Resolved |
 | AR-D26 | Technical · runtime · complex | What exact candidate boundary preserves the usable viewport when query projection fails after session open? | Stage only a query session publication / stage a complete isolated viewport source through current-geometry refresh / mutate the live viewport and roll back | Stage a complete isolated viewport source through synchronous publication validation and one current-geometry refresh, then install it non-reentrantly, retire the exact old generation, and notify subscribers afterward | ✅ Resolved |
+| AR-D27 | Quality review · runtime · complex | How should the seven accepted Phase 1 Major findings be corrected without widening source authority or the public query protocol? | Parallel quick-filter query directives / executable filter builders / declarative quick-filter mappings plus focused transaction, presentation, ordering, and geometry corrections | Map quick filters to existing source-owned filters declaratively; apply every remaining focused correction and require one fix-scoped re-review | ✅ Resolved |
 
 ## Resolution notes
 
@@ -188,3 +189,43 @@
 - **Reopen triggers:** Candidate refresh requires asynchronous readiness, source implementations cannot
   sustain two bounded sessions during prepare, or committed revision evidence cannot suppress the legacy
   reactive replacement without a second query open.
+
+### AR-D27 — Phase 1 quality-review remediation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; no risk is waived.
+- **Eligibility:** Implementation, source-query mapping, transaction consistency, reentrancy,
+  presentation composition, eligibility, and geometry mechanisms inside the confirmed RD-09 behavior.
+- **Objective:** Make every committed view facet effective and observer-atomic while preserving source
+  evaluation authority, application geometry constraints, legacy query compatibility, and bounded work.
+- **Evidence:** Three independent Phase 1 reviewers found seven unique Major defects, and primary
+  consolidation found the required ordered summary-ID facet absent from the public model. Quick-filter state
+  never reached a query; two presentation facets were inert; sorted moves bypassed ordering eligibility;
+  width preferences expanded application limits; activation refreshed twice; subscriber delivery was
+  recursively reentrant; and summary evidence lagged committed state/query delivery.
+- **Decision:** Replace the new registry's unused per-card predicate with one declarative mapping to an
+  existing `KanbanFilter` field/operator plus a fixed value or a codec-validated parameter. The controller
+  binds the immutable registry, contains applicability/codec failures, combines explicit and derived
+  filters under the existing query validator, and leaves all per-card evaluation in source adapters.
+  Compose controller checklist/field/summary selection with the preserved legacy presentation and record callback,
+  using the already approved two-item standard preview. Clamp effective widths without rewriting raw state.
+  Apply sorted within-cell blocking before application eligibility. Consume the staged viewport snapshot
+  exactly once, verify its generation/revision, commit coherent summary evidence before external delivery,
+  and keep the transition guard active through the complete subscriber pass.
+- **Rejected alternatives:** Adding parallel quick-filter directives to `KanbanQuery` would require every
+  source implementation to add a second interpreter without a capability-negotiation seam. Arbitrary
+  filter-builder callbacks permit output amplification and add a hostile executable-output boundary when
+  one application-owned field/operator can express compound semantics. Retaining any finding would waive
+  known incorrect behavior and is prohibited by the quality gate.
+- **Strongest counterargument:** One declarative mapping may require an application to register a synthetic
+  source operator for a named filter spanning several fields.
+- **Confidence:** High — the existing filter contract already provides inert stable semantics and bounded
+  eager/remote interpretation, and the independent challenger selected declarative mapping over both
+  viable alternatives.
+- **Hardening:** Correctness, security, and performance/concurrency/API reviewers independently audited the
+  complete phase diff. A separate blind design challenge compared all viable quick-filter mechanisms and
+  converged on the existing-filter mapping. The completed fix diff must receive the one permitted re-review.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1231CEST`.
+- **Reopen triggers:** An approved quick filter cannot be expressed by one source operator without semantic
+  duplication, a remote protocol must retain original quick-filter identity for authorization, or source
+  capability negotiation is added.

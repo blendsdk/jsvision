@@ -55,10 +55,10 @@ describe('Kanban view input security specification', () => {
   it('rejects an unsafe registry identity without invoking its evaluator or accessor', () => {
     expect(createKanbanViewRegistry).toBeTypeOf('function');
     expect(KanbanInvalidViewRegistryError).toBeTypeOf('function');
-    const evaluator = vi.fn(() => true);
+    const evaluator = vi.fn((value: unknown) => String(value));
     const hostile = {
       id: 'app.hostile',
-      predicate: evaluator,
+      filter: { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
       get labelId(): string {
         throw new Error('classified-registry-accessor');
       },
@@ -66,7 +66,15 @@ describe('Kanban view input security specification', () => {
 
     expect(() =>
       createKanbanViewRegistry({
-        quickFilters: [{ id: '../unsafe', labelId: 'kanban.filter.unsafe', predicate: evaluator }, hostile],
+        quickFilters: [
+          {
+            id: '../unsafe',
+            labelId: 'kanban.filter.unsafe',
+            filter: { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
+            parameterCodec: { snapshot: evaluator },
+          },
+          hostile,
+        ],
       }),
     ).toThrowError(KanbanInvalidViewRegistryError);
     expect(evaluator).not.toHaveBeenCalled();

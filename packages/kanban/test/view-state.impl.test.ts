@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KanbanInvalidViewRegistryError } from '../src/contract/error.js';
 import { createKanbanExtensionId } from '../src/contract/identity.js';
 import { KANBAN_LIMITS } from '../src/contract/limits.js';
+import { KanbanBoardViewBinding } from '../src/view/board-binding.js';
 import { attachKanbanViewProjectionParticipant, createKanbanViewController } from '../src/view/controller.js';
 import { createKanbanViewRegistry } from '../src/view/registry.js';
 import { createKanbanViewScheduler } from '../src/view/scheduler.js';
@@ -60,7 +61,7 @@ describe('Kanban view-state implementation boundaries', () => {
     const registrations = Array.from({ length: KANBAN_LIMITS.cardFields.safe }, (_, index) => ({
       id: createKanbanExtensionId(`app.filter-${index}`),
       labelId: `app.filters.filter-${index}`,
-      predicate: () => true,
+      filter: { fieldId: 'status', operatorId: 'app.equals', value: index },
     }));
 
     const registry = createKanbanViewRegistry({ quickFilters: registrations });
@@ -74,7 +75,7 @@ describe('Kanban view-state implementation boundaries', () => {
           {
             id: createKanbanExtensionId('app.filter-overflow'),
             labelId: 'app.filters.overflow',
-            predicate: () => true,
+            filter: { fieldId: 'status', operatorId: 'app.equals', value: 'overflow' },
           },
         ],
       }),
@@ -82,12 +83,11 @@ describe('Kanban view-state implementation boundaries', () => {
   });
 
   it('should detach registry structure without invoking registered behavior', () => {
-    const predicate = vi.fn(() => true);
     const applicable = vi.fn(() => true);
     const registration = {
       id: createKanbanExtensionId('app.mine'),
       labelId: 'app.filters.mine',
-      predicate,
+      filter: { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
       applicable,
     };
     const input = [registration];
@@ -98,7 +98,6 @@ describe('Kanban view-state implementation boundaries', () => {
     expect(registry.quickFilters).toHaveLength(1);
     expect(Object.isFrozen(registry.quickFilters)).toBe(true);
     expect(Object.isFrozen(registry.quickFilters[0])).toBe(true);
-    expect(predicate).not.toHaveBeenCalled();
     expect(applicable).not.toHaveBeenCalled();
   });
 
@@ -166,6 +165,66 @@ describe('Kanban view-state implementation boundaries', () => {
     detach();
     const nextDetach = attachKanbanViewProjectionParticipant(controller, participant);
     nextDetach();
+    controller.dispose();
+  });
+
+  it('should reject subscriber-origin transitions until the complete delivery pass unwinds', () => {
+    const controller = createKanbanViewController();
+    let nested: KanbanViewTransitionResult | undefined;
+    controller.subscribe(() => {
+      nested = controller.apply({ kind: 'set-density', density: 'spacious' });
+    });
+
+    const result = controller.apply({ kind: 'set-density', density: 'compact' });
+
+    expect(result.kind).toBe('changed');
+    expect(nested).toEqual({ kind: 'unavailable', code: 'view-transition-active' });
+    expect(controller.state().presentation.density).toBe('compact');
+    controller.dispose();
+  });
+
+  it('should stop retained subscriber delivery when an earlier subscriber disposes the controller', () => {
+    const controller = createKanbanViewController();
+    const later = vi.fn();
+    controller.subscribe(() => controller.dispose());
+    controller.subscribe(later);
+
+    controller.apply({ kind: 'set-density', density: 'compact' });
+
+    expect(later).not.toHaveBeenCalled();
+    expect(controller.apply({ kind: 'set-density', density: 'spacious' })).toEqual({ kind: 'unavailable' });
+  });
+
+  it('should clamp an effective width without expanding application geometry constraints', () => {
+    const controller = createKanbanViewController();
+    const binding = new KanbanBoardViewBinding(controller, {
+      query: controller.query,
+      structure: () => ({
+        revision: 'structure-v1',
+        columns: [
+          {
+            columnId: 'ready',
+            width: { minimumWidth: 18, preferredWidth: 24, maximumWidth: 32 },
+          },
+        ],
+      }),
+    });
+    binding.activate();
+
+    controller.apply({
+      kind: 'set-columns',
+      columns: {
+        items: [{ columnId: 'ready', visible: true, collapsed: false, width: 40 }],
+      },
+    });
+
+    expect(binding.structure().columns[0]?.width).toEqual({
+      minimumWidth: 18,
+      preferredWidth: 32,
+      maximumWidth: 32,
+    });
+    expect(controller.state().columns.items[0]?.width).toBe(40);
+    binding.dispose();
     controller.dispose();
   });
 });

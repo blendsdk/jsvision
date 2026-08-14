@@ -6,6 +6,8 @@ import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import type { KanbanQuery } from '../source/types.js';
+import { snapshotKanbanQuery } from '../source/validation.js';
+import type { KanbanViewRegistry } from './registry.js';
 import { createKanbanViewScheduler } from './scheduler.js';
 import { kanbanViewStatesEqual, snapshotKanbanViewState, transitionKanbanViewState } from './state.js';
 import { createUnboundKanbanViewSummary } from './summary.js';
@@ -38,6 +40,8 @@ export interface KanbanViewControllerOptions {
   readonly initial?: KanbanViewControllerInitialState;
   /** Whole-millisecond search debounce; defaults to 150 ms. */
   readonly debounceMs?: number;
+  /** Optional declarative quick-filter registry interpreted into ordinary source filters. */
+  readonly registry?: KanbanViewRegistry;
 }
 
 /** @internal Prepared projection whose fallible work completed before public controller activation. */
@@ -101,6 +105,7 @@ function initialState(options: KanbanViewControllerOptions): KanbanViewState {
     presentation: Object.freeze({
       density: density(options.initial?.density),
       cardFieldIds: EMPTY,
+      summaryIds: EMPTY,
       checklist: 'hidden',
     }),
     revision: 0,
@@ -108,18 +113,55 @@ function initialState(options: KanbanViewControllerOptions): KanbanViewState {
 }
 
 /** Derives the source-facing immutable query for the currently supported controller facets. */
-function queryFor(state: KanbanViewState): KanbanQuery {
+function queryFor(state: KanbanViewState, registry: KanbanViewRegistry | undefined): KanbanQuery {
   const visibleColumnIds = state.columns.items.filter((item) => item.visible).map((item) => item.columnId);
   const visibleSwimlaneIds = state.swimlanes.items.filter((item) => item.visible).map((item) => item.swimlaneId);
-  return Object.freeze({
+  const quickFilters = state.quickFilters.map((selection) => {
+    const registration = registry?.quickFilter(selection.id);
+    if (registration === undefined) throw new KanbanViewQueryError('unknown-quick-filter');
+    try {
+      if (registration.applicable !== undefined && registration.applicable() !== true) {
+        throw new KanbanViewQueryError('quick-filter-unavailable');
+      }
+      if (selection.value !== undefined && registration.parameterCodec === undefined) {
+        throw new KanbanViewQueryError('quick-filter-unavailable');
+      }
+      const value =
+        selection.value === undefined
+          ? (registration.filter.value ?? null)
+          : registration.parameterCodec!.snapshot(selection.value);
+      return Object.freeze({
+        fieldId: registration.filter.fieldId,
+        operatorId: registration.filter.operatorId,
+        value,
+      });
+    } catch (error) {
+      if (error instanceof KanbanViewQueryError) throw error;
+      throw new KanbanViewQueryError('quick-filter-unavailable');
+    }
+  });
+  return snapshotKanbanQuery({
     ...(state.search.length === 0 ? {} : { search: state.search }),
-    filters: state.filters,
+    filters: Object.freeze([...state.filters, ...quickFilters]),
     ...(state.grouping === undefined ? {} : { groupBy: state.grouping.fieldId }),
     sort: state.sort,
     ...(state.columns.items.length === 0 ? {} : { visibleColumnIds: Object.freeze(visibleColumnIds) }),
     ...(state.swimlanes.items.length === 0 ? {} : { visibleSwimlaneIds: Object.freeze(visibleSwimlaneIds) }),
     viewRevision: state.revision,
   });
+}
+
+/** Internal payload-free query-derivation failure exposed only as a stable result code. */
+class KanbanViewQueryError extends Error {
+  /** Stable public result code selected without retaining application values. */
+  readonly code: string;
+
+  /** Creates one query-derivation failure. */
+  constructor(code: string) {
+    super('Kanban view query could not be derived.');
+    this.name = 'KanbanViewQueryError';
+    this.code = code;
+  }
 }
 
 /** Sanitizes one search draft and rejects values that exceed the public byte limit. */
@@ -139,6 +181,7 @@ class KanbanViewControllerImpl implements KanbanViewController {
   readonly #scheduler;
   readonly #subscribers = new Set<KanbanViewSubscriber>();
   readonly #summary: KanbanViewSummary = createUnboundKanbanViewSummary();
+  readonly #registry: KanbanViewRegistry | undefined;
   #state: KanbanViewState;
   #query: KanbanQuery;
   #participant: KanbanViewProjectionParticipant | undefined;
@@ -148,8 +191,9 @@ class KanbanViewControllerImpl implements KanbanViewController {
 
   /** Initializes one committed state/query pair before any callback can observe it. */
   constructor(options: KanbanViewControllerOptions) {
+    this.#registry = options.registry;
     this.#state = initialState(options);
-    this.#query = queryFor(this.#state);
+    this.#query = queryFor(this.#state, this.#registry);
     this.#scheduler = createKanbanViewScheduler(options.debounceMs ?? KANBAN_VIEW_SEARCH_DEBOUNCE_MS);
   }
 
@@ -260,15 +304,18 @@ class KanbanViewControllerImpl implements KanbanViewController {
   #commitCandidate(candidate: KanbanViewState): KanbanViewTransitionResult {
     if (kanbanViewStatesEqual(this.#state, candidate)) return Object.freeze({ kind: 'unchanged' });
     if (this.#committing) return Object.freeze({ kind: 'unavailable', code: 'view-transition-active' });
-    const query = queryFor(candidate);
+    let query: KanbanQuery;
     let prepared: KanbanPreparedViewProjection | undefined;
     try {
+      query = queryFor(candidate, this.#registry);
       prepared = this.#participant?.prepare(candidate, query);
     } catch (error) {
       const code =
-        error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
-          ? 'unknown-comparator'
-          : 'query-open-failed';
+        error instanceof KanbanViewQueryError
+          ? error.code
+          : error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
+            ? 'unknown-comparator'
+            : 'query-open-failed';
       return Object.freeze({ kind: 'rejected', code });
     }
     const previousState = this.#state;
@@ -309,15 +356,16 @@ class KanbanViewControllerImpl implements KanbanViewController {
       } catch {
         // Retirement follows activation and cannot revoke the already verified committed projection.
       }
+      for (const subscriber of [...this.#subscribers]) {
+        if (this.#disposed) break;
+        try {
+          subscriber(this.#state, this.#query);
+        } catch {
+          // One application observer cannot prevent later observers from seeing a committed projection.
+        }
+      }
     } finally {
       this.#committing = false;
-    }
-    for (const subscriber of [...this.#subscribers]) {
-      try {
-        subscriber(this.#state, this.#query);
-      } catch {
-        // One application observer cannot prevent later observers from seeing a committed projection.
-      }
     }
     return Object.freeze({ kind: 'changed', revision: candidate.revision });
   }

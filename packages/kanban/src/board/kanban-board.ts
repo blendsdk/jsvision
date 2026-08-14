@@ -39,6 +39,7 @@ import type {
 } from '../interaction/types.js';
 import type { KanbanSourceState } from '../source/states.js';
 import type { KanbanIdentityChangeBatch } from '../source/types.js';
+import { snapshotKanbanQuery } from '../source/validation.js';
 import type { KanbanEligibility } from '../operation/eligibility.js';
 import type { KanbanOperationIdFactory } from '../operation/operation-id.js';
 import type {
@@ -171,6 +172,35 @@ export interface KanbanBoardInspection extends KanbanViewportInspection {
   readonly clearedPublication?: KanbanPublicationNotice;
 }
 
+/** Returns whether two already-validated cell addresses name the same semantic cell. */
+function sameCell(
+  left: { readonly columnId: string; readonly swimlaneId?: string },
+  right: { readonly columnId: string; readonly swimlaneId?: string },
+): boolean {
+  return left.columnId === right.columnId && left.swimlaneId === right.swimlaneId;
+}
+
+/** Applies package ordering invariants before delegating to application-owned operation policy. */
+function composeOperationEligibility(
+  proposal: KanbanRequestProposal,
+  query: () => unknown,
+  application: ((proposal: KanbanRequestProposal) => KanbanEligibility) | undefined,
+): KanbanEligibility {
+  try {
+    const committed = snapshotKanbanQuery(query());
+    if (
+      proposal.kind === 'card-move' &&
+      (committed.sort?.length ?? 0) > 0 &&
+      proposal.moved.every(({ source }) => sameCell(source, proposal.target))
+    ) {
+      return Object.freeze({ kind: 'blocked', code: 'sorted-manual-order' });
+    }
+    return application?.(proposal) ?? Object.freeze({ kind: 'allowed' });
+  } catch {
+    return Object.freeze({ kind: 'unavailable', code: 'eligibility-unavailable' });
+  }
+}
+
 /** Copies the shared viewport options while replacing identity with the board-owned detached signal. */
 function viewportOptions<TCard>(
   options: KanbanBoardOptions<TCard>,
@@ -191,14 +221,22 @@ function viewportOptions<TCard>(
         ? {}
         : { density: options.density }
       : { density: () => viewBinding.density() }),
-    ...(viewBinding !== undefined || options.presentation === undefined ? {} : { presentation: options.presentation }),
+    ...(viewBinding === undefined
+      ? options.presentation === undefined
+        ? {}
+        : { presentation: options.presentation }
+      : { presentation: () => viewBinding.presentation() }),
     ...(viewBinding === undefined
       ? options.structure === undefined
         ? {}
         : { structure: options.structure }
       : { structure: () => viewBinding.structure() }),
     ...(options.formatting === undefined ? {} : { formatting: options.formatting }),
-    ...(options.cardPresentation === undefined ? {} : { cardPresentation: options.cardPresentation }),
+    ...(viewBinding === undefined
+      ? options.cardPresentation === undefined
+        ? {}
+        : { cardPresentation: options.cardPresentation }
+      : { cardPresentation: (card: TCard) => viewBinding.cardPresentation(card) }),
     ...(options.renderer === undefined ? {} : { renderer: options.renderer }),
     ...(options.rendererRevision === undefined ? {} : { rendererRevision: options.rendererRevision }),
     ...(options.theme === undefined ? {} : { theme: options.theme }),
@@ -314,6 +352,9 @@ export class KanbanBoard<TCard> extends Group {
         : new KanbanBoardViewBinding(options.view.controller, {
             query: options.query,
             ...(options.density === undefined ? {} : { density: options.density }),
+            ...(options.presentation === undefined ? {} : { presentation: options.presentation }),
+            ...(options.cardPresentation === undefined ? {} : { cardPresentation: options.cardPresentation }),
+            ...(options.limits === undefined ? {} : { limits: options.limits }),
             ...(options.structure === undefined ? {} : { structure: options.structure }),
             ...(options.collapsedColumnIds === undefined ? {} : { collapsedColumnIds: options.collapsedColumnIds }),
           });
@@ -334,11 +375,12 @@ export class KanbanBoard<TCard> extends Group {
         const revisions = this.viewport.interactionRevisions();
         return Object.freeze({ source: revisions.sessionRevision, query: revisions.queryGeneration });
       },
-      ...(operationEligibility === undefined
-        ? {}
-        : {
-            eligibility: operationEligibility,
-          }),
+      eligibility: (proposal) =>
+        composeOperationEligibility(
+          proposal,
+          () => this.#viewBinding?.query() ?? options.query(),
+          operationEligibility,
+        ),
       ...(options.confirmOperation === undefined ? {} : { confirm: options.confirmOperation }),
       ...(options.resolveUndo === undefined ? {} : { resolveUndo: options.resolveUndo }),
       ...(options.operationId === undefined ? {} : { operationId: options.operationId }),

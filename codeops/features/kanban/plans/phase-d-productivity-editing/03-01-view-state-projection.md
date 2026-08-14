@@ -28,6 +28,7 @@ export interface KanbanViewState {
 export interface KanbanViewController {
   readonly state: () => KanbanViewState;
   readonly query: () => KanbanQuery;
+  readonly summary: () => KanbanViewSummary;
   apply(transition: KanbanViewTransition): KanbanViewTransitionResult;
   replace(state: unknown): KanbanViewTransitionResult;
   clearFilters(): KanbanViewTransitionResult;
@@ -37,8 +38,15 @@ export interface KanbanViewController {
 ```
 
 All constructors snapshot exact bounded input. Stable field/operator/quick-filter/comparator IDs select
-only registered behavior. Registry entries include localized label IDs, optional parameter codecs,
-sensitivity, and applicability; functions never enter saved JSON (AR-D13).
+only registered behavior. Each quick-filter registry entry maps declaratively to one ordinary source
+field/operator filter with an optional fixed value or bounded parameter codec. Entries also include a
+localized label ID, sensitivity, and applicability. The controller validates selections and derives the
+ordinary `KanbanFilter` list; eager, remote, and windowed sources remain the sole record evaluators.
+Functions never enter saved JSON (AR-D13/D27).
+
+`KanbanViewPresentation` contains density, ordered card-field IDs, ordered summary IDs, and checklist
+mode. Field and summary identities are unique and independently bounded. Standard checklist preview
+shows at most two source-order items, further clamped by the active resource limits.
 
 `KanbanSort` gains an optional comparator ID. Existing `KanbanSortField { fieldId, compare }` remains
 valid and normalizes to the reserved default comparator. Additive `comparators` may register one or more
@@ -58,13 +66,18 @@ standard chrome is a view-bar draft until debounce expiry; meanwhile `state()`, 
 subscriptions, and view events expose the last committed projection. Expiry commits state/query/revision
 once. Clear cancels pending input and commits its clear transition. A bound controller prepares state/
 query privately and passes it to one projection participant; the source coordinator stages the candidate
-through first valid publication. One batched commit activates the session, viewport revision, controller
-state/query, and then notifies observers before retiring the old generation. Failure/supersession aborts
+through first valid publication and current geometry. One batched commit activates the prepared source,
+viewport revision, controller state/query, and coherent source-count summary; the reactive activation and
+identity reconciliation consume that prepared publication without a second source refresh. The exact old
+generation retires before external subscribers run. The transition guard remains active through the whole
+subscriber pass, and disposal by an earlier subscriber stops later delivery. Failure/supersession aborts
 the candidate, so no observer sees it. An unbound controller commits pure transitions synchronously.
 
 - Search is terminal-safe, byte-bounded, and scheduled with configurable default `150 ms`.
 - Each scheduling generation cancels the prior pending search publication and disposes cleanly.
 - Filters apply logical AND; internal OR belongs only to a registered filter implementation.
+- Named quick filters derive ordinary filters and are jointly active with explicit filters; unknown,
+  inapplicable, or invalid parameter selections reject without changing the committed pair.
 - Sorting appends stable card identity as the final deterministic tie-break where the adapter permits.
 - Grouping is singular; selecting another replaces the prior group atomically.
 - Hidden/collapsed groups remain view-only and never change placement or WIP authority.
@@ -77,14 +90,16 @@ the candidate, so no observer sees it. An unbound controller commits pure transi
 existing quality labels. Filtered-empty is distinct from true empty and exposes Clear Filters without
 stealing search focus. Query publication triggers existing focus/selection reconciliation after the
 new projection is observable; hidden selected identities are pruned from destructive scope according
-to RD-06/RD-09 (AR-D03).
+to RD-06/RD-09 (AR-D03). Candidate source counts are staged with the state/query pair before subscriber
+delivery; projected visible and selected counts refresh after draw without mixing source revisions.
 
 The board-view binding is the only effective getter composer. Controller ownership is all-or-nothing:
 
 | Channel | Without controller | With controller |
 |---|---|---|
-| Query, density, global durable presentation | Existing getter unchanged | Controller committed state/query |
-| Record-dependent `cardPresentation(card)` callback | Existing callback | Always preserved; functions never enter controller/saved state |
+| Query and density | Existing getter unchanged | Controller committed state/query |
+| Global durable presentation | Existing getter unchanged | Legacy bounded budget with controller checklist mode and two-item preview |
+| Record-dependent `cardPresentation(card)` callback | Existing callback | Visual state and checklist IDs preserved; non-empty controller field/summary order wins |
 | Column order/visible/collapsed/width/alignment | Existing structure and collapsed getters | Controller facets over base columns by ID |
 | Column WIP/DoD/capabilities/style | Existing structure | Always preserved from base structure |
 | Group resolver/membership/unassigned/fallback | Existing structure | Always preserved from base structure |
@@ -108,7 +123,9 @@ Chrome owns no record or mutation authority.
 | Failure | Behavior | AR Ref |
 |---|---|---|
 | Unknown required registry ID | Reject transition/restore atomically with structured diagnostic | AR-D04/D13 |
+| Inapplicable or invalid quick-filter parameter | Reject transition atomically; do not open a candidate source | AR-D27 |
 | Throwing evaluator or candidate open | Candidate aborts before activation; prior session/cursors/state/query remain usable; safe diagnostic emitted | AR-D13/D17 |
+| Subscriber attempts a nested transition | Return typed `view-transition-active`; finish or stop the current delivery first | AR-D27 |
 | Disposed controller | Return unavailable/no-op; no late scheduled publication | AR-D06/D12 |
 | Filtered placement unresolved | Disable ambiguous manual reorder with localized reason | AR-D09 |
 | Search scheduler failure | Publish safe unavailable feedback; input and prior projection remain usable | AR-D12 |
@@ -119,7 +136,7 @@ Chrome owns no record or mutation authority.
 `summary.ts`, `view-bar.ts`; existing `source/{types,validation,eager-index,session-coordinator}.ts`
 and remote/windowed contracts; plus a projection-participant/board binding that owns the prepare/commit/
 abort handshake. Replacement stages a candidate through first valid publication before one batched
-controller/viewport/session activation and retirement of the old generation.
+controller/viewport/session activation, atomic count evidence, and retirement of the old generation.
 No view state is added to `KanbanViewport` beyond existing query consumption.
 
 ## Testing requirements

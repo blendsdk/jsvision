@@ -172,7 +172,7 @@ Phase 7/8 own the complete cross-surface assertions.
 
 | File | ST cases |
 |---|---|
-| `test/view-state.spec.test.ts`, `test/view-chrome.spec.test.ts`, `test/security/view-input.spec.test.ts` | ST-DV-01…DV-16 |
+| `test/view-state.spec.test.ts`, `test/view-projection.spec.test.ts`, `test/view-chrome.spec.test.ts`, `test/security/view-input.spec.test.ts` | ST-DV-01…DV-16, including quick-filter projection, presentation composition, sorted-move blocking, and atomic summary delivery |
 | `test/saved-view.spec.test.ts`, `test/saved-view-migration.spec.test.ts`, `test/saved-view-store.spec.test.ts`, `test/security/saved-view-input.spec.test.ts` | ST-DS-01…DS-20 |
 | `test/editor-schema.spec.test.ts`, `test/editor-session.spec.test.ts`, `test/editor-dialog.spec.test.ts`, `test/editor-integration.spec.test.ts`, `test/security/editor-boundary.spec.test.ts`, `test/e2e/editor-dialog.e2e.test.ts` | ST-DE-01…DE-27 |
 | `test/configuration.spec.test.ts`, `test/configuration-delete.spec.test.ts`, `test/security/configuration-input.spec.test.ts`, `test/e2e/configuration-dialog.e2e.test.ts` | ST-DC-01…DC-17 |
@@ -191,7 +191,7 @@ Phase 7/8 own the complete cross-surface assertions.
 | `test/package-consumer-contract.spec.test.ts` | ST-DI-05 |
 | package/build/plugin checks | ST-DI-06 |
 
-Implementation tests are split by concern as `view-state.impl.test.ts`, `saved-view-codec.impl.test.ts`,
+Implementation tests are split by concern as `view-state.impl.test.ts`, `view-transaction.impl.test.ts`, `saved-view-codec.impl.test.ts`,
 `saved-view-migration.impl.test.ts`, `editor-session.impl.test.ts`, `configuration-builders.impl.test.ts`,
 `action-registry.impl.test.ts`, `event-hub.impl.test.ts`, and `history.impl.test.ts`. Fuzz/property tests
 use deterministic bounded seeds. Real objects are preferred; fake clocks/hosts isolate true external time
