@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 29 items resolved
-> **Last Updated**: 2026-08-14 16:38 CEST
+> **Status**: ✅ GATE PASSED — all 30 items resolved
+> **Last Updated**: 2026-08-14 17:34 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -46,6 +46,7 @@
 | AR-D27 | Quality review · runtime · complex | How should the seven accepted Phase 1 Major findings be corrected without widening source authority or the public query protocol? | Parallel quick-filter query directives / executable filter builders / declarative quick-filter mappings plus focused transaction, presentation, ordering, and geometry corrections | Map quick filters to existing source-owned filters declaratively; apply every remaining focused correction and require one fix-scoped re-review | ✅ Resolved |
 | AR-D28 | Security limits · runtime | Which safe/standard/absolute budgets bound saved-view parsing, migration, diagnostics, registries, and extensions? | Independent saved-view budgets / shared semantic budgets plus saved-view-specific count limits | Reuse the shared semantic rows exactly for JSON shape and bytes; add fixed saved-view migration, diagnostic, registered-ID, and extension count rows; untrusted parsing always uses the safe class | ✅ Resolved |
 | AR-D29 | Confirmation policy · runtime · reserved | Does public programmatic saved-view deletion require the existing destructive confirmation, or is the store API itself an already-authorized boundary? | Preserve confirmation and explicitly approve it in the store oracle / formally make store deletion an already-authorized public authority seam | Preserve destructive confirmation; the store oracle supplies an approving board confirmer explicitly | ✅ Resolved |
+| AR-D30 | Editor API · runtime · complex | How do full-draft evidence, field rejection mapping, and coherent session state cross the existing authority without breaking legacy updates? | Additive editor metadata plus aggregate session snapshots / new request kind / encode metadata in patch / public per-field signals | Keep `card-update.patch`; add exact optional full-draft editor metadata and bounded field errors; expose one actor-style session with immutable aggregate snapshots and subscription | ✅ Resolved |
 
 ## Resolution notes
 
@@ -288,3 +289,48 @@
   follows the same board authority path, and callers or package dialogs provide explicit confirmation at
   that boundary.
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+
+### AR-D30 — Editor submission evidence and session API (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Additive public API, lifecycle ownership, validation, and compatibility mechanisms
+  within the approved editor behavior; product scope, application data ownership, and the shared board
+  authority remain unchanged.
+- **Objective:** Carry a full detached draft, exact changed fields, base revision, and bounded field
+  rejection evidence through the existing request authority while publishing one coherent disposable
+  editor state.
+- **Evidence:** `KanbanCardUpdateProposal` currently has exact `{ kind, cardKey, patch }` shape and every
+  board request receives coordinator-owned operation identity, expected revisions, and cancellation.
+  The approved adapter still returns that proposal type, while the editor acceptance criteria require
+  changed-field/base-revision evidence and mapped field errors. Existing view/controller APIs publish
+  immutable aggregate snapshots rather than exposing mutable reactive internals.
+- **Decision:** Preserve legacy update proposals unchanged. Editor-produced updates add one optional exact
+  `editor: { kind: 'full-draft', changedFieldIds, baseRevision }` object; its presence defines `patch` as
+  the bounded full detached draft. Add optional bounded `fieldErrors` to rejected results, with exact
+  field IDs, safe codes, and sanitized optional labels; the existing top-level code/label remains the
+  form diagnostic. The editor passes the proposal to the existing authority, which alone allocates the
+  operation ID; the session retains only the returned pending identity. Expose an actor-style session
+  with `snapshot`/`subscribe`, field-ID actions, submit/cancel, explicit stale reload/merge/overwrite,
+  and idempotent disposal. One immutable aggregate snapshot carries ordered field projections plus
+  orthogonal record/submission discriminators. Subscribe before resolving a record and reconcile any
+  buffered publication to close the open-time lost-update window.
+- **Rejected alternatives:** A new `card-edit` kind duplicates update policy and expands every request
+  switch. Putting metadata inside `patch` prevents package-level exact validation. Required new top-level
+  update fields or a same-kind union break legacy handlers' unconditional `patch` access. Adapter-only
+  rejection mapping cannot represent dynamic per-field application errors. Public per-field signals
+  couple the Zod-free protocol to reactive implementation details and weaken atomic whole-form state.
+  Callback-owned mutable drafts cannot enforce isolation or generation ownership.
+- **Strongest counterargument:** `patch` means a full record only when the explicit editor discriminator
+  is present, so an older application handler could mistakenly apply it as a sparse patch. Editor submit
+  is new opt-in behavior, the discriminator is runtime-visible, and adapters remain application-owned;
+  this is the only compatible path that neither adds a second authority nor a new request kind.
+- **Confidence:** High — two independent blind challenges converged on additive discriminated metadata
+  and one aggregate actor-style session; both rejected request-kind duplication and public mutable state.
+- **Hardening:** The API-surface challenge grounded compatibility in the current exact request validator
+  and board authority. The lifecycle challenge added subscribe-before-resolve buffering, explicit stale
+  resolution, schema-order focus, and idempotent lease cleanup.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Applications cannot distinguish full-draft metadata safely, aggregate snapshots
+  exceed the approved bounded-field work budget, or the board authority gains a first-class editor
+  admission contract that carries equivalent evidence without compatibility loss.
