@@ -812,8 +812,8 @@ type KanbanCardEditorFieldKind = 'text' | 'multiline' | 'number' | 'boolean' | '
 Lifecycle-free proposal shape whose application draft is validated by the session boundary.
 
 ```ts
-type KanbanCardEditorProposal = | Omit<KanbanCardCreateProposal, 'draft'> & { readonly draft: unknown }
-  | Omit<KanbanCardUpdateProposal, 'patch'> & { readonly patch: unknown }
+type KanbanCardEditorProposal = | (Omit<KanbanCardCreateProposal, 'draft'> & { readonly draft: unknown })
+  | (Omit<KanbanCardUpdateProposal, 'patch'> & { readonly patch: unknown })
 ```
 
 ## KanbanCardEditorSchema
