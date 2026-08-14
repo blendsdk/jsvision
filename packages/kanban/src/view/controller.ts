@@ -23,6 +23,8 @@ export const KANBAN_VIEW_SEARCH_DEBOUNCE_MS = 150;
 export interface KanbanViewControllerInitialState {
   /** Initial search persistence policy. */
   readonly searchPolicy?: KanbanSearchPolicy;
+  /** Initial sanitized search text committed with the first controller snapshot. */
+  readonly search?: string;
   /** Initial card density. */
   readonly density?: KanbanCardDensity;
 }
@@ -65,7 +67,7 @@ function initialState(options: KanbanViewControllerOptions): KanbanViewState {
   }
   return Object.freeze({
     searchPolicy,
-    search: '',
+    search: searchDraft(options.initial?.search ?? ''),
     filters: EMPTY,
     quickFilters: EMPTY,
     sort: EMPTY,

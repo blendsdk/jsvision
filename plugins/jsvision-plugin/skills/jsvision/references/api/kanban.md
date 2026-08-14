@@ -381,6 +381,7 @@ Responsive DSL-composed Kanban shell that owns exactly one public viewport.
 new KanbanBoard<TCard>(options: KanbanBoardOptions<TCard>)   // extends Group
 // methods & signals:
 viewport: KanbanViewport<TCard>
+viewBar: KanbanViewBar | undefined
 runPendingMounts(): void
 inspection(): KanbanBoardInspection
 interaction(): KanbanInteractionFacade
@@ -447,6 +448,12 @@ Construction options for the responsive board shell and application authority se
 
 ```ts
 interface KanbanBoardOptions<TCard> {
+  view?: {
+    /** Complete semantic view owner bound atomically over legacy getters. */
+    readonly controller: KanbanViewController;
+    /** Optional package view bar; omission keeps controller binding headless. */
+    readonly chrome?: 'standard';
+  };   // Optional controller-owned view projection and package standard chrome.
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
   confirmOperation?: KanbanConfirmer;   // Optional confirmation callback for warning and destructive operation proposals.

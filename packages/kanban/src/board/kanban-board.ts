@@ -67,6 +67,9 @@ import type { KanbanViewportInteractionAdapter } from './viewport-interaction.js
 import type { KanbanViewportInspection } from './viewport-inspection.js';
 import type { KanbanRevealAlignment, KanbanRevealResult, KanbanScrollTarget } from './viewport-scroll.js';
 import { setViewportHostChromeRows } from './viewport-host-chrome.js';
+import { KanbanBoardViewBinding } from '../view/board-binding.js';
+import { KanbanViewBar } from '../view/view-bar.js';
+import type { KanbanViewController } from '../view/types.js';
 
 /** Typed locale key assigned to each closed interaction feedback category. */
 const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
@@ -82,6 +85,13 @@ const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
 
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction' | 'drag'> {
+  /** Optional controller-owned view projection and package standard chrome. */
+  readonly view?: {
+    /** Complete semantic view owner bound atomically over legacy getters. */
+    readonly controller: KanbanViewController;
+    /** Optional package view bar; omission keeps controller binding headless. */
+    readonly chrome?: 'standard';
+  };
   /**
    * Optional compatibility seed captured once during construction for the default controller's mount.
    *
@@ -151,17 +161,26 @@ function viewportOptions<TCard>(
   i18n: () => I18n,
   identity: () => KanbanIdentityInput,
   interaction?: KanbanViewportInteractionAdapter,
+  viewBinding?: KanbanBoardViewBinding<TCard>,
 ): KanbanViewportOptions<TCard> {
   return {
     source: options.source,
-    query: options.query,
+    query: viewBinding === undefined ? options.query : () => viewBinding.query(),
     card: options.card,
     i18n,
     identity,
     ...(interaction === undefined ? {} : { interaction }),
-    ...(options.density === undefined ? {} : { density: options.density }),
-    ...(options.presentation === undefined ? {} : { presentation: options.presentation }),
-    ...(options.structure === undefined ? {} : { structure: options.structure }),
+    ...(viewBinding === undefined
+      ? options.density === undefined
+        ? {}
+        : { density: options.density }
+      : { density: () => viewBinding.density() }),
+    ...(viewBinding !== undefined || options.presentation === undefined ? {} : { presentation: options.presentation }),
+    ...(viewBinding === undefined
+      ? options.structure === undefined
+        ? {}
+        : { structure: options.structure }
+      : { structure: () => viewBinding.structure() }),
     ...(options.formatting === undefined ? {} : { formatting: options.formatting }),
     ...(options.cardPresentation === undefined ? {} : { cardPresentation: options.cardPresentation }),
     ...(options.renderer === undefined ? {} : { renderer: options.renderer }),
@@ -171,7 +190,11 @@ function viewportOptions<TCard>(
     ...(options.overscan === undefined ? {} : { overscan: options.overscan }),
     ...(options.observe === undefined ? {} : { observe: options.observe }),
     ...(options.capabilities === undefined ? {} : { capabilities: options.capabilities }),
-    ...(options.collapsedColumnIds === undefined ? {} : { collapsedColumnIds: options.collapsedColumnIds }),
+    ...(viewBinding === undefined
+      ? options.collapsedColumnIds === undefined
+        ? {}
+        : { collapsedColumnIds: options.collapsedColumnIds }
+      : { collapsedColumnIds: () => viewBinding.collapsedColumnIds() ?? [] }),
     ...(options.drag === undefined ? {} : { drag: options.drag }),
   };
 }
@@ -233,8 +256,11 @@ function revisionKey(value: KanbanRevision | undefined): string {
 export class KanbanBoard<TCard> extends Group {
   /** Single exact-cell read projection owned by this board. */
   readonly viewport: KanbanViewport<TCard>;
+  /** Optional package-owned responsive view chrome requested at construction. */
+  readonly viewBar: KanbanViewBar | undefined;
   readonly #i18n: () => I18n;
   readonly #bindings: KanbanBoardBindings<TCard>;
+  readonly #viewBinding: KanbanBoardViewBinding<TCard> | undefined;
   readonly #authority: KanbanBoardAuthority;
   readonly #interactionFacade: KanbanInteractionFacadeOwner;
   readonly #interactionFactory: KanbanInteractionControllerFactory | undefined;
@@ -267,8 +293,23 @@ export class KanbanBoard<TCard> extends Group {
     this.focusable = true;
     const fallbackI18n = createEnglishKanbanI18n();
     this.#i18n = options.i18n ?? (() => fallbackI18n);
+    this.#viewBinding =
+      options.view === undefined
+        ? undefined
+        : new KanbanBoardViewBinding(options.view.controller, {
+            query: options.query,
+            ...(options.density === undefined ? {} : { density: options.density }),
+            ...(options.structure === undefined ? {} : { structure: options.structure }),
+            ...(options.collapsedColumnIds === undefined ? {} : { collapsedColumnIds: options.collapsedColumnIds }),
+          });
     const bindingOptions: KanbanViewportOptions<TCard> = {
-      ...viewportOptions(options, this.#i18n, options.identity ?? (() => Object.freeze({}))),
+      ...viewportOptions(
+        options,
+        this.#i18n,
+        options.identity ?? (() => Object.freeze({})),
+        undefined,
+        this.#viewBinding,
+      ),
       ...(options.identity === undefined ? {} : { identity: options.identity }),
     };
     this.#bindings = new KanbanBoardBindings(bindingOptions);
@@ -310,7 +351,13 @@ export class KanbanBoard<TCard> extends Group {
       },
     });
     this.viewport = new KanbanViewport(
-      viewportOptions(options, this.#i18n, () => this.#interactionIdentity(), this.#interactionFacade),
+      viewportOptions(
+        options,
+        this.#i18n,
+        () => this.#interactionIdentity(),
+        this.#interactionFacade,
+        this.#viewBinding,
+      ),
     );
     prepareKanbanViewportOperations(this.viewport, {
       snapshot: () => this.#authority.snapshot(),
@@ -341,6 +388,9 @@ export class KanbanBoard<TCard> extends Group {
     );
     this.#feedback = new KanbanBoardFeedbackView(() => this.#feedbackState());
     this.setLayout({ direction: 'col' });
+    this.viewBar =
+      options.view?.chrome === 'standard' ? new KanbanViewBar({ controller: options.view.controller }) : undefined;
+    if (this.viewBar !== undefined) this.add(fixed(this.viewBar, 3));
     this.add(grow(this.viewport));
     fixed(this.#feedback, 1);
     this.addDynamic(() =>
@@ -392,6 +442,7 @@ export class KanbanBoard<TCard> extends Group {
       );
       this.viewport.onCleanup(() => this.dispose());
     });
+    this.#viewBinding?.activate();
   }
 
   /** Rejects remount after the board's terminal owned-resource lifecycle has been released. */
@@ -424,7 +475,7 @@ export class KanbanBoard<TCard> extends Group {
       }),
       viewportRect: Object.freeze({
         ...this.viewport.bounds,
-        y: 0,
+        y: this.viewBar === undefined ? 0 : this.viewport.bounds.y,
         height: Math.max(
           0,
           this.bounds.height -
@@ -511,6 +562,7 @@ export class KanbanBoard<TCard> extends Group {
     this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
+    this.#viewBinding?.dispose();
     this.viewport.dispose();
   }
 

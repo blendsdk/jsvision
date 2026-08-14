@@ -490,15 +490,25 @@ function filteredColumns(
     if (collapsed.size >= limits.columns) throw new KanbanInvalidGeometryError();
     collapsed.add(createKanbanColumnId(rawId));
   }
+  const admitted = publication.columns.filter((column) => {
+    const structural = structure.columns.find((candidate) => candidate.columnId === column.columnId);
+    return (
+      structural !== undefined &&
+      (queryVisible === undefined || queryVisible.has(column.columnId)) &&
+      !collapsed.has(column.columnId)
+    );
+  });
+  if (query.visibleColumnIds === undefined) return Object.freeze(admitted);
+  const rank = new Map(query.visibleColumnIds.map((columnId, index) => [columnId, index]));
   return Object.freeze(
-    publication.columns.filter((column) => {
-      const structural = structure.columns.find((candidate) => candidate.columnId === column.columnId);
-      return (
-        structural !== undefined &&
-        (queryVisible === undefined || queryVisible.has(column.columnId)) &&
-        !collapsed.has(column.columnId)
-      );
-    }),
+    admitted
+      .map((column, sourceIndex) => ({ column, sourceIndex }))
+      .sort(
+        (left, right) =>
+          (rank.get(left.column.columnId) ?? Number.MAX_SAFE_INTEGER) -
+            (rank.get(right.column.columnId) ?? Number.MAX_SAFE_INTEGER) || left.sourceIndex - right.sourceIndex,
+      )
+      .map(({ column }) => column),
   );
 }
 
