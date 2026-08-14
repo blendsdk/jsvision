@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 22:36 CEST
-> **Progress**: 57/125 tasks (46%)
+> **Last Updated**: 2026-08-14 22:38 CEST
+> **Progress**: 58/125 tasks (46%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -237,7 +237,7 @@ all in-scope Major findings and the one permitted re-review's residuals fixed, n
 **Reference**: 03-04 §Programmatic builders–Focus/access · ST-DC-01…DC-17 · AR-D06–D08
 
 - [x] 5.1.1 `[spec-author]` Add pure builder/name/identity/view-versus-structure oracles — `packages/kanban/test/configuration.spec.test.ts` ✅ (completed: 2026-08-14 22:36)
-- [ ] 5.1.2 `[spec-author]` Add delete confirmation, non-empty/unknown, atomic policy, no-cascade, and capability oracles — `packages/kanban/test/configuration-delete.spec.test.ts`
+- [x] 5.1.2 `[spec-author]` Add delete confirmation, non-empty/unknown, atomic policy, no-cascade, and capability oracles — `packages/kanban/test/configuration-delete.spec.test.ts` ✅ (completed: 2026-08-14 22:38)
 - [ ] 5.1.3 `[spec-author]` Add dialog cancel/reject/stale/focus/resize plus keyboard/button/pointer reorder parity oracles; defer DC-15 command assertion — `packages/kanban/test/e2e/configuration-dialog.e2e.test.ts`
 - [ ] 5.1.4 `[spec-author]` Add hostile name/DoD/application-field diagnostics oracles — `packages/kanban/test/security/configuration-input.spec.test.ts`
 - [ ] 5.1.5 Run the focused specifications and record expected red failures
