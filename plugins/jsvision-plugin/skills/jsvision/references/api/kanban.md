@@ -823,6 +823,7 @@ interface KanbanActionRouterOptions {
   registry: KanbanActionRegistry;   // Stable action inventory used for exact route lookup.
   capability?: KanbanCapabilityProvider;   // Optional synchronous UI capability policy.
   maxDepth?: number;   // Maximum distinct synchronous nesting depth; defaults to 16 and cannot exceed 64.
+  events?: KanbanEventHub;   // Optional board-scoped public action event stream.
 }
 ```
 
@@ -1038,6 +1039,7 @@ Construction options for the responsive board shell and application authority se
 
 ```ts
 interface KanbanBoardOptions<TCard> {
+  events?: KanbanEventHub;   // Optional board-scoped public semantic event stream.
   view?: KanbanBoardViewOptions;   // Optional controller-owned view projection and package standard chrome.
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.

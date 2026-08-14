@@ -9,6 +9,8 @@ import {
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import { evaluateKanbanActionCapability } from './capability.js';
+import { publishKanbanActionIntent, publishKanbanActionOutcome } from '../event/publisher.js';
+import type { KanbanEventHub } from '../event/types.js';
 import type {
   KanbanActionAffordance,
   KanbanActionCapability,
@@ -32,6 +34,8 @@ export interface KanbanActionRouterOptions {
   readonly capability?: KanbanCapabilityProvider;
   /** Maximum distinct synchronous nesting depth; defaults to 16 and cannot exceed 64. */
   readonly maxDepth?: number;
+  /** Optional board-scoped public action event stream. */
+  readonly events?: KanbanEventHub;
 }
 
 /** Exact native Promise method captured before application code can replace an instance method. */
@@ -377,30 +381,48 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       if (route === undefined) return ACTION_UNAVAILABLE;
       if (depth >= maxDepth) return ACTION_DEPTH_EXCEEDED;
       if (activeActions.has(route.definition.id)) return ACTION_REENTRANT;
+      if (options.events !== undefined) publishKanbanActionIntent(options.events, route.invocation);
       const denied = deniedOutcome(eligibility(options.capability, route.definition, route.invocation));
-      if (denied !== undefined) return denied;
+      if (denied !== undefined) {
+        if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, denied);
+        return denied;
+      }
 
       activeActions.add(route.definition.id);
       depth += 1;
       const admittedGeneration = generation;
       try {
         const result = route.definition.handler(route.invocation);
-        if (!isExactNativePromise(result)) return snapshotTerminalOutcome(result);
+        if (!isExactNativePromise(result)) {
+          const outcome = snapshotTerminalOutcome(result);
+          if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, outcome);
+          return outcome;
+        }
+        if (options.events !== undefined)
+          publishKanbanActionOutcome(options.events, route.invocation, { kind: 'pending' });
         const completion = new Promise<KanbanActionTerminalOutcome>((resolveCompletion) => {
           NATIVE_PROMISE_THEN.call(
             result,
             (outcome) => {
-              resolveCompletion(
-                isDisposed || generation !== admittedGeneration ? ROUTER_DISPOSED : snapshotTerminalOutcome(outcome),
-              );
+              const terminal =
+                isDisposed || generation !== admittedGeneration ? ROUTER_DISPOSED : snapshotTerminalOutcome(outcome);
+              if (!isDisposed && generation === admittedGeneration && options.events !== undefined) {
+                publishKanbanActionOutcome(options.events, route.invocation, terminal);
+              }
+              resolveCompletion(terminal);
             },
             () => {
-              resolveCompletion(isDisposed || generation !== admittedGeneration ? ROUTER_DISPOSED : ACTION_FAILED);
+              const terminal = isDisposed || generation !== admittedGeneration ? ROUTER_DISPOSED : ACTION_FAILED;
+              if (!isDisposed && generation === admittedGeneration && options.events !== undefined) {
+                publishKanbanActionOutcome(options.events, route.invocation, terminal);
+              }
+              resolveCompletion(terminal);
             },
           );
         });
         return Object.freeze({ kind: 'pending', actionId: route.definition.id, completion });
       } catch {
+        if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, ACTION_FAILED);
         return ACTION_FAILED;
       } finally {
         depth -= 1;

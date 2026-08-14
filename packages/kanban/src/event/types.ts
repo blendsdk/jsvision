@@ -79,7 +79,7 @@ export interface KanbanSourceEventInput {
   /** Event discriminator. */
   readonly kind: 'source';
   /** Current bounded source lifecycle state. */
-  readonly state: 'ready' | 'loading' | 'error' | 'disposed';
+  readonly state: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' | 'error' | 'disposed';
   /** Optional equality-only source revision. */
   readonly revision?: KanbanRevision;
   /** Optional equality-only query projection revision. */

@@ -269,6 +269,9 @@ export function snapshotKanbanEventInput(value: unknown): KanbanEventInput {
     if (
       properties.state !== 'ready' &&
       properties.state !== 'loading' &&
+      properties.state !== 'refreshing' &&
+      properties.state !== 'partial' &&
+      properties.state !== 'empty' &&
       properties.state !== 'error' &&
       properties.state !== 'disposed'
     ) {

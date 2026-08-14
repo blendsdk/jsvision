@@ -75,6 +75,8 @@ import { setViewportHostChromeRows } from './viewport-host-chrome.js';
 import { KanbanBoardViewBinding } from '../view/board-binding.js';
 import { KanbanViewBar } from '../view/view-bar.js';
 import type { KanbanViewController } from '../view/types.js';
+import { KanbanStateEventPublisher } from '../event/publisher.js';
+import type { KanbanEventHub } from '../event/types.js';
 
 /** Typed locale key assigned to each closed interaction feedback category. */
 const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
@@ -109,6 +111,8 @@ export interface KanbanBoardViewOptions {
 
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction' | 'drag'> {
+  /** Optional board-scoped public semantic event stream. */
+  readonly events?: KanbanEventHub;
   /** Optional controller-owned view projection and package standard chrome. */
   readonly view?: KanbanBoardViewOptions;
   /**
@@ -332,6 +336,7 @@ export class KanbanBoard<TCard> extends Group {
   readonly #bindings: KanbanBoardBindings<TCard>;
   readonly #viewBinding: KanbanBoardViewBinding<TCard> | undefined;
   readonly #authority: KanbanBoardAuthority;
+  readonly #stateEvents: KanbanStateEventPublisher | undefined;
   /** Cancels delayed or resolving editor opens when this board releases ownership. */
   readonly #editorLifetime = new AbortController();
   readonly #interactionFacade: KanbanInteractionFacadeOwner;
@@ -346,6 +351,7 @@ export class KanbanBoard<TCard> extends Group {
   #layoutReflows = 0;
   #disposeBindings: (() => void) | undefined;
   #disposeInteractionChrome: (() => void) | undefined;
+  #disposeViewEvents: (() => void) | undefined;
   #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
   #automaticReconcileReady: boolean;
   #disposed = false;
@@ -387,6 +393,7 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.identity === undefined ? {} : { identity: options.identity }),
     };
     this.#bindings = new KanbanBoardBindings(bindingOptions);
+    this.#stateEvents = options.events === undefined ? undefined : new KanbanStateEventPublisher(options.events);
     const operationEligibility = options.operationEligibility;
     this.#authority = new KanbanBoardAuthority(options.dispatcher, options.capabilities, {
       expected: () => {
@@ -404,6 +411,7 @@ export class KanbanBoard<TCard> extends Group {
       ...(options.operationId === undefined ? {} : { operationId: options.operationId }),
       ...(options.limits === undefined ? {} : { limits: options.limits }),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
+      ...(options.events === undefined ? {} : { events: options.events }),
     });
     this.#interactionFactory = options.interactionFactory;
     this.#automaticReconcileReady = options.interactionFactory === undefined;
@@ -471,6 +479,8 @@ export class KanbanBoard<TCard> extends Group {
     setKanbanViewportInteractionEvidenceListener(this.viewport, () => {
       this.#viewBinding?.refreshSummary();
       this.#reconcileInteraction(this.viewport.identityChanges());
+      const revisions = this.viewport.interactionRevisions();
+      this.#stateEvents?.source(this.viewport.sourceState(), revisions.sessionRevision, revisions.queryGeneration);
     });
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(
@@ -508,7 +518,10 @@ export class KanbanBoard<TCard> extends Group {
 
     this.onMount(() => {
       this.#everMounted = true;
-      this.#disposeInteractionChrome = this.#interactionFacade.subscribe(() => this.#syncInteractionChrome());
+      this.#disposeInteractionChrome = this.#interactionFacade.subscribe(() => {
+        this.#syncInteractionChrome();
+        this.#stateEvents?.interaction(this.#interactionFacade.snapshot());
+      });
       this.#disposeBindings = runWithOwner(this.viewport.scope, () =>
         createRoot((dispose) => {
           effect(() => {
@@ -534,6 +547,7 @@ export class KanbanBoard<TCard> extends Group {
       this.viewport.onCleanup(() => this.dispose());
     });
     this.#viewBinding?.activate();
+    this.#disposeViewEvents = options.view?.controller.subscribe((state) => this.#stateEvents?.view(state.revision));
   }
 
   /** Rejects remount after the board's terminal owned-resource lifecycle has been released. */
@@ -654,6 +668,8 @@ export class KanbanBoard<TCard> extends Group {
     this.#disposeInteractionChrome = undefined;
     this.#disposeBindings?.();
     this.#disposeBindings = undefined;
+    this.#disposeViewEvents?.();
+    this.#disposeViewEvents = undefined;
     this.#viewBinding?.dispose();
     this.viewport.dispose();
   }
