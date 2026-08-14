@@ -338,7 +338,7 @@ execute without unrelated import, harness, or existing-suite failures.
 
 ### Step 7.2: Implementation
 
-- [ ] 7.2.1 Define bounded event union/subscriber/history contracts and exact validation — `packages/kanban/src/event/types.ts`, `validation.ts`
+- [x] 7.2.1 Define bounded event union/subscriber/history contracts and exact validation — `packages/kanban/src/event/types.ts`, `validation.ts` ✅ (completed: 2026-08-15 01:56)
 - [ ] 7.2.2 Implement breadth-first event queue with default 256/max 4096, dequeue sequence, typed overflow, isolation, and disposal — event hub/publisher
 - [ ] 7.2.3 Derive request events from authority snapshots/publication without a second lifecycle — `packages/kanban/src/event/operation-events.ts`, `packages/kanban/src/board/board-authority.ts`
 - [ ] 7.2.4 Publish focus/selection/view/action/source events after public state and keep observations separate — `packages/kanban/src/event/publisher.ts`, `packages/kanban/src/board/kanban-board.ts`
