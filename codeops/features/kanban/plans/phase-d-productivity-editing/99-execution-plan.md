@@ -274,7 +274,7 @@ all initial and fix-scoped Major findings corrected under auto-design, no waiver
 
 ## Phase 6: Actions, keymaps, capabilities, and read-only mode
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `5b138c4b3`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: RD-12 action inventory/keymap/capability/read-only/router/help, consuming completed Phase D producers.
 > **Expected modification set**: additive Core input/keymap and Web DOM keyboard/pointer adapters; Kanban command modules and small interaction/board adapters; i18n; host/security tests; barrels/docs/plugin references; this plan.
@@ -284,7 +284,7 @@ all initial and fix-scoped Major findings corrected under auto-design, no waiver
 
 **Reference**: 03-05 §Action registry–Routing · ST-DA-01…DA-13 · AR-D09/D13
 
-- [ ] 6.1.1 `[spec-author]` Add action inventory, origin parity, outcome, custom-action, and disposal oracles — `packages/kanban/test/actions-capabilities.spec.test.ts`
+- [x] 6.1.1 `[spec-author]` Add action inventory, origin parity, outcome, custom-action, and disposal oracles — `packages/kanban/test/actions-capabilities.spec.test.ts` ✅ (completed: 2026-08-15 00:26)
 - [ ] 6.1.2 `[spec-author]` Add key conflict/override/runtime-help/default-key oracles — `packages/kanban/test/action-keymap.spec.test.ts`
 - [ ] 6.1.3 `[spec-author]` Add disabled/hidden/throw/read-only hit-target and authorization-boundary oracles — `packages/kanban/test/security/action-capability.spec.test.ts`
 - [ ] 6.1.4 `[spec-author]` Add Primary/Meta compatibility and DOM pointer mapping/capture/coordinate/fallback/SGR-dedupe oracles — Core `test/input-primary.spec.test.ts`, Web `test/dom-pointer-input.spec.test.ts`, Kanban host E2E
