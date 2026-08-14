@@ -12,6 +12,9 @@ export type KanbanErrorCode =
   | 'invalid-geometry'
   | 'disposed-resource';
 
+/** Safe reason that further classifies a rejected semantic query without retaining query data. */
+export type KanbanInvalidQueryReason = 'invalid-query' | 'unknown-comparator';
+
 /** Base class for sanitized programmer and configuration errors raised by Kanban. */
 export abstract class KanbanError extends Error {
   /** Stable machine-readable failure code. */
@@ -35,10 +38,14 @@ export class KanbanInvalidQueryError extends KanbanError {
   /** Stable machine-readable failure code. */
   readonly code = 'invalid-query' as const;
 
+  /** Payload-free reason suitable for application diagnostics. */
+  readonly reason: KanbanInvalidQueryReason;
+
   /** Creates a bounded query-validation error. */
-  constructor() {
+  constructor(reason: KanbanInvalidQueryReason = 'invalid-query') {
     super('Invalid Kanban query.');
     this.name = 'KanbanInvalidQueryError';
+    this.reason = reason;
   }
 }
 

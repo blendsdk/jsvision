@@ -4,6 +4,7 @@ import type { Signal } from '@jsvision/ui';
 import { KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH, KANBAN_DEFAULT_COLUMN_MINIMUM_WIDTH } from '../layout/width-solver.js';
 import type { KanbanCardDensity } from '../card/descriptor.js';
 import type { KanbanQuery } from '../source/types.js';
+import type { KanbanPreparedViewportView } from '../board/kanban-viewport.js';
 import { snapshotKanbanStructurePolicy } from '../structure/policy.js';
 import type {
   KanbanColumnPolicy,
@@ -12,6 +13,10 @@ import type {
   KanbanStructurePolicy,
 } from '../structure/policy.js';
 import type { KanbanViewController, KanbanViewState } from './types.js';
+import { attachKanbanViewProjectionParticipant } from './controller.js';
+import type { KanbanPreparedViewProjection } from './controller.js';
+import { createKanbanViewSummary, createUnboundKanbanViewSummary } from './summary.js';
+import type { KanbanViewSummary, KanbanViewSummaryEvidence } from './summary.js';
 
 /** Legacy board getters retained behind one controller-aware composition boundary. */
 export interface KanbanBoardViewLegacyChannels<TCard> {
@@ -23,6 +28,19 @@ export interface KanbanBoardViewLegacyChannels<TCard> {
   readonly structure?: () => KanbanStructurePolicy<TCard>;
   /** Existing compatibility collapse getter. */
   readonly collapsedColumnIds?: () => readonly string[];
+}
+
+/** Viewport-side transaction and evidence bridge attached after board construction. */
+export interface KanbanBoardViewProjectionBridge<TCard> {
+  /** Stages one isolated candidate source using prospective controller-owned facets. */
+  readonly prepare: (candidate: {
+    readonly query: KanbanQuery;
+    readonly density: KanbanCardDensity;
+    readonly structure: KanbanStructurePolicy<TCard>;
+    readonly collapsedColumnIds?: readonly string[];
+  }) => KanbanPreparedViewportView;
+  /** Reads summary evidence from the committed source and viewport projection. */
+  readonly summary: () => KanbanViewSummaryEvidence | undefined;
 }
 
 /** Creates a collision-safe equality revision that preserves number/string identity. */
@@ -110,8 +128,10 @@ export class KanbanBoardViewBinding<TCard> {
   readonly #legacy: KanbanBoardViewLegacyChannels<TCard>;
   readonly #state: Signal<KanbanViewState>;
   readonly #query: Signal<KanbanQuery>;
+  readonly #summary: Signal<KanbanViewSummary>;
   readonly #controller: KanbanViewController;
-  #unsubscribe: (() => void) | undefined;
+  #bridge: KanbanBoardViewProjectionBridge<TCard> | undefined;
+  #detachParticipant: (() => void) | undefined;
   #disposed = false;
 
   /** Captures the initial pair without retaining external lifecycle resources. */
@@ -120,18 +140,31 @@ export class KanbanBoardViewBinding<TCard> {
     this.#legacy = legacy;
     this.#state = signal(controller.state());
     this.#query = signal(controller.query());
+    this.#summary = signal(createUnboundKanbanViewSummary());
   }
 
-  /** Synchronizes the latest pair and subscribes once after board construction succeeds. */
+  /** Attaches the exact viewport bridge before controller activation. */
+  connect(bridge: KanbanBoardViewProjectionBridge<TCard>): void {
+    if (this.#disposed || this.#bridge !== undefined) throw new TypeError('Kanban view binding is already connected.');
+    this.#bridge = bridge;
+  }
+
+  /** Synchronizes the latest pair and acquires one exclusive controller participant lease. */
   activate(): void {
-    if (this.#disposed || this.#unsubscribe !== undefined) return;
+    if (this.#disposed || this.#detachParticipant !== undefined) return;
     this.#state.set(this.#controller.state());
     this.#query.set(this.#controller.query());
-    this.#unsubscribe = this.#controller.subscribe((state, query) => {
-      if (this.#disposed) return;
-      this.#state.set(state);
-      this.#query.set(query);
+    this.#detachParticipant = attachKanbanViewProjectionParticipant(this.#controller, {
+      prepare: (state, query) => this.#prepare(state, query),
+      summary: () => this.#summary(),
     });
+  }
+
+  /** Refreshes summary evidence only after the viewport publishes a committed projection. */
+  refreshSummary(): void {
+    if (this.#disposed) return;
+    const evidence = this.#bridge?.summary();
+    if (evidence !== undefined) this.#summary.set(createKanbanViewSummary(evidence));
   }
 
   /** Returns the controller's last complete source query. */
@@ -156,19 +189,60 @@ export class KanbanBoardViewBinding<TCard> {
    * the older collapse getter suppresses the complete column and therefore cannot represent it.
    */
   collapsedColumnIds(): readonly string[] | undefined {
-    const legacy = this.#legacy.collapsedColumnIds?.();
-    const state = this.#state();
-    if (state.columns.items.length === 0) return legacy;
-    const owned = new Set(state.columns.items.map((item) => item.columnId));
-    const retained = legacy?.filter((columnId) => !owned.has(columnId)) ?? [];
-    return retained.length === 0 ? undefined : Object.freeze(retained);
+    return this.#collapsedColumnIdsFor(this.#state());
   }
 
   /** Releases controller observation while freezing the last committed effective snapshot. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    this.#unsubscribe?.();
-    this.#unsubscribe = undefined;
+    this.#detachParticipant?.();
+    this.#detachParticipant = undefined;
+    this.#bridge = undefined;
+  }
+
+  /** Stages one complete source-backed candidate and composes binding writes around its lifecycle. */
+  #prepare(state: KanbanViewState, query: KanbanQuery): KanbanPreparedViewProjection {
+    const bridge = this.#bridge;
+    const previousState = this.#state.peek();
+    const previousQuery = this.#query.peek();
+    const previousSummary = this.#summary.peek();
+    const structure = composeStructure(this.#legacy.structure?.(), state);
+    const collapsedColumnIds = this.#collapsedColumnIdsFor(state);
+    const viewport = bridge?.prepare({
+      query,
+      density: state.presentation.density,
+      structure,
+      ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
+    });
+    let installed = false;
+    return Object.freeze({
+      commit: () => {
+        viewport?.commit();
+        this.#state.set(state);
+        this.#query.set(query);
+        installed = true;
+      },
+      verify: () =>
+        installed && this.#state.peek() === state && this.#query.peek() === query && (viewport?.verify() ?? true),
+      rollback: () => {
+        viewport?.rollback();
+        this.#state.set(previousState);
+        this.#query.set(previousQuery);
+        this.#summary.set(previousSummary);
+        installed = false;
+      },
+      abort: () => viewport?.abort(),
+      retire: () => viewport?.retire(),
+    });
+  }
+
+  /** Applies compatibility collapse only to identities the candidate controller does not own. */
+  #collapsedColumnIdsFor(state: KanbanViewState): readonly string[] | undefined {
+    const legacy = this.#legacy.collapsedColumnIds?.();
+    if (state.columns.items.length === 0) return legacy;
+    const owned = new Set(state.columns.items.map((item) => item.columnId));
+    const retained = legacy?.filter((columnId) => !owned.has(columnId)) ?? [];
+    return retained.length === 0 ? undefined : Object.freeze(retained);
   }
 }

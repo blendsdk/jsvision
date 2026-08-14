@@ -1,4 +1,7 @@
+import { batch } from '@jsvision/ui';
+
 import type { KanbanCardDensity } from '../card/descriptor.js';
+import { KanbanInvalidQueryError } from '../contract/error.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
@@ -35,6 +38,28 @@ export interface KanbanViewControllerOptions {
   readonly initial?: KanbanViewControllerInitialState;
   /** Whole-millisecond search debounce; defaults to 150 ms. */
   readonly debounceMs?: number;
+}
+
+/** @internal Prepared projection whose fallible work completed before public controller activation. */
+export interface KanbanPreparedViewProjection {
+  /** Installs the candidate projection without releasing the previous generation. */
+  readonly commit: () => void;
+  /** Confirms that every internal public channel now carries the candidate revision. */
+  readonly verify: () => boolean;
+  /** Restores the exact prior projection when post-install evidence is inconsistent. */
+  readonly rollback: () => void;
+  /** Releases the prepared candidate when it never became active. */
+  readonly abort: () => void;
+  /** Releases the captured prior generation after successful activation. */
+  readonly retire: () => void;
+}
+
+/** @internal Exclusive board participant used to stage source-backed view transitions. */
+export interface KanbanViewProjectionParticipant {
+  /** Stages one candidate through all synchronous source and projection validation. */
+  readonly prepare: (state: KanbanViewState, query: KanbanQuery) => KanbanPreparedViewProjection;
+  /** Returns honest evidence for the last committed bound projection. */
+  readonly summary: () => KanbanViewSummary;
 }
 
 /** Shared immutable empty collection used by the initial view and query snapshots. */
@@ -116,6 +141,9 @@ class KanbanViewControllerImpl implements KanbanViewController {
   readonly #summary: KanbanViewSummary = createUnboundKanbanViewSummary();
   #state: KanbanViewState;
   #query: KanbanQuery;
+  #participant: KanbanViewProjectionParticipant | undefined;
+  #participantLease: object | undefined;
+  #committing = false;
   #disposed = false;
 
   /** Initializes one committed state/query pair before any callback can observe it. */
@@ -137,7 +165,7 @@ class KanbanViewControllerImpl implements KanbanViewController {
 
   /** Returns honest unbound counts until board binding supplies source evidence. */
   summary(): KanbanViewSummary {
-    return this.#summary;
+    return this.#participant?.summary() ?? this.#summary;
   }
 
   /** Validates and atomically publishes one transition, with search using the scheduler boundary. */
@@ -202,6 +230,20 @@ class KanbanViewControllerImpl implements KanbanViewController {
     this.#subscribers.clear();
   }
 
+  /** Attaches one exclusive board projection participant for its exact disposable lease. */
+  attachParticipant(participant: KanbanViewProjectionParticipant): () => void {
+    if (this.#disposed) throw new TypeError('Cannot bind a disposed Kanban view controller.');
+    if (this.#participant !== undefined) throw new TypeError('Kanban view controller is already bound.');
+    const lease = Object.freeze({});
+    this.#participant = participant;
+    this.#participantLease = lease;
+    return () => {
+      if (this.#participantLease !== lease) return;
+      this.#participant = undefined;
+      this.#participantLease = undefined;
+    };
+  }
+
   /** Commits one still-current scheduler generation and then notifies isolated observers. */
   #commitSearch(search: string): void {
     if (this.#disposed || search === this.#state.search) return;
@@ -217,9 +259,59 @@ class KanbanViewControllerImpl implements KanbanViewController {
   /** Publishes a complete state/query pair before delivering isolated observer callbacks. */
   #commitCandidate(candidate: KanbanViewState): KanbanViewTransitionResult {
     if (kanbanViewStatesEqual(this.#state, candidate)) return Object.freeze({ kind: 'unchanged' });
+    if (this.#committing) return Object.freeze({ kind: 'unavailable', code: 'view-transition-active' });
     const query = queryFor(candidate);
-    this.#state = candidate;
-    this.#query = query;
+    let prepared: KanbanPreparedViewProjection | undefined;
+    try {
+      prepared = this.#participant?.prepare(candidate, query);
+    } catch (error) {
+      const code =
+        error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
+          ? 'unknown-comparator'
+          : 'query-open-failed';
+      return Object.freeze({ kind: 'rejected', code });
+    }
+    const previousState = this.#state;
+    const previousQuery = this.#query;
+    let installed = false;
+    this.#committing = true;
+    try {
+      try {
+        batch(() => {
+          prepared?.commit();
+          this.#state = candidate;
+          this.#query = query;
+          installed = true;
+        });
+      } catch {
+        // A closing reactive flush can fail after every write has landed. Verification below decides
+        // whether to keep the complete candidate or restore the previous complete projection.
+      }
+      if (!installed || prepared?.verify() === false) {
+        try {
+          batch(() => {
+            prepared?.rollback();
+            this.#state = previousState;
+            this.#query = previousQuery;
+          });
+        } catch {
+          // The rollback body restores all fields before a closing reactive flush can report failure.
+        }
+        try {
+          prepared?.abort();
+        } catch {
+          // Candidate cleanup is isolated so the previous committed projection remains callable.
+        }
+        return Object.freeze({ kind: 'rejected', code: 'query-open-failed' });
+      }
+      try {
+        prepared?.retire();
+      } catch {
+        // Retirement follows activation and cannot revoke the already verified committed projection.
+      }
+    } finally {
+      this.#committing = false;
+    }
     for (const subscriber of [...this.#subscribers]) {
       try {
         subscriber(this.#state, this.#query);
@@ -229,6 +321,19 @@ class KanbanViewControllerImpl implements KanbanViewController {
     }
     return Object.freeze({ kind: 'changed', revision: candidate.revision });
   }
+}
+
+/** Internal implementation lookup that avoids adding transaction methods to the public interface. */
+const VIEW_CONTROLLER_IMPLEMENTATIONS = new WeakMap<KanbanViewController, KanbanViewControllerImpl>();
+
+/** @internal Attaches one exclusive board participant without widening the public controller contract. */
+export function attachKanbanViewProjectionParticipant(
+  controller: KanbanViewController,
+  participant: KanbanViewProjectionParticipant,
+): () => void {
+  const implementation = VIEW_CONTROLLER_IMPLEMENTATIONS.get(controller);
+  if (implementation === undefined) throw new TypeError('Unsupported Kanban view controller implementation.');
+  return implementation.attachParticipant(participant);
 }
 
 /**
@@ -242,5 +347,7 @@ class KanbanViewControllerImpl implements KanbanViewController {
  * ```
  */
 export function createKanbanViewController(options: KanbanViewControllerOptions = {}): KanbanViewController {
-  return new KanbanViewControllerImpl(options);
+  const controller = new KanbanViewControllerImpl(options);
+  VIEW_CONTROLLER_IMPLEMENTATIONS.set(controller, controller);
+  return controller;
 }

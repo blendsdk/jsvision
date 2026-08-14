@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 13:18 CEST
-> **Progress**: 11/125 tasks (9%)
+> **Last Updated**: 2026-08-14 13:42 CEST
+> **Progress**: 12/125 tasks (10%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -77,7 +77,7 @@ registry, chrome, additive comparator query, and transactional binding behavior 
 - [x] 1.2.4 Implement controller subscriptions, atomic publication, clear, replace, and disposal — `packages/kanban/src/view/controller.ts`, `summary.ts` ✅ (completed: 2026-08-14 12:52)
 - [x] 1.2.5 Implement view bar plus all-or-nothing controller facet→legacy-channel composer and type-tagged composite revision — view bar/board binding ✅ (completed: 2026-08-14 13:08)
 - [x] 1.2.6 Export/document view APIs while preserving query-getter construction — `packages/kanban/src/index.ts`, `packages/kanban/src/board/kanban-board.ts` ✅ (completed: 2026-08-14 13:18)
-- [ ] 1.2.7 Implement controller/binder/viewport/session prepare-commit-abort handshake through candidate first publication, atomic observer-visible activation, and rollback — controller, board binding, viewport, source coordinator
+- [x] 1.2.7 Implement controller/binder/viewport/session prepare-commit-abort handshake through candidate first publication, atomic observer-visible activation, and rollback — controller, board binding, viewport, source coordinator ✅ (completed: 2026-08-14 13:42)
 - [ ] 1.2.8 Run focused specifications and make them green
 
 ### Step 1.3: Implementation tests and hardening

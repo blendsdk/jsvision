@@ -11,14 +11,20 @@ import { resolveKanbanPresentation } from '../card/presentation-policy.js';
 import type { KanbanTheme } from '../card/theme.js';
 import { createKanbanTheme } from '../card/theme-resolver.js';
 import type { KanbanCapabilities } from '../contract/capability.js';
-import { KanbanDisposedResourceError } from '../contract/error.js';
+import {
+  KanbanDisposedResourceError,
+  KanbanInvalidQueryError,
+  KanbanInvalidSourcePublicationError,
+} from '../contract/error.js';
 import { createKanbanExtensionId } from '../contract/identity.js';
 import type { CardKey } from '../contract/identity.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanLimitOptions, KanbanResolvedLimits } from '../contract/limits.js';
+import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanObservation } from '../contract/observation.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import type { KanbanViewSummaryEvidence } from '../view/summary.js';
 import { routeKanbanKeyInput } from '../interaction/input-router.js';
 import type { KanbanScopedActionId } from '../interaction/intent.js';
 import { KanbanPointerRouter } from '../interaction/pointer-router.js';
@@ -279,6 +285,52 @@ interface KanbanViewportInputLifecycle {
 
 /** Internal input controls keyed weakly so released viewports are never retained. */
 const VIEWPORT_INPUT_LIFECYCLES = new WeakMap<object, KanbanViewportInputLifecycle>();
+
+/** @internal Complete candidate facets needed to stage a controller-owned viewport source. */
+export interface KanbanViewportViewCandidate<TCard> {
+  /** Detached source query paired with the candidate view state. */
+  readonly query: KanbanQuery;
+  /** Candidate card density used by bootstrap geometry. */
+  readonly density: KanbanCardDensity;
+  /** Candidate all-or-nothing structural projection. */
+  readonly structure: KanbanStructurePolicy<TCard>;
+  /** Compatibility collapse identities not owned by the candidate structure. */
+  readonly collapsedColumnIds?: readonly string[];
+}
+
+/** @internal Prepared viewport-source swap owned by one controller transition. */
+export interface KanbanPreparedViewportView {
+  /** Installs the candidate source and its validated current-geometry snapshot. */
+  readonly commit: () => void;
+  /** Confirms the candidate source and view revision are active. */
+  readonly verify: () => boolean;
+  /** Restores the captured prior source and projection evidence. */
+  readonly rollback: () => void;
+  /** Releases a candidate that never became active. */
+  readonly abort: () => void;
+  /** Releases the exact captured prior source after activation succeeds. */
+  readonly retire: () => void;
+}
+
+/** Module-private symbol for the controller candidate transaction seam. */
+const PREPARE_VIEW_CANDIDATE = Symbol('kanban.prepare-view-candidate');
+/** Module-private symbol for committed view-summary evidence. */
+const READ_VIEW_SUMMARY = Symbol('kanban.read-view-summary');
+
+/** @internal Stages one bound controller candidate without adding transaction methods to the public viewport API. */
+export function prepareKanbanViewportViewCandidate<TCard>(
+  viewport: KanbanViewport<TCard>,
+  candidate: KanbanViewportViewCandidate<TCard>,
+): KanbanPreparedViewportView {
+  return viewport[PREPARE_VIEW_CANDIDATE](candidate);
+}
+
+/** @internal Reads committed summary evidence without exposing source sessions or application records. */
+export function readKanbanViewportViewSummary<TCard>(
+  viewport: KanbanViewport<TCard>,
+): KanbanViewSummaryEvidence | undefined {
+  return viewport[READ_VIEW_SUMMARY]();
+}
 
 /**
  * Defers input until the owning board finishes its controller mount transaction.
@@ -633,6 +685,17 @@ export class KanbanViewport<TCard> extends View {
     const wasMounted = this.mounted;
     super.unmount();
     if (wasMounted && this.#disposed) this.#releasedLifecycle = true;
+  }
+
+  /** @internal Stages one controller-owned candidate through current viewport geometry. */
+  [PREPARE_VIEW_CANDIDATE](candidate: KanbanViewportViewCandidate<TCard>): KanbanPreparedViewportView {
+    if (this.#disposed) throw new KanbanDisposedResourceError();
+    return this.#prepareViewCandidate(candidate);
+  }
+
+  /** @internal Reads committed source and projection evidence for the bound controller summary. */
+  [READ_VIEW_SUMMARY](): KanbanViewSummaryEvidence | undefined {
+    return this.#viewSummaryEvidence();
   }
 
   /** Refreshes bounded source acquisition; visual descriptor drawing is added by the render task. */
@@ -1700,10 +1763,23 @@ export class KanbanViewport<TCard> extends View {
     }
     const effectiveFocusedColumnId =
       this.#imperativeFocusedColumnAnchor ?? focusedColumnId ?? this.#focusedColumnAnchor;
+    return this.#refreshSource(this.#source, collapsedColumnIds, effectiveFocusedColumnId, density, structure, true);
+  }
+
+  /** Refreshes one selected source using either committed learned windows or conservative bootstrap geometry. */
+  #refreshSource(
+    source: KanbanViewportSource<TCard> | undefined,
+    collapsedColumnIds: readonly string[] | undefined,
+    focusedColumnId: string | undefined,
+    density: KanbanCardDensity,
+    structure: KanbanStructurePolicy<TCard> | undefined,
+    useLearnedWindows: boolean,
+  ) {
     const presentation = resolveKanbanPresentation(this.#options.presentation?.() ?? density, this.#limits);
-    const groupedAxis = this.#groupedAxisProjection(presentation, structure);
-    const rangeWindow = groupedAxis === undefined ? this.#cardRangeWindow(presentation) : undefined;
-    return this.#source?.refresh({
+    const groupedAxis = useLearnedWindows ? this.#groupedAxisProjection(presentation, structure) : undefined;
+    const rangeWindow =
+      useLearnedWindows && groupedAxis === undefined ? this.#cardRangeWindow(presentation) : undefined;
+    return source?.refresh({
       width: this.bounds.width,
       height: this.bounds.height,
       horizontalOffset: this.#requestedOffsets.x,
@@ -1717,8 +1793,156 @@ export class KanbanViewport<TCard> extends View {
       ...(structure === undefined ? {} : { structure }),
       ...(rangeWindow === undefined ? {} : { cardRangeWindow: rangeWindow }),
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
-      ...(effectiveFocusedColumnId === undefined ? {} : { focusedColumnId: effectiveFocusedColumnId }),
+      ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
     });
+  }
+
+  /** Stages an isolated source through first publication and current-geometry cursor acquisition. */
+  #prepareViewCandidate(candidate: KanbanViewportViewCandidate<TCard>): KanbanPreparedViewportView {
+    const activeSource = this.#source;
+    if (activeSource === undefined) {
+      return Object.freeze({
+        commit: () => undefined,
+        verify: () => true,
+        rollback: () => undefined,
+        abort: () => undefined,
+        retire: () => undefined,
+      });
+    }
+    let stagedSource: KanbanViewportSource<TCard> | undefined;
+    let stagedSnapshot: KanbanViewportSourceSnapshot<TCard>;
+    try {
+      stagedSource = new KanbanViewportSource({
+        source: this.#options.source,
+        query: candidate.query,
+        initialGeneration: this.#nextViewQueryGeneration(),
+        card: this.#options.card,
+        limits: this.#options.limits,
+        overscan: this.#options.overscan,
+        observe: this.#options.observe,
+        invalidate: () => this.invalidate(),
+        beforeCursorDispose: (address) => {
+          if (!this.#descriptorCacheDisposed) this.#descriptorCache.invalidate({ address });
+        },
+      });
+      const refreshed = this.#refreshSource(
+        stagedSource,
+        candidate.collapsedColumnIds,
+        this.#imperativeFocusedColumnAnchor ?? this.#lastApplicationFocusedColumnId ?? this.#focusedColumnAnchor,
+        candidate.density,
+        candidate.structure,
+        false,
+      );
+      if (refreshed === undefined) throw new KanbanInvalidSourcePublicationError();
+      if (refreshed.publication.state.kind === 'error') throw new KanbanInvalidSourcePublicationError();
+      stagedSnapshot = refreshed;
+    } catch (error) {
+      stagedSource?.dispose();
+      try {
+        const code =
+          error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
+            ? 'unknown-comparator'
+            : 'query-open-failed';
+        this.#options.observe?.(createKanbanObservation({ code, scope: 'query' }));
+      } catch {
+        // Diagnostics cannot replace the candidate failure or expose its payload.
+      }
+      throw error;
+    }
+    const preparedSource = stagedSource;
+    const previousSnapshot = this.#snapshot;
+    const previousProjection = this.#projection;
+    const previousQueryViewRevision = this.#queryViewRevision;
+    let installed = false;
+    let candidateReleased = false;
+    let previousReleased = false;
+    const releaseCandidate = (): void => {
+      if (candidateReleased) return;
+      candidateReleased = true;
+      preparedSource.dispose();
+    };
+    return Object.freeze({
+      commit: () => {
+        this.#source = preparedSource;
+        this.#snapshot = stagedSnapshot;
+        this.#projection = undefined;
+        this.#queryViewRevision = candidate.query.viewRevision;
+        this.#completedProjectionFingerprint = undefined;
+        this.#completedAuthoritativeProjection = undefined;
+        this.#skipResidentReuseInspectionOnce = true;
+        installed = true;
+        this.invalidate();
+      },
+      verify: () =>
+        installed && this.#source === preparedSource && this.#queryViewRevision === candidate.query.viewRevision,
+      rollback: () => {
+        if (!installed) return;
+        this.#source = activeSource;
+        this.#snapshot = previousSnapshot;
+        this.#projection = previousProjection;
+        this.#queryViewRevision = previousQueryViewRevision;
+        installed = false;
+        releaseCandidate();
+        this.invalidate();
+      },
+      abort: () => {
+        if (!installed) releaseCandidate();
+      },
+      retire: () => {
+        if (!installed || previousReleased) return;
+        previousReleased = true;
+        activeSource.dispose();
+      },
+    });
+  }
+
+  /** Converts committed source and projection state into payload-free view-summary evidence. */
+  #viewSummaryEvidence(): KanbanViewSummaryEvidence | undefined {
+    const snapshot = this.#snapshot;
+    if (snapshot === undefined) return undefined;
+    const visibleKeys = new Set(
+      (this.#projection?.cards ?? []).map((card) =>
+        JSON.stringify([typeof card.descriptor.cardKey, card.descriptor.cardKey]),
+      ),
+    );
+    const interaction = this.#interactionBinding.snapshot();
+    const exactResidentTotal =
+      snapshot.visibleSwimlanes.length === 0 && snapshot.cells.length === snapshot.visibleColumns.length
+        ? snapshot.cells.reduce<number | undefined>((total, cell) => {
+            if (total === undefined) return undefined;
+            const count = cell.cursor.counts().total;
+            if (count.quality !== 'exact') return undefined;
+            const next = total + count.value;
+            return Number.isSafeInteger(next) ? next : undefined;
+          }, 0)
+        : undefined;
+    const selected = interaction.selectedCardKeys.filter((key) =>
+      visibleKeys.has(JSON.stringify([typeof key, key])),
+    ).length;
+    return Object.freeze({
+      state: snapshot.publication.state,
+      total: snapshot.publication.counts.total,
+      matching: snapshot.publication.counts.matching,
+      loaded:
+        exactResidentTotal === undefined
+          ? snapshot.publication.counts.loaded
+          : Object.freeze({ quality: 'exact' as const, value: exactResidentTotal }),
+      wip: snapshot.publication.counts.wip,
+      authoritativeResident:
+        exactResidentTotal !== undefined &&
+        snapshot.publication.counts.total.quality === 'exact' &&
+        exactResidentTotal === snapshot.publication.counts.total.value,
+      filtered: snapshot.filtered,
+      visible: this.#projection?.cards.length ?? 0,
+      selected,
+    });
+  }
+
+  /** Advances the viewport-wide query generation without wrapping into stale identity. */
+  #nextViewQueryGeneration(): number {
+    const current = this.#snapshot?.generation ?? 0;
+    if (current >= Number.MAX_SAFE_INTEGER) throw new KanbanInvalidSourcePublicationError();
+    return current + 1;
   }
 
   /**

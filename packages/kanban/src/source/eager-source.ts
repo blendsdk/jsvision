@@ -600,7 +600,8 @@ export function createEagerKanbanDataSource<TCard>(
       let snapshot: KanbanQuery;
       try {
         snapshot = resolveEagerKanbanQuery(snapshotKanbanQuery(query), options, limits);
-      } catch {
+      } catch (error) {
+        if (error instanceof KanbanInvalidQueryError) throw error;
         throw new KanbanInvalidQueryError();
       }
       return new EagerKanbanSession(cards, snapshot, options, nextRevision);

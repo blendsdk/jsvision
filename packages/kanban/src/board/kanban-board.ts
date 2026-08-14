@@ -56,8 +56,10 @@ import type { KanbanNavigatorState } from './board-bindings.js';
 import {
   activateKanbanViewportBoardInput,
   KanbanViewport,
+  prepareKanbanViewportViewCandidate,
   prepareKanbanViewportBoardInput,
   quiesceKanbanViewportInput,
+  readKanbanViewportViewSummary,
   setKanbanViewportInteractionEvidenceListener,
 } from './kanban-viewport.js';
 import { disposeKanbanViewportOperations, prepareKanbanViewportOperations } from './viewport-operation-bridge.js';
@@ -289,7 +291,6 @@ export class KanbanBoard<TCard> extends Group {
   #disposeBindings: (() => void) | undefined;
   #disposeInteractionChrome: (() => void) | undefined;
   #interactionReconcileEvidence: KanbanInteractionReconcileEvidence | undefined;
-  #interactionReconcileGeneration = 0;
   #automaticReconcileReady: boolean;
   #disposed = false;
   #everMounted = false;
@@ -373,6 +374,10 @@ export class KanbanBoard<TCard> extends Group {
         this.#viewBinding,
       ),
     );
+    this.#viewBinding?.connect({
+      prepare: (candidate) => prepareKanbanViewportViewCandidate(this.viewport, candidate),
+      summary: () => readKanbanViewportViewSummary(this.viewport),
+    });
     prepareKanbanViewportOperations(this.viewport, {
       snapshot: () => this.#authority.snapshot(),
       subscribe: (subscriber) => this.#authority.subscribe(subscriber),
@@ -392,9 +397,10 @@ export class KanbanBoard<TCard> extends Group {
       moveFocused: (direction) => this.#interactionFacade.acceptMoveFocused(direction),
       cancelTransient: () => this.#interactionFacade.cancel(),
     });
-    setKanbanViewportInteractionEvidenceListener(this.viewport, () =>
-      this.#reconcileInteraction(this.viewport.identityChanges()),
-    );
+    setKanbanViewportInteractionEvidenceListener(this.viewport, () => {
+      this.#viewBinding?.refreshSummary();
+      this.#reconcileInteraction(this.viewport.identityChanges());
+    });
     setViewportHostChromeRows(this.viewport, 1);
     this.#navigator = new KanbanFocusedNavigatorView(
       () => this.#navigatorState(),
@@ -697,11 +703,7 @@ export class KanbanBoard<TCard> extends Group {
       ...(deletedColumnIds.length === 0 ? {} : { deletedColumnIds }),
       ...(deletedSwimlaneIds.length === 0 ? {} : { deletedSwimlaneIds }),
     });
-    const reconciliationGeneration = ++this.#interactionReconcileGeneration;
-    void Promise.resolve().then(async () => {
-      if (this.#disposed || this.#interactionReconcileGeneration !== reconciliationGeneration) return;
-      await this.#interactionFacade.transition(command);
-    });
+    this.#interactionFacade.accept(command);
   }
 
   /** Lets explicit application scrolling supersede automatic reveal without changing selection. */

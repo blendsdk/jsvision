@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 25 items resolved
-> **Last Updated**: 2026-08-14 12:35 CEST
+> **Status**: ✅ GATE PASSED — all 26 items resolved
+> **Last Updated**: 2026-08-14 13:29 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -42,6 +42,7 @@
 | AR-D23 | Reentrancy | What exact action/event nesting behavior is supported? | Queue or reject unspecified / closed per-surface policies | Reject same-action recursion before mutation; queue nested events breadth-first with exact bound and typed overflow | ✅ Resolved |
 | AR-D24 | Performance | What is the responsiveness pass/fail contract? | Qualitative / deterministic work bounds plus calibrated timing | Assert bounded query/repaint/reflow/session work and use the existing 16 ms median harness as secondary evidence | ✅ Resolved |
 | AR-D25 | Technical · runtime | How should view registry lookup relate to source-owned evaluator authority? | Duplicate all source evaluators in the view controller / retain immutable bounded view metadata while source adapters own record evaluation | Keep quick-filter metadata and stable lookup in an immutable bounded view registry; keep sort/filter/group execution in source adapters and validate selected identities at the binding boundary | ✅ Resolved |
+| AR-D26 | Technical · runtime · complex | What exact candidate boundary preserves the usable viewport when query projection fails after session open? | Stage only a query session publication / stage a complete isolated viewport source through current-geometry refresh / mutate the live viewport and roll back | Stage a complete isolated viewport source through synchronous publication validation and one current-geometry refresh, then install it non-reentrantly, retire the exact old generation, and notify subscribers afterward | ✅ Resolved |
 
 ## Resolution notes
 
@@ -153,3 +154,37 @@
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-D-20260814T1231CEST`.
 - **Reopen triggers:** A required quick-filter semantic cannot be expressed as source query filters, or remote sources need executable registry callbacks rather than inert IDs.
+
+### AR-D26 — Transactional viewport-source activation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal availability, concurrency, and recovery mechanics inside the approved
+  atomic view-publication behavior; public product behavior and source ownership remain unchanged.
+- **Objective:** Preserve the last usable board when opening, validating, or projecting a candidate
+  query fails, while keeping each successful transition to one source open and one subscriber delivery.
+- **Evidence:** `KanbanQuerySession` exposes a synchronous atomic publication, but
+  `KanbanViewportSource.refresh()` performs additional fallible geometry validation and cursor
+  acquisition. UI `batch()` coalesces signal effects but provides no rollback. The current viewport
+  independently calls `replaceQuery()` from its reactive effect, which would otherwise open twice.
+- **Decision:** One exclusive generation-tagged internal controller binding stages a complete isolated
+  `KanbanViewportSource`, validates its first publication, and performs one refresh using the candidate
+  all-or-nothing facets and current viewport geometry. Commit is non-reentrant: install the prepared
+  source/snapshot, batch controller/binding signals, let the viewport recognize the prepared revision,
+  retire the exact captured old source, verify committed revision evidence, and only then notify external
+  subscribers. Prepare failure or supersession disposes only the candidate. Existing standalone and
+  controller-free query getters remain unchanged.
+- **Rejected alternatives:** Session-only staging leaves later cursor/geometry failure outside rollback.
+  Mutating the live viewport and attempting rollback cannot restore disposed cursors reliably. Treating
+  `batch()` as a database transaction is unsound because its closing effect flush may throw.
+- **Strongest counterargument:** A full candidate viewport source temporarily duplicates bounded session
+  and cursor resources during the synchronous prepare window.
+- **Confidence:** High — candidate retention is already bounded by the same viewport limits and the
+  independent challenger identified and resolved the remaining activation-order and reentrancy hazards.
+- **Hardening:** A blind Phase D grounding reviewer rejected session-only preparation, subscriber-before-
+  retirement ordering, and rollback assumptions around `batch()`. The corrected design stages through
+  current geometry, retires before callbacks, rejects nested commit, and keeps exact-generation ownership.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1231CEST`.
+- **Reopen triggers:** Candidate refresh requires asynchronous readiness, source implementations cannot
+  sustain two bounded sessions during prepare, or committed revision evidence cannot suppress the legacy
+  reactive replacement without a second query open.

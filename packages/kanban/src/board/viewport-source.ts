@@ -435,6 +435,8 @@ export interface KanbanViewportSourceOptions<TCard> {
   readonly source: KanbanDataSource<TCard>;
   /** Initial semantic query. */
   readonly query: KanbanQuery;
+  /** Optional monotonic generation seed for a transactionally staged replacement source. */
+  readonly initialGeneration?: number;
   /** Stable card adapter used for identity reads after a range becomes resident. */
   readonly card: KanbanCardAdapter<TCard>;
   /** Optional lower resource limits. */
@@ -631,6 +633,7 @@ export class KanbanViewportSource<TCard> {
     this.#session = new KanbanSessionCoordinator({
       source: options.source,
       initialQuery: this.#query,
+      ...(options.initialGeneration === undefined ? {} : { initialGeneration: options.initialGeneration }),
       maximumRetainedCursors: this.#limits.retainedCursors,
       observe: options.observe,
     });

@@ -1,4 +1,4 @@
-import { KanbanInvalidSourcePublicationError } from '../contract/error.js';
+import { KanbanInvalidQueryError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import {
   createKanbanCardKey,
   createKanbanExtensionId,
@@ -310,12 +310,12 @@ export function validateEagerKanbanQuerySupport<TCard>(
     const field = sorts.get(sort.fieldId);
     if (field === undefined) throw new KanbanInvalidSourcePublicationError();
     if ('compare' in field && field.compare !== undefined) {
-      if (sort.comparatorId !== undefined) throw new KanbanInvalidSourcePublicationError();
+      if (sort.comparatorId !== undefined) throw new KanbanInvalidQueryError('unknown-comparator');
       continue;
     }
     const comparators = field.comparators;
     if (sort.comparatorId !== undefined && !comparators.some((entry) => entry.comparatorId === sort.comparatorId)) {
-      throw new KanbanInvalidSourcePublicationError();
+      throw new KanbanInvalidQueryError('unknown-comparator');
     }
   }
 }

@@ -34,6 +34,8 @@ export interface KanbanSessionCoordinatorOptions<TCard> {
   readonly source: KanbanDataSource<TCard>;
   /** Initial immutable semantic query. */
   readonly initialQuery: KanbanQuery;
+  /** Optional initial generation used when an isolated candidate supersedes another coordinator. */
+  readonly initialGeneration?: number;
   /** Maximum sparse cursors retained by the read projection. */
   readonly maximumRetainedCursors?: number;
   /** Optional sink for already-redacted lifecycle observations. */
@@ -68,6 +70,13 @@ export class KanbanSessionCoordinator<TCard> {
     this.#source = options.source;
     this.#maximumRetainedCursors = maximum;
     this.#observe = options.observe;
+    if (
+      options.initialGeneration !== undefined &&
+      (!Number.isSafeInteger(options.initialGeneration) || options.initialGeneration < 0)
+    ) {
+      throw new KanbanInvalidLimitError();
+    }
+    this.#generation = options.initialGeneration ?? 0;
     this.#query = snapshotKanbanQuery(options.initialQuery);
     this.#sessionController = new AbortController();
     this.#session = this.#source.openQuery(this.#query, { signal: this.#sessionController.signal });

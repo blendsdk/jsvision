@@ -2529,9 +2529,18 @@ code
 Raised when a query does not satisfy the published query contract.
 
 ```ts
-new KanbanInvalidQueryError()   // extends KanbanError
+new KanbanInvalidQueryError(reason: KanbanInvalidQueryReason = 'invalid-query')   // extends KanbanError
 // methods & signals:
 code
+reason: KanbanInvalidQueryReason
+```
+
+## KanbanInvalidQueryReason
+
+Safe reason that further classifies a rejected semantic query without retaining query data.
+
+```ts
+type KanbanInvalidQueryReason = 'invalid-query' | 'unknown-comparator'
 ```
 
 ## KanbanInvalidRangeError
@@ -5456,6 +5465,7 @@ interface KanbanViewSummary {
   visible: number;   // Cards currently projected into the viewport.
   selected: number;   // Selected visible identities in the active interaction projection.
   wip: KanbanCount;   // Authoritative work-in-progress count, never derived from filtered visibility.
+  authoritativeResident: boolean;   // Whether every authoritative record is proven resident in the active bounded source.
   emptyState: KanbanViewEmptyState;   // Distinguishes filtered absence from true or unavailable source states.
 }
 ```
