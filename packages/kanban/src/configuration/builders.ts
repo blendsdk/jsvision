@@ -4,12 +4,10 @@ import { createKanbanColumnId, createKanbanSwimlaneId } from '../contract/identi
 import type { KanbanColumnId, KanbanSwimlaneId } from '../contract/identity.js';
 import type {
   KanbanColumnAddProposal,
-  KanbanColumnDeleteProposal,
   KanbanColumnPosition,
   KanbanColumnReorderProposal,
   KanbanColumnUpdateProposal,
   KanbanSwimlaneAddProposal,
-  KanbanSwimlaneDeleteProposal,
   KanbanSwimlanePosition,
   KanbanSwimlaneReorderProposal,
   KanbanSwimlaneUpdateProposal,
@@ -18,6 +16,12 @@ import { snapshotKanbanRequestProposal } from '../contract/request-validation.js
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import { snapshotKanbanDefinitionOfDone } from '../workflow/definition-of-done.js';
 import type { KanbanDefinitionOfDoneSnapshot } from '../workflow/definition-of-done.js';
+import {
+  buildColumnDeletion,
+  buildSwimlaneDeletion,
+  type KanbanColumnDeletionProposal,
+  type KanbanSwimlaneDeletionProposal,
+} from './deletion.js';
 import type { KanbanConfigurationSnapshot, KanbanDuplicateConfigurationName } from './types.js';
 import {
   createKanbanConfigurationSnapshot,
@@ -36,6 +40,7 @@ const BUILDER_KEYS = new Set([
   'changes',
   'duplicateName',
   'occupancy',
+  'policy',
 ]);
 /** Exact members accepted by one configurable column draft. */
 const COLUMN_DRAFT_KEYS = new Set(['columnId', 'label', 'definitionOfDone', 'data']);
@@ -234,14 +239,17 @@ export function buildKanbanColumnReorderProposal(value: unknown): KanbanColumnRe
 }
 
 /** Builds an empty-column delete proposal without presenting UI confirmation. */
-export function buildKanbanColumnDeleteProposal(value: unknown): KanbanColumnDeleteProposal {
+export function buildKanbanColumnDeleteProposal(value: unknown): KanbanColumnDeletionProposal {
   const properties = builderProperties(value);
   const snapshot = configuration(properties.snapshot);
   const columnId = createKanbanColumnId(requiredString(properties.columnId));
   if (!snapshot.columns.some((column) => column.columnId === columnId)) return invalidBuilder();
-  const occupancy = snapshotKanbanConfigurationOccupancy(properties.occupancy);
-  if (occupancy.quality !== 'exact' || occupancy.count !== 0) return invalidBuilder();
-  return snapshotKanbanRequestProposal({ kind: 'column-delete', columnId });
+  return buildColumnDeletion(
+    snapshot,
+    columnId,
+    snapshotKanbanConfigurationOccupancy(properties.occupancy),
+    properties.policy,
+  );
 }
 
 /** Builds a validated lifecycle-free explicit-swimlane-add proposal. */
@@ -304,13 +312,16 @@ export function buildKanbanSwimlaneReorderProposal(value: unknown): KanbanSwimla
 }
 
 /** Builds an empty explicit-swimlane delete proposal without presenting UI confirmation. */
-export function buildKanbanSwimlaneDeleteProposal(value: unknown): KanbanSwimlaneDeleteProposal {
+export function buildKanbanSwimlaneDeleteProposal(value: unknown): KanbanSwimlaneDeletionProposal {
   const properties = builderProperties(value);
   const snapshot = configuration(properties.snapshot);
   const swimlaneId = createKanbanSwimlaneId(requiredString(properties.swimlaneId));
   const current = snapshot.swimlanes.find((swimlane) => swimlane.swimlaneId === swimlaneId);
   if (current === undefined || current.mode !== 'explicit') return invalidBuilder();
-  const occupancy = snapshotKanbanConfigurationOccupancy(properties.occupancy);
-  if (occupancy.quality !== 'exact' || occupancy.count !== 0) return invalidBuilder();
-  return snapshotKanbanRequestProposal({ kind: 'swimlane-delete', swimlaneId });
+  return buildSwimlaneDeletion(
+    snapshot,
+    swimlaneId,
+    snapshotKanbanConfigurationOccupancy(properties.occupancy),
+    properties.policy,
+  );
 }
