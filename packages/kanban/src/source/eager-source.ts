@@ -10,7 +10,7 @@ import { createKanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import { canonicalizeKanbanCellAddress, snapshotKanbanCellAddress } from './address.js';
 import type { KanbanBoardCounts, KanbanCellCounts, KanbanCount } from './counts.js';
-import { buildEagerKanbanIndex, validateEagerKanbanQuerySupport } from './eager-index.js';
+import { buildEagerKanbanIndex, resolveEagerKanbanQuery } from './eager-index.js';
 import type { EagerKanbanIndex, EagerKanbanSourceOptions } from './eager-index.js';
 import { snapshotKanbanRange } from './range-set.js';
 import type { KanbanCellState, KanbanKnownLength, KanbanSourceState } from './states.js';
@@ -599,8 +599,7 @@ export function createEagerKanbanDataSource<TCard>(
       }
       let snapshot: KanbanQuery;
       try {
-        snapshot = snapshotKanbanQuery(query);
-        validateEagerKanbanQuerySupport(snapshot, options, limits);
+        snapshot = resolveEagerKanbanQuery(snapshotKanbanQuery(query), options, limits);
       } catch {
         throw new KanbanInvalidQueryError();
       }

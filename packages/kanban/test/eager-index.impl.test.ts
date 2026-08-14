@@ -52,7 +52,7 @@ function sourceFor(cards: () => readonly WorkItem[], observations: KanbanObserva
 }
 
 describe('eager index ordering and identity', () => {
-  it('applies lexicographic sort directives and preserves source order for equal values', () => {
+  it('applies sort directives and uses total card-key order for equal values', () => {
     const cards: readonly WorkItem[] = [
       { id: 1, columnId: 'ready', points: 3, rank: 2, status: 'open', title: 'third' },
       { id: '1', columnId: 'ready', points: 1, rank: 1, status: 'open', title: 'first tie' },
@@ -61,9 +61,9 @@ describe('eager index ordering and identity', () => {
     const session = sourceFor(() => cards).openQuery({ sort: [{ fieldId: 'rank', direction: 'ascending' }] });
     const cursor = session.cell({ columnId: 'ready' });
 
-    expect([cursor.cardAt(0)?.id, cursor.cardAt(1)?.id, cursor.cardAt(2)?.id]).toEqual(['1', 3, 1]);
+    expect([cursor.cardAt(0)?.id, cursor.cardAt(1)?.id, cursor.cardAt(2)?.id]).toEqual([3, '1', 1]);
     expect(session.locateCard?.(1)).toMatchObject({ kind: 'found', index: 2 });
-    expect(session.locateCard?.('1')).toMatchObject({ kind: 'found', index: 0 });
+    expect(session.locateCard?.('1')).toMatchObject({ kind: 'found', index: 1 });
   });
 
   it('keeps authoritative summaries stable while loaded-only summaries follow filtering', () => {

@@ -19,6 +19,7 @@ import type { KanbanObservation } from '../contract/observation.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import { canonicalizeKanbanCellAddress } from './address.js';
+import { compareKanbanCardKeys } from './card-key-order.js';
 import type {
   KanbanCellAddress,
   KanbanColumnMeta,
@@ -381,8 +382,8 @@ function resolveGroupedSwimlane<TCard>(
 
 /** Validates comparator output before it can destabilize publication order. */
 function compareCards<TCard>(
-  left: { readonly card: TCard; readonly sourceIndex: number },
-  right: { readonly card: TCard; readonly sourceIndex: number },
+  left: { readonly card: TCard; readonly key: CardKey; readonly sourceIndex: number },
+  right: { readonly card: TCard; readonly key: CardKey; readonly sourceIndex: number },
   query: KanbanQuery,
   sortFields: ReadonlyMap<string, KanbanSortField<TCard>>,
   fallback: ((left: TCard, right: TCard) => number) | undefined,
@@ -390,10 +391,8 @@ function compareCards<TCard>(
   for (const directive of query.sort ?? []) {
     const adapter = sortFields.get(directive.fieldId);
     if (adapter === undefined) throw new KanbanInvalidSourcePublicationError();
-    if (!('compare' in adapter) || adapter.compare === undefined) {
-      throw new KanbanInvalidSourcePublicationError();
-    }
-    const comparison = adapter.compare(left.card, right.card);
+    const compare = resolveSortComparator(adapter, directive.comparatorId);
+    const comparison = compare(left.card, right.card);
     if (comparison !== -1 && comparison !== 0 && comparison !== 1) {
       throw new KanbanInvalidSourcePublicationError();
     }
@@ -404,7 +403,49 @@ function compareCards<TCard>(
     if (!Number.isFinite(comparison)) throw new KanbanInvalidSourcePublicationError();
     if (comparison !== 0) return comparison;
   }
+  if ((query.sort?.length ?? 0) > 0) return compareKanbanCardKeys(left.key, right.key);
   return left.sourceIndex - right.sourceIndex;
+}
+
+/** Selects the validated comparator requested by one query directive. */
+function resolveSortComparator<TCard>(
+  field: KanbanSortField<TCard>,
+  comparatorId: KanbanExtensionId | undefined,
+): (left: TCard, right: TCard) => -1 | 0 | 1 {
+  if ('compare' in field && field.compare !== undefined) {
+    if (comparatorId !== undefined) throw new KanbanInvalidSourcePublicationError();
+    return field.compare;
+  }
+  const comparator =
+    comparatorId === undefined
+      ? (field.comparators.find((entry) => entry.default === true) ?? field.comparators[0])
+      : field.comparators.find((entry) => entry.comparatorId === comparatorId);
+  if (comparator === undefined) throw new KanbanInvalidSourcePublicationError();
+  return comparator.compare;
+}
+
+/** Returns an immutable query whose named sort fields always carry their resolved comparator identity. */
+export function resolveEagerKanbanQuery<TCard>(
+  query: KanbanQuery,
+  options: EagerKanbanSourceOptions<TCard>,
+  limits: KanbanResolvedLimits,
+): KanbanQuery {
+  validateEagerKanbanQuerySupport(query, options, limits);
+  const fields = adapterMap(options.sortFields, (entry) => createKanbanFieldId(entry.fieldId));
+  const sort = Object.freeze(
+    (query.sort ?? []).map((directive) => {
+      const field = fields.get(directive.fieldId);
+      if (field === undefined) throw new KanbanInvalidSourcePublicationError();
+      if ('compare' in field && field.compare !== undefined) return directive;
+      const comparator =
+        directive.comparatorId === undefined
+          ? (field.comparators.find((entry) => entry.default === true) ?? field.comparators[0])
+          : field.comparators.find((entry) => entry.comparatorId === directive.comparatorId);
+      if (comparator === undefined) throw new KanbanInvalidSourcePublicationError();
+      return Object.freeze({ ...directive, comparatorId: comparator.comparatorId });
+    }),
+  );
+  return Object.freeze({ ...query, sort });
 }
 
 /** Aggregates finite optional numeric contributions without delegating an arbitrary reducer. */
