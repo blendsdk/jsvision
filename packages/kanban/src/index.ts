@@ -46,16 +46,26 @@ export {
   openKanbanCardViewDialog,
   type KanbanEditorAuthorityCompletion,
   type KanbanEditorDialogCompletion,
+  type KanbanEditorDialogActions,
+  type KanbanEditorDialogContext,
   type KanbanEditorDialogHandlers,
   type KanbanEditorDialogHost,
   type KanbanEditorDialogOptions,
   type KanbanEditorDialogResult,
+  type KanbanEditorDialogReplacement,
+  type KanbanEditorDialogSubmitResult,
   type KanbanEditorDialogViewport,
   type KanbanEditorResultOnlyCompletion,
   type OpenKanbanCardCreateDialogOptions,
   type OpenKanbanCardEditDialogOptions,
   type OpenKanbanCardViewDialogOptions,
 } from './editor/dialog.js';
+export {
+  openKanbanCardInspector,
+  type KanbanEditorInspectorPresentation,
+  type KanbanEditorInspectorResult,
+  type OpenKanbanCardInspectorOptions,
+} from './editor/inspector.js';
 export { createKanbanEditorControlRegistry } from './editor/registry.js';
 export { createKanbanCardEditorSchema, type KanbanCardEditorSchemaOptions } from './editor/schema.js';
 export { createKanbanEditorSession } from './editor/session.js';

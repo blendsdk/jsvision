@@ -24,8 +24,8 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRequestResult } from '../contract/request.js';
 import { createKanbanEditorControlBinding } from './controls.js';
 import type { KanbanEditorControlBinding } from './controls.js';
-import { confirmKanbanEditorAction } from './confirmation.js';
-import type { KanbanEditorConfirm } from './confirmation.js';
+import { confirmAndReloadKanbanEditor, confirmKanbanEditorAction } from './confirmation.js';
+import type { KanbanEditorConfirm, KanbanEditorConfirmedReloadResult } from './confirmation.js';
 import type {
   KanbanCardEditorAdapter,
   KanbanEditorAlreadyOpen,
@@ -301,7 +301,7 @@ export interface KanbanEditorDialogHost {
   /** Application translation service used by package and standard UI controls. */
   readonly i18n: I18n;
   /** Event-loop operations required to execute and focus the modal. */
-  readonly loop: Pick<EventLoop, 'execView' | 'focusView'>;
+  readonly loop: Pick<EventLoop, 'execView' | 'focusView' | 'endModal'>;
   /** Desktop operations and hard viewport extent required by the modal lifecycle. */
   readonly desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;
 }
@@ -336,6 +336,35 @@ export type KanbanEditorDialogResult<TResult = never> =
   | { readonly kind: 'disposed' }
   | { readonly kind: 'failed' };
 
+/** Submit outcomes returned to a complete application replacement. */
+export type KanbanEditorDialogSubmitResult<TResult = never> =
+  KanbanEditorSubmitResult | { readonly kind: 'result'; readonly value: TResult };
+
+/** Bounded lifecycle actions supplied to a complete application dialog replacement. */
+export interface KanbanEditorDialogActions<TResult = never> {
+  /** Validates and completes through the configured authority or result-only policy. */
+  readonly submit: () => Promise<KanbanEditorDialogSubmitResult<TResult>>;
+  /** Applies dirty confirmation and closes as cancelled when accepted. */
+  readonly cancel: () => Promise<void>;
+  /** Confirms and reloads one stale draft through the same session. */
+  readonly reload: () => Promise<KanbanEditorConfirmedReloadResult>;
+  /** Closes a view/deleted presentation without attempting submission. */
+  readonly close: () => void;
+}
+
+/** Session and lifecycle actions received by a complete application dialog replacement. */
+export interface KanbanEditorDialogContext<TDraft, TResult = never> {
+  /** Exact coordinator-owned session shared with default and inspector presentations. */
+  readonly session: KanbanEditorSession<TDraft>;
+  /** Bounded actions that preserve package validation, confirmation, and completion policy. */
+  readonly actions: KanbanEditorDialogActions<TResult>;
+}
+
+/** Factory for a complete application-owned modal presentation. */
+export type KanbanEditorDialogReplacement<TDraft, TResult = never> = (
+  context: KanbanEditorDialogContext<TDraft, TResult>,
+) => Dialog;
+
 /** Common options shared by create and edit dialog invokers. */
 interface KanbanEditorMutableDialogOptions<TCard, TDraft, TResult> {
   /** Adapter that owns the typed application record and draft mapping. */
@@ -346,6 +375,8 @@ interface KanbanEditorMutableDialogOptions<TCard, TDraft, TResult> {
   readonly completion: KanbanEditorDialogCompletion<TDraft, TResult>;
   /** Optional application replacement for localized dirty and stale confirmations. */
   readonly confirm?: KanbanEditorConfirm;
+  /** Optional complete presentation replacement over the same package-owned session. */
+  readonly replacement?: KanbanEditorDialogReplacement<TDraft, TResult>;
   /** Optional caller cancellation used while initial record resolution is pending. */
   readonly signal?: AbortSignal;
 }
@@ -395,6 +426,7 @@ interface ResolvedDialogOptions<TCard, TDraft, TResult> {
   readonly coordinator: KanbanEditorCoordinator;
   readonly completion?: KanbanEditorDialogCompletion<TDraft, TResult>;
   readonly confirm?: KanbanEditorConfirm;
+  readonly replacement?: KanbanEditorDialogReplacement<TDraft, TResult>;
   readonly signal?: AbortSignal;
 }
 
@@ -415,7 +447,7 @@ function inertAuthority(): KanbanEditorAuthority {
   });
 }
 
-/** Runs one already-acquired default modal and releases its exact session claim on every exit. */
+/** Runs one default or application-replaced modal and releases its exact session claim on every exit. */
 async function runDefaultDialog<TCard, TDraft, TResult>(
   host: KanbanEditorDialogHost,
   options: ResolvedDialogOptions<TCard, TDraft, TResult>,
@@ -427,7 +459,7 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
     resolver: options.resolver,
     authority: options.completion?.kind === 'authority' ? options.completion.authority : inertAuthority(),
     signal: options.signal,
-    editorKind: 'standard',
+    editorKind: options.replacement === undefined ? 'standard' : 'custom',
   });
   if (opened.kind !== 'opened') return opened;
 
@@ -436,33 +468,35 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
     options.mode === 'view' ? Object.freeze({ kind: 'closed' }) : Object.freeze({ kind: 'cancelled' });
   let submitting = false;
   let cancelling = false;
-  const active: { dialog?: KanbanEditorDialog<TCard, TDraft> } = {};
+  let standardDialog: KanbanEditorDialog<TCard, TDraft> | undefined;
 
   const focusInvalid = (fieldId: KanbanEditorFieldState['fieldId']): void => {
-    active.dialog?.focusField(fieldId, (view) => host.loop.focusView(view));
+    standardDialog?.focusField(fieldId, (view) => host.loop.focusView(view));
   };
-  const submit = async (): Promise<void> => {
-    if (submitting || options.mode === 'view' || options.completion === undefined) return;
+  const submit = async (): Promise<KanbanEditorDialogSubmitResult<TResult>> => {
+    if (submitting) return Object.freeze({ kind: 'sealed' });
+    if (options.mode === 'view' || options.completion === undefined) return Object.freeze({ kind: 'read-only' });
     submitting = true;
     try {
       if (options.completion.kind === 'result-only') {
         const prepared = await session.prepare();
         if (prepared.kind === 'invalid') focusInvalid(prepared.fieldId);
-        if (prepared.kind !== 'prepared') return;
+        if (prepared.kind !== 'prepared') return prepared;
         try {
           outcome = Object.freeze({ kind: 'result', value: options.completion.detach(prepared.result) });
         } catch {
           outcome = Object.freeze({ kind: 'failed' });
         }
-        active.dialog?.finish('result');
-        return;
+        host.loop.endModal('result');
+        return outcome;
       }
       const result = await session.submit();
       if (result.kind === 'invalid') focusInvalid(result.fieldId);
       if (result.kind === 'committed') {
         outcome = result;
-        active.dialog?.finish('committed');
+        host.loop.endModal('committed');
       }
+      return result;
     } finally {
       submitting = false;
     }
@@ -479,36 +513,58 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
         return;
       }
       outcome = options.mode === 'view' ? Object.freeze({ kind: 'closed' }) : Object.freeze({ kind: 'cancelled' });
-      active.dialog?.finish('cancel');
+      host.loop.endModal('cancel');
     } finally {
       cancelling = false;
     }
   };
+  const reload = async (): Promise<KanbanEditorConfirmedReloadResult> => {
+    const result = await confirmAndReloadKanbanEditor(host, session, options.confirm);
+    const focusedFieldId = session.snapshot().focusedFieldId;
+    if (result.kind === 'reloaded' && focusedFieldId !== undefined) focusInvalid(focusedFieldId);
+    return result;
+  };
+  const close = (): void => {
+    outcome = Object.freeze({ kind: 'closed' });
+    host.loop.endModal('close');
+  };
+  const actions: KanbanEditorDialogActions<TResult> = Object.freeze({ submit, cancel, reload, close });
 
-  const dialog = new KanbanEditorDialog({
-    i18n: host.i18n,
-    viewport: host.desktop.bounds,
-    adapter: options.adapter,
-    session,
-    handlers: { submit: () => void submit(), cancel: () => void cancel() },
-  });
-  active.dialog = dialog;
+  let dialog: Dialog;
+  try {
+    if (options.replacement === undefined) {
+      standardDialog = new KanbanEditorDialog({
+        i18n: host.i18n,
+        viewport: host.desktop.bounds,
+        adapter: options.adapter,
+        session,
+        handlers: { submit: () => void submit(), cancel: () => void cancel() },
+      });
+      dialog = standardDialog;
+    } else {
+      dialog = options.replacement(Object.freeze({ session, actions }));
+      if (!(dialog instanceof Dialog)) throw new TypeError('Invalid Kanban editor replacement.');
+    }
+  } catch {
+    session.dispose();
+    return Object.freeze({ kind: 'failed' });
+  }
   const unsubscribe = session.subscribe((snapshot) => {
     if (snapshot.submission.kind === 'committed') {
       outcome = Object.freeze({ kind: 'committed', operationId: snapshot.submission.operationId });
-      dialog.finish('committed');
+      host.loop.endModal('committed');
     }
   });
   host.desktop.addWindow(dialog);
   try {
     const pending = host.loop.execView<string>(dialog);
-    if (dialog.firstControl !== undefined) host.loop.focusView(dialog.firstControl);
+    if (standardDialog?.firstControl !== undefined) host.loop.focusView(standardDialog.firstControl);
     await pending;
     return outcome;
   } finally {
     unsubscribe();
     host.desktop.removeWindow(dialog);
-    dialog.disposeBindings();
+    standardDialog?.disposeBindings();
     session.dispose();
   }
 }
@@ -536,6 +592,7 @@ export function openKanbanCardCreateDialog<TCard, TDraft, TResult = never>(
     coordinator: options.coordinator,
     completion: options.completion,
     confirm: options.confirm,
+    replacement: options.replacement,
     signal: options.signal,
   });
 }

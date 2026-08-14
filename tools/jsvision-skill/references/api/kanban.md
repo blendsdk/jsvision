@@ -2152,12 +2152,36 @@ interface KanbanEditorDiagnostic {
 }
 ```
 
+## KanbanEditorDialogActions
+
+Bounded lifecycle actions supplied to a complete application dialog replacement.
+
+```ts
+interface KanbanEditorDialogActions<TResult = never> {
+  submit: () => Promise<KanbanEditorDialogSubmitResult<TResult>>;   // Validates and completes through the configured authority or result-only policy.
+  cancel: () => Promise<void>;   // Applies dirty confirmation and closes as cancelled when accepted.
+  reload: () => Promise<KanbanEditorConfirmedReloadResult>;   // Confirms and reloads one stale draft through the same session.
+  close: () => void;   // Closes a view/deleted presentation without attempting submission.
+}
+```
+
 ## KanbanEditorDialogCompletion
 
 Completion policies supported by create and edit dialogs.
 
 ```ts
 type KanbanEditorDialogCompletion<TDraft, TResult> = KanbanEditorAuthorityCompletion | KanbanEditorResultOnlyCompletion<TDraft, TResult>
+```
+
+## KanbanEditorDialogContext
+
+Session and lifecycle actions received by a complete application dialog replacement.
+
+```ts
+interface KanbanEditorDialogContext<TDraft, TResult = never> {
+  session: KanbanEditorSession<TDraft>;   // Exact coordinator-owned session shared with default and inspector presentations.
+  actions: KanbanEditorDialogActions<TResult>;   // Bounded actions that preserve package validation, confirmation, and completion policy.
+}
 ```
 
 ## KanbanEditorDialogHandlers
@@ -2178,7 +2202,7 @@ Minimal application host required by the package editor dialogs.
 ```ts
 interface KanbanEditorDialogHost {
   i18n: I18n;   // Application translation service used by package and standard UI controls.
-  loop: Pick<EventLoop, 'execView' | 'focusView'>;   // Event-loop operations required to execute and focus the modal.
+  loop: Pick<EventLoop, 'execView' | 'focusView' | 'endModal'>;   // Event-loop operations required to execute and focus the modal.
   desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // Desktop operations and hard viewport extent required by the modal lifecycle.
 }
 ```
@@ -2197,6 +2221,16 @@ interface KanbanEditorDialogOptions<TCard, TDraft> {
 }
 ```
 
+## KanbanEditorDialogReplacement
+
+Factory for a complete application-owned modal presentation.
+
+```ts
+type KanbanEditorDialogReplacement<TDraft, TResult = never> = (
+  context: KanbanEditorDialogContext<TDraft, TResult>,
+) => Dialog
+```
+
 ## KanbanEditorDialogResult
 
 Terminal outcomes produced by one package editor dialog.
@@ -2209,6 +2243,14 @@ type KanbanEditorDialogResult<TResult = never> = | { readonly kind: 'cancelled' 
   | KanbanEditorAlreadyOpen
   | { readonly kind: 'disposed' }
   | { readonly kind: 'failed' }
+```
+
+## KanbanEditorDialogSubmitResult
+
+Submit outcomes returned to a complete application replacement.
+
+```ts
+type KanbanEditorDialogSubmitResult<TResult = never> = KanbanEditorSubmitResult | { readonly kind: 'result'; readonly value: TResult }
 ```
 
 ## KanbanEditorDialogViewport
@@ -2249,6 +2291,25 @@ interface KanbanEditorFieldState {
   readOnly: boolean;   // Whether mutation is currently forbidden.
   diagnostics: readonly KanbanEditorDiagnostic[];   // Bounded payload-free validation failures in callback order.
 }
+```
+
+## KanbanEditorInspectorPresentation
+
+Application-owned modeless presentation operations for one inspector identity.
+
+```ts
+interface KanbanEditorInspectorPresentation {
+  mount: KanbanInspectorCallback<void | Promise<void>>;   // Mounts the first acquired session in an application-owned surface.
+  reveal: KanbanInspectorCallback<void | Promise<void>>;   // Reveals the existing application-owned surface for a repeated open.
+}
+```
+
+## KanbanEditorInspectorResult
+
+Successful inspector acquisition or reveal result.
+
+```ts
+type KanbanEditorInspectorResult<TDraft = unknown> = KanbanEditorOpened<TDraft> | KanbanEditorAlreadyOpen
 ```
 
 ## KanbanEditorKind
@@ -6982,6 +7043,22 @@ interface OpenKanbanCardEditDialogOptions<TCard, TDraft, TResult> {
 }
 ```
 
+## OpenKanbanCardInspectorOptions
+
+Options for acquiring or revealing one application-owned modeless card inspector.
+
+```ts
+interface OpenKanbanCardInspectorOptions<TCard, TDraft> {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>;   // Adapter that owns the inspector's typed detached draft.
+  resolver: KanbanEditorRecordResolver<TCard>;   // Authoritative application record source.
+  coordinator: KanbanEditorCoordinator;   // Identity coordinator shared with package dialogs and other inspectors.
+  presentation: KanbanEditorInspectorPresentation;   // Application-owned mount and reveal operations; the package owns no inspector window.
+  authority?: KanbanEditorAuthority;   // Optional request authority when the application inspector exposes editing actions.
+  signal?: AbortSignal;   // Optional caller cancellation used while initial resolution is pending.
+}
+```
+
 ## OpenKanbanCardViewDialogOptions
 
 Options for opening an existing card in read-only view mode.
@@ -8118,6 +8195,14 @@ Opens a centered edit dialog over one application-owned record and request autho
 
 ```ts
 openKanbanCardEditDialog<TCard, TDraft, TResult = never>(host: KanbanEditorDialogHost, options: OpenKanbanCardEditDialogOptions<TCard, TDraft, TResult>): Promise<KanbanEditorDialogResult<TResult>>
+```
+
+## openKanbanCardInspector
+
+Acquires or reveals one modeless inspector without mounting any package-owned window.
+
+```ts
+openKanbanCardInspector<TCard, TDraft>(options: OpenKanbanCardInspectorOptions<TCard, TDraft>): Promise<KanbanEditorInspectorResult<TDraft>>
 ```
 
 ## openKanbanCardViewDialog
