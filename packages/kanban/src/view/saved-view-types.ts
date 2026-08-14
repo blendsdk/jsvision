@@ -167,6 +167,51 @@ export type KanbanSavedViewParseResult =
       readonly supported: typeof KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS;
     };
 
+/** One deterministic adapter that advances an older envelope by exactly one schema version. */
+export interface KanbanSavedViewMigration {
+  /** Exact source version accepted by the adapter. */
+  readonly fromVersion: number;
+  /** Exact destination version produced by the adapter. */
+  readonly toVersion: number;
+  /** Returns a new JSON-like envelope without mutating the detached source value. */
+  readonly migrate: (value: KanbanSemanticValue) => unknown;
+}
+
+/** Input accepted by the bounded migration-registry constructor. */
+export interface KanbanSavedViewMigrationRegistryOptions {
+  /** Sequential one-version adapters keyed by their source version. */
+  readonly migrations?: readonly KanbanSavedViewMigration[];
+}
+
+/** Immutable lookup registry for application-provided saved-view migrations. */
+export interface KanbanSavedViewMigrationRegistry {
+  /** Detached ordered adapter metadata and callbacks. */
+  readonly migrations: readonly KanbanSavedViewMigration[];
+  /** Finds the single adapter registered for a source version. */
+  migrationFrom(version: number): KanbanSavedViewMigration | undefined;
+}
+
+/** Options supplied to one pure migration run. */
+export interface KanbanSavedViewMigrationOptions {
+  /** Application migration adapters supplementing package-owned schema steps. */
+  readonly registry?: KanbanSavedViewMigrationRegistry;
+}
+
+/** Result of advancing one older envelope to the current saved-view schema. */
+export type KanbanSavedViewMigrationResult =
+  | {
+      readonly kind: 'migrated';
+      readonly fromVersion: number;
+      readonly toVersion: 1;
+      readonly value: KanbanSavedViewV1;
+    }
+  | { readonly kind: 'rejected'; readonly diagnostic: KanbanSavedViewDiagnostic }
+  | {
+      readonly kind: 'unsupported-version';
+      readonly version: number;
+      readonly supported: typeof KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS;
+    };
+
 /** Current application metadata for one filterable or sortable field. */
 export interface KanbanSavedViewFieldDefinition {
   /** Stable application field identity. */
