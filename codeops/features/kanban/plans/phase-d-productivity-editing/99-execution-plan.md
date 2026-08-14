@@ -286,7 +286,7 @@ all initial and fix-scoped Major findings corrected under auto-design, no waiver
 
 - [x] 6.1.1 `[spec-author]` Add action inventory, origin parity, outcome, custom-action, and disposal oracles — `packages/kanban/test/actions-capabilities.spec.test.ts` ✅ (completed: 2026-08-15 00:26)
 - [x] 6.1.2 `[spec-author]` Add key conflict/override/runtime-help/default-key oracles — `packages/kanban/test/action-keymap.spec.test.ts` ✅ (completed: 2026-08-15 00:31)
-- [ ] 6.1.3 `[spec-author]` Add disabled/hidden/throw/read-only hit-target and authorization-boundary oracles — `packages/kanban/test/security/action-capability.spec.test.ts`
+- [x] 6.1.3 `[spec-author]` Add disabled/hidden/throw/read-only hit-target and authorization-boundary oracles — `packages/kanban/test/security/action-capability.spec.test.ts` ✅ (completed: 2026-08-15 00:36)
 - [ ] 6.1.4 `[spec-author]` Add Primary/Meta compatibility and DOM pointer mapping/capture/coordinate/fallback/SGR-dedupe oracles — Core `test/input-primary.spec.test.ts`, Web `test/dom-pointer-input.spec.test.ts`, Kanban host E2E
 - [ ] 6.1.5 Run the focused specifications and record expected red failures
 
