@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 17:39 CEST
-> **Progress**: 31/125 tasks (25%)
+> **Last Updated**: 2026-08-14 17:42 CEST
+> **Progress**: 32/125 tasks (26%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -151,7 +151,7 @@ fix-scoped Major findings corrected with zero Critical findings.
 
 - [x] 3.1.1 `[spec-author]` Add field-kind, invalid schema graph/bounds, typed adapter, configured-field, checklist-ID, and custom-control oracles — `packages/kanban/test/editor-schema.spec.test.ts` ✅ (completed: 2026-08-14 17:28)
 - [x] 3.1.2 `[spec-author]` Add resolver, draft isolation, abort generations, first-error focus, exact request, resubmit, stale/reload/contradictory publication, and cleanup oracles — `packages/kanban/test/editor-session.spec.test.ts` ✅ (completed: 2026-08-14 17:39)
-- [ ] 3.1.3 `[spec-author]` Add identity exclusivity, view mode, authoritative publication, and hostile-value oracles — `packages/kanban/test/security/editor-boundary.spec.test.ts`
+- [x] 3.1.3 `[spec-author]` Add identity exclusivity, view mode, authoritative publication, and hostile-value oracles — `packages/kanban/test/security/editor-boundary.spec.test.ts` ✅ (completed: 2026-08-14 17:42)
 - [ ] 3.1.4 `[spec-author]` Add exact dependency and built packed-consumer oracles for generic-only, missing peer, and Zod 4 standard adapter — package-boundary and consumer-contract specs
 - [ ] 3.1.5 Run the focused specifications and record expected red failures
 
