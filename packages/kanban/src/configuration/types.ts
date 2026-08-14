@@ -148,3 +148,46 @@ export interface KanbanConfigurationSession {
   /** Reports whether owned resources have been released. */
   readonly disposed: () => boolean;
 }
+
+/** Minimal application host required by package-owned configuration dialogs. */
+export interface KanbanConfigurationDialogHost {
+  /** Translation service inherited from the application. */
+  readonly i18n: I18n;
+  /** Modal execution and focus operations. */
+  readonly loop: Pick<EventLoop, 'execView' | 'focusView'>;
+  /** Desktop mount operations and current terminal extent. */
+  readonly desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;
+}
+
+/** Result-only configuration completion that never invokes application authority. */
+export interface KanbanConfigurationResultOnlyCompletion {
+  /** Completion discriminator. */
+  readonly kind: 'result-only';
+}
+
+/** Configuration completion routed through application request authority. */
+export interface KanbanConfigurationAuthorityCompletion {
+  /** Completion discriminator. */
+  readonly kind: 'authority';
+  /** Application request admission seam. */
+  readonly authority: KanbanConfigurationAuthority;
+}
+
+/** Completion policies supported by package-owned configuration dialogs. */
+export type KanbanConfigurationDialogCompletion =
+  KanbanConfigurationResultOnlyCompletion | KanbanConfigurationAuthorityCompletion;
+
+/** Application confirmation seam used for destructive or stale draft decisions. */
+export type KanbanConfigurationConfirm = (request: {
+  readonly kind: 'reload-stale' | 'discard-draft' | 'delete-structure';
+}) => boolean | Promise<boolean>;
+
+/** Terminal result returned by one package-owned configuration dialog. */
+export type KanbanConfigurationDialogResult =
+  | { readonly kind: 'cancelled' }
+  | { readonly kind: 'proposal'; readonly proposal: KanbanRequestProposal }
+  | { readonly kind: 'accepted'; readonly operationId: string }
+  | { readonly kind: 'disposed' }
+  | { readonly kind: 'failed' };
+import type { I18n } from '@jsvision/i18n';
+import type { Desktop, EventLoop } from '@jsvision/ui';
