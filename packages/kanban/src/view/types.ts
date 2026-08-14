@@ -3,6 +3,7 @@ import type { KanbanColumnId, KanbanExtensionId, KanbanFieldId, KanbanSwimlaneId
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanFilter, KanbanQuery, KanbanSort } from '../source/types.js';
+import type { KanbanViewSummary } from './summary.js';
 
 /** Determines whether raw search text is eligible for durable saved-view capture. */
 export type KanbanSearchPolicy = 'transient' | 'durable';
@@ -127,6 +128,8 @@ export interface KanbanViewController {
   readonly state: () => KanbanViewState;
   /** Returns the current committed source query. */
   readonly query: () => KanbanQuery;
+  /** Returns honest source/projection counts for the committed query. */
+  readonly summary: () => KanbanViewSummary;
   /** Requests one exact view transition. */
   apply(transition: KanbanViewTransition): KanbanViewTransitionResult;
   /** Replaces the complete state after exact bounded validation. */

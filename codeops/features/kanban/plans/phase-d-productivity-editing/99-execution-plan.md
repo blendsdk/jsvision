@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 12:47 CEST
-> **Progress**: 8/125 tasks (6%)
+> **Last Updated**: 2026-08-14 12:52 CEST
+> **Progress**: 9/125 tasks (7%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -74,7 +74,7 @@ registry, chrome, additive comparator query, and transactional binding behavior 
 - [x] 1.2.1 Implement bounded view types plus multi-comparator registration/default contract and backward-compatible query identity — view/source types and validation ✅ (completed: 2026-08-14 12:39)
 - [x] 1.2.2 Implement immutable projection, resolved comparator ID, and integers-before-code-point-strings tie order across eager/remote/windowed contracts ✅ (completed: 2026-08-14 12:44)
 - [x] 1.2.3 Implement generation-safe draft-to-committed debounced search scheduler — `packages/kanban/src/view/scheduler.ts`, `controller.ts` ✅ (completed: 2026-08-14 12:47)
-- [ ] 1.2.4 Implement controller subscriptions, atomic publication, clear, replace, and disposal — `packages/kanban/src/view/controller.ts`, `summary.ts`
+- [x] 1.2.4 Implement controller subscriptions, atomic publication, clear, replace, and disposal — `packages/kanban/src/view/controller.ts`, `summary.ts` ✅ (completed: 2026-08-14 12:52)
 - [ ] 1.2.5 Implement view bar plus all-or-nothing controller facet→legacy-channel composer and type-tagged composite revision — view bar/board binding
 - [ ] 1.2.6 Export/document view APIs while preserving query-getter construction — `packages/kanban/src/index.ts`, `packages/kanban/src/board/kanban-board.ts`
 - [ ] 1.2.7 Implement controller/binder/viewport/session prepare-commit-abort handshake through candidate first publication, atomic observer-visible activation, and rollback — controller, board binding, viewport, source coordinator
