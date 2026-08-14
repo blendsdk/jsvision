@@ -577,3 +577,90 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** Existing request variants cannot encode an approved atomic configuration policy or a
   source publication lacks the structural revision evidence required for validation.
+
+### AR-D38 — Publication-correlated configuration sessions (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; no concurrency or authority risk is waived.
+- **Eligibility:** Additive lifecycle context and internal state transitions inside the approved
+  application-owned configuration authority boundary.
+- **Objective:** Prevent duplicate requests, stale acceptance, and premature dialog closure while retaining the
+  application's sole persistence authority.
+- **Evidence:** A request response can arrive before, after, or concurrently with a structural publication. The
+  source snapshot already carries board and entity revisions, while accepted request results already carry
+  operation-correlated publication evidence.
+- **Decision:** Snapshot the selected operation and base revisions once. Serialize apply/reload/mutation, pass a
+  detached authority context containing those revisions and a lifetime signal, and treat acceptance as awaiting
+  publication until one authoritative snapshot matches the accepted revision evidence. Contradictory publication
+  keeps the draft stale. Disposal aborts and settles every outstanding wait.
+- **Rejected alternatives:** Closing on admission conflates request acceptance with observable state. Polling has
+  no bounded completion or correlation. Optimistic local structure would create a second data authority.
+- **Confidence:** High — all three independent reviews converged on the same missing boundary.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Application results cannot provide structure publication revisions, or the source protocol
+  gains an operation-correlated publication primitive that supersedes revision matching.
+
+### AR-D39 — Operation-specific configuration presentation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Responsive UI composition and diagnostics inside the approved package-owned optional dialogs;
+  structural persistence remains application-owned.
+- **Objective:** Make add, edit, reorder, and delete workflows understandable and fully operable with keyboard and
+  mouse without exposing view-only personalization as structural data.
+- **Evidence:** The public proposal variants already distinguish names, definition of done, application metadata,
+  stable-neighbor ordering, occupancy, and atomic deletion destination. The initial generic name form concealed
+  most of those semantics.
+- **Decision:** Render controls by operation: editable structural fields for add/update, explicit stable-neighbor
+  destinations for reorder, and identity/occupancy/policy/destination evidence for delete. Keep bounded payload-free
+  field/form diagnostics in session state. Default dirty and destructive confirmation applies to every close route.
+  Visibility and collapse remain saved-view concerns and never enter structural proposals.
+- **Rejected alternatives:** One generic form is visually simple but semantically incomplete. Numeric ordering is
+  unsafe under concurrent publications. Mixing personalization into structure contradicts application ownership.
+- **Confidence:** High.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A future proposal family adds structural fields that cannot be represented by the bounded
+  configuration field protocol, or the UI package adds a reusable structural editor surface.
+
+### AR-D40 — Bounded structural focus reconciliation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Input validation and focus restoration inside confirmed delete/publication behavior.
+- **Objective:** Restore focus deterministically without allocating from hostile unbounded arrays or retaining a
+  removed structural identity.
+- **Evidence:** Column and swimlane limits are already classified; both axes use stable identities and ordered
+  authoritative publications.
+- **Decision:** Validate exact input envelopes, snapshot arrays with their safe classified limits, reject duplicate
+  identities with a payload-free error, and use the same next-then-previous-then-board rule for columns and
+  swimlanes. Apply the helper only after the correlated authoritative deletion publication.
+- **Rejected alternatives:** Caller-trusted arrays permit unbounded work. Index-based focus is unstable. Leaving
+  focus on the deleted view makes keyboard interaction appear frozen.
+- **Confidence:** High.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Focus moves to card-level spatial navigation or swimlane publications cease to preserve order.
+
+### AR-D41 — Terminal configuration ownership and structural form boundary (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; no accepted-work or modal-lifetime risk is waived.
+- **Eligibility:** Session finality, cancellable package confirmation, and operation-specific fields inside the
+  confirmed configuration-dialog scope.
+- **Objective:** Keep accepted work visibly owned until publication, prevent completed sessions from reopening,
+  and expose common structural policy without duplicating saved-view authority.
+- **Evidence:** The fix-scoped re-review found that Cancel could close an accepted request, committed sessions
+  could dispatch again, nested confirmation could strand its parent, and the dialog reused mutable caller input.
+  RD-09 already owns width, visibility, collapse, grouping selection, and presentation; RD-11 also requires WIP,
+  definition-of-done, style, and application fields in structural add/update workflows.
+- **Decision:** Treat committed sessions as terminal, disable every close/edit route while publication is pending,
+  use an abortable exact-modal package confirmation, and render only application-authoritative structural fields:
+  name/disambiguator, WIP, definition of done, semantic style, and bounded application metadata. Express optional
+  field removal with explicit `null` patches. Continue routing width, visibility, collapse, grouping selection,
+  and presentation through the saved-view controller so one dialog never submits competing authorities.
+- **Rejected alternatives:** Allowing Cancel after admission loses operation ownership. Retrying a committed session
+  can duplicate persistence. A structural width/grouping patch conflicts with the confirmed view-only model.
+- **Confidence:** High — the correction follows the existing request/source boundaries and focused lifecycle,
+  cancellation, mutation, clear-semantics, and rendered-dialog tests are green.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The request contract gains one atomic cross-authority structure-and-view transaction, or a
+  future standard field cannot be represented by the typed structural draft plus bounded application metadata.

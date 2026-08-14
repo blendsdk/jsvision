@@ -11,7 +11,12 @@ import type {
 } from './identity.js';
 import type { KanbanRevision } from './revision.js';
 import type { KanbanSemanticValue } from './semantic-query.js';
-import type { KanbanCellAddress, KanbanDefinitionOfDone } from '../source/types.js';
+import type {
+  KanbanCellAddress,
+  KanbanDefinitionOfDone,
+  KanbanStructureStyle,
+  KanbanWipPolicy,
+} from '../source/types.js';
 import type { KanbanUndoDescriptor } from '../operation/types.js';
 
 /** Captured card revision required by an application request. */
@@ -225,6 +230,10 @@ export interface KanbanColumnDraft {
   readonly disambiguator?: string;
   /** Optional safe completion policy presented by column help and configuration UI. */
   readonly definitionOfDone?: KanbanDefinitionOfDone;
+  /** Optional application-authoritative workflow count policy. */
+  readonly wip?: KanbanWipPolicy;
+  /** Optional allowlisted semantic surface style. */
+  readonly style?: KanbanStructureStyle;
   /** Optional bounded application-owned column metadata. */
   readonly data?: KanbanSemanticValue;
 }
@@ -237,6 +246,8 @@ export interface KanbanSwimlaneDraft {
   readonly label: string;
   /** Optional visible text distinguishing an application-approved duplicate label. */
   readonly disambiguator?: string;
+  /** Optional allowlisted semantic surface style. */
+  readonly style?: KanbanStructureStyle;
   /** Optional bounded application-owned swimlane metadata. */
   readonly data?: KanbanSemanticValue;
 }

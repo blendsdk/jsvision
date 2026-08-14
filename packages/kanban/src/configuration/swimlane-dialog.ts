@@ -7,6 +7,7 @@ import type {
   KanbanConfigurationSource,
   KanbanSwimlaneConfigurationOperation,
 } from './types.js';
+import type { KanbanConfigurationFocusTarget } from '../board/board-configuration-binding.js';
 
 /** Options for invoking one package-owned explicit-swimlane configuration workflow. */
 export interface OpenKanbanSwimlaneConfigurationDialogOptions {
@@ -18,6 +19,10 @@ export interface OpenKanbanSwimlaneConfigurationDialogOptions {
   readonly completion: KanbanConfigurationDialogCompletion;
   /** Optional application confirmation policy. */
   readonly confirm?: KanbanConfigurationConfirm;
+  /** Optional caller lifetime for modal and application work. */
+  readonly signal?: AbortSignal;
+  /** Optional bridge that applies a committed deletion's stable board focus target. */
+  readonly focus?: (target: KanbanConfigurationFocusTarget) => void;
 }
 
 /**

@@ -33,6 +33,7 @@ import { snapshotKanbanCellAddress } from '../source/address.js';
 import { snapshotKanbanDefinitionOfDone } from '../workflow/definition-of-done.js';
 import { snapshotKanbanCardMoveProposal, snapshotKanbanMovePosition } from '../operation/placement.js';
 import { snapshotKanbanUndoDescriptor } from '../operation/undo.js';
+import { KANBAN_THEME_ROLES } from '../card/theme.js';
 
 /** Maximum entity subjects retained by one request or publication expectation. */
 const MAX_SUBJECTS = KANBAN_LIMITS.selectedKeys.safe;
@@ -111,8 +112,12 @@ const SAVED_VIEW_RENAME_KEYS = new Set(['kind', 'viewId', 'label']);
 const SAVED_VIEW_DELETE_KEYS = new Set(['kind', 'viewId']);
 const EXTENSION_PROPOSAL_KEYS = new Set(['kind', 'extensionId', 'payload']);
 /** Exact generic structural draft members. */
-const COLUMN_DRAFT_KEYS = new Set(['columnId', 'label', 'disambiguator', 'definitionOfDone', 'data']);
-const SWIMLANE_DRAFT_KEYS = new Set(['swimlaneId', 'label', 'disambiguator', 'data']);
+const COLUMN_DRAFT_KEYS = new Set(['columnId', 'label', 'disambiguator', 'definitionOfDone', 'wip', 'style', 'data']);
+const SWIMLANE_DRAFT_KEYS = new Set(['swimlaneId', 'label', 'disambiguator', 'style', 'data']);
+/** Exact workflow-count policy members accepted by structural add requests. */
+const WIP_KEYS = new Set(['minimum', 'maximum', 'mode', 'countDone']);
+/** Exact semantic-style members accepted by structural add requests. */
+const STYLE_KEYS = new Set(['role']);
 /** Exact semantic structural position members. */
 const COLUMN_POSITION_KEYS = new Set(['kind', 'beforeColumnId', 'afterColumnId']);
 const SWIMLANE_POSITION_KEYS = new Set(['kind', 'swimlaneId']);
@@ -122,6 +127,39 @@ function requiredString(properties: KanbanDataProperties, key: string): string {
   const value = properties[key];
   if (typeof value !== 'string') throw new KanbanInvalidSemanticValueError();
   return value;
+}
+
+/** Validate and detach one optional workflow count policy. */
+function requestWipPolicy(value: unknown) {
+  const properties = snapshotKanbanDataProperties(value, WIP_KEYS.size);
+  validateKanbanDataKeys(properties, WIP_KEYS);
+  const minimum = properties.minimum;
+  const maximum = properties.maximum;
+  if (
+    (minimum !== undefined && (typeof minimum !== 'number' || !Number.isSafeInteger(minimum) || minimum < 0)) ||
+    (maximum !== undefined && (typeof maximum !== 'number' || !Number.isSafeInteger(maximum) || maximum < 0)) ||
+    (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum) ||
+    (properties.mode !== 'informational' && properties.mode !== 'advisory' && properties.mode !== 'blocking') ||
+    (properties.countDone !== 'include' && properties.countDone !== 'exclude')
+  )
+    throw new KanbanInvalidSemanticValueError();
+  return Object.freeze({
+    ...(minimum === undefined ? {} : { minimum }),
+    ...(maximum === undefined ? {} : { maximum }),
+    mode: properties.mode,
+    countDone: properties.countDone,
+  });
+}
+
+/** Validate one semantic style against the closed Kanban theme-role inventory. */
+function requestStructureStyle(value: unknown) {
+  const properties = snapshotKanbanDataProperties(value, STYLE_KEYS.size);
+  validateKanbanDataKeys(properties, STYLE_KEYS);
+  const role = KANBAN_THEME_ROLES.find((candidate) => candidate === properties.role);
+  if (role === undefined || Object.keys(properties).length !== STYLE_KEYS.size) {
+    throw new KanbanInvalidSemanticValueError();
+  }
+  return Object.freeze({ role });
 }
 
 /** Convert a source-oriented revision failure into the request boundary's semantic error. */
@@ -332,6 +370,8 @@ function columnDraft(value: unknown) {
     ...(properties.definitionOfDone === undefined
       ? {}
       : { definitionOfDone: snapshotKanbanDefinitionOfDone(properties.definitionOfDone) }),
+    ...(properties.wip === undefined ? {} : { wip: requestWipPolicy(properties.wip) }),
+    ...(properties.style === undefined ? {} : { style: requestStructureStyle(properties.style) }),
     ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }
@@ -344,6 +384,7 @@ function swimlaneDraft(value: unknown) {
     swimlaneId: createKanbanSwimlaneId(requiredString(properties, 'swimlaneId')),
     label: requiredLabel(properties.label),
     ...(properties.disambiguator === undefined ? {} : { disambiguator: requiredLabel(properties.disambiguator) }),
+    ...(properties.style === undefined ? {} : { style: requestStructureStyle(properties.style) }),
     ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }

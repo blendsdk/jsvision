@@ -1,7 +1,7 @@
 /** End-to-end requirements for responsive package-owned board-configuration dialogs. */
 import { resolveCapabilities } from '@jsvision/core';
 import { createI18n } from '@jsvision/i18n';
-import { Commands, Group, Input, createEventLoop } from '@jsvision/ui';
+import { Button, Commands, Group, Input, createEventLoop } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -83,6 +83,23 @@ function frame(loop: ReturnType<typeof createEventLoop>): string {
     .rows()
     .map((row) => row.map((cell) => cell.char).join(''))
     .join('\n');
+}
+
+/** Returns all public descendants in stable traversal order. */
+function descendants(view: View): readonly View[] {
+  if (!(view instanceof Group)) return [];
+  return view.children.flatMap((child) => [child, ...descendants(child)]);
+}
+
+/** Returns the absolute clickable point at the top-left of one mounted view. */
+function absolutePoint(view: View): { readonly x: number; readonly y: number } {
+  let x = Math.max(1, Math.floor(view.bounds.width / 2)) + 1;
+  let y = 1;
+  for (let current: View | null = view; current !== null; current = current.parent) {
+    x += current.bounds.x;
+    y += current.bounds.y;
+  }
+  return { x, y };
 }
 
 /** Replaces the focused one-line field through public keyboard input. */
@@ -185,6 +202,83 @@ describe('Kanban configuration dialogs', () => {
     await expect(pending).resolves.toEqual({ kind: 'cancelled' });
   });
 
+  it('closes nested package confirmation and the owning dialog when its lifetime aborts', async () => {
+    const h = host();
+    const records = source();
+    const controller = new AbortController();
+    const pending = openKanbanColumnConfigurationDialog(h.value, {
+      source: records.value,
+      operation: { kind: 'update', columnId: 'doing' },
+      completion: { kind: 'result-only' },
+      signal: controller.signal,
+    });
+    await mounted();
+    replaceInput(h.loop, 'Local draft');
+    h.loop.emitCommand(Commands.cancel);
+    await mounted();
+    expect(h.added).toHaveLength(2);
+    controller.abort();
+    await expect(pending).resolves.toEqual({ kind: 'disposed' });
+    expect(h.removed).toHaveLength(2);
+  });
+
+  it('retains modal ownership and disables every draft input while awaiting publication', async () => {
+    const h = host();
+    const records = source();
+    const pending = openKanbanColumnConfigurationDialog(h.value, {
+      source: records.value,
+      operation: { kind: 'update', columnId: 'doing' },
+      completion: {
+        kind: 'authority',
+        authority: {
+          request: () => ({
+            kind: 'accepted',
+            operationId: 'update-doing',
+            publication: {
+              operationId: 'update-doing',
+              subjects: [
+                {
+                  kind: 'column',
+                  columnId: 'doing',
+                  baselineRevision: 'column-r1',
+                  expectedRevision: 'column-r2',
+                },
+              ],
+            },
+          }),
+        },
+      },
+    });
+    await mounted();
+    replaceInput(h.loop, 'In progress');
+    h.loop.emitCommand(Commands.ok);
+    await mounted();
+    expect(frame(h.loop)).toContain('Waiting for board update');
+    const dialog = h.added[0];
+    if (dialog === undefined) throw new Error('Expected a mounted configuration dialog.');
+    expect(
+      descendants(dialog)
+        .filter((view): view is Input => view instanceof Input)
+        .every((input) => input.state.disabled),
+    ).toBe(true);
+    h.loop.emitCommand(Commands.cancel);
+    await mounted();
+    expect(h.removed).toHaveLength(0);
+
+    records.publish(
+      createKanbanConfigurationSnapshot({
+        revision: 'structure-r2',
+        columns: [
+          { columnId: 'todo', label: 'To do', revision: 'column-r1' },
+          { columnId: 'doing', label: 'In progress', revision: 'column-r2' },
+          { columnId: 'done', label: 'Done', revision: 'column-r1' },
+        ],
+        swimlanes: [{ swimlaneId: 'team-a', label: 'Team A', revision: 'swimlane-r1', mode: 'explicit' }],
+      }),
+    );
+    await expect(pending).resolves.toEqual({ kind: 'committed', operationId: 'update-doing' });
+  });
+
   it('produces the same neighbor proposal for keyboard, button, and pointer reorder routes', async () => {
     const origins = ['keyboard', 'button', 'pointer'] as const;
     const proposals = [];
@@ -213,5 +307,41 @@ describe('Kanban configuration dialogs', () => {
       { kind: 'swimlane-reorder', swimlaneId: 'team-a', position: { kind: 'end' } },
       { kind: 'swimlane-reorder', swimlaneId: 'team-a', position: { kind: 'end' } },
     ]);
+  });
+
+  it('offers a real stable-neighbor button that is reachable by keyboard and pointer', async () => {
+    for (const origin of ['keyboard', 'pointer'] as const) {
+      const h = host();
+      const records = source();
+      const pending = openKanbanSwimlaneConfigurationDialog(h.value, {
+        source: records.value,
+        operation: { kind: 'reorder', swimlaneId: 'team-a' },
+        completion: { kind: 'result-only' },
+      });
+      await mounted();
+      frame(h.loop);
+      const dialog = h.added[0];
+      if (dialog === undefined) throw new Error('Expected a mounted reorder dialog.');
+      const start = descendants(dialog).find(
+        (view): view is Button => view instanceof Button && view.activation.label === 'Start',
+      );
+      if (start === undefined) throw new Error('Expected a stable start destination.');
+      if (origin === 'keyboard') {
+        h.loop.focusView(start);
+        expect(h.loop.getFocused()).toBe(start);
+        h.loop.dispatch({ type: 'key', key: 'space', ctrl: false, alt: false, shift: false });
+      } else {
+        const point = absolutePoint(start);
+        expect(h.loop.viewAt({ x: point.x - 1, y: point.y - 1 })).toBe(start);
+        h.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, ...point });
+        expect(h.loop.viewAt({ x: point.x - 1, y: point.y - 1 })).toBe(start);
+        h.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...point });
+      }
+      h.loop.emitCommand(Commands.ok);
+      expect(await pending, origin).toEqual({
+        kind: 'proposal',
+        proposal: { kind: 'swimlane-reorder', swimlaneId: 'team-a', position: { kind: 'start' } },
+      });
+    }
   });
 });

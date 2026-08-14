@@ -261,13 +261,16 @@ initialize successfully; no unrelated runtime, matcher, or transform failure mas
 - [x] 5.3.1 Add builder exact-shape, normalization, callback failure, stale, and disposal tests — `packages/kanban/test/configuration-builders.impl.test.ts`, `configuration-dialog.impl.test.ts` ✅ (completed: 2026-08-14 23:14)
 - [x] 5.3.2 Run focused Kanban/UI/Forms build/typecheck/tests/E2E/docs and `yarn verify:local` ✅ (completed: 2026-08-14 23:20)
 
-**Closure evidence**: configuration unit/security/implementation specifications pass 25/25 and rendered
-E2E specifications pass 4/4. The full Kanban functional unit set passes 953 tests; its timing benchmark
-passes in the required isolated run after exceeding its budget only under the full 117-file worker load.
-Kanban E2E passes 33 with 2 intentional skips. Kanban, UI, and Forms build/typecheck/docs gates pass;
-UI passes 2,059 tests, Forms passes 116 tests, plugin integrity and `yarn verify:local` pass.
+**Closure evidence**: focused configuration unit/security/implementation specifications pass 33/33 and
+rendered configuration E2E specifications pass 7/7. The full Kanban functional matrix passes 961 behavior
+tests; its timing benchmark passes in the required isolated run after exceeding its budget only under the
+full 118-file worker load. Kanban E2E passes 36 with 2 intentional skips. Kanban build/typecheck/docs/dependency
+gates, plugin integrity, and `yarn verify:local` pass.
 
 **Verify**: focused configuration/security/E2E suites; affected package gates; `yarn verify:local`
+
+**Quality gate**: [Phase 5 quality review](12-phase-5-quality-review.md) — PASS; zero Critical findings,
+all initial and fix-scoped Major findings corrected under auto-design, no waiver.
 
 ## Phase 6: Actions, keymaps, capabilities, and read-only mode
 

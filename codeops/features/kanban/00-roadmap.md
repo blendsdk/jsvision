@@ -3,8 +3,8 @@
 > **Feature-Set**: JSVision Kanban
 > **Status**: In Progress
 > **Created**: 2026-08-03
-> **Last Updated**: 2026-08-14 19:43 CEST
-> **Progress**: 8 / 15 (53%)
+> **Last Updated**: 2026-08-15 00:20 CEST
+> **Progress**: 11 / 15 (73%)
 > **CodeOps Artifact Schema**: 1
 
 > **Corrective gate cleared:** T-03 completed automated and native-terminal acceptance on 2026-08-14;
@@ -26,9 +26,9 @@
 | RD-06 | Focus, navigation, and selection | [RD-06](requirements/RD-06-focus-navigation-selection.md) | [Phase B](plans/phase-b-core-board/00-index.md) | Done | ✅ | 2026-08-14 | depends on RD-03, RD-05 |
 | RD-07 | Pointer drag and drop | [RD-07](requirements/RD-07-pointer-drag-drop.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Done | ✅ | 2026-08-12 | depends on RD-03, RD-04, RD-06 |
 | RD-08 | Requests, placement, and operation lifecycle | [RD-08](requirements/RD-08-requests-placement-lifecycle.md) | [Phase C](plans/phase-c-modern-interaction/00-index.md) | Done | ✅ | 2026-08-12 | depends on RD-02, RD-05–RD-07 |
-| RD-09 | Search, filters, sorting, and saved views | [RD-09](requirements/RD-09-search-filters-saved-views.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Executing | 🔄 | 2026-08-14 | depends on RD-02, RD-05, RD-06, RD-08 |
-| RD-10 | Card schema and editor dialogs | [RD-10](requirements/RD-10-card-schema-editor-dialogs.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Executing | 🔄 | 2026-08-14 | depends on RD-04, RD-08 |
-| RD-11 | Board configuration APIs and dialogs | [RD-11](requirements/RD-11-board-configuration-dialogs.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Plan Preflighted | 🔬 | 2026-08-14 | depends on RD-05, RD-08–RD-10 |
+| RD-09 | Search, filters, sorting, and saved views | [RD-09](requirements/RD-09-search-filters-saved-views.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Done | ✅ | 2026-08-15 | depends on RD-02, RD-05, RD-06, RD-08 |
+| RD-10 | Card schema and editor dialogs | [RD-10](requirements/RD-10-card-schema-editor-dialogs.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Done | ✅ | 2026-08-15 | depends on RD-04, RD-08 |
+| RD-11 | Board configuration APIs and dialogs | [RD-11](requirements/RD-11-board-configuration-dialogs.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Done | ✅ | 2026-08-15 | depends on RD-05, RD-08–RD-10 |
 | RD-12 | Commands, events, capabilities, and history | [RD-12](requirements/RD-12-commands-events-capabilities.md) | [Phase D](plans/phase-d-productivity-editing/00-index.md) | Plan Preflighted | 🔬 | 2026-08-14 | depends on RD-06, RD-08, RD-09, RD-11 |
 | RD-13 | Internationalization, theming, and accessibility | [RD-13](requirements/RD-13-i18n-theme-accessibility.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-03, RD-04, RD-10, RD-12 |
 | RD-14 | Quality, scale, security, and resilience | [RD-14](requirements/RD-14-quality-scale-security.md) | — | RD Preflighted | 🔎 | 2026-08-03 | depends on RD-01–RD-13 |

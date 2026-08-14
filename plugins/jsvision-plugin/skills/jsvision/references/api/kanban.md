@@ -1595,6 +1595,8 @@ interface KanbanColumnDraft {
   label: string;   // Safe human-readable column label.
   disambiguator?: string;   // Optional visible text distinguishing an application-approved duplicate label.
   definitionOfDone?: KanbanDefinitionOfDone;   // Optional safe completion policy presented by column help and configuration UI.
+  wip?: KanbanWipPolicy;   // Optional application-authoritative workflow count policy.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic surface style.
   data?: KanbanSemanticValue;   // Optional bounded application-owned column metadata.
 }
 ```
@@ -1802,7 +1804,10 @@ Application-owned proposal authority used by dispatched configuration sessions.
 
 ```ts
 interface KanbanConfigurationAuthority {
-  request: (proposal: KanbanRequestProposal) => KanbanRequestResult | Promise<KanbanRequestResult>;   // Admits one lifecycle-free proposal and returns an operation-correlated result.
+  request: (
+    proposal: KanbanRequestProposal,
+    context?: KanbanConfigurationAuthorityContext,
+  ) => KanbanRequestResult | Promise<KanbanRequestResult>;   // Admits one lifecycle-free proposal and returns an operation-correlated result.
 }
 ```
 
@@ -1817,6 +1822,18 @@ interface KanbanConfigurationAuthorityCompletion {
 }
 ```
 
+## KanbanConfigurationAuthorityContext
+
+Immutable authority evidence captured with one configuration proposal.
+
+```ts
+interface KanbanConfigurationAuthorityContext {
+  boardRevision: KanbanRevision;   // Board-wide structural revision observed while the proposal was built.
+  entities: readonly KanbanExpectedEntityRevision[];   // Relevant entity and stable-neighbor revisions from the same snapshot.
+  signal: AbortSignal;   // Aborts when the session is disposed or this request is superseded.
+}
+```
+
 ## KanbanConfigurationColumnSnapshot
 
 Immutable structural evidence for one configurable workflow column.
@@ -1828,6 +1845,9 @@ interface KanbanConfigurationColumnSnapshot {
   disambiguator?: string;   // Optional visible text that distinguishes an approved duplicate name.
   revision: KanbanRevision;   // Equality-only column revision captured from application authority.
   definitionOfDone?: KanbanDefinitionOfDoneSnapshot;   // Optional sanitized completion policy presented by configuration UI.
+  wip?: KanbanWipPolicy;   // Optional application-authoritative workflow count policy.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic surface style.
+  data?: KanbanSemanticValue;   // Optional detached application-owned structural metadata.
 }
 ```
 
@@ -1838,6 +1858,8 @@ Application confirmation seam used for destructive or stale draft decisions.
 ```ts
 type KanbanConfigurationConfirm = (request: {
   readonly kind: 'reload-stale' | 'discard-draft' | 'delete-structure';
+  /** Aborts when the owning configuration dialog ends or is disposed. */
+  readonly signal: AbortSignal;
 }) => boolean | Promise<boolean>
 ```
 
@@ -1850,6 +1872,7 @@ interface KanbanConfigurationDeleteConfirmationOptions {
   occupancy: KanbanConfigurationOccupancy;   // Authoritative affected-card count; unknown counts fail closed without opening UI.
   hasPolicy: boolean;   // Whether one complete application policy resolves a non-empty structure atomically.
   confirm?: KanbanConfigurationConfirm;   // Optional application replacement for the localized package confirmation.
+  signal: AbortSignal;   // Owning dialog lifetime used to cancel confirmation work.
 }
 ```
 
@@ -1862,6 +1885,17 @@ interface KanbanConfigurationDeletionContext {
   identity: KanbanConfigurationDeletionIdentity;   // Stable structural identity being deleted.
   occupancy: Extract<KanbanConfigurationOccupancy, { readonly quality: 'exact' }>;   // Exact authoritative non-zero occupancy.
   signal: AbortSignal;   // Live signal reserved for application work performed by the custom builder.
+}
+```
+
+## KanbanConfigurationDeletionDestination
+
+One safe atomic reassignment destination offered by package-owned delete UI.
+
+```ts
+interface KanbanConfigurationDeletionDestination {
+  destinationId: string;   // Stable column or swimlane destination identity.
+  label: string;   // Short terminal-safe destination label.
 }
 ```
 
@@ -1926,7 +1960,7 @@ Terminal result returned by one package-owned configuration dialog.
 ```ts
 type KanbanConfigurationDialogResult = | { readonly kind: 'cancelled' }
   | { readonly kind: 'proposal'; readonly proposal: KanbanRequestProposal }
-  | { readonly kind: 'accepted'; readonly operationId: string }
+  | { readonly kind: 'committed'; readonly operationId: string }
   | { readonly kind: 'disposed' }
   | { readonly kind: 'failed' }
 ```
@@ -1936,7 +1970,9 @@ type KanbanConfigurationDialogResult = | { readonly kind: 'cancelled' }
 Focus target selected after an authoritative column deletion publication.
 
 ```ts
-type KanbanConfigurationFocusTarget = { readonly kind: 'column'; readonly columnId: KanbanColumnId } | { readonly kind: 'board' }
+type KanbanConfigurationFocusTarget = | { readonly kind: 'column'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'board' }
 ```
 
 ## KanbanConfigurationOccupancy
@@ -1945,6 +1981,17 @@ Authoritative occupancy evidence required before structural deletion.
 
 ```ts
 type KanbanConfigurationOccupancy = { readonly quality: 'unknown' } | { readonly quality: 'exact'; readonly count: number }
+```
+
+## KanbanConfigurationReorderDestination
+
+One human-readable stable destination offered by package-owned reorder UI.
+
+```ts
+interface KanbanConfigurationReorderDestination {
+  label: string;   // Application-owned neighbor-label suffix; empty for package-localized start/end destinations.
+  position: KanbanColumnPosition | KanbanSwimlanePosition;   // Stable semantic position submitted to the pure proposal builder.
+}
 ```
 
 ## KanbanConfigurationResultOnlyCompletion
@@ -1963,9 +2010,18 @@ Disposable isolated draft actor shared by standard and replacement configuration
 
 ```ts
 interface KanbanConfigurationSession {
+  operation: () => KanbanColumnConfigurationOperation | KanbanSwimlaneConfigurationOperation;   // Returns the detached immutable operation owned by this session.
   snapshot: () => KanbanConfigurationSessionSnapshot;   // Returns one coherent immutable lifecycle snapshot.
   setLabel: (value: unknown) => boolean;   // Replaces the isolated visible-name draft after terminal-safe normalization.
+  setDisambiguator: (value: unknown) => boolean;   // Replaces an optional visible duplicate-name disambiguator.
+  setDefinitionOfDone: (summary: unknown, details?: unknown) => boolean;   // Replaces optional definition-of-done text for a configurable column.
+  setWip: (value: unknown) => boolean;   // Replaces or clears the isolated workflow count policy for a column.
+  setStyle: (value: unknown) => boolean;   // Replaces or clears the isolated allowlisted semantic style.
+  setData: (value: unknown) => boolean;   // Replaces optional bounded application metadata.
   setPosition: (value: KanbanColumnPosition | KanbanSwimlanePosition) => boolean;   // Replaces the semantic position used by a reorder operation.
+  reorderDestinations: () => readonly KanbanConfigurationReorderDestination[];   // Returns bounded stable-neighbor destinations for a reorder operation.
+  deletionDestinations: () => readonly KanbanConfigurationDeletionDestination[];   // Returns valid reassignment destinations for a delete operation.
+  setDeletionDestination: (destinationId: unknown) => boolean;   // Selects one complete atomic reassignment policy by stable destination identity.
   apply: () => Promise<KanbanConfigurationSessionApplyResult>;   // Builds a proposal and optionally submits it through application authority.
   reload: () => Promise<boolean>;   // Discards a stale draft and resolves the latest authoritative structure.
   subscribe: (listener: (snapshot: KanbanConfigurationSessionSnapshot) => void) => () => void;   // Subscribes to coherent state changes.
@@ -1980,7 +2036,8 @@ Result of applying one configuration-session draft.
 
 ```ts
 type KanbanConfigurationSessionApplyResult = | { readonly kind: 'proposal'; readonly proposal: KanbanRequestProposal }
-  | { readonly kind: 'accepted'; readonly operationId: string }
+  | { readonly kind: 'awaiting-publication'; readonly operationId: string }
+  | { readonly kind: 'committed'; readonly operationId: string }
   | { readonly kind: 'rejected'; readonly code: string }
   | { readonly kind: 'stale' }
   | { readonly kind: 'unavailable' }
@@ -1997,6 +2054,7 @@ interface KanbanConfigurationSessionOptions {
   source: KanbanConfigurationSource;   // Application-owned authoritative structure source.
   operation: KanbanColumnConfigurationOperation | KanbanSwimlaneConfigurationOperation;   // Column or explicit-swimlane operation being configured.
   authority?: KanbanConfigurationAuthority;   // Optional application request authority; omission selects result-only behavior.
+  signal?: AbortSignal;   // Optional caller lifetime; aborting it disposes pending session work.
 }
 ```
 
@@ -2008,9 +2066,22 @@ Coherent immutable state rendered by a configuration dialog.
 interface KanbanConfigurationSessionSnapshot {
   record: 'loading' | 'ready' | 'stale' | 'unavailable';   // Current source lifecycle.
   label: string;   // Sanitized isolated name draft.
+  disambiguator?: string;   // Optional visible duplicate-name disambiguator.
+  definitionOfDone?: KanbanDefinitionOfDoneSnapshot;   // Optional isolated definition-of-done draft for columns.
+  wip?: KanbanWipPolicy;   // Optional isolated workflow count-policy draft for columns.
+  style?: KanbanStructureStyle;   // Optional isolated semantic-style draft.
+  data?: KanbanSemanticValue;   // Optional detached application-owned metadata draft.
   dirty: boolean;   // Whether the isolated draft differs from its authoritative baseline.
-  submission: 'idle' | 'dispatching' | 'rejected' | 'accepted';   // Current request lifecycle.
+  submission: 'idle' | 'dispatching' | 'awaiting-publication' | 'rejected' | 'committed';   // Current request lifecycle.
   code?: string;   // Optional payload-free application rejection code.
+  diagnostics?: readonly KanbanFieldRejection[];   // Optional bounded field-specific application rejection diagnostics.
+  operationId?: string;   // Operation awaiting or confirmed by authoritative publication.
+  deletion?: | { readonly kind: 'ready' }
+    | {
+        readonly kind: 'disabled';
+        readonly code: 'occupancy-unknown' | 'non-empty-policy-required' | 'derived-group-read-only';
+      };   // Current structural-deletion eligibility for delete workflows.
+  focusTarget?: KanbanConfigurationFocusTarget;   // Deterministic board focus target produced by a committed structural deletion.
 }
 ```
 
@@ -2032,7 +2103,7 @@ Application-owned authoritative source used by one configuration session.
 
 ```ts
 interface KanbanConfigurationSource {
-  resolve: () => Promise<KanbanConfigurationSnapshot>;   // Resolves the latest detached structure.
+  resolve: (context?: { readonly signal: AbortSignal }) => Promise<KanbanConfigurationSnapshot>;   // Resolves the latest detached structure.
   subscribe: (listener: (snapshot: KanbanConfigurationSnapshot) => void) => () => void;   // Observes later authoritative structural publications.
 }
 ```
@@ -2056,6 +2127,8 @@ interface KanbanConfigurationSwimlaneSnapshot {
   disambiguator?: string;   // Optional visible text that distinguishes an approved duplicate name.
   revision: KanbanRevision;   // Equality-only swimlane revision captured from application authority.
   mode: KanbanConfigurationSwimlaneMode;   // Structural mutability classification; omitted input defaults to `explicit`.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic surface style.
+  data?: KanbanSemanticValue;   // Optional detached application-owned structural metadata.
 }
 ```
 
@@ -2230,6 +2303,19 @@ interface KanbanDeletedColumnFocusInput {
   currentColumnIds: readonly KanbanColumnId[];   // Ordered surviving columns in the authoritative publication.
   deletedColumnId: KanbanColumnId;   // Stable identity removed by the publication.
   focusedColumnId?: KanbanColumnId;   // Optional focus identity active before publication.
+}
+```
+
+## KanbanDeletedSwimlaneFocusInput
+
+Inputs required to reconcile focus after an authoritative swimlane deletion.
+
+```ts
+interface KanbanDeletedSwimlaneFocusInput {
+  previousSwimlaneIds: readonly KanbanSwimlaneId[];   // Ordered swimlanes before the accepted deletion.
+  currentSwimlaneIds: readonly KanbanSwimlaneId[];   // Ordered surviving swimlanes in the authoritative publication.
+  deletedSwimlaneId: KanbanSwimlaneId;   // Stable identity removed by the publication.
+  focusedSwimlaneId?: KanbanSwimlaneId;   // Optional focus identity active before publication.
 }
 ```
 
@@ -6524,6 +6610,7 @@ interface KanbanSwimlaneDraft {
   swimlaneId: KanbanSwimlaneId;   // Stable identity proposed for the new explicit swimlane.
   label: string;   // Safe human-readable swimlane label.
   disambiguator?: string;   // Optional visible text distinguishing an application-approved duplicate label.
+  style?: KanbanStructureStyle;   // Optional allowlisted semantic surface style.
   data?: KanbanSemanticValue;   // Optional bounded application-owned swimlane metadata.
 }
 ```
@@ -7539,6 +7626,8 @@ interface OpenKanbanColumnConfigurationDialogOptions {
   operation: KanbanColumnConfigurationOperation;   // Add, update, reorder, or delete workflow.
   completion: KanbanConfigurationDialogCompletion;   // Result-only or application-authority completion.
   confirm?: KanbanConfigurationConfirm;   // Optional application confirmation policy.
+  signal?: AbortSignal;   // Optional caller lifetime for modal and application work.
+  focus?: (target: KanbanConfigurationFocusTarget) => void;   // Optional bridge that applies a committed deletion's stable board focus target.
 }
 ```
 
@@ -7552,6 +7641,8 @@ interface OpenKanbanSwimlaneConfigurationDialogOptions {
   operation: KanbanSwimlaneConfigurationOperation;   // Add, update, reorder, or delete workflow.
   completion: KanbanConfigurationDialogCompletion;   // Result-only or application-authority completion.
   confirm?: KanbanConfigurationConfirm;   // Optional application confirmation policy.
+  signal?: AbortSignal;   // Optional caller lifetime for modal and application work.
+  focus?: (target: KanbanConfigurationFocusTarget) => void;   // Optional bridge that applies a committed deletion's stable board focus target.
 }
 ```
 
@@ -8932,6 +9023,14 @@ Resolves post-deletion focus to the next survivor, previous survivor, or board i
 reconcileKanbanDeletedColumnFocus(input: KanbanDeletedColumnFocusInput): KanbanConfigurationFocusTarget
 ```
 
+## reconcileKanbanDeletedSwimlaneFocus
+
+Resolves post-deletion swimlane focus with the same deterministic survivor rule.
+
+```ts
+reconcileKanbanDeletedSwimlaneFocus(input: KanbanDeletedSwimlaneFocusInput): KanbanConfigurationFocusTarget
+```
+
 ## reconcileKanbanPublication
 
 Clear publication metadata after matching or contradictory authoritative data arrives.
@@ -9154,6 +9253,14 @@ Validates one ordered column metadata record.
 
 ```ts
 snapshotKanbanColumnMeta(value: unknown): KanbanColumnMeta
+```
+
+## snapshotKanbanConfigurationDeletionPolicy
+
+Snapshots one optional atomic deletion policy without invoking a custom builder.
+
+```ts
+snapshotKanbanConfigurationDeletionPolicy(value: unknown): KanbanConfigurationDeletionPolicy | undefined
 ```
 
 ## snapshotKanbanCount

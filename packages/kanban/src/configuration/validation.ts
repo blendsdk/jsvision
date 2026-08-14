@@ -8,7 +8,10 @@ import { createKanbanColumnId, createKanbanSwimlaneId } from '../contract/identi
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
+import { KANBAN_THEME_ROLES } from '../card/theme.js';
+import type { KanbanStructureStyle, KanbanWipPolicy } from '../source/types.js';
 import { snapshotKanbanDefinitionOfDone } from '../workflow/definition-of-done.js';
+import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type {
   KanbanConfigurationColumnSnapshot,
   KanbanConfigurationOccupancy,
@@ -21,9 +24,22 @@ import type {
 /** Exact keys accepted by a complete configuration snapshot. */
 const SNAPSHOT_KEYS = new Set(['revision', 'columns', 'swimlanes']);
 /** Exact keys accepted by one column snapshot. */
-const COLUMN_KEYS = new Set(['columnId', 'label', 'disambiguator', 'revision', 'definitionOfDone']);
+const COLUMN_KEYS = new Set([
+  'columnId',
+  'label',
+  'disambiguator',
+  'revision',
+  'definitionOfDone',
+  'wip',
+  'style',
+  'data',
+]);
 /** Exact keys accepted by one swimlane snapshot. */
-const SWIMLANE_KEYS = new Set(['swimlaneId', 'label', 'disambiguator', 'revision', 'mode']);
+const SWIMLANE_KEYS = new Set(['swimlaneId', 'label', 'disambiguator', 'revision', 'mode', 'style', 'data']);
+/** Exact keys accepted by one workflow count policy. */
+const WIP_KEYS = new Set(['minimum', 'maximum', 'mode', 'countDone']);
+/** Exact keys accepted by one semantic style. */
+const STYLE_KEYS = new Set(['role']);
 /** Exact keys accepted by authoritative occupancy evidence. */
 const OCCUPANCY_KEYS = new Set(['quality', 'count']);
 /** Exact keys accepted by explicit duplicate-name permission. */
@@ -90,6 +106,37 @@ export function snapshotKanbanDuplicateConfigurationName(value: unknown): Kanban
   }
 }
 
+/** Validates and detaches one workflow count policy used by configuration drafts. */
+export function snapshotKanbanConfigurationWipPolicy(value: unknown): KanbanWipPolicy {
+  const properties = snapshotKanbanDataProperties(value, WIP_KEYS.size);
+  validateKanbanDataKeys(properties, WIP_KEYS);
+  const minimum = properties.minimum;
+  const maximum = properties.maximum;
+  if (
+    (minimum !== undefined && (typeof minimum !== 'number' || !Number.isSafeInteger(minimum) || minimum < 0)) ||
+    (maximum !== undefined && (typeof maximum !== 'number' || !Number.isSafeInteger(maximum) || maximum < 0)) ||
+    (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum) ||
+    (properties.mode !== 'informational' && properties.mode !== 'advisory' && properties.mode !== 'blocking') ||
+    (properties.countDone !== 'include' && properties.countDone !== 'exclude')
+  )
+    return invalidConfiguration();
+  return Object.freeze({
+    ...(minimum === undefined ? {} : { minimum }),
+    ...(maximum === undefined ? {} : { maximum }),
+    mode: properties.mode,
+    countDone: properties.countDone,
+  });
+}
+
+/** Validates one semantic style against the closed Kanban theme-role inventory. */
+export function snapshotKanbanConfigurationStyle(value: unknown): KanbanStructureStyle {
+  const properties = snapshotKanbanDataProperties(value, STYLE_KEYS.size);
+  validateKanbanDataKeys(properties, STYLE_KEYS);
+  const role = KANBAN_THEME_ROLES.find((candidate) => candidate === properties.role);
+  if (role === undefined || Object.keys(properties).length !== STYLE_KEYS.size) return invalidConfiguration();
+  return Object.freeze({ role });
+}
+
 /** Snapshots one exact immutable column structure record. */
 function columnSnapshot(value: unknown): KanbanConfigurationColumnSnapshot {
   const properties = snapshotKanbanDataProperties(value, COLUMN_KEYS.size);
@@ -108,6 +155,9 @@ function columnSnapshot(value: unknown): KanbanConfigurationColumnSnapshot {
     ...(properties.definitionOfDone === undefined
       ? {}
       : { definitionOfDone: snapshotKanbanDefinitionOfDone(properties.definitionOfDone) }),
+    ...(properties.wip === undefined ? {} : { wip: snapshotKanbanConfigurationWipPolicy(properties.wip) }),
+    ...(properties.style === undefined ? {} : { style: snapshotKanbanConfigurationStyle(properties.style) }),
+    ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }
 
@@ -130,12 +180,25 @@ function swimlaneSnapshot(value: unknown): KanbanConfigurationSwimlaneSnapshot {
       : { disambiguator: normalizeKanbanConfigurationName(properties.disambiguator).label }),
     revision: snapshotKanbanRevision(properties.revision),
     mode: properties.mode ?? 'explicit',
+    ...(properties.style === undefined ? {} : { style: snapshotKanbanConfigurationStyle(properties.style) }),
+    ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }
 
 /** Rejects duplicate structural identities without exposing the rejected values. */
 function requireUnique(values: readonly string[]): void {
   if (new Set(values).size !== values.length) return invalidConfiguration();
+}
+
+/** Rejects visually ambiguous normalized names while allowing explicit distinct disambiguators. */
+function requireUnambiguousNames(values: readonly { readonly label: string; readonly disambiguator?: string }[]): void {
+  const keys = values.map((value) => {
+    const label = normalizeKanbanConfigurationName(value.label).collisionKey;
+    const disambiguator =
+      value.disambiguator === undefined ? '' : normalizeKanbanConfigurationName(value.disambiguator).collisionKey;
+    return `${label.length}:${label}:${disambiguator.length}:${disambiguator}`;
+  });
+  requireUnique(keys);
 }
 
 /**
@@ -162,6 +225,8 @@ export function createKanbanConfigurationSnapshot(value: unknown): KanbanConfigu
     const swimlanes = snapshotKanbanDataArray(properties.swimlanes, KANBAN_LIMITS.swimlanes.safe).map(swimlaneSnapshot);
     requireUnique(columns.map((column) => column.columnId));
     requireUnique(swimlanes.map((swimlane) => swimlane.swimlaneId));
+    requireUnambiguousNames(columns);
+    requireUnambiguousNames(swimlanes);
     return Object.freeze({
       revision: snapshotKanbanRevision(properties.revision),
       columns: Object.freeze(columns),

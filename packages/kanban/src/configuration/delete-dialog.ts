@@ -1,6 +1,5 @@
-import { confirm } from '@jsvision/ui';
-
 import { resolveKanbanEditorMessage } from '../editor/presentation-text.js';
+import { confirmKanbanConfigurationAction } from './confirmation.js';
 import type {
   KanbanConfigurationConfirm,
   KanbanConfigurationDialogHost,
@@ -15,6 +14,8 @@ export interface KanbanConfigurationDeleteConfirmationOptions {
   readonly hasPolicy: boolean;
   /** Optional application replacement for the localized package confirmation. */
   readonly confirm?: KanbanConfigurationConfirm;
+  /** Owning dialog lifetime used to cancel confirmation work. */
+  readonly signal: AbortSignal;
 }
 
 /**
@@ -34,13 +35,6 @@ export async function confirmKanbanConfigurationDeletion(
 ): Promise<boolean> {
   if (options.occupancy.quality === 'unknown') return false;
   if (options.occupancy.count > 0 && !options.hasPolicy) return false;
-  if (options.confirm !== undefined) {
-    try {
-      return (await options.confirm(Object.freeze({ kind: 'delete-structure' }))) === true;
-    } catch {
-      return false;
-    }
-  }
   const message = resolveKanbanEditorMessage(
     host.i18n,
     'kanban.configuration.confirm.delete',
@@ -48,9 +42,5 @@ export async function confirmKanbanConfigurationDeletion(
       ? 'Delete this empty structure?'
       : `Delete this structure and atomically move ${options.occupancy.count} affected cards?`,
   );
-  try {
-    return await confirm(host, message);
-  } catch {
-    return false;
-  }
+  return confirmKanbanConfigurationAction(host, 'delete-structure', message, options.signal, options.confirm);
 }

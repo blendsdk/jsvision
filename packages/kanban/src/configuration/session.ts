@@ -1,17 +1,25 @@
-import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
-import { createKanbanColumnId, createKanbanOperationId, createKanbanSwimlaneId } from '../contract/identity.js';
-import type { KanbanRequestProposal, KanbanRequestResult } from '../contract/request.js';
-import { snapshotKanbanRequestProposal, snapshotKanbanRequestResult } from '../contract/request-validation.js';
+import type { KanbanFieldRejection, KanbanPublicationExpectation, KanbanRequestProposal } from '../contract/request.js';
+import { kanbanRevisionsEqual } from '../contract/revision.js';
+import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
+import { snapshotKanbanDefinitionOfDone } from '../workflow/definition-of-done.js';
+import type { KanbanDefinitionOfDoneSnapshot } from '../workflow/definition-of-done.js';
+import type { KanbanStructureStyle, KanbanWipPolicy } from '../source/types.js';
+import { awaitEditorWork } from '../editor/session-async.js';
+import type { KanbanConfigurationFocusTarget } from '../board/board-configuration-binding.js';
 import {
-  buildKanbanColumnAddProposal,
-  buildKanbanColumnDeleteProposal,
-  buildKanbanColumnReorderProposal,
-  buildKanbanColumnUpdateProposal,
-  buildKanbanSwimlaneAddProposal,
-  buildKanbanSwimlaneDeleteProposal,
-  buildKanbanSwimlaneReorderProposal,
-  buildKanbanSwimlaneUpdateProposal,
-} from './builders.js';
+  applicationResult,
+  authorityEntities,
+  deletionDestinations,
+  deletionFocusTarget,
+  invalidSession,
+  operationLabel,
+  operationSubject,
+  proposalFor,
+  publicationOutcome,
+  reorderDestinations,
+  sessionOptions,
+} from './session-helpers.js';
+import { snapshotKanbanConfigurationDeletionPolicy } from './deletion.js';
 import type {
   KanbanColumnConfigurationOperation,
   KanbanConfigurationAuthority,
@@ -25,19 +33,12 @@ import type {
 import {
   createKanbanConfigurationSnapshot,
   normalizeKanbanConfigurationName,
-  snapshotKanbanConfigurationOccupancy,
+  snapshotKanbanConfigurationStyle,
+  snapshotKanbanConfigurationWipPolicy,
 } from './validation.js';
 
 /** Maximum retained state listeners for one short-lived configuration dialog. */
 const MAXIMUM_LISTENERS = 64;
-/** Exact keys accepted by a configuration-session constructor. */
-const SESSION_KEYS = new Set(['source', 'operation', 'authority']);
-/** Exact keys accepted by the source seam. */
-const SOURCE_KEYS = new Set(['resolve', 'subscribe']);
-/** Exact keys accepted by the optional authority seam. */
-const AUTHORITY_KEYS = new Set(['request']);
-/** Exact union of members accepted by one selected configuration operation. */
-const OPERATION_KEYS = new Set(['kind', 'columnId', 'swimlaneId', 'position', 'occupancy', 'policy']);
 
 /** Options for one isolated configuration draft session. */
 export interface KanbanConfigurationSessionOptions {
@@ -47,6 +48,8 @@ export interface KanbanConfigurationSessionOptions {
   readonly operation: KanbanColumnConfigurationOperation | KanbanSwimlaneConfigurationOperation;
   /** Optional application request authority; omission selects result-only behavior. */
   readonly authority?: KanbanConfigurationAuthority;
+  /** Optional caller lifetime; aborting it disposes pending session work. */
+  readonly signal?: AbortSignal;
 }
 
 /** Mutable state retained behind immutable session snapshots. */
@@ -57,198 +60,9 @@ interface SessionState {
   dirty: boolean;
   submission: KanbanConfigurationSessionSnapshot['submission'];
   code?: string;
-}
-
-/** Raises a fixed session-construction failure without retaining application input. */
-function invalidSession(): never {
-  throw new Error('Invalid Kanban configuration session.');
-}
-
-/** Narrows a function with no arguments and unknown output without invoking it. */
-function isResolver(value: unknown): value is () => Promise<KanbanConfigurationSnapshot> {
-  return typeof value === 'function';
-}
-
-/** Narrows the configuration subscription seam without invoking it. */
-function isSubscriber(
-  value: unknown,
-): value is (listener: (snapshot: KanbanConfigurationSnapshot) => void) => () => void {
-  return typeof value === 'function';
-}
-
-/** Narrows the application request seam without invoking it. */
-function isRequester(
-  value: unknown,
-): value is (proposal: KanbanRequestProposal) => KanbanRequestResult | Promise<KanbanRequestResult> {
-  return typeof value === 'function';
-}
-
-/** Returns one string member without coercing application values. */
-function requiredString(value: unknown): string {
-  if (typeof value !== 'string') return invalidSession();
-  return value;
-}
-
-/** Validates and detaches one selected column or swimlane operation. */
-function configurationOperation(
-  value: unknown,
-): KanbanColumnConfigurationOperation | KanbanSwimlaneConfigurationOperation {
-  const properties = snapshotKanbanDataProperties(value, OPERATION_KEYS.size);
-  validateKanbanDataKeys(properties, OPERATION_KEYS);
-  if (properties.columnId !== undefined && properties.swimlaneId === undefined) {
-    const columnId = createKanbanColumnId(requiredString(properties.columnId));
-    switch (properties.kind) {
-      case 'add':
-        if (Object.keys(properties).length !== 3) return invalidSession();
-        return Object.freeze({
-          kind: 'add',
-          columnId,
-          position: snapshotKanbanRequestProposal({
-            kind: 'column-reorder',
-            columnId,
-            position: properties.position,
-          }).position,
-        });
-      case 'update':
-        if (Object.keys(properties).length !== 2) return invalidSession();
-        return Object.freeze({ kind: 'update', columnId });
-      case 'reorder':
-        if (Object.keys(properties).length !== 2) return invalidSession();
-        return Object.freeze({ kind: 'reorder', columnId });
-      case 'delete':
-        if (Object.keys(properties).length !== (properties.policy === undefined ? 3 : 4)) return invalidSession();
-        return Object.freeze({
-          kind: 'delete',
-          columnId,
-          occupancy: snapshotKanbanConfigurationOccupancy(properties.occupancy),
-          ...(properties.policy === undefined ? {} : { policy: properties.policy }),
-        });
-      default:
-        return invalidSession();
-    }
-  }
-  if (properties.swimlaneId !== undefined && properties.columnId === undefined) {
-    const swimlaneId = createKanbanSwimlaneId(requiredString(properties.swimlaneId));
-    switch (properties.kind) {
-      case 'add':
-        if (Object.keys(properties).length !== 3) return invalidSession();
-        return Object.freeze({
-          kind: 'add',
-          swimlaneId,
-          position: snapshotKanbanRequestProposal({
-            kind: 'swimlane-reorder',
-            swimlaneId,
-            position: properties.position,
-          }).position,
-        });
-      case 'update':
-        if (Object.keys(properties).length !== 2) return invalidSession();
-        return Object.freeze({ kind: 'update', swimlaneId });
-      case 'reorder':
-        if (Object.keys(properties).length !== 2) return invalidSession();
-        return Object.freeze({ kind: 'reorder', swimlaneId });
-      case 'delete':
-        if (Object.keys(properties).length !== (properties.policy === undefined ? 3 : 4)) return invalidSession();
-        return Object.freeze({
-          kind: 'delete',
-          swimlaneId,
-          occupancy: snapshotKanbanConfigurationOccupancy(properties.occupancy),
-          ...(properties.policy === undefined ? {} : { policy: properties.policy }),
-        });
-      default:
-        return invalidSession();
-    }
-  }
-  return invalidSession();
-}
-
-/** Validates function-valued application seams without invoking accessors. */
-function sessionOptions(value: unknown): KanbanConfigurationSessionOptions {
-  const properties = snapshotKanbanDataProperties(value, SESSION_KEYS.size);
-  validateKanbanDataKeys(properties, SESSION_KEYS);
-  const sourceProperties = snapshotKanbanDataProperties(properties.source, SOURCE_KEYS.size);
-  validateKanbanDataKeys(sourceProperties, SOURCE_KEYS);
-  if (!isResolver(sourceProperties.resolve) || !isSubscriber(sourceProperties.subscribe)) return invalidSession();
-  let authority: KanbanConfigurationAuthority | undefined;
-  if (properties.authority !== undefined) {
-    const authorityProperties = snapshotKanbanDataProperties(properties.authority, AUTHORITY_KEYS.size);
-    validateKanbanDataKeys(authorityProperties, AUTHORITY_KEYS);
-    if (!isRequester(authorityProperties.request)) return invalidSession();
-    authority = Object.freeze({ request: authorityProperties.request });
-  }
-  return Object.freeze({
-    source: Object.freeze({ resolve: sourceProperties.resolve, subscribe: sourceProperties.subscribe }),
-    operation: configurationOperation(properties.operation),
-    ...(authority === undefined ? {} : { authority }),
-  });
-}
-
-/** Returns the label represented by an operation in one authoritative snapshot. */
-function operationLabel(
-  operation: KanbanConfigurationSessionOptions['operation'],
-  snapshot: KanbanConfigurationSnapshot,
-): string {
-  if (operation.kind === 'add' || operation.kind === 'reorder' || operation.kind === 'delete') return '';
-  if ('columnId' in operation) {
-    return snapshot.columns.find((column) => column.columnId === operation.columnId)?.label ?? '';
-  }
-  return snapshot.swimlanes.find((swimlane) => swimlane.swimlaneId === operation.swimlaneId)?.label ?? '';
-}
-
-/** Builds the exact proposal represented by current session state. */
-function proposalFor(
-  operation: KanbanConfigurationSessionOptions['operation'],
-  snapshot: KanbanConfigurationSnapshot,
-  label: string,
-  position: unknown,
-): KanbanRequestProposal {
-  if ('columnId' in operation) {
-    switch (operation.kind) {
-      case 'add':
-        return buildKanbanColumnAddProposal({
-          snapshot,
-          draft: { columnId: operation.columnId, label },
-          position: operation.position,
-        });
-      case 'update':
-        return buildKanbanColumnUpdateProposal({ snapshot, columnId: operation.columnId, changes: { label } });
-      case 'reorder':
-        return buildKanbanColumnReorderProposal({ snapshot, columnId: operation.columnId, position });
-      case 'delete':
-        return buildKanbanColumnDeleteProposal({
-          snapshot,
-          columnId: operation.columnId,
-          occupancy: operation.occupancy,
-          ...(operation.policy === undefined ? {} : { policy: operation.policy }),
-        });
-    }
-  }
-  switch (operation.kind) {
-    case 'add':
-      return buildKanbanSwimlaneAddProposal({
-        snapshot,
-        draft: { swimlaneId: operation.swimlaneId, label },
-        position: operation.position,
-      });
-    case 'update':
-      return buildKanbanSwimlaneUpdateProposal({ snapshot, swimlaneId: operation.swimlaneId, changes: { label } });
-    case 'reorder':
-      return buildKanbanSwimlaneReorderProposal({ snapshot, swimlaneId: operation.swimlaneId, position });
-    case 'delete':
-      return buildKanbanSwimlaneDeleteProposal({
-        snapshot,
-        swimlaneId: operation.swimlaneId,
-        occupancy: operation.occupancy,
-        ...(operation.policy === undefined ? {} : { policy: operation.policy }),
-      });
-  }
-}
-
-/** Converts an application response to a detached request result without trusting its public properties. */
-function applicationResult(value: unknown): KanbanRequestResult {
-  const properties = snapshotKanbanDataProperties(value);
-  if (typeof properties.operationId !== 'string') return invalidSession();
-  return snapshotKanbanRequestResult(value, createKanbanOperationId(properties.operationId));
+  diagnostics?: readonly KanbanFieldRejection[];
+  operationId?: string;
+  focusTarget?: KanbanConfigurationFocusTarget;
 }
 
 /**
@@ -266,9 +80,29 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
   const options = sessionOptions(value);
   let disposed = false;
   let generation = 0;
+  const lifetimeController = new AbortController();
+  let workController: AbortController | undefined;
   let structure: KanbanConfigurationSnapshot;
   let publicationDuringResolve: KanbanConfigurationSnapshot | undefined;
+  let publicationDuringDispatch: KanbanConfigurationSnapshot | undefined;
+  let expectedPublication: KanbanPublicationExpectation | undefined;
   let position: unknown = { kind: 'end' };
+  let positionDirty = false;
+  let disambiguator: string | undefined;
+  let baselineDisambiguator: string | undefined;
+  let definitionOfDone: KanbanDefinitionOfDoneSnapshot | undefined;
+  let baselineDefinitionOfDone: KanbanDefinitionOfDoneSnapshot | undefined;
+  let wip: KanbanWipPolicy | undefined;
+  let baselineWip: KanbanWipPolicy | undefined;
+  let style: KanbanStructureStyle | undefined;
+  let baselineStyle: KanbanStructureStyle | undefined;
+  let data: ReturnType<typeof snapshotKanbanSemanticValue> | undefined;
+  let baselineData: ReturnType<typeof snapshotKanbanSemanticValue> | undefined;
+  let dataDirty = false;
+  let selectedDeletionPolicy =
+    options.operation.kind === 'delete'
+      ? snapshotKanbanConfigurationDeletionPolicy(options.operation.policy)
+      : undefined;
   const state: SessionState = {
     record: 'loading',
     label: '',
@@ -278,13 +112,40 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
   };
   const listeners = new Set<(snapshot: KanbanConfigurationSessionSnapshot) => void>();
 
+  const deletionSnapshot = (): KanbanConfigurationSessionSnapshot['deletion'] => {
+    const operation = options.operation;
+    if (operation.kind !== 'delete') return undefined;
+    if (
+      'swimlaneId' in operation &&
+      structure?.swimlanes.find((entry) => entry.swimlaneId === operation.swimlaneId)?.mode === 'derived'
+    ) {
+      return Object.freeze({ kind: 'disabled', code: 'derived-group-read-only' });
+    }
+    if (operation.occupancy.quality === 'unknown') {
+      return Object.freeze({ kind: 'disabled', code: 'occupancy-unknown' });
+    }
+    if (operation.occupancy.count > 0 && selectedDeletionPolicy === undefined) {
+      return Object.freeze({ kind: 'disabled', code: 'non-empty-policy-required' });
+    }
+    return Object.freeze({ kind: 'ready' });
+  };
+
   const snapshot = (): KanbanConfigurationSessionSnapshot =>
     Object.freeze({
       record: state.record,
       label: state.label,
+      ...(disambiguator === undefined ? {} : { disambiguator }),
+      ...(definitionOfDone === undefined ? {} : { definitionOfDone }),
+      ...(wip === undefined ? {} : { wip }),
+      ...(style === undefined ? {} : { style }),
+      ...(data === undefined ? {} : { data }),
       dirty: state.dirty,
       submission: state.submission,
       ...(state.code === undefined ? {} : { code: state.code }),
+      ...(state.diagnostics === undefined ? {} : { diagnostics: state.diagnostics }),
+      ...(state.operationId === undefined ? {} : { operationId: state.operationId }),
+      ...(state.focusTarget === undefined ? {} : { focusTarget: state.focusTarget }),
+      ...(deletionSnapshot() === undefined ? {} : { deletion: deletionSnapshot() }),
     });
   const publish = (): void => {
     const current = snapshot();
@@ -296,6 +157,20 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
       }
     }
   };
+  const refreshDirty = (): void => {
+    state.dirty =
+      state.label !== state.baselineLabel ||
+      disambiguator !== baselineDisambiguator ||
+      definitionOfDone?.summary !== baselineDefinitionOfDone?.summary ||
+      definitionOfDone?.details !== baselineDefinitionOfDone?.details ||
+      wip?.minimum !== baselineWip?.minimum ||
+      wip?.maximum !== baselineWip?.maximum ||
+      wip?.mode !== baselineWip?.mode ||
+      wip?.countDone !== baselineWip?.countDone ||
+      style?.role !== baselineStyle?.role ||
+      dataDirty ||
+      positionDirty;
+  };
   const rebase = (next: KanbanConfigurationSnapshot): void => {
     structure = createKanbanConfigurationSnapshot(next);
     const label = operationLabel(options.operation, structure);
@@ -305,16 +180,65 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
     state.record = 'ready';
     state.submission = 'idle';
     delete state.code;
+    delete state.diagnostics;
+    delete state.operationId;
+    delete state.focusTarget;
+    const selectedOperation = options.operation;
+    const currentEntity =
+      selectedOperation.kind === 'update'
+        ? 'columnId' in selectedOperation
+          ? structure.columns.find((column) => column.columnId === selectedOperation.columnId)
+          : structure.swimlanes.find((swimlane) => swimlane.swimlaneId === selectedOperation.swimlaneId)
+        : undefined;
+    disambiguator = currentEntity?.disambiguator;
+    baselineDisambiguator = disambiguator;
+    definitionOfDone =
+      'columnId' in selectedOperation && selectedOperation.kind === 'update'
+        ? structure.columns.find((column) => column.columnId === selectedOperation.columnId)?.definitionOfDone
+        : undefined;
+    baselineDefinitionOfDone = definitionOfDone;
+    wip = currentEntity !== undefined && 'wip' in currentEntity ? currentEntity.wip : undefined;
+    baselineWip = wip;
+    style = currentEntity?.style;
+    baselineStyle = style;
+    data = currentEntity?.data;
+    baselineData = data;
+    dataDirty = false;
+    positionDirty = false;
   };
   const publication = (next: KanbanConfigurationSnapshot): void => {
     if (disposed) return;
+    // A committed session is terminal. Later board publications belong to a future session and
+    // must not reopen this draft or make a second authority request possible.
+    if (state.submission === 'committed') return;
     try {
       const validated = createKanbanConfigurationSnapshot(next);
       if (state.record === 'loading') {
         publicationDuringResolve = validated;
         return;
       }
-      if (state.dirty || state.submission === 'dispatching') {
+      if (state.submission === 'dispatching') {
+        publicationDuringDispatch = validated;
+      } else if (state.submission === 'awaiting-publication' && expectedPublication !== undefined) {
+        const outcome = publicationOutcome(options.operation, structure, validated, expectedPublication);
+        if (outcome === 'committed') {
+          state.focusTarget = deletionFocusTarget(options.operation, structure, validated);
+          structure = validated;
+          state.record = 'ready';
+          state.dirty = false;
+          state.submission = 'committed';
+          expectedPublication = undefined;
+          workController = undefined;
+        } else if (outcome === 'contradictory') {
+          structure = validated;
+          state.record = 'stale';
+          state.submission = 'idle';
+          expectedPublication = undefined;
+          workController?.abort();
+          workController = undefined;
+          delete state.operationId;
+        }
+      } else if (state.dirty) {
         structure = validated;
         state.record = 'stale';
       } else {
@@ -333,37 +257,257 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
   } catch {
     return invalidSession();
   }
+  const releaseOwned = (): void => {
+    if (disposed) return;
+    disposed = true;
+    generation += 1;
+    workController?.abort();
+    lifetimeController.abort();
+    listeners.clear();
+    try {
+      unsubscribe();
+    } catch {
+      // A hostile source disposer cannot keep the session or dialog alive.
+    }
+  };
+  const abortLifetime = (): void => releaseOwned();
+  if (options.signal?.aborted === true) abortLifetime();
+  else options.signal?.addEventListener('abort', abortLifetime, { once: true });
   try {
-    const resolved = createKanbanConfigurationSnapshot(await options.source.resolve());
+    const pending = options.source.resolve(Object.freeze({ signal: lifetimeController.signal }));
+    const awaited = await awaitEditorWork(pending, lifetimeController.signal);
+    if (awaited.kind !== 'value') return invalidSession();
+    const resolved = createKanbanConfigurationSnapshot(awaited.value);
     structure = publicationDuringResolve ?? resolved;
     publicationDuringResolve = undefined;
     rebase(structure);
   } catch {
-    unsubscribe();
+    releaseOwned();
+    options.signal?.removeEventListener('abort', abortLifetime);
     return invalidSession();
   }
 
   return Object.freeze({
+    operation: () => options.operation,
     snapshot,
     setLabel(input: unknown): boolean {
-      if (disposed || state.record === 'unavailable') return false;
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed'
+      ) {
+        return false;
+      }
       try {
-        state.label = normalizeKanbanConfigurationName(input).label;
-        state.dirty = state.label !== state.baselineLabel;
+        const nextLabel = normalizeKanbanConfigurationName(input).label;
+        if (nextLabel === state.label) return true;
+        state.label = nextLabel;
+        refreshDirty();
         state.submission = 'idle';
         delete state.code;
+        delete state.diagnostics;
         publish();
         return true;
       } catch {
+        state.code = 'invalid-name';
+        publish();
+        return false;
+      }
+    },
+    setDisambiguator(input: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed'
+      ) {
+        return false;
+      }
+      try {
+        const nextDisambiguator =
+          input === undefined || input === '' ? undefined : normalizeKanbanConfigurationName(input).label;
+        if (nextDisambiguator === disambiguator) return true;
+        disambiguator = nextDisambiguator;
+        refreshDirty();
+        state.submission = 'idle';
+        delete state.code;
+        delete state.diagnostics;
+        publish();
+        return true;
+      } catch {
+        state.code = 'invalid-disambiguator';
+        publish();
+        return false;
+      }
+    },
+    setDefinitionOfDone(summary: unknown, details?: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed' ||
+        !('columnId' in options.operation) ||
+        options.operation.kind === 'reorder' ||
+        options.operation.kind === 'delete'
+      ) {
+        return false;
+      }
+      try {
+        const nextDefinition =
+          summary === undefined || summary === ''
+            ? undefined
+            : snapshotKanbanDefinitionOfDone({
+                summary,
+                ...(details === undefined || details === '' ? {} : { details }),
+              });
+        if (
+          nextDefinition?.summary === definitionOfDone?.summary &&
+          nextDefinition?.details === definitionOfDone?.details
+        ) {
+          return true;
+        }
+        definitionOfDone = nextDefinition;
+        refreshDirty();
+        state.submission = 'idle';
+        delete state.code;
+        delete state.diagnostics;
+        publish();
+        return true;
+      } catch {
+        state.code = 'invalid-definition-of-done';
+        publish();
+        return false;
+      }
+    },
+    setWip(input: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed' ||
+        !('columnId' in options.operation) ||
+        options.operation.kind === 'reorder' ||
+        options.operation.kind === 'delete'
+      )
+        return false;
+      try {
+        const nextWip = input === undefined ? undefined : snapshotKanbanConfigurationWipPolicy(input);
+        if (JSON.stringify(nextWip) === JSON.stringify(wip)) return true;
+        wip = nextWip;
+        refreshDirty();
+        state.submission = 'idle';
+        delete state.code;
+        delete state.diagnostics;
+        publish();
+        return true;
+      } catch {
+        state.code = 'invalid-wip-policy';
+        publish();
+        return false;
+      }
+    },
+    setStyle(input: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed' ||
+        options.operation.kind === 'reorder' ||
+        options.operation.kind === 'delete'
+      )
+        return false;
+      try {
+        const nextStyle = input === undefined ? undefined : snapshotKanbanConfigurationStyle(input);
+        if (nextStyle?.role === style?.role) return true;
+        style = nextStyle;
+        refreshDirty();
+        state.submission = 'idle';
+        delete state.code;
+        delete state.diagnostics;
+        publish();
+        return true;
+      } catch {
+        state.code = 'invalid-style';
+        publish();
+        return false;
+      }
+    },
+    setData(input: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed' ||
+        options.operation.kind === 'reorder' ||
+        options.operation.kind === 'delete'
+      ) {
+        return false;
+      }
+      try {
+        const nextData = input === undefined ? undefined : snapshotKanbanSemanticValue(input);
+        if (JSON.stringify(nextData) === JSON.stringify(data)) return true;
+        data = nextData;
+        dataDirty = JSON.stringify(data) !== JSON.stringify(baselineData);
+        refreshDirty();
+        state.submission = 'idle';
+        delete state.code;
+        delete state.diagnostics;
+        publish();
+        return true;
+      } catch {
+        state.code = 'invalid-application-data';
+        publish();
         return false;
       }
     },
     setPosition(next: Parameters<KanbanConfigurationSession['setPosition']>[0]): boolean {
-      if (disposed || state.record === 'unavailable') return false;
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed'
+      ) {
+        return false;
+      }
       position = next;
+      positionDirty = true;
+      refreshDirty();
+      state.submission = 'idle';
+      delete state.code;
+      delete state.diagnostics;
+      publish();
+      return true;
+    },
+    reorderDestinations: () => reorderDestinations(options.operation, structure),
+    deletionDestinations: () => deletionDestinations(options.operation, structure),
+    setDeletionDestination(destinationId: unknown): boolean {
+      if (
+        disposed ||
+        state.record === 'unavailable' ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed' ||
+        options.operation.kind !== 'delete' ||
+        typeof destinationId !== 'string' ||
+        !deletionDestinations(options.operation, structure).some(
+          (destination) => destination.destinationId === destinationId,
+        )
+      ) {
+        return false;
+      }
+      selectedDeletionPolicy = Object.freeze({ kind: 'reassign', destinationId });
       state.dirty = true;
       state.submission = 'idle';
       delete state.code;
+      delete state.diagnostics;
       publish();
       return true;
     },
@@ -371,26 +515,125 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
       if (disposed) return Object.freeze({ kind: 'disposed' });
       if (state.record === 'stale') return Object.freeze({ kind: 'stale' });
       if (state.record !== 'ready') return Object.freeze({ kind: 'unavailable' });
+      if (state.submission === 'committed') {
+        return state.operationId === undefined
+          ? Object.freeze({ kind: 'failed' })
+          : Object.freeze({ kind: 'committed', operationId: state.operationId });
+      }
+      if (state.submission === 'dispatching' || state.submission === 'awaiting-publication') {
+        return Object.freeze({ kind: 'failed' });
+      }
       let proposal: KanbanRequestProposal;
       try {
-        proposal = proposalFor(options.operation, structure, state.label, position);
+        proposal = proposalFor(
+          options.operation,
+          structure,
+          {
+            label: state.label,
+            ...(disambiguator === undefined ? {} : { disambiguator }),
+            ...(definitionOfDone === undefined ? {} : { definitionOfDone }),
+            definitionOfDoneChanged:
+              definitionOfDone?.summary !== baselineDefinitionOfDone?.summary ||
+              definitionOfDone?.details !== baselineDefinitionOfDone?.details,
+            ...(wip === undefined ? {} : { wip }),
+            wipChanged:
+              wip?.minimum !== baselineWip?.minimum ||
+              wip?.maximum !== baselineWip?.maximum ||
+              wip?.mode !== baselineWip?.mode ||
+              wip?.countDone !== baselineWip?.countDone,
+            ...(style === undefined ? {} : { style }),
+            styleChanged: style?.role !== baselineStyle?.role,
+            ...(data === undefined ? {} : { data }),
+            dataChanged: dataDirty,
+          },
+          position,
+          selectedDeletionPolicy,
+        );
       } catch {
+        state.code = 'invalid-draft';
+        publish();
         return Object.freeze({ kind: 'failed' });
       }
       if (options.authority === undefined) return Object.freeze({ kind: 'proposal', proposal });
       const ownGeneration = ++generation;
+      const baseline = structure;
+      workController?.abort();
+      const controller = new AbortController();
+      workController = controller;
+      const abortWork = (): void => controller.abort();
+      lifetimeController.signal.addEventListener('abort', abortWork, { once: true });
       state.submission = 'dispatching';
+      delete state.code;
+      delete state.diagnostics;
+      publicationDuringDispatch = undefined;
       publish();
       try {
-        const result = applicationResult(await options.authority.request(proposal));
+        const requested = options.authority.request(
+          proposal,
+          Object.freeze({
+            boardRevision: baseline.revision,
+            entities: authorityEntities(options.operation, baseline, proposal),
+            signal: controller.signal,
+          }),
+        );
+        const pending = requested instanceof Promise ? requested : Promise.resolve(requested);
+        const awaited = await awaitEditorWork(pending, controller.signal);
+        if (awaited.kind !== 'value') throw new Error('request-interrupted');
+        const result = applicationResult(awaited.value);
         if (disposed || ownGeneration !== generation) return Object.freeze({ kind: 'disposed' });
         if (result.kind === 'accepted') {
-          state.submission = 'accepted';
+          if (result.publication === undefined) {
+            state.submission = 'rejected';
+            state.code = 'publication-required';
+            publish();
+            return Object.freeze({ kind: 'rejected', code: state.code });
+          }
+          const subject = operationSubject(options.operation, result.publication);
+          if (subject === undefined) throw new Error('publication-subject-missing');
+          if (options.operation.kind !== 'add') {
+            const baselineEntity =
+              subject.kind === 'column'
+                ? baseline.columns.find((entry) => entry.columnId === subject.columnId)
+                : subject.kind === 'swimlane'
+                  ? baseline.swimlanes.find((entry) => entry.swimlaneId === subject.swimlaneId)
+                  : undefined;
+            if (
+              baselineEntity === undefined ||
+              !kanbanRevisionsEqual(baselineEntity.revision, subject.baselineRevision)
+            ) {
+              throw new Error('publication-baseline-mismatch');
+            }
+          }
+          const current = publicationDuringDispatch;
+          if (current !== undefined) {
+            const outcome = publicationOutcome(options.operation, baseline, current, result.publication);
+            if (outcome === 'committed') {
+              state.focusTarget = deletionFocusTarget(options.operation, baseline, current);
+              structure = current;
+              state.record = 'ready';
+              state.dirty = false;
+              state.submission = 'committed';
+              state.operationId = result.operationId;
+              publish();
+              return Object.freeze({ kind: 'committed', operationId: result.operationId });
+            }
+            if (outcome === 'contradictory') {
+              structure = current;
+              state.record = 'stale';
+              state.submission = 'idle';
+              publish();
+              return Object.freeze({ kind: 'stale' });
+            }
+          }
+          expectedPublication = result.publication;
+          state.operationId = result.operationId;
+          state.submission = 'awaiting-publication';
           publish();
-          return Object.freeze({ kind: 'accepted', operationId: result.operationId });
+          return Object.freeze({ kind: 'awaiting-publication', operationId: result.operationId });
         }
         state.submission = 'rejected';
         state.code = result.code ?? result.kind;
+        state.diagnostics = result.kind === 'rejected' ? result.fieldErrors : undefined;
         publish();
         return Object.freeze({ kind: 'rejected', code: state.code });
       } catch {
@@ -399,13 +642,30 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
         state.code = 'request-failed';
         publish();
         return Object.freeze({ kind: 'rejected', code: state.code });
+      } finally {
+        lifetimeController.signal.removeEventListener('abort', abortWork);
+        if (workController === controller && state.submission !== 'awaiting-publication') workController = undefined;
       }
     },
     async reload(): Promise<boolean> {
-      if (disposed) return false;
+      if (
+        disposed ||
+        state.submission === 'dispatching' ||
+        state.submission === 'awaiting-publication' ||
+        state.submission === 'committed'
+      )
+        return false;
       const ownGeneration = ++generation;
+      workController?.abort();
+      const controller = new AbortController();
+      workController = controller;
+      const abortWork = (): void => controller.abort();
+      lifetimeController.signal.addEventListener('abort', abortWork, { once: true });
       try {
-        const resolved = createKanbanConfigurationSnapshot(await options.source.resolve());
+        const pending = options.source.resolve(Object.freeze({ signal: controller.signal }));
+        const awaited = await awaitEditorWork(pending, controller.signal);
+        if (awaited.kind !== 'value') return false;
+        const resolved = createKanbanConfigurationSnapshot(awaited.value);
         if (disposed || ownGeneration !== generation) return false;
         rebase(resolved);
         publish();
@@ -416,6 +676,9 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
           publish();
         }
         return false;
+      } finally {
+        lifetimeController.signal.removeEventListener('abort', abortWork);
+        if (workController === controller) workController = undefined;
       }
     },
     subscribe(listener: (current: KanbanConfigurationSessionSnapshot) => void): () => void {
@@ -424,15 +687,8 @@ export async function createKanbanConfigurationSession(value: unknown): Promise<
       return () => listeners.delete(listener);
     },
     dispose(): void {
-      if (disposed) return;
-      disposed = true;
-      generation += 1;
-      listeners.clear();
-      try {
-        unsubscribe();
-      } catch {
-        // A hostile source disposer cannot keep the session or dialog alive.
-      }
+      options.signal?.removeEventListener('abort', abortLifetime);
+      releaseOwned();
     },
     disposed: () => disposed,
   });

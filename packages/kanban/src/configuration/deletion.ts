@@ -71,7 +71,9 @@ function isDeletionBuilder(value: unknown): value is (context: KanbanConfigurati
 }
 
 /** Snapshots one optional atomic deletion policy without invoking a custom builder. */
-function deletionPolicy(value: unknown): KanbanConfigurationDeletionPolicy | undefined {
+export function snapshotKanbanConfigurationDeletionPolicy(
+  value: unknown,
+): KanbanConfigurationDeletionPolicy | undefined {
   if (value === undefined) return undefined;
   const properties = snapshotKanbanDataProperties(value, POLICY_KEYS.size);
   validateKanbanDataKeys(properties, POLICY_KEYS);
@@ -96,7 +98,7 @@ function evaluation(value: unknown) {
     properties,
     snapshot: createKanbanConfigurationSnapshot(properties.snapshot),
     occupancy: snapshotKanbanConfigurationOccupancy(properties.occupancy),
-    policy: deletionPolicy(properties.policy),
+    policy: snapshotKanbanConfigurationDeletionPolicy(properties.policy),
   });
 }
 
@@ -164,12 +166,19 @@ export function buildColumnDeletion(
   occupancy: KanbanConfigurationOccupancy,
   policyValue: unknown,
 ): KanbanColumnDeletionProposal {
-  const policy = deletionPolicy(policyValue);
+  const policy = snapshotKanbanConfigurationDeletionPolicy(policyValue);
   if (occupancy.quality === 'unknown' || (occupancy.count > 0 && policy === undefined)) return invalidDeletion();
   if (occupancy.count === 0) return snapshotKanbanRequestProposal({ kind: 'column-delete', columnId });
   if (policy?.kind === 'custom') {
     const proposal = customProposal(policy, { kind: 'column', columnId }, occupancy);
     if (proposal.kind !== 'extension' && (proposal.kind !== 'column-delete' || proposal.columnId !== columnId)) {
+      return invalidDeletion();
+    }
+    if (
+      proposal.kind === 'column-delete' &&
+      proposal.reassignTo !== undefined &&
+      (proposal.reassignTo === columnId || !snapshot.columns.some((column) => column.columnId === proposal.reassignTo))
+    ) {
       return invalidDeletion();
     }
     return proposal;
@@ -194,13 +203,17 @@ export function buildSwimlaneDeletion(
 ): KanbanSwimlaneDeletionProposal {
   const current = snapshot.swimlanes.find((swimlane) => swimlane.swimlaneId === swimlaneId);
   if (current === undefined || current.mode !== 'explicit') return invalidDeletion();
-  const policy = deletionPolicy(policyValue);
+  const policy = snapshotKanbanConfigurationDeletionPolicy(policyValue);
   if (occupancy.quality === 'unknown' || (occupancy.count > 0 && policy === undefined)) return invalidDeletion();
   if (occupancy.count === 0) return snapshotKanbanRequestProposal({ kind: 'swimlane-delete', swimlaneId });
   if (policy?.kind === 'custom') {
     const proposal = customProposal(policy, { kind: 'swimlane', swimlaneId }, occupancy);
     if (proposal.kind !== 'extension' && (proposal.kind !== 'swimlane-delete' || proposal.swimlaneId !== swimlaneId)) {
       return invalidDeletion();
+    }
+    if (proposal.kind === 'swimlane-delete' && proposal.reassignTo !== undefined) {
+      const destination = snapshot.swimlanes.find((swimlane) => swimlane.swimlaneId === proposal.reassignTo);
+      if (proposal.reassignTo === swimlaneId || destination?.mode !== 'explicit') return invalidDeletion();
     }
     return proposal;
   }
