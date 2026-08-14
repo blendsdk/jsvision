@@ -241,16 +241,64 @@ export interface KanbanEditorUnavailableRecord {
   readonly code: string;
 }
 
+/** Authoritative notice that the application record no longer exists. */
+export interface KanbanEditorDeletedRecord {
+  /** Deletion discriminator. */
+  readonly kind: 'deleted';
+}
+
+/** Internal typed discriminator shared by payload-free editor outcomes. */
+interface KanbanEditorKindOutcome<TKind extends string> {
+  /** Stable outcome discriminator. */
+  readonly kind: TKind;
+}
+
+/** Internal operation-correlated outcome shared by submit and publication states. */
+interface KanbanEditorOperationOutcome<TKind extends string> extends KanbanEditorKindOutcome<TKind> {
+  /** Board-authority operation identity. */
+  readonly operationId: KanbanOperationId;
+}
+
+/** Internal safe-code outcome shared by resolver and reload states. */
+interface KanbanEditorCodeOutcome<TKind extends string> extends KanbanEditorKindOutcome<TKind> {
+  /** Safe machine-readable reason. */
+  readonly code: string;
+}
+
+/** Validation outcome that identifies the first schema-ordered invalid field. */
+interface KanbanEditorInvalidSubmitOutcome extends KanbanEditorKindOutcome<'invalid'> {
+  /** First invalid schema field that should receive focus. */
+  readonly fieldId: KanbanFieldId;
+}
+
+/** Rejected submission retained for correction and resubmission. */
+interface KanbanEditorRejectedSubmitOutcome extends KanbanEditorOperationOutcome<'rejected'> {
+  /** Safe machine-readable application rejection reason. */
+  readonly code: string;
+}
+
+/** Rejected submission state with optional safe application feedback. */
+interface KanbanEditorRejectedSubmissionState extends KanbanEditorRejectedSubmitOutcome {
+  /** Optional sanitized application-facing explanation. */
+  readonly label?: string;
+}
+
 /** Complete result of resolving one application-owned card record. */
 export type KanbanEditorResolveResult<TCard> = KanbanEditorResolvedRecord<TCard> | KanbanEditorUnavailableRecord;
 
 /** One authoritative record or deletion publication observed by an editor session. */
-export type KanbanEditorRecordPublication<TCard> = KanbanEditorResolvedRecord<TCard> | { readonly kind: 'deleted' };
+export type KanbanEditorRecordPublication<TCard> = KanbanEditorResolvedRecord<TCard> | KanbanEditorDeletedRecord;
+
+/** Cancellation context supplied to one application record-resolution generation. */
+export interface KanbanEditorResolveContext {
+  /** Live package-owned signal aborted when the resolution is no longer authoritative. */
+  readonly signal: AbortSignal;
+}
 
 /** Application-owned record and revision source required by edit and view sessions. */
 export interface KanbanEditorRecordResolver<TCard> {
   /** Resolves the latest detached record while honoring package-owned cancellation. */
-  resolve(cardKey: CardKey, context: { readonly signal: AbortSignal }): Promise<KanbanEditorResolveResult<TCard>>;
+  resolve(cardKey: CardKey, context: KanbanEditorResolveContext): Promise<KanbanEditorResolveResult<TCard>>;
   /** Subscribes before resolution so no intervening authoritative publication is lost. */
   subscribe(cardKey: CardKey, listener: (publication: KanbanEditorRecordPublication<TCard>) => void): () => void;
 }
@@ -265,24 +313,19 @@ export interface KanbanEditorAuthority {
 
 /** Authoritative record condition visible to editor renderers. */
 export type KanbanEditorRecordState =
-  | { readonly kind: 'ready' }
-  | { readonly kind: 'stale' }
-  | { readonly kind: 'deleted' }
-  | { readonly kind: 'unavailable'; readonly code: string };
+  | KanbanEditorKindOutcome<'ready'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorCodeOutcome<'unavailable'>;
 
 /** Submission lifecycle visible as one coherent immutable state. */
 export type KanbanEditorSubmissionState =
-  | { readonly kind: 'idle' }
-  | { readonly kind: 'validating' }
-  | { readonly kind: 'dispatching' }
-  | { readonly kind: 'awaiting-publication'; readonly operationId: KanbanOperationId }
-  | {
-      readonly kind: 'rejected';
-      readonly operationId: KanbanOperationId;
-      readonly code: string;
-      readonly label?: string;
-    }
-  | { readonly kind: 'committed'; readonly operationId: KanbanOperationId };
+  | KanbanEditorKindOutcome<'idle'>
+  | KanbanEditorKindOutcome<'validating'>
+  | KanbanEditorKindOutcome<'dispatching'>
+  | KanbanEditorOperationOutcome<'awaiting-publication'>
+  | KanbanEditorRejectedSubmissionState
+  | KanbanEditorOperationOutcome<'committed'>;
 
 /** Immutable field presentation and validation state. */
 export interface KanbanEditorFieldState {
@@ -333,38 +376,38 @@ export interface KanbanEditorValueAccepted {
 /** Synchronous result of attempting to change one editor field. */
 export type KanbanEditorSetValueResult =
   | KanbanEditorValueAccepted
-  | { readonly kind: 'read-only' }
-  | { readonly kind: 'unknown-field' }
-  | { readonly kind: 'invalid-value' }
-  | { readonly kind: 'sealed' }
-  | { readonly kind: 'disposed' };
+  | KanbanEditorKindOutcome<'read-only'>
+  | KanbanEditorKindOutcome<'unknown-field'>
+  | KanbanEditorKindOutcome<'invalid-value'>
+  | KanbanEditorKindOutcome<'sealed'>
+  | KanbanEditorKindOutcome<'disposed'>;
 
 /** Result returned by a complete validation and submission attempt. */
 export type KanbanEditorSubmitResult =
-  | { readonly kind: 'invalid'; readonly fieldId: KanbanFieldId }
-  | { readonly kind: 'awaiting-publication'; readonly operationId: KanbanOperationId }
-  | { readonly kind: 'rejected'; readonly operationId: KanbanOperationId; readonly code: string }
-  | { readonly kind: 'cancelled'; readonly operationId: KanbanOperationId }
-  | { readonly kind: 'superseded'; readonly operationId: KanbanOperationId }
-  | { readonly kind: 'committed'; readonly operationId: KanbanOperationId }
-  | { readonly kind: 'read-only' }
-  | { readonly kind: 'stale' }
-  | { readonly kind: 'deleted' }
-  | { readonly kind: 'unavailable' }
-  | { readonly kind: 'sealed' }
-  | { readonly kind: 'disposed' }
-  | { readonly kind: 'failed' };
+  | KanbanEditorInvalidSubmitOutcome
+  | KanbanEditorOperationOutcome<'awaiting-publication'>
+  | KanbanEditorRejectedSubmitOutcome
+  | KanbanEditorOperationOutcome<'cancelled'>
+  | KanbanEditorOperationOutcome<'superseded'>
+  | KanbanEditorOperationOutcome<'committed'>
+  | KanbanEditorKindOutcome<'read-only'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorKindOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>;
 
 /** Explicit policy accepted by a stale-session reload. */
 export type KanbanEditorReloadPolicy = 'discard-draft';
 
 /** Result of resolving and rebasing a stale editor draft. */
 export type KanbanEditorReloadResult =
-  | { readonly kind: 'reloaded' }
-  | { readonly kind: 'deleted' }
-  | { readonly kind: 'unavailable'; readonly code: string }
-  | { readonly kind: 'disposed' }
-  | { readonly kind: 'failed' };
+  | KanbanEditorKindOutcome<'reloaded'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorCodeOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>;
 
 /** Options for opening one isolated editor session. */
 export interface KanbanEditorSessionOptions<TCard, TDraft> {
@@ -378,6 +421,8 @@ export interface KanbanEditorSessionOptions<TCard, TDraft> {
   readonly resolver: KanbanEditorRecordResolver<TCard>;
   /** Application-owned request admission seam. */
   readonly authority: KanbanEditorAuthority;
+  /** Optional caller cancellation used only while the initial record resolution is pending. */
+  readonly signal?: AbortSignal;
 }
 
 /** Disposable actor-style session shared by standard, custom, and inspector presentations. */
@@ -397,5 +442,47 @@ export interface KanbanEditorSession {
   /** Releases resolver, validation, and request ownership idempotently. */
   dispose(): void;
   /** Reports whether the session has released all owned resources. */
+  disposed(): boolean;
+}
+
+/** Presentation family claiming one card identity through the editor coordinator. */
+export type KanbanEditorKind = 'standard' | 'custom';
+
+/** Options for opening one identity-exclusive editor session. */
+export interface KanbanEditorCoordinatorOpenOptions<TCard, TDraft> extends KanbanEditorSessionOptions<TCard, TDraft> {
+  /** Standard package presentation or complete application replacement. */
+  readonly editorKind: KanbanEditorKind;
+}
+
+/** Successful identity-exclusive editor acquisition. */
+export interface KanbanEditorOpened {
+  /** Acquisition discriminator. */
+  readonly kind: 'opened';
+  /** Claimed presentation family. */
+  readonly editorKind: KanbanEditorKind;
+  /** Session whose disposal releases this exact coordinator claim. */
+  readonly session: KanbanEditorSession;
+}
+
+/** Existing claim returned instead of creating a second draft for the same card. */
+export interface KanbanEditorAlreadyOpen {
+  /** Existing-claim discriminator. */
+  readonly kind: 'already-open';
+  /** Presentation family that owns the existing claim. */
+  readonly editorKind: KanbanEditorKind;
+  /** Existing shared session suitable for focus or inspector reuse. */
+  readonly session: KanbanEditorSession;
+}
+
+/** Complete result of attempting an identity-exclusive editor acquisition. */
+export type KanbanEditorOpenResult = KanbanEditorOpened | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>;
+
+/** Owns identity claims across package and application editor presentations. */
+export interface KanbanEditorCoordinator {
+  /** Opens or returns the one session already claimed for the supplied card identity. */
+  open<TCard, TDraft>(options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>): Promise<KanbanEditorOpenResult>;
+  /** Disposes all resolved sessions and prevents later acquisition. */
+  dispose(): void;
+  /** Reports whether the coordinator has released its claim registry. */
   disposed(): boolean;
 }

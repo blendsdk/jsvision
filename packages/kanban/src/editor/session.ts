@@ -665,6 +665,16 @@ export async function createKanbanEditorSession<TCard, TDraft>(
   const buffered: BufferedKanbanEditorRecordPublication<TCard>[] = [];
   let actor: KanbanEditorSessionActor<TCard, TDraft> | undefined;
   let unsubscribe = (): void => undefined;
+  const abortOpening = (): void => {
+    resolutionController.abort();
+    try {
+      unsubscribe();
+    } catch {
+      // Cancellation still invalidates package ownership when application cleanup fails.
+    }
+  };
+  if (options.signal?.aborted === true) abortOpening();
+  else options.signal?.addEventListener('abort', abortOpening, { once: true });
   try {
     const subscribed = options.resolver.subscribe(cardKey, (publication) => {
       let snapshot: BufferedKanbanEditorRecordPublication<TCard>;
@@ -678,20 +688,24 @@ export async function createKanbanEditorSession<TCard, TDraft>(
     });
     if (typeof subscribed !== 'function') throw new KanbanInvalidSemanticValueError();
     unsubscribe = subscribed;
+    if (resolutionController.signal.aborted) throw new KanbanInvalidSemanticValueError();
     const initial = snapshotKanbanEditorResolveResult<TCard>(
       await options.resolver.resolve(cardKey, { signal: resolutionController.signal }),
     );
+    if (resolutionController.signal.aborted) throw new KanbanInvalidSemanticValueError();
+    options.signal?.removeEventListener('abort', abortOpening);
     actor = new KanbanEditorSessionActor(options, initial);
     actor.attachResolver(unsubscribe);
     for (const publication of buffered) actor.publish(publication);
     return actor;
-  } catch (error) {
+  } catch {
+    options.signal?.removeEventListener('abort', abortOpening);
     resolutionController.abort();
     try {
       unsubscribe();
     } catch {
       // Opening failed before a session existed; resolver cleanup remains best-effort and bounded.
     }
-    throw error;
+    throw new KanbanInvalidSemanticValueError();
   }
 }
