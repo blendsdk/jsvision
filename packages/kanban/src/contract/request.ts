@@ -3,6 +3,7 @@ import type {
   CardKey,
   KanbanColumnId,
   KanbanExtensionId,
+  KanbanFieldId,
   KanbanOperationId,
   KanbanSwimlaneId,
   KanbanViewId,
@@ -119,6 +120,18 @@ export interface KanbanCardUpdateProposal {
   readonly cardKey: CardKey;
   /** Bounded application-schema patch data. */
   readonly patch: KanbanSemanticValue;
+  /** Optional exact evidence that identifies an editor-produced full-draft update. */
+  readonly editor?: KanbanEditorUpdateEvidence;
+}
+
+/** Exact evidence carried only when a card update patch is a complete editor draft. */
+export interface KanbanEditorUpdateEvidence {
+  /** Evidence discriminator that distinguishes full drafts from legacy sparse patches. */
+  readonly kind: 'full-draft';
+  /** Schema-ordered field identities whose values differ from the editor baseline. */
+  readonly changedFieldIds: readonly KanbanFieldId[];
+  /** Equality-only card revision captured when the editor draft opened. */
+  readonly baseRevision: KanbanRevision;
 }
 
 /** Duplicate one card into an exact semantic destination. */
@@ -401,6 +414,18 @@ export interface KanbanRequestRejected {
   /** Safe machine-readable reason code. */
   readonly code: string;
   /** Optional sanitized application-facing reason label. */
+  readonly label?: string;
+  /** Optional bounded field-specific failures used by editor sessions. */
+  readonly fieldErrors?: readonly KanbanFieldRejection[];
+}
+
+/** One sanitized field-specific application rejection. */
+export interface KanbanFieldRejection {
+  /** Stable schema field identity. */
+  readonly fieldId: KanbanFieldId;
+  /** Safe machine-readable field failure code. */
+  readonly code: string;
+  /** Optional sanitized application-facing field label. */
   readonly label?: string;
 }
 

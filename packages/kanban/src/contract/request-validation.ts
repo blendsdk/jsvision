@@ -7,14 +7,17 @@ import {
   createKanbanCardKey,
   createKanbanColumnId,
   createKanbanExtensionId,
+  createKanbanFieldId,
   createKanbanOperationId,
   createKanbanSwimlaneId,
   createKanbanViewId,
 } from './identity.js';
-import type { CardKey, KanbanOperationId } from './identity.js';
+import type { CardKey, KanbanFieldId, KanbanOperationId } from './identity.js';
 import { KANBAN_LIMITS } from './limits.js';
 import type {
   KanbanExpectedEntityRevision,
+  KanbanEditorUpdateEvidence,
+  KanbanFieldRejection,
   KanbanRequestLifecycle,
   KanbanPublicationExpectation,
   KanbanPublicationSubject,
@@ -55,11 +58,11 @@ const SWIMLANE_SUBJECT_KEYS = new Set(['kind', 'swimlaneId', 'baselineRevision',
 /** Exact publication expectation members. */
 const EXPECTATION_KEYS = new Set(['operationId', 'subjects']);
 /** Exact dispatcher result members before discriminator narrowing. */
-const RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'undo', 'code', 'label']);
+const RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'undo', 'code', 'label', 'fieldErrors']);
 /** Exact accepted-result members. */
 const ACCEPTED_RESULT_KEYS = new Set(['kind', 'operationId', 'publication', 'undo']);
 /** Exact rejected-result members. */
-const REJECTED_RESULT_KEYS = new Set(['kind', 'operationId', 'code', 'label']);
+const REJECTED_RESULT_KEYS = new Set(['kind', 'operationId', 'code', 'label', 'fieldErrors']);
 /** Exact cancellation and supersession result members. */
 const OPTIONAL_REASON_RESULT_KEYS = new Set(['kind', 'operationId', 'code', 'label']);
 /** Exact dispatcher-context members. */
@@ -73,6 +76,7 @@ const PROPOSAL_KEYS = new Set([
   'draft',
   'cardKey',
   'patch',
+  'editor',
   'position',
   'moved',
   'viewRevision',
@@ -87,7 +91,11 @@ const PROPOSAL_KEYS = new Set([
 ]);
 /** Exact proposal members by simple discriminator. */
 const CARD_CREATE_KEYS = new Set(['kind', 'target', 'draft']);
-const CARD_UPDATE_KEYS = new Set(['kind', 'cardKey', 'patch']);
+const CARD_UPDATE_KEYS = new Set(['kind', 'cardKey', 'patch', 'editor']);
+/** Exact editor full-draft evidence members. */
+const EDITOR_UPDATE_KEYS = new Set(['kind', 'changedFieldIds', 'baseRevision']);
+/** Exact field-specific rejection members. */
+const FIELD_REJECTION_KEYS = new Set(['fieldId', 'code', 'label']);
 const CARD_DUPLICATE_KEYS = new Set(['kind', 'cardKey', 'target', 'position']);
 const CARD_IDENTITY_KEYS = new Set(['kind', 'cardKey']);
 const STRUCTURE_ADD_KEYS = new Set(['kind', 'draft', 'position']);
@@ -132,6 +140,56 @@ function cardKey(value: unknown): CardKey {
   } catch {
     throw new KanbanInvalidSemanticValueError();
   }
+}
+
+/** Validate one field identity while normalizing identity failures to the request boundary error. */
+function fieldId(value: unknown): KanbanFieldId {
+  if (typeof value !== 'string') throw new KanbanInvalidSemanticValueError();
+  try {
+    return createKanbanFieldId(value);
+  } catch {
+    throw new KanbanInvalidSemanticValueError();
+  }
+}
+
+/** Validate and detach exact evidence produced by a full-draft editor update. */
+function editorUpdateEvidence(value: unknown): KanbanEditorUpdateEvidence {
+  const properties = snapshotKanbanDataProperties(value, EDITOR_UPDATE_KEYS.size);
+  validateKanbanDataKeys(properties, EDITOR_UPDATE_KEYS);
+  if (properties.kind !== 'full-draft') throw new KanbanInvalidSemanticValueError();
+  const changedFieldIds = snapshotKanbanDataArray(properties.changedFieldIds, KANBAN_LIMITS.cardFields.safe).map(
+    fieldId,
+  );
+  if (new Set(changedFieldIds).size !== changedFieldIds.length) throw new KanbanInvalidSemanticValueError();
+  return Object.freeze({
+    kind: properties.kind,
+    changedFieldIds: Object.freeze(changedFieldIds),
+    baseRevision: revision(properties.baseRevision),
+  });
+}
+
+/** Validate one field-specific rejection without retaining rejected application data. */
+function fieldRejection(value: unknown): KanbanFieldRejection {
+  const properties = snapshotKanbanDataProperties(value, FIELD_REJECTION_KEYS.size);
+  validateKanbanDataKeys(properties, FIELD_REJECTION_KEYS);
+  const code = snapshotKanbanReasonCode(properties.code);
+  if (code === undefined) throw new KanbanInvalidSemanticValueError();
+  const label = snapshotKanbanLabel(properties.label);
+  return Object.freeze({
+    fieldId: fieldId(properties.fieldId),
+    code,
+    ...(label === undefined ? {} : { label }),
+  });
+}
+
+/** Validate a bounded field-error collection and reject duplicate field identities. */
+function fieldRejections(value: unknown): readonly KanbanFieldRejection[] | undefined {
+  if (value === undefined) return undefined;
+  const errors = snapshotKanbanDataArray(value, KANBAN_LIMITS.cardFields.safe).map(fieldRejection);
+  if (new Set(errors.map(({ fieldId }) => fieldId)).size !== errors.length) {
+    throw new KanbanInvalidSemanticValueError();
+  }
+  return Object.freeze(errors);
 }
 
 /** Copy one typed captured entity revision from descriptor-vetted input. */
@@ -322,6 +380,7 @@ export function snapshotKanbanRequestProposal(value: unknown): KanbanRequestProp
           kind: properties.kind,
           cardKey: cardKey(properties.cardKey),
           patch: snapshotKanbanSemanticValue(properties.patch),
+          ...(properties.editor === undefined ? {} : { editor: editorUpdateEvidence(properties.editor) }),
         });
       case 'card-duplicate':
         validateKanbanDataKeys(properties, CARD_DUPLICATE_KEYS);
@@ -599,7 +658,14 @@ export function snapshotKanbanRequestResult(value: unknown, operationId: KanbanO
       const code = snapshotKanbanReasonCode(properties.code);
       if (code === undefined) throw new KanbanInvalidSemanticValueError();
       const label = snapshotKanbanLabel(properties.label);
-      return Object.freeze({ kind, operationId, code, ...(label === undefined ? {} : { label }) });
+      const errors = fieldRejections(properties.fieldErrors);
+      return Object.freeze({
+        kind,
+        operationId,
+        code,
+        ...(label === undefined ? {} : { label }),
+        ...(errors === undefined ? {} : { fieldErrors: errors }),
+      });
     }
     case 'cancelled':
     case 'superseded': {

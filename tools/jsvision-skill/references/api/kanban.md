@@ -1146,6 +1146,7 @@ interface KanbanCardUpdateProposal {
   kind: 'card-update';   // Request discriminator.
   cardKey: CardKey;   // Stable identity of the card to update.
   patch: KanbanSemanticValue;   // Bounded application-schema patch data.
+  editor?: KanbanEditorUpdateEvidence;   // Optional exact evidence that identifies an editor-produced full-draft update.
 }
 ```
 
@@ -1756,6 +1757,18 @@ interface KanbanDurableViewStateV1 {
 }
 ```
 
+## KanbanEditorUpdateEvidence
+
+Exact evidence carried only when a card update patch is a complete editor draft.
+
+```ts
+interface KanbanEditorUpdateEvidence {
+  kind: 'full-draft';   // Evidence discriminator that distinguishes full drafts from legacy sparse patches.
+  changedFieldIds: readonly KanbanFieldId[];   // Schema-ordered field identities whose values differ from the editor baseline.
+  baseRevision: KanbanRevision;   // Equality-only card revision captured when the editor draft opened.
+}
+```
+
 ## KanbanEligibility
 
 Pure synchronous result shared by pointer, keyboard, programmatic, menu, and dialog producers.
@@ -1912,6 +1925,18 @@ A validated application field identity.
 
 ```ts
 type KanbanFieldId = string
+```
+
+## KanbanFieldRejection
+
+One sanitized field-specific application rejection.
+
+```ts
+interface KanbanFieldRejection {
+  fieldId: KanbanFieldId;   // Stable schema field identity.
+  code: string;   // Safe machine-readable field failure code.
+  label?: string;   // Optional sanitized application-facing field label.
+}
 ```
 
 ## KanbanFilter
@@ -3734,6 +3759,7 @@ interface KanbanRequestRejected {
   operationId: KanbanOperationId;   // Identity of the rejected operation.
   code: string;   // Safe machine-readable reason code.
   label?: string;   // Optional sanitized application-facing reason label.
+  fieldErrors?: readonly KanbanFieldRejection[];   // Optional bounded field-specific failures used by editor sessions.
 }
 ```
 
