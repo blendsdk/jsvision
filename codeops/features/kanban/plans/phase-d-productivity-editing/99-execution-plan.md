@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 20:59 CEST
-> **Progress**: 54/125 tasks (43%)
+> **Last Updated**: 2026-08-14 21:04 CEST
+> **Progress**: 55/125 tasks (44%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -216,7 +216,7 @@ fixture, transform, or unrelated runtime failure masks the required behavior.
 
 ### Step 4.3: Implementation tests and hardening
 
-- [ ] 4.3.1 Add modal cleanup, async seal, focus identity, custom-control failure, and leak tests — `packages/kanban/test/editor-dialog.impl.test.ts`
+- [x] 4.3.1 Add modal cleanup, async seal, focus identity, custom-control failure, and leak tests — `packages/kanban/test/editor-dialog.impl.test.ts` ✅ (completed: 2026-08-14 21:04)
 - [ ] 4.3.2 Run focused UI/Forms/Kanban typecheck/tests/E2E/docs and `yarn verify:local`
 
 **Verify**: focused editor dialog/E2E suites; affected UI/Forms/Kanban gates; `yarn verify:local`
