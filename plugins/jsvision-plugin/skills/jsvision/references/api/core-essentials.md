@@ -1738,7 +1738,7 @@ createKeymap(bindings: Readonly<Record<string, string>>, options: KeymapOptions 
 Build a keymap from chord→name bindings.
 
 ```ts
-createKeymap(bindings: Readonly<Record<string, string>>): Keymap
+createKeymap(bindings: Readonly<Record<string, string>>, options?: KeymapOptions): Keymap
 ```
 
 ## createLogger
