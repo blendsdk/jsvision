@@ -59,13 +59,38 @@ export interface KanbanFilterField<TCard> {
   readonly operators: readonly KanbanFilterOperator<TCard>[];
 }
 
-/** Application stable-order adapter used by the eager source. */
-export interface KanbanSortField<TCard> {
+/** One named ascending comparator registered for an eager sort field. */
+export interface KanbanSortComparator<TCard> {
+  /** Application-namespaced identity selected by a query sort directive. */
+  readonly comparatorId: KanbanExtensionId;
+  /** Compares two cards in ascending semantic order. */
+  readonly compare: (left: TCard, right: TCard) => -1 | 0 | 1;
+  /** Selects this comparator when the query omits `comparatorId`. */
+  readonly default?: boolean;
+}
+
+/** Source-compatible single-comparator adapter retained for existing applications. */
+export interface KanbanLegacySortField<TCard> {
   /** Semantic field selected by a sort directive. */
   readonly fieldId: KanbanFieldId;
   /** Compares two cards in ascending semantic order. */
   readonly compare: (left: TCard, right: TCard) => -1 | 0 | 1;
+  /** Legacy fields cannot also register named comparators. */
+  readonly comparators?: never;
 }
+
+/** Additive multi-comparator adapter for one semantic sort field. */
+export interface KanbanMultiComparatorSortField<TCard> {
+  /** Semantic field selected by a sort directive. */
+  readonly fieldId: KanbanFieldId;
+  /** Named comparators; exactly one default is required when several are registered. */
+  readonly comparators: readonly KanbanSortComparator<TCard>[];
+  /** Named-comparator fields cannot also provide the legacy comparator. */
+  readonly compare?: never;
+}
+
+/** Application stable-order adapter used by the eager source. */
+export type KanbanSortField<TCard> = KanbanLegacySortField<TCard> | KanbanMultiComparatorSortField<TCard>;
 
 /** Application numeric summary adapter used by eager headers. */
 export interface KanbanSummaryAdapter<TCard> {
@@ -223,7 +248,35 @@ export function validateEagerKanbanQuerySupport<TCard>(
     if (typeof field.swimlaneOf !== 'function') throw new KanbanInvalidSourcePublicationError();
   }
   for (const field of sortFields) {
-    if (typeof field.compare !== 'function') throw new KanbanInvalidSourcePublicationError();
+    if ('compare' in field && field.compare !== undefined) {
+      if (typeof field.compare !== 'function' || field.comparators !== undefined) {
+        throw new KanbanInvalidSourcePublicationError();
+      }
+      continue;
+    }
+    if (
+      !Array.isArray(field.comparators) ||
+      field.comparators.length === 0 ||
+      field.comparators.length > limits.cardFields
+    ) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
+    const comparatorIds = new Set<string>();
+    let defaultCount = 0;
+    for (const comparator of field.comparators) {
+      const comparatorId = createKanbanExtensionId(comparator.comparatorId);
+      if (comparatorIds.has(comparatorId) || typeof comparator.compare !== 'function') {
+        throw new KanbanInvalidSourcePublicationError();
+      }
+      if (comparator.default === true) defaultCount += 1;
+      else if (comparator.default !== undefined && comparator.default !== false) {
+        throw new KanbanInvalidSourcePublicationError();
+      }
+      comparatorIds.add(comparatorId);
+    }
+    if ((field.comparators.length === 1 && defaultCount > 1) || (field.comparators.length > 1 && defaultCount !== 1)) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
   }
   for (const adapter of summaries) {
     if (
@@ -253,7 +306,16 @@ export function validateEagerKanbanQuerySupport<TCard>(
     }
   }
   for (const sort of query.sort ?? []) {
-    if (!sorts.has(sort.fieldId)) throw new KanbanInvalidSourcePublicationError();
+    const field = sorts.get(sort.fieldId);
+    if (field === undefined) throw new KanbanInvalidSourcePublicationError();
+    if ('compare' in field && field.compare !== undefined) {
+      if (sort.comparatorId !== undefined) throw new KanbanInvalidSourcePublicationError();
+      continue;
+    }
+    const comparators = field.comparators;
+    if (sort.comparatorId !== undefined && !comparators.some((entry) => entry.comparatorId === sort.comparatorId)) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
   }
 }
 
@@ -328,6 +390,9 @@ function compareCards<TCard>(
   for (const directive of query.sort ?? []) {
     const adapter = sortFields.get(directive.fieldId);
     if (adapter === undefined) throw new KanbanInvalidSourcePublicationError();
+    if (!('compare' in adapter) || adapter.compare === undefined) {
+      throw new KanbanInvalidSourcePublicationError();
+    }
     const comparison = adapter.compare(left.card, right.card);
     if (comparison !== -1 && comparison !== 0 && comparison !== 1) {
       throw new KanbanInvalidSourcePublicationError();

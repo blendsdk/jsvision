@@ -1707,6 +1707,7 @@ type KanbanErrorCode = | 'invalid-identity'
   | 'invalid-limit'
   | 'invalid-semantic-value'
   | 'invalid-query'
+  | 'invalid-view-registry'
   | 'invalid-range'
   | 'invalid-source-publication'
   | 'invalid-presentation'
@@ -2485,6 +2486,16 @@ Raised when a source publication violates its structural contract.
 
 ```ts
 new KanbanInvalidSourcePublicationError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidViewRegistryError
+
+Raised when view behavior metadata is unsafe, duplicate, or exceeds package bounds.
+
+```ts
+new KanbanInvalidViewRegistryError()   // extends KanbanError
 // methods & signals:
 code
 ```
@@ -4128,6 +4139,7 @@ One stable ordering directive in a semantic query.
 ```ts
 interface KanbanSort {
   fieldId: KanbanFieldId;   // Application field evaluated by a registered sort adapter.
+  comparatorId?: KanbanExtensionId;   // Optional registered comparator; omission selects the field's declared default.
   direction: 'ascending' | 'descending';   // Requested order for values of the field.
 }
 ```
@@ -4137,10 +4149,7 @@ interface KanbanSort {
 Application stable-order adapter used by the eager source.
 
 ```ts
-interface KanbanSortField<TCard> {
-  fieldId: KanbanFieldId;   // Semantic field selected by a sort directive.
-  compare: (left: TCard, right: TCard) => -1 | 0 | 1;   // Compares two cards in ascending semantic order.
-}
+type KanbanSortField<TCard> = KanbanLegacySortField<TCard> | KanbanMultiComparatorSortField<TCard>
 ```
 
 ## KanbanSourceState

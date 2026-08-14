@@ -55,7 +55,7 @@ const QUERY_KEYS = new Set([
 /** Exact accepted members of one filter directive. */
 const FILTER_KEYS = new Set(['fieldId', 'operatorId', 'value']);
 /** Exact accepted members of one sort directive. */
-const SORT_KEYS = new Set(['fieldId', 'direction']);
+const SORT_KEYS = new Set(['fieldId', 'comparatorId', 'direction']);
 /** Exact accepted members of column or swimlane metadata. */
 const META_KEYS = new Set(['columnId', 'swimlaneId', 'label', 'revision']);
 /** Exact accepted members of one column or swimlane header. */
@@ -170,13 +170,20 @@ function snapshotSort(value: unknown): KanbanSort {
     const properties = snapshotKanbanDataProperties(value, SORT_KEYS.size);
     validateKanbanDataKeys(properties, SORT_KEYS);
     if (
-      Object.keys(properties).length !== SORT_KEYS.size ||
+      (Object.keys(properties).length !== 2 && Object.keys(properties).length !== 3) ||
       typeof properties.fieldId !== 'string' ||
+      (properties.comparatorId !== undefined && typeof properties.comparatorId !== 'string') ||
       (properties.direction !== 'ascending' && properties.direction !== 'descending')
     ) {
       return invalidQuery();
     }
-    return Object.freeze({ fieldId: createKanbanFieldId(properties.fieldId), direction: properties.direction });
+    return Object.freeze({
+      fieldId: createKanbanFieldId(properties.fieldId),
+      ...(properties.comparatorId === undefined
+        ? {}
+        : { comparatorId: createKanbanExtensionId(properties.comparatorId) }),
+      direction: properties.direction,
+    });
   } catch (error) {
     if (error instanceof KanbanInvalidQueryError) throw error;
     return invalidQuery();

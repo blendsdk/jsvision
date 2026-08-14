@@ -26,6 +26,8 @@ export interface KanbanFilter {
 export interface KanbanSort {
   /** Application field evaluated by a registered sort adapter. */
   readonly fieldId: KanbanFieldId;
+  /** Optional registered comparator; omission selects the field's declared default. */
+  readonly comparatorId?: KanbanExtensionId;
   /** Requested order for values of the field. */
   readonly direction: 'ascending' | 'descending';
 }

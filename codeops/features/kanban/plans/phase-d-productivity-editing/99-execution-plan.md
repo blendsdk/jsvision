@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 12:30 CEST
-> **Progress**: 5/125 tasks (4%)
+> **Last Updated**: 2026-08-14 12:39 CEST
+> **Progress**: 6/125 tasks (5%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -71,7 +71,7 @@ registry, chrome, additive comparator query, and transactional binding behavior 
 
 **Reference**: 03-01 §Public model–Standard chrome · AR-D03/D07/D12
 
-- [ ] 1.2.1 Implement bounded view types plus multi-comparator registration/default contract and backward-compatible query identity — view/source types and validation
+- [x] 1.2.1 Implement bounded view types plus multi-comparator registration/default contract and backward-compatible query identity — view/source types and validation ✅ (completed: 2026-08-14 12:39)
 - [ ] 1.2.2 Implement immutable projection, resolved comparator ID, and integers-before-code-point-strings tie order across eager/remote/windowed contracts
 - [ ] 1.2.3 Implement generation-safe draft-to-committed debounced search scheduler — `packages/kanban/src/view/scheduler.ts`, `controller.ts`
 - [ ] 1.2.4 Implement controller subscriptions, atomic publication, clear, replace, and disposal — `packages/kanban/src/view/controller.ts`, `summary.ts`

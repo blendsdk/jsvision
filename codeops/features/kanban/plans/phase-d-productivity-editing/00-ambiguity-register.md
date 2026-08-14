@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 24 items resolved
-> **Last Updated**: 2026-08-14 12:16 CEST
+> **Status**: ✅ GATE PASSED — all 25 items resolved
+> **Last Updated**: 2026-08-14 12:35 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -41,6 +41,7 @@
 | AR-D22 | Compatibility | Which owner wins when controller facets overlap legacy getters? | Implicit merge / reject overlap / effective getter composition | Board binding composes all view getters; controller wins supplied facets and legacy behavior remains otherwise | ✅ Resolved |
 | AR-D23 | Reentrancy | What exact action/event nesting behavior is supported? | Queue or reject unspecified / closed per-surface policies | Reject same-action recursion before mutation; queue nested events breadth-first with exact bound and typed overflow | ✅ Resolved |
 | AR-D24 | Performance | What is the responsiveness pass/fail contract? | Qualitative / deterministic work bounds plus calibrated timing | Assert bounded query/repaint/reflow/session work and use the existing 16 ms median harness as secondary evidence | ✅ Resolved |
+| AR-D25 | Technical · runtime | How should view registry lookup relate to source-owned evaluator authority? | Duplicate all source evaluators in the view controller / retain immutable bounded view metadata while source adapters own record evaluation | Keep quick-filter metadata and stable lookup in an immutable bounded view registry; keep sort/filter/group execution in source adapters and validate selected identities at the binding boundary | ✅ Resolved |
 
 ## Resolution notes
 
@@ -137,3 +138,18 @@
 - **Policy version:** 1.
 - **Root invocation ID:** `MP-PHASE-D-20260814T1058CEST`.
 - **Reopen triggers:** Plugin impact mapping changes, a new production subpath becomes necessary for safe optional loading, or host fixtures cannot exercise resolved Primary behavior.
+
+### AR-D25 — Registry and source authority (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal interface partitioning within the approved view-controller and registered-behavior model; it changes neither product behavior nor application data ownership.
+- **Objective:** Give chrome and saved-view reconciliation stable bounded metadata without creating a second record-evaluation pipeline.
+- **Evidence:** Eager source adapters already own grouping, filter, search, and sort callbacks, while the planned controller owns only semantic state/query projection. The security oracle requires registry construction to reject hostile metadata without invoking accessors or evaluators.
+- **Decision:** The view registry snapshots immutable quick-filter metadata and behavior references for lookup, without executing them during construction. Source adapters remain the sole record-evaluation authority. Comparator identities live additively on source sort fields and query directives; the board binding validates controller selections against the active source.
+- **Rejected alternatives:** Copying every source evaluator into the view registry duplicates authority and risks divergent local/remote behavior. Making the registry an unvalidated callback bag violates the established exact-shape boundary.
+- **Strongest counterargument:** Separating metadata lookup from source execution requires an explicit binding validation step before controller publication.
+- **Confidence:** High — it follows the existing source/query split and makes the transaction boundary explicit.
+- **Hardening:** The 10× and contrarian reframes considered a unified evaluator registry, but that design couples UI metadata to eager execution and cannot represent remote/windowed sources cleanly. The selected split remains smaller and source-compatible.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1231CEST`.
+- **Reopen triggers:** A required quick-filter semantic cannot be expressed as source query filters, or remote sources need executable registry callbacks rather than inert IDs.

@@ -4,6 +4,7 @@ export type KanbanErrorCode =
   | 'invalid-limit'
   | 'invalid-semantic-value'
   | 'invalid-query'
+  | 'invalid-view-registry'
   | 'invalid-range'
   | 'invalid-source-publication'
   | 'invalid-presentation'
@@ -38,6 +39,18 @@ export class KanbanInvalidQueryError extends KanbanError {
   constructor() {
     super('Invalid Kanban query.');
     this.name = 'KanbanInvalidQueryError';
+  }
+}
+
+/** Raised when view behavior metadata is unsafe, duplicate, or exceeds package bounds. */
+export class KanbanInvalidViewRegistryError extends KanbanError {
+  /** Stable machine-readable failure code. */
+  readonly code = 'invalid-view-registry' as const;
+
+  /** Creates a bounded registry error that never retains rejected metadata. */
+  constructor() {
+    super('Invalid Kanban view registry.');
+    this.name = 'KanbanInvalidViewRegistryError';
   }
 }
 
