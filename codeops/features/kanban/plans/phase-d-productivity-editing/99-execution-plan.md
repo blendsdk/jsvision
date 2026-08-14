@@ -288,7 +288,12 @@ all initial and fix-scoped Major findings corrected under auto-design, no waiver
 - [x] 6.1.2 `[spec-author]` Add key conflict/override/runtime-help/default-key oracles — `packages/kanban/test/action-keymap.spec.test.ts` ✅ (completed: 2026-08-15 00:31)
 - [x] 6.1.3 `[spec-author]` Add disabled/hidden/throw/read-only hit-target and authorization-boundary oracles — `packages/kanban/test/security/action-capability.spec.test.ts` ✅ (completed: 2026-08-15 00:36)
 - [x] 6.1.4 `[spec-author]` Add Primary/Meta compatibility and DOM pointer mapping/capture/coordinate/fallback/SGR-dedupe oracles — Core `test/input-primary.spec.test.ts`, Web `test/dom-pointer-input.spec.test.ts`, Kanban host E2E ✅ (completed: 2026-08-15 00:45)
-- [ ] 6.1.5 Run the focused specifications and record expected red failures
+- [x] 6.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-15 00:49)
+
+**Red evidence**: the action inventory/router, keymap, capability/read-only, Web DOM adapter, and
+Kanban host specifications fail at their absent public APIs (20 expected failures). Core's legacy
+compatibility assertion passes while its three semantic Primary/Meta assertions fail at the existing
+three-modifier grammar. Fixtures import and execute without unrelated transform or harness failures.
 
 ### Step 6.2: Implementation
 
