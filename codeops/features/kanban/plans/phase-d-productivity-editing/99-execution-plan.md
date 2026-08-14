@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 14:36 CEST
-> **Progress**: 17/125 tasks (14%)
+> **Last Updated**: 2026-08-14 14:38 CEST
+> **Progress**: 18/125 tasks (14%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -108,7 +108,7 @@ verification is green and the Phase 2 quality entry gate is complete. Evidence i
 
 - [x] 2.1.1 `[spec-author]` Add capture exclusions, Unicode canonical equality, idempotence, raw-provenance/invalidation, and extension round-trip oracles — `packages/kanban/test/saved-view.spec.test.ts` ✅ (completed: 2026-08-14 14:34)
 - [x] 2.1.2 `[spec-author]` Add malformed/oversized/hostile/version/atomic-failure oracles — `packages/kanban/test/security/saved-view-input.spec.test.ts` ✅ (completed: 2026-08-14 14:36)
-- [ ] 2.1.3 `[spec-author]` Add sequential migration, explicit missing-ID policy, new-ID, and remote-query oracles — `packages/kanban/test/saved-view-migration.spec.test.ts`
+- [x] 2.1.3 `[spec-author]` Add sequential migration, explicit missing-ID policy, new-ID, and remote-query oracles — `packages/kanban/test/saved-view-migration.spec.test.ts` ✅ (completed: 2026-08-14 14:38)
 - [ ] 2.1.4 `[spec-author]` Add pure capture/apply versus store-request ownership oracles — `packages/kanban/test/saved-view-store.spec.test.ts`
 - [ ] 2.1.5 Run the focused specifications and record expected red failures
 
