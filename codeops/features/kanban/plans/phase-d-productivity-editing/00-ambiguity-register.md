@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 30 items resolved
-> **Last Updated**: 2026-08-14 17:34 CEST
+> **Status**: ✅ GATE PASSED — all 31 items resolved
+> **Last Updated**: 2026-08-14 18:31 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -47,6 +47,7 @@
 | AR-D28 | Security limits · runtime | Which safe/standard/absolute budgets bound saved-view parsing, migration, diagnostics, registries, and extensions? | Independent saved-view budgets / shared semantic budgets plus saved-view-specific count limits | Reuse the shared semantic rows exactly for JSON shape and bytes; add fixed saved-view migration, diagnostic, registered-ID, and extension count rows; untrusted parsing always uses the safe class | ✅ Resolved |
 | AR-D29 | Confirmation policy · runtime · reserved | Does public programmatic saved-view deletion require the existing destructive confirmation, or is the store API itself an already-authorized boundary? | Preserve confirmation and explicitly approve it in the store oracle / formally make store deletion an already-authorized public authority seam | Preserve destructive confirmation; the store oracle supplies an approving board confirmer explicitly | ✅ Resolved |
 | AR-D30 | Editor API · runtime · complex | How do full-draft evidence, field rejection mapping, and coherent session state cross the existing authority without breaking legacy updates? | Additive editor metadata plus aggregate session snapshots / new request kind / encode metadata in patch / public per-field signals | Keep `card-update.patch`; add exact optional full-draft editor metadata and bounded field errors; expose one actor-style session with immutable aggregate snapshots and subscription | ✅ Resolved |
+| AR-D31 | Standard editor · runtime · complex | How do configured standard fields, Zod validation, Forms ownership, and application extensions share one adapter without rejecting temporary invalid drafts? | Validate every snapshot through Zod / Forms-backed standard adapter with field diagnostics and generic additions / postpone Forms until dialogs | Build one configured standard schema plus optional generic additions; expose one disposable Forms store per draft, use Zod field diagnostics, reserve whole-object Zod submission for the form, and retain bounded temporary drafts while invalid | ✅ Resolved |
 
 ## Resolution notes
 
@@ -334,3 +335,32 @@
 - **Reopen triggers:** Applications cannot distinguish full-draft metadata safely, aggregate snapshots
   exceed the approved bounded-field work budget, or the board authority gains a first-class editor
   admission contract that carries equivalent evidence without compatibility loss.
+
+### AR-D31 — Standard editor schema and Forms ownership (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal adapter composition and validation timing inside the approved standard
+  editor, generic extension, Forms, and Zod boundary.
+- **Objective:** Keep temporary editing values usable while preserving one validation model and one
+  disposable Forms owner per mounted standard editor.
+- **Evidence:** `@jsvision/forms` owns reactive raw values, touched/dirty state, whole-object Zod
+  validation, async cancellation, and disposal. The generic Kanban session owns application draft,
+  stale, and authority state and snapshots drafts after every accepted field write.
+- **Decision:** The standard adapter accepts an explicit ordered unique field selection and optional
+  generic additional sections/fields. It creates one Forms store for dialog ownership, maps Zod field
+  failures into payload-free session diagnostics, and applies whole-object Zod validation through the
+  form on submission. Semantic snapshots remain available while a Zod-invalid temporary value is
+  being corrected; they are not treated as committed data.
+- **Rejected alternatives:** Parsing the whole Zod object inside every draft snapshot prevents ordinary
+  temporary invalid edits. Deferring Forms until dialog composition contradicts the adapter boundary and
+  duplicates validation decisions. A separate standard session violates the single protocol.
+- **Strongest counterargument:** Dynamic application fields cannot retain exhaustive compile-time form
+  keys. Their generic field descriptors remain strongly typed at the application boundary; the standard
+  form uses stable validated field IDs at the heterogeneous rendering boundary.
+- **Confidence:** High.
+- **Hardening:** Reuses the existing Forms lifecycle rather than creating another reactive form engine,
+  while leaving application persistence and custom draft semantics outside the package.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Forms cannot retain configured dynamic field IDs without unsafe casts, or whole-form
+  validation cannot be gated before authority dispatch in the standard dialog.

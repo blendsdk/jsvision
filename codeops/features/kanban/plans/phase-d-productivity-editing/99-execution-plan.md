@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 18:28 CEST
-> **Progress**: 39/125 tasks (31%)
+> **Last Updated**: 2026-08-14 18:39 CEST
+> **Progress**: 40/125 tasks (32%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -169,7 +169,7 @@ cases passed. No import-transform, matcher, fixture, or command failure masked t
 - [x] 3.2.3 Implement bounded editor/control registries and callback isolation — `packages/kanban/src/editor/registry.ts`, `schema.ts` ✅ (completed: 2026-08-14 18:01)
 - [x] 3.2.4 Implement disposable draft session, abort generations, first-error focus, exact request state, stale/reload policy, and cancellation — `packages/kanban/src/editor/session.ts`, `types.ts` ✅ (completed: 2026-08-14 18:19)
 - [x] 3.2.5 Implement application-owned record/revision resolver, identity coordinator, and authoritative/contradictory publication reconciliation — `packages/kanban/src/editor/coordinator.ts`, `session.ts` ✅ (completed: 2026-08-14 18:28)
-- [ ] 3.2.6 Implement standard field/checklist schema and Forms/Zod adapter isolated from generic types — `packages/kanban/src/editor/standard-schema.ts`, `standard-adapter.ts`
+- [x] 3.2.6 Implement standard field/checklist schema and Forms/Zod adapter isolated from generic types — `packages/kanban/src/editor/standard-schema.ts`, `standard-adapter.ts` ✅ (completed: 2026-08-14 18:39)
 - [ ] 3.2.7 Export/document editor core APIs and make focused specifications green — `packages/kanban/src/index.ts`
 
 ### Step 3.3: Implementation tests and hardening
