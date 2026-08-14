@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 12:29 CEST
-> **Progress**: 4/125 tasks (3%)
+> **Last Updated**: 2026-08-14 12:30 CEST
+> **Progress**: 5/125 tasks (4%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -61,7 +61,11 @@ remains in Phases E–F.
 - [x] 1.1.2 `[spec-author]` Add draft-versus-committed debounce, cancellation, filtered-empty, counts, focus, and disposal oracles — `packages/kanban/test/view-state.spec.test.ts` ✅ (completed: 2026-08-14 12:25)
 - [x] 1.1.3 `[spec-author]` Add responsive standard view-bar and keyboard/mouse reachability oracles — `packages/kanban/test/view-chrome.spec.test.ts` ✅ (completed: 2026-08-14 12:27)
 - [x] 1.1.4 `[spec-author]` Add hostile evaluator and controller→binder→viewport→session prepare/commit/abort invisibility/rollback oracles — `packages/kanban/test/security/view-input.spec.test.ts` ✅ (completed: 2026-08-14 12:29)
-- [ ] 1.1.5 Run the focused specifications and record expected red failures
+- [x] 1.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-14 12:30)
+
+**Red evidence (2026-08-14 12:29 CEST):** focused Vitest run executed 16 cases: the legacy
+single-comparator compatibility oracle passed; 15 expected Phase D cases failed because the controller,
+registry, chrome, additive comparator query, and transactional binding behavior are not implemented.
 
 ### Step 1.2: Implementation
 
