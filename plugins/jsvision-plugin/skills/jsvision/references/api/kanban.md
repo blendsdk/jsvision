@@ -1753,6 +1753,7 @@ type KanbanErrorCode = | 'invalid-identity'
   | 'invalid-semantic-value'
   | 'invalid-query'
   | 'invalid-view-registry'
+  | 'invalid-saved-view'
   | 'invalid-range'
   | 'invalid-source-publication'
   | 'invalid-presentation'
@@ -2549,6 +2550,16 @@ Raised before an invalid half-open source range reaches application code.
 
 ```ts
 new KanbanInvalidRangeError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidSavedViewError
+
+Raised when a saved-view envelope cannot cross a package validation boundary safely.
+
+```ts
+new KanbanInvalidSavedViewError()   // extends KanbanError
 // methods & signals:
 code
 ```

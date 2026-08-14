@@ -5,6 +5,7 @@ export type KanbanErrorCode =
   | 'invalid-semantic-value'
   | 'invalid-query'
   | 'invalid-view-registry'
+  | 'invalid-saved-view'
   | 'invalid-range'
   | 'invalid-source-publication'
   | 'invalid-presentation'
@@ -58,6 +59,18 @@ export class KanbanInvalidViewRegistryError extends KanbanError {
   constructor() {
     super('Invalid Kanban view registry.');
     this.name = 'KanbanInvalidViewRegistryError';
+  }
+}
+
+/** Raised when a saved-view envelope cannot cross a package validation boundary safely. */
+export class KanbanInvalidSavedViewError extends KanbanError {
+  /** Stable machine-readable failure code. */
+  readonly code = 'invalid-saved-view' as const;
+
+  /** Creates a payload-free error that never retains rejected saved-view data. */
+  constructor() {
+    super('Invalid Kanban saved view.');
+    this.name = 'KanbanInvalidSavedViewError';
   }
 }
 
