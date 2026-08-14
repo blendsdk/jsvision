@@ -30,6 +30,7 @@ import { snapshotKanbanRevision } from './revision.js';
 import type { KanbanRevision } from './revision.js';
 import { snapshotKanbanSemanticValue } from './semantic-query.js';
 import { snapshotKanbanCellAddress } from '../source/address.js';
+import { snapshotKanbanDefinitionOfDone } from '../workflow/definition-of-done.js';
 import { snapshotKanbanCardMoveProposal, snapshotKanbanMovePosition } from '../operation/placement.js';
 import { snapshotKanbanUndoDescriptor } from '../operation/undo.js';
 
@@ -110,8 +111,8 @@ const SAVED_VIEW_RENAME_KEYS = new Set(['kind', 'viewId', 'label']);
 const SAVED_VIEW_DELETE_KEYS = new Set(['kind', 'viewId']);
 const EXTENSION_PROPOSAL_KEYS = new Set(['kind', 'extensionId', 'payload']);
 /** Exact generic structural draft members. */
-const COLUMN_DRAFT_KEYS = new Set(['columnId', 'label', 'data']);
-const SWIMLANE_DRAFT_KEYS = new Set(['swimlaneId', 'label', 'data']);
+const COLUMN_DRAFT_KEYS = new Set(['columnId', 'label', 'disambiguator', 'definitionOfDone', 'data']);
+const SWIMLANE_DRAFT_KEYS = new Set(['swimlaneId', 'label', 'disambiguator', 'data']);
 /** Exact semantic structural position members. */
 const COLUMN_POSITION_KEYS = new Set(['kind', 'beforeColumnId', 'afterColumnId']);
 const SWIMLANE_POSITION_KEYS = new Set(['kind', 'swimlaneId']);
@@ -327,6 +328,10 @@ function columnDraft(value: unknown) {
   return Object.freeze({
     columnId: createKanbanColumnId(requiredString(properties, 'columnId')),
     label: requiredLabel(properties.label),
+    ...(properties.disambiguator === undefined ? {} : { disambiguator: requiredLabel(properties.disambiguator) }),
+    ...(properties.definitionOfDone === undefined
+      ? {}
+      : { definitionOfDone: snapshotKanbanDefinitionOfDone(properties.definitionOfDone) }),
     ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }
@@ -338,6 +343,7 @@ function swimlaneDraft(value: unknown) {
   return Object.freeze({
     swimlaneId: createKanbanSwimlaneId(requiredString(properties, 'swimlaneId')),
     label: requiredLabel(properties.label),
+    ...(properties.disambiguator === undefined ? {} : { disambiguator: requiredLabel(properties.disambiguator) }),
     ...(properties.data === undefined ? {} : { data: snapshotKanbanSemanticValue(properties.data) }),
   });
 }

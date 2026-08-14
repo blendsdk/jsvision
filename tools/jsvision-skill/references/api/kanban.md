@@ -1569,6 +1569,8 @@ Generic application-owned workflow-column draft with package-validated identity 
 interface KanbanColumnDraft {
   columnId: KanbanColumnId;   // Stable identity proposed for the new workflow column.
   label: string;   // Safe human-readable column label.
+  disambiguator?: string;   // Optional visible text distinguishing an application-approved duplicate label.
+  definitionOfDone?: KanbanDefinitionOfDone;   // Optional safe completion policy presented by column help and configuration UI.
   data?: KanbanSemanticValue;   // Optional bounded application-owned column metadata.
 }
 ```
@@ -6176,6 +6178,7 @@ Generic application-owned swimlane draft with package-validated identity and lab
 interface KanbanSwimlaneDraft {
   swimlaneId: KanbanSwimlaneId;   // Stable identity proposed for the new explicit swimlane.
   label: string;   // Safe human-readable swimlane label.
+  disambiguator?: string;   // Optional visible text distinguishing an application-approved duplicate label.
   data?: KanbanSemanticValue;   // Optional bounded application-owned swimlane metadata.
 }
 ```

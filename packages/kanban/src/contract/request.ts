@@ -11,7 +11,7 @@ import type {
 } from './identity.js';
 import type { KanbanRevision } from './revision.js';
 import type { KanbanSemanticValue } from './semantic-query.js';
-import type { KanbanCellAddress } from '../source/types.js';
+import type { KanbanCellAddress, KanbanDefinitionOfDone } from '../source/types.js';
 import type { KanbanUndoDescriptor } from '../operation/types.js';
 
 /** Captured card revision required by an application request. */
@@ -221,6 +221,10 @@ export interface KanbanColumnDraft {
   readonly columnId: KanbanColumnId;
   /** Safe human-readable column label. */
   readonly label: string;
+  /** Optional visible text distinguishing an application-approved duplicate label. */
+  readonly disambiguator?: string;
+  /** Optional safe completion policy presented by column help and configuration UI. */
+  readonly definitionOfDone?: KanbanDefinitionOfDone;
   /** Optional bounded application-owned column metadata. */
   readonly data?: KanbanSemanticValue;
 }
@@ -231,6 +235,8 @@ export interface KanbanSwimlaneDraft {
   readonly swimlaneId: KanbanSwimlaneId;
   /** Safe human-readable swimlane label. */
   readonly label: string;
+  /** Optional visible text distinguishing an application-approved duplicate label. */
+  readonly disambiguator?: string;
   /** Optional bounded application-owned swimlane metadata. */
   readonly data?: KanbanSemanticValue;
 }
