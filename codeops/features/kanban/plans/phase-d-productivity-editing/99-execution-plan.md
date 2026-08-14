@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 14:40 CEST
-> **Progress**: 19/125 tasks (15%)
+> **Last Updated**: 2026-08-14 14:41 CEST
+> **Progress**: 20/125 tasks (16%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -110,7 +110,12 @@ verification is green and the Phase 2 quality entry gate is complete. Evidence i
 - [x] 2.1.2 `[spec-author]` Add malformed/oversized/hostile/version/atomic-failure oracles — `packages/kanban/test/security/saved-view-input.spec.test.ts` ✅ (completed: 2026-08-14 14:36)
 - [x] 2.1.3 `[spec-author]` Add sequential migration, explicit missing-ID policy, new-ID, and remote-query oracles — `packages/kanban/test/saved-view-migration.spec.test.ts` ✅ (completed: 2026-08-14 14:38)
 - [x] 2.1.4 `[spec-author]` Add pure capture/apply versus store-request ownership oracles — `packages/kanban/test/saved-view-store.spec.test.ts` ✅ (completed: 2026-08-14 14:40)
-- [ ] 2.1.5 Run the focused specifications and record expected red failures
+- [x] 2.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-14 14:41)
+
+**Red evidence (2026-08-14 14:41 CEST):** focused Vitest executed 16 saved-view cases across
+capture/canonicalization/provenance, hostile input, migration/reconciliation, and store ownership. All
+16 failed for the intended absent Phase 2 APIs (`parse`, `serialize`, `capture`, `migrate`, `reconcile`,
+`apply`, and the store helper); no fixture, import-transform, or harness failure masked the missing behavior.
 
 ### Step 2.2: Implementation
 
