@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 31 items resolved
-> **Last Updated**: 2026-08-14 18:31 CEST
+> **Status**: ✅ GATE PASSED — all 35 items resolved
+> **Last Updated**: 2026-08-14 20:50 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -48,6 +48,10 @@
 | AR-D29 | Confirmation policy · runtime · reserved | Does public programmatic saved-view deletion require the existing destructive confirmation, or is the store API itself an already-authorized boundary? | Preserve confirmation and explicitly approve it in the store oracle / formally make store deletion an already-authorized public authority seam | Preserve destructive confirmation; the store oracle supplies an approving board confirmer explicitly | ✅ Resolved |
 | AR-D30 | Editor API · runtime · complex | How do full-draft evidence, field rejection mapping, and coherent session state cross the existing authority without breaking legacy updates? | Additive editor metadata plus aggregate session snapshots / new request kind / encode metadata in patch / public per-field signals | Keep `card-update.patch`; add exact optional full-draft editor metadata and bounded field errors; expose one actor-style session with immutable aggregate snapshots and subscription | ✅ Resolved |
 | AR-D31 | Standard editor · runtime · complex | How do configured standard fields, Zod validation, Forms ownership, and application extensions share one adapter without rejecting temporary invalid drafts? | Validate every snapshot through Zod / Forms-backed standard adapter with field diagnostics and generic additions / postpone Forms until dialogs | Build one configured standard schema plus optional generic additions; expose one disposable Forms store per draft, use Zod field diagnostics, reserve whole-object Zod submission for the form, and retain bounded temporary drafts while invalid | ✅ Resolved |
+| AR-D32 | Editor quality · runtime · complex | How should the editor session close resolver, publication, cancellation, reentrancy, and hostile collection races found by Phase 3 review? | Await application cooperation / retain unbounded state / generation-owned bounded latest-state reconciliation | Use prompt package-side cancellation, bounded latest publications, card-key correlation, serialized notification, exact choice validation, and detached bounded standard inputs | ✅ Resolved |
+| AR-D33 | Dialog API · runtime · complex | How should create/view/edit, result-only completion, custom replacement, and inspector ownership share one session without invalid option combinations? | One permissive invoker / separate typed invokers over one lifecycle engine / separate presentation-owned sessions | Export separate typed invokers over one coordinator-owned lifecycle, with provisional create claims, typed result detachment, and application-owned inspector docking | ✅ Resolved |
+| AR-D34 | Control binding · runtime · complex | What boundary lets standard and registered custom controls share reactive field state without exposing the complete draft or session authority? | Complete draft / complete session / narrow semantic field context | Expose immutable field values and focus identity through a narrow field context; retain parsing, validation, submission, and disposal authority in the session | ✅ Resolved |
+| AR-D35 | Board integration · runtime · complex | How should whole-card and checklist activation open the editor through the existing board authority without spreading editor draft generics through `KanbanBoard`? | Add editor generics to board options / application-only intent handling / type-erased board binding with typed factory | Add a narrow `open(cardKey, authority)` board binding and typed factory; compose it at the existing `open-card` intent boundary for whole-card and standard editor actions while preserving unrelated application intents | ✅ Resolved |
 
 ## Resolution notes
 
@@ -476,3 +480,39 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** Custom controls require a separately approved capability model, field values can no longer
   be represented by bounded semantic snapshots, or the UI package adds a first-class generic form-control adapter.
+
+### AR-D35 — Board editor activation boundary (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Additive internal integration and public typing inside the approved board editor-action scope;
+  card behavior, application data ownership, persistence authority, and acceptance criteria remain unchanged.
+- **Objective:** Make mouse, keyboard, checklist, and programmatic card activation reach one editor path while
+  preserving the board's existing request coordinator and keeping card records out of the viewport.
+- **Evidence:** Every activation origin already converges on a validated `open-card` intent carrying only `CardKey`,
+  address, and optional descriptor action. `KanbanBoardAuthority.request()` already admits lifecycle-free editor
+  proposals with current revisions and policy. The editor invoker already accepts a typed application resolver,
+  coordinator, adapter, and authority. Adding editor record/draft/result generics to `KanbanBoard` would spread
+  presentation-only types through its viewport, bindings, and consumers without improving runtime safety.
+- **Decision:** Add a non-generic board-facing binding with one `open(cardKey, authority)` operation and a generic
+  factory that closes over the typed host, adapter, resolver, coordinator, confirmations, and optional replacement.
+  The board composes this binding at its existing intent handler. Whole-card activation and the standard
+  `kanban.card.open-editor` action open edit mode through the board authority; other descriptor actions continue
+  only to the application handler. Editor startup is fire-and-forget from the serialized interaction queue, and
+  synchronous or asynchronous failures remain isolated so they cannot stall input or suppress application intents.
+- **Rejected alternatives:** Adding draft generics to the board infects unrelated projection APIs and still needs
+  runtime callback composition. Requiring every application to manually recognize the package's standard checklist
+  action fails the package-provided editor-integration requirement and duplicates authority wiring. Opening from the
+  viewport would give a read-only rendering leaf host and record responsibilities it must not own.
+- **Strongest counterargument:** A type-erased binding cannot expose the concrete dialog result through
+  `KanbanBoardOptions`. Applications that need result handling can implement the small binding directly or wrap the
+  typed factory; normal board editing commits through the authoritative operation/publication lifecycle rather than
+  through a dialog return value.
+- **Confidence:** High — the integration reuses the sole existing activation and authority seams and adds no second
+  record, operation, focus, or input owner.
+- **Hardening:** Forced reframing against direct viewport ownership, board-wide generics, and application-only
+  routing left the narrow binding as the only option that preserves all existing ownership boundaries. The design
+  is reversible and can later be consumed by the unified action router without changing its public contract.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The board gains typed draft ownership, editor activation no longer converges on `open-card`,
+  or a later public action router needs a materially different asynchronous result contract.

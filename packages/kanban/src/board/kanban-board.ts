@@ -14,6 +14,7 @@ import type { CardKey, KanbanOperationId } from '../contract/identity.js';
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import { validateKanbanLimitOptions } from '../contract/limits.js';
 import type { KanbanRevision } from '../contract/revision.js';
+import type { KanbanEditorAuthority } from '../editor/types.js';
 import { createEnglishKanbanI18n } from '../i18n/catalog.js';
 import type { KanbanPhaseBMessageMap } from '../i18n/catalog.js';
 import { KANBAN_MINIMUM_VIEWPORT_ROWS } from '../layout/workflow-geometry.js';
@@ -49,6 +50,7 @@ import type {
   KanbanOperationSubscriber,
 } from '../operation/types.js';
 import { KanbanBoardBindings, KanbanFocusedNavigatorView } from './board-bindings.js';
+import { createKanbanBoardEditorInteractionHandler, type KanbanBoardEditorBinding } from './editor-binding.js';
 import { KanbanBoardFeedbackView, createKanbanBoardFeedbackState } from './board-feedback.js';
 import type { KanbanBoardFeedbackState } from './board-feedback.js';
 import { createKanbanDefaultInteractionSeed } from './board-state.js';
@@ -130,6 +132,8 @@ export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TC
   readonly interactionFactory?: KanbanInteractionControllerFactory;
   /** Optional synchronous receiver for immutable, non-mutation semantic interaction intents. */
   readonly onInteraction?: KanbanInteractionHandler;
+  /** Optional application-configured editor opened by whole-card and standard checklist activation. */
+  readonly editor?: KanbanBoardEditorBinding;
   /** Optional bounded threshold configuration for board-owned card and structural drags. */
   readonly drag?: KanbanDragConfiguration;
 }
@@ -402,11 +406,21 @@ export class KanbanBoard<TCard> extends Group {
     this.#interactionFactory = options.interactionFactory;
     this.#automaticReconcileReady = options.interactionFactory === undefined;
     this.#hasLegacyIdentity = options.identity !== undefined;
+    const editorAuthority: KanbanEditorAuthority = Object.freeze({
+      request: (proposal: KanbanRequestProposal) => this.#authority.request(proposal),
+      cancel: (operationId: KanbanOperationId) => this.#authority.cancel(operationId),
+    });
+    const interactionHandler = createKanbanBoardEditorInteractionHandler({
+      authority: editorAuthority,
+      ...(options.editor === undefined ? {} : { editor: options.editor }),
+      ...(options.onInteraction === undefined ? {} : { application: options.onInteraction }),
+      ...(options.observe === undefined ? {} : { observe: options.observe }),
+    });
     this.#interactionFacade = new KanbanInteractionFacadeOwner({
       snapshotEligibleSelection: () => this.#snapshotEligibleSelection(),
       invalidate: () => this.viewport.invalidate(),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
-      ...(options.onInteraction === undefined ? {} : { onInteraction: options.onInteraction }),
+      ...(interactionHandler === undefined ? {} : { onInteraction: interactionHandler }),
       operations: {
         selection: () => this.#snapshotEligibleSelection(),
         resolveCardMove: (cardKeys, moveOptions) => resolveKanbanViewportCardMove(this.viewport, cardKeys, moveOptions),

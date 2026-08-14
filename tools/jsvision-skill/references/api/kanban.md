@@ -57,6 +57,22 @@ interface ClampKanbanScrollOptions {
 }
 ```
 
+## CreateKanbanBoardEditorBindingOptions
+
+Typed application services captured by createKanbanBoardEditorBinding.
+
+```ts
+interface CreateKanbanBoardEditorBindingOptions<TCard, TDraft> {
+  host: KanbanEditorDialogHost;   // Modal host that owns desktop placement, focus, i18n, and event-loop execution.
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>;   // Typed adapter between the application record, draft, schema, and update proposal.
+  resolver: KanbanEditorRecordResolver<TCard>;   // Application-owned authoritative record and revision resolver.
+  coordinator: KanbanEditorCoordinator;   // Identity coordinator shared by every editor presentation in the application.
+  confirm?: KanbanEditorConfirm;   // Optional application confirmation replacement for dirty and stale editor actions.
+  replacement?: KanbanEditorDialogReplacement<TDraft>;   // Optional complete application presentation over the package-owned editor session.
+  signal?: AbortSignal;   // Optional application cancellation signal used while initial record resolution is pending.
+}
+```
+
 ## CreateKanbanVerticalHeightProjectionOptions
 
 Inputs for creating one bounded immutable height projection.
@@ -436,6 +452,16 @@ interface KanbanBoardCounts {
 }
 ```
 
+## KanbanBoardEditorBinding
+
+Board-facing card editor operation that deliberately erases application record and draft types.
+
+```ts
+interface KanbanBoardEditorBinding {
+  open(cardKey: CardKey, authority: KanbanEditorAuthority): unknown | PromiseLike<unknown>;   // Opens or reveals the editor for one card through the board's current operation authority.
+}
+```
+
 ## KanbanBoardInspection
 
 Detached board-level composition, identity, and viewport evidence.
@@ -481,6 +507,7 @@ interface KanbanBoardOptions<TCard> {
   operationEligibility?: (proposal: KanbanRequestProposal) => KanbanEligibility;   // Optional pure current-policy evaluator shared by programmatic proposal and confirmation paths.
   interactionFactory?: KanbanInteractionControllerFactory;   // Optional mount factory replacing the package default interaction controller.
   onInteraction?: KanbanInteractionHandler;   // Optional synchronous receiver for immutable, non-mutation semantic interaction intents.
+  editor?: KanbanBoardEditorBinding;   // Optional application-configured editor opened by whole-card and standard checklist activation.
   drag?: KanbanDragConfiguration;   // Optional bounded threshold configuration for board-owned card and structural drags.
 }
 ```
@@ -7827,6 +7854,14 @@ Creates a pure localized descriptor that fits the supplied render budget.
 
 ```ts
 createFallbackKanbanCardDescriptor(context: KanbanCardRenderContext, labels: KanbanCardFallbackLabels): KanbanCardDescriptor
+```
+
+## createKanbanBoardEditorBinding
+
+Creates a board binding that opens the standard or replaced edit dialog for activated cards.
+
+```ts
+createKanbanBoardEditorBinding<TCard, TDraft>(options: CreateKanbanBoardEditorBindingOptions<TCard, TDraft>): KanbanBoardEditorBinding
 ```
 
 ## createKanbanCardEditorSchema
