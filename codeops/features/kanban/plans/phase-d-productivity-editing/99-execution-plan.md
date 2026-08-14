@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 20:56 CEST
-> **Progress**: 53/125 tasks (42%)
+> **Last Updated**: 2026-08-14 20:59 CEST
+> **Progress**: 54/125 tasks (43%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -212,7 +212,7 @@ fixture, transform, or unrelated runtime failure masks the required behavior.
 - [x] 4.2.4 Implement dirty/destructive confirmations and stale Reload/Cancel/application-policy actions — `packages/kanban/src/editor/confirmation.ts`, `dialog.ts` ✅ (completed: 2026-08-14 20:41)
 - [x] 4.2.5 Implement custom editor replacement and application-owned modeless inspector contract — `packages/kanban/src/editor/inspector.ts`, `coordinator.ts` ✅ (completed: 2026-08-14 20:47)
 - [x] 4.2.6 Bind board open/checklist actions through the application record resolver, editor coordinator, and existing authority — board editor binding and board ✅ (completed: 2026-08-14 20:56)
-- [ ] 4.2.7 Export/document dialogs and make focused specifications green — `packages/kanban/src/index.ts`
+- [x] 4.2.7 Export/document dialogs and make focused specifications green — `packages/kanban/src/index.ts` ✅ (completed: 2026-08-14 20:59)
 
 ### Step 4.3: Implementation tests and hardening
 
