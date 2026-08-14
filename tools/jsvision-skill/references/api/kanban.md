@@ -147,6 +147,22 @@ Accelerator topology owned by the Phase A Kanban vocabulary.
 const KANBAN_ACCELERATOR_MANIFEST: AcceleratorManifest
 ```
 
+## KANBAN_ACTION_IDS
+
+Stable package action IDs in help and registry order.
+
+```ts
+const KANBAN_ACTION_IDS: readonly ["kanban.navigation.left", "kanban.navigation.right", "kanban.navigation.up", "kanban.navigation.down", "kanban.navigation.cell-first", "kanban.navigation.cell-last", "kanban.navigation.page-up", "kanban.navigation.page-down", "kanban.navigation.board-first", "kanban.navigation.board-last", "kanban.selection.toggle", "kanban.selection.extend-left", "kanban.selection.extend-right", "kanban.selection.extend-up", "kanban.selection.extend-down", "kanban.selection.select-all", "kanban.selection.clear", "kanban.card.open", "kanban.card.activate", "kanban.card.create", "kanban.card.edit", "kanban.card.duplicate", "kanban.card.archive", "kanban.card.delete", "kanban.card.grab", "kanban.card.drop", "kanban.card.move", "kanban.card.cancel-move", "kanban.transient.cancel", "kanban.column.configure", "kanban.column.add", "kanban.column.reorder", "kanban.column.delete", "kanban.swimlane.configure", "kanban.swimlane.add", "kanban.swimlane.reorder", "kanban.swimlane.delete", "kanban.search.focus", "kanban.filter.clear", "kanban.sort.configure", "kanban.view.apply", "kanban.view.save", "kanban.context.open", "kanban.help.open", "kanban.source.retry", "kanban.history.undo", "kanban.history.redo"]
+```
+
+## KANBAN_DEFAULT_ACTION_CHORDS
+
+Stable presentation order for the conservative package-owned default bindings.
+
+```ts
+const KANBAN_DEFAULT_ACTION_CHORDS: readonly ["left", "right", "up", "down", "home", "end", "pageup", "pagedown", "primary+home", "primary+end", "enter", "space", "shift+left", "shift+right", "shift+up", "shift+down", "primary+a", "primary+f", "insert", "alt+m", "escape", "shift+f10", "f1", "primary+z", "primary+y"]
+```
+
 ## KANBAN_DEFAULT_COLUMN_MAXIMUM_WIDTH
 
 Default maximum width of one Kanban column surface, excluding its separator.
@@ -363,6 +379,409 @@ Standard delay between search input and one committed query publication.
 const KANBAN_VIEW_SEARCH_DEBOUNCE_MS: 150
 ```
 
+## KanbanActionAffordance
+
+Visible/enabled state used to construct pointer, menu, status, and palette affordances.
+
+```ts
+interface KanbanActionAffordance {
+  visible: boolean;   // Whether the affordance participates in hit testing/presentation.
+  enabled: boolean;   // Whether an invocation may reach the action handler.
+}
+```
+
+## KanbanActionCapability
+
+Capability result returned synchronously before one action handler.
+
+```ts
+type KanbanActionCapability = | { readonly state: 'allowed' }
+  | { readonly state: 'disabled'; readonly reasonCode: string; readonly label?: string }
+  | { readonly state: 'hidden' }
+```
+
+## KanbanActionCapabilityContext
+
+Record-free context passed to a pure capability provider.
+
+```ts
+interface KanbanActionCapabilityContext {
+  definition: KanbanActionDefinition;   // Detached immutable action metadata.
+}
+```
+
+## KanbanActionCategory
+
+Closed package categories used for help grouping and read-only policy.
+
+```ts
+type KanbanActionCategory = 'navigation' | 'selection' | 'card' | 'structure' | 'view' | 'help' | 'history' | 'application'
+```
+
+## KanbanActionDefinition
+
+Complete stable action definition stored by the bounded registry.
+
+```ts
+interface KanbanActionDefinition {
+  id: string;   // Stable package ID or namespaced application extension ID.
+  category: KanbanActionCategory;   // Help/menu grouping category.
+  labelMessageId: string;   // Translation message ID for the concise label.
+  helpMessageId: string;   // Translation message ID for complete help.
+  target: KanbanActionTargetKind;   // Logical target kind required by the handler.
+  capability: string;   // Stable capability key passed to application policy.
+  bindings: readonly string[];   // Semantic default chords; an empty array marks an explicitly unbound action.
+  mutation?: boolean;   // Whether read-only policy classifies the package action as mutating.
+  handler: KanbanActionHandler;   // Action behavior invoked through the shared router only.
+}
+```
+
+## KanbanActionDisabledOutcome
+
+Discoverable action denial with bounded payload-free feedback.
+
+```ts
+interface KanbanActionDisabledOutcome {
+  kind: 'disabled';   // Outcome discriminator.
+  code: string;   // Stable application/package reason code.
+  label?: string;   // Optional safe visible feedback label.
+}
+```
+
+## KanbanActionHandledOutcome
+
+Successful synchronous or asynchronous action completion.
+
+```ts
+interface KanbanActionHandledOutcome {
+  kind: 'handled';   // Outcome discriminator.
+}
+```
+
+## KanbanActionHandler
+
+Handler invoked only after target validation and one allowed capability snapshot.
+
+```ts
+type KanbanActionHandler = (invocation: KanbanActionInvocation) => KanbanActionHandlerResult
+```
+
+## KanbanActionHandlerResult
+
+Result accepted from one package or application action handler.
+
+```ts
+type KanbanActionHandlerResult = KanbanActionTerminalOutcome | Promise<KanbanActionTerminalOutcome>
+```
+
+## KanbanActionHelpItem
+
+Localized presentation for one action in help, menus, status, or a command palette.
+
+```ts
+interface KanbanActionHelpItem {
+  actionId: string;   // Stable package or application action identity.
+  label: string;   // Sanitized concise localized label.
+  help: string;   // Sanitized localized explanation.
+  key?: string;   // Host-resolved visible key chord, when currently bound.
+  visible: boolean;   // Whether the action should be presented for this invocation context.
+  enabled: boolean;   // Whether the presented action is currently invocable.
+}
+```
+
+## KanbanActionHelpOptions
+
+Services used to resolve action presentation through current routing policy.
+
+```ts
+interface KanbanActionHelpOptions {
+  registry: KanbanActionRegistry;   // Stable action metadata inventory.
+  keymap: KanbanActionKeymap;   // Current reactive host-resolved keymap.
+  router: KanbanActionRouter;   // Shared router used to resolve exact capability affordance state.
+  i18n: I18n;   // Application or package locale service.
+}
+```
+
+## KanbanActionHiddenOutcome
+
+Explicitly hidden action outcome used to remove an affordance.
+
+```ts
+interface KanbanActionHiddenOutcome {
+  kind: 'hidden';   // Outcome discriminator.
+}
+```
+
+## KanbanActionInputAdapter
+
+Origin-neutral adapter that keeps input surfaces out of private mutation helpers.
+
+```ts
+interface KanbanActionInputAdapter {
+  keyboard: (
+    event: KanbanActionKeyEvent,
+    target: KanbanActionInvocationTarget,
+  ) => KanbanActionOutcome | undefined;   // Resolves and routes one keyboard event; unbound events return no outcome.
+  pointer: (actionId: string, target: KanbanActionInvocationTarget) => KanbanActionOutcome;   // Routes one exact pointer action through the shared capability/handler path.
+  invoke: (
+    actionId: string,
+    origin: Exclude<KanbanActionOrigin, 'keyboard' | 'pointer'>,
+    target: KanbanActionInvocationTarget,
+  ) => KanbanActionOutcome;   // Routes one menu, context-menu, status, or programmatic action identically.
+  pointerAffordance: (actionId: string, target: KanbanActionInvocationTarget) => KanbanActionAffordance;   // Resolves whether one pointer action should participate in presentation and hit testing.
+}
+```
+
+## KanbanActionInputAdapterOptions
+
+Services used by the keyboard/pointer/chrome action adapter.
+
+```ts
+interface KanbanActionInputAdapterOptions {
+  keymap: KanbanActionKeymap;   // Current semantic keymap.
+  router: KanbanActionRouter;   // One shared action router used by every origin.
+  context: () => KanbanActionInputContext;   // Captures current record-free context once per route or affordance check.
+}
+```
+
+## KanbanActionInputContext
+
+Record-free live state captured immediately before one input-origin action route.
+
+```ts
+interface KanbanActionInputContext {
+  selection: KanbanActionSelectionSnapshot;   // Current selection count only, never selected records.
+  source: KanbanActionSourceSnapshot;   // Current bounded source lifecycle evidence.
+  view: KanbanActionViewSnapshot;   // Current view revision evidence.
+}
+```
+
+## KanbanActionInvocation
+
+One immutable action invocation shared by every origin.
+
+```ts
+interface KanbanActionInvocation {
+  actionId: string;   // Stable package or namespaced application action identity.
+  origin: KanbanActionOrigin;   // UI or programmatic route that initiated the action.
+  target: KanbanActionInvocationTarget;   // Current logical target captured before capability evaluation.
+  selection: KanbanActionSelectionSnapshot;   // Record-free selection summary.
+  source: KanbanActionSourceSnapshot;   // Current source state and optional revision.
+  view: KanbanActionViewSnapshot;   // Current view revision evidence.
+}
+```
+
+## KanbanActionInvocationTarget
+
+Detached logical target captured once before capability and handler execution.
+
+```ts
+type KanbanActionInvocationTarget = | { readonly kind: 'board' }
+  | { readonly kind: 'card'; readonly cardKey: CardKey; readonly revision?: KanbanRevision }
+  | {
+      readonly kind: 'cell';
+      readonly columnId: KanbanColumnId;
+      readonly swimlaneId?: KanbanSwimlaneId;
+    }
+  | { readonly kind: 'column'; readonly columnId: KanbanColumnId; readonly revision?: KanbanRevision }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId; readonly revision?: KanbanRevision }
+```
+
+## KanbanActionKeyBinding
+
+One immutable concrete chord route.
+
+```ts
+interface KanbanActionKeyBinding {
+  chord: string;   // Host-resolved canonical chord.
+  actionId: string;   // Exact registered action identity.
+}
+```
+
+## KanbanActionKeyEvent
+
+Core key event accepted by the semantic Kanban keymap.
+
+```ts
+type KanbanActionKeyEvent = KeyEvent
+```
+
+## KanbanActionKeymap
+
+Public action-keymap surface used by routing and visible help.
+
+```ts
+interface KanbanActionKeymap {
+  resolve: (event: KanbanActionKeyEvent) => string | undefined;   // Returns the exact action for one normalized event, if bound.
+  help: (actionId: string) => string | undefined;   // Returns the resolved visible chord for one action, if bound.
+  snapshot: () => KanbanActionKeymapSnapshot;   // Returns the current immutable routing/help snapshot.
+  replace: (replacement: KanbanActionKeymapReplacement) => boolean;   // Atomically applies a validated runtime binding patch.
+  subscribe: (listener: (snapshot: KanbanActionKeymapSnapshot) => void) => () => void;   // Observes successful replacements; failed replacements publish nothing.
+}
+```
+
+## KanbanActionKeymapConflict
+
+Structured conflict evidence returned without retaining event or record data.
+
+```ts
+interface KanbanActionKeymapConflict {
+  chord: string;   // Concrete host-resolved chord.
+  actionIds: readonly string[];   // Exact actions competing for the chord.
+}
+```
+
+## KanbanActionKeymapConflictError
+
+Raised when exact chord ownership is ambiguous or an override does not match it.
+
+```ts
+new KanbanActionKeymapConflictError(chord: string, actionIds: readonly string[])   // extends Error
+// methods & signals:
+conflict: KanbanActionKeymapConflict
+```
+
+## KanbanActionKeymapHost
+
+Host facts used to resolve semantic `Primary` bindings.
+
+```ts
+interface KanbanActionKeymapHost {
+  kind: 'browser' | 'terminal';   // Browser hosts can preserve Command/Meta; terminal hosts cannot.
+  platform: string;   // Lowercase operating-system platform name such as `linux` or `darwin`.
+}
+```
+
+## KanbanActionKeymapOptions
+
+Options accepted by the conflict-validating action keymap.
+
+```ts
+interface KanbanActionKeymapOptions {
+  registry: KanbanActionRegistry;   // Stable package-plus-application action inventory.
+  host: KanbanActionKeymapHost;   // Host facts used to resolve semantic `Primary`.
+}
+```
+
+## KanbanActionKeymapOverride
+
+Exact existing route that a runtime replacement is allowed to displace.
+
+```ts
+interface KanbanActionKeymapOverride {
+  chord: string;   // Semantic or concrete chord being replaced.
+  replaceActionId: string;   // Exact currently bound action expected at that chord.
+}
+```
+
+## KanbanActionKeymapReplacement
+
+Atomic runtime replacement request.
+
+```ts
+interface KanbanActionKeymapReplacement {
+  bindings: readonly KanbanActionKeymapReplacementBinding[];   // Routes to add or replace after validation.
+  overrides?: readonly KanbanActionKeymapOverride[];   // Exact displacement approvals for conflicting existing routes.
+}
+```
+
+## KanbanActionKeymapReplacementBinding
+
+One proposed runtime binding.
+
+```ts
+interface KanbanActionKeymapReplacementBinding {
+  chord: string;   // Semantic or concrete chord.
+  actionId: string;   // Exact registered destination action.
+}
+```
+
+## KanbanActionKeymapSnapshot
+
+Immutable observable keymap state.
+
+```ts
+interface KanbanActionKeymapSnapshot {
+  revision: number;   // Monotonic replacement revision, beginning at one.
+  bindings: readonly KanbanActionKeyBinding[];   // Complete ordered concrete routes.
+}
+```
+
+## KanbanActionOrigin
+
+Stable origin inventory shared by keyboard, pointer, chrome, and programmatic callers.
+
+```ts
+type KanbanActionOrigin = 'keyboard' | 'menu' | 'context-menu' | 'status' | 'pointer' | 'programmatic'
+```
+
+## KanbanActionOutcome
+
+Immediate or pending outcome returned by the action router.
+
+```ts
+type KanbanActionOutcome = KanbanActionTerminalOutcome | KanbanActionPendingOutcome
+```
+
+## KanbanActionPendingOutcome
+
+Asynchronous action admission with a disposal-aware terminal completion.
+
+```ts
+interface KanbanActionPendingOutcome {
+  kind: 'pending';   // Outcome discriminator.
+  actionId: string;   // Stable action identity whose handler is pending.
+  completion: Promise<KanbanActionTerminalOutcome>;   // Terminal completion; router disposal converts late settlement to unavailable.
+}
+```
+
+## KanbanActionRegistry
+
+Public registry surface consumed by keymaps, help, and routers.
+
+```ts
+interface KanbanActionRegistry {
+  actions: () => readonly KanbanActionDefinition[];   // Returns the complete immutable package-plus-application inventory.
+  action: (actionId: string) => KanbanActionDefinition | undefined;   // Finds one exact action identity without prefix or case folding.
+}
+```
+
+## KanbanActionRegistryOptions
+
+Options accepted by the bounded package-plus-application action registry.
+
+```ts
+interface KanbanActionRegistryOptions {
+  executePackageAction: KanbanActionHandler;   // One board-owned execution seam shared by every package action.
+  extensions?: readonly KanbanActionDefinition[];   // Optional namespaced application actions appended after the package inventory.
+}
+```
+
+## KanbanActionRouter
+
+Public action router shared by every invocation origin.
+
+```ts
+interface KanbanActionRouter {
+  invoke: (invocation: KanbanActionInvocation) => KanbanActionOutcome;   // Evaluates capability once and invokes one exact action.
+  affordance: (invocation: KanbanActionInvocation) => KanbanActionAffordance;   // Resolves affordance visibility/enablement through the same capability path.
+  dispose: () => void;   // Makes retained routes unavailable and invalidates late handler settlement.
+  disposed: () => boolean;   // Reports whether router resources have been released.
+}
+```
+
+## KanbanActionRouterOptions
+
+Options accepted by the bounded shared action router.
+
+```ts
+interface KanbanActionRouterOptions {
+  registry: KanbanActionRegistry;   // Stable action inventory used for exact route lookup.
+  capability?: KanbanCapabilityProvider;   // Optional synchronous UI capability policy.
+  maxDepth?: number;   // Maximum distinct synchronous nesting depth; defaults to 16 and cannot exceed 64.
+}
+```
+
 ## KanbanActionScope
 
 Closed semantic owner carried by one bounded pointer target.
@@ -378,6 +797,27 @@ type KanbanActionScope = | { readonly kind: 'board' }
       readonly state: KanbanStructureStateCode;
       readonly address?: KanbanCellAddress;
     }
+```
+
+## KanbanActionSelectionSnapshot
+
+Bounded record-free selection evidence supplied to capabilities and handlers.
+
+```ts
+interface KanbanActionSelectionSnapshot {
+  count: number;   // Current selected-card count without card payloads.
+}
+```
+
+## KanbanActionSourceSnapshot
+
+Bounded source lifecycle evidence supplied to capabilities and handlers.
+
+```ts
+interface KanbanActionSourceSnapshot {
+  state: 'ready' | 'loading' | 'error' | 'disposed';   // Current source/query availability.
+  revision?: KanbanRevision;   // Optional equality-only source revision.
+}
 ```
 
 ## KanbanActionTarget
@@ -398,6 +838,43 @@ interface KanbanActionTarget {
   regionId?: string;   // Descriptor-local region identity for a card action.
   state?: KanbanStructureStateCode;   // Structural state code for state and retry targets.
   reorder?: 'allowed' | 'blocked-derived';   // Header reorder availability; derived swimlanes remain explicitly blocked.
+}
+```
+
+## KanbanActionTargetKind
+
+Logical applicability declared by one action definition.
+
+```ts
+type KanbanActionTargetKind = 'board' | 'card' | 'cell' | 'column' | 'swimlane' | 'selection' | 'any'
+```
+
+## KanbanActionTerminalOutcome
+
+Terminal action outcome returned after eligibility and handler execution.
+
+```ts
+type KanbanActionTerminalOutcome = KanbanActionHandledOutcome | KanbanActionDisabledOutcome | KanbanActionHiddenOutcome | KanbanActionUnavailableOutcome
+```
+
+## KanbanActionUnavailableOutcome
+
+Missing or disposed route outcome.
+
+```ts
+interface KanbanActionUnavailableOutcome {
+  kind: 'unavailable';   // Outcome discriminator.
+  code: 'action-unavailable' | 'router-disposed' | 'action-depth-exceeded' | 'action-reentrant';   // Stable payload-free reason code.
+}
+```
+
+## KanbanActionViewSnapshot
+
+Bounded active-view evidence supplied to capabilities and handlers.
+
+```ts
+interface KanbanActionViewSnapshot {
+  revision?: KanbanRevision;   // Optional equality-only active view revision.
 }
 ```
 
@@ -571,6 +1048,14 @@ interface KanbanCapabilityDescription {
   reasonCode?: string;   // Optional stable application reason code for diagnostics or localization.
   label?: string;   // Optional sanitized display label.
 }
+```
+
+## KanbanCapabilityProvider
+
+Pure synchronous UI-eligibility provider; application authorization remains separate.
+
+```ts
+type KanbanCapabilityProvider = (context: KanbanActionCapabilityContext) => KanbanActionCapability
 ```
 
 ## KanbanCapabilityState
@@ -4689,6 +5174,14 @@ interface KanbanOverscanOptions {
 }
 ```
 
+## KanbanPackageActionId
+
+Stable package action identity.
+
+```ts
+type KanbanPackageActionId = (typeof KANBAN_ACTION_IDS)[number]
+```
+
 ## KanbanPendingNavigation
 
 Navigation work that is waiting for a bounded reveal or data acquisition.
@@ -4841,6 +5334,14 @@ interface KanbanPresentationPresetDefaultManifest {
   comfortable: KanbanPresentationPresetDefault;   // Default preset balancing scanability and optional card detail.
   spacious: KanbanPresentationPresetDefault;   // Detail-oriented preset for larger terminal surfaces.
 }
+```
+
+## KanbanPrimaryModifier
+
+Concrete modifier used for semantic `Primary` on one host.
+
+```ts
+type KanbanPrimaryModifier = 'ctrl' | 'meta'
 ```
 
 ## KanbanPublicationExpectation
@@ -8519,6 +9020,38 @@ Creates a pure localized descriptor that fits the supplied render budget.
 createFallbackKanbanCardDescriptor(context: KanbanCardRenderContext, labels: KanbanCardFallbackLabels): KanbanCardDescriptor
 ```
 
+## createKanbanActionInputAdapter
+
+Creates keyboard, pointer, and chrome adapters over one action router.
+
+```ts
+createKanbanActionInputAdapter(options: KanbanActionInputAdapterOptions): KanbanActionInputAdapter
+```
+
+## createKanbanActionKeymap
+
+Creates a host-resolved, conflict-validating action keymap with atomic replacement.
+
+```ts
+createKanbanActionKeymap(options: KanbanActionKeymapOptions): KanbanActionKeymap
+```
+
+## createKanbanActionRegistry
+
+Creates one immutable package-plus-application action inventory.
+
+```ts
+createKanbanActionRegistry(options: KanbanActionRegistryOptions): KanbanActionRegistry
+```
+
+## createKanbanActionRouter
+
+Creates the one shared action router for keyboard, pointer, chrome, and programmatic origins.
+
+```ts
+createKanbanActionRouter(options: KanbanActionRouterOptions): KanbanActionRouter
+```
+
 ## createKanbanBoardEditorBinding
 
 Creates a board binding that opens the standard or replaced edit dialog for activated cards.
@@ -8671,12 +9204,28 @@ Create a bounded registry that rejects active and recently completed operation-I
 createKanbanOperationIdRegistry(options: KanbanOperationIdRegistryOptions = {}): KanbanOperationIdRegistry
 ```
 
+## createKanbanPackageActions
+
+Completes the stable package inventory with one board-owned execution seam.
+
+```ts
+createKanbanPackageActions(execute: KanbanActionHandler): readonly KanbanActionDefinition[]
+```
+
 ## createKanbanPendingProjection
 
 Build the payload-free pending projection for one already-validated proposal.
 
 ```ts
 createKanbanPendingProjection(proposal: KanbanRequestProposal): KanbanPendingProjection
+```
+
+## createKanbanReadOnlyCapabilityProvider
+
+Creates the standard read-only UX capability policy.
+
+```ts
+createKanbanReadOnlyCapabilityProvider(): KanbanCapabilityProvider
 ```
 
 ## createKanbanRequestEnvelope
@@ -8823,6 +9372,14 @@ Validate and dispatch one request through the stable Promise-based public contra
 dispatchKanbanRequest(request: KanbanRequest, dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown, context: KanbanRequestContext): Promise<KanbanRequestResult>
 ```
 
+## evaluateKanbanActionCapability
+
+Evaluates one synchronous provider and contains every exception as redacted disabled feedback.
+
+```ts
+evaluateKanbanActionCapability(provider: KanbanCapabilityProvider | undefined, context: KanbanActionCapabilityContext): KanbanActionCapability
+```
+
 ## evaluateKanbanColumnDeletion
 
 Evaluates whether a column deletion is confirmable, blocked, or ready for an atomic policy.
@@ -8879,6 +9436,14 @@ Derives a stable browser-safe 64-bit fingerprint from the canonical semantic sna
 fingerprintKanbanSemanticValue(value: unknown): string
 ```
 
+## formatKanbanActionChord
+
+Formats one already-normalized concrete chord for visible help and menus.
+
+```ts
+formatKanbanActionChord(chord: string): string
+```
+
 ## isKanbanPlacementTokenCurrent
 
 Check opaque token membership only after validating the complete current source-owned set.
@@ -8909,6 +9474,14 @@ Advances an older detached saved-view envelope through each registered version e
 
 ```ts
 migrateKanbanSavedView(input: unknown, options: KanbanSavedViewMigrationOptions = {}): KanbanSavedViewMigrationResult
+```
+
+## normalizeKanbanActionChord
+
+Resolves and canonicalizes one semantic chord using the same grammar as Core keymaps.
+
+```ts
+normalizeKanbanActionChord(chord: string, primary: KanbanPrimaryModifier): string
 ```
 
 ## normalizeKanbanConfigurationName
@@ -9063,6 +9636,14 @@ Snapshots and composes an application-owned card through the standard rich-card 
 renderStandardKanbanCard<TCard>(card: TCard, adapter: KanbanCardPresentationAdapter<TCard>, context: KanbanCardRenderContext): KanbanCardDescriptor
 ```
 
+## resolveKanbanActionHelp
+
+Resolves one localized action presentation from the same registry, keymap, and capability route.
+
+```ts
+resolveKanbanActionHelp(options: KanbanActionHelpOptions, invocation: KanbanActionInvocation): KanbanActionHelpItem | undefined
+```
+
 ## resolveKanbanCardPresentationSelection
 
 Resolves one card's optional section order without changing numeric view maxima.
@@ -9093,6 +9674,14 @@ Resolves a named or custom presentation policy into one bounded immutable budget
 
 ```ts
 resolveKanbanPresentation(input: KanbanPresentationInput = 'comfortable', limits?: KanbanResolvedLimits): ResolvedKanbanPresentationBudget
+```
+
+## resolveKanbanPrimaryModifier
+
+Resolves Command only where a macOS browser can preserve it, and Ctrl everywhere else.
+
+```ts
+resolveKanbanPrimaryModifier(host: KanbanActionKeymapHost): KanbanPrimaryModifier
 ```
 
 ## resolveKanbanSceneWindow

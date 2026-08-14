@@ -6,7 +6,7 @@ import type {
   KanbanActionRouter,
   KanbanActionSelectionSnapshot,
   KanbanActionSourceSnapshot,
-  KanbanActionTarget,
+  KanbanActionInvocationTarget,
   KanbanActionViewSnapshot,
 } from './types.js';
 import type { KanbanActionKeyEvent } from './types.js';
@@ -35,17 +35,20 @@ export interface KanbanActionInputAdapterOptions {
 /** Origin-neutral adapter that keeps input surfaces out of private mutation helpers. */
 export interface KanbanActionInputAdapter {
   /** Resolves and routes one keyboard event; unbound events return no outcome. */
-  readonly keyboard: (event: KanbanActionKeyEvent, target: KanbanActionTarget) => KanbanActionOutcome | undefined;
+  readonly keyboard: (
+    event: KanbanActionKeyEvent,
+    target: KanbanActionInvocationTarget,
+  ) => KanbanActionOutcome | undefined;
   /** Routes one exact pointer action through the shared capability/handler path. */
-  readonly pointer: (actionId: string, target: KanbanActionTarget) => KanbanActionOutcome;
+  readonly pointer: (actionId: string, target: KanbanActionInvocationTarget) => KanbanActionOutcome;
   /** Routes one menu, context-menu, status, or programmatic action identically. */
   readonly invoke: (
     actionId: string,
     origin: Exclude<KanbanActionOrigin, 'keyboard' | 'pointer'>,
-    target: KanbanActionTarget,
+    target: KanbanActionInvocationTarget,
   ) => KanbanActionOutcome;
   /** Resolves whether one pointer action should participate in presentation and hit testing. */
-  readonly pointerAffordance: (actionId: string, target: KanbanActionTarget) => KanbanActionAffordance;
+  readonly pointerAffordance: (actionId: string, target: KanbanActionInvocationTarget) => KanbanActionAffordance;
 }
 
 /** Payload-free failure used when the application context seam cannot be safely read. */
@@ -61,7 +64,7 @@ function invocation(
   options: KanbanActionInputAdapterOptions,
   actionId: string,
   origin: KanbanActionOrigin,
-  target: KanbanActionTarget,
+  target: KanbanActionInvocationTarget,
 ): KanbanActionInvocation | undefined {
   try {
     const context = options.context();

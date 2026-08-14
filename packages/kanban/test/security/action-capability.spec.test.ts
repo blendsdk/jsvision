@@ -112,7 +112,7 @@ describe('Kanban action capability boundary', () => {
       operationId: request.operationId,
       code: 'application-denied',
     }));
-    const authority = new KanbanBoardAuthority(dispatcher, () => ({}));
+    const authority = new KanbanBoardAuthority(dispatcher, () => ({}), { confirm: () => true });
 
     await expect(authority.request({ kind: 'card-delete', cardKey: 42 })).resolves.toMatchObject({
       kind: 'rejected',

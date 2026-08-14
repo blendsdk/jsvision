@@ -113,6 +113,15 @@ export {
 } from './configuration/swimlane-dialog.js';
 export * from './configuration/types.js';
 export { createKanbanConfigurationSnapshot, normalizeKanbanConfigurationName } from './configuration/validation.js';
+export * from './command/actions.js';
+export * from './command/capability.js';
+export * from './command/defaults.js';
+export * from './command/help.js';
+export * from './command/input-adapter.js';
+export * from './command/keymap.js';
+export * from './command/registry.js';
+export * from './command/router.js';
+export * from './command/types.js';
 export * from './i18n/catalog.js';
 export type {
   KanbanActivateOptions,

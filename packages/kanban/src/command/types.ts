@@ -14,7 +14,7 @@ export type KanbanActionCategory =
 export type KanbanActionTargetKind = 'board' | 'card' | 'cell' | 'column' | 'swimlane' | 'selection' | 'any';
 
 /** Detached logical target captured once before capability and handler execution. */
-export type KanbanActionTarget =
+export type KanbanActionInvocationTarget =
   | { readonly kind: 'board' }
   | { readonly kind: 'card'; readonly cardKey: CardKey; readonly revision?: KanbanRevision }
   | {
@@ -52,7 +52,7 @@ export interface KanbanActionInvocation {
   /** UI or programmatic route that initiated the action. */
   readonly origin: KanbanActionOrigin;
   /** Current logical target captured before capability evaluation. */
-  readonly target: KanbanActionTarget;
+  readonly target: KanbanActionInvocationTarget;
   /** Record-free selection summary. */
   readonly selection: KanbanActionSelectionSnapshot;
   /** Current source state and optional revision. */

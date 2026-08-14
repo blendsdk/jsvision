@@ -13,7 +13,7 @@ import type {
   KanbanActionRegistry,
   KanbanActionRouter,
   KanbanActionSourceSnapshot,
-  KanbanActionTarget,
+  KanbanActionInvocationTarget,
   KanbanActionTerminalOutcome,
   KanbanCapabilityProvider,
 } from './types.js';
@@ -56,7 +56,7 @@ const SOURCE_KEYS = new Set(['state', 'revision']);
 /** Exact members accepted in one view summary. */
 const VIEW_KEYS = new Set(['revision']);
 /** Exact members accepted by every target variant. */
-const TARGET_KEYS: Readonly<Record<KanbanActionTarget['kind'], ReadonlySet<string>>> = Object.freeze({
+const TARGET_KEYS: Readonly<Record<KanbanActionInvocationTarget['kind'], ReadonlySet<string>>> = Object.freeze({
   board: new Set(['kind']),
   card: new Set(['kind', 'cardKey', 'revision']),
   cell: new Set(['kind', 'columnId', 'swimlaneId']),
@@ -116,7 +116,7 @@ function isBoundedActionId(value: unknown): value is string {
 }
 
 /** Narrows an unknown target discriminator without coercing application input. */
-function isActionTargetKind(value: unknown): value is KanbanActionTarget['kind'] {
+function isActionTargetKind(value: unknown): value is KanbanActionInvocationTarget['kind'] {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(TARGET_KEYS, value);
 }
 
@@ -126,7 +126,7 @@ function optionalRevision(value: unknown): ReturnType<typeof snapshotKanbanRevis
 }
 
 /** Copies and validates one closed logical target. */
-function snapshotTarget(value: unknown): KanbanActionTarget {
+function snapshotTarget(value: unknown): KanbanActionInvocationTarget {
   const properties = snapshotKanbanDataProperties(value, 3);
   const kind = properties.kind;
   if (!isActionTargetKind(kind)) throw new Error('Invalid action target.');

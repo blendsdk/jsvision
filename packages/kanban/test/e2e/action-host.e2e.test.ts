@@ -3,6 +3,7 @@ import { createBrowserDomInputAdapter } from '@jsvision/web';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createKanbanActionRegistry, createKanbanActionRouter } from '../../src/index.js';
+import type { KanbanActionInvocation } from '../../src/index.js';
 
 describe('Kanban browser action host', () => {
   it('routes a macOS Command-click once and suppresses its matching SGR duplicate', () => {
@@ -18,7 +19,7 @@ describe('Kanban browser action host', () => {
       setPointerCapture: vi.fn(),
       releasePointerCapture: vi.fn(),
     };
-    const handler = vi.fn(() => ({ kind: 'handled' as const }));
+    const handler = vi.fn((_invocation: KanbanActionInvocation) => ({ kind: 'handled' as const }));
     const registry = createKanbanActionRegistry({ executePackageAction: handler });
     const router = createKanbanActionRouter({ registry });
     const adapter = createBrowserDomInputAdapter({

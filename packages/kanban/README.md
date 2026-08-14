@@ -191,6 +191,50 @@ const board = new KanbanBoard({
 await board.interaction().transition({ kind: 'navigate', direction: 'down' });
 ```
 
+## Actions, keymaps, and read-only presentation
+
+The action layer publishes stable IDs for navigation, selection, cards, structure, views, help, and
+history. A bounded registry combines the package inventory with optional namespaced application
+actions. Every keyboard, pointer, menu, context-menu, status, and programmatic invocation can then use
+the same router, capability snapshot, and handler seam.
+
+```ts
+import {
+  createKanbanActionInputAdapter,
+  createKanbanActionKeymap,
+  createKanbanActionRegistry,
+  createKanbanActionRouter,
+} from '@jsvision/kanban';
+
+const registry = createKanbanActionRegistry({
+  executePackageAction: (invocation) => executeBoardAction(invocation),
+});
+const keymap = createKanbanActionKeymap({
+  registry,
+  host: { kind: 'terminal', platform: process.platform },
+});
+const router = createKanbanActionRouter({ registry });
+const input = createKanbanActionInputAdapter({
+  keymap,
+  router,
+  context: () => ({
+    selection: { count: board.interaction().snapshot().selectedCardKeys.length },
+    source: { state: 'ready' },
+    view: {},
+  }),
+});
+```
+
+`Primary` resolves to Command on a macOS browser that preserves Meta input and to Ctrl on native
+terminals and other hosts. Runtime binding replacement is atomic: an exact conflict requires an
+override naming both the chord and the currently bound action, and visible help reads the same updated
+snapshot. Destructive and board-configuration actions are public but unbound by default.
+
+Use `createKanbanReadOnlyCapabilityProvider()` for discoverable read-only presentation. It hides
+mutation pointer hit targets and disables mutation keyboard/menu routes while retaining navigation,
+selection, search, viewing, and help. This is a UX policy, not authorization: raw application requests
+still reach the application's normal authority boundary.
+
 ## Hosting and lifecycle
 
 `KanbanBoard` owns exactly one `KanbanViewport`. It does not create a window, dialog, shadow, or
