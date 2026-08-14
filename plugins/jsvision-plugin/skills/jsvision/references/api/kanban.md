@@ -323,6 +323,14 @@ Package-owned deterministic interaction timings.
 const KANBAN_TIMING_DEFAULTS: KanbanTimingDefaults
 ```
 
+## KANBAN_VIEW_SEARCH_DEBOUNCE_MS
+
+Standard delay between search input and one committed query publication.
+
+```ts
+const KANBAN_VIEW_SEARCH_DEBOUNCE_MS: 150
+```
+
 ## KanbanActionScope
 
 Closed semantic owner carried by one bounded pointer target.
@@ -448,12 +456,7 @@ Construction options for the responsive board shell and application authority se
 
 ```ts
 interface KanbanBoardOptions<TCard> {
-  view?: {
-    /** Complete semantic view owner bound atomically over legacy getters. */
-    readonly controller: KanbanViewController;
-    /** Optional package view bar; omission keeps controller binding headless. */
-    readonly chrome?: 'standard';
-  };   // Optional controller-owned view projection and package standard chrome.
+  view?: KanbanBoardViewOptions;   // Optional controller-owned view projection and package standard chrome.
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
   confirmOperation?: KanbanConfirmer;   // Optional confirmation callback for warning and destructive operation proposals.
@@ -474,6 +477,17 @@ Localized board-wide state shown by the board shell.
 type KanbanBoardState = | { readonly kind: 'no-columns'; readonly label: string }
   | { readonly kind: 'minimum-size'; readonly label: string }
   | { readonly kind: KanbanSourceState['kind']; readonly label: string }
+```
+
+## KanbanBoardViewOptions
+
+Optional controller-owned projection and standard chrome composed by a KanbanBoard.
+
+```ts
+interface KanbanBoardViewOptions {
+  controller: KanbanViewController;   // Complete semantic view owner bound over the board's legacy view getters.
+  chrome?: 'standard';   // Optional package view bar; omission keeps controller binding headless.
+}
 ```
 
 ## KanbanBuiltInActionId
@@ -1462,6 +1476,30 @@ interface KanbanColumnUpdateProposal {
 }
 ```
 
+## KanbanColumnViewItem
+
+View-only overrides for one workflow column.
+
+```ts
+interface KanbanColumnViewItem {
+  columnId: KanbanColumnId;   // Stable column identity.
+  visible: boolean;   // Whether the column participates in the visible projection.
+  collapsed: boolean;   // Whether the visible column is collapsed.
+  width?: number;   // Optional preferred terminal-cell width before runtime clamping.
+  alignment?: 'start' | 'center';   // Optional header alignment override.
+}
+```
+
+## KanbanColumnViewState
+
+Ordered complete column-personalization state owned by the view controller.
+
+```ts
+interface KanbanColumnViewState {
+  items: readonly KanbanColumnViewItem[];   // Columns in requested display order.
+}
+```
+
 ## KanbanColumnWidthInput
 
 Width constraints supplied for one source-ordered workflow column.
@@ -1874,6 +1912,14 @@ interface KanbanFilterOperator<TCard> {
 }
 ```
 
+## KanbanFilterSelection
+
+One active registered field filter retained by view state.
+
+```ts
+type KanbanFilterSelection = KanbanFilter
+```
+
 ## KanbanFocusTarget
 
 A semantic board target that may own keyboard focus.
@@ -2025,6 +2071,17 @@ Complete pure grouping result.
 type KanbanGroupingResult<TCardKey extends CardKey = CardKey> = KanbanUngroupedResult | KanbanGroupedResult<TCardKey>
 ```
 
+## KanbanGroupingSelection
+
+The single semantic grouping selected by a view.
+
+```ts
+interface KanbanGroupingSelection {
+  fieldId: KanbanFieldId;   // Registered source grouping field.
+  variantId?: KanbanExtensionId;   // Optional application-namespaced presentation variant.
+}
+```
+
 ## KanbanGroupingSummary
 
 One application-owned numeric/text summary associated with a semantic swimlane.
@@ -2109,9 +2166,19 @@ interface KanbanInspectedCard {
   cardKey: CardKey;   // Stable application-owned card identity.
   columnId: string;   // Containing workflow column identity.
   address: KanbanCellAddress;   // Complete semantic cell address containing the card.
-  descriptor: import('../card/descriptor.js').KanbanCardDescriptor;   // Validated immutable descriptor retained for modeless diagnostics and specification evidence.
+  descriptor: KanbanInspectedCardDescriptor;   // Validated immutable descriptor retained for modeless diagnostics and specification evidence.
   title: string;   // Sanitized visible title projection.
   marker: { readonly cues: readonly string[] };   // Non-color marker projected with the visible descriptor.
+}
+```
+
+## KanbanInspectedCardDescriptor
+
+Descriptor evidence enriched with the density selected by the owning viewport projection.
+
+```ts
+interface KanbanInspectedCardDescriptor {
+  density: KanbanCardDensity;   // Density used to construct and lay out the descriptor.
 }
 ```
 
@@ -2572,6 +2639,18 @@ interface KanbanLayoutRegion {
 }
 ```
 
+## KanbanLegacySortField
+
+Source-compatible single-comparator adapter retained for existing applications.
+
+```ts
+interface KanbanLegacySortField<TCard> {
+  fieldId: KanbanFieldId;   // Semantic field selected by a sort directive.
+  compare: (left: TCard, right: TCard) => -1 | 0 | 1;   // Compares two cards in ascending semantic order.
+  comparators?: never;   // Legacy fields cannot also register named comparators.
+}
+```
+
 ## KanbanLimitClass
 
 Resource class selected by a component instance.
@@ -2868,6 +2947,18 @@ interface KanbanMovedCardSnapshot {
   sourcePlacement: KanbanMovePosition;   // Source-issued semantic placement at capture time.
   sourceRevision: KanbanRevision;   // Equality-only source-cell revision captured with the placement.
   entityRevision: KanbanRevision;   // Equality-only card revision captured with the placement.
+}
+```
+
+## KanbanMultiComparatorSortField
+
+Additive multi-comparator adapter for one semantic sort field.
+
+```ts
+interface KanbanMultiComparatorSortField<TCard> {
+  fieldId: KanbanFieldId;   // Semantic field selected by a sort directive.
+  comparators: readonly KanbanSortComparator<TCard>[];   // Named comparators; exactly one default is required when several are registered.
+  compare?: never;   // Named-comparator fields cannot also provide the legacy comparator.
 }
 ```
 
@@ -3370,6 +3461,42 @@ interface KanbanQuerySession<TCard> {
   locateCard?(key: CardKey, options?: { readonly signal?: AbortSignal }): Promise<KanbanCardLocation> | KanbanCardLocation;   // Performs one bounded optional identity lookup without scanning cursor contents.
   swimlaneLayoutHints?(request: KanbanSwimlaneLayoutHintRequest, options?: { readonly signal?: AbortSignal }): Promise<KanbanSwimlaneLayoutHintBatch> | KanbanSwimlaneLayoutHintBatch;   // Optionally returns payload-free aggregate swimlane extents for preliminary grouped layout. The signal aborts only this hint request and never disposes the owning query session.
   dispose(): void;   // Releases session work and child resources idempotently.
+}
+```
+
+## KanbanQuickFilterParameterCodec
+
+Parameter boundary for one registered quick filter.
+
+```ts
+interface KanbanQuickFilterParameterCodec {
+  snapshot: (value: unknown) => KanbanSemanticValue;   // Validates and detaches application input before it enters view state.
+}
+```
+
+## KanbanQuickFilterRegistration
+
+Application metadata and behavior for one named quick filter.
+
+```ts
+interface KanbanQuickFilterRegistration<TCard = unknown> {
+  id: KanbanExtensionId;   // Stable application-namespaced quick-filter identity.
+  labelId: string;   // Stable localized message identity displayed by package chrome.
+  predicate: (card: TCard, value?: KanbanSemanticValue) => boolean;   // Evaluates one card; registered code never enters a saved view.
+  parameterCodec?: KanbanQuickFilterParameterCodec;   // Optional detached parameter validator.
+  sensitive?: boolean;   // Whether diagnostics must suppress the parameter value.
+  applicable?: () => boolean;   // Optional pure availability predicate for application context.
+}
+```
+
+## KanbanQuickFilterSelection
+
+One active application quick filter and its optional detached parameter.
+
+```ts
+interface KanbanQuickFilterSelection {
+  id: KanbanExtensionId;   // Stable application-namespaced quick-filter identity.
+  value?: KanbanSemanticValue;   // Optional inert parameter interpreted only by the registered filter.
 }
 ```
 
@@ -4040,6 +4167,14 @@ interface KanbanScrollTarget {
 }
 ```
 
+## KanbanSearchPolicy
+
+Determines whether raw search text is eligible for durable saved-view capture.
+
+```ts
+type KanbanSearchPolicy = 'transient' | 'durable'
+```
+
 ## KanbanSelectionEntry
 
 One eligible selected card detached from live cursor and application ownership.
@@ -4148,6 +4283,18 @@ interface KanbanSort {
   fieldId: KanbanFieldId;   // Application field evaluated by a registered sort adapter.
   comparatorId?: KanbanExtensionId;   // Optional registered comparator; omission selects the field's declared default.
   direction: 'ascending' | 'descending';   // Requested order for values of the field.
+}
+```
+
+## KanbanSortComparator
+
+One named ascending comparator registered for an eager sort field.
+
+```ts
+interface KanbanSortComparator<TCard> {
+  comparatorId: KanbanExtensionId;   // Application-namespaced identity selected by a query sort directive.
+  compare: (left: TCard, right: TCard) => -1 | 0 | 1;   // Compares two cards in ascending semantic order.
+  default?: boolean;   // Selects this comparator when the query omits `comparatorId`.
 }
 ```
 
@@ -4827,6 +4974,28 @@ interface KanbanSwimlaneUpdateProposal {
 }
 ```
 
+## KanbanSwimlaneViewItem
+
+View-only overrides for one semantic swimlane.
+
+```ts
+interface KanbanSwimlaneViewItem {
+  swimlaneId: KanbanSwimlaneId;   // Stable swimlane identity.
+  visible: boolean;   // Whether the swimlane participates in the visible projection.
+  collapsed: boolean;   // Whether the visible swimlane is collapsed.
+}
+```
+
+## KanbanSwimlaneViewState
+
+Ordered complete swimlane-personalization state owned by the view controller.
+
+```ts
+interface KanbanSwimlaneViewState {
+  items: readonly KanbanSwimlaneViewItem[];   // Swimlanes in requested display order.
+}
+```
+
 ## KanbanTheme
 
 Versioned complete package-local semantic palette consumed by card descriptors.
@@ -5081,12 +5250,244 @@ interface KanbanVerticalProjectionExtent {
 }
 ```
 
+## KanbanViewBar
+
+Responsive three-row search and view-control surface for a KanbanViewController.
+
+```ts
+new KanbanViewBar(options: KanbanViewBarOptions)   // extends Group
+// methods & signals:
+focusSearch(): void
+inspection(): KanbanViewBarInspection
+```
+
+## KanbanViewBarControlId
+
+Stable semantic identities for controls in the package-owned view bar.
+
+```ts
+type KanbanViewBarControlId = 'search' | 'quick-filters' | 'sort' | 'saved-views' | 'clear' | 'overflow'
+```
+
+## KanbanViewBarControlInspection
+
+Detached geometry and reachability evidence for one semantic bar control.
+
+```ts
+interface KanbanViewBarControlInspection {
+  id: KanbanViewBarControlId;   // Stable semantic control identity.
+  visible: boolean;   // Whether the control is directly visible rather than represented in overflow.
+  bounds: Readonly<Rect>;   // Parent-relative terminal-cell bounds.
+  keyboardReachable: boolean;   // Whether the action is reachable through the bar's keyboard model.
+  mouseTarget?: Readonly<Rect>;   // Mouse hit target when the control is visible.
+}
+```
+
+## KanbanViewBarInspection
+
+Complete bounded inspection of one responsive standard view bar.
+
+```ts
+interface KanbanViewBarInspection {
+  mode: KanbanViewBarMode;   // Current responsive presentation.
+  searchDraft: string;   // Immediate search draft, which may be newer than committed controller state.
+  focusedControlId?: KanbanViewBarControlId;   // Last semantic control explicitly focused within the bar.
+  controls: readonly KanbanViewBarControlInspection[];   // Every standard control, including currently overflowed controls.
+  overflowActionIds: readonly string[];   // Stable action IDs represented by the narrow overflow control.
+  overflowEntries: readonly KanbanViewBarOverflowEntryInspection[];   // Keyboard and mouse reachability of each overflow action.
+}
+```
+
+## KanbanViewBarMode
+
+Responsive presentation selected from the bar's current terminal width.
+
+```ts
+type KanbanViewBarMode = 'wide' | 'narrow'
+```
+
+## KanbanViewBarOptions
+
+Construction options for the package-owned standard view chrome.
+
+```ts
+interface KanbanViewBarOptions {
+  controller: KanbanViewController;   // Controller that owns committed semantic view state.
+}
+```
+
+## KanbanViewBarOverflowEntryInspection
+
+Detached reachability evidence for one action represented by narrow overflow.
+
+```ts
+interface KanbanViewBarOverflowEntryInspection {
+  actionId: string;   // Stable package action identifier.
+  keyboardReachable: boolean;   // Whether keyboard navigation can select the action.
+  mouseReachable: boolean;   // Whether the overflow surface provides a mouse target for the action.
+}
+```
+
+## KanbanViewController
+
+Disposable owner of one immutable committed Kanban view projection.
+
+```ts
+interface KanbanViewController {
+  state: () => KanbanViewState;   // Returns the current committed state snapshot.
+  query: () => KanbanQuery;   // Returns the current committed source query.
+  summary: () => KanbanViewSummary;   // Returns honest source/projection counts for the committed query.
+  apply(transition: KanbanViewTransition): KanbanViewTransitionResult;   // Requests one exact view transition.
+  replace(state: unknown): KanbanViewTransitionResult;   // Replaces the complete state after exact bounded validation.
+  clearFilters(): KanbanViewTransitionResult;   // Clears search, field filters, and quick filters atomically.
+  subscribe(subscriber: KanbanViewSubscriber): () => void;   // Subscribes to committed state/query publications.
+  dispose(): void;   // Cancels pending work and makes future transitions unavailable.
+}
+```
+
+## KanbanViewControllerInitialState
+
+Ergonomic initial facets accepted by the controller constructor.
+
+```ts
+interface KanbanViewControllerInitialState {
+  searchPolicy?: KanbanSearchPolicy;   // Initial search persistence policy.
+  search?: string;   // Initial sanitized search text committed with the first controller snapshot.
+  density?: KanbanCardDensity;   // Initial card density.
+}
+```
+
+## KanbanViewControllerOptions
+
+Construction options for one independent view controller.
+
+```ts
+interface KanbanViewControllerOptions {
+  initial?: KanbanViewControllerInitialState;   // Optional initial controller-owned facets.
+  debounceMs?: number;   // Whole-millisecond search debounce; defaults to 150 ms.
+}
+```
+
+## KanbanViewEmptyState
+
+Semantic empty-state distinction derived from the active view and source publication.
+
+```ts
+type KanbanViewEmptyState = 'none' | 'true' | 'filtered' | 'loading' | 'partial' | 'error'
+```
+
 ## KanbanViewId
 
 A validated saved-view identity.
 
 ```ts
 type KanbanViewId = string
+```
+
+## KanbanViewPresentation
+
+Durable card-presentation facets owned by one view.
+
+```ts
+interface KanbanViewPresentation {
+  density: KanbanCardDensity;   // Named card-density preset.
+  cardFieldIds: readonly KanbanFieldId[];   // Optional ordered allowlist of application card fields.
+  checklist: 'hidden' | 'progress' | 'preview';   // Whether bounded checklist presentation is enabled.
+}
+```
+
+## KanbanViewRegistry
+
+Immutable behavior registry used by view state and standard chrome.
+
+```ts
+interface KanbanViewRegistry<TCard = unknown> {
+  quickFilters: readonly KanbanQuickFilterRegistration<TCard>[];   // Detached ordered quick-filter registrations.
+  quickFilter(id: KanbanExtensionId): KanbanQuickFilterRegistration<TCard> | undefined;   // Looks up a quick filter without interpreting untrusted view data.
+}
+```
+
+## KanbanViewRegistryOptions
+
+Input accepted by the bounded view registry constructor.
+
+```ts
+interface KanbanViewRegistryOptions<TCard = unknown> {
+  quickFilters?: readonly KanbanQuickFilterRegistration<TCard>[];   // Finite named quick-filter registrations.
+}
+```
+
+## KanbanViewState
+
+Complete immutable semantic view snapshot.
+
+```ts
+interface KanbanViewState {
+  searchPolicy: KanbanSearchPolicy;   // Persistence treatment for raw search text.
+  search: string;   // Last committed sanitized search value.
+  filters: readonly KanbanFilterSelection[];   // Ordered active field filters.
+  quickFilters: readonly KanbanQuickFilterSelection[];   // Ordered jointly active named quick filters.
+  sort: readonly KanbanSort[];   // Ordered stable sort directives.
+  grouping?: KanbanGroupingSelection;   // Optional single semantic grouping.
+  columns: KanbanColumnViewState;   // Complete column view facets.
+  swimlanes: KanbanSwimlaneViewState;   // Complete swimlane view facets.
+  presentation: KanbanViewPresentation;   // Complete durable card presentation.
+  revision: KanbanRevision;   // Equality-only revision changed once per committed transition.
+}
+```
+
+## KanbanViewSubscriber
+
+Observer invoked after a complete state/query pair becomes publicly visible.
+
+```ts
+type KanbanViewSubscriber = (state: KanbanViewState, query: KanbanQuery) => void
+```
+
+## KanbanViewSummary
+
+Honest count and empty-state snapshot exposed by a view controller.
+
+```ts
+interface KanbanViewSummary {
+  total: KanbanCount;   // Authoritative records before search and filters.
+  matching: KanbanCount;   // Records matching the active semantic query.
+  loaded: KanbanCount;   // Records currently resident in the active source session.
+  visible: number;   // Cards currently projected into the viewport.
+  selected: number;   // Selected visible identities in the active interaction projection.
+  wip: KanbanCount;   // Authoritative work-in-progress count, never derived from filtered visibility.
+  emptyState: KanbanViewEmptyState;   // Distinguishes filtered absence from true or unavailable source states.
+}
+```
+
+## KanbanViewTransition
+
+Atomic user or application request to change controller-owned view state.
+
+```ts
+type KanbanViewTransition = | { readonly kind: 'set-search'; readonly search: string }
+  | { readonly kind: 'set-search-policy'; readonly policy: KanbanSearchPolicy }
+  | { readonly kind: 'set-filters'; readonly filters: readonly KanbanFilterSelection[] }
+  | { readonly kind: 'set-quick-filters'; readonly quickFilters: readonly KanbanQuickFilterSelection[] }
+  | { readonly kind: 'set-sort'; readonly sort: readonly KanbanSort[] }
+  | { readonly kind: 'set-grouping'; readonly grouping?: KanbanGroupingSelection }
+  | { readonly kind: 'set-columns'; readonly columns: KanbanColumnViewState }
+  | { readonly kind: 'set-swimlanes'; readonly swimlanes: KanbanSwimlaneViewState }
+  | { readonly kind: 'set-presentation'; readonly presentation: KanbanViewPresentation }
+  | { readonly kind: 'set-density'; readonly density: KanbanCardDensity }
+  | { readonly kind: 'clear-filters' }
+```
+
+## KanbanViewTransitionResult
+
+Sanitized result returned synchronously when a view transition is requested.
+
+```ts
+type KanbanViewTransitionResult = | { readonly kind: 'changed'; readonly revision: KanbanRevision; readonly code?: undefined }
+  | { readonly kind: 'pending'; readonly code?: undefined }
+  | { readonly kind: 'unchanged'; readonly code?: undefined }
+  | { readonly kind: 'rejected'; readonly code: string }
+  | { readonly kind: 'unavailable'; readonly code?: string }
 ```
 
 ## KanbanViewport
@@ -5976,12 +6377,28 @@ Samples retained rows and the logical end boundary from one sparse index.
 createKanbanVerticalHeightProjection(options: CreateKanbanVerticalHeightProjectionOptions): KanbanVerticalHeightProjection
 ```
 
+## createKanbanViewController
+
+Creates an independent disposable owner of one immutable Kanban view projection.
+
+```ts
+createKanbanViewController(options: KanbanViewControllerOptions = {}): KanbanViewController
+```
+
 ## createKanbanViewId
 
 Creates a validated saved-view identity.
 
 ```ts
 createKanbanViewId(value: string): KanbanViewId
+```
+
+## createKanbanViewRegistry
+
+Validates and detaches a finite application view registry without invoking registered behavior.
+
+```ts
+createKanbanViewRegistry<TCard = unknown>(options: KanbanViewRegistryOptions<TCard> = {}): KanbanViewRegistry<TCard>
 ```
 
 ## createPlacementToken

@@ -83,15 +83,29 @@ const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
   Record<KanbanInteractionFeedbackCode, Extract<keyof KanbanPhaseBMessageMap, `kanban.interaction.${string}`>>
 >;
 
+/**
+ * Optional controller-owned projection and standard chrome composed by a {@link KanbanBoard}.
+ *
+ * Omitting `chrome` keeps the controller binding headless. Omitting the complete `view` option keeps
+ * the legacy `query` and presentation getters lazy and mounts no additional rows.
+ *
+ * @example
+ * ```ts
+ * const view = createKanbanViewController();
+ * const options = { controller: view, chrome: 'standard' } satisfies KanbanBoardViewOptions;
+ * ```
+ */
+export interface KanbanBoardViewOptions {
+  /** Complete semantic view owner bound over the board's legacy view getters. */
+  readonly controller: KanbanViewController;
+  /** Optional package view bar; omission keeps controller binding headless. */
+  readonly chrome?: 'standard';
+}
+
 /** Construction options for the responsive board shell and application authority seam. */
 export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction' | 'drag'> {
   /** Optional controller-owned view projection and package standard chrome. */
-  readonly view?: {
-    /** Complete semantic view owner bound atomically over legacy getters. */
-    readonly controller: KanbanViewController;
-    /** Optional package view bar; omission keeps controller binding headless. */
-    readonly chrome?: 'standard';
-  };
+  readonly view?: KanbanBoardViewOptions;
   /**
    * Optional compatibility seed captured once during construction for the default controller's mount.
    *

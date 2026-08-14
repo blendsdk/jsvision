@@ -113,9 +113,9 @@ export type KanbanViewTransition =
 
 /** Sanitized result returned synchronously when a view transition is requested. */
 export type KanbanViewTransitionResult =
-  | { readonly kind: 'changed'; readonly revision: KanbanRevision }
-  | { readonly kind: 'pending' }
-  | { readonly kind: 'unchanged' }
+  | { readonly kind: 'changed'; readonly revision: KanbanRevision; readonly code?: undefined }
+  | { readonly kind: 'pending'; readonly code?: undefined }
+  | { readonly kind: 'unchanged'; readonly code?: undefined }
   | { readonly kind: 'rejected'; readonly code: string }
   | { readonly kind: 'unavailable'; readonly code?: string };
 

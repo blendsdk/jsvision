@@ -87,6 +87,9 @@ export type {
   KanbanFilterField,
   KanbanFilterOperator,
   KanbanGroupingField,
+  KanbanLegacySortField,
+  KanbanMultiComparatorSortField,
+  KanbanSortComparator,
   KanbanSortField,
   KanbanSummaryAdapter,
 } from './source/eager-index.js';
@@ -99,6 +102,45 @@ export * from './structure/grouping.js';
 export * from './structure/model.js';
 export * from './structure/policy.js';
 export * from './structure/swimlane-presentation.js';
+export {
+  KANBAN_VIEW_SEARCH_DEBOUNCE_MS,
+  createKanbanViewController,
+  type KanbanViewControllerInitialState,
+  type KanbanViewControllerOptions,
+} from './view/controller.js';
+export {
+  createKanbanViewRegistry,
+  type KanbanQuickFilterParameterCodec,
+  type KanbanQuickFilterRegistration,
+  type KanbanViewRegistry,
+  type KanbanViewRegistryOptions,
+} from './view/registry.js';
+export type { KanbanViewEmptyState, KanbanViewSummary } from './view/summary.js';
+export type {
+  KanbanColumnViewItem,
+  KanbanColumnViewState,
+  KanbanFilterSelection,
+  KanbanGroupingSelection,
+  KanbanQuickFilterSelection,
+  KanbanSearchPolicy,
+  KanbanSwimlaneViewItem,
+  KanbanSwimlaneViewState,
+  KanbanViewController,
+  KanbanViewPresentation,
+  KanbanViewState,
+  KanbanViewSubscriber,
+  KanbanViewTransition,
+  KanbanViewTransitionResult,
+} from './view/types.js';
+export {
+  KanbanViewBar,
+  type KanbanViewBarControlId,
+  type KanbanViewBarControlInspection,
+  type KanbanViewBarInspection,
+  type KanbanViewBarMode,
+  type KanbanViewBarOptions,
+  type KanbanViewBarOverflowEntryInspection,
+} from './view/view-bar.js';
 export * from './workflow/definition-of-done.js';
 export * from './workflow/transition.js';
 export * from './workflow/wip.js';

@@ -10,6 +10,13 @@ import type { KanbanSceneCardGeometry, KanbanSceneGeometry } from './swimlane-ge
 import type { KanbanCellState } from '../source/states.js';
 import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanStructureStateCode } from '../structure/model.js';
+import type { KanbanCardDensity, KanbanCardDescriptor } from '../card/descriptor.js';
+
+/** Descriptor evidence enriched with the density selected by the owning viewport projection. */
+export interface KanbanInspectedCardDescriptor extends KanbanCardDescriptor {
+  /** Density used to construct and lay out the descriptor. */
+  readonly density: KanbanCardDensity;
+}
 
 /** Semantic rectangle emitted by pure layout projection for inspection or future interaction. */
 export interface KanbanLayoutRegion extends Readonly<Rect> {
@@ -323,7 +330,7 @@ export interface KanbanInspectedCard {
   /** Complete semantic cell address containing the card. */
   readonly address: KanbanCellAddress;
   /** Validated immutable descriptor retained for modeless diagnostics and specification evidence. */
-  readonly descriptor: import('../card/descriptor.js').KanbanCardDescriptor;
+  readonly descriptor: KanbanInspectedCardDescriptor;
   /** Sanitized visible title projection. */
   readonly title: string;
   /** Non-color marker projected with the visible descriptor. */

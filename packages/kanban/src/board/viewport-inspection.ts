@@ -186,7 +186,7 @@ export function createKanbanViewportInspection<TCard>(
           columnId: card.columnId,
           ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
         }),
-        descriptor: card.descriptor,
+        descriptor: Object.freeze({ ...card.descriptor, density: card.density ?? 'comfortable' }),
         title,
         marker: Object.freeze({ cues: Object.freeze([...card.descriptor.marker.cues]) }),
       });

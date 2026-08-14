@@ -86,6 +86,8 @@ export interface KanbanProjectedCard {
   readonly index: number;
   /** Validated immutable descriptor. */
   readonly descriptor: KanbanCardDescriptor;
+  /** Density used to construct and lay out the descriptor; absent only in legacy synthetic fixtures. */
+  readonly density?: KanbanCardDensity;
   /** Descriptor columns cropped from the left by viewport clipping. */
   readonly descriptorColumnOffset: number;
   /** Descriptor rows cropped from the top by viewport clipping. */
@@ -701,6 +703,7 @@ export function projectKanbanViewport<TCard>(options: ProjectKanbanViewportOptio
           ...(card.address.swimlaneId === undefined ? {} : { swimlaneId: card.address.swimlaneId }),
           index: card.logicalIndex,
           descriptor,
+          density: options.density,
           descriptorColumnOffset: card.descriptorColumnOffset,
           descriptorRowOffset: card.descriptorRowOffset,
           rect: Object.freeze({ x: card.x, y: card.y, width: card.width, height: card.height }),

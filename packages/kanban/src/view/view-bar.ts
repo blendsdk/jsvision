@@ -1,4 +1,4 @@
-import { Group, Input, Label, View, fixed, grow, row, signal, stringWidth } from '@jsvision/ui';
+import { Group, Input, Label, View, col, fixed, grow, row, signal, stringWidth } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext, Rect, Signal, Size2D } from '@jsvision/ui';
 
 import { KANBAN_LIMITS } from '../contract/limits.js';
@@ -273,11 +273,15 @@ export class KanbanViewBar extends Group {
       this.#controller.clearFilters();
     });
     this.#searchRow = row({ gap: 1, background: 'statusBar' }, label, grow(this.#searchInput), this.#clear);
-    this.setLayout({ direction: 'col' });
     this.background = 'statusBar';
-    this.add(fixed(this.#searchRow, 1));
-    this.add(fixed(this.#secondary, 1));
-    this.add(fixed(new KanbanViewBarSummaryLine(options.controller), 1));
+    this.add(
+      col(
+        { position: 'fill', background: 'statusBar' },
+        fixed(this.#searchRow, 1),
+        fixed(this.#secondary, 1),
+        fixed(new KanbanViewBarSummaryLine(options.controller), 1),
+      ),
+    );
 
     this.onMount(() => {
       const current = this.#controller.state().search;
