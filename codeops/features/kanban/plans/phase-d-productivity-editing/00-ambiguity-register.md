@@ -551,3 +551,29 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** UI gains a different target-addressable modal primitive, created-card publications cannot be
   correlated by operation, or replacement views require a materially different public host capability.
+
+### AR-D37 — Pure configuration builder surface (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Public function naming and immutable input partitioning inside the approved pure
+  configuration-builder contract; application persistence and product behavior do not change.
+- **Objective:** Make structural changes easy to build programmatically while preventing visual indices,
+  mutable source objects, UI state, or dispatcher authority from entering proposal construction.
+- **Evidence:** The request contract already owns validated column/swimlane add, update, reorder, and delete
+  proposals with stable-neighbor positions. Source publications expose ordered IDs, labels, and revisions.
+  Existing request validation provides the canonical detached proposal boundary.
+- **Decision:** Export `buildKanbanColumn*Proposal` and `buildKanbanSwimlane*Proposal` functions over one
+  detached `KanbanConfigurationSnapshot`. Export a normalized-name helper for UI/application preflight.
+  Builders return only validated lifecycle-free proposals; callers separately dispatch through authority.
+- **Rejected alternatives:** Numeric-index builders are unstable under concurrent publication; methods on a
+  mutable board facade mix UI and application authority; returning request envelopes would allocate lifecycle
+  state outside the existing coordinator.
+- **Strongest counterargument:** Eight explicit functions add surface area compared with one discriminator-based
+  builder, but give consumers precise input/output types and keep ordinary use discoverable.
+- **Confidence:** High — the names map one-to-one to the existing closed structural proposal union.
+- **Hardening:** The surface preserves stable identities for rename/reorder, shares one exact validation path,
+  and contains no callback or dispatch seam.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Existing request variants cannot encode an approved atomic configuration policy or a
+  source publication lacks the structural revision evidence required for validation.
