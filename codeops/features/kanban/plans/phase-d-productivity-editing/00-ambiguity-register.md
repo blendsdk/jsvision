@@ -402,3 +402,46 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** Authority gains cancellable request ownership, resolver publications become sequenced event
   logs rather than latest-state snapshots, or choice controls adopt an explicitly extensible value domain.
+
+### AR-D33 — Dialog completion, create identity, and presentation ownership (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Additive public API and lifecycle mechanics inside the approved create/view/edit, result-only,
+  custom-replacement, and inspector scope; application persistence, docking, and record authority remain unchanged.
+- **Objective:** Make invalid dialog combinations unrepresentable while preserving one draft/session authority and
+  returning a genuinely detached typed result without fabricating a board request.
+- **Evidence:** The Phase 3 session requires a card key, resolver, and authority even though its adapter already
+  accepts `undefined` for create. Its coordinator returns one identity-owned session, while the approved dialog
+  contract requires resolver-free create, zero-request result-only completion, optional complete replacement, and
+  modeless-inspector exclusivity. UI modal helpers already mount/remove one `Dialog` in `try/finally` and inherit
+  Core theme/i18n from the host.
+- **Decision:** Export separate `openKanbanCardCreateDialog`, `openKanbanCardViewDialog`, and
+  `openKanbanCardEditDialog` invokers over one internal engine. Create uses a bounded provisional claim identity,
+  calls `adapter.create(undefined, context)`, and owns no record resolver/subscription; view/edit retain exact card
+  identity and subscribe-before-resolve. Add a typed session preparation result used by both authority and
+  result-only completion. Result-only requires an application result-detacher callback and emits zero requests;
+  authority mode closes only after matching committed publication. View has no submit path. The first coordinator
+  opener owns disposal; a second modal/inspector receives `already-open` for application reveal and never mounts a
+  second presentation, so reference-counted shared disposal is unnecessary. A complete replacement receives the
+  same acquired session and bounded dialog actions and mounts no standard controls. Inspector helpers delegate
+  mounting/reveal/docking to the application. Host i18n/Core theme remain authoritative; optional live Kanban i18n
+  and semantic-theme getters supply package labels/cues during render, reflow, and confirmation.
+- **Rejected alternatives:** A fake authority for result-only mode cannot return a typed detached draft and
+  violates the zero-request contract. A single option bag permits nonsensical create-with-resolver and
+  view-with-authority combinations. Returning a raw actor draft after disposal leaves ownership ambiguous.
+  Reference-counted multi-presentation leases add lifecycle complexity when the approved second-open behavior may
+  reject/reveal the existing presentation. A replacement that creates its own session breaks exclusivity and stale
+  reconciliation.
+- **Strongest counterargument:** Three invokers plus a result detacher add more exported types than one generic
+  `openEditor` function. The discriminated entry points make mode-specific ownership visible in TypeScript and in
+  generated documentation, and the detacher is the only generic way to guarantee application-owned result data.
+- **Confidence:** High.
+- **Hardening:** Two independent API challenges converged on resolver-free provisional create, explicit
+  result-only completion, named mode-specific invokers, one acquired session for default/custom presentation, and
+  application-owned inspector docking. The final design rejects simultaneous presentation sharing rather than
+  introducing reference-counted leases.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Product scope later requires the standard modal and inspector to remain simultaneously
+  mounted, applications cannot detach typed results safely, or create identity must become a persisted card key
+  before submission.

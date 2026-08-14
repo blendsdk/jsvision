@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 19:43 CEST
-> **Progress**: 43/125 tasks (34%)
+> **Last Updated**: 2026-08-14 19:55 CEST
+> **Progress**: 44/125 tasks (35%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -184,7 +184,7 @@ all in-scope Major findings corrected under auto-design, and the single fix-scop
 
 ## Phase 4: Responsive card dialogs and board editor integration
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `9b1f2452cf2b10edb13c1e96def5089c315a2678`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: RD-10 create/view/edit dialogs, result-only/custom/inspector integration, responsive lifecycle.
 > **Expected modification set**: `src/editor/{controls,dialog,confirmation,inspector}.ts`, board editor binding, i18n message additions, focused/e2e tests, barrel, and this plan.
@@ -194,7 +194,7 @@ all in-scope Major findings corrected under auto-design, and the single fix-scop
 
 **Reference**: 03-03 §Dialogs and inspector–Failure handling · ST-DE-03…DE-27 · AR-D06/D07/D21
 
-- [ ] 4.1.1 `[spec-author]` Add create/view/edit, cancel, submit, rejection, dirty-close, and result-only dialog oracles — `packages/kanban/test/editor-dialog.spec.test.ts`
+- [x] 4.1.1 `[spec-author]` Add create/view/edit, cancel, submit, rejection, dirty-close, and result-only dialog oracles — `packages/kanban/test/editor-dialog.spec.test.ts` ✅ (completed: 2026-08-14 19:55)
 - [ ] 4.1.2 `[spec-author]` Add resize/maximize/restore, scroll reachability, focus/draft preservation, and narrow-mode oracles — `packages/kanban/test/e2e/editor-dialog.e2e.test.ts`
 - [ ] 4.1.3 `[spec-author]` Add custom replacement, inspector sharing, stale reload, and deleted-card oracles — `packages/kanban/test/editor-integration.spec.test.ts`
 - [ ] 4.1.4 Run the focused specifications and record expected red failures
