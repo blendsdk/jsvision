@@ -47,6 +47,7 @@ export interface KanbanBoardViewProjectionBridge<TCard> {
   readonly prepare: (candidate: {
     readonly query: KanbanQuery;
     readonly density: KanbanCardDensity;
+    readonly presentation: KanbanPresentationInput;
     readonly structure: KanbanStructurePolicy<TCard>;
     readonly collapsedColumnIds?: readonly string[];
   }) => KanbanPreparedViewportView;
@@ -193,7 +194,11 @@ export class KanbanBoardViewBinding<TCard> {
 
   /** Returns the effective bounded card budget with controller-owned checklist detail. */
   presentation(): KanbanPresentationInput {
-    const state = this.#state();
+    return this.#presentationFor(this.#state());
+  }
+
+  /** Composes one prospective state with the application budget before candidate source preparation. */
+  #presentationFor(state: KanbanViewState): KanbanPresentationInput {
     const limits = validateKanbanLimitOptions(this.#legacy.limits);
     const base = resolveKanbanPresentation(this.#legacy.presentation?.() ?? state.presentation.density, limits);
     const previewItems = state.presentation.checklist === 'preview' ? Math.min(2, limits.checklistItemsPerGroup) : 0;
@@ -262,6 +267,7 @@ export class KanbanBoardViewBinding<TCard> {
     const viewport = bridge?.prepare({
       query,
       density: state.presentation.density,
+      presentation: this.#presentationFor(state),
       structure,
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
     });

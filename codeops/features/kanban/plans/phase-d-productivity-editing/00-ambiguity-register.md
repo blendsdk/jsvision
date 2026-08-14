@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
 > **Status**: ✅ GATE PASSED — all 27 items resolved
-> **Last Updated**: 2026-08-14 14:16 CEST
+> **Last Updated**: 2026-08-14 14:28 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -210,7 +210,10 @@
   using the already approved two-item standard preview. Clamp effective widths without rewriting raw state.
   Apply sorted within-cell blocking before application eligibility. Consume the staged viewport snapshot
   exactly once, verify its generation/revision, commit coherent summary evidence before external delivery,
-  and keep the transition guard active through the complete subscriber pass.
+  and keep the transition guard active from query derivation through the complete subscriber pass. Abort
+  if an application callback disposes the controller. Candidate preparation receives the prospective
+  composed presentation and verifies that revision during activation. Operation eligibility snapshots the
+  query around application policy, rejects a changed view, and reapplies package ordering afterward.
 - **Rejected alternatives:** Adding parallel quick-filter directives to `KanbanQuery` would require every
   source implementation to add a second interpreter without a capability-negotiation seam. Arbitrary
   filter-builder callbacks permit output amplification and add a hostile executable-output boundary when
@@ -223,7 +226,8 @@
   viable alternatives.
 - **Hardening:** Correctness, security, and performance/concurrency/API reviewers independently audited the
   complete phase diff. A separate blind design challenge compared all viable quick-filter mechanisms and
-  converged on the existing-filter mapping. The completed fix diff must receive the one permitted re-review.
+  converged on the existing-filter mapping. The one permitted fix-scoped re-review found three additional
+  Major callback/prospective-state gaps; all were accepted, corrected, and covered by red-then-green tests.
 - **Policy version:** 1.
 - **Root invocation ID:** `EP-PHASE-D-20260814T1231CEST`.
 - **Reopen triggers:** An approved quick filter cannot be expressed by one source operator without semantic

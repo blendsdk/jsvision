@@ -221,6 +221,31 @@ describe('Kanban Phase D view projection specification', () => {
     controller.dispose();
   });
 
+  it('should reject a move when application eligibility changes the committed ordering view', async () => {
+    const requests: KanbanRequest[] = [];
+    const controller = createKanbanViewController();
+    const { board } = mount([item(), item({ id: 2, priority: 2 })], controller, {
+      dispatcher: (request) => {
+        requests.push(request);
+        return { kind: 'accepted', operationId: request.operationId };
+      },
+      operationEligibility: () => {
+        controller.apply({ kind: 'set-sort', sort: [{ fieldId: 'priority', direction: 'ascending' }] });
+        return { kind: 'allowed' };
+      },
+    });
+
+    const result = await board.interaction().moveCard?.({
+      cardKey: 1,
+      target: { columnId: 'ready' },
+      direction: 'end',
+    });
+
+    expect(result).toMatchObject({ kind: 'cancelled', code: 'view-transition-stale' });
+    expect(requests).toEqual([]);
+    controller.dispose();
+  });
+
   it('should expose new query count evidence inside the committed subscriber delivery', () => {
     vi.useFakeTimers();
     const controller = createKanbanViewController({ debounceMs: 150 });

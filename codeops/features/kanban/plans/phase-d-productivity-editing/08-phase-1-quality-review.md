@@ -2,7 +2,7 @@
 
 > **Phase baseline tree**: `255ab1bfbc757111cedfe9b7c902e36a64994bf1`
 > **Scope mode**: strict
-> **Status**: REMEDIATION VERIFIED — fix-scoped re-review pending; zero Critical findings
+> **Status**: RE-REVIEW COMPLETE — all Major findings corrected and verified; zero Critical findings
 
 ## Independent findings
 
@@ -35,3 +35,19 @@ The accepted Major corrections require the one permitted fix-scoped re-review be
 The correction suite passes the Phase 1 specification/security set plus the new projection and
 transaction implementation tests, Kanban typecheck, documentation checks, plugin synchronization,
 and plugin parity. `yarn verify:local` is rerun after formatting immediately before the guarded commit.
+
+## Fix-scoped re-review
+
+The one permitted fix-scoped re-review inspected exact commit `aab0c836e` against parent
+`1d0180817`. The performance/concurrency/API reviewer reported clear. The correctness and security
+reviewers reported three additional Major findings; auto-design accepted all three without waiver.
+
+| ID | Severity | Finding | Auto-design ruling | Status |
+|---|---|---|---|---|
+| FR-001 | Major | Query derivation and candidate preparation invoked application callbacks before the transition reentrancy guard became active. | Extend the guard across derivation, preparation, activation, and delivery; abort if a callback disposes the controller. | Fixed; hostile applicability, participant, source-evaluator, and disposal tests green |
+| FR-002 | Major | Application eligibility could change the committed sort after package ordering validation and still return an allowed move. | Snapshot the query before and after the callback; fail unavailable on any change and reapply package ordering afterward. | Fixed; TOCTOU specification green |
+| FR-003 | Major | Candidate source geometry used the prior rich-card presentation because prospective presentation was not passed through the bridge. | Compose prospective presentation before prepare, stage with it, and verify its revision during reactive consumption. | Fixed; prospective-presentation implementation test green |
+
+The corrected suite passes the complete Phase 1 focused specification/security/implementation set and
+Kanban typecheck. No second fix-scoped re-review is permitted; deterministic package, docs, plugin, and
+changed-file gates provide the final correction evidence.

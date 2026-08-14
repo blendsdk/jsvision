@@ -114,6 +114,33 @@ describe('Kanban view input security specification', () => {
     controller.dispose();
   });
 
+  it('contains source-evaluator reentrancy throughout candidate preparation', () => {
+    vi.useFakeTimers();
+    const card: WorkItem = { id: 1, columnId: 'ready', title: 'Safe resident card' };
+    const owner: { controller?: ReturnType<typeof createKanbanViewController> } = {};
+    let nested: ReturnType<ReturnType<typeof createKanbanViewController>['apply']> | undefined;
+    const source = createEagerKanbanDataSource(() => [card], {
+      columns: () => [COLUMN],
+      keyOf: (item) => item.id,
+      columnOf: (item) => item.columnId,
+      search: (_item, term) => {
+        if (term.length > 0) nested = owner.controller?.apply({ kind: 'set-density', density: 'compact' });
+        return true;
+      },
+    });
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    owner.controller = controller;
+    mount(source, controller);
+
+    controller.apply({ kind: 'set-search', search: 'release' });
+    vi.advanceTimersByTime(150);
+
+    expect(nested).toEqual({ kind: 'unavailable', code: 'view-transition-active' });
+    expect(controller.state().search).toBe('release');
+    expect(controller.state().presentation.density).toBe('comfortable');
+    controller.dispose();
+  });
+
   it('rejects an unknown comparator candidate without changing the committed revision', () => {
     const source = createEagerKanbanDataSource<WorkItem>(() => [], {
       columns: () => [COLUMN],

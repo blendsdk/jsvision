@@ -180,6 +180,18 @@ function sameCell(
   return left.columnId === right.columnId && left.swimlaneId === right.swimlaneId;
 }
 
+/** Returns the package-owned sorted-placement result for one committed query and proposal. */
+function sortedPlacementEligibility(
+  proposal: KanbanRequestProposal,
+  query: ReturnType<typeof snapshotKanbanQuery>,
+): KanbanEligibility | undefined {
+  return proposal.kind === 'card-move' &&
+    (query.sort?.length ?? 0) > 0 &&
+    proposal.moved.every(({ source }) => sameCell(source, proposal.target))
+    ? Object.freeze({ kind: 'blocked' as const, code: 'sorted-manual-order' })
+    : undefined;
+}
+
 /** Applies package ordering invariants before delegating to application-owned operation policy. */
 function composeOperationEligibility(
   proposal: KanbanRequestProposal,
@@ -187,15 +199,15 @@ function composeOperationEligibility(
   application: ((proposal: KanbanRequestProposal) => KanbanEligibility) | undefined,
 ): KanbanEligibility {
   try {
-    const committed = snapshotKanbanQuery(query());
-    if (
-      proposal.kind === 'card-move' &&
-      (committed.sort?.length ?? 0) > 0 &&
-      proposal.moved.every(({ source }) => sameCell(source, proposal.target))
-    ) {
-      return Object.freeze({ kind: 'blocked', code: 'sorted-manual-order' });
+    const before = snapshotKanbanQuery(query());
+    const blocked = sortedPlacementEligibility(proposal, before);
+    if (blocked !== undefined) return blocked;
+    const applicationResult = application?.(proposal) ?? Object.freeze({ kind: 'allowed' as const });
+    const after = snapshotKanbanQuery(query());
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      return Object.freeze({ kind: 'unavailable', code: 'view-transition-stale' });
     }
-    return application?.(proposal) ?? Object.freeze({ kind: 'allowed' });
+    return sortedPlacementEligibility(proposal, after) ?? applicationResult;
   } catch {
     return Object.freeze({ kind: 'unavailable', code: 'eligibility-unavailable' });
   }

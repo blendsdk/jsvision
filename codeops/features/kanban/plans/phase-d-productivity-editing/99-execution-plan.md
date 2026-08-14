@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 14:16 CEST
+> **Last Updated**: 2026-08-14 14:28 CEST
 > **Progress**: 15/125 tasks (12%)
 > **CodeOps Artifact Schema**: 1
 
@@ -87,10 +87,12 @@ registry, chrome, additive comparator query, and transactional binding behavior 
 
 **Verify**: focused `view-state`/`view-chrome`/security tests; `yarn workspace @jsvision/kanban typecheck`; `yarn verify:local`
 
-**Phase quality follow-up (2026-08-14 14:16 CEST):** independent correctness, security, and
+**Phase quality follow-up (2026-08-14 14:28 CEST):** independent correctness, security, and
 performance/concurrency/API review found eight unique Major issues and no Critical issues. All eight
-accepted corrections are implemented and focused verification is green. The required single fix-scoped
-re-review remains the Phase 2 entry gate; evidence is recorded in `08-phase-1-quality-review.md`.
+accepted corrections are implemented. The single permitted fix-scoped re-review found three further
+Major callback/prospective-state gaps; all three are corrected with red-then-green coverage. Focused
+verification is green and the Phase 2 quality entry gate is complete. Evidence is recorded in
+`08-phase-1-quality-review.md`.
 
 ## Phase 2: Saved-view codec, migrations, and store integration
 

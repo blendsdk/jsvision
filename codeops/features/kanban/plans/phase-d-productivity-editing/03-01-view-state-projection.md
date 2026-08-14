@@ -66,11 +66,12 @@ standard chrome is a view-bar draft until debounce expiry; meanwhile `state()`, 
 subscriptions, and view events expose the last committed projection. Expiry commits state/query/revision
 once. Clear cancels pending input and commits its clear transition. A bound controller prepares state/
 query privately and passes it to one projection participant; the source coordinator stages the candidate
-through first valid publication and current geometry. One batched commit activates the prepared source,
+through first valid publication, prospective composed presentation, and current geometry. One batched commit activates the prepared source,
 viewport revision, controller state/query, and coherent source-count summary; the reactive activation and
 identity reconciliation consume that prepared publication without a second source refresh. The exact old
 generation retires before external subscribers run. The transition guard remains active through the whole
-subscriber pass, and disposal by an earlier subscriber stops later delivery. Failure/supersession aborts
+subscriber pass. This guard starts before registry callbacks or source preparation, callback disposal
+aborts the candidate, and disposal by an earlier subscriber stops later delivery. Failure/supersession aborts
 the candidate, so no observer sees it. An unbound controller commits pure transitions synchronously.
 
 - Search is terminal-safe, byte-bounded, and scheduled with configurable default `150 ms`.
@@ -82,7 +83,8 @@ the candidate, so no observer sees it. An unbound controller commits pure transi
 - Grouping is singular; selecting another replaces the prior group atomically.
 - Hidden/collapsed groups remain view-only and never change placement or WIP authority.
 - Sorted cells block within-cell manual rank; filtered ambiguous placement requires an application/source
-  resolver already consumed by operation eligibility.
+  resolver already consumed by operation eligibility. Package ordering policy snapshots the committed
+  query around application eligibility, fails unavailable if it changes, and reapplies ordering afterward.
 
 ## Counts, empty state, focus, and selection
 
@@ -126,6 +128,7 @@ Chrome owns no record or mutation authority.
 | Inapplicable or invalid quick-filter parameter | Reject transition atomically; do not open a candidate source | AR-D27 |
 | Throwing evaluator or candidate open | Candidate aborts before activation; prior session/cursors/state/query remain usable; safe diagnostic emitted | AR-D13/D17 |
 | Subscriber attempts a nested transition | Return typed `view-transition-active`; finish or stop the current delivery first | AR-D27 |
+| Application eligibility changes the view | Return typed `view-transition-stale`; do not dispatch against stale ordering | AR-D27 |
 | Disposed controller | Return unavailable/no-op; no late scheduled publication | AR-D06/D12 |
 | Filtered placement unresolved | Disable ambiguous manual reorder with localized reason | AR-D09 |
 | Search scheduler failure | Publish safe unavailable feedback; input and prior projection remain usable | AR-D12 |

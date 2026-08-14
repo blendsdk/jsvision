@@ -8,7 +8,7 @@ import { attachKanbanViewProjectionParticipant, createKanbanViewController } fro
 import { createKanbanViewRegistry } from '../src/view/registry.js';
 import { createKanbanViewScheduler } from '../src/view/scheduler.js';
 import { createUnboundKanbanViewSummary } from '../src/view/summary.js';
-import type { KanbanViewTransitionResult } from '../src/view/types.js';
+import type { KanbanViewController, KanbanViewTransitionResult } from '../src/view/types.js';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -180,6 +180,122 @@ describe('Kanban view-state implementation boundaries', () => {
     expect(result.kind).toBe('changed');
     expect(nested).toEqual({ kind: 'unavailable', code: 'view-transition-active' });
     expect(controller.state().presentation.density).toBe('compact');
+    controller.dispose();
+  });
+
+  it('should reject callback-origin transitions throughout query derivation and candidate preparation', () => {
+    const owner: { controller?: KanbanViewController } = {};
+    const nested: KanbanViewTransitionResult[] = [];
+    const registry = createKanbanViewRegistry({
+      quickFilters: [
+        {
+          id: 'app.mine',
+          labelId: 'app.filters.mine',
+          filter: { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
+          applicable: () => {
+            const result = owner.controller?.apply({ kind: 'set-density', density: 'compact' });
+            if (result !== undefined) nested.push(result);
+            return true;
+          },
+        },
+      ],
+    });
+    const controller = createKanbanViewController({ registry });
+    owner.controller = controller;
+    let prepareNested: KanbanViewTransitionResult | undefined;
+    const detach = attachKanbanViewProjectionParticipant(controller, {
+      prepare: () => {
+        prepareNested = controller.apply({ kind: 'set-density', density: 'spacious' });
+        return {
+          commit: () => undefined,
+          verify: () => true,
+          rollback: () => undefined,
+          abort: () => undefined,
+          retire: () => undefined,
+        };
+      },
+      summary: createUnboundKanbanViewSummary,
+    });
+
+    const result = controller.apply({ kind: 'set-quick-filters', quickFilters: [{ id: 'app.mine' }] });
+
+    expect(result.kind).toBe('changed');
+    expect(nested).toEqual([{ kind: 'unavailable', code: 'view-transition-active' }]);
+    expect(prepareNested).toEqual({ kind: 'unavailable', code: 'view-transition-active' });
+    expect(controller.state().presentation.density).toBe('comfortable');
+    detach();
+    controller.dispose();
+  });
+
+  it('should abort a candidate when an application callback disposes its controller', () => {
+    const owner: { controller?: KanbanViewController } = {};
+    const registry = createKanbanViewRegistry({
+      quickFilters: [
+        {
+          id: 'app.dispose',
+          labelId: 'app.filters.dispose',
+          filter: { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
+          applicable: () => {
+            owner.controller?.dispose();
+            return true;
+          },
+        },
+      ],
+    });
+    const controller = createKanbanViewController({ registry });
+    owner.controller = controller;
+    const initialState = controller.state();
+
+    const result = controller.apply({ kind: 'set-quick-filters', quickFilters: [{ id: 'app.dispose' }] });
+
+    expect(result).toEqual({ kind: 'unavailable' });
+    expect(controller.state()).toEqual(initialState);
+  });
+
+  it('should stage a candidate with its prospective rich-card presentation', () => {
+    const controller = createKanbanViewController();
+    const binding = new KanbanBoardViewBinding(controller, {
+      query: controller.query,
+      presentation: () => ({
+        revision: 'legacy',
+        cardRows: 12,
+        cardGap: 1,
+        metadataFields: 4,
+        labelRows: 1,
+        summarySections: 1,
+        checklistMode: 'hidden',
+        checklistPreviewItems: 0,
+      }),
+    });
+    let preparedPresentation: unknown;
+    binding.connect({
+      prepare: (candidate) => {
+        preparedPresentation = Reflect.get(candidate, 'presentation');
+        return {
+          summary: undefined,
+          commit: () => undefined,
+          verify: () => true,
+          rollback: () => undefined,
+          abort: () => undefined,
+          retire: () => undefined,
+        };
+      },
+      summary: () => undefined,
+    });
+    binding.activate();
+
+    controller.apply({
+      kind: 'set-presentation',
+      presentation: {
+        density: 'spacious',
+        cardFieldIds: [],
+        summaryIds: [],
+        checklist: 'preview',
+      },
+    });
+
+    expect(preparedPresentation).toMatchObject({ checklistMode: 'preview', checklistPreviewItems: 2 });
+    binding.dispose();
     controller.dispose();
   });
 

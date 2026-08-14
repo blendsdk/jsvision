@@ -292,6 +292,8 @@ export interface KanbanViewportViewCandidate<TCard> {
   readonly query: KanbanQuery;
   /** Candidate card density used by bootstrap geometry. */
   readonly density: KanbanCardDensity;
+  /** Candidate rich-card budget used by bootstrap and sparse-range geometry. */
+  readonly presentation: KanbanPresentationInput;
   /** Candidate all-or-nothing structural projection. */
   readonly structure: KanbanStructurePolicy<TCard>;
   /** Compatibility collapse identities not owned by the candidate structure. */
@@ -392,6 +394,7 @@ export class KanbanViewport<TCard> extends View {
         readonly source: KanbanViewportSource<TCard>;
         readonly query: KanbanQuery;
         readonly snapshot: KanbanViewportSourceSnapshot<TCard>;
+        readonly presentationRevision: KanbanRevision;
         consumed: boolean;
       }
     | undefined;
@@ -661,13 +664,21 @@ export class KanbanViewport<TCard> extends View {
           void options.i18n?.();
           void options.theme?.();
           void options.capabilities?.();
-          void options.presentation?.();
+          const presentationRevision = resolveKanbanPresentation(
+            options.presentation?.() ?? density,
+            this.#limits,
+          ).revision;
           void options.formatting?.();
           void options.renderer?.();
           void options.rendererRevision?.();
           const prepared = this.#preparedActivation;
           if (prepared !== undefined && prepared.source === this.#source) {
-            if (prepared.query.viewRevision === query.viewRevision) prepared.consumed = true;
+            if (
+              prepared.query.viewRevision === query.viewRevision &&
+              prepared.presentationRevision === presentationRevision
+            ) {
+              prepared.consumed = true;
+            }
             return prepared.snapshot;
           }
           this.#source?.replaceQuery(query);
@@ -1795,8 +1806,12 @@ export class KanbanViewport<TCard> extends View {
     density: KanbanCardDensity,
     structure: KanbanStructurePolicy<TCard> | undefined,
     useLearnedWindows: boolean,
+    presentationInput?: KanbanPresentationInput,
   ) {
-    const presentation = resolveKanbanPresentation(this.#options.presentation?.() ?? density, this.#limits);
+    const presentation = resolveKanbanPresentation(
+      presentationInput ?? this.#options.presentation?.() ?? density,
+      this.#limits,
+    );
     const groupedAxis = useLearnedWindows ? this.#groupedAxisProjection(presentation, structure) : undefined;
     const rangeWindow =
       useLearnedWindows && groupedAxis === undefined ? this.#cardRangeWindow(presentation) : undefined;
@@ -1854,6 +1869,7 @@ export class KanbanViewport<TCard> extends View {
         candidate.density,
         candidate.structure,
         false,
+        candidate.presentation,
       );
       if (refreshed === undefined) throw new KanbanInvalidSourcePublicationError();
       if (refreshed.publication.state.kind === 'error') throw new KanbanInvalidSourcePublicationError();
@@ -1893,6 +1909,7 @@ export class KanbanViewport<TCard> extends View {
           source: preparedSource,
           query: candidate.query,
           snapshot: stagedSnapshot,
+          presentationRevision: resolveKanbanPresentation(candidate.presentation, this.#limits).revision,
           consumed: false,
         };
         this.#projection = undefined;

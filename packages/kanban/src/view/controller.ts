@@ -304,25 +304,34 @@ class KanbanViewControllerImpl implements KanbanViewController {
   #commitCandidate(candidate: KanbanViewState): KanbanViewTransitionResult {
     if (kanbanViewStatesEqual(this.#state, candidate)) return Object.freeze({ kind: 'unchanged' });
     if (this.#committing) return Object.freeze({ kind: 'unavailable', code: 'view-transition-active' });
-    let query: KanbanQuery;
+    this.#committing = true;
     let prepared: KanbanPreparedViewProjection | undefined;
     try {
-      query = queryFor(candidate, this.#registry);
-      prepared = this.#participant?.prepare(candidate, query);
-    } catch (error) {
-      const code =
-        error instanceof KanbanViewQueryError
-          ? error.code
-          : error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
-            ? 'unknown-comparator'
-            : 'query-open-failed';
-      return Object.freeze({ kind: 'rejected', code });
-    }
-    const previousState = this.#state;
-    const previousQuery = this.#query;
-    let installed = false;
-    this.#committing = true;
-    try {
+      let query: KanbanQuery;
+      try {
+        query = queryFor(candidate, this.#registry);
+        if (this.#disposed) return Object.freeze({ kind: 'unavailable' });
+        prepared = this.#participant?.prepare(candidate, query);
+      } catch (error) {
+        const code =
+          error instanceof KanbanViewQueryError
+            ? error.code
+            : error instanceof KanbanInvalidQueryError && error.reason === 'unknown-comparator'
+              ? 'unknown-comparator'
+              : 'query-open-failed';
+        return Object.freeze({ kind: 'rejected', code });
+      }
+      if (this.#disposed) {
+        try {
+          prepared?.abort();
+        } catch {
+          // Disposal already made the controller unavailable; candidate cleanup remains isolated.
+        }
+        return Object.freeze({ kind: 'unavailable' });
+      }
+      const previousState = this.#state;
+      const previousQuery = this.#query;
+      let installed = false;
       try {
         batch(() => {
           prepared?.commit();
@@ -334,7 +343,15 @@ class KanbanViewControllerImpl implements KanbanViewController {
         // A closing reactive flush can fail after every write has landed. Verification below decides
         // whether to keep the complete candidate or restore the previous complete projection.
       }
-      if (!installed || prepared?.verify() === false) {
+      let verified = installed && !this.#disposed;
+      if (verified) {
+        try {
+          verified = prepared?.verify() !== false;
+        } catch {
+          verified = false;
+        }
+      }
+      if (!verified) {
         try {
           batch(() => {
             prepared?.rollback();
@@ -349,7 +366,9 @@ class KanbanViewControllerImpl implements KanbanViewController {
         } catch {
           // Candidate cleanup is isolated so the previous committed projection remains callable.
         }
-        return Object.freeze({ kind: 'rejected', code: 'query-open-failed' });
+        return this.#disposed
+          ? Object.freeze({ kind: 'unavailable' })
+          : Object.freeze({ kind: 'rejected', code: 'query-open-failed' });
       }
       try {
         prepared?.retire();
@@ -364,10 +383,10 @@ class KanbanViewControllerImpl implements KanbanViewController {
           // One application observer cannot prevent later observers from seeing a committed projection.
         }
       }
+      return Object.freeze({ kind: 'changed', revision: candidate.revision });
     } finally {
       this.#committing = false;
     }
-    return Object.freeze({ kind: 'changed', revision: candidate.revision });
   }
 }
 
