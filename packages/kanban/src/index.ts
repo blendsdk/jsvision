@@ -96,6 +96,23 @@ export {
   type StandardKanbanSchemaOptions,
 } from './editor/standard-schema.js';
 export * from './editor/types.js';
+export * from './configuration/builders.js';
+export {
+  confirmKanbanConfigurationDeletion,
+  type KanbanConfigurationDeleteConfirmationOptions,
+} from './configuration/delete-dialog.js';
+export * from './configuration/deletion.js';
+export {
+  openKanbanColumnConfigurationDialog,
+  type OpenKanbanColumnConfigurationDialogOptions,
+} from './configuration/column-dialog.js';
+export { createKanbanConfigurationSession, type KanbanConfigurationSessionOptions } from './configuration/session.js';
+export {
+  openKanbanSwimlaneConfigurationDialog,
+  type OpenKanbanSwimlaneConfigurationDialogOptions,
+} from './configuration/swimlane-dialog.js';
+export * from './configuration/types.js';
+export { createKanbanConfigurationSnapshot, normalizeKanbanConfigurationName } from './configuration/validation.js';
 export * from './i18n/catalog.js';
 export type {
   KanbanActivateOptions,
@@ -136,6 +153,7 @@ export {
   type KanbanBoardEditorBinding,
   type KanbanBoardEditorOpenContext,
 } from './board/editor-binding.js';
+export * from './board/board-configuration-binding.js';
 export * from './board/kanban-viewport.js';
 export * from './board/kanban-board.js';
 export * from './board/scene-builder.js';

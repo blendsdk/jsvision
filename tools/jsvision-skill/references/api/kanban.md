@@ -1549,6 +1549,22 @@ interface KanbanColumnAddProposal {
 }
 ```
 
+## KanbanColumnConfigurationOperation
+
+One column workflow selected by a configuration invoker.
+
+```ts
+type KanbanColumnConfigurationOperation = | { readonly kind: 'add'; readonly columnId: KanbanColumnId; readonly position: KanbanColumnPosition }
+  | { readonly kind: 'update'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'reorder'; readonly columnId: KanbanColumnId }
+  | {
+      readonly kind: 'delete';
+      readonly columnId: KanbanColumnId;
+      readonly occupancy: KanbanConfigurationOccupancy;
+      readonly policy?: unknown;
+    }
+```
+
 ## KanbanColumnDeleteProposal
 
 Delete one workflow column with an optional application-authorized card reassignment target.
@@ -1559,6 +1575,14 @@ interface KanbanColumnDeleteProposal {
   columnId: KanbanColumnId;   // Stable identity of the column to delete.
   reassignTo?: KanbanColumnId;   // Optional application-authorized destination for affected cards.
 }
+```
+
+## KanbanColumnDeletionProposal
+
+Valid custom result for a column deletion.
+
+```ts
+type KanbanColumnDeletionProposal = KanbanColumnDeleteProposal | KanbanExtensionRequestProposal
 ```
 
 ## KanbanColumnDraft
@@ -1772,6 +1796,269 @@ interface KanbanColumnWidthSolution {
 }
 ```
 
+## KanbanConfigurationAuthority
+
+Application-owned proposal authority used by dispatched configuration sessions.
+
+```ts
+interface KanbanConfigurationAuthority {
+  request: (proposal: KanbanRequestProposal) => KanbanRequestResult | Promise<KanbanRequestResult>;   // Admits one lifecycle-free proposal and returns an operation-correlated result.
+}
+```
+
+## KanbanConfigurationAuthorityCompletion
+
+Configuration completion routed through application request authority.
+
+```ts
+interface KanbanConfigurationAuthorityCompletion {
+  kind: 'authority';   // Completion discriminator.
+  authority: KanbanConfigurationAuthority;   // Application request admission seam.
+}
+```
+
+## KanbanConfigurationColumnSnapshot
+
+Immutable structural evidence for one configurable workflow column.
+
+```ts
+interface KanbanConfigurationColumnSnapshot {
+  columnId: KanbanColumnId;   // Stable application-owned column identity.
+  label: string;   // Sanitized visible column name.
+  disambiguator?: string;   // Optional visible text that distinguishes an approved duplicate name.
+  revision: KanbanRevision;   // Equality-only column revision captured from application authority.
+  definitionOfDone?: KanbanDefinitionOfDoneSnapshot;   // Optional sanitized completion policy presented by configuration UI.
+}
+```
+
+## KanbanConfigurationConfirm
+
+Application confirmation seam used for destructive or stale draft decisions.
+
+```ts
+type KanbanConfigurationConfirm = (request: {
+  readonly kind: 'reload-stale' | 'discard-draft' | 'delete-structure';
+}) => boolean | Promise<boolean>
+```
+
+## KanbanConfigurationDeleteConfirmationOptions
+
+Input used to decide whether a package-owned structural deletion may proceed.
+
+```ts
+interface KanbanConfigurationDeleteConfirmationOptions {
+  occupancy: KanbanConfigurationOccupancy;   // Authoritative affected-card count; unknown counts fail closed without opening UI.
+  hasPolicy: boolean;   // Whether one complete application policy resolves a non-empty structure atomically.
+  confirm?: KanbanConfigurationConfirm;   // Optional application replacement for the localized package confirmation.
+}
+```
+
+## KanbanConfigurationDeletionContext
+
+Bounded context passed to an application custom atomic-deletion builder.
+
+```ts
+interface KanbanConfigurationDeletionContext {
+  identity: KanbanConfigurationDeletionIdentity;   // Stable structural identity being deleted.
+  occupancy: Extract<KanbanConfigurationOccupancy, { readonly quality: 'exact' }>;   // Exact authoritative non-zero occupancy.
+  signal: AbortSignal;   // Live signal reserved for application work performed by the custom builder.
+}
+```
+
+## KanbanConfigurationDeletionEvaluation
+
+Safe eligibility result used by programmatic callers and package-owned dialogs.
+
+```ts
+type KanbanConfigurationDeletionEvaluation = | { readonly kind: 'confirmation-required'; readonly code: 'delete-empty-column' | 'delete-empty-swimlane' }
+  | {
+      readonly kind: 'disabled';
+      readonly code: 'occupancy-unknown' | 'non-empty-policy-required' | 'derived-group-read-only';
+    }
+  | { readonly kind: 'ready' }
+```
+
+## KanbanConfigurationDeletionIdentity
+
+One immutable identity passed to an application custom deletion builder.
+
+```ts
+type KanbanConfigurationDeletionIdentity = | { readonly kind: 'column'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId }
+```
+
+## KanbanConfigurationDeletionPolicy
+
+Application policy used to resolve one non-empty structural deletion atomically.
+
+```ts
+type KanbanConfigurationDeletionPolicy = | { readonly kind: 'reassign' | 'archive'; readonly destinationId: string }
+  | {
+      readonly kind: 'custom';
+      readonly build: (context: KanbanConfigurationDeletionContext) => unknown;
+    }
+```
+
+## KanbanConfigurationDialogCompletion
+
+Completion policies supported by package-owned configuration dialogs.
+
+```ts
+type KanbanConfigurationDialogCompletion = KanbanConfigurationResultOnlyCompletion | KanbanConfigurationAuthorityCompletion
+```
+
+## KanbanConfigurationDialogHost
+
+Minimal application host required by package-owned configuration dialogs.
+
+```ts
+interface KanbanConfigurationDialogHost {
+  i18n: I18n;   // Translation service inherited from the application.
+  loop: Pick<EventLoop, 'execView' | 'focusView'>;   // Modal execution and focus operations.
+  desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // Desktop mount operations and current terminal extent.
+}
+```
+
+## KanbanConfigurationDialogResult
+
+Terminal result returned by one package-owned configuration dialog.
+
+```ts
+type KanbanConfigurationDialogResult = | { readonly kind: 'cancelled' }
+  | { readonly kind: 'proposal'; readonly proposal: KanbanRequestProposal }
+  | { readonly kind: 'accepted'; readonly operationId: string }
+  | { readonly kind: 'disposed' }
+  | { readonly kind: 'failed' }
+```
+
+## KanbanConfigurationFocusTarget
+
+Focus target selected after an authoritative column deletion publication.
+
+```ts
+type KanbanConfigurationFocusTarget = { readonly kind: 'column'; readonly columnId: KanbanColumnId } | { readonly kind: 'board' }
+```
+
+## KanbanConfigurationOccupancy
+
+Authoritative occupancy evidence required before structural deletion.
+
+```ts
+type KanbanConfigurationOccupancy = { readonly quality: 'unknown' } | { readonly quality: 'exact'; readonly count: number }
+```
+
+## KanbanConfigurationResultOnlyCompletion
+
+Result-only configuration completion that never invokes application authority.
+
+```ts
+interface KanbanConfigurationResultOnlyCompletion {
+  kind: 'result-only';   // Completion discriminator.
+}
+```
+
+## KanbanConfigurationSession
+
+Disposable isolated draft actor shared by standard and replacement configuration dialogs.
+
+```ts
+interface KanbanConfigurationSession {
+  snapshot: () => KanbanConfigurationSessionSnapshot;   // Returns one coherent immutable lifecycle snapshot.
+  setLabel: (value: unknown) => boolean;   // Replaces the isolated visible-name draft after terminal-safe normalization.
+  setPosition: (value: KanbanColumnPosition | KanbanSwimlanePosition) => boolean;   // Replaces the semantic position used by a reorder operation.
+  apply: () => Promise<KanbanConfigurationSessionApplyResult>;   // Builds a proposal and optionally submits it through application authority.
+  reload: () => Promise<boolean>;   // Discards a stale draft and resolves the latest authoritative structure.
+  subscribe: (listener: (snapshot: KanbanConfigurationSessionSnapshot) => void) => () => void;   // Subscribes to coherent state changes.
+  dispose: () => void;   // Releases source subscriptions and invalidates late async work.
+  disposed: () => boolean;   // Reports whether owned resources have been released.
+}
+```
+
+## KanbanConfigurationSessionApplyResult
+
+Result of applying one configuration-session draft.
+
+```ts
+type KanbanConfigurationSessionApplyResult = | { readonly kind: 'proposal'; readonly proposal: KanbanRequestProposal }
+  | { readonly kind: 'accepted'; readonly operationId: string }
+  | { readonly kind: 'rejected'; readonly code: string }
+  | { readonly kind: 'stale' }
+  | { readonly kind: 'unavailable' }
+  | { readonly kind: 'disposed' }
+  | { readonly kind: 'failed' }
+```
+
+## KanbanConfigurationSessionOptions
+
+Options for one isolated configuration draft session.
+
+```ts
+interface KanbanConfigurationSessionOptions {
+  source: KanbanConfigurationSource;   // Application-owned authoritative structure source.
+  operation: KanbanColumnConfigurationOperation | KanbanSwimlaneConfigurationOperation;   // Column or explicit-swimlane operation being configured.
+  authority?: KanbanConfigurationAuthority;   // Optional application request authority; omission selects result-only behavior.
+}
+```
+
+## KanbanConfigurationSessionSnapshot
+
+Coherent immutable state rendered by a configuration dialog.
+
+```ts
+interface KanbanConfigurationSessionSnapshot {
+  record: 'loading' | 'ready' | 'stale' | 'unavailable';   // Current source lifecycle.
+  label: string;   // Sanitized isolated name draft.
+  dirty: boolean;   // Whether the isolated draft differs from its authoritative baseline.
+  submission: 'idle' | 'dispatching' | 'rejected' | 'accepted';   // Current request lifecycle.
+  code?: string;   // Optional payload-free application rejection code.
+}
+```
+
+## KanbanConfigurationSnapshot
+
+Detached application-authoritative board structure consumed by configuration builders and dialogs.
+
+```ts
+interface KanbanConfigurationSnapshot {
+  revision: KanbanRevision;   // Equality-only revision for the complete structural publication.
+  columns: readonly KanbanConfigurationColumnSnapshot[];   // Ordered workflow columns.
+  swimlanes: readonly KanbanConfigurationSwimlaneSnapshot[];   // Ordered explicit or derived swimlanes.
+}
+```
+
+## KanbanConfigurationSource
+
+Application-owned authoritative source used by one configuration session.
+
+```ts
+interface KanbanConfigurationSource {
+  resolve: () => Promise<KanbanConfigurationSnapshot>;   // Resolves the latest detached structure.
+  subscribe: (listener: (snapshot: KanbanConfigurationSnapshot) => void) => () => void;   // Observes later authoritative structural publications.
+}
+```
+
+## KanbanConfigurationSwimlaneMode
+
+Whether a swimlane is application-owned structure or a derived grouping projection.
+
+```ts
+type KanbanConfigurationSwimlaneMode = 'explicit' | 'derived'
+```
+
+## KanbanConfigurationSwimlaneSnapshot
+
+Immutable structural evidence for one configurable or derived swimlane.
+
+```ts
+interface KanbanConfigurationSwimlaneSnapshot {
+  swimlaneId: KanbanSwimlaneId;   // Stable application-owned or derived swimlane identity.
+  label: string;   // Sanitized visible swimlane name.
+  disambiguator?: string;   // Optional visible text that distinguishes an approved duplicate name.
+  revision: KanbanRevision;   // Equality-only swimlane revision captured from application authority.
+  mode: KanbanConfigurationSwimlaneMode;   // Structural mutability classification; omitted input defaults to `explicit`.
+}
+```
+
 ## KanbanConfirmationClassification
 
 Pure coordinator input describing whether a currently eligible proposal needs confirmation.
@@ -1933,6 +2220,19 @@ interface KanbanDefinitionOfDoneSnapshot {
 }
 ```
 
+## KanbanDeletedColumnFocusInput
+
+Inputs required to reconcile focus without retaining a hidden or deleted view.
+
+```ts
+interface KanbanDeletedColumnFocusInput {
+  previousColumnIds: readonly KanbanColumnId[];   // Ordered columns before the accepted deletion.
+  currentColumnIds: readonly KanbanColumnId[];   // Ordered surviving columns in the authoritative publication.
+  deletedColumnId: KanbanColumnId;   // Stable identity removed by the publication.
+  focusedColumnId?: KanbanColumnId;   // Optional focus identity active before publication.
+}
+```
+
 ## KanbanDisposedResourceError
 
 Raised when a caller uses a source, cursor, or viewport after disposal.
@@ -1949,6 +2249,16 @@ Public bounded drag configuration shared by board-owned pointer gestures.
 
 ```ts
 type KanbanDragConfiguration = KanbanPointerRouterOptions
+```
+
+## KanbanDuplicateConfigurationName
+
+Explicit application opt-in that makes one duplicate visible name unambiguous.
+
+```ts
+interface KanbanDuplicateConfigurationName {
+  disambiguator: string;   // Non-empty terminal-safe text displayed beside the duplicate name.
+}
 ```
 
 ## KanbanDurableViewStateV1
@@ -4064,6 +4374,17 @@ type KanbanNonColorCue = | { readonly kind: 'marker'; readonly glyph: string }
   | { readonly kind: 'text'; readonly prefix: string }
 ```
 
+## KanbanNormalizedConfigurationName
+
+A terminal-safe visible name and its locale-independent duplicate key.
+
+```ts
+interface KanbanNormalizedConfigurationName {
+  label: string;   // Sanitized, trimmed, NFKC-normalized text shown to a user.
+  collisionKey: string;   // Fixed-locale lowercase key used only for duplicate detection.
+}
+```
+
 ## KanbanNumericSummary
 
 Honest numeric summary that never presents unavailable authority as zero.
@@ -6158,6 +6479,22 @@ interface KanbanSwimlaneChromeRegion {
 }
 ```
 
+## KanbanSwimlaneConfigurationOperation
+
+One explicit-swimlane workflow selected by a configuration invoker.
+
+```ts
+type KanbanSwimlaneConfigurationOperation = | { readonly kind: 'add'; readonly swimlaneId: KanbanSwimlaneId; readonly position: KanbanSwimlanePosition }
+  | { readonly kind: 'update'; readonly swimlaneId: KanbanSwimlaneId }
+  | { readonly kind: 'reorder'; readonly swimlaneId: KanbanSwimlaneId }
+  | {
+      readonly kind: 'delete';
+      readonly swimlaneId: KanbanSwimlaneId;
+      readonly occupancy: KanbanConfigurationOccupancy;
+      readonly policy?: unknown;
+    }
+```
+
 ## KanbanSwimlaneDeleteProposal
 
 Delete one explicit swimlane with an optional application-authorized reassignment target.
@@ -6168,6 +6505,14 @@ interface KanbanSwimlaneDeleteProposal {
   swimlaneId: KanbanSwimlaneId;   // Stable identity of the swimlane to delete.
   reassignTo?: KanbanSwimlaneId;   // Optional application-authorized destination for affected cards.
 }
+```
+
+## KanbanSwimlaneDeletionProposal
+
+Valid custom result for a swimlane deletion.
+
+```ts
+type KanbanSwimlaneDeletionProposal = KanbanSwimlaneDeleteProposal | KanbanExtensionRequestProposal
 ```
 
 ## KanbanSwimlaneDraft
@@ -7184,6 +7529,32 @@ interface OpenKanbanCardViewDialogOptions<TCard, TDraft> {
 }
 ```
 
+## OpenKanbanColumnConfigurationDialogOptions
+
+Options for invoking one package-owned column configuration workflow.
+
+```ts
+interface OpenKanbanColumnConfigurationDialogOptions {
+  source: KanbanConfigurationSource;   // Authoritative board structure source.
+  operation: KanbanColumnConfigurationOperation;   // Add, update, reorder, or delete workflow.
+  completion: KanbanConfigurationDialogCompletion;   // Result-only or application-authority completion.
+  confirm?: KanbanConfigurationConfirm;   // Optional application confirmation policy.
+}
+```
+
+## OpenKanbanSwimlaneConfigurationDialogOptions
+
+Options for invoking one package-owned explicit-swimlane configuration workflow.
+
+```ts
+interface OpenKanbanSwimlaneConfigurationDialogOptions {
+  source: KanbanConfigurationSource;   // Authoritative board structure source.
+  operation: KanbanSwimlaneConfigurationOperation;   // Add, update, reorder, or delete workflow.
+  completion: KanbanConfigurationDialogCompletion;   // Result-only or application-authority completion.
+  confirm?: KanbanConfigurationConfirm;   // Optional application confirmation policy.
+}
+```
+
 ## PlacementToken
 
 An opaque source-issued placement token.
@@ -7857,12 +8228,92 @@ Rejects any placement derived from a different cursor revision.
 assertKanbanPlacementCurrent(placement: KanbanPlacement, currentRevision: KanbanRevision): KanbanPlacement
 ```
 
+## buildColumnDeletion
+
+Builds an empty or policy-backed atomic column deletion proposal.
+
+```ts
+buildColumnDeletion(snapshot: KanbanConfigurationSnapshot, columnId: KanbanColumnId, occupancy: KanbanConfigurationOccupancy, policyValue: unknown): KanbanColumnDeletionProposal
+```
+
+## buildKanbanColumnAddProposal
+
+Builds a validated lifecycle-free column-add proposal without opening UI or dispatching it.
+
+```ts
+buildKanbanColumnAddProposal(value: unknown): KanbanColumnAddProposal
+```
+
+## buildKanbanColumnDeleteProposal
+
+Builds an empty-column delete proposal without presenting UI confirmation.
+
+```ts
+buildKanbanColumnDeleteProposal(value: unknown): KanbanColumnDeletionProposal
+```
+
+## buildKanbanColumnReorderProposal
+
+Builds a validated lifecycle-free stable-neighbor column-reorder proposal.
+
+```ts
+buildKanbanColumnReorderProposal(value: unknown): KanbanColumnReorderProposal
+```
+
+## buildKanbanColumnUpdateProposal
+
+Builds a validated lifecycle-free column-update proposal while preserving column identity.
+
+```ts
+buildKanbanColumnUpdateProposal(value: unknown): KanbanColumnUpdateProposal
+```
+
 ## buildKanbanScene
 
 Builds one immutable geometry-free semantic scene from bounded resident source data.
 
 ```ts
 buildKanbanScene(options: BuildKanbanSceneOptions): KanbanScene
+```
+
+## buildKanbanSwimlaneAddProposal
+
+Builds a validated lifecycle-free explicit-swimlane-add proposal.
+
+```ts
+buildKanbanSwimlaneAddProposal(value: unknown): KanbanSwimlaneAddProposal
+```
+
+## buildKanbanSwimlaneDeleteProposal
+
+Builds an empty explicit-swimlane delete proposal without presenting UI confirmation.
+
+```ts
+buildKanbanSwimlaneDeleteProposal(value: unknown): KanbanSwimlaneDeletionProposal
+```
+
+## buildKanbanSwimlaneReorderProposal
+
+Builds a validated lifecycle-free stable-neighbor explicit-swimlane-reorder proposal.
+
+```ts
+buildKanbanSwimlaneReorderProposal(value: unknown): KanbanSwimlaneReorderProposal
+```
+
+## buildKanbanSwimlaneUpdateProposal
+
+Builds a validated lifecycle-free explicit-swimlane-update proposal.
+
+```ts
+buildKanbanSwimlaneUpdateProposal(value: unknown): KanbanSwimlaneUpdateProposal
+```
+
+## buildSwimlaneDeletion
+
+Builds an empty or policy-backed atomic explicit-swimlane deletion proposal.
+
+```ts
+buildSwimlaneDeletion(snapshot: KanbanConfigurationSnapshot, swimlaneId: KanbanSwimlaneId, occupancy: KanbanConfigurationOccupancy, policyValue: unknown): KanbanSwimlaneDeletionProposal
 ```
 
 ## calculateKanbanSceneDamage
@@ -7935,6 +8386,14 @@ Confirms and performs the only safe stale-draft reload policy.
 
 ```ts
 confirmAndReloadKanbanEditor<TDraft>(host: KanbanEditorDialogHost, session: KanbanEditorSession<TDraft>, replacement?: KanbanEditorConfirm): Promise<KanbanEditorConfirmedReloadResult>
+```
+
+## confirmKanbanConfigurationDeletion
+
+Confirms an eligible structural deletion and fails closed for unknown or unresolved non-empty occupancy.
+
+```ts
+confirmKanbanConfigurationDeletion(host: KanbanConfigurationDialogHost, options: KanbanConfigurationDeleteConfirmationOptions): Promise<boolean>
 ```
 
 ## confirmKanbanEditorAction
@@ -8023,6 +8482,22 @@ Creates a validated workflow-column identity.
 
 ```ts
 createKanbanColumnId(value: string): KanbanColumnId
+```
+
+## createKanbanConfigurationSession
+
+Creates one isolated configuration session after resolving the initial authoritative structure.
+
+```ts
+createKanbanConfigurationSession(value: unknown): Promise<KanbanConfigurationSession>
+```
+
+## createKanbanConfigurationSnapshot
+
+Validates, detaches, and deeply freezes one authoritative board-configuration snapshot.
+
+```ts
+createKanbanConfigurationSnapshot(value: unknown): KanbanConfigurationSnapshot
 ```
 
 ## createKanbanEditorControlBinding
@@ -8257,6 +8732,14 @@ Validate and dispatch one request through the stable Promise-based public contra
 dispatchKanbanRequest(request: KanbanRequest, dispatcher: (request: KanbanRequest, context: KanbanRequestContext) => unknown, context: KanbanRequestContext): Promise<KanbanRequestResult>
 ```
 
+## evaluateKanbanColumnDeletion
+
+Evaluates whether a column deletion is confirmable, blocked, or ready for an atomic policy.
+
+```ts
+evaluateKanbanColumnDeletion(value: unknown): KanbanConfigurationDeletionEvaluation
+```
+
 ## evaluateKanbanMoveEligibility
 
 Evaluate immutable move facts in fixed fail-closed order without dispatching or authorizing.
@@ -8271,6 +8754,14 @@ Check one validated semantic position against current source-owned placement evi
 
 ```ts
 evaluateKanbanMovePositionCurrency(position: KanbanMovePosition, evidence: KanbanMovePositionEvidence): KanbanMovePositionCurrency
+```
+
+## evaluateKanbanSwimlaneDeletion
+
+Evaluates whether an explicit swimlane deletion is confirmable, blocked, or policy-ready.
+
+```ts
+evaluateKanbanSwimlaneDeletion(value: unknown): KanbanConfigurationDeletionEvaluation
 ```
 
 ## evaluateKanbanTransition
@@ -8329,6 +8820,14 @@ Advances an older detached saved-view envelope through each registered version e
 migrateKanbanSavedView(input: unknown, options: KanbanSavedViewMigrationOptions = {}): KanbanSavedViewMigrationResult
 ```
 
+## normalizeKanbanConfigurationName
+
+Sanitizes one visible configuration name and derives a deterministic duplicate key.
+
+```ts
+normalizeKanbanConfigurationName(value: unknown): KanbanNormalizedConfigurationName
+```
+
 ## openKanbanCardCreateDialog
 
 Opens a centered create dialog using a provisional coordinator claim and no application resolver.
@@ -8359,6 +8858,22 @@ Opens a centered read-only card dialog with static field values and one Close pa
 
 ```ts
 openKanbanCardViewDialog<TCard, TDraft>(host: KanbanEditorDialogHost, options: OpenKanbanCardViewDialogOptions<TCard, TDraft>): Promise<KanbanEditorDialogResult>
+```
+
+## openKanbanColumnConfigurationDialog
+
+Opens the localized responsive column configuration dialog on demand.
+
+```ts
+openKanbanColumnConfigurationDialog(host: KanbanConfigurationDialogHost, options: OpenKanbanColumnConfigurationDialogOptions): Promise<KanbanConfigurationDialogResult>
+```
+
+## openKanbanSwimlaneConfigurationDialog
+
+Opens the localized responsive explicit-swimlane configuration dialog on demand.
+
+```ts
+openKanbanSwimlaneConfigurationDialog(host: KanbanConfigurationDialogHost, options: OpenKanbanSwimlaneConfigurationDialogOptions): Promise<KanbanConfigurationDialogResult>
 ```
 
 ## parseKanbanSavedView
@@ -8407,6 +8922,14 @@ Reads and validates one card through its adapter as one atomic presentation snap
 
 ```ts
 readKanbanCardAdapter<TCard>(card: TCard, adapter: KanbanCardAdapter<TCard>): KanbanCardAdapterSnapshot
+```
+
+## reconcileKanbanDeletedColumnFocus
+
+Resolves post-deletion focus to the next survivor, previous survivor, or board in that order.
+
+```ts
+reconcileKanbanDeletedColumnFocus(input: KanbanDeletedColumnFocusInput): KanbanConfigurationFocusTarget
 ```
 
 ## reconcileKanbanPublication

@@ -174,9 +174,9 @@ describe('Kanban configuration dialogs', () => {
     const dialog = h.added[0];
     if (dialog === undefined) throw new Error('Expected mounted configuration dialog.');
     dialog.bounds = { ...dialog.bounds, width: 34, height: 10 };
-    h.loop.renderRoot.resize(100, 32);
+    h.loop.renderRoot.resize({ width: 100, height: 32 });
     dialog.bounds = { x: 0, y: 1, width: 100, height: 31 };
-    h.loop.renderRoot.resize(48, 14);
+    h.loop.renderRoot.resize({ width: 48, height: 14 });
     dialog.bounds = { x: 4, y: 2, width: 40, height: 11 };
 
     expect(frame(h.loop)).toMatch(/Save|Apply/u);
@@ -200,7 +200,7 @@ describe('Kanban configuration dialogs', () => {
       h.loop.dispatch({
         type: 'command',
         command: 'kanban.configuration.move-after',
-        data: { origin, swimlaneId: 'team-a' },
+        arg: { origin, swimlaneId: 'team-a' },
       });
       h.loop.emitCommand(Commands.ok);
       const result = await pending;
