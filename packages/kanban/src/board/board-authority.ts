@@ -28,6 +28,8 @@ import type {
   KanbanOperationSnapshot,
   KanbanOperationSubscriber,
 } from '../operation/types.js';
+import { publishKanbanOperationEvent } from '../event/operation-events.js';
+import type { KanbanEventHub } from '../event/types.js';
 
 /** Stable unavailable identity used only when a disposed authority receives a lifecycle-free proposal. */
 const UNAVAILABLE_OPERATION_ID = createKanbanOperationId('kanban-unavailable');
@@ -64,6 +66,8 @@ export interface KanbanBoardAuthorityOptions {
   readonly limits?: KanbanLimitOptions;
   /** Optional payload-free lifecycle observation sink, wired by the observation layer. */
   readonly observe?: (observation: KanbanObservation) => void;
+  /** Optional board-scoped public event stream derived from operation snapshots. */
+  readonly events?: KanbanEventHub;
 }
 
 /** Safely capture current equality revisions without retaining a throwing application value. */
@@ -109,6 +113,7 @@ export class KanbanBoardAuthority {
   readonly #expected: (() => unknown) | undefined;
   readonly #eligibility: ((proposal: KanbanRequestProposal) => unknown) | undefined;
   readonly #pendingLimit: number;
+  readonly #releaseEvents: (() => void) | undefined;
   #cleared: KanbanPublicationNotice | undefined;
   #disposed = false;
 
@@ -137,6 +142,13 @@ export class KanbanBoardAuthority {
       ...(options.limits === undefined ? {} : { limits: options.limits }),
       ...(options.observe === undefined ? {} : { observe: options.observe }),
     });
+    const events = options.events;
+    this.#releaseEvents =
+      events === undefined
+        ? undefined
+        : this.#coordinator.subscribe((snapshot) => {
+            publishKanbanOperationEvent(events, snapshot);
+          });
   }
 
   /**
@@ -248,6 +260,7 @@ export class KanbanBoardAuthority {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#releaseEvents?.();
     this.#coordinator.dispose();
     this.#cleared = undefined;
   }
