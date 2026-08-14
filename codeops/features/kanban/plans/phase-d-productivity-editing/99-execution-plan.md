@@ -330,7 +330,11 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 - [x] 7.1.2 `[spec-author]` Add subscriber failure/redaction/observation-separation/reentrancy oracles — `packages/kanban/test/security/event-boundary.spec.test.ts` ✅ (completed: 2026-08-15 01:47)
 - [x] 7.1.3 `[spec-author]` Add undo/redo availability/fresh-request/rejection/no-snapshot oracles — `packages/kanban/test/history.spec.test.ts` ✅ (completed: 2026-08-15 01:49)
 - [x] 7.1.4 `[spec-author]` Add dispose/late-settlement/custom-action event lifecycle oracles — `packages/kanban/test/event-lifecycle.spec.test.ts` ✅ (completed: 2026-08-15 01:51)
-- [ ] 7.1.5 Run the focused specifications and record expected red failures
+- [x] 7.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-15 01:52)
+
+**Red evidence**: all 15 Phase 7 event/history specifications fail only at the absent
+`createKanbanEventHub` and `createKanbanHistoryBinding` public APIs. The four fixtures transform and
+execute without unrelated import, harness, or existing-suite failures.
 
 ### Step 7.2: Implementation
 
