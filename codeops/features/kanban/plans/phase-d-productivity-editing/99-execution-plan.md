@@ -328,7 +328,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 - [x] 7.1.1 `[spec-author]` Add lifecycle ordering/terminal outcome/observable-state/key-identity oracles — `packages/kanban/test/events-history.spec.test.ts` ✅ (completed: 2026-08-15 01:45)
 - [x] 7.1.2 `[spec-author]` Add subscriber failure/redaction/observation-separation/reentrancy oracles — `packages/kanban/test/security/event-boundary.spec.test.ts` ✅ (completed: 2026-08-15 01:47)
-- [ ] 7.1.3 `[spec-author]` Add undo/redo availability/fresh-request/rejection/no-snapshot oracles — `packages/kanban/test/history.spec.test.ts`
+- [x] 7.1.3 `[spec-author]` Add undo/redo availability/fresh-request/rejection/no-snapshot oracles — `packages/kanban/test/history.spec.test.ts` ✅ (completed: 2026-08-15 01:49)
 - [ ] 7.1.4 `[spec-author]` Add dispose/late-settlement/custom-action event lifecycle oracles — `packages/kanban/test/event-lifecycle.spec.test.ts`
 - [ ] 7.1.5 Run the focused specifications and record expected red failures
 
