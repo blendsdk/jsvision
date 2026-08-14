@@ -57,8 +57,10 @@ rectangles.
 Windows may overlap or extend beyond an edge. Choose minimum dimensions that leave frame controls
 and content usable.
 
-Set `app.desktop.resizeMode = 'outline'` when most windows host expensive responsive content. An
-individual Window can override that default with its own `resizeMode`; an unset Window inherits it.
+Set `app.desktop.resizeMode = 'outline'` when most windows host expensive responsive content. The
+Window frame then follows the pointer as an empty shell with centered dimensions; its child subtree
+reflows and paints once on release. An individual Window can override that default with its own
+`resizeMode`; an unset Window inherits it.
 
 ## Activation and z-order
 

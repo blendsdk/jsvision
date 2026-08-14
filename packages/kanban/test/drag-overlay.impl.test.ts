@@ -665,6 +665,32 @@ describe('overlay drawing and damage internals', () => {
     ascii.render.unmount();
   });
 
+  it('keeps a right-clipped ghost above the insertion strip in Unicode and ASCII frames', () => {
+    const evidence = drag();
+    const projection = composeKanbanViewportOverlay({
+      authoritative: authoritative(),
+      bounds: { x: 0, y: 0, width: 36, height: 12 },
+      density: 'compact',
+      drag: {
+        ...evidence,
+        ghost: { ...evidence.ghost, point: { x: 24, y: 7 } },
+      },
+    });
+    expect(projection.overlay.ghost?.rect).toEqual({ x: 24, y: 7, width: 12, height: 3 });
+
+    const unicode = mountedFrame(projection);
+    const ascii = mountedFrame(projection, true);
+    const unicodeRow = unicode.text().split('\n')[7]!;
+    const asciiRow = ascii.text().split('\n')[7]!;
+
+    expect(unicodeRow.slice(19, 24)).toBe('▶ Mov');
+    expect(unicodeRow.slice(24, 36)).toBe('◆━━━━━━━━━━◆');
+    expect(asciiRow.slice(19, 24)).toBe('> Mov');
+    expect(asciiRow.slice(24, 36)).toBe('+==========+');
+    unicode.render.unmount();
+    ascii.render.unmount();
+  });
+
   it('draws a compact localized bulk count without duplicating resident details', () => {
     const evidence = drag();
     const projection = composeKanbanViewportOverlay({

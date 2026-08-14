@@ -1,9 +1,10 @@
 /** Implementation hardening for deferred Window resize ownership and cleanup. */
 import type { MouseEvent } from '@jsvision/core';
 import { resolveCapabilities } from '@jsvision/core';
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
 
-import { createApplication, Window } from '../src/index.js';
+import { createApplication, View, Window } from '../src/index.js';
+import type { DrawContext } from '../src/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -18,6 +19,16 @@ class ObservedWindow extends Window {
 
   override onResized(): void {
     this.resizeCalls += 1;
+  }
+}
+
+/** Child fixture that exposes repaint requests while its Window shell suppresses composition. */
+class RepaintingContent extends View {
+  draws = 0;
+
+  override draw(ctx: DrawContext): void {
+    this.draws += 1;
+    ctx.fill('R', ctx.color('window'));
   }
 }
 
@@ -91,26 +102,42 @@ test('reentrant capture replacement cancels an unpublished outline without relea
   expect(app.desktop.children).toEqual([window]);
 });
 
-test('capture loss cancels a coalesced outline repaint before it can revive preview chrome', () => {
-  vi.useFakeTimers();
-  try {
-    const { app, window } = fixture();
-    const committed = { ...window.layout.rect };
+test('capture loss restores the committed Window after live shell motion', () => {
+  const { app, window } = fixture();
+  const committed = { ...window.layout.rect };
 
-    app.loop.dispatch(mouse('down', 15, 8));
-    app.loop.dispatch(mouse('drag', 20, 11));
-    app.loop.dispatch(mouse('drag', 22, 12));
-    expect(vi.getTimerCount()).toBe(1);
+  app.loop.dispatch(mouse('down', 15, 8));
+  app.loop.dispatch(mouse('drag', 20, 11));
+  expect(window.layout.rect).toEqual({ x: 2, y: 1, width: 19, height: 11 });
+  expect(app.loop.renderRoot.buffer().get(9, 6)?.char).toBe('1');
 
-    app.loop.releaseCapture();
-    expect(vi.getTimerCount()).toBe(0);
-    vi.advanceTimersByTime(33);
+  app.loop.releaseCapture();
+  app.loop.dispatch(mouse('drag', 22, 12));
+  expect(app.loop.renderRoot.buffer().get(9, 6)?.char).not.toBe('1');
 
-    expect(window.layout.rect).toEqual(committed);
-    expect(window.resizeCalls).toBe(0);
-    expect(window.resizing()).toBe(false);
-    expect(app.desktop.children).toEqual([window]);
-  } finally {
-    vi.useRealTimers();
-  }
+  expect(window.layout.rect).toEqual(committed);
+  expect(window.resizeCalls).toBe(0);
+  expect(window.resizing()).toBe(false);
+  expect(app.desktop.children).toEqual([window]);
+});
+
+test('a child repaint request stays suppressed until the live resize shell releases', () => {
+  const { app, window } = fixture();
+  const content = new RepaintingContent();
+  content.setLayout({ position: 'fill' });
+  window.add(content);
+  app.loop.renderRoot.flush();
+
+  app.loop.dispatch(mouse('down', 15, 8));
+  app.loop.dispatch(mouse('drag', 24, 13));
+  const drawsDuringShell = content.draws;
+  content.invalidate();
+  app.loop.renderRoot.flush();
+
+  expect(content.draws).toBe(drawsDuringShell);
+  expect(app.loop.renderRoot.buffer().get(3, 2)?.char).toBe(' ');
+
+  app.loop.dispatch(mouse('up', 24, 13));
+  expect(content.draws).toBeGreaterThan(drawsDuringShell);
+  expect(app.loop.renderRoot.buffer().get(3, 2)?.char).toBe('R');
 });

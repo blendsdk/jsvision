@@ -11,7 +11,7 @@
 import { layout } from '../layout/index.js';
 import type { LayoutBox, Size2D } from '../layout/index.js';
 import { View } from './view.js';
-import { Group } from './group.js';
+import { compositionChildren, Group } from './group.js';
 import { checkLayoutFootguns } from './layout-warnings.js';
 
 /**
@@ -59,7 +59,7 @@ function applyCentering(view: View): void {
     };
   }
   if (view instanceof Group) {
-    for (const child of view.children) applyCentering(child);
+    for (const child of compositionChildren(view)) applyCentering(child);
   }
 }
 
@@ -72,7 +72,7 @@ function buildBox(view: View, map: Map<LayoutBox, View>): LayoutBox | null {
 
   const children: LayoutBox[] = [];
   if (view instanceof Group) {
-    for (const child of view.children) {
+    for (const child of compositionChildren(view)) {
       const childBox = buildBox(child, map);
       if (childBox !== null) children.push(childBox);
     }
@@ -92,6 +92,6 @@ function firePendingMounts(view: View): void {
   if (!view.state.visible) return;
   if (view.mounted) view.runPendingMounts();
   if (view instanceof Group) {
-    for (const child of view.children) firePendingMounts(child);
+    for (const child of compositionChildren(view)) firePendingMounts(child);
   }
 }

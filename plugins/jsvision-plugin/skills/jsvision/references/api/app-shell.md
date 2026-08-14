@@ -144,7 +144,7 @@ The slice of the event loop the desktop needs, injected by `createApplication`: 
 
 ```ts
 interface DesktopLoopSeam {
-  renderRoot: Pick<RenderRoot, 'buffer'>;   // Current composed frame used to restore cells beneath a paint-only resize outline.
+  renderRoot: Pick<RenderRoot, 'buffer'>;   // Current composed frame exposed to attached event-loop integrations.
   acquireCapture?(view: View, onLost: () => void): PointerCaptureLease;   // Acquire cleanup-aware pointer capture when the host supports generation-bound ownership.
   setCapture(view: View): void;   // Capture the pointer to a view for the duration of a drag or resize.
   releaseCapture(): void;   // Release the pointer capture.

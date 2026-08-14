@@ -326,11 +326,9 @@ function drawOverlays(
       token,
     );
   }
-  if (overlay.ghost !== undefined) {
-    drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
-  }
-  // The insertion cue is the precise release destination, so it stays readable even when the
-  // lifted-card ghost overlaps the same terminal row.
+  // Draw the insertion cue before the pointer-following card. Its uncovered cells keep the exact
+  // release destination readable, while the dragged object remains visually foremost wherever the
+  // two rectangles overlap.
   if (overlay.gap !== undefined) {
     const role: KanbanThemeRole =
       overlay.gap.visualState === 'valid'
@@ -353,12 +351,14 @@ function drawOverlays(
       token,
     );
   }
+  if (overlay.ghost !== undefined) {
+    drawOverlayFrame(ctx, overlay.ghost.rect, 'card.ghost', theme, 'heavy');
+  }
   if (overlay.ghost !== undefined && overlay.ghost.rect.width > 2) {
     const countLabel =
       overlay.ghost.count === 1 ? overlay.ghost.label : translate('kanban.drag.cards', { count: overlay.ghost.count });
     const primaryLabel = overlay.ghost.count > 1 ? countLabel : (overlay.ghost.title ?? countLabel);
-    // Paint recognizable content last. If a gap crosses this row, its marker remains in the first
-    // cell while the title/count remains readable inside the compact ghost.
+    // Paint recognizable content after the opaque frame so no lower overlay can split the card.
     ctx.text(
       overlay.ghost.rect.x + 1,
       overlay.ghost.rect.y + Math.min(1, overlay.ghost.rect.height - 1),

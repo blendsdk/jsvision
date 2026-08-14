@@ -18,7 +18,7 @@ import { createRoot, getOwner } from '../reactive/index.js';
 import type { Rect, Size2D } from '../layout/index.js';
 import { View } from './view.js';
 import type { ViewHost } from './view.js';
-import { Group } from './group.js';
+import { compositionChildren, Group } from './group.js';
 import type { Point } from './geometry.js';
 import { intersect } from './geometry.js';
 import { themeRoleToStyle } from './theme-style.js';
@@ -184,7 +184,7 @@ function composeView(
   }
 
   if (view instanceof Group) {
-    for (const child of view.children) {
+    for (const child of compositionChildren(view)) {
       if (!child.state.visible) continue; // skipped entirely, like display:none
       const childOrigin: Point = { x: absOrigin.x + child.bounds.x, y: absOrigin.y + child.bounds.y };
       const childRect: Rect = {

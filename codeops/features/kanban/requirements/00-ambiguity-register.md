@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision Kanban
 
-> **Status**: ✅ GATE PASSED — 45 of 45 items resolved; scope confirmed for implementation
-> **Last Updated**: 2026-08-12
+> **Status**: ✅ GATE PASSED — 45 discovery items and 8 runtime decisions resolved
+> **Last Updated**: 2026-08-14
 > **Feature-Set**: kanban (`codeops/features/kanban/`)
 > **Mode**: auto-design
 > **Root Invocation ID**: `kanban-20260803-01`
@@ -715,6 +715,82 @@ during RD authoring must reopen this register before the affected requirement is
 - **Root invocation ID:** `kanban-t03-window-outline-bleed-20260814`.
 - **Reopen triggers:** Native motion still accumulates stale outlines, preview latency exceeds one interval, a
   delayed callback paints after ownership ends, or release commits anything other than the newest candidate.
+
+### AR-51 — Static masked deferred-resize preview
+
+- **Category:** UX / rendering `(runtime)`.
+- **Authority:** User — explicitly approved after native-terminal acceptance showed the bounded moving outline
+  made resize bleeding worse on 2026-08-14.
+- **Objective:** Preserve deferred content reflow while eliminating moving terminal-cell geometry during a
+  captured Window resize.
+- **Decision:** The existing public `outline` mode retains its name and compatibility boundary, but its preview
+  becomes static. Gesture start masks the committed Window interior once while leaving its frame fixed. Pointer
+  motion updates only a compact `width×height` readout at a fixed position inside that committed rectangle; it
+  draws no moving border or corner markers. Mouse-up applies the latest minimum-clamped candidate once, removes
+  the mask, and redraws/reflows the committed Window normally. Capture loss or lifecycle cancellation removes
+  the mask without committing. The failed preview-cadence timer and immutable background snapshot are removed.
+- **Evidence:** `ResizeOutline.draw()` currently restores the preceding moving perimeter and emits the complete
+  next perimeter. A logical overlay cannot become a hardware-composited terminal layer: its cells are still
+  serialized as ordinary cursor-addressed terminal writes. Native acceptance triggered AR-50's reopen condition
+  because slower cadence made stale intermediate borders remain visible longer. A fixed readout changes only a
+  handful of cells per report and cannot leave position-dependent border trails.
+- **Rejected alternatives:** Four moving corner markers reduce output but retain position-dependent restoration
+  and artifact risk. Blank live resizing still changes real geometry and reflows hosted content. A second logical
+  overlay is equivalent to the existing topmost `ResizeOutline` and cannot add terminal compositor semantics.
+- **Strongest counterargument:** The user sees exact dimensions but no moving spatial boundary until release.
+- **Confidence:** High; the change removes the native failure mechanism rather than attempting another cadence
+  adjustment, while preserving the established single-commit and cancellation contracts.
+- **Reopen triggers:** Motion changes cells outside the fixed committed preview rectangle, hosted content reflows
+  before release, cancellation leaves a mask visible, or native acceptance still observes resize bleeding.
+
+### AR-52 — Live shell-only Window resize
+
+- **Category:** UX / rendering `(runtime)`.
+- **Authority:** User — requested after native testing of AR-51 on 2026-08-14.
+- **Objective:** Preserve direct spatial resize feedback while keeping expensive hosted content out of the
+  gesture-time layout and paint path.
+- **Decision:** The public `outline` mode becomes a live shell-only resize. The real Window frame follows every
+  captured pointer candidate, but its child subtree is omitted from both layout and composition for the entire
+  gesture. The frame therefore paints an empty themed interior with the current `width×height` readout centered
+  horizontally and vertically. `onResized()` and child reflow occur once on successful release. Cancellation
+  restores the original Window rectangle and child subtree without calling `onResized()`. The `live` mode remains
+  unchanged and continues to reflow content during motion.
+- **Evidence:** AR-51 removed bleeding but native review found a stationary frame too weak as resize feedback.
+  JSVision's reflow and composition traversals both enumerate `Group.children`; a shared internal suppression seam
+  can omit an owned subtree without mutating application-visible child flags or unmounting reactive state. The
+  Window itself can then use its ordinary frame renderer at the candidate rectangle.
+- **Rejected alternatives:** Temporarily changing each child's public `state.visible` risks overwriting reactive
+  application state. A second overlay would duplicate Window chrome and still require restoring every swept cell.
+  Drawing children and masking them afterward preserves the expensive work that deferred resize exists to avoid.
+- **Strongest counterargument:** A moving shell again emits position-dependent border cells, so a terminal without
+  synchronized output may still expose intermediate drawing. Native acceptance must decide whether eliminating all
+  hosted-content work makes that output sufficiently responsive.
+- **Confidence:** Medium-high; subtree suppression directly removes Kanban layout/paint work, but terminal-native
+  presentation remains environment-dependent and therefore requires the explicit manual gate.
+- **Reopen triggers:** Hosted content draws or reflows during motion, cancellation changes committed content state,
+  the centered readout clips at minimum size, or native resizing still bleeds visibly.
+
+### AR-53 — Drag ghost paints above the insertion strip
+
+- **Category:** UX / rendering `(runtime)`.
+- **Authority:** User — explicitly requested after native Kanban drag review on 2026-08-14.
+- **Objective:** Prevent the pointer-following card ghost and the `Move here` insertion strip from visually
+  bleeding into one another when their terminal rectangles overlap.
+- **Decision:** The insertion strip paints before the complete card ghost. The ghost then repaints its opaque
+  interior, full border, and title/count, so every cell inside the ghost rectangle wins the overlap. The strip
+  remains visible only outside the ghost rectangle; its semantic target, one-row geometry, hit behavior, and
+  eligibility styling do not change. Pending/rejected operation feedback retains its existing precedence.
+- **Evidence:** `drawOverlays()` currently draws the ghost frame, fills and labels the insertion strip over it,
+  then repaints only the ghost title. That deliberately mixed precedence leaves strip cells inside the ghost border
+  and produces the observed half-strip/half-card corruption.
+- **Rejected alternatives:** Clipping the strip around the ghost duplicates rectangle-subtraction logic and can
+  create disconnected label fragments. Moving the ghost away from its captured pointer-relative origin violates
+  direct manipulation. Making the strip topmost preserves the current defect.
+- **Strongest counterargument:** A completely covered strip segment is not readable under the pointer, but the
+  uncovered portion remains visible and the ghost must behave as the foremost dragged object.
+- **Confidence:** High; the defect and correction are a direct consequence of the renderer's current draw order.
+- **Reopen triggers:** Any insertion-strip cell remains inside an overlapping ghost rectangle, the ghost loses its
+  complete frame/title, or the strip disappears outside the overlap.
 
 ## Auto-design context
 

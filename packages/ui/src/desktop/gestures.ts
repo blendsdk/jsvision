@@ -23,6 +23,7 @@ export type Gesture =
       originX: number;
       originY: number;
       mode: 'live' | 'outline';
+      committed: Rect;
       candidate: Rect;
     }
   | {
@@ -31,6 +32,7 @@ export type Gesture =
       anchorRight: number;
       originY: number;
       mode: 'live' | 'outline';
+      committed: Rect;
       candidate: Rect;
     };
 

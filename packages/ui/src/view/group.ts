@@ -200,3 +200,35 @@ export class Group extends View {
     if (wasFocusChild) this.host?.healFocus?.(this);
   }
 }
+
+/** Groups whose mounted child subtrees are temporarily omitted from layout and composition. */
+const suppressedChildGroups = new WeakSet<Group>();
+
+/**
+ * Return the children that participate in the current layout and composition pass.
+ *
+ * @internal Framework containers use this seam for short-lived shell-only presentation without
+ * mutating application-owned child visibility or unmounting reactive state.
+ */
+export function compositionChildren(group: Group): readonly View[] {
+  return suppressedChildGroups.has(group) ? [] : group.children;
+}
+
+/** Return whether a Group's mounted children are temporarily excluded from layout and paint. */
+export function childCompositionSuppressed(group: Group): boolean {
+  return suppressedChildGroups.has(group);
+}
+
+/**
+ * Include or exclude a mounted Group's children from layout and composition, then request the full
+ * reflow required to clear or restore their pixels.
+ *
+ * @internal This changes presentation only: child identity, visibility, focus, and lifecycle remain
+ * untouched.
+ */
+export function setChildCompositionSuppressed(group: Group, suppressed: boolean): void {
+  if (suppressed === suppressedChildGroups.has(group)) return;
+  if (suppressed) suppressedChildGroups.add(group);
+  else suppressedChildGroups.delete(group);
+  group.invalidateLayout();
+}

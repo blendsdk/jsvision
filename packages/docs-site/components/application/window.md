@@ -83,15 +83,15 @@ minimum dimensions and pointer capture. `dragging()` is true for move and resize
 
 The default `live` mode updates the Window rectangle and reflows its content for every pointer
 position. Use `outline` for a Kanban, Data Grid, editor, or another expensive responsive workspace:
-the committed Window remains unchanged while a frame-only size preview follows the pointer, then the
-latest rectangle is applied once on release.
+an empty Window shell follows the pointer with its size centered in the interior, while the hosted
+child subtree stays out of layout and paint until it reflows once on release.
 
 ```ts
 window.resizeMode = 'outline';
 ```
 
-An unset Window mode inherits `app.desktop.resizeMode`. Capture loss cancels an outline without
-committing its candidate.
+An unset Window mode inherits `app.desktop.resizeMode`. Capture loss restores the original Window
+rectangle and content without publishing the shell candidate as a completed resize.
 
 Viewport resizing keeps zoomed windows maximized and clamps their restore target back on-screen.
 Non-zoomed windows retain their authored rectangle even if it overflows.
@@ -101,7 +101,8 @@ Non-zoomed windows retain their authored rectangle even if it overflows.
 - Add and remove windows through `Desktop` so manager, active state, and focus remain consistent.
 - Give every window useful focusable content and a concise, reactive title.
 - Set minimum dimensions from actual content needs, not frame size alone.
-- Prefer `outline` when live reflow cannot keep pace with terminal mouse reports.
+- Prefer `outline` when live content reflow cannot keep pace with terminal mouse reports but users
+  still need the Window frame to track the pointer.
 - Disable close only when another discoverable route cannot reopen the surface.
 - Use dialogs for modal validation and short-lived decisions.
 

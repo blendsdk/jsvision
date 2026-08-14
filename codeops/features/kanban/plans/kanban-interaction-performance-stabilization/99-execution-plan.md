@@ -2,10 +2,10 @@
 
 > **Implements**: kanban/T-03
 > **Type**: Task (lightweight) · **Feature**: kanban
-> **Status**: Executing
+> **Status**: Complete
 > **Created**: 2026-08-12
-> **Last Updated**: 2026-08-14 00:53 CEST
-> **Progress**: 62/64 tasks (97%)
+> **Last Updated**: 2026-08-14 10:44 CEST
+> **Progress**: 79/79 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Objective
@@ -510,13 +510,25 @@ typechecks, Kanban build, plugin update/check, dependency/documentation checks, 
       `CI` or `TUI_SKIP_PERF`; T-03 still requires one actionable controlled local result before closure.
       Completed: 2026-08-12 21:05 CEST in the controlled local environment; the exact cross-package
       performance runner and changed-file verification both passed without a skip.
-- [ ] 6.7 Load the live Node.js project only for the native-terminal manual matrix and record the app
+- [x] 6.7 Load the live Node.js project only for the native-terminal manual matrix and record the app
       command, project URL and observation time, OS/CPU/runtime, terminal/host/version/capabilities, viewport
       sizes, complete theme inventory, and expected/actual outcome for click, wheel down/up, horizontal
       scroll, grab, per-event ghost tracking, slot changes, invalid/outside cancel, valid drop, second drag,
       resize cancellation/fresh drag, maximize/restore, and every supplied theme.
-- [ ] 6.8 Present the corrected app to the user for the mandatory interaction acceptance gate; resume the
+- [x] 6.8 Present the corrected app to the user for the mandatory interaction acceptance gate; resume the
       regular roadmap only after explicit approval.
+
+**Final native-terminal acceptance:** On 2026-08-14 at 10:44 CEST, the user accepted the complete
+matrix after running `yarn workspace @jsvision/examples demo:github-kanban` against
+`https://github.com/orgs/nodejs/projects/11`. The environment was Linux 6.8.0-136-generic x86_64 on
+an Intel Core i7-7820HQ at 2.90 GHz, Node.js v22.23.1, VTE 7600, `TERM=xterm-256color`, truecolor,
+and a 248×54 viewport. The supplied theme inventory was Classic, Monochrome, Slate, Nord, Dracula,
+Solarized Dark, Gruvbox Dark, Janus, Warp, Solstice, Platinum, Workbench, and Horizon. Click, wheel
+down/up, horizontal scrolling, grab, per-event ghost tracking, slot changes, invalid/outside cancel,
+valid drop, a second drag, resize cancellation followed by a fresh drag, resize-shell behavior,
+maximize/restore, and all supplied themes behaved as expected without a freeze, jump, bleed, or lost
+input. The user explicitly reported LGTM, completing the mandatory interaction acceptance gate and
+unblocking the regular roadmap.
 
 **Manual acceptance remediation:** The first 248×54 native-terminal attempt failed because cards did not
 activate or begin dragging. Input diagnostics proved a valid SGR primary-down report reached the host at the
@@ -784,6 +796,83 @@ newest candidate. A reversal-heavy fake-timer oracle failed red against the bypa
 alongside exact release and cancellation cleanup. The required single re-review closed the Major and found no
 new Critical or Major issue.
 
+## Phase 10: Static masked Window resize preview
+
+> **Phase baseline tree**: 72a459ad59fdf617313f4446cdb8624ceb8669cb
+> **Scope mode**: strict
+> **Expected modification set**: Window deferred-preview implementation and focused tests under `packages/ui/`,
+> public Window/Desktop guidance under `packages/docs-site/`, mapped plugin outputs if required, the Kanban
+> ambiguity register, and this execution plan.
+
+Native acceptance triggered AR-50's reopen condition: slowing a moving terminal outline made the visual bleeding
+worse. AR-51 replaces position-dependent preview geometry with a static masked interior and fixed size readout,
+while retaining the public mode name, committed geometry, single-release commit, and cancellation behavior.
+
+- [x] 10.1 `[spec-author]` Record the approved runtime decision and revise the immutable Window specification to
+      prove the committed frame stays fixed, hosted content is masked without reflow, motion changes only the
+      fixed size readout, no candidate perimeter appears, and release commits the newest rectangle once. ✅
+      (completed: 2026-08-14 01:09 CEST)
+- [x] 10.2 Run the focused specification and record the expected red failure against the moving-perimeter preview.
+      Three revised oracles failed against the moving frame, 67-cell motion delta, and unmasked content. ✅
+      (completed: 2026-08-14 01:10 CEST)
+- [x] 10.3 Replace moving perimeter restoration and cadence timers with the smallest static masked preview, then
+      make the focused Window specification green without changing live-mode behavior or public mode selection.
+      ✅ (completed: 2026-08-14 01:14 CEST)
+- [x] 10.4 Add implementation hardening for unchanged candidates, left/right resizing, capture loss, removal, and
+      reentrant capture replacement; run focused UI tests and package typecheck. Ten focused tests, UI typecheck,
+      and `yarn verify:local` pass. ✅ (completed: 2026-08-14 01:18 CEST)
+- [x] 10.5 Obtain native-terminal acceptance of the static preview and record the outcome. Native review confirmed
+      that masking removed the severe failure, but rejected a stationary frame as insufficient spatial feedback;
+      AR-52 authorizes a live shell with centered dimensions and no hosted content. ✅
+      (completed: 2026-08-14 01:31 CEST)
+- [x] 10.6 Revise the immutable Window specification for live shell geometry, centered dimensions, suppressed child
+      layout/paint, exact release, and cancellation restoration; confirm red against the static mask. Four shell
+      geometry oracles failed while the compatibility-live oracle remained green. ✅
+      (completed: 2026-08-14 01:36 CEST)
+- [x] 10.7 Implement internal child-subtree suppression and live shell motion without changing `live` mode or
+      calling `onResized()` before a successful release. Five focused specifications and UI typecheck pass. ✅
+      (completed: 2026-08-14 01:44 CEST)
+- [x] 10.8 Add implementation hardening for minimum geometry, left/right resizing, unchanged release, removal,
+      capture loss, reentrant replacement, and reactive child invalidation; run focused tests and UI typecheck.
+      Eleven focused tests, UI typecheck, documentation self-check, and `yarn verify:local` pass. ✅
+      (completed: 2026-08-14 01:50 CEST)
+- [x] 10.9 Obtain native-terminal acceptance, update public guidance and mapped plugin outputs, then run the
+      affected package/repository verification gates. Native acceptance passed; 2,058 UI tests, UI
+      typecheck/build/dependency/JSDoc gates, eight GitHub application tests, Examples typecheck, plugin
+      regeneration/integrity, and `yarn verify:local` pass. ✅ (completed: 2026-08-14 02:02 CEST)
+- [x] 10.10 Complete the required correctness and performance quality review, resolve accepted Critical/Major
+      findings, and re-run applicable gates before resuming Tasks 6.7 and 6.8. Independent correctness and
+      performance reviews reported no findings. ✅ (completed: 2026-08-14 01:33 CEST)
+
+## Phase 11: Card ghost and insertion-strip visual precedence
+
+> **Phase baseline tree**: 8d4584e6668b0937518c7f0671e754b500f914b8
+> **Scope mode**: strict
+> **Expected modification set**: Kanban overlay renderer and focused specifications under `packages/kanban/`,
+> mapped plugin outputs if required, the Kanban ambiguity register, and this execution plan.
+
+Native drag acceptance found that the `Move here` strip paints through an overlapping card ghost because the
+renderer applies mixed precedence: ghost border, then strip, then ghost title. AR-53 makes the dragged ghost the
+single topmost object inside its rectangle while preserving the visible strip outside the overlap.
+
+- [x] 11.1 Add an immutable renderer specification proving a one-row insertion strip paints outside an overlapping
+      ghost but no strip glyph or style survives inside the ghost's complete frame/title rectangle. ✅
+      (completed: 2026-08-14 01:39 CEST)
+- [x] 11.2 Run the focused specification and record the expected red failure against mixed overlay precedence. The
+      overlapping ghost top edge contained ` here` and blank strip cells instead of its complete heavy frame. ✅
+      (completed: 2026-08-14 01:39 CEST)
+- [x] 11.3 Reorder the smallest renderer block so the strip paints before the complete card ghost and title/count.
+      Fifteen focused specifications pass. ✅ (completed: 2026-08-14 01:42 CEST)
+- [x] 11.4 Add implementation hardening for Unicode/color, ASCII/mono, clipped ghosts, and non-overlapping strips;
+      run Kanban package gates, affected Examples tests/typecheck, plugin update/check, and `yarn verify:local`.
+      All 783 Kanban tests passed except the loaded full-suite timing sample; its exact isolated rerun passed. Kanban
+      typecheck/build/dependency/JSDoc gates, 30 affected Examples tests/typecheck, plugin update/check, documentation
+      self-check, and `yarn verify:local` pass. ✅ (completed: 2026-08-14 01:48 CEST)
+- [x] 11.5 Complete the required correctness quality review, resolve accepted Critical/Major findings, and return
+      the native drag overlap to the user for acceptance. Independent review reported no findings; native review
+      confirmed the dragged card cleanly covers the overlapping insertion strip. ✅
+      (completed: 2026-08-14 01:55 CEST)
+
 ## Verification summary
 
 | Gate | Required evidence |
@@ -797,6 +886,6 @@ new Critical or Major issue.
 
 ## Completion rule
 
-T-03 is complete only when all 64 tasks are checked, every automated gate passes, no unresolved geometry
+T-03 is complete only when all 79 tasks are checked, every automated gate passes, no unresolved geometry
 or input-sequencing defect remains, and the user explicitly accepts the real-terminal interaction. A
 visually attractive demo alone cannot close this task.

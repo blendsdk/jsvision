@@ -14,10 +14,12 @@
  */
 import { Group } from '../view/index.js';
 import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
+import { childCompositionSuppressed } from '../view/group.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { Rect, LayoutProps, Size2D } from '../layout/index.js';
 import { drawFrame, frameZoneAt } from './frame.js';
+import { clipCellText, stringWidth } from '../controls/measure.js';
 
 /**
  * The set of desktop operations a {@link Window} calls back into. The desktop injects itself under
@@ -42,8 +44,8 @@ export interface WindowManager {
 /**
  * Mouse-driven Window resize presentation.
  *
- * `live` reflows hosted content during pointer motion. `outline` repaints only a frame candidate and
- * commits the real Window geometry on release.
+ * `live` reflows hosted content during pointer motion. `outline` moves an empty Window shell during
+ * motion, then reflows and paints the hosted child subtree once on release.
  *
  * @example
  * import { Window } from '@jsvision/ui';
@@ -269,6 +271,13 @@ export class Window extends Group {
       },
       role,
     );
+    if (childCompositionSuppressed(this)) {
+      const readout = clipCellText(`${ctx.size.width}×${ctx.size.height}`, Math.max(0, ctx.size.width - 2));
+      if (readout.length === 0 || ctx.size.height < 3) return;
+      const x = Math.max(1, Math.floor((ctx.size.width - stringWidth(readout)) / 2));
+      const y = Math.floor(ctx.size.height / 2);
+      ctx.text(x, y, readout, ctx.color(role));
+    }
   }
 
   /**

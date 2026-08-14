@@ -30,14 +30,14 @@ import {
 } from './gestures.js';
 import type { Gesture } from './gestures.js';
 import { cascade, tile, nextWindow, prevWindow, windowByNumber } from './arrange.js';
-import { ResizeOutline } from './resize-outline.js';
+import { setChildCompositionSuppressed } from '../view/group.js';
 
 /**
  * The slice of the event loop the desktop needs, injected by `createApplication`: pointer capture for
  * drag/resize, command emit/enablement, and focus for raise-on-click.
  */
 export interface DesktopLoopSeam {
-  /** Current composed frame used to restore cells beneath a paint-only resize outline. */
+  /** Current composed frame exposed to attached event-loop integrations. */
   readonly renderRoot: Pick<RenderRoot, 'buffer'>;
   /** Acquire cleanup-aware pointer capture when the host supports generation-bound ownership. */
   acquireCapture?(view: View, onLost: () => void): PointerCaptureLease;
@@ -101,9 +101,6 @@ export class Desktop extends Group {
   protected gesture: Gesture | null = null;
   /** Generation-bound capture for the current gesture when supplied by the attached EventLoop. */
   protected gestureCapture: PointerCaptureLease | null = null;
-  /** @internal Paint-only top layer retained so deferred pointer motion never changes layout. */
-  protected readonly resizeOutline = new ResizeOutline();
-
   /** Default mouse resize presentation inherited by Windows without an explicit override. */
   resizeMode: WindowResizeMode = 'live';
 
@@ -257,18 +254,18 @@ export class Desktop extends Group {
     w.commitPlacement(); // fix a still-centered window into its rect so the top-left is known
     const rect = w.layout.rect ?? { x: 0, y: 0, width: 0, height: 0 };
     const mode = w.resizeMode ?? this.resizeMode;
-    this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y, mode, candidate: { ...rect } };
+    this.gesture = {
+      kind: 'resize',
+      target: w,
+      originX: rect.x,
+      originY: rect.y,
+      mode,
+      committed: { ...rect },
+      candidate: { ...rect },
+    };
     w.dragging.set(true);
     w.resizing.set(true);
-    if (mode === 'outline') {
-      const base = this.loop?.renderRoot.buffer().clone();
-      if (base === undefined) {
-        this.cancelGesture();
-        return;
-      }
-      this.add(this.resizeOutline);
-      this.resizeOutline.begin(rect, base);
-    }
+    if (mode === 'outline') setChildCompositionSuppressed(w, true);
     this.captureGesture();
   }
 
@@ -288,19 +285,12 @@ export class Desktop extends Group {
       anchorRight: rect.x + rect.width - 1,
       originY: rect.y,
       mode,
+      committed: { ...rect },
       candidate: { ...rect },
     };
     w.dragging.set(true);
     w.resizing.set(true);
-    if (mode === 'outline') {
-      const base = this.loop?.renderRoot.buffer().clone();
-      if (base === undefined) {
-        this.cancelGesture();
-        return;
-      }
-      this.add(this.resizeOutline);
-      this.resizeOutline.begin(rect, base);
-    }
+    if (mode === 'outline') setChildCompositionSuppressed(w, true);
     this.captureGesture();
   }
 
@@ -322,11 +312,11 @@ export class Desktop extends Group {
         if (this.gesture.kind === 'move') applyMove(this.gesture, ev.local, this.bounds.width, this.bounds.height);
         else if (this.gesture.kind === 'resize') {
           this.gesture.candidate = resizeCandidate(this.gesture, ev.local);
-          if (this.gesture.mode === 'outline') this.resizeOutline.update(this.gesture.candidate);
+          if (this.gesture.mode === 'outline') this.gesture.target.setLayout({ rect: this.gesture.candidate });
           else applyResize(this.gesture, ev.local);
         } else {
           this.gesture.candidate = resizeLeftCandidate(this.gesture, ev.local);
-          if (this.gesture.mode === 'outline') this.resizeOutline.update(this.gesture.candidate);
+          if (this.gesture.mode === 'outline') this.gesture.target.setLayout({ rect: this.gesture.candidate });
           else applyResizeLeft(this.gesture, ev.local);
         }
         ev.handled = true;
@@ -334,18 +324,11 @@ export class Desktop extends Group {
       }
       if (inner.kind === 'up') {
         const gesture = this.gesture;
-        if (
-          gesture.kind !== 'move' &&
-          gesture.mode === 'outline' &&
-          !sameRect(gesture.target.layout.rect ?? gesture.candidate, gesture.candidate)
-        ) {
-          commitResize(gesture.target, gesture.candidate);
-        }
         gesture.target.dragging.set(false);
         gesture.target.resizing.set(false);
         if (gesture.kind !== 'move' && gesture.mode === 'outline') {
-          this.resizeOutline.finish();
-          this.remove(this.resizeOutline);
+          setChildCompositionSuppressed(gesture.target, false);
+          if (!sameRect(gesture.committed, gesture.candidate)) commitResize(gesture.target, gesture.candidate);
         }
         this.gesture = null;
         const capture = this.gestureCapture;
@@ -391,7 +374,7 @@ export class Desktop extends Group {
   }
 
   /**
-   * Cancel an owned gesture and restore any pixels covered by its deferred preview.
+   * Cancel an owned gesture and restore the committed Window after a shell-only resize.
    *
    * @param releaseOwnedCapture Release this Desktop's capture when cancellation originates locally.
    *   Capture-loss callbacks pass `false` because a reentrant replacement may already own capture.
@@ -405,8 +388,8 @@ export class Desktop extends Group {
     gesture.target.dragging.set(false);
     gesture.target.resizing.set(false);
     if (gesture.kind !== 'move' && gesture.mode === 'outline') {
-      this.resizeOutline.finish();
-      this.remove(this.resizeOutline);
+      setChildCompositionSuppressed(gesture.target, false);
+      gesture.target.setLayout({ rect: gesture.committed });
     }
     if (releaseOwnedCapture) {
       if (capture?.active()) capture.release();

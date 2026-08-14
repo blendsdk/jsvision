@@ -160,16 +160,16 @@
   ],
   "fingerprints": {
     "core-engine-and-themes": "33a64be2770d01cc52fe9d4ec727ccac35f1739a8f6bb12c68fcf0de97eceacb",
-    "ui-layout-and-views": "81253b4d22a697bba7a769b27b4d00c5ef7d00f9730470195cdef83182a3ff5d",
+    "ui-layout-and-views": "fedc895f4474f77da6671ba4b2d0d29b19b850e7969757e666e659f81a9962bb",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
-    "ui-application-shell": "68b5c44f5e58cfb9c84adb962dfd1c811ad53aa8ba4b9a2fa0679a1f2a955f89",
-    "internationalization": "c04b75436df5bb9ce1c0309db5b916bba2834c74647e8c24fb75c33c327eab23",
+    "ui-application-shell": "7bd193ae62414626e129aef91cdadff9384f2d710940c82f1efcaa7c7efc4b15",
+    "internationalization": "52746e4108d63453e6872a94d2d04352c3762dfa690229f482c27593de415b37",
     "forms": "028366f0307468207cae41ebe4be54eaa66a1e533883bd4d42c50c159ec7729a",
     "datagrid": "0da1693fde29dd5c332e571c9560f0b53640041a5e5746aecc1803c5d3af7800",
     "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
     "web": "f905feec01e08072e640a5fe2e590032cb76b397520026a6e0301018c9a836b6",
     "code-editor": "708252d08848b5f438e9fd0d2f8b6d3ca95890dc1a28a964e2cd769cf3bf076f",
-    "kanban": "66ea1b3063802508fa2fec5606cc845905cdb940ea78d11d5b7a1823a6ee792c",
+    "kanban": "a4f61581c693d364c2eef00f347c0be22373547ced85abcd8d34fcc185c3d475",
     "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
   }
 }

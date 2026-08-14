@@ -5,14 +5,53 @@
  * authoritative projection is reused after every composition to prove overlays never mutate source
  * descriptors or geometry.
  */
+import { classicTheme, resolveCapabilities } from '@jsvision/core';
+import { Group, View, createRenderRoot } from '@jsvision/ui';
+import type { DrawContext } from '@jsvision/ui';
 import { describe, expect, it } from 'vitest';
 
+import { createKanbanTheme } from '../src/index.js';
 import type { KanbanCardDescriptor } from '../src/index.js';
+import { createEnglishKanbanI18n } from '../src/i18n/catalog.js';
 import type { KanbanDragOverlayEvidence } from '../src/interaction/drag-types.js';
 import type { KanbanOperationSnapshot } from '../src/operation/types.js';
 import { composeKanbanViewportOverlay, type KanbanOverlayProjection } from '../src/board/overlay-projector.js';
 import { calculateKanbanViewportDamage } from '../src/board/viewport-damage.js';
 import type { KanbanViewportProjection } from '../src/board/viewport-projector.js';
+import { drawKanbanViewport } from '../src/board/viewport-render.js';
+
+const CAPS = resolveCapabilities({
+  env: {},
+  platform: 'linux',
+  override: { colorDepth: 'truecolor', glyphs: { boxDrawing: true } },
+}).profile;
+const THEME = createKanbanTheme(classicTheme);
+const I18N = createEnglishKanbanI18n();
+
+/** Real viewport-renderer leaf used to assert terminal-visible overlay precedence. */
+class ProjectionLeaf extends View {
+  constructor(protected readonly projection: KanbanViewportProjection) {
+    super();
+  }
+
+  override draw(ctx: DrawContext): void {
+    drawKanbanViewport(ctx, this.projection, THEME, (key, params) =>
+      I18N.t(key, params === undefined ? undefined : { params }),
+    );
+  }
+}
+
+/** Render one immutable 40×12 projection through the public terminal-cell composition path. */
+function renderProjection(projection: KanbanViewportProjection) {
+  const leaf = new ProjectionLeaf(projection);
+  leaf.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } });
+  const root = new Group();
+  root.add(leaf);
+  const render = createRenderRoot({ width: 40, height: 12 }, { caps: CAPS });
+  render.mount(root);
+  render.flush();
+  return render;
+}
 
 /** Creates a minimal immutable card descriptor with deliberately hostile and wide title text. */
 function descriptor(cardKey: number, title: string): KanbanCardDescriptor {
@@ -167,6 +206,30 @@ describe('drag overlay composition', () => {
     expect(result.overlay.ghost?.rect.y).toBeLessThan(12);
     expect(source.cards).toHaveLength(2);
     expect(source.cards[0]?.rect).toEqual({ x: 1, y: 3, width: 18, height: 4 });
+  });
+
+  // The dragged card is the foremost object: its complete frame must cover an intersecting target strip.
+  it('should paint the complete card ghost above an overlapping insertion strip', () => {
+    const evidence = drag();
+    const result = compose({
+      drag: {
+        ...evidence,
+        ghost: { ...evidence.ghost, point: { x: 30, y: 9 } },
+      },
+    });
+    expect(result.overlay.gap?.rect).toEqual({ x: 21, y: 8, width: 18, height: 1 });
+    expect(result.overlay.ghost?.rect).toEqual({ x: 27, y: 8, width: 13, height: 3 });
+
+    const render = renderProjection(result);
+    const top = render
+      .buffer()
+      .rows()[8]!
+      .map(({ char }) => char)
+      .join('');
+
+    expect(top.slice(21, 27)).toBe('▶ Move');
+    expect(top.slice(27, 40)).toBe('◆━━━━━━━━━━━◆');
+    render.unmount();
   });
 
   // A lifted card keeps the exact source-relative grab point; resident overlap must not teleport it elsewhere.
