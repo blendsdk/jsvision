@@ -11,10 +11,12 @@ application-owned: adapt an existing domain model instead of copying it into a K
 ## Install
 
 ```sh
-yarn add @jsvision/ui @jsvision/kanban
+yarn add @jsvision/ui @jsvision/kanban zod
 ```
 
-The package requires Node.js 22 or later and uses ESM.
+The package requires Node.js 22 or later and uses ESM. Zod 4 is a peer dependency used by the
+optional standard card editor. Generic editor schema types remain Zod-free, so libraries can
+describe application-specific editors without importing Zod types.
 
 ## Quick start
 
@@ -198,6 +200,37 @@ the board shell and its focused-column navigator are not wanted.
 A mounted board owns one source/session/cursor lifecycle. Unmounting or calling `dispose()` releases
 those resources in cancellation-first order. A disposed instance cannot be remounted; create a new
 board for a new terminal lifecycle.
+
+## Card editor core
+
+Use `createKanbanCardEditorSchema` with a typed `KanbanCardEditorAdapter` when application records do
+not match `StandardCard`. One disposable `createKanbanEditorSession` owns a detached draft, abortable
+field validation, focus/error state, stale detection, and application-authorized submission. Subscribe
+to its aggregate immutable snapshot so dialog rendering never observes torn submission state.
+
+`createStandardKanbanEditorAdapter` provides configured mainstream fields and stable-ID checklist
+groups/items. Its `createForm()` method returns a disposable `@jsvision/forms` store backed by a
+consumer-supplied or generated Zod 4 object schema. Only selected fields enter the form and full-draft
+proposal; optional application fields still use the same generic schema/session protocol.
+
+```ts
+import { createStandardKanbanEditorAdapter } from '@jsvision/kanban';
+import { z } from 'zod';
+
+const editor = createStandardKanbanEditorAdapter({
+  fields: ['title', 'status', 'checklists'],
+  schema: z.object({
+    title: z.string().min(1),
+    status: z.string().min(1),
+    checklists: z.array(z.unknown()),
+  }),
+});
+```
+
+The component never writes the source record. An adapter returns a normal `card-update` proposal with
+exact full-draft evidence; application authority returns the operation result, and the session commits
+only after the resolver publishes the expected card revision. Dirty external changes become stale and
+require explicit reload, cancel, or an application-owned merge policy.
 
 ## Localization
 

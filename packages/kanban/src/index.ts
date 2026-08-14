@@ -27,6 +27,31 @@ export { composeStandardKanbanCard, renderStandardKanbanCard } from './card/stan
 export type { KanbanStandardCardCompositionContext } from './card/standard-renderer.js';
 export * from './card/theme.js';
 export * from './card/theme-resolver.js';
+export { createKanbanEditorCoordinator } from './editor/coordinator.js';
+export { createKanbanEditorControlRegistry } from './editor/registry.js';
+export { createKanbanCardEditorSchema, type KanbanCardEditorSchemaOptions } from './editor/schema.js';
+export { createKanbanEditorSession } from './editor/session.js';
+export {
+  createStandardKanbanEditorAdapter,
+  type StandardKanbanEditorAdapter,
+  type StandardKanbanEditorAdapterOptions,
+  type StandardKanbanEditorForm,
+  type StandardKanbanEditorFormField,
+  type StandardKanbanFormFieldSchema,
+  type StandardKanbanFormParseResult,
+  type StandardKanbanFormSchema,
+  type StandardKanbanFormValues,
+} from './editor/standard-adapter.js';
+export {
+  STANDARD_KANBAN_EDITOR_FIELDS,
+  createStandardKanbanEditorSchema,
+  type StandardKanbanEditableCard,
+  type StandardKanbanEditorDraft,
+  type StandardKanbanEditorFieldId,
+  type StandardKanbanFieldValidator,
+  type StandardKanbanSchemaOptions,
+} from './editor/standard-schema.js';
+export * from './editor/types.js';
 export * from './i18n/catalog.js';
 export type {
   KanbanActivateOptions,

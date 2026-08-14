@@ -36,6 +36,17 @@ import type {
 import { NO_KANBAN_EDITOR_DIAGNOSTICS } from './session-state.js';
 import type { BufferedKanbanEditorRecordPublication, MutableKanbanEditorFieldState } from './session-state.js';
 
+type KanbanEditorRejectedValueKind = Exclude<KanbanEditorSetValueResult, { readonly kind: 'accepted' }>['kind'];
+
+const SETTLED_EDITOR_VALUE = Promise.resolve();
+
+/** Returns a uniform completion handle when a value change did not start validation work. */
+function settledValueOutcome<TKind extends KanbanEditorRejectedValueKind>(
+  kind: TKind,
+): { readonly kind: TKind; readonly settled: Promise<void> } {
+  return Object.freeze({ kind, settled: SETTLED_EDITOR_VALUE });
+}
+
 /**
  * Owns a detached editor draft and reconciles it with application publications.
  *
@@ -183,34 +194,34 @@ class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession {
 
   /** Attempts one typed field mutation and starts a new validation generation. */
   setValue(fieldId: KanbanFieldId, rawValue: unknown): KanbanEditorSetValueResult {
-    if (this.#disposed) return Object.freeze({ kind: 'disposed' });
-    if (this.#options.mode === 'view') return Object.freeze({ kind: 'read-only' });
+    if (this.#disposed) return settledValueOutcome('disposed');
+    if (this.#options.mode === 'view') return settledValueOutcome('read-only');
     if (
       this.#submission.kind === 'validating' ||
       this.#submission.kind === 'dispatching' ||
       this.#submission.kind === 'awaiting-publication' ||
       this.#submission.kind === 'committed'
     ) {
-      return Object.freeze({ kind: 'sealed' });
+      return settledValueOutcome('sealed');
     }
     let normalizedFieldId: KanbanFieldId;
     try {
       normalizedFieldId = createKanbanFieldId(fieldId);
     } catch {
-      return Object.freeze({ kind: 'unknown-field' });
+      return settledValueOutcome('unknown-field');
     }
     const field = this.#options.adapter.schema.field(normalizedFieldId);
     const state = this.#fields.get(normalizedFieldId);
-    if (field === undefined || state === undefined) return Object.freeze({ kind: 'unknown-field' });
+    if (field === undefined || state === undefined) return settledValueOutcome('unknown-field');
     this.#refreshFieldPresentation(field, state);
-    if (state.readOnly || !state.visible) return Object.freeze({ kind: 'read-only' });
+    if (state.readOnly || !state.visible) return settledValueOutcome('read-only');
 
     const controller = this.#replaceFieldGeneration(state);
     const currentValue = this.#readField(field);
     if (currentValue.kind === 'failure') {
       state.diagnostics = Object.freeze([currentValue.diagnostic]);
       this.#notify();
-      return Object.freeze({ kind: 'invalid-value' });
+      return settledValueOutcome('invalid-value');
     }
     const input = this.#callbackInput(currentValue.value, controller.signal);
     let value: unknown;
@@ -220,14 +231,14 @@ class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession {
       } catch {
         state.diagnostics = Object.freeze([Object.freeze({ code: 'invalid-value' })]);
         this.#notify();
-        return Object.freeze({ kind: 'invalid-value' });
+        return settledValueOutcome('invalid-value');
       }
     } else {
       const parsed = invokeKanbanEditorCallback(field.parse, [rawValue, input]);
       if (parsed.kind === 'failure') {
         state.diagnostics = Object.freeze([parsed.diagnostic]);
         this.#notify();
-        return Object.freeze({ kind: 'invalid-value' });
+        return settledValueOutcome('invalid-value');
       }
       value = parsed.value;
     }
@@ -235,7 +246,7 @@ class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession {
     if (written.kind === 'failure') {
       state.diagnostics = Object.freeze([written.diagnostic]);
       this.#notify();
-      return Object.freeze({ kind: 'invalid-value' });
+      return settledValueOutcome('invalid-value');
     }
     try {
       const draftSnapshot = this.#snapshotDraft(written.value);
@@ -244,7 +255,7 @@ class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession {
     } catch {
       state.diagnostics = Object.freeze([Object.freeze({ code: 'invalid-value' })]);
       this.#notify();
-      return Object.freeze({ kind: 'invalid-value' });
+      return settledValueOutcome('invalid-value');
     }
     state.touched = true;
     this.#submission = Object.freeze({ kind: 'idle' });

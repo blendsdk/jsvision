@@ -216,6 +216,11 @@ function standardSections(fields: readonly StandardKanbanEditorFieldId[]): reado
  * Builds the generic schema used by the standard adapter and later standard dialog.
  *
  * @throws {KanbanInvalidEditorSchemaError} When configured field identities are duplicate or unknown.
+ *
+ * @example
+ * ```ts
+ * const schema = createStandardKanbanEditorSchema({ fields: ['title', 'status'] });
+ * ```
  */
 export function createStandardKanbanEditorSchema(
   options: StandardKanbanSchemaOptions,

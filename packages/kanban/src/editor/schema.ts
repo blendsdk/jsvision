@@ -9,6 +9,7 @@ import { isKanbanEditorControlRegistry } from './registry.js';
 import type {
   KanbanCardEditorChoice,
   KanbanCardEditorField,
+  KanbanCardEditorFieldDefinition,
   KanbanCardEditorFieldKind,
   KanbanCardEditorSchema,
   KanbanCardEditorSection,
@@ -23,7 +24,7 @@ export interface KanbanCardEditorSchemaOptions<TCard, TDraft> {
   /** Finite ordered section metadata. */
   readonly sections: readonly KanbanCardEditorSection[];
   /** Finite typed heterogeneous field descriptors. */
-  readonly fields: readonly KanbanCardEditorField<TDraft, unknown, TCard>[];
+  readonly fields: readonly KanbanCardEditorFieldDefinition<TDraft, TCard>[];
   /** Optional prevalidated custom-control registry. */
   readonly controls?: KanbanEditorControlRegistry;
 }

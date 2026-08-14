@@ -686,6 +686,179 @@ interface KanbanCardDuplicateProposal {
 }
 ```
 
+## KanbanCardEditorAdapter
+
+Generic bridge between an application record, editor draft, and board proposal.
+
+```ts
+interface KanbanCardEditorAdapter<TCard, TDraft> {
+  schema: KanbanCardEditorSchema<TCard, TDraft>;   // Validated schema describing fields and controls.
+  create(card: TCard | undefined, context: KanbanEditorContext): TDraft;   // Creates a detached typed draft for create, view, or edit mode.
+  snapshot(draft: TDraft): KanbanSemanticValue;   // Creates a bounded semantic snapshot without mutating the draft.
+  proposal(result: KanbanEditorResult<TDraft>): KanbanCardEditorProposal;   // Builds one lifecycle-free create or update proposal for the shared authority.
+}
+```
+
+## KanbanCardEditorChoice
+
+One static single-choice or multiple-choice option.
+
+```ts
+interface KanbanCardEditorChoice<TValue extends KanbanSemanticValue = KanbanSemanticValue> {
+  choiceId: string;   // Stable identity used for selection and reconciliation.
+  labelId: string;   // Localized label identity displayed by standard controls.
+  value: TValue;   // Detached semantic value written into the draft when selected.
+}
+```
+
+## KanbanCardEditorField
+
+Typed field descriptor consumed by generic and standard editor sessions.
+
+```ts
+interface KanbanCardEditorField<TDraft, TValue = KanbanSemanticValue, TCard = unknown> {
+  fieldId: KanbanFieldId;   // Stable field identity used by state, errors, and focus.
+  sectionId: KanbanEditorSectionId;   // Stable section containing this field.
+  kind: KanbanCardEditorFieldKind;   // Generic control/value behavior.
+  labelId: string;   // Localized field label identity.
+  helpId?: string;   // Optional localized help identity.
+  order: number;   // Stable order within the section.
+  dependencies?: readonly KanbanFieldId[];   // Other field identities consulted by visibility or read-only predicates.
+  read: KanbanEditorCallback<readonly [draft: TDraft], TValue>;   // Reads the typed value from a session-owned draft.
+  write: KanbanEditorCallback<readonly [draft: TDraft, value: TValue], TDraft>;   // Returns a draft containing the supplied typed value.
+  parse?: KanbanEditorCallback<
+    readonly [value: unknown, input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    TValue
+  >;   // Optional safe parser for raw control input.
+  format?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    string
+  >;   // Optional application formatter whose result is sanitized before display.
+  validate?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    KanbanEditorDiagnostic | undefined
+  >[];   // Ordered synchronous validators.
+  validateAsync?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    Promise<KanbanEditorDiagnostic | undefined>
+  >[];   // Ordered asynchronous validators, each receiving a generation-owned signal.
+  visible?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    boolean
+  >;   // Optional visibility predicate evaluated through failure isolation.
+  readOnly?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, TValue>],
+    boolean
+  >;   // Optional read-only predicate evaluated through failure isolation.
+  choices?: readonly KanbanCardEditorChoice[];   // Bounded static choices required by choice kinds.
+  controlId?: string;   // Registered custom-control identity required only by custom fields.
+}
+```
+
+## KanbanCardEditorFieldDefinition
+
+Heterogeneous field definition accepted while a schema infers its draft type.
+
+```ts
+interface KanbanCardEditorFieldDefinition<TDraft, TCard = unknown> {
+  fieldId: KanbanFieldId;   // Stable field identity used by state, errors, and focus.
+  sectionId: KanbanEditorSectionId;   // Stable section containing this field.
+  kind: KanbanCardEditorFieldKind;   // Generic control/value behavior.
+  labelId: string;   // Localized field label identity.
+  helpId?: string;   // Optional localized help identity.
+  order: number;   // Stable order within the section.
+  dependencies?: readonly KanbanFieldId[];   // Other fields consulted by conditional behavior.
+  read: KanbanEditorCallback<readonly [draft: TDraft], unknown>;   // Reads one concrete value into the heterogeneous boundary.
+  write: KanbanEditorCallback<readonly [draft: TDraft, value: never], TDraft>;   // Writes a concrete field value accepted by its own descriptor.
+  parse?: KanbanEditorCallback<
+    readonly [value: unknown, input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    unknown
+  >;   // Optional parser retained without erasing its concrete return type.
+  format?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    string
+  >;   // Optional safe display formatter.
+  validate?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    KanbanEditorDiagnostic | undefined
+  >[];   // Ordered synchronous validators.
+  validateAsync?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    Promise<KanbanEditorDiagnostic | undefined>
+  >[];   // Ordered asynchronous validators.
+  visible?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    boolean
+  >;   // Optional visibility predicate.
+  readOnly?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    boolean
+  >;   // Optional read-only predicate.
+  choices?: readonly KanbanCardEditorChoice[];   // Bounded static choices required by choice kinds.
+  controlId?: string;   // Registered custom-control identity required only by custom fields.
+}
+```
+
+## KanbanCardEditorFieldKind
+
+Closed field-kind set supported by the generic editor protocol.
+
+```ts
+type KanbanCardEditorFieldKind = 'text' | 'multiline' | 'number' | 'boolean' | 'date' | 'single-choice' | 'multiple-choice' | 'custom'
+```
+
+## KanbanCardEditorProposal
+
+Lifecycle-free proposal shape whose application draft is validated by the session boundary.
+
+```ts
+type KanbanCardEditorProposal = | Omit<KanbanCardCreateProposal, 'draft'> & { readonly draft: unknown }
+  | Omit<KanbanCardUpdateProposal, 'patch'> & { readonly patch: unknown }
+```
+
+## KanbanCardEditorSchema
+
+Validated immutable generic editor schema.
+
+```ts
+interface KanbanCardEditorSchema<TCard, TDraft> {
+  revision: KanbanRevision;   // Equality-only application schema revision.
+  sections: readonly KanbanCardEditorSection[];   // Ordered immutable sections.
+  fields: readonly KanbanCardEditorField<TDraft, unknown, TCard>[];   // Ordered immutable fields with value types erased only at the heterogeneous boundary.
+  controls?: KanbanEditorControlRegistry;   // Optional immutable custom-control registry.
+  field(fieldId: KanbanFieldId): KanbanCardEditorField<TDraft, unknown, TCard> | undefined;   // Finds a field by its stable identity.
+  section(sectionId: KanbanEditorSectionId): KanbanCardEditorSection | undefined;   // Finds a section by its stable identity.
+}
+```
+
+## KanbanCardEditorSchemaOptions
+
+Input accepted by the exact generic editor-schema constructor.
+
+```ts
+interface KanbanCardEditorSchemaOptions<TCard, TDraft> {
+  revision: unknown;   // Equality-only application schema revision.
+  sections: readonly KanbanCardEditorSection[];   // Finite ordered section metadata.
+  fields: readonly KanbanCardEditorFieldDefinition<TDraft, TCard>[];   // Finite typed heterogeneous field descriptors.
+  controls?: KanbanEditorControlRegistry;   // Optional prevalidated custom-control registry.
+}
+```
+
+## KanbanCardEditorSection
+
+Presentation metadata for one ordered editor section.
+
+```ts
+interface KanbanCardEditorSection {
+  sectionId: KanbanEditorSectionId;   // Stable section identity referenced by fields.
+  labelId: string;   // Localized section label identity.
+  order: number;   // Stable schema order.
+  presentation?: 'section' | 'tab' | 'collapsible';   // Optional normal, tab, or collapsible presentation preference.
+  initialCollapsed?: boolean;   // Whether a collapsible section starts closed.
+  secondaryDense?: boolean;   // Marks secondary dense content subject to the one-initially-open policy.
+}
+```
+
 ## KanbanCardFallbackLabels
 
 Localized bounded labels used when a renderer cannot produce a safe descriptor.
@@ -1757,6 +1930,414 @@ interface KanbanDurableViewStateV1 {
 }
 ```
 
+## KanbanEditorAlreadyOpen
+
+Existing claim returned instead of creating a second draft for the same card.
+
+```ts
+interface KanbanEditorAlreadyOpen {
+  kind: 'already-open';   // Existing-claim discriminator.
+  editorKind: KanbanEditorKind;   // Presentation family that owns the existing claim.
+  session: KanbanEditorSession;   // Existing shared session suitable for focus or inspector reuse.
+}
+```
+
+## KanbanEditorAuthority
+
+Application-owned request seam used by a session without assuming persistence authority.
+
+```ts
+interface KanbanEditorAuthority {
+  request(proposal: KanbanRequestProposal): KanbanRequestResult | Promise<KanbanRequestResult>;   // Admits one exact lifecycle-free proposal and returns an operation-correlated result.
+  cancel?(operationId: KanbanOperationId): boolean;   // Optionally requests cancellation of an accepted operation still awaiting publication.
+}
+```
+
+## KanbanEditorCardIdentity
+
+Application-owned record identity used by an edit/view session.
+
+```ts
+interface KanbanEditorCardIdentity {
+  kind: 'card';   // Identity discriminator reserved for later provisional create sessions.
+  cardKey: CardKey;   // Stable application-owned card key.
+}
+```
+
+## KanbanEditorContext
+
+Bounded context supplied to application editor callbacks.
+
+```ts
+interface KanbanEditorContext {
+  mode: KanbanEditorMode;   // Current create, view, or edit behavior.
+  signal: AbortSignal;   // Live signal aborted when the callback generation is no longer authoritative.
+}
+```
+
+## KanbanEditorControlInstance
+
+Measured custom control instance owned and disposed by one mounted field.
+
+```ts
+interface KanbanEditorControlInstance {
+  view: View;   // Mounted JSVision view.
+  measure: (availableWidth: number) => KanbanEditorControlMeasurement;   // Returns bounded responsive geometry for the current terminal width.
+  dispose: () => void;   // Releases timers, subscriptions, and other field-owned resources idempotently.
+}
+```
+
+## KanbanEditorControlMeasurement
+
+Bounded layout evidence returned by a custom editor control.
+
+```ts
+interface KanbanEditorControlMeasurement {
+  minimumWidth: number;   // Smallest usable control width in terminal cells.
+  preferredWidth: number;   // Preferred control width in terminal cells.
+  rows: number;   // Required control height in terminal rows.
+}
+```
+
+## KanbanEditorControlRegistration
+
+Application factory registered under one inert custom-control identity.
+
+```ts
+interface KanbanEditorControlRegistration {
+  controlId: string;   // Stable namespaced application control identity.
+  create: () => KanbanEditorControlInstance;   // Creates one measured disposable control instance.
+}
+```
+
+## KanbanEditorControlRegistry
+
+Immutable custom-control registry consumed by schema validation and later dialogs.
+
+```ts
+interface KanbanEditorControlRegistry {
+  controls: readonly KanbanEditorControlRegistration[];   // Ordered detached registrations.
+  control(controlId: string): KanbanEditorControlRegistration | undefined;   // Looks up a registration without invoking its factory.
+}
+```
+
+## KanbanEditorCoordinator
+
+Owns identity claims across package and application editor presentations.
+
+```ts
+interface KanbanEditorCoordinator {
+  open(options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>): Promise<KanbanEditorOpenResult>;   // Opens or returns the one session already claimed for the supplied card identity.
+  dispose(): void;   // Disposes all resolved sessions and prevents later acquisition.
+  disposed(): boolean;   // Reports whether the coordinator has released its claim registry.
+}
+```
+
+## KanbanEditorCoordinatorOpenOptions
+
+Options for opening one identity-exclusive editor session.
+
+```ts
+interface KanbanEditorCoordinatorOpenOptions<TCard, TDraft> {
+  editorKind: KanbanEditorKind;   // Standard package presentation or complete application replacement.
+}
+```
+
+## KanbanEditorDeletedRecord
+
+Authoritative notice that the application record no longer exists.
+
+```ts
+interface KanbanEditorDeletedRecord {
+  kind: 'deleted';   // Deletion discriminator.
+}
+```
+
+## KanbanEditorDiagnostic
+
+Safe field or form failure published without rejected application values.
+
+```ts
+interface KanbanEditorDiagnostic {
+  code: string;   // Stable machine-readable reason code.
+  messageId?: string;   // Optional localized message identity resolved by the mounted application.
+  label?: string;   // Optional already-sanitized application label.
+}
+```
+
+## KanbanEditorFieldCallbackInput
+
+Complete typed input supplied to parsers, formatters, predicates, and validators.
+
+```ts
+interface KanbanEditorFieldCallbackInput<TCard, TDraft, TValue> {
+  value: TValue;   // Current typed field value.
+  draft: TDraft;   // Current session-owned draft; callbacks must return changes rather than mutating it.
+  card?: TCard;   // Detached authoritative card when an edit/view session has one.
+  context: KanbanEditorContext;   // Current bounded mode and cancellation context.
+  signal: AbortSignal;   // Convenience alias for the live callback-generation signal.
+}
+```
+
+## KanbanEditorFieldState
+
+Immutable field presentation and validation state.
+
+```ts
+interface KanbanEditorFieldState {
+  fieldId: KanbanFieldId;   // Stable schema field identity.
+  displayValue: string;   // Safe formatted value intended for a standard control.
+  touched: boolean;   // Whether the user has attempted to change or submit this field.
+  visible: boolean;   // Whether the field participates in the current layout.
+  readOnly: boolean;   // Whether mutation is currently forbidden.
+  diagnostics: readonly KanbanEditorDiagnostic[];   // Bounded payload-free validation failures in callback order.
+}
+```
+
+## KanbanEditorKind
+
+Presentation family claiming one card identity through the editor coordinator.
+
+```ts
+type KanbanEditorKind = 'standard' | 'custom'
+```
+
+## KanbanEditorMode
+
+Editor mode shared by generic sessions and later package dialogs.
+
+```ts
+type KanbanEditorMode = 'create' | 'view' | 'edit'
+```
+
+## KanbanEditorOpenResult
+
+Complete result of attempting an identity-exclusive editor acquisition.
+
+```ts
+type KanbanEditorOpenResult = KanbanEditorOpened | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>
+```
+
+## KanbanEditorOpened
+
+Successful identity-exclusive editor acquisition.
+
+```ts
+interface KanbanEditorOpened {
+  kind: 'opened';   // Acquisition discriminator.
+  editorKind: KanbanEditorKind;   // Claimed presentation family.
+  session: KanbanEditorSession;   // Session whose disposal releases this exact coordinator claim.
+}
+```
+
+## KanbanEditorRecordPublication
+
+One authoritative record or deletion publication observed by an editor session.
+
+```ts
+type KanbanEditorRecordPublication<TCard> = KanbanEditorResolvedRecord<TCard> | KanbanEditorDeletedRecord
+```
+
+## KanbanEditorRecordResolver
+
+Application-owned record and revision source required by edit and view sessions.
+
+```ts
+interface KanbanEditorRecordResolver<TCard> {
+  resolve(cardKey: CardKey, context: KanbanEditorResolveContext): Promise<KanbanEditorResolveResult<TCard>>;   // Resolves the latest detached record while honoring package-owned cancellation.
+  subscribe(cardKey: CardKey, listener: (publication: KanbanEditorRecordPublication<TCard>) => void): () => void;   // Subscribes before resolution so no intervening authoritative publication is lost.
+}
+```
+
+## KanbanEditorRecordState
+
+Authoritative record condition visible to editor renderers.
+
+```ts
+type KanbanEditorRecordState = | KanbanEditorKindOutcome<'ready'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorCodeOutcome<'unavailable'>
+```
+
+## KanbanEditorReloadPolicy
+
+Explicit policy accepted by a stale-session reload.
+
+```ts
+type KanbanEditorReloadPolicy = 'discard-draft'
+```
+
+## KanbanEditorReloadResult
+
+Result of resolving and rebasing a stale editor draft.
+
+```ts
+type KanbanEditorReloadResult = | KanbanEditorKindOutcome<'reloaded'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorCodeOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>
+```
+
+## KanbanEditorResolveContext
+
+Cancellation context supplied to one application record-resolution generation.
+
+```ts
+interface KanbanEditorResolveContext {
+  signal: AbortSignal;   // Live package-owned signal aborted when the resolution is no longer authoritative.
+}
+```
+
+## KanbanEditorResolveResult
+
+Complete result of resolving one application-owned card record.
+
+```ts
+type KanbanEditorResolveResult<TCard> = KanbanEditorResolvedRecord<TCard> | KanbanEditorUnavailableRecord
+```
+
+## KanbanEditorResolvedRecord
+
+Authoritative record returned by an application-owned editor resolver.
+
+```ts
+interface KanbanEditorResolvedRecord<TCard> {
+  kind: 'record';   // Successful resolution discriminator.
+  card: TCard;   // Detached application record used only to construct the editor draft.
+  revision: KanbanRevision;   // Equality-only revision that becomes the session baseline.
+}
+```
+
+## KanbanEditorResult
+
+Detached validated draft evidence passed to an application adapter.
+
+```ts
+interface KanbanEditorResult<TDraft> {
+  draft: TDraft;   // Current typed session draft.
+  snapshot: KanbanSemanticValue;   // Bounded semantic full-draft snapshot.
+  changedFieldIds: readonly KanbanFieldId[];   // Exact schema-ordered changed field identities.
+  baseRevision?: KanbanRevision;   // Base card revision captured when editing began.
+}
+```
+
+## KanbanEditorSectionId
+
+Stable identity used to group and order editor fields.
+
+```ts
+type KanbanEditorSectionId = string
+```
+
+## KanbanEditorSession
+
+Disposable actor-style session shared by standard, custom, and inspector presentations.
+
+```ts
+interface KanbanEditorSession {
+  snapshot(): KanbanEditorSessionSnapshot;   // Returns one coherent immutable session snapshot.
+  fieldState(fieldId: KanbanFieldId): KanbanEditorFieldState;   // Returns immutable state for one schema field or a safe absent placeholder.
+  setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult;   // Attempts one typed field mutation without coercing hostile values.
+  submit(): Promise<KanbanEditorSubmitResult>;   // Validates and submits one full detached draft through application authority.
+  reload(policy: KanbanEditorReloadPolicy): Promise<KanbanEditorReloadResult>;   // Explicitly discards a stale draft and reloads the latest authoritative record.
+  subscribe(listener: (snapshot: KanbanEditorSessionSnapshot) => void): () => void;   // Subscribes to coherent state changes and returns an idempotent unsubscriber.
+  dispose(): void;   // Releases resolver, validation, and request ownership idempotently.
+  disposed(): boolean;   // Reports whether the session has released all owned resources.
+}
+```
+
+## KanbanEditorSessionOptions
+
+Options for opening one isolated editor session.
+
+```ts
+interface KanbanEditorSessionOptions<TCard, TDraft> {
+  mode: KanbanEditorMode;   // Create, view, or edit behavior.
+  cardKey: CardKey;   // Existing application-owned card identity.
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>;   // Typed generic record/draft adapter.
+  resolver: KanbanEditorRecordResolver<TCard>;   // Application-owned authoritative record source.
+  authority: KanbanEditorAuthority;   // Application-owned request admission seam.
+  signal?: AbortSignal;   // Optional caller cancellation used only while the initial record resolution is pending.
+}
+```
+
+## KanbanEditorSessionSnapshot
+
+Coherent immutable editor state consumed by dialogs and inspectors.
+
+```ts
+interface KanbanEditorSessionSnapshot {
+  mode: KanbanEditorMode;   // Current create, view, or edit behavior.
+  cardKey?: CardKey;   // Stable record identity when the session edits or views an existing card.
+  draft: KanbanSemanticValue;   // Detached bounded semantic draft safe for presentation and result handling.
+  baseRevision?: KanbanRevision;   // Base revision captured from the latest explicit resolution or reload.
+  dirty: boolean;   // Whether any schema field differs from its baseline value.
+  changedFieldIds: readonly KanbanFieldId[];   // Schema-ordered identities whose values differ from the baseline.
+  focusedFieldId?: KanbanFieldId;   // Field that should receive focus after validation or reflow.
+  record: KanbanEditorRecordState;   // Current authoritative-record condition.
+  submission: KanbanEditorSubmissionState;   // Current request/publication lifecycle.
+}
+```
+
+## KanbanEditorSetValueResult
+
+Synchronous result of attempting to change one editor field.
+
+```ts
+type KanbanEditorSetValueResult = | KanbanEditorValueAccepted
+  | KanbanEditorValueOutcome<'read-only'>
+  | KanbanEditorValueOutcome<'unknown-field'>
+  | KanbanEditorValueOutcome<'invalid-value'>
+  | KanbanEditorValueOutcome<'sealed'>
+  | KanbanEditorValueOutcome<'disposed'>
+```
+
+## KanbanEditorSubmissionState
+
+Submission lifecycle visible as one coherent immutable state.
+
+```ts
+type KanbanEditorSubmissionState = | KanbanEditorKindOutcome<'idle'>
+  | KanbanEditorKindOutcome<'validating'>
+  | KanbanEditorKindOutcome<'dispatching'>
+  | KanbanEditorOperationOutcome<'awaiting-publication'>
+  | KanbanEditorRejectedSubmissionState
+  | KanbanEditorOperationOutcome<'committed'>
+```
+
+## KanbanEditorSubmitResult
+
+Result returned by a complete validation and submission attempt.
+
+```ts
+type KanbanEditorSubmitResult = | KanbanEditorInvalidSubmitOutcome
+  | KanbanEditorOperationOutcome<'awaiting-publication'>
+  | KanbanEditorRejectedSubmitOutcome
+  | KanbanEditorOperationOutcome<'cancelled'>
+  | KanbanEditorOperationOutcome<'superseded'>
+  | KanbanEditorOperationOutcome<'committed'>
+  | KanbanEditorKindOutcome<'read-only'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorKindOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>
+```
+
+## KanbanEditorUnavailableRecord
+
+Typed resolver absence that does not disclose application record data.
+
+```ts
+interface KanbanEditorUnavailableRecord {
+  kind: 'unavailable';   // Absence discriminator.
+  code: string;   // Safe machine-readable reason such as `not-loaded` or `not-found`.
+}
+```
+
 ## KanbanEditorUpdateEvidence
 
 Exact evidence carried only when a card update patch is a complete editor draft.
@@ -1766,6 +2347,17 @@ interface KanbanEditorUpdateEvidence {
   kind: 'full-draft';   // Evidence discriminator that distinguishes full drafts from legacy sparse patches.
   changedFieldIds: readonly KanbanFieldId[];   // Schema-ordered field identities whose values differ from the editor baseline.
   baseRevision: KanbanRevision;   // Equality-only card revision captured when the editor draft opened.
+}
+```
+
+## KanbanEditorValueAccepted
+
+Completion handle returned by an accepted field mutation.
+
+```ts
+interface KanbanEditorValueAccepted {
+  kind: 'accepted';   // Accepted mutation discriminator.
+  settled: Promise<void>;   // Settles after the current async validation generation becomes inert or authoritative.
 }
 ```
 
@@ -6418,6 +7010,14 @@ interface ResolvedKanbanTheme {
 }
 ```
 
+## STANDARD_KANBAN_EDITOR_FIELDS
+
+Mainstream field order used when callers omit explicit configuration.
+
+```ts
+const STANDARD_KANBAN_EDITOR_FIELDS: readonly StandardKanbanEditorFieldId[]
+```
+
 ## SolveKanbanColumnWidthsOptions
 
 Inputs for the pure deterministic column-width solver.
@@ -6609,6 +7209,190 @@ interface StandardKanbanCardTextFieldConfiguration {
 }
 ```
 
+## StandardKanbanEditableCard
+
+Standard editor record accepted at the public convenience-model boundary.
+
+```ts
+type StandardKanbanEditableCard = StandardCard
+```
+
+## StandardKanbanEditorAdapter
+
+Standard adapter with an explicit disposable Forms factory for dialog composition.
+
+```ts
+interface StandardKanbanEditorAdapter {
+  formSchema: StandardKanbanFormSchema;   // Consumer or package Zod schema used by every created form.
+  createForm(draft: StandardKanbanEditorDraft): StandardKanbanEditorForm;   // Creates one disposable headless Forms owner from the current detached draft.
+}
+```
+
+## StandardKanbanEditorAdapterOptions
+
+Configuration accepted by the mainstream standard card adapter.
+
+```ts
+interface StandardKanbanEditorAdapterOptions {
+  fields?: readonly StandardKanbanEditorFieldId[];   // Ordered unique mainstream fields; all standard fields are used when omitted.
+  schema?: StandardKanbanFormSchema;   // Optional consumer Zod 4 schema used by the standard Forms store.
+  additionalSections?: readonly KanbanCardEditorSection[];   // Optional application sections appended to the standard section sequence.
+  additionalFields?: readonly KanbanCardEditorField<
+    StandardKanbanEditorDraft,
+    unknown,
+    StandardKanbanEditableCard
+  >[];   // Optional application fields operating on the same detached draft.
+  controls?: KanbanEditorControlRegistry;   // Optional application custom-control registry used by additional fields.
+  formatDate?: (value: unknown) => string;   // Optional formatter that converts opaque StandardCard dates into editable text.
+}
+```
+
+## StandardKanbanEditorDraft
+
+Detached standard draft; dynamic application fields remain explicitly unknown until snapshotted.
+
+```ts
+interface StandardKanbanEditorDraft {
+  key: string | number;   // Existing application-owned identity used by update proposals.
+  title: string;   // Required primary label.
+  status: string;   // Required application workflow status.
+  description: string;   // Optional long-form description represented as editable text.
+  type: string;   // Optional application-formatted work-item type.
+  priority: string;   // Optional application-formatted priority.
+  assignees: readonly KanbanSemanticValue[];   // Ordered detached assignee summaries.
+  labels: readonly KanbanSemanticValue[];   // Ordered detached card labels.
+  startDate: string;   // Optional ISO/application date text.
+  dueDate: string;   // Optional ISO/application date text.
+  estimate: string;   // Optional application-formatted estimate.
+  checklists: readonly KanbanSemanticValue[];   // Ordered detached checklist groups and stable item identities.
+  custom: KanbanSemanticValue;   // Bounded application-specific values consumed by additional field descriptors.
+}
+```
+
+## StandardKanbanEditorFieldId
+
+Closed set of mainstream fields supplied by the standard card adapter.
+
+```ts
+type StandardKanbanEditorFieldId = | 'title'
+  | 'status'
+  | 'description'
+  | 'type'
+  | 'priority'
+  | 'assignees'
+  | 'labels'
+  | 'startDate'
+  | 'dueDate'
+  | 'estimate'
+  | 'checklists'
+```
+
+## StandardKanbanEditorForm
+
+Disposable Zod-free view of the Forms store owned by one mounted standard editor.
+
+```ts
+interface StandardKanbanEditorForm {
+  field(name: string): StandardKanbanEditorFormField;   // Returns the stable handle for one configured field.
+  values(): StandardKanbanFormValues | null;   // Returns validated values, or `null` while the form is invalid.
+  rawValues(): StandardKanbanFormValues;   // Returns the live raw editing snapshot.
+  errors(): readonly unknown[];   // Returns form-level validation issues without exposing a Zod-owned public type.
+  isValid(): boolean;   // Reports whether synchronous and completed asynchronous validation pass.
+  dirty(): boolean;   // Reports whether any field differs from its baseline.
+  validating(): boolean;   // Reports whether asynchronous field validation is running.
+  submitting(): boolean;   // Reports whether form submission is running.
+  loading(): boolean;   // Reports whether an asynchronous record load is running.
+  load(loader: (context: { readonly signal: AbortSignal }) => Promise<StandardKanbanFormValues>): Promise<boolean>;   // Loads and rebases a complete raw editing record.
+  submit(handler: (values: StandardKanbanFormValues) => void | Promise<void>): Promise<boolean>;   // Validates and submits the current complete form values.
+  reset(): void;   // Restores the current baseline and clears interaction state.
+  dispose(): void;   // Releases the form's reactive and asynchronous resources.
+}
+```
+
+## StandardKanbanEditorFormField
+
+Zod-free field handle exposed by the standard editor's Forms store.
+
+```ts
+interface StandardKanbanEditorFormField {
+  name: string;   // Stable field identity.
+  value: Signal<unknown>;   // Reactive raw editing value.
+  error(): unknown | null;   // First synchronous validation issue, or `null` when clean.
+  touched(): boolean;   // Whether the field has been interacted with.
+  dirty(): boolean;   // Whether the field differs from its baseline.
+  validating(): boolean;   // Whether asynchronous validation is currently running.
+  asyncError(): string | null;   // Latest asynchronous validation message.
+}
+```
+
+## StandardKanbanFieldValidator
+
+Payload-free validator shared between Zod and the generic session protocol.
+
+```ts
+type StandardKanbanFieldValidator = (
+  fieldId: StandardKanbanEditorFieldId | KanbanFieldId,
+  value: unknown,
+) => boolean
+```
+
+## StandardKanbanFormFieldSchema
+
+Zod-compatible field contract kept structural so generic package types do not load Zod declarations.
+
+```ts
+interface StandardKanbanFormFieldSchema {
+  safeParse(value: unknown): StandardKanbanFormParseResult;   // Validates one field value without throwing.
+}
+```
+
+## StandardKanbanFormParseResult
+
+Minimal parse result required from a configured standard editor schema.
+
+```ts
+interface StandardKanbanFormParseResult {
+  success: boolean;   // Whether the supplied value satisfies the schema.
+}
+```
+
+## StandardKanbanFormSchema
+
+Zod-object-compatible contract used at the configured-field boundary.
+
+```ts
+interface StandardKanbanFormSchema {
+  shape: Readonly<Record<string, StandardKanbanFormFieldSchema>>;   // Field schemas keyed by configured editor field identity.
+  safeParse(value: unknown): StandardKanbanFormParseResult;   // Validates the complete raw form record without throwing.
+}
+```
+
+## StandardKanbanFormValues
+
+Raw Forms record keyed by validated editor field identities.
+
+```ts
+type StandardKanbanFormValues = Record<string, unknown>
+```
+
+## StandardKanbanSchemaOptions
+
+Internal inputs used to assemble one configured standard schema.
+
+```ts
+interface StandardKanbanSchemaOptions {
+  fields: readonly StandardKanbanEditorFieldId[];   // Ordered unique standard field selection.
+  additionalSections?: readonly KanbanCardEditorSection[];   // Optional application sections appended after standard sections.
+  additionalFields?: readonly KanbanCardEditorField<
+    StandardKanbanEditorDraft,
+    unknown,
+    StandardKanbanEditableCard
+  >[];   // Optional application fields over the same detached standard draft.
+  controls?: KanbanEditorControlRegistry;   // Optional application custom-control registrations.
+  valid: StandardKanbanFieldValidator;   // Field-level Zod validity callback that never exposes issue payloads.
+}
+```
+
 ## acceptKanbanPendingProjection
 
 Copy one pending projection into its accepted-but-unpublished lifecycle state.
@@ -6729,6 +7513,14 @@ Creates a pure localized descriptor that fits the supplied render budget.
 createFallbackKanbanCardDescriptor(context: KanbanCardRenderContext, labels: KanbanCardFallbackLabels): KanbanCardDescriptor
 ```
 
+## createKanbanCardEditorSchema
+
+Validates and detaches one finite Zod-free editor schema without invoking application callbacks.
+
+```ts
+createKanbanCardEditorSchema<TCard = unknown, TDraft = unknown>(options: KanbanCardEditorSchemaOptions<TCard, TDraft>): KanbanCardEditorSchema<TCard, TDraft>
+```
+
 ## createKanbanCardKey
 
 Creates a validated application-owned card key while preserving number/string distinction.
@@ -6767,6 +7559,30 @@ Creates a validated workflow-column identity.
 
 ```ts
 createKanbanColumnId(value: string): KanbanColumnId
+```
+
+## createKanbanEditorControlRegistry
+
+Creates a finite immutable registry whose inert IDs are the only custom-control selectors.
+
+```ts
+createKanbanEditorControlRegistry(options: KanbanEditorControlRegistryOptions = {}): KanbanEditorControlRegistry
+```
+
+## createKanbanEditorCoordinator
+
+Creates one identity coordinator shared by standard dialogs, custom replacements, and inspectors.
+
+```ts
+createKanbanEditorCoordinator(): KanbanEditorCoordinator
+```
+
+## createKanbanEditorSession
+
+Opens one detached editor session after subscribing to authoritative publications.
+
+```ts
+createKanbanEditorSession<TCard, TDraft>(options: KanbanEditorSessionOptions<TCard, TDraft>): Promise<KanbanEditorSession>
 ```
 
 ## createKanbanExtensionId
@@ -6943,6 +7759,22 @@ Creates the direct adapter for the optional StandardCard convenience model.
 
 ```ts
 createStandardKanbanCardAdapter<TDate = unknown, TCustom = unknown>(options: StandardKanbanCardAdapterOptions<TDate, TCustom> = {}): KanbanCardPresentationAdapter<StandardCard<TDate, TCustom>>
+```
+
+## createStandardKanbanEditorAdapter
+
+Creates the optional mainstream StandardCard editor adapter.
+
+```ts
+createStandardKanbanEditorAdapter(options: StandardKanbanEditorAdapterOptions = {}): StandardKanbanEditorAdapter
+```
+
+## createStandardKanbanEditorSchema
+
+Builds the generic schema used by the standard adapter and later standard dialog.
+
+```ts
+createStandardKanbanEditorSchema(options: StandardKanbanSchemaOptions): KanbanCardEditorSchema<StandardKanbanEditableCard, StandardKanbanEditorDraft>
 ```
 
 ## dispatchKanbanRequest

@@ -123,6 +123,67 @@ export interface KanbanCardEditorField<TDraft, TValue = KanbanSemanticValue, TCa
   readonly controlId?: string;
 }
 
+/**
+ * Heterogeneous field definition accepted while a schema infers its draft type.
+ *
+ * `never` appears only in callback input positions so fields retain their concrete value types while
+ * entering one mixed collection. The validated schema exposes `unknown` at the later lookup boundary.
+ */
+export interface KanbanCardEditorFieldDefinition<TDraft, TCard = unknown> {
+  /** Stable field identity used by state, errors, and focus. */
+  readonly fieldId: KanbanFieldId;
+  /** Stable section containing this field. */
+  readonly sectionId: KanbanEditorSectionId;
+  /** Generic control/value behavior. */
+  readonly kind: KanbanCardEditorFieldKind;
+  /** Localized field label identity. */
+  readonly labelId: string;
+  /** Optional localized help identity. */
+  readonly helpId?: string;
+  /** Stable order within the section. */
+  readonly order: number;
+  /** Other fields consulted by conditional behavior. */
+  readonly dependencies?: readonly KanbanFieldId[];
+  /** Reads one concrete value into the heterogeneous boundary. */
+  readonly read: KanbanEditorCallback<readonly [draft: TDraft], unknown>;
+  /** Writes a concrete field value accepted by its own descriptor. */
+  readonly write: KanbanEditorCallback<readonly [draft: TDraft, value: never], TDraft>;
+  /** Optional parser retained without erasing its concrete return type. */
+  readonly parse?: KanbanEditorCallback<
+    readonly [value: unknown, input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    unknown
+  >;
+  /** Optional safe display formatter. */
+  readonly format?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    string
+  >;
+  /** Ordered synchronous validators. */
+  readonly validate?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    KanbanEditorDiagnostic | undefined
+  >[];
+  /** Ordered asynchronous validators. */
+  readonly validateAsync?: readonly KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    Promise<KanbanEditorDiagnostic | undefined>
+  >[];
+  /** Optional visibility predicate. */
+  readonly visible?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    boolean
+  >;
+  /** Optional read-only predicate. */
+  readonly readOnly?: KanbanEditorCallback<
+    readonly [input: KanbanEditorFieldCallbackInput<TCard, TDraft, never>],
+    boolean
+  >;
+  /** Bounded static choices required by choice kinds. */
+  readonly choices?: readonly KanbanCardEditorChoice[];
+  /** Registered custom-control identity required only by custom fields. */
+  readonly controlId?: string;
+}
+
 /** Presentation metadata for one ordered editor section. */
 export interface KanbanCardEditorSection {
   /** Stable section identity referenced by fields. */
@@ -203,6 +264,11 @@ export interface KanbanEditorResult<TDraft> {
   readonly baseRevision?: KanbanRevision;
 }
 
+/** Lifecycle-free proposal shape whose application draft is validated by the session boundary. */
+export type KanbanCardEditorProposal =
+  | (Omit<KanbanCardCreateProposal, 'draft'> & { readonly draft: unknown })
+  | (Omit<KanbanCardUpdateProposal, 'patch'> & { readonly patch: unknown });
+
 /** Generic bridge between an application record, editor draft, and board proposal. */
 export interface KanbanCardEditorAdapter<TCard, TDraft> {
   /** Validated schema describing fields and controls. */
@@ -212,7 +278,7 @@ export interface KanbanCardEditorAdapter<TCard, TDraft> {
   /** Creates a bounded semantic snapshot without mutating the draft. */
   snapshot(draft: TDraft): KanbanSemanticValue;
   /** Builds one lifecycle-free create or update proposal for the shared authority. */
-  proposal(result: KanbanEditorResult<TDraft>): KanbanCardCreateProposal | KanbanCardUpdateProposal;
+  proposal(result: KanbanEditorResult<TDraft>): KanbanCardEditorProposal;
 }
 
 /** Application-owned record identity used by an edit/view session. */
@@ -373,14 +439,20 @@ export interface KanbanEditorValueAccepted {
   readonly settled: Promise<void>;
 }
 
+/** Non-accepted mutation outcome whose already-settled handle keeps calling code uniform. */
+interface KanbanEditorValueOutcome<TKind extends string> extends KanbanEditorKindOutcome<TKind> {
+  /** Already-settled completion because no async validation was started. */
+  readonly settled: Promise<void>;
+}
+
 /** Synchronous result of attempting to change one editor field. */
 export type KanbanEditorSetValueResult =
   | KanbanEditorValueAccepted
-  | KanbanEditorKindOutcome<'read-only'>
-  | KanbanEditorKindOutcome<'unknown-field'>
-  | KanbanEditorKindOutcome<'invalid-value'>
-  | KanbanEditorKindOutcome<'sealed'>
-  | KanbanEditorKindOutcome<'disposed'>;
+  | KanbanEditorValueOutcome<'read-only'>
+  | KanbanEditorValueOutcome<'unknown-field'>
+  | KanbanEditorValueOutcome<'invalid-value'>
+  | KanbanEditorValueOutcome<'sealed'>
+  | KanbanEditorValueOutcome<'disposed'>;
 
 /** Result returned by a complete validation and submission attempt. */
 export type KanbanEditorSubmitResult =

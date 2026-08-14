@@ -1,5 +1,5 @@
 import { createForm } from '@jsvision/forms';
-import type { Form } from '@jsvision/forms';
+import type { Signal } from '@jsvision/ui';
 import { z } from 'zod';
 
 import { KanbanInvalidEditorSchemaError } from '../contract/error.js';
@@ -21,12 +21,78 @@ import type {
   KanbanEditorControlRegistry,
 } from './types.js';
 
-/** Dynamic Zod object used at the heterogeneous configured-field boundary. */
-export type StandardKanbanFormSchema = z.ZodObject<Record<string, z.ZodType>>;
+/** Minimal parse result required from a configured standard editor schema. */
+export interface StandardKanbanFormParseResult {
+  /** Whether the supplied value satisfies the schema. */
+  readonly success: boolean;
+}
+
+/** Zod-compatible field contract kept structural so generic package types do not load Zod declarations. */
+export interface StandardKanbanFormFieldSchema {
+  /** Validates one field value without throwing. */
+  safeParse(value: unknown): StandardKanbanFormParseResult;
+}
+
+/** Zod-object-compatible contract used at the configured-field boundary. */
+export interface StandardKanbanFormSchema {
+  /** Field schemas keyed by configured editor field identity. */
+  readonly shape: Readonly<Record<string, StandardKanbanFormFieldSchema>>;
+  /** Validates the complete raw form record without throwing. */
+  safeParse(value: unknown): StandardKanbanFormParseResult;
+}
+
 /** Raw Forms record keyed by validated editor field identities. */
 export type StandardKanbanFormValues = Record<string, unknown>;
-/** Disposable Forms store owned by one mounted standard editor. */
-export type StandardKanbanEditorForm = Form<StandardKanbanFormSchema, StandardKanbanFormValues>;
+
+/** Zod-free field handle exposed by the standard editor's Forms store. */
+export interface StandardKanbanEditorFormField {
+  /** Stable field identity. */
+  readonly name: string;
+  /** Reactive raw editing value. */
+  readonly value: Signal<unknown>;
+  /** First synchronous validation issue, or `null` when clean. */
+  error(): unknown | null;
+  /** Whether the field has been interacted with. */
+  touched(): boolean;
+  /** Whether the field differs from its baseline. */
+  dirty(): boolean;
+  /** Whether asynchronous validation is currently running. */
+  validating(): boolean;
+  /** Latest asynchronous validation message. */
+  asyncError(): string | null;
+}
+
+/** Disposable Zod-free view of the Forms store owned by one mounted standard editor. */
+export interface StandardKanbanEditorForm {
+  /** Returns the stable handle for one configured field. */
+  field(name: string): StandardKanbanEditorFormField;
+  /** Returns validated values, or `null` while the form is invalid. */
+  values(): StandardKanbanFormValues | null;
+  /** Returns the live raw editing snapshot. */
+  rawValues(): StandardKanbanFormValues;
+  /** Returns form-level validation issues without exposing a Zod-owned public type. */
+  errors(): readonly unknown[];
+  /** Reports whether synchronous and completed asynchronous validation pass. */
+  isValid(): boolean;
+  /** Reports whether any field differs from its baseline. */
+  dirty(): boolean;
+  /** Reports whether asynchronous field validation is running. */
+  validating(): boolean;
+  /** Reports whether form submission is running. */
+  submitting(): boolean;
+  /** Reports whether an asynchronous record load is running. */
+  loading(): boolean;
+  /** Loads and rebases a complete raw editing record. */
+  load(loader: (context: { readonly signal: AbortSignal }) => Promise<StandardKanbanFormValues>): Promise<boolean>;
+  /** Validates and submits the current complete form values. */
+  submit(handler: (values: StandardKanbanFormValues) => void | Promise<void>): Promise<boolean>;
+  /** Restores the current baseline and clears interaction state. */
+  reset(): void;
+  /** Releases the form's reactive and asynchronous resources. */
+  dispose(): void;
+}
+
+type RuntimeStandardKanbanFormSchema = z.ZodObject<Record<string, z.ZodType>>;
 
 /** Configuration accepted by the mainstream standard card adapter. */
 export interface StandardKanbanEditorAdapterOptions {
@@ -63,7 +129,7 @@ export interface StandardKanbanEditorAdapter extends KanbanCardEditorAdapter<
 function defaultFormSchema(
   fields: readonly StandardKanbanEditorFieldId[],
   additionalFields: readonly KanbanCardEditorField<StandardKanbanEditorDraft, unknown, StandardKanbanEditableCard>[],
-): StandardKanbanFormSchema {
+): RuntimeStandardKanbanFormSchema {
   const shape: Record<string, z.ZodType> = {};
   for (const fieldId of fields) {
     switch (fieldId) {
@@ -105,8 +171,13 @@ function defaultFormSchema(
 }
 
 /** Validates that a consumer schema owns every configured field without inspecting its validators. */
-function validateFormSchema(schema: StandardKanbanFormSchema, fieldIds: readonly string[]): StandardKanbanFormSchema {
-  if (fieldIds.some((fieldId) => schema.shape[fieldId] === undefined)) throw new KanbanInvalidEditorSchemaError();
+function validateFormSchema(
+  schema: StandardKanbanFormSchema,
+  fieldIds: readonly string[],
+): RuntimeStandardKanbanFormSchema {
+  if (!(schema instanceof z.ZodObject) || fieldIds.some((fieldId) => schema.shape[fieldId] === undefined)) {
+    throw new KanbanInvalidEditorSchemaError();
+  }
   return schema;
 }
 
@@ -220,8 +291,25 @@ export function createStandardKanbanEditorAdapter(
     create: (card: StandardKanbanEditableCard | undefined) => createDraft(card, options.formatDate),
     snapshot: (draft: StandardKanbanEditorDraft) => snapshotFormValues(rawFormValues(draft, schema.fields)),
     proposal: (result) => ({ kind: 'card-update', cardKey: result.draft.key, patch: result.snapshot }),
-    createForm: (draft: StandardKanbanEditorDraft) =>
-      createForm({ schema: formSchema, initial: rawFormValues(draft, schema.fields) }),
+    createForm: (draft: StandardKanbanEditorDraft) => {
+      const form = createForm({ schema: formSchema, initial: rawFormValues(draft, schema.fields) });
+      return Object.freeze({
+        field: (name: string) => form.field(name),
+        values: () => form.values(),
+        rawValues: () => form.rawValues(),
+        errors: () => form.errors(),
+        isValid: () => form.isValid(),
+        dirty: () => form.dirty(),
+        validating: () => form.validating(),
+        submitting: () => form.submitting(),
+        loading: () => form.loading(),
+        load: (loader: (context: { readonly signal: AbortSignal }) => Promise<StandardKanbanFormValues>) =>
+          form.load(loader),
+        submit: (handler: (values: StandardKanbanFormValues) => void | Promise<void>) => form.submit(handler),
+        reset: () => form.reset(),
+        dispose: () => form.dispose(),
+      });
+    },
   };
   return Object.freeze(adapter);
 }
