@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 22:43 CEST
-> **Progress**: 61/125 tasks (49%)
+> **Last Updated**: 2026-08-14 22:46 CEST
+> **Progress**: 62/125 tasks (50%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -248,7 +248,7 @@ initialize successfully; no unrelated runtime, matcher, or transform failure mas
 
 ### Step 5.2: Implementation
 
-- [ ] 5.2.1 Implement configuration types and exact validation using sanitized/trimmed NFKC plus fixed `en-US` lowercase collision keys — configuration types/validation
+- [x] 5.2.1 Implement configuration types and exact validation using sanitized/trimmed NFKC plus fixed `en-US` lowercase collision keys — configuration types/validation ✅ (completed: 2026-08-14 22:46)
 - [ ] 5.2.2 Implement pure column/swimlane add/update/reorder/delete builders — `packages/kanban/src/configuration/builders.ts`, `validation.ts`
 - [ ] 5.2.3 Implement non-empty/unknown delete policy and confirmation result builders — `packages/kanban/src/configuration/deletion.ts`, `builders.ts`
 - [ ] 5.2.4 Implement shared configuration session and stale/rejection lifecycle — `packages/kanban/src/configuration/session.ts`, `types.ts`
