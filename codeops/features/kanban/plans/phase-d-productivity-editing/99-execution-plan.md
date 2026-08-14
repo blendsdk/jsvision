@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 12:22 CEST
-> **Progress**: 1/125 tasks (1%)
+> **Last Updated**: 2026-08-14 12:25 CEST
+> **Progress**: 2/125 tasks (2%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -58,7 +58,7 @@ remains in Phases E–F.
 **Reference**: 03-01 §Public model–Failure handling · ST-DV-01…DV-16 · AR-D03/D12/D13/D17/D18/D22
 
 - [x] 1.1.1 `[spec-author]` Add transition, legacy `KanbanSortField.compare` compatibility, additive comparators, mixed-key ties, clear-sort, facet ownership, and `cardPresentation` preservation — `packages/kanban/test/view-state.spec.test.ts` ✅ (completed: 2026-08-14 12:22)
-- [ ] 1.1.2 `[spec-author]` Add draft-versus-committed debounce, cancellation, filtered-empty, counts, focus, and disposal oracles — `packages/kanban/test/view-state.spec.test.ts`
+- [x] 1.1.2 `[spec-author]` Add draft-versus-committed debounce, cancellation, filtered-empty, counts, focus, and disposal oracles — `packages/kanban/test/view-state.spec.test.ts` ✅ (completed: 2026-08-14 12:25)
 - [ ] 1.1.3 `[spec-author]` Add responsive standard view-bar and keyboard/mouse reachability oracles — `packages/kanban/test/view-chrome.spec.test.ts`
 - [ ] 1.1.4 `[spec-author]` Add hostile evaluator and controller→binder→viewport→session prepare/commit/abort invisibility/rollback oracles — `packages/kanban/test/security/view-input.spec.test.ts`
 - [ ] 1.1.5 Run the focused specifications and record expected red failures

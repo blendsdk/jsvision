@@ -1,5 +1,5 @@
 import { createApplication, resolveCapabilities } from '@jsvision/ui';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KanbanBoard, createEagerKanbanDataSource, createKanbanViewController } from '../src/index.js';
 import type { CardKey, KanbanCardAdapter, KanbanQuery, KanbanQuerySession } from '../src/index.js';
@@ -19,6 +19,10 @@ const CARD: KanbanCardAdapter<WorkItem> = {
   statusOf: () => 'Ready',
 };
 const CAPS = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 /** Compares the fixture priority without widening its bounded comparator result. */
 function comparePriority(left: WorkItem, right: WorkItem): -1 | 0 | 1 {
@@ -160,6 +164,129 @@ describe('Kanban Phase D view-state specification', () => {
 
     expect(board.inspection().visibleCards[0]?.descriptor.density).toBe('compact');
     expect(cardPresentation).toHaveBeenCalledWith(card);
+    application.loop.dispose();
+    controller.dispose();
+  });
+
+  it('keeps search draft out of committed state until the exact debounce boundary', () => {
+    vi.useFakeTimers();
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    const subscriber = vi.fn();
+    controller.subscribe(subscriber);
+
+    const pending = controller.apply({ kind: 'set-search', search: 'alpha' });
+
+    expect(pending.kind).toBe('pending');
+    expect(controller.state().search).toBe('');
+    expect(controller.query().search).toBeUndefined();
+    vi.advanceTimersByTime(149);
+    expect(controller.state().search).toBe('');
+    expect(subscriber).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(controller.state().search).toBe('alpha');
+    expect(controller.query().search).toBe('alpha');
+    expect(subscriber).toHaveBeenCalledOnce();
+    controller.dispose();
+  });
+
+  it('cancels older search generations and publishes only the newest query', () => {
+    vi.useFakeTimers();
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    const subscriber = vi.fn();
+    controller.subscribe(subscriber);
+
+    controller.apply({ kind: 'set-search', search: 'a' });
+    vi.advanceTimersByTime(50);
+    controller.apply({ kind: 'set-search', search: 'al' });
+    vi.advanceTimersByTime(50);
+    controller.apply({ kind: 'set-search', search: 'alp' });
+    vi.advanceTimersByTime(149);
+    expect(controller.query().search).toBeUndefined();
+    vi.advanceTimersByTime(1);
+
+    expect(controller.state().search).toBe('alp');
+    expect(controller.query().search).toBe('alp');
+    expect(subscriber).toHaveBeenCalledOnce();
+    controller.dispose();
+  });
+
+  it('cancels pending search publication when disposed', () => {
+    vi.useFakeTimers();
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    const subscriber = vi.fn();
+    controller.subscribe(subscriber);
+
+    controller.apply({ kind: 'set-search', search: 'late' });
+    controller.dispose();
+    vi.advanceTimersByTime(150);
+
+    expect(subscriber).not.toHaveBeenCalled();
+    expect(controller.apply({ kind: 'set-density', density: 'compact' }).kind).toBe('unavailable');
+  });
+
+  it('reports filtered-empty counts without rewriting total or authoritative WIP', () => {
+    vi.useFakeTimers();
+    const cards: readonly WorkItem[] = [
+      { id: 1, columnId: 'ready', priority: 1, rank: 1, title: 'Alpha' },
+      { id: 2, columnId: 'ready', priority: 2, rank: 2, title: 'Beta' },
+    ];
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [COLUMN],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+      search: (card, term) => card.title.toLocaleLowerCase('en-US').includes(term),
+    });
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    const board = new KanbanBoard({ source, query: controller.query, card: CARD, view: { controller } });
+    board.setLayout({ position: 'fill' });
+    const application = createApplication({ content: board, viewport: { width: 40, height: 12 }, caps: CAPS });
+    application.loop.renderRoot.flush();
+
+    controller.apply({ kind: 'set-search', search: 'missing' });
+    vi.advanceTimersByTime(150);
+    application.loop.renderRoot.flush();
+
+    expect(controller.summary()).toMatchObject({
+      total: { quality: 'exact', value: 2 },
+      matching: { quality: 'exact', value: 0 },
+      loaded: { quality: 'exact', value: 2 },
+      visible: 0,
+      emptyState: 'filtered',
+      wip: { quality: 'exact', value: 2 },
+    });
+    application.loop.dispose();
+    controller.dispose();
+  });
+
+  it('reconciles focus only after a committed query hides the focused card', async () => {
+    vi.useFakeTimers();
+    const cards: readonly WorkItem[] = [
+      { id: 1, columnId: 'ready', priority: 1, rank: 1, title: 'Alpha' },
+      { id: 2, columnId: 'ready', priority: 2, rank: 2, title: 'Beta' },
+    ];
+    const source = createEagerKanbanDataSource(() => cards, {
+      columns: () => [COLUMN],
+      keyOf: (card) => card.id,
+      columnOf: (card) => card.columnId,
+      search: (card, term) => card.title.toLocaleLowerCase('en-US').includes(term),
+    });
+    const controller = createKanbanViewController({ debounceMs: 150 });
+    const board = new KanbanBoard({ source, query: controller.query, card: CARD, view: { controller } });
+    board.setLayout({ position: 'fill' });
+    const application = createApplication({ content: board, viewport: { width: 40, height: 12 }, caps: CAPS });
+    application.loop.renderRoot.flush();
+    await board.interaction().transition({
+      kind: 'focus',
+      target: { kind: 'card', cardKey: 2, address: { columnId: 'ready' } },
+    });
+
+    controller.apply({ kind: 'set-search', search: 'alpha' });
+    expect(board.interaction().snapshot().focused).toMatchObject({ kind: 'card', cardKey: 2 });
+    vi.advanceTimersByTime(150);
+    application.loop.renderRoot.flush();
+
+    expect(controller.query().search).toBe('alpha');
+    expect(board.interaction().snapshot().focused).not.toMatchObject({ kind: 'card', cardKey: 2 });
     application.loop.dispose();
     controller.dispose();
   });
