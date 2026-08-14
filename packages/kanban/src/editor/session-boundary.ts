@@ -6,14 +6,18 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanCardPublicationSubject, KanbanRequestResult } from '../contract/request.js';
 import { snapshotKanbanRequestResult } from '../contract/request-validation.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
-import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
+import { canonicalizeKanbanSemanticValue, snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
+import type { KanbanSemanticValue } from '../contract/semantic-query.js';
 import { sanitizeContractText } from '../contract/text-safety.js';
 import type {
+  KanbanCardEditorAdapter,
   KanbanCardEditorField,
   KanbanEditorDiagnostic,
+  KanbanEditorMode,
   KanbanEditorRecordPublication,
   KanbanEditorResolveResult,
 } from './types.js';
+import { invokeKanbanEditorCallback } from './registry.js';
 
 /** Exact resolver record members. */
 const RESOLVED_RECORD_KEYS = new Set(['kind', 'card', 'revision']);
@@ -25,6 +29,28 @@ const DELETED_PUBLICATION_KEYS = new Set(['kind']);
 const DIAGNOSTIC_KEYS = new Set(['code', 'messageId', 'label']);
 /** Conservative display ceiling for one formatted editor value. */
 const MAX_DISPLAY_CHARACTERS = 4_096;
+
+/** Creates one detached draft and converts an application callback failure into a contract error. */
+export function createKanbanEditorDraft<TCard, TDraft>(
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>,
+  card: TCard | undefined,
+  mode: KanbanEditorMode,
+  signal: AbortSignal,
+): TDraft {
+  const created = invokeKanbanEditorCallback(adapter.create, [card, Object.freeze({ mode, signal })]);
+  if (created.kind === 'failure') throw new KanbanInvalidSemanticValueError();
+  return created.value;
+}
+
+/** Snapshots one typed draft before the session exposes or dispatches it. */
+export function snapshotKanbanEditorDraft<TCard, TDraft>(
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>,
+  draft: TDraft,
+): KanbanSemanticValue {
+  const snapshot = invokeKanbanEditorCallback(adapter.snapshot, [draft]);
+  if (snapshot.kind === 'failure') throw new KanbanInvalidSemanticValueError();
+  return snapshotKanbanSemanticValue(snapshot.value);
+}
 
 /** Removes whole terminal escape sequences before the general control-code sanitizer runs. */
 export function sanitizeEditorDisplay(value: string): string {
@@ -94,8 +120,11 @@ export function snapshotKanbanEditorRecordPublication<TCard>(
 }
 
 /** Returns a safe default parser result without invoking coercive object behavior. */
-export function defaultKanbanEditorFieldValue(kind: KanbanCardEditorField<unknown>['kind'], value: unknown): unknown {
-  switch (kind) {
+export function defaultKanbanEditorFieldValue<TDraft, TCard>(
+  field: KanbanCardEditorField<TDraft, unknown, TCard>,
+  value: unknown,
+): unknown {
+  switch (field.kind) {
     case 'text':
     case 'multiline':
     case 'date':
@@ -107,8 +136,24 @@ export function defaultKanbanEditorFieldValue(kind: KanbanCardEditorField<unknow
     case 'boolean':
       if (typeof value !== 'boolean') throw new KanbanInvalidSemanticValueError();
       return value;
-    case 'single-choice':
-    case 'multiple-choice':
+    case 'single-choice': {
+      const selected = snapshotKanbanSemanticValue(value);
+      const key = canonicalizeKanbanSemanticValue(selected);
+      if (!field.choices?.some((choice) => canonicalizeKanbanSemanticValue(choice.value) === key)) {
+        throw new KanbanInvalidSemanticValueError();
+      }
+      return selected;
+    }
+    case 'multiple-choice': {
+      const selected = snapshotKanbanSemanticValue(value);
+      if (!Array.isArray(selected)) throw new KanbanInvalidSemanticValueError();
+      const allowed = new Set(field.choices?.map((choice) => canonicalizeKanbanSemanticValue(choice.value)) ?? []);
+      const keys = selected.map(canonicalizeKanbanSemanticValue);
+      if (new Set(keys).size !== keys.length || keys.some((key) => !allowed.has(key))) {
+        throw new KanbanInvalidSemanticValueError();
+      }
+      return selected;
+    }
     case 'custom':
       return snapshotKanbanSemanticValue(value);
   }

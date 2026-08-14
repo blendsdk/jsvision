@@ -54,6 +54,9 @@ export function validateKanbanDataKeys(properties: KanbanDataProperties, allowed
 }
 
 /** Copies a bounded dense ordinary array without invoking element accessors. */
+export function snapshotKanbanDataArray<TValue>(value: readonly TValue[], maximumEntries: number): readonly TValue[];
+/** Runtime boundary for callers whose array element type is not known yet. */
+export function snapshotKanbanDataArray(value: unknown, maximumEntries: number): readonly unknown[];
 export function snapshotKanbanDataArray(value: unknown, maximumEntries: number): readonly unknown[] {
   try {
     if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {

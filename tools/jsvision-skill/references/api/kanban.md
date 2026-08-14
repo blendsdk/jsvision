@@ -2176,6 +2176,7 @@ Result of resolving and rebasing a stale editor draft.
 type KanbanEditorReloadResult = | KanbanEditorKindOutcome<'reloaded'>
   | KanbanEditorKindOutcome<'deleted'>
   | KanbanEditorCodeOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
   | KanbanEditorKindOutcome<'disposed'>
   | KanbanEditorKindOutcome<'failed'>
 ```

@@ -478,6 +478,7 @@ export type KanbanEditorReloadResult =
   | KanbanEditorKindOutcome<'reloaded'>
   | KanbanEditorKindOutcome<'deleted'>
   | KanbanEditorCodeOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
   | KanbanEditorKindOutcome<'disposed'>
   | KanbanEditorKindOutcome<'failed'>;
 

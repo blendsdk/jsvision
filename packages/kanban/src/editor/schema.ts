@@ -200,6 +200,9 @@ function snapshotField<TCard, TDraft>(
           snapshotKanbanDataArray(properties.choices, KANBAN_LIMITS.semanticArrayEntries.safe).map(snapshotChoice),
         );
   if ((kind === 'single-choice' || kind === 'multiple-choice') !== (choices !== undefined)) return invalidSchema();
+  if (choices !== undefined && new Set(choices.map(({ choiceId }) => choiceId)).size !== choices.length) {
+    return invalidSchema();
+  }
   const controlId = properties.controlId;
   if (kind === 'custom') {
     if (typeof controlId !== 'string' || !CONTROL_ID.test(controlId) || controls?.control(controlId) === undefined) {

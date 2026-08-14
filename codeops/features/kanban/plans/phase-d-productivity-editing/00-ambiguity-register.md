@@ -364,3 +364,37 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** Forms cannot retain configured dynamic field IDs without unsafe casts, or whole-form
   validation cannot be gated before authority dispatch in the standard dialog.
+
+### AR-D32 — Editor session race and hostile-input remediation (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; every Major finding is corrected, not waived.
+- **Eligibility:** Concurrency ownership, bounded application input, callback containment, and exact proposal
+  correlation inside the approved editor session and standard adapter scope.
+- **Objective:** Make cancellation prompt, record/publication reconciliation deterministic, subscriber delivery
+  monotonic, and all standard schema collections safe before traversal.
+- **Evidence:** Independent correctness, security, and API/concurrency review found ten Major failures spanning
+  cross-card proposals, unbounded pre-resolution publications, uncooperative promises, hostile collections,
+  validation-time stale records, early accepted publications, reentrant notification order, reload overlap,
+  lost presentation diagnostics, and unenforced choice domains.
+- **Decision:** Correlate edit proposals and standard resolved records to the session card key; retain only the
+  latest pre-resolution or reload publication and one dispatch-generation publication; race package awaits
+  against generation-owned abort signals; interrupt submission on stale/deleted records; seal reload during
+  active submission; serialize/coalesce notification passes; retain presentation and validation diagnostics
+  independently; reject duplicate choices and default values outside exact registered domains; and snapshot
+  exact bounded standard-adapter records/collections before iteration. Split the actor into field, async, and
+  notifier responsibilities so cancellation and ordering invariants remain reviewable.
+- **Rejected alternatives:** Awaiting application cooperation leaves package operations pending indefinitely.
+  Retaining every publication permits unbounded memory growth. Treating callback failures as empty presentation
+  silently authorizes invalid submit. Allowing arbitrary default choice values contradicts the declared schema.
+  Any waiver would preserve a known Major defect and is prohibited by the quality gate.
+- **Strongest counterargument:** Detaching from an uncooperative promise cannot stop the application's underlying
+  work. The package still promptly releases its own operation/claim and makes every late continuation inert;
+  application code remains responsible for honoring the supplied abort signal to stop external work.
+- **Confidence:** High — each decision directly closes an observed state-machine or boundary failure and has a
+  focused regression test plus cross-package verification.
+- **Hardening:** Three independent lenses reviewed the complete Phase 3 diff. The accepted correction is subject
+  to the single mandatory fix-scoped re-review before Phase 4 starts.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** Authority gains cancellable request ownership, resolver publications become sequenced event
+  logs rather than latest-state snapshots, or choice controls adopt an explicitly extensible value domain.

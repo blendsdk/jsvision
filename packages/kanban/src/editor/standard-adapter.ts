@@ -2,6 +2,11 @@ import { createForm } from '@jsvision/forms';
 import type { Signal } from '@jsvision/ui';
 import { z } from 'zod';
 
+import {
+  snapshotKanbanDataArray,
+  snapshotKanbanDataProperties,
+  validateKanbanDataKeys,
+} from '../contract/data-snapshot.js';
 import { KanbanInvalidEditorSchemaError } from '../contract/error.js';
 import { createKanbanCardKey } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
@@ -94,6 +99,39 @@ export interface StandardKanbanEditorForm {
 
 type RuntimeStandardKanbanFormSchema = z.ZodObject<Record<string, z.ZodType>>;
 
+const ADAPTER_OPTION_KEYS = new Set([
+  'fields',
+  'schema',
+  'additionalSections',
+  'additionalFields',
+  'controls',
+  'formatDate',
+]);
+const STANDARD_CARD_KEYS = new Set([
+  'key',
+  'columnId',
+  'swimlaneId',
+  'rank',
+  'presentationRevision',
+  'title',
+  'status',
+  'description',
+  'type',
+  'priority',
+  'assignees',
+  'labels',
+  'startDate',
+  'dueDate',
+  'estimate',
+  'value',
+  'checklists',
+  'summaries',
+  'custom',
+]);
+const SUMMARY_KEYS = new Set(['id', 'label']);
+const CHECKLIST_KEYS = new Set(['checklistId', 'title', 'items']);
+const CHECKLIST_ITEM_KEYS = new Set(['itemId', 'text', 'completed']);
+
 /** Configuration accepted by the mainstream standard card adapter. */
 export interface StandardKanbanEditorAdapterOptions {
   /** Ordered unique mainstream fields; all standard fields are used when omitted. */
@@ -171,10 +209,7 @@ function defaultFormSchema(
 }
 
 /** Validates that a consumer schema owns every configured field without inspecting its validators. */
-function validateFormSchema(
-  schema: StandardKanbanFormSchema,
-  fieldIds: readonly string[],
-): RuntimeStandardKanbanFormSchema {
+function validateFormSchema(schema: unknown, fieldIds: readonly string[]): RuntimeStandardKanbanFormSchema {
   if (!(schema instanceof z.ZodObject) || fieldIds.some((fieldId) => schema.shape[fieldId] === undefined)) {
     throw new KanbanInvalidEditorSchemaError();
   }
@@ -185,23 +220,40 @@ function validateFormSchema(
 function snapshotSummaries(
   values: readonly { readonly id: string; readonly label: string }[],
 ): readonly KanbanSemanticValue[] {
-  return Object.freeze(values.map((value) => snapshotKanbanSemanticValue({ id: value.id, label: value.label })));
+  const bounded = snapshotKanbanDataArray(values, KANBAN_LIMITS.cardFields.safe);
+  return Object.freeze(
+    bounded.map((value) => {
+      const properties = snapshotKanbanDataProperties(value, SUMMARY_KEYS.size);
+      validateKanbanDataKeys(properties, SUMMARY_KEYS);
+      return snapshotKanbanSemanticValue({ id: properties.id, label: properties.label });
+    }),
+  );
 }
 
 /** Snapshots stable checklist identities, order, text, and completion values. */
-function snapshotChecklists(card: StandardKanbanEditableCard): readonly KanbanSemanticValue[] {
+function snapshotChecklists(
+  groups: readonly NonNullable<StandardKanbanEditableCard['checklists']>[number][],
+): readonly KanbanSemanticValue[] {
+  const boundedGroups = snapshotKanbanDataArray(groups, KANBAN_LIMITS.checklistGroups.safe);
   return Object.freeze(
-    (card.checklists ?? []).map((group) =>
-      snapshotKanbanSemanticValue({
-        checklistId: group.checklistId,
-        ...(group.title === undefined ? {} : { title: group.title }),
-        items: group.items.map((item) => ({
-          itemId: item.itemId,
-          text: item.text,
-          completed: item.completed,
-        })),
-      }),
-    ),
+    boundedGroups.map((group) => {
+      const properties = snapshotKanbanDataProperties(group, CHECKLIST_KEYS.size);
+      validateKanbanDataKeys(properties, CHECKLIST_KEYS);
+      const items = snapshotKanbanDataArray(group.items, KANBAN_LIMITS.checklistItemsPerGroup.safe).map((item) => {
+        const itemProperties = snapshotKanbanDataProperties(item, CHECKLIST_ITEM_KEYS.size);
+        validateKanbanDataKeys(itemProperties, CHECKLIST_ITEM_KEYS);
+        return {
+          itemId: itemProperties.itemId,
+          text: itemProperties.text,
+          completed: itemProperties.completed,
+        };
+      });
+      return snapshotKanbanSemanticValue({
+        checklistId: properties.checklistId,
+        ...(properties.title === undefined ? {} : { title: properties.title }),
+        items,
+      });
+    }),
   );
 }
 
@@ -222,22 +274,35 @@ function createDraft(
   card: StandardKanbanEditableCard | undefined,
   formatDate: ((value: unknown) => string) | undefined,
 ): StandardKanbanEditorDraft {
-  if (card === undefined) throw new KanbanInvalidEditorSchemaError();
-  return Object.freeze({
-    key: createKanbanCardKey(card.key),
-    title: card.title,
-    status: card.status,
-    description: card.description ?? '',
-    type: card.type ?? '',
-    priority: card.priority ?? '',
-    assignees: snapshotSummaries(card.assignees ?? []),
-    labels: snapshotSummaries(card.labels ?? []),
-    startDate: dateText(card.startDate, formatDate),
-    dueDate: dateText(card.dueDate, formatDate),
-    estimate: card.estimate ?? '',
-    checklists: snapshotChecklists(card),
-    custom: snapshotKanbanSemanticValue(card.custom ?? null),
-  });
+  try {
+    if (card === undefined) throw new KanbanInvalidEditorSchemaError();
+    const properties = snapshotKanbanDataProperties(card, STANDARD_CARD_KEYS.size);
+    validateKanbanDataKeys(properties, STANDARD_CARD_KEYS);
+    if (typeof properties.title !== 'string' || typeof properties.status !== 'string') {
+      throw new KanbanInvalidEditorSchemaError();
+    }
+    if (typeof properties.key !== 'string' && typeof properties.key !== 'number') {
+      throw new KanbanInvalidEditorSchemaError();
+    }
+    return Object.freeze({
+      key: createKanbanCardKey(properties.key),
+      title: properties.title,
+      status: properties.status,
+      description: typeof properties.description === 'string' ? properties.description : '',
+      type: typeof properties.type === 'string' ? properties.type : '',
+      priority: typeof properties.priority === 'string' ? properties.priority : '',
+      assignees: snapshotSummaries(card.assignees ?? []),
+      labels: snapshotSummaries(card.labels ?? []),
+      startDate: dateText(properties.startDate, formatDate),
+      dueDate: dateText(properties.dueDate, formatDate),
+      estimate: typeof properties.estimate === 'string' ? properties.estimate : '',
+      checklists: snapshotChecklists(card.checklists ?? []),
+      custom: snapshotKanbanSemanticValue(properties.custom ?? null),
+    });
+  } catch (error) {
+    if (error instanceof KanbanInvalidEditorSchemaError) throw error;
+    throw new KanbanInvalidEditorSchemaError();
+  }
 }
 
 /** Reads every configured field through the normalized generic schema. */
@@ -260,6 +325,19 @@ function snapshotFormValues(values: StandardKanbanFormValues): KanbanSemanticVal
   return snapshotKanbanSemanticValue(values);
 }
 
+/** Reads additional field identities through descriptors before schema construction invokes no behavior. */
+function additionalFieldIds(
+  fields: readonly KanbanCardEditorField<StandardKanbanEditorDraft, unknown, StandardKanbanEditableCard>[],
+): readonly string[] {
+  return Object.freeze(
+    fields.map((field) => {
+      const properties = snapshotKanbanDataProperties(field, KANBAN_LIMITS.cardFields.safe);
+      if (typeof properties.fieldId !== 'string') throw new KanbanInvalidEditorSchemaError();
+      return properties.fieldId;
+    }),
+  );
+}
+
 /**
  * Creates the optional mainstream StandardCard editor adapter.
  *
@@ -271,45 +349,59 @@ function snapshotFormValues(values: StandardKanbanFormValues): KanbanSemanticVal
 export function createStandardKanbanEditorAdapter(
   options: StandardKanbanEditorAdapterOptions = {},
 ): StandardKanbanEditorAdapter {
-  const selected = Object.freeze([...(options.fields ?? STANDARD_KANBAN_EDITOR_FIELDS)]);
-  const additionalFields = Object.freeze([...(options.additionalFields ?? [])]);
-  const fieldIds = [...selected, ...additionalFields.map(({ fieldId }) => fieldId)];
-  if (new Set(fieldIds).size !== fieldIds.length || fieldIds.length > KANBAN_LIMITS.cardFields.safe) {
+  try {
+    const properties = snapshotKanbanDataProperties(options, ADAPTER_OPTION_KEYS.size);
+    validateKanbanDataKeys(properties, ADAPTER_OPTION_KEYS);
+    const selected = snapshotKanbanDataArray(
+      options.fields ?? STANDARD_KANBAN_EDITOR_FIELDS,
+      KANBAN_LIMITS.cardFields.safe,
+    );
+    const additionalFields = snapshotKanbanDataArray(options.additionalFields ?? [], KANBAN_LIMITS.cardFields.safe);
+    const additionalSections = snapshotKanbanDataArray(options.additionalSections ?? [], KANBAN_LIMITS.cardFields.safe);
+    if (options.formatDate !== undefined && typeof options.formatDate !== 'function') {
+      throw new KanbanInvalidEditorSchemaError();
+    }
+    const fieldIds = [...selected, ...additionalFieldIds(additionalFields)];
+    if (new Set(fieldIds).size !== fieldIds.length || fieldIds.length > KANBAN_LIMITS.cardFields.safe) {
+      throw new KanbanInvalidEditorSchemaError();
+    }
+    const formSchema = validateFormSchema(options.schema ?? defaultFormSchema(selected, additionalFields), fieldIds);
+    const schema = createStandardKanbanEditorSchema({
+      fields: selected,
+      additionalFields,
+      ...(additionalSections.length === 0 ? {} : { additionalSections }),
+      ...(options.controls === undefined ? {} : { controls: options.controls }),
+      valid: (fieldId, value) => formSchema.shape[fieldId]?.safeParse(value).success === true,
+    });
+    const adapter: StandardKanbanEditorAdapter = {
+      schema,
+      formSchema,
+      create: (card: StandardKanbanEditableCard | undefined) => createDraft(card, options.formatDate),
+      snapshot: (draft: StandardKanbanEditorDraft) => snapshotFormValues(rawFormValues(draft, schema.fields)),
+      proposal: (result) => ({ kind: 'card-update', cardKey: result.draft.key, patch: result.snapshot }),
+      createForm: (draft: StandardKanbanEditorDraft) => {
+        const form = createForm({ schema: formSchema, initial: rawFormValues(draft, schema.fields) });
+        return Object.freeze({
+          field: (name: string) => form.field(name),
+          values: () => form.values(),
+          rawValues: () => form.rawValues(),
+          errors: () => form.errors(),
+          isValid: () => form.isValid(),
+          dirty: () => form.dirty(),
+          validating: () => form.validating(),
+          submitting: () => form.submitting(),
+          loading: () => form.loading(),
+          load: (loader: (context: { readonly signal: AbortSignal }) => Promise<StandardKanbanFormValues>) =>
+            form.load(loader),
+          submit: (handler: (values: StandardKanbanFormValues) => void | Promise<void>) => form.submit(handler),
+          reset: () => form.reset(),
+          dispose: () => form.dispose(),
+        });
+      },
+    };
+    return Object.freeze(adapter);
+  } catch (error) {
+    if (error instanceof KanbanInvalidEditorSchemaError) throw error;
     throw new KanbanInvalidEditorSchemaError();
   }
-  const formSchema = validateFormSchema(options.schema ?? defaultFormSchema(selected, additionalFields), fieldIds);
-  const schema = createStandardKanbanEditorSchema({
-    fields: selected,
-    additionalFields,
-    ...(options.additionalSections === undefined ? {} : { additionalSections: options.additionalSections }),
-    ...(options.controls === undefined ? {} : { controls: options.controls }),
-    valid: (fieldId, value) => formSchema.shape[fieldId]?.safeParse(value).success === true,
-  });
-  const adapter: StandardKanbanEditorAdapter = {
-    schema,
-    formSchema,
-    create: (card: StandardKanbanEditableCard | undefined) => createDraft(card, options.formatDate),
-    snapshot: (draft: StandardKanbanEditorDraft) => snapshotFormValues(rawFormValues(draft, schema.fields)),
-    proposal: (result) => ({ kind: 'card-update', cardKey: result.draft.key, patch: result.snapshot }),
-    createForm: (draft: StandardKanbanEditorDraft) => {
-      const form = createForm({ schema: formSchema, initial: rawFormValues(draft, schema.fields) });
-      return Object.freeze({
-        field: (name: string) => form.field(name),
-        values: () => form.values(),
-        rawValues: () => form.rawValues(),
-        errors: () => form.errors(),
-        isValid: () => form.isValid(),
-        dirty: () => form.dirty(),
-        validating: () => form.validating(),
-        submitting: () => form.submitting(),
-        loading: () => form.loading(),
-        load: (loader: (context: { readonly signal: AbortSignal }) => Promise<StandardKanbanFormValues>) =>
-          form.load(loader),
-        submit: (handler: (values: StandardKanbanFormValues) => void | Promise<void>) => form.submit(handler),
-        reset: () => form.reset(),
-        dispose: () => form.dispose(),
-      });
-    },
-  };
-  return Object.freeze(adapter);
 }

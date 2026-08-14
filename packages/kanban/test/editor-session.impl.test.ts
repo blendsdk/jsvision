@@ -198,4 +198,61 @@ describe('Kanban editor session implementation boundaries', () => {
     expect(openingSignal?.aborted).toBe(true);
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
+
+  it('should coalesce a pre-resolution publication flood to the latest record', async () => {
+    const initial = deferred<{ readonly kind: 'record'; readonly card: Ticket; readonly revision: KanbanRevision }>();
+    let publish: ((publication: TicketPublication) => void) | undefined;
+    const baseAdapter = adapter();
+    const create = vi.fn(baseAdapter.create);
+    const source = {
+      subscribe: vi.fn((_cardKey: string, listener: (publication: TicketPublication) => void) => {
+        publish = listener;
+        return vi.fn();
+      }),
+      resolve: vi.fn(() => initial.promise),
+    };
+    const opening = createKanbanEditorSession({
+      mode: 'edit',
+      cardKey: CARD.id,
+      adapter: { ...baseAdapter, create },
+      resolver: source,
+      authority: { request: vi.fn() },
+    });
+    for (let index = 1; index <= 257; index += 1) {
+      publish?.({ kind: 'record', card: { ...CARD, title: `Published ${index}` }, revision: `card-r${index}` });
+    }
+    initial.resolve({ kind: 'record', card: CARD, revision: 'card-r0' });
+
+    const session = await opening;
+    expect(session.snapshot()).toMatchObject({ baseRevision: 'card-r257', draft: { title: 'Published 257' } });
+    expect(create).toHaveBeenCalledTimes(2);
+    session.dispose();
+  });
+
+  it('should settle an ignored initial resolution when caller cancellation aborts opening', async () => {
+    const controller = new AbortController();
+    const unsubscribe = vi.fn();
+    let resolutionSignal: AbortSignal | undefined;
+    const source = {
+      subscribe: vi.fn(() => unsubscribe),
+      resolve: vi.fn((_cardKey: string, context: { readonly signal: AbortSignal }) => {
+        resolutionSignal = context.signal;
+        return new Promise<never>(() => undefined);
+      }),
+    };
+    const opening = createKanbanEditorSession({
+      mode: 'edit',
+      cardKey: CARD.id,
+      adapter: adapter(),
+      resolver: source,
+      authority: { request: vi.fn() },
+      signal: controller.signal,
+    });
+
+    controller.abort();
+
+    await expect(opening).rejects.toBeInstanceOf(KanbanInvalidSemanticValueError);
+    expect(resolutionSignal?.aborted).toBe(true);
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
 });
