@@ -18,7 +18,7 @@ When you already know which widget you want, open its category page and copy the
 - [Surfaces & terminal](./surfaces-terminal.md) — Offscreen surfaces and the scrollback terminal view. (8 exports)
 - [Text editing](./text-editing.md) — The multi-line `Editor`, `Memo`, and edit-window chrome. (27 exports)
 - [App shell](./app-shell.md) — Application, desktop, windows, menus, status line, and the event loop. (44 exports)
-- [@jsvision/core — engine, capabilities & themes](./core-essentials.md) — Rendering, terminal capabilities, input, colors, contrast, themes, and safety. (215 exports)
+- [@jsvision/core — engine, capabilities & themes](./core-essentials.md) — Rendering, terminal capabilities, input, colors, contrast, themes, and safety. (216 exports)
 - [@jsvision/i18n — catalogs, translation & formatting](./i18n.md) — Catalog authoring, plurals, loading, validation, diagnostics, and locale formatting. (37 exports)
 - [@jsvision/forms — form state & validation](./forms.md) — Typed form state, field bindings, validation, and form dialogs. (12 exports)
 - [@jsvision/datagrid — editable enterprise grids](./datagrid.md) — Typed columns, editing, sorting, filtering, selection, variants, and windowing. (115 exports)

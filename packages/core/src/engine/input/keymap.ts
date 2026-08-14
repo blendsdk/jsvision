@@ -8,7 +8,7 @@
  * the event stream — you call it on events you have already decoded.
  *
  * Chord grammar: `'+'`-joined and case-insensitive — zero or more modifiers
- * (`ctrl`, `alt`, `shift`) followed by exactly one key (a named key from
+ * (`ctrl`, `alt`, `shift`, `meta`, `primary`) followed by exactly one key (a named key from
  * {@link KEY_NAMES} or a single character). A malformed binding (no key, unknown
  * modifier, or unknown key name) throws at build time so mistakes surface early.
  */
@@ -21,8 +21,14 @@ export interface Keymap {
   lookup(event: KeyEvent): string | undefined;
 }
 
+/** Host-specific interpretation of the semantic `Primary` chord modifier. */
+export interface KeymapOptions {
+  /** Command/Meta on capable macOS browser hosts; Ctrl on native terminals and other hosts. */
+  readonly primary?: 'ctrl' | 'meta';
+}
+
 /** The recognised modifier tokens in a chord binding. */
-const MODIFIERS = new Set(['ctrl', 'alt', 'shift']);
+const MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'meta', 'primary']);
 
 /** The named keys allowed as a chord's key part. */
 const NAMED_KEYS: ReadonlySet<string> = new Set(KEY_NAMES);
@@ -47,20 +53,24 @@ const NAMED_KEYS: ReadonlySet<string> = new Set(KEY_NAMES);
  *   }
  * }
  */
-export function createKeymap(bindings: Readonly<Record<string, string>>): Keymap {
+export function createKeymap(bindings: Readonly<Record<string, string>>, options: KeymapOptions = {}): Keymap {
+  const primary = options.primary ?? 'ctrl';
   const table = new Map<string, string>();
   for (const [chord, name] of Object.entries(bindings)) {
-    table.set(parseChord(chord), name);
+    table.set(parseChord(chord, primary), name);
   }
   return {
     lookup(event: KeyEvent): string | undefined {
-      return table.get(canonicalize(event.ctrl, event.alt, event.shift, event.key.toLowerCase()));
+      const meta = event.meta === true;
+      const primaryHeld = primary === 'meta' ? meta : event.ctrl;
+      if (event.primary === true && (!primaryHeld || (event.ctrl && meta))) return undefined;
+      return table.get(canonicalize(event.ctrl, event.alt, event.shift, meta, event.key.toLowerCase()));
     },
   };
 }
 
 /** Parse and validate one chord binding into its canonical key. */
-function parseChord(chord: string): string {
+function parseChord(chord: string, primary: NonNullable<KeymapOptions['primary']>): string {
   const parts = chord.toLowerCase().split('+');
   const key = parts[parts.length - 1];
   const mods = parts.slice(0, -1);
@@ -75,6 +85,7 @@ function parseChord(chord: string): string {
   let ctrl = false;
   let alt = false;
   let shift = false;
+  let meta = false;
   for (const mod of mods) {
     if (!MODIFIERS.has(mod)) {
       throw new Error(`Invalid key binding '${chord}': unknown modifier '${mod}'`);
@@ -82,8 +93,13 @@ function parseChord(chord: string): string {
     ctrl = ctrl || mod === 'ctrl';
     alt = alt || mod === 'alt';
     shift = shift || mod === 'shift';
+    meta = meta || mod === 'meta';
+    if (mod === 'primary') {
+      ctrl = ctrl || primary === 'ctrl';
+      meta = meta || primary === 'meta';
+    }
   }
-  return canonicalize(ctrl, alt, shift, key);
+  return canonicalize(ctrl, alt, shift, meta, key);
 }
 
 /** A key is valid when it is a single character or a known named key. */
@@ -92,6 +108,6 @@ function isValidKey(key: string): boolean {
 }
 
 /** Canonical chord string with modifiers in a fixed order, so input order is irrelevant. */
-function canonicalize(ctrl: boolean, alt: boolean, shift: boolean, key: string): string {
-  return `${ctrl ? 'ctrl+' : ''}${alt ? 'alt+' : ''}${shift ? 'shift+' : ''}${key}`;
+function canonicalize(ctrl: boolean, alt: boolean, shift: boolean, meta: boolean, key: string): string {
+  return `${ctrl ? 'ctrl+' : ''}${alt ? 'alt+' : ''}${shift ? 'shift+' : ''}${meta ? 'meta+' : ''}${key}`;
 }

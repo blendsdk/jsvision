@@ -17,6 +17,10 @@ export interface KeyEvent {
   readonly ctrl: boolean;
   readonly alt: boolean;
   readonly shift: boolean;
+  /** Browser-observable Command/Meta; omitted when a terminal cannot distinguish it. */
+  readonly meta?: boolean;
+  /** Whether the host classified its semantic Primary modifier on this event. */
+  readonly primary?: boolean;
   /** Unicode code point when `key` is a printable character; omitted for named keys. */
   readonly codepoint?: number;
 }
@@ -44,6 +48,10 @@ export interface MouseEvent {
   readonly alt?: boolean;
   /** Shift held during the report. */
   readonly shift?: boolean;
+  /** Browser-observable Command/Meta; omitted for ordinary terminal reports. */
+  readonly meta?: boolean;
+  /** Whether the host classified its semantic Primary modifier on this event. */
+  readonly primary?: boolean;
 }
 
 /**
@@ -65,6 +73,10 @@ export interface WheelEvent {
   readonly alt: boolean;
   /** Ctrl held during the wheel report. */
   readonly ctrl: boolean;
+  /** Browser-observable Command/Meta; omitted for ordinary terminal reports. */
+  readonly meta?: boolean;
+  /** Whether the host classified its semantic Primary modifier on this event. */
+  readonly primary?: boolean;
 }
 
 /** A completed bracketed paste. `truncated` is true when the paste size cap clipped the text. */

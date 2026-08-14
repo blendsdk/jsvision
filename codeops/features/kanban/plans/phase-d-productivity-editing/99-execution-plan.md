@@ -297,7 +297,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 ### Step 6.2: Implementation
 
-- [ ] 6.2.1 Implement additive Core semantic Primary/Meta event normalization and keymap grammar with source-compatible literals — Core input events/keymap and public tests
+- [x] 6.2.1 Implement additive Core semantic Primary/Meta event normalization and keymap grammar with source-compatible literals — Core input events/keymap and public tests ✅ (completed: 2026-08-15 00:54)
 - [ ] 6.2.2 Implement Web pre-xterm DOM keyboard/pointer adapter, cell mapping, capture, fallback, and matching-SGR dedupe — Web host/mount and fixtures
 - [ ] 6.2.3 Define stable action/capability/outcome/context contracts and package inventory — `packages/kanban/src/command/types.ts`, `actions.ts`
 - [ ] 6.2.4 Implement bounded action registry and namespaced extension validation — `packages/kanban/src/command/registry.ts`, `actions.ts`

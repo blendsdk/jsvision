@@ -47,6 +47,7 @@ export type {
   PasteState,
   DecodeOptions,
   Keymap,
+  KeymapOptions,
 } from './input/index.js';
 export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES, KEY_NAMES } from './input/index.js';
 

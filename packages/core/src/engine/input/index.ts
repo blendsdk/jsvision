@@ -9,7 +9,7 @@
  */
 export { createDecoderState, decode, flush } from './decoder.js';
 export { createKeymap } from './keymap.js';
-export type { Keymap } from './keymap.js';
+export type { Keymap, KeymapOptions } from './keymap.js';
 export { boundPasteText } from './paste.js';
 export type { BoundedPasteText } from './paste.js';
 export type {

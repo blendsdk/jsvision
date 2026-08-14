@@ -699,6 +699,8 @@ interface KeyEvent {
   ctrl: boolean;
   alt: boolean;
   shift: boolean;
+  meta?: boolean;   // Browser-observable Command/Meta; omitted when a terminal cannot distinguish it.
+  primary?: boolean;   // Whether the host classified its semantic Primary modifier on this event.
   codepoint?: number;   // Unicode code point when `key` is a printable character; omitted for named keys.
 }
 ```
@@ -731,6 +733,16 @@ A compiled keymap: a pure lookup from a decoded KeyEvent to a bound name.
 ```ts
 interface Keymap {
   lookup(event: KeyEvent): string | undefined;   // Return the bound name for the event's chord, or `undefined` if unbound.
+}
+```
+
+## KeymapOptions
+
+Host-specific interpretation of the semantic `Primary` chord modifier.
+
+```ts
+interface KeymapOptions {
+  primary?: 'ctrl' | 'meta';   // Command/Meta on capable macOS browser hosts; Ctrl on native terminals and other hosts.
 }
 ```
 
@@ -898,6 +910,8 @@ interface MouseEvent {
   ctrl?: boolean;   // Ctrl held during the report (from the SGR button byte).
   alt?: boolean;   // Meta/Alt held during the report.
   shift?: boolean;   // Shift held during the report.
+  meta?: boolean;   // Browser-observable Command/Meta; omitted for ordinary terminal reports.
+  primary?: boolean;   // Whether the host classified its semantic Primary modifier on this event.
 }
 ```
 
@@ -1571,6 +1585,8 @@ interface WheelEvent {
   shift: boolean;   // Shift held during the wheel report.
   alt: boolean;   // Meta/Alt held during the wheel report.
   ctrl: boolean;   // Ctrl held during the wheel report.
+  meta?: boolean;   // Browser-observable Command/Meta; omitted for ordinary terminal reports.
+  primary?: boolean;   // Whether the host classified its semantic Primary modifier on this event.
 }
 ```
 
@@ -1714,7 +1730,7 @@ createI18n(options?: CreateI18nOptions): I18n
 Build a keymap from chord→name bindings.
 
 ```ts
-createKeymap(bindings: Readonly<Record<string, string>>): Keymap
+createKeymap(bindings: Readonly<Record<string, string>>, options: KeymapOptions = {}): Keymap
 ```
 
 ## createKeymap

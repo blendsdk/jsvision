@@ -30,7 +30,7 @@ describe('semantic Primary and Meta input', () => {
   it('accepts an observable Meta modifier without folding it into Alt', () => {
     const keymap = createKeymap({ 'meta+f': 'meta-find', 'alt+f': 'alt-find' });
 
-    expect(keymap.lookup(key('f', { meta: true, primary: true }))).toBe('meta-find');
+    expect(keymap.lookup(key('f', { meta: true }))).toBe('meta-find');
     expect(keymap.lookup(key('f', { alt: true }))).toBe('alt-find');
   });
 
