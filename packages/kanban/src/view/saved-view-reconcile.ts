@@ -6,6 +6,7 @@ import {
 } from '../contract/identity.js';
 import { snapshotKanbanDataArray, snapshotKanbanDataProperties } from '../contract/data-snapshot.js';
 import type { KanbanFieldId } from '../contract/identity.js';
+import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanFilter, KanbanSort } from '../source/types.js';
 import { snapshotKanbanViewState } from './state.js';
 import { parseKanbanSavedView } from './saved-view-codec.js';
@@ -36,6 +37,11 @@ interface DiagnosticCollector {
   readonly values: KanbanSavedViewDiagnostic[];
   /** Adds one missing-reference diagnostic while enforcing the fixed result bound. */
   dropped(category: KanbanSavedViewReferenceCategory, id: string): void;
+}
+
+/** Shared cumulative budget for every application registry identity inspected by one reconciliation. */
+interface ReconciliationIdentityBudget {
+  remaining: number;
 }
 
 /** Exact members accepted for one current field definition. */
@@ -99,19 +105,28 @@ function createDiagnostics(): DiagnosticCollector {
   return {
     values,
     dropped(category, id) {
-      if (values.length >= KANBAN_SAVED_VIEW_LIMITS.diagnostics) return invalidReconciliation();
+      if (values.length >= KANBAN_SAVED_VIEW_LIMITS.diagnostics) return;
       values.push(Object.freeze({ code: 'missing-reference-dropped', category, id }));
     },
   };
+}
+
+/** Consumes one cumulative registry budget before identities are copied or indexed. */
+function consumeIdentities(budget: ReconciliationIdentityBudget, count: number): void {
+  if (!Number.isSafeInteger(count) || count < 0 || count > budget.remaining) return invalidReconciliation();
+  budget.remaining -= count;
 }
 
 /** Validates a finite unique identity list before lookup. */
 function identitySet(
   values: readonly string[] | undefined,
   create: (value: string) => string,
+  budget: ReconciliationIdentityBudget,
 ): ReadonlySet<string> | undefined {
   if (values === undefined) return undefined;
-  const identities = dataArray(values, KANBAN_SAVED_VIEW_LIMITS.registeredIds).map((value) => {
+  const entries = dataArray(values, KANBAN_SAVED_VIEW_LIMITS.registeredIds);
+  consumeIdentities(budget, entries.length);
+  const identities = entries.map((value) => {
     if (typeof value !== 'string') return invalidReconciliation();
     return create(value);
   });
@@ -122,19 +137,26 @@ function identitySet(
 /** Validates current field metadata and indexes it by stable identity. */
 function fieldDefinitions(
   values: readonly KanbanSavedViewFieldDefinition[] | undefined,
+  budget: ReconciliationIdentityBudget,
 ): ReadonlyMap<KanbanFieldId, KanbanSavedViewFieldDefinition> {
   if (values === undefined) return new Map();
+  const entries = dataArray(values, KANBAN_SAVED_VIEW_LIMITS.registeredIds);
+  consumeIdentities(budget, entries.length);
   const result = new Map<KanbanFieldId, KanbanSavedViewFieldDefinition>();
-  for (const value of dataArray(values, KANBAN_SAVED_VIEW_LIMITS.registeredIds)) {
+  for (const value of entries) {
     const properties = exactProperties(value, FIELD_DEFINITION_KEYS);
     if (typeof properties.fieldId !== 'string') return invalidReconciliation();
     const fieldId = createKanbanFieldId(properties.fieldId);
     if (result.has(fieldId)) return invalidReconciliation();
-    const operators = dataArray(properties.operators, KANBAN_SAVED_VIEW_LIMITS.registeredIds).map((entry) => {
+    const operatorEntries = dataArray(properties.operators, KANBAN_SAVED_VIEW_LIMITS.registeredIds);
+    consumeIdentities(budget, operatorEntries.length);
+    const operators = operatorEntries.map((entry) => {
       if (typeof entry !== 'string') return invalidReconciliation();
       return createKanbanExtensionId(entry);
     });
-    const comparators = dataArray(properties.comparators, KANBAN_SAVED_VIEW_LIMITS.registeredIds).map((entry) => {
+    const comparatorEntries = dataArray(properties.comparators, KANBAN_SAVED_VIEW_LIMITS.registeredIds);
+    consumeIdentities(budget, comparatorEntries.length);
+    const comparators = comparatorEntries.map((entry) => {
       if (typeof entry !== 'string') return invalidReconciliation();
       return createKanbanExtensionId(entry);
     });
@@ -257,11 +279,26 @@ function resolveQuickFilters(
 ): readonly KanbanQuickFilterSelection[] {
   return Object.freeze(
     raw.view.quickFilters.map((quickFilter) => {
-      requireExecutable(context.registry.quickFilter(quickFilter.id) !== undefined, 'quick-filter', quickFilter.id);
-      return Object.freeze({
-        id: quickFilter.id,
-        ...(quickFilter.value === undefined ? {} : { value: quickFilter.value }),
-      });
+      const registration = context.registry.quickFilter(quickFilter.id);
+      if (registration === undefined) throw new MissingRequiredReferenceError('quick-filter', quickFilter.id);
+      try {
+        if (registration.applicable !== undefined && registration.applicable() !== true) {
+          throw new MissingRequiredReferenceError('quick-filter', quickFilter.id);
+        }
+        if (quickFilter.value !== undefined && registration.parameterCodec === undefined) {
+          throw new MissingRequiredReferenceError('quick-filter', quickFilter.id);
+        }
+        if (quickFilter.value !== undefined) {
+          snapshotKanbanSemanticValue(registration.parameterCodec!.snapshot(quickFilter.value));
+        }
+        return Object.freeze({
+          id: quickFilter.id,
+          ...(quickFilter.value === undefined ? {} : { value: quickFilter.value }),
+        });
+      } catch (error) {
+        if (error instanceof MissingRequiredReferenceError) throw error;
+        throw new MissingRequiredReferenceError('quick-filter', quickFilter.id);
+      }
     }),
   );
 }
@@ -450,12 +487,13 @@ export function reconcileKanbanSavedView(
     if (parsed.kind !== 'parsed') return invalidResult();
     const raw = parsed.value;
     const diagnostics = createDiagnostics();
-    const fields = fieldDefinitions(context.fields);
+    const identityBudget: ReconciliationIdentityBudget = { remaining: KANBAN_SAVED_VIEW_LIMITS.registeredIds };
+    const fields = fieldDefinitions(context.fields, identityBudget);
     const columns = currentColumns(context.columns);
     const swimlanes = currentSwimlanes(context.swimlanes);
-    const cardFieldIds = identitySet(context.cardFieldIds, createKanbanFieldId);
-    const summaryIds = identitySet(context.summaryIds, createKanbanFieldId);
-    const variants = identitySet(context.groupingVariantIds, createKanbanExtensionId);
+    const cardFieldIds = identitySet(context.cardFieldIds, createKanbanFieldId, identityBudget);
+    const summaryIds = identitySet(context.summaryIds, createKanbanFieldId, identityBudget);
+    const variants = identitySet(context.groupingVariantIds, createKanbanExtensionId, identityBudget);
     const resolved = snapshotKanbanViewState(
       {
         searchPolicy: raw.view.searchPolicy,

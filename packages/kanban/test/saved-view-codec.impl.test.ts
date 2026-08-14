@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { KANBAN_SAVED_VIEW_LIMITS } from '../src/view/saved-view-limits.js';
 import { parseKanbanSavedView, serializeKanbanSavedView } from '../src/view/saved-view-codec.js';
 import type { KanbanSavedViewV1 } from '../src/view/saved-view-types.js';
+import { snapshotKanbanSemanticValue } from '../src/contract/semantic-query.js';
 
 /** Creates one complete current envelope for deterministic boundary mutations. */
 function view(replacement: Partial<KanbanSavedViewV1> = {}): KanbanSavedViewV1 {
@@ -105,5 +106,26 @@ describe('Kanban saved-view codec implementation boundaries', () => {
         diagnostic: { code: 'invalid-view' },
       });
     }
+  });
+
+  it('should reject oversized containers before copying unbounded property descriptors', () => {
+    const oversizedArray = new Proxy(new Array(KANBAN_SAVED_VIEW_LIMITS.arrayEntries + 1), {
+      ownKeys: () => {
+        throw new Error('array-own-keys-should-not-run');
+      },
+    });
+    const descriptorReads = vi.fn(() => undefined);
+    const keys = Array.from({ length: KANBAN_SAVED_VIEW_LIMITS.objectKeys + 1 }, (_, index) => `key-${index}`);
+    const oversizedRecord = new Proxy(
+      {},
+      {
+        ownKeys: () => keys,
+        getOwnPropertyDescriptor: descriptorReads,
+      },
+    );
+
+    expect(() => snapshotKanbanSemanticValue(oversizedArray)).toThrow();
+    expect(() => snapshotKanbanSemanticValue(oversizedRecord)).toThrow();
+    expect(descriptorReads).not.toHaveBeenCalled();
   });
 });

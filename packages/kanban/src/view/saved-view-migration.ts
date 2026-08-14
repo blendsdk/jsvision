@@ -2,7 +2,7 @@ import { snapshotKanbanDataArray, snapshotKanbanDataProperties } from '../contra
 import { KanbanInvalidSavedViewError } from '../contract/error.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
-import { parseKanbanSavedView } from './saved-view-codec.js';
+import { parseKanbanSavedView, snapshotKanbanSavedViewInput } from './saved-view-codec.js';
 import { KANBAN_SAVED_VIEW_LIMITS } from './saved-view-limits.js';
 import { KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS } from './saved-view-types.js';
 import type {
@@ -120,7 +120,7 @@ export function migrateKanbanSavedView(
   options: KanbanSavedViewMigrationOptions = {},
 ): KanbanSavedViewMigrationResult {
   try {
-    let current = snapshotKanbanSemanticValue(input);
+    let current = snapshotKanbanSavedViewInput(input);
     const fromVersion = envelopeVersion(current);
     if (fromVersion > KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS.maximum) {
       return Object.freeze({

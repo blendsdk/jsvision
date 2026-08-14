@@ -42,18 +42,28 @@ function consumeCanonical(budget: SemanticBudget, fragment: string): void {
   budget.remainingBytes -= bytes;
 }
 
-/** Reads descriptors and prototype while normalizing hostile proxy failures to a typed error. */
-function inspectObject(value: object): {
-  readonly prototype: object | null;
-  readonly keys: readonly PropertyKey[];
-  readonly descriptors: Readonly<Record<PropertyKey, PropertyDescriptor>>;
-} {
+/** Reads one prototype while normalizing hostile proxy failures to a typed error. */
+function objectPrototype(value: object): object | null {
   try {
-    return {
-      prototype: Object.getPrototypeOf(value),
-      keys: Reflect.ownKeys(value),
-      descriptors: Object.getOwnPropertyDescriptors(value),
-    };
+    return Object.getPrototypeOf(value);
+  } catch {
+    throw new KanbanInvalidSemanticValueError();
+  }
+}
+
+/** Enumerates own keys once before any descriptor copying or sorting occurs. */
+function objectKeys(value: object): readonly PropertyKey[] {
+  try {
+    return Reflect.ownKeys(value);
+  } catch {
+    throw new KanbanInvalidSemanticValueError();
+  }
+}
+
+/** Reads one bounded data descriptor without invoking an accessor. */
+function objectDescriptor(value: object, key: PropertyKey): PropertyDescriptor | undefined {
+  try {
+    return Object.getOwnPropertyDescriptor(value, key);
   } catch {
     throw new KanbanInvalidSemanticValueError();
   }
@@ -123,9 +133,8 @@ function walkArray(
   active: WeakSet<object>,
   budget: SemanticBudget,
 ): SemanticSnapshot {
-  const inspected = inspectObject(value);
-  if (inspected.prototype !== Array.prototype) throw new KanbanInvalidSemanticValueError();
-  const lengthDescriptor = inspected.descriptors.length;
+  if (objectPrototype(value) !== Array.prototype) throw new KanbanInvalidSemanticValueError();
+  const lengthDescriptor = objectDescriptor(value, 'length');
   if (
     lengthDescriptor === undefined ||
     typeof lengthDescriptor.value !== 'number' ||
@@ -136,9 +145,10 @@ function walkArray(
     throw new KanbanInvalidSemanticValueError();
   }
   const length = lengthDescriptor.value;
-  if (inspected.keys.length !== length + 1) throw new KanbanInvalidSemanticValueError();
+  const keys = objectKeys(value);
+  if (keys.length !== length + 1) throw new KanbanInvalidSemanticValueError();
 
-  for (const key of inspected.keys) {
+  for (const key of keys) {
     if (typeof key !== 'string') throw new KanbanInvalidSemanticValueError();
     if (key !== 'length' && !ARRAY_INDEX.test(key)) throw new KanbanInvalidSemanticValueError();
     if (key !== 'length' && Number(key) >= length) throw new KanbanInvalidSemanticValueError();
@@ -148,7 +158,7 @@ function walkArray(
   const snapshotValues: KanbanSemanticValue[] = [];
   const canonicalParts = ['['];
   for (let index = 0; index < length; index += 1) {
-    const descriptor = inspected.descriptors[String(index)];
+    const descriptor = objectDescriptor(value, String(index));
     if (
       descriptor === undefined ||
       !descriptor.enumerable ||
@@ -176,32 +186,35 @@ function walkArray(
 
 /** Validates a plain data record, sorts its keys, then copies and freezes it. */
 function walkRecord(value: object, depth: number, active: WeakSet<object>, budget: SemanticBudget): SemanticSnapshot {
-  const inspected = inspectObject(value);
-  if (inspected.prototype !== Object.prototype && inspected.prototype !== null) {
+  const prototype = objectPrototype(value);
+  if (prototype !== Object.prototype && prototype !== null) {
     throw new KanbanInvalidSemanticValueError();
   }
-  if (inspected.keys.some((key) => typeof key === 'symbol')) throw new KanbanInvalidSemanticValueError();
-
-  const keys = inspected.keys.filter((key): key is string => typeof key === 'string').sort(compareUnicodeCodePoints);
-  if (keys.length > KANBAN_LIMITS.semanticObjectKeys.safe) throw new KanbanInvalidSemanticValueError();
+  const ownKeys = objectKeys(value);
+  if (ownKeys.length > KANBAN_LIMITS.semanticObjectKeys.safe) throw new KanbanInvalidSemanticValueError();
+  if (ownKeys.some((key) => typeof key === 'symbol')) throw new KanbanInvalidSemanticValueError();
+  const keys = ownKeys.filter((key): key is string => typeof key === 'string');
+  for (const key of keys) {
+    if (
+      UNSAFE_KEYS.has(key) ||
+      key.length > KANBAN_LIMITS.semanticStringBytes.safe ||
+      encodedBytes(key) > KANBAN_LIMITS.semanticStringBytes.safe
+    ) {
+      throw new KanbanInvalidSemanticValueError();
+    }
+  }
+  keys.sort(compareUnicodeCodePoints);
 
   consumeCanonical(budget, '{');
   const snapshot: Record<string, KanbanSemanticValue> = {};
   const canonicalParts = ['{'];
   for (const [index, key] of keys.entries()) {
-    const descriptor = inspected.descriptors[key];
+    const descriptor = objectDescriptor(value, key);
     if (
-      UNSAFE_KEYS.has(key) ||
       descriptor === undefined ||
       !descriptor.enumerable ||
       descriptor.get !== undefined ||
       descriptor.set !== undefined
-    ) {
-      throw new KanbanInvalidSemanticValueError();
-    }
-    if (
-      key.length > KANBAN_LIMITS.semanticStringBytes.safe ||
-      encodedBytes(key) > KANBAN_LIMITS.semanticStringBytes.safe
     ) {
       throw new KanbanInvalidSemanticValueError();
     }

@@ -149,4 +149,118 @@ describe('Kanban saved-view specification', () => {
     expect(captureKanbanSavedView(controller, { mode: 'resave' }).view.columns.items[0]?.width).toBe(28);
     controller.dispose();
   });
+
+  it('preserves current structure order and unavailable presentation identities during ordinary capture', () => {
+    const controller = createKanbanViewController();
+    const parsed = parseKanbanSavedView(
+      savedView({
+        view: {
+          ...savedView().view,
+          columns: {
+            items: [
+              { columnId: 'removed', visible: true, collapsed: false, onMissing: 'drop' },
+              { columnId: 'ready', visible: true, collapsed: false, width: 40 },
+              { columnId: 'review', visible: true, collapsed: false },
+            ],
+          },
+          presentation: {
+            ...savedView().view.presentation,
+            cardFieldIds: ['legacy-field', 'priority'],
+            summaryIds: ['legacy-summary', 'children'],
+          },
+        },
+      }),
+    );
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+    const reconciled = reconcileKanbanSavedView(parsed.value, {
+      registry: createKanbanViewRegistry(),
+      columns: [
+        { columnId: 'ready', visible: true, collapsed: false, minimumWidth: 18, maximumWidth: 32 },
+        { columnId: 'review', visible: true, collapsed: false, minimumWidth: 18, maximumWidth: 32 },
+      ],
+      swimlanes: [],
+      cardFieldIds: ['priority'],
+      summaryIds: ['children'],
+    });
+    expect(reconciled.kind).toBe('reconciled');
+    if (reconciled.kind !== 'reconciled') return;
+    expect(applyKanbanSavedView(controller, reconciled).kind).toBe('changed');
+
+    controller.apply({
+      kind: 'set-columns',
+      columns: {
+        items: [
+          { columnId: 'review', visible: true, collapsed: false },
+          { columnId: 'ready', visible: true, collapsed: false, width: 28 },
+        ],
+      },
+    });
+    const captured = captureKanbanSavedView(controller);
+
+    expect(captured.view.columns.items.map(({ columnId }) => columnId)).toEqual(['review', 'ready', 'removed']);
+    expect(captured.view.columns.items[1]?.width).toBe(40);
+    expect(captured.view.presentation.cardFieldIds).toEqual(['priority', 'legacy-field']);
+    expect(captured.view.presentation.summaryIds).toEqual(['children', 'legacy-summary']);
+
+    controller.apply({
+      kind: 'set-columns',
+      columns: { items: [{ columnId: 'ready', visible: true, collapsed: false, width: 28 }] },
+    });
+    expect(captureKanbanSavedView(controller).view.columns.items.map(({ columnId }) => columnId)).toEqual([
+      'ready',
+      'removed',
+    ]);
+    controller.dispose();
+  });
+
+  it('invalidates edited directives individually without discarding unrelated missing directives', () => {
+    const controller = createKanbanViewController();
+    const parsed = parseKanbanSavedView(
+      savedView({
+        view: {
+          ...savedView().view,
+          filters: [
+            { fieldId: 'removed', operatorId: 'app.equals', value: 'old', onMissing: 'drop' },
+            { fieldId: 'owner', operatorId: 'app.equals', value: 'me' },
+          ],
+        },
+      }),
+    );
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+    const reconciled = reconcileKanbanSavedView(parsed.value, {
+      registry: createKanbanViewRegistry(),
+      fields: [{ fieldId: 'owner', operators: ['app.equals'], comparators: [] }],
+      columns: [{ columnId: 'ready', visible: true, collapsed: false, minimumWidth: 18, maximumWidth: 32 }],
+      swimlanes: [],
+    });
+    expect(reconciled.kind).toBe('reconciled');
+    if (reconciled.kind !== 'reconciled') return;
+    expect(applyKanbanSavedView(controller, reconciled).kind).toBe('changed');
+
+    controller.apply({
+      kind: 'set-filters',
+      filters: [{ fieldId: 'owner', operatorId: 'app.equals', value: 'team' }],
+    });
+    const filters = captureKanbanSavedView(controller).view.filters;
+
+    expect(filters).toEqual([
+      { fieldId: 'owner', operatorId: 'app.equals', value: 'team' },
+      { fieldId: 'removed', operatorId: 'app.equals', value: 'old', onMissing: 'drop' },
+    ]);
+
+    controller.apply({
+      kind: 'set-filters',
+      filters: [
+        { fieldId: 'owner', operatorId: 'app.equals', value: 'team' },
+        { fieldId: 'removed', operatorId: 'app.equals', value: 'restored' },
+      ],
+    });
+    expect(captureKanbanSavedView(controller).view.filters).toEqual([
+      { fieldId: 'owner', operatorId: 'app.equals', value: 'team' },
+      { fieldId: 'removed', operatorId: 'app.equals', value: 'restored' },
+    ]);
+    controller.dispose();
+  });
 });

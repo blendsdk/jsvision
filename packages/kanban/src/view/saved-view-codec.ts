@@ -313,11 +313,21 @@ function snapshotEnvelope(value: unknown): KanbanSavedViewV1 {
   });
 }
 
-/** Converts text or object input into one detached JSON-like semantic snapshot. */
-function parseInput(input: unknown): KanbanSemanticValue {
+/**
+ * Converts bounded text or object input into one detached JSON-like semantic snapshot.
+ *
+ * This internal package seam is shared by current parsing and legacy migration so persisted text
+ * never bypasses the cheap pre-parse size guard.
+ */
+export function snapshotKanbanSavedViewInput(input: unknown): KanbanSemanticValue {
   let value = input;
   if (typeof input === 'string') {
-    if (ENCODER.encode(input).byteLength > KANBAN_SAVED_VIEW_LIMITS.encodedBytes) return invalidView();
+    if (
+      input.length > KANBAN_SAVED_VIEW_LIMITS.encodedBytes ||
+      ENCODER.encode(input).byteLength > KANBAN_SAVED_VIEW_LIMITS.encodedBytes
+    ) {
+      return invalidView();
+    }
     try {
       value = JSON.parse(input);
     } catch {
@@ -341,7 +351,7 @@ function parseInput(input: unknown): KanbanSemanticValue {
  */
 export function parseKanbanSavedView(input: unknown): KanbanSavedViewParseResult {
   try {
-    const detached = parseInput(input);
+    const detached = snapshotKanbanSavedViewInput(input);
     const properties = exactProperties(detached, ENVELOPE_KEYS);
     if (properties.kind !== KANBAN_SAVED_VIEW_KIND) return invalidView();
     if (typeof properties.version !== 'number' || !Number.isSafeInteger(properties.version)) return invalidView();

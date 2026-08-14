@@ -78,6 +78,19 @@ describe('Kanban saved-view migration and reconciliation specification', () => {
     expect(JSON.stringify(v0)).toBe(before);
   });
 
+  it('migrates bounded persisted JSON text through the same detached input boundary', () => {
+    const v0 = { kind: 'jsvision-kanban-view', version: 0, view: {} };
+    const migrate = vi.fn(() => view());
+    const registry = createKanbanSavedViewMigrationRegistry({
+      migrations: [{ fromVersion: 0, toVersion: 1, migrate }],
+    });
+
+    const result = migrateKanbanSavedView(JSON.stringify(v0), { registry });
+
+    expect(result).toMatchObject({ kind: 'migrated', fromVersion: 0, toVersion: 1 });
+    expect(migrate).toHaveBeenCalledWith(v0);
+  });
+
   it('drops explicitly optional missing structures and appends new structures in current order', () => {
     const parsed = parseKanbanSavedView(
       view({
@@ -115,6 +128,108 @@ describe('Kanban saved-view migration and reconciliation specification', () => {
       kind: 'rejected',
       diagnostic: { code: 'missing-required-reference', category: 'comparator', id: 'app.removed' },
     });
+  });
+
+  it('rejects quick filters whose current applicability or parameter codec cannot produce a query', () => {
+    const parsed = parseKanbanSavedView(view({ quickFilters: [{ id: 'app.mine', value: 'me' }] }));
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+    const registrations = [
+      {
+        id: 'app.mine',
+        labelId: 'app.filters.mine',
+        filter: { fieldId: 'owner', operatorId: 'app.equals' },
+        applicable: () => false,
+        parameterCodec: { snapshot: () => 'me' },
+      },
+      {
+        id: 'app.mine',
+        labelId: 'app.filters.mine',
+        filter: { fieldId: 'owner', operatorId: 'app.equals' },
+        parameterCodec: {
+          snapshot: () => {
+            throw new Error('classified-codec-failure');
+          },
+        },
+      },
+    ] as const;
+
+    for (const registration of registrations) {
+      const registry = createKanbanViewRegistry({ quickFilters: [registration] });
+      expect(reconcileKanbanSavedView(parsed.value, { ...context(), registry })).toEqual({
+        kind: 'rejected',
+        diagnostic: { code: 'missing-required-reference', category: 'quick-filter', id: 'app.mine' },
+      });
+    }
+  });
+
+  it('validates transforming quick-filter codecs without storing their transformed output', () => {
+    const snapshot = vi.fn((value: unknown) => ({ normalized: String(value) }));
+    const registry = createKanbanViewRegistry({
+      quickFilters: [
+        {
+          id: 'app.mine',
+          labelId: 'app.filters.mine',
+          filter: { fieldId: 'owner', operatorId: 'app.equals' },
+          parameterCodec: { snapshot },
+        },
+      ],
+    });
+    const parsed = parseKanbanSavedView(view({ quickFilters: [{ id: 'app.mine', value: 'me' }] }));
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+
+    const result = reconcileKanbanSavedView(parsed.value, { ...context(), registry });
+
+    expect(result.kind).toBe('reconciled');
+    if (result.kind !== 'reconciled') return;
+    expect(result.resolved.quickFilters).toEqual([{ id: 'app.mine', value: 'me' }]);
+    expect(snapshot).toHaveBeenCalledOnce();
+  });
+
+  it('truncates optional-drop diagnostics without rejecting an otherwise valid view', () => {
+    const columns = Array.from({ length: 64 }, (_, index) => ({
+      columnId: `missing-column-${index}`,
+      visible: true,
+      collapsed: false,
+      onMissing: 'drop' as const,
+    }));
+    const swimlanes = Array.from({ length: 128 }, (_, index) => ({
+      swimlaneId: `missing-swimlane-${index}`,
+      visible: true,
+      collapsed: false,
+      onMissing: 'drop' as const,
+    }));
+    const cardFieldIds = Array.from({ length: 64 }, (_, index) => `missing-field-${index}`);
+    const summaryIds = Array.from({ length: 16 }, (_, index) => `missing-summary-${index}`);
+    const parsed = parseKanbanSavedView(
+      view({
+        filters: [],
+        sort: [],
+        columns: { items: columns },
+        swimlanes: { items: swimlanes },
+        presentation: {
+          density: 'comfortable',
+          cardFieldIds,
+          summaryIds,
+          checklist: 'hidden',
+        },
+      }),
+    );
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+
+    const result = reconcileKanbanSavedView(parsed.value, {
+      registry: createKanbanViewRegistry(),
+      columns: [],
+      swimlanes: [],
+      cardFieldIds: [],
+      summaryIds: [],
+    });
+
+    expect(result.kind).toBe('reconciled');
+    if (result.kind !== 'reconciled') return;
+    expect(result.diagnostics).toHaveLength(256);
   });
 
   it('applies typed registered filter and sort identities to a windowed source query', () => {

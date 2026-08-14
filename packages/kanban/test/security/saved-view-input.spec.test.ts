@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createKanbanViewController, parseKanbanSavedView } from '../../src/index.js';
+import {
+  applyKanbanSavedView,
+  createKanbanViewController,
+  createKanbanViewRegistry,
+  parseKanbanSavedView,
+  reconcileKanbanSavedView,
+} from '../../src/index.js';
 import type { KanbanSavedViewV1 } from '../../src/index.js';
 
 /** Creates one minimal complete valid envelope for one hostile-field mutation at a time. */
@@ -109,5 +115,56 @@ describe('Kanban saved-view input security specification', () => {
     expect(result.kind).toBe('rejected');
     expect(JSON.stringify(result)).not.toContain(secret);
     expect(JSON.stringify(result)).not.toContain('BigInt');
+  });
+
+  it('validates complete reconciliation provenance before mutating controller state', () => {
+    const controller = createKanbanViewController();
+    const input = validView();
+    const parsed = parseKanbanSavedView({
+      ...input,
+      view: {
+        ...input.view,
+        presentation: { ...input.view.presentation, density: 'spacious' },
+      },
+    });
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+    const reconciled = reconcileKanbanSavedView(parsed.value, {
+      registry: createKanbanViewRegistry(),
+      columns: [],
+      swimlanes: [],
+    });
+    expect(reconciled.kind).toBe('reconciled');
+    if (reconciled.kind !== 'reconciled') return;
+    const before = controller.state();
+    const hostile = Object.defineProperty({ ...reconciled }, 'provenance', {
+      enumerable: true,
+      get: () => {
+        throw new Error('classified-provenance');
+      },
+    });
+
+    expect(applyKanbanSavedView(controller, hostile)).toEqual({ kind: 'rejected', code: 'invalid-saved-view' });
+    expect(controller.state()).toBe(before);
+    controller.dispose();
+  });
+
+  it('enforces one cumulative registered-identity budget across nested field metadata', () => {
+    const parsed = parseKanbanSavedView(validView());
+    expect(parsed.kind).toBe('parsed');
+    if (parsed.kind !== 'parsed') return;
+    const operators = Array.from({ length: 1_024 }, (_, index) => `app.operator-${index}`);
+
+    expect(
+      reconcileKanbanSavedView(parsed.value, {
+        registry: createKanbanViewRegistry(),
+        fields: [
+          { fieldId: 'first', operators, comparators: [] },
+          { fieldId: 'second', operators: [], comparators: [] },
+        ],
+        columns: [],
+        swimlanes: [],
+      }),
+    ).toEqual({ kind: 'rejected', diagnostic: { code: 'invalid-view' } });
   });
 });
