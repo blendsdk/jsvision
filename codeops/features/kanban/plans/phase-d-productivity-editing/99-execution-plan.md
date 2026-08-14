@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 17:17 CEST
-> **Progress**: 29/125 tasks (23%)
+> **Last Updated**: 2026-08-14 17:28 CEST
+> **Progress**: 30/125 tasks (24%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -139,7 +139,7 @@ fix-scoped Major findings corrected with zero Critical findings.
 
 ## Phase 3: Generic/standard editor schema and session core
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `3fb1d2ab3d93ce3ef553e58edd78ed3c43bf1c12`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: RD-10 schema, draft, validation, stale, and exclusivity core; no dialog composition yet.
 > **Expected modification set**: Kanban manifest/lockfile; editor schema/session/coordinator/standard adapter; application record resolver contracts; exact dependency and packed-consumer fixtures; focused tests; barrel; this plan.
@@ -149,7 +149,7 @@ fix-scoped Major findings corrected with zero Critical findings.
 
 **Reference**: 03-03 §Generic schema–Editor lifecycle · ST-DE-01…DE-10/15…DE-27 · AR-D05/D06/D21
 
-- [ ] 3.1.1 `[spec-author]` Add field-kind, invalid schema graph/bounds, typed adapter, configured-field, checklist-ID, and custom-control oracles — `packages/kanban/test/editor-schema.spec.test.ts`
+- [x] 3.1.1 `[spec-author]` Add field-kind, invalid schema graph/bounds, typed adapter, configured-field, checklist-ID, and custom-control oracles — `packages/kanban/test/editor-schema.spec.test.ts` ✅ (completed: 2026-08-14 17:28)
 - [ ] 3.1.2 `[spec-author]` Add resolver, draft isolation, abort generations, first-error focus, exact request, resubmit, stale/reload/contradictory publication, and cleanup oracles — `packages/kanban/test/editor-session.spec.test.ts`
 - [ ] 3.1.3 `[spec-author]` Add identity exclusivity, view mode, authoritative publication, and hostile-value oracles — `packages/kanban/test/security/editor-boundary.spec.test.ts`
 - [ ] 3.1.4 `[spec-author]` Add exact dependency and built packed-consumer oracles for generic-only, missing peer, and Zod 4 standard adapter — package-boundary and consumer-contract specs
