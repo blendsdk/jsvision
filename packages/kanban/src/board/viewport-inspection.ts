@@ -2,10 +2,12 @@ import type {
   KanbanActionTarget,
   KanbanDamageRegion,
   KanbanInspectedCard,
+  KanbanInspectedCardDescriptor,
   KanbanInspectedCell,
   KanbanInspectedColumn,
   KanbanLayoutRegion,
 } from '../layout/hit-map.js';
+import type { KanbanCardDensity, KanbanCardDescriptor } from '../card/descriptor.js';
 import { snapshotKanbanFocusTarget } from '../interaction/reconciliation.js';
 import { KANBAN_NEUTRAL_FOCUSED_DETAIL_SNAPSHOT, KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
 import type {
@@ -18,6 +20,35 @@ import type { KanbanCellState } from '../source/states.js';
 import type { KanbanStructureState } from '../structure/model.js';
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanViewportSourceSnapshot } from './viewport-source.js';
+
+/**
+ * Reuses detached density-enriched descriptors while their immutable source descriptor remains live.
+ *
+ * Inspection callers rely on descriptor identity to distinguish a card-local rebuild from an
+ * unrelated viewport publication. A weak cache preserves that evidence without extending the
+ * lifetime of viewport-owned descriptors.
+ */
+const INSPECTED_DESCRIPTORS = new WeakMap<
+  KanbanCardDescriptor,
+  Map<KanbanCardDensity, KanbanInspectedCardDescriptor>
+>();
+
+/** Adds projection density once while preserving stable inspection identity for unchanged cards. */
+function inspectedDescriptor(
+  descriptor: KanbanCardDescriptor,
+  density: KanbanCardDensity,
+): KanbanInspectedCardDescriptor {
+  let densities = INSPECTED_DESCRIPTORS.get(descriptor);
+  if (densities === undefined) {
+    densities = new Map();
+    INSPECTED_DESCRIPTORS.set(descriptor, densities);
+  }
+  const retained = densities.get(density);
+  if (retained !== undefined) return retained;
+  const created = Object.freeze({ ...descriptor, density });
+  densities.set(density, created);
+  return created;
+}
 
 /** Detached controller evidence exposed without application records or host handles. */
 export interface KanbanInteractionInspection {
@@ -186,7 +217,7 @@ export function createKanbanViewportInspection<TCard>(
           columnId: card.columnId,
           ...(card.swimlaneId === undefined ? {} : { swimlaneId: card.swimlaneId }),
         }),
-        descriptor: Object.freeze({ ...card.descriptor, density: card.density ?? 'comfortable' }),
+        descriptor: inspectedDescriptor(card.descriptor, card.density ?? 'comfortable'),
         title,
         marker: Object.freeze({ cues: Object.freeze([...card.descriptor.marker.cues]) }),
       });

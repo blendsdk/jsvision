@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 16:46 CEST
-> **Progress**: 28/125 tasks (22%)
+> **Last Updated**: 2026-08-14 16:57 CEST
+> **Progress**: 29/125 tasks (23%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -130,7 +130,7 @@ capture/canonicalization/provenance, hostile input, migration/reconciliation, an
 ### Step 2.3: Implementation tests and hardening
 
 - [x] 2.3.1 Add deterministic property/fuzz, migration failure, proxy/accessor, and allocation tests — `packages/kanban/test/saved-view-codec.impl.test.ts`, `saved-view-migration.impl.test.ts` ✅ (completed: 2026-08-14 16:46)
-- [ ] 2.3.2 Run focused Kanban build/typecheck/tests/check:deps/check:docs and `yarn verify:local`
+- [x] 2.3.2 Run focused Kanban build/typecheck/tests/check:deps/check:docs and `yarn verify:local` ✅ (completed: 2026-08-14 16:57)
 
 **Verify**: focused saved-view/security/property suites; Kanban build/typecheck/deps/docs; `yarn verify:local`
 
