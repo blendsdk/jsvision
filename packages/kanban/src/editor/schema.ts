@@ -5,6 +5,7 @@ import type { KanbanFieldId } from '../contract/identity.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { snapshotKanbanRevision } from '../contract/revision.js';
 import { snapshotKanbanSemanticValue } from '../contract/semantic-query.js';
+import { isKanbanEditorControlRegistry } from './registry.js';
 import type {
   KanbanCardEditorChoice,
   KanbanCardEditorField,
@@ -280,7 +281,8 @@ export function createKanbanCardEditorSchema<TCard = unknown, TDraft = unknown>(
   try {
     const properties = snapshotKanbanDataProperties(options, SCHEMA_KEYS.size);
     if (Object.keys(properties).some((key) => !SCHEMA_KEYS.has(key))) return invalidSchema();
-    const controls = properties.controls as KanbanEditorControlRegistry | undefined;
+    const controls = properties.controls;
+    if (controls !== undefined && !isKanbanEditorControlRegistry(controls)) return invalidSchema();
     const sections = Object.freeze(
       snapshotKanbanDataArray(properties.sections, KANBAN_LIMITS.cardFields.safe)
         .map(snapshotSection)
