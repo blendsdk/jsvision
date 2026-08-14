@@ -309,7 +309,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 
 ### Step 6.3: Implementation tests and hardening
 
-- [ ] 6.3.1 Add router bounds/failures, Primary dedupe, and replacement tests — Kanban `action-registry.impl.test.ts`/`action-router.impl.test.ts`, Core `input-primary.impl.test.ts`, Web `dom-pointer-input.impl.test.ts`
+- [x] 6.3.1 Add router bounds/failures, Primary dedupe, and replacement tests — Kanban `action-registry.impl.test.ts`/`action-router.impl.test.ts`, Core `input-primary.impl.test.ts`, Web `dom-pointer-input.impl.test.ts` ✅ (completed: 2026-08-15 02:10)
 - [ ] 6.3.2 Run focused Core/Web/UI/Kanban typecheck/tests/E2E/docs and `yarn verify:local`
 
 **Verify**: focused actions/keymap/security/host suites; affected package gates; `yarn verify:local`
