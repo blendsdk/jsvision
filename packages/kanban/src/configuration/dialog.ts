@@ -18,6 +18,7 @@ import type { DispatchEvent, View } from '@jsvision/ui';
 import { createKanbanEditorActionBand } from '../editor/dialog-action-band.js';
 import { resolveKanbanEditorMessage } from '../editor/presentation-text.js';
 import { createKanbanConfigurationSession } from './session.js';
+import { confirmKanbanConfigurationDeletion } from './delete-dialog.js';
 import type {
   KanbanColumnConfigurationOperation,
   KanbanConfigurationConfirm,
@@ -203,6 +204,16 @@ export async function openKanbanConfigurationDialog(
     if (terminal || applying) return;
     applying = true;
     try {
+      if (
+        options.operation.kind === 'delete' &&
+        !(await confirmKanbanConfigurationDeletion(host, {
+          occupancy: options.operation.occupancy,
+          hasPolicy: options.operation.policy !== undefined,
+          ...(options.confirm === undefined ? {} : { confirm: options.confirm }),
+        }))
+      ) {
+        return;
+      }
       const result = await session.apply();
       if (result.kind === 'proposal' || result.kind === 'accepted') finish(result);
     } finally {

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 23:05 CEST
-> **Progress**: 66/125 tasks (53%)
+> **Last Updated**: 2026-08-14 23:08 CEST
+> **Progress**: 67/125 tasks (54%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -253,7 +253,7 @@ initialize successfully; no unrelated runtime, matcher, or transform failure mas
 - [x] 5.2.3 Implement non-empty/unknown delete policy and confirmation result builders — `packages/kanban/src/configuration/deletion.ts`, `builders.ts` ✅ (completed: 2026-08-14 22:54)
 - [x] 5.2.4 Implement shared configuration session and stale/rejection lifecycle — `packages/kanban/src/configuration/session.ts`, `types.ts` ✅ (completed: 2026-08-14 22:59)
 - [x] 5.2.5 Implement responsive column and swimlane/grouping dialogs — `packages/kanban/src/configuration/column-dialog.ts`, `swimlane-dialog.ts` ✅ (completed: 2026-08-14 23:05)
-- [ ] 5.2.6 Implement delete/reassign/archive/custom dialog flow and focus reconciliation — `packages/kanban/src/configuration/delete-dialog.ts`, `packages/kanban/src/board/board-configuration-binding.ts`
+- [x] 5.2.6 Implement delete/reassign/archive/custom dialog flow and focus reconciliation — `packages/kanban/src/configuration/delete-dialog.ts`, `packages/kanban/src/board/board-configuration-binding.ts` ✅ (completed: 2026-08-14 23:08)
 - [ ] 5.2.7 Export/document configuration APIs and make focused specifications green — `packages/kanban/src/index.ts`
 
 ### Step 5.3: Implementation tests and hardening
