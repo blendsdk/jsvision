@@ -24,6 +24,8 @@ import type { CardKey } from '../contract/identity.js';
 import type { KanbanRequestResult } from '../contract/request.js';
 import { createKanbanEditorControlBinding } from './controls.js';
 import type { KanbanEditorControlBinding } from './controls.js';
+import { confirmKanbanEditorAction } from './confirmation.js';
+import type { KanbanEditorConfirm } from './confirmation.js';
 import type {
   KanbanCardEditorAdapter,
   KanbanEditorAlreadyOpen,
@@ -273,7 +275,13 @@ export class KanbanEditorDialog<TCard, TDraft> extends Dialog {
     }
     if (
       (inner.type === 'command' && inner.command === Commands.cancel) ||
-      (inner.type === 'key' && inner.key === 'escape')
+      (inner.type === 'key' && inner.key === 'escape') ||
+      (inner.type === 'mouse' &&
+        inner.kind === 'down' &&
+        event.local?.y === 0 &&
+        event.local.x >= 2 &&
+        event.local.x <= 4 &&
+        this.closable)
     ) {
       event.handled = true;
       this.handlers.cancel();
@@ -336,6 +344,8 @@ interface KanbanEditorMutableDialogOptions<TCard, TDraft, TResult> {
   readonly coordinator: KanbanEditorCoordinator;
   /** Authority or explicitly request-free result completion. */
   readonly completion: KanbanEditorDialogCompletion<TDraft, TResult>;
+  /** Optional application replacement for localized dirty and stale confirmations. */
+  readonly confirm?: KanbanEditorConfirm;
   /** Optional caller cancellation used while initial record resolution is pending. */
   readonly signal?: AbortSignal;
 }
@@ -384,6 +394,7 @@ interface ResolvedDialogOptions<TCard, TDraft, TResult> {
   readonly resolver: KanbanEditorRecordResolver<TCard>;
   readonly coordinator: KanbanEditorCoordinator;
   readonly completion?: KanbanEditorDialogCompletion<TDraft, TResult>;
+  readonly confirm?: KanbanEditorConfirm;
   readonly signal?: AbortSignal;
 }
 
@@ -424,6 +435,7 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
   let outcome: KanbanEditorDialogResult<TResult> =
     options.mode === 'view' ? Object.freeze({ kind: 'closed' }) : Object.freeze({ kind: 'cancelled' });
   let submitting = false;
+  let cancelling = false;
   const active: { dialog?: KanbanEditorDialog<TCard, TDraft> } = {};
 
   const focusInvalid = (fieldId: KanbanEditorFieldState['fieldId']): void => {
@@ -455,9 +467,22 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
       submitting = false;
     }
   };
-  const cancel = (): void => {
-    outcome = options.mode === 'view' ? Object.freeze({ kind: 'closed' }) : Object.freeze({ kind: 'cancelled' });
-    active.dialog?.finish('cancel');
+  const cancel = async (): Promise<void> => {
+    if (cancelling) return;
+    cancelling = true;
+    try {
+      if (
+        options.mode !== 'view' &&
+        session.snapshot().dirty &&
+        !(await confirmKanbanEditorAction(host, { kind: 'discard-draft', mode: options.mode }, options.confirm))
+      ) {
+        return;
+      }
+      outcome = options.mode === 'view' ? Object.freeze({ kind: 'closed' }) : Object.freeze({ kind: 'cancelled' });
+      active.dialog?.finish('cancel');
+    } finally {
+      cancelling = false;
+    }
   };
 
   const dialog = new KanbanEditorDialog({
@@ -465,7 +490,7 @@ async function runDefaultDialog<TCard, TDraft, TResult>(
     viewport: host.desktop.bounds,
     adapter: options.adapter,
     session,
-    handlers: { submit: () => void submit(), cancel },
+    handlers: { submit: () => void submit(), cancel: () => void cancel() },
   });
   active.dialog = dialog;
   const unsubscribe = session.subscribe((snapshot) => {
@@ -510,6 +535,7 @@ export function openKanbanCardCreateDialog<TCard, TDraft, TResult = never>(
     resolver: emptyCreateResolver(),
     coordinator: options.coordinator,
     completion: options.completion,
+    confirm: options.confirm,
     signal: options.signal,
   });
 }

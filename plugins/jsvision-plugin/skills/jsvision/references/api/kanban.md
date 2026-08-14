@@ -1975,6 +1975,39 @@ interface KanbanEditorCardIdentity {
 }
 ```
 
+## KanbanEditorConfirm
+
+Optional application replacement for the package confirmation presentation.
+
+```ts
+type KanbanEditorConfirm = (request: KanbanEditorConfirmationRequest) => boolean | Promise<boolean>
+```
+
+## KanbanEditorConfirmationRequest
+
+One package-owned decision that requires explicit user confirmation.
+
+```ts
+type KanbanEditorConfirmationRequest = | {
+      /** Dirty draft discard discriminator. */
+      readonly kind: 'discard-draft';
+      /** Create or edit context used by application confirmation policy. */
+      readonly mode: Exclude<KanbanEditorMode, 'view'>;
+    }
+  | {
+      /** Stale draft reload discriminator. */
+      readonly kind: 'reload-stale';
+    }
+```
+
+## KanbanEditorConfirmedReloadResult
+
+Stale reload result extended with an explicit declined-confirmation outcome.
+
+```ts
+type KanbanEditorConfirmedReloadResult = KanbanEditorReloadResult | { readonly kind: 'cancelled' }
+```
+
 ## KanbanEditorContext
 
 Bounded context supplied to application editor callbacks.
@@ -7677,6 +7710,22 @@ Composes one detached presentation snapshot into a bounded immutable descriptor.
 
 ```ts
 composeStandardKanbanCard(snapshot: KanbanCardPresentationSnapshot, context: KanbanStandardCardCompositionContext): KanbanCardDescriptor
+```
+
+## confirmAndReloadKanbanEditor
+
+Confirms and performs the only safe stale-draft reload policy.
+
+```ts
+confirmAndReloadKanbanEditor<TDraft>(host: KanbanEditorDialogHost, session: KanbanEditorSession<TDraft>, replacement?: KanbanEditorConfirm): Promise<KanbanEditorConfirmedReloadResult>
+```
+
+## confirmKanbanEditorAction
+
+Resolves an editor confirmation through an application callback or the localized package dialog.
+
+```ts
+confirmKanbanEditorAction(host: KanbanEditorDialogHost, request: KanbanEditorConfirmationRequest, replacement?: KanbanEditorConfirm): Promise<boolean>
 ```
 
 ## createEagerKanbanDataSource

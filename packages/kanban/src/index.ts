@@ -29,6 +29,13 @@ export * from './card/theme.js';
 export * from './card/theme-resolver.js';
 export { createKanbanEditorCoordinator } from './editor/coordinator.js';
 export {
+  confirmAndReloadKanbanEditor,
+  confirmKanbanEditorAction,
+  type KanbanEditorConfirm,
+  type KanbanEditorConfirmationRequest,
+  type KanbanEditorConfirmedReloadResult,
+} from './editor/confirmation.js';
+export {
   createKanbanEditorControlBinding,
   type KanbanEditorControlBinding,
   type KanbanEditorControlBindingOptions,
