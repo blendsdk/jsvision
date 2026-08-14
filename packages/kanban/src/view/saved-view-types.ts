@@ -31,7 +31,7 @@ export type KanbanSavedViewReferenceCategory =
 
 /** Optional missing-reference policy shared by saved directives. */
 export interface KanbanSavedViewReferencePolicy {
-  /** Explicit behavior when the referenced application identity is unavailable. */
+  /** Explicit behavior when the directive's primary field or structure identity is unavailable. */
   readonly onMissing?: KanbanSavedViewMissingPolicy;
 }
 
@@ -262,6 +262,8 @@ export interface KanbanSavedViewReconciliationContext {
   readonly cardFieldIds?: readonly KanbanFieldId[];
   /** Current summary identities available to presentation. */
   readonly summaryIds?: readonly KanbanFieldId[];
+  /** Current grouping presentation variants available to saved views. */
+  readonly groupingVariantIds?: readonly KanbanExtensionId[];
 }
 
 /** Raw durable facets retained after reconciliation for lossless ordinary capture. */
