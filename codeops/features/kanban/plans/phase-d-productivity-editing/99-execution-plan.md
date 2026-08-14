@@ -302,7 +302,7 @@ three-modifier grammar. Fixtures import and execute without unrelated transform 
 - [x] 6.2.3 Define stable action/capability/outcome/context contracts and package inventory — `packages/kanban/src/command/types.ts`, `actions.ts` ✅ (completed: 2026-08-15 01:07)
 - [x] 6.2.4 Implement bounded action registry and namespaced extension validation — `packages/kanban/src/command/registry.ts`, `actions.ts` ✅ (completed: 2026-08-15 01:16)
 - [x] 6.2.5 Implement conflict-validating semantic-Primary keymap/defaults and atomic replacement — `packages/kanban/src/command/keymap.ts`, `defaults.ts` ✅ (completed: 2026-08-15 01:25)
-- [ ] 6.2.6 Implement pure capability provider containment and read-only preset — `packages/kanban/src/command/capability.ts`, `types.ts`
+- [x] 6.2.6 Implement pure capability provider containment and read-only preset — `packages/kanban/src/command/capability.ts`, `types.ts` ✅ (completed: 2026-08-15 01:31)
 - [ ] 6.2.7 Implement one board action router with typed same-action recursion rejection across completed producer seams — command router and board action binding
 - [ ] 6.2.8 Implement localized help/status labels and pointer/action adapters without private mutation paths — command help and viewport input
 - [ ] 6.2.9 Export/document actions and make phase-local specifications green; defer DA-09 event assertions to Phase 7 — Kanban barrel
