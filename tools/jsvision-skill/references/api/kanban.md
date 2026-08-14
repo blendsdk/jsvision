@@ -6213,6 +6213,14 @@ Return a collision-safe identity for one type-preserving subject.
 canonicalizeKanbanOperationSubject(subject: KanbanOperationSubject): string
 ```
 
+## canonicalizeKanbanSemanticValue
+
+Returns the deterministic JSON representation used by semantic fingerprints and saved artifacts.
+
+```ts
+canonicalizeKanbanSemanticValue(value: unknown): string
+```
+
 ## clampKanbanScroll
 
 Clamps requested offsets to current live extents without retaining caller objects.

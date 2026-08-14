@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 14:52 CEST
-> **Progress**: 22/125 tasks (18%)
+> **Last Updated**: 2026-08-14 14:56 CEST
+> **Progress**: 23/125 tasks (18%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -121,7 +121,7 @@ capture/canonicalization/provenance, hostile input, migration/reconciliation, an
 
 - [x] 2.2.1 Define v1 raw/resolved/provenance envelope, per-reference missing policy, and diagnostics — `packages/kanban/src/view/saved-view-types.ts`, `packages/kanban/src/contract/error.ts` ✅ (completed: 2026-08-14 14:46)
 - [x] 2.2.2 Add classified saved-view/registry/migration limits — `packages/kanban/src/contract/limits.ts`, `packages/kanban/src/view/saved-view-limits.ts` ✅ (completed: 2026-08-14 14:52)
-- [ ] 2.2.3 Implement exact parser, detached snapshots, and shared Unicode code-point canonical serializer — `packages/kanban/src/view/saved-view-codec.ts`, existing semantic encoder
+- [x] 2.2.3 Implement exact parser, detached snapshots, and shared Unicode code-point canonical serializer — `packages/kanban/src/view/saved-view-codec.ts`, existing semantic encoder ✅ (completed: 2026-08-14 14:56)
 - [ ] 2.2.4 Implement bounded sequential package/application migrations — `packages/kanban/src/view/saved-view-migration.ts`, `saved-view-codec.ts`
 - [ ] 2.2.5 Implement deterministic registry/data/capability reconciliation with exact missing policy and facet provenance — `packages/kanban/src/view/saved-view-reconcile.ts`, `registry.ts`
 - [ ] 2.2.6 Implement provenance-aware capture/apply/invalidation and authority-backed save/rename/delete helpers — `packages/kanban/src/view/saved-view-store.ts`, `controller.ts`

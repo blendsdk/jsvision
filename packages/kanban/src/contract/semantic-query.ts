@@ -182,7 +182,7 @@ function walkRecord(value: object, depth: number, active: WeakSet<object>, budge
   }
   if (inspected.keys.some((key) => typeof key === 'symbol')) throw new KanbanInvalidSemanticValueError();
 
-  const keys = inspected.keys.filter((key): key is string => typeof key === 'string').sort();
+  const keys = inspected.keys.filter((key): key is string => typeof key === 'string').sort(compareUnicodeCodePoints);
   if (keys.length > KANBAN_LIMITS.semanticObjectKeys.safe) throw new KanbanInvalidSemanticValueError();
 
   consumeCanonical(budget, '{');
@@ -230,6 +230,22 @@ function createSemanticSnapshot(value: unknown): SemanticSnapshot {
   });
 }
 
+/** Compares strings by Unicode scalar/code-point value while retaining lone surrogates deterministically. */
+function compareUnicodeCodePoints(left: string, right: string): number {
+  let leftIndex = 0;
+  let rightIndex = 0;
+  while (leftIndex < left.length && rightIndex < right.length) {
+    const leftPoint = left.codePointAt(leftIndex);
+    const rightPoint = right.codePointAt(rightIndex);
+    if (leftPoint === undefined || rightPoint === undefined) break;
+    if (leftPoint !== rightPoint) return leftPoint < rightPoint ? -1 : 1;
+    leftIndex += leftPoint > 0xffff ? 2 : 1;
+    rightIndex += rightPoint > 0xffff ? 2 : 1;
+  }
+  if (leftIndex === left.length && rightIndex === right.length) return 0;
+  return leftIndex === left.length ? -1 : 1;
+}
+
 /**
  * Validates, detaches, sorts, normalizes, and deeply freezes one semantic value.
  *
@@ -240,6 +256,22 @@ export function snapshotKanbanSemanticValue<T extends KanbanSemanticValue>(value
 export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue;
 export function snapshotKanbanSemanticValue(value: unknown): KanbanSemanticValue {
   return createSemanticSnapshot(value).value;
+}
+
+/**
+ * Returns the deterministic JSON representation used by semantic fingerprints and saved artifacts.
+ *
+ * Object keys use Unicode code-point order, arrays retain their order, and invalid values are rejected
+ * before any partial representation is returned.
+ *
+ * @example
+ * ```ts
+ * canonicalizeKanbanSemanticValue({ beta: 2, alpha: 1 });
+ * // '{"alpha":1,"beta":2}'
+ * ```
+ */
+export function canonicalizeKanbanSemanticValue(value: unknown): string {
+  return createSemanticSnapshot(value).canonical;
 }
 
 /**
