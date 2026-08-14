@@ -5,6 +5,7 @@ export type KanbanErrorCode =
   | 'invalid-semantic-value'
   | 'invalid-query'
   | 'invalid-view-registry'
+  | 'invalid-editor-schema'
   | 'invalid-saved-view'
   | 'invalid-range'
   | 'invalid-source-publication'
@@ -59,6 +60,18 @@ export class KanbanInvalidViewRegistryError extends KanbanError {
   constructor() {
     super('Invalid Kanban view registry.');
     this.name = 'KanbanInvalidViewRegistryError';
+  }
+}
+
+/** Raised when editor schema metadata is unsafe, inconsistent, duplicate, or over its bounds. */
+export class KanbanInvalidEditorSchemaError extends KanbanError {
+  /** Stable machine-readable failure code. */
+  readonly code = 'invalid-editor-schema' as const;
+
+  /** Creates a payload-free error that never retains rejected schema metadata. */
+  constructor() {
+    super('Invalid Kanban editor schema.');
+    this.name = 'KanbanInvalidEditorSchemaError';
   }
 }
 

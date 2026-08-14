@@ -1787,6 +1787,7 @@ type KanbanErrorCode = | 'invalid-identity'
   | 'invalid-semantic-value'
   | 'invalid-query'
   | 'invalid-view-registry'
+  | 'invalid-editor-schema'
   | 'invalid-saved-view'
   | 'invalid-range'
   | 'invalid-source-publication'
@@ -2514,6 +2515,16 @@ Raised when a custom card descriptor violates its bounded render contract.
 
 ```ts
 new KanbanInvalidDescriptorError()   // extends KanbanError
+// methods & signals:
+code
+```
+
+## KanbanInvalidEditorSchemaError
+
+Raised when editor schema metadata is unsafe, inconsistent, duplicate, or over its bounds.
+
+```ts
+new KanbanInvalidEditorSchemaError()   // extends KanbanError
 // methods & signals:
 code
 ```

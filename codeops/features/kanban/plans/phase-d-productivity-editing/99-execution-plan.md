@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 17:51 CEST
-> **Progress**: 35/125 tasks (28%)
+> **Last Updated**: 2026-08-14 17:57 CEST
+> **Progress**: 36/125 tasks (29%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -165,7 +165,7 @@ cases passed. No import-transform, matcher, fixture, or command failure masked t
 ### Step 3.2: Implementation
 
 - [x] 3.2.1 Add Forms/Zod dependency topology and update exact boundary/isolated consumer fixtures using authorized workspace install flow — manifest, lockfile, package specs ✅ (completed: 2026-08-14 17:51)
-- [ ] 3.2.2 Implement Zod-free generic schema/field/section/control contracts — `packages/kanban/src/editor/types.ts`, `schema.ts`
+- [x] 3.2.2 Implement Zod-free generic schema/field/section/control contracts — `packages/kanban/src/editor/types.ts`, `schema.ts` ✅ (completed: 2026-08-14 17:57)
 - [ ] 3.2.3 Implement bounded editor/control registries and callback isolation — `packages/kanban/src/editor/registry.ts`, `schema.ts`
 - [ ] 3.2.4 Implement disposable draft session, abort generations, first-error focus, exact request state, stale/reload policy, and cancellation — `packages/kanban/src/editor/session.ts`, `types.ts`
 - [ ] 3.2.5 Implement application-owned record/revision resolver, identity coordinator, and authoritative/contradictory publication reconciliation — `packages/kanban/src/editor/coordinator.ts`, `session.ts`
