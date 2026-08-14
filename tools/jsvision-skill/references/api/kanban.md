@@ -1953,6 +1953,17 @@ interface KanbanEditorAuthority {
 }
 ```
 
+## KanbanEditorAuthorityCompletion
+
+Normal completion routed through the application request authority.
+
+```ts
+interface KanbanEditorAuthorityCompletion {
+  kind: 'authority';   // Authority completion discriminator.
+  authority: KanbanEditorAuthority;   // Application-owned request admission seam.
+}
+```
+
 ## KanbanEditorCardIdentity
 
 Application-owned record identity used by an edit/view session.
@@ -1981,6 +1992,7 @@ One disposable view binding consumed by the responsive editor dialog.
 
 ```ts
 interface KanbanEditorControlBinding {
+  fieldId: KanbanEditorFieldState['fieldId'];   // Stable schema field identity represented by this binding.
   view: View;   // Mounted field view.
   measure: (availableWidth: number) => KanbanEditorControlMeasurement;   // Returns terminal-cell geometry for the current available width.
   diagnostics: () => readonly KanbanEditorDiagnostic[];   // Returns safe package diagnostics produced while constructing the binding.
@@ -2069,7 +2081,7 @@ Owns identity claims across package and application editor presentations.
 
 ```ts
 interface KanbanEditorCoordinator {
-  open(options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>): Promise<KanbanEditorOpenResult>;   // Opens or returns the one session already claimed for the supplied card identity.
+  open(options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>): Promise<KanbanEditorOpenResult<TDraft>>;   // Opens or returns the one session already claimed for the supplied card identity.
   dispose(): void;   // Disposes all resolved sessions and prevents later acquisition.
   disposed(): boolean;   // Reports whether the coordinator has released its claim registry.
 }
@@ -2104,6 +2116,76 @@ interface KanbanEditorDiagnostic {
   code: string;   // Stable machine-readable reason code.
   messageId?: string;   // Optional localized message identity resolved by the mounted application.
   label?: string;   // Optional already-sanitized application label.
+}
+```
+
+## KanbanEditorDialogCompletion
+
+Completion policies supported by create and edit dialogs.
+
+```ts
+type KanbanEditorDialogCompletion<TDraft, TResult> = KanbanEditorAuthorityCompletion | KanbanEditorResultOnlyCompletion<TDraft, TResult>
+```
+
+## KanbanEditorDialogHandlers
+
+Callbacks used by the shell without granting it completion or persistence authority.
+
+```ts
+interface KanbanEditorDialogHandlers {
+  submit: () => void;   // Handles the package submit command.
+  cancel: () => void;   // Handles Cancel, Escape, and the frame close action.
+}
+```
+
+## KanbanEditorDialogHost
+
+Minimal application host required by the package editor dialogs.
+
+```ts
+interface KanbanEditorDialogHost {
+  i18n: I18n;   // Application translation service used by package and standard UI controls.
+  loop: Pick<EventLoop, 'execView' | 'focusView'>;   // Event-loop operations required to execute and focus the modal.
+  desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // Desktop operations and hard viewport extent required by the modal lifecycle.
+}
+```
+
+## KanbanEditorDialogOptions
+
+Construction options for the reusable responsive editor shell.
+
+```ts
+interface KanbanEditorDialogOptions<TCard, TDraft> {
+  i18n: I18n;   // Application translation service inherited from the modal host.
+  viewport: KanbanEditorDialogViewport;   // Hard desktop boundary used only to choose initial compact geometry.
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>;   // Adapter whose validated schema determines the complete field tree.
+  session: KanbanEditorSession<TDraft>;   // Session that owns draft, focus, validation, and record state.
+  handlers: KanbanEditorDialogHandlers;   // Command handlers supplied by the dialog lifecycle engine.
+}
+```
+
+## KanbanEditorDialogResult
+
+Terminal outcomes produced by one package editor dialog.
+
+```ts
+type KanbanEditorDialogResult<TResult = never> = | { readonly kind: 'cancelled' }
+  | { readonly kind: 'closed' }
+  | { readonly kind: 'result'; readonly value: TResult }
+  | Extract<KanbanEditorSubmitResult, { readonly kind: 'committed' }>
+  | KanbanEditorAlreadyOpen
+  | { readonly kind: 'disposed' }
+  | { readonly kind: 'failed' }
+```
+
+## KanbanEditorDialogViewport
+
+Desktop extent required to choose a compact responsive editor size.
+
+```ts
+interface KanbanEditorDialogViewport {
+  width: number;   // Available terminal columns.
+  height: number;   // Available terminal rows.
 }
 ```
 
@@ -2157,7 +2239,7 @@ type KanbanEditorMode = 'create' | 'view' | 'edit'
 Complete result of attempting an identity-exclusive editor acquisition.
 
 ```ts
-type KanbanEditorOpenResult = KanbanEditorOpened | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>
+type KanbanEditorOpenResult<TDraft = unknown> = KanbanEditorOpened<TDraft> | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>
 ```
 
 ## KanbanEditorOpened
@@ -2165,11 +2247,27 @@ type KanbanEditorOpenResult = KanbanEditorOpened | KanbanEditorAlreadyOpen | Kan
 Successful identity-exclusive editor acquisition.
 
 ```ts
-interface KanbanEditorOpened {
+interface KanbanEditorOpened<TDraft = unknown> {
   kind: 'opened';   // Acquisition discriminator.
   editorKind: KanbanEditorKind;   // Claimed presentation family.
-  session: KanbanEditorSession;   // Session whose disposal releases this exact coordinator claim.
+  session: KanbanEditorSession<TDraft>;   // Session whose disposal releases this exact coordinator claim.
 }
+```
+
+## KanbanEditorPrepareResult
+
+Result of validating and detaching a draft without invoking application request authority.
+
+```ts
+type KanbanEditorPrepareResult<TDraft> = | { readonly kind: 'prepared'; readonly result: KanbanEditorResult<TDraft> }
+  | KanbanEditorInvalidSubmitOutcome
+  | KanbanEditorKindOutcome<'read-only'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorKindOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>
 ```
 
 ## KanbanEditorRecordPublication
@@ -2266,6 +2364,17 @@ interface KanbanEditorResult<TDraft> {
 }
 ```
 
+## KanbanEditorResultOnlyCompletion
+
+Application-owned typed result detachment used when no request should be dispatched.
+
+```ts
+interface KanbanEditorResultOnlyCompletion<TDraft, TResult> {
+  kind: 'result-only';   // Result-only completion discriminator.
+  detach: (result: KanbanEditorResult<TDraft>) => TResult;   // Copies the validated typed draft into application-owned result data.
+}
+```
+
 ## KanbanEditorSectionId
 
 Stable identity used to group and order editor fields.
@@ -2279,12 +2388,13 @@ type KanbanEditorSectionId = string
 Disposable actor-style session shared by standard, custom, and inspector presentations.
 
 ```ts
-interface KanbanEditorSession {
+interface KanbanEditorSession<TDraft = unknown> {
   snapshot(): KanbanEditorSessionSnapshot;   // Returns one coherent immutable session snapshot.
   fieldState(fieldId: KanbanFieldId): KanbanEditorFieldState;   // Returns immutable state for one schema field or a safe absent placeholder.
   fieldValue(fieldId: KanbanFieldId): KanbanSemanticValue | undefined;   // Returns one immutable semantic field value, or `undefined` when absent or unsafe.
   focusField(fieldId: KanbanFieldId): boolean;   // Updates the stable field focus identity when that field exists and is visible.
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult;   // Attempts one typed field mutation without coercing hostile values.
+  prepare(): Promise<KanbanEditorPrepareResult<TDraft>>;   // Validates and returns a typed detached-result input without invoking request authority.
   submit(): Promise<KanbanEditorSubmitResult>;   // Validates and submits one full detached draft through application authority.
   reload(policy: KanbanEditorReloadPolicy): Promise<KanbanEditorReloadResult>;   // Explicitly discards a stale draft and reloads the latest authoritative record.
   subscribe(listener: (snapshot: KanbanEditorSessionSnapshot) => void): () => void;   // Subscribes to coherent state changes and returns an idempotent unsubscriber.
@@ -6818,6 +6928,41 @@ interface KanbanWorkflowViolationEvidence {
 }
 ```
 
+## OpenKanbanCardCreateDialogOptions
+
+Options for opening a new-card editor without an application record resolver.
+
+```ts
+interface OpenKanbanCardCreateDialogOptions<TCard, TDraft, TResult> {
+  claimId: string;   // Bounded provisional identity used only for editor exclusivity before persistence assigns a card key.
+}
+```
+
+## OpenKanbanCardEditDialogOptions
+
+Options for opening an existing-card edit dialog.
+
+```ts
+interface OpenKanbanCardEditDialogOptions<TCard, TDraft, TResult> {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  resolver: KanbanEditorRecordResolver<TCard>;   // Authoritative application record source.
+}
+```
+
+## OpenKanbanCardViewDialogOptions
+
+Options for opening an existing card in read-only view mode.
+
+```ts
+interface OpenKanbanCardViewDialogOptions<TCard, TDraft> {
+  cardKey: CardKey;   // Stable application-owned card identity.
+  adapter: KanbanCardEditorAdapter<TCard, TDraft>;   // Adapter used to format the detached record through its validated schema.
+  resolver: KanbanEditorRecordResolver<TCard>;   // Authoritative application record source.
+  coordinator: KanbanEditorCoordinator;   // Identity coordinator shared by every editor presentation in the application.
+  signal?: AbortSignal;   // Optional caller cancellation used while initial record resolution is pending.
+}
+```
+
 ## PlacementToken
 
 An opaque source-issued placement token.
@@ -7635,7 +7780,7 @@ createKanbanEditorCoordinator(): KanbanEditorCoordinator
 Opens one detached editor session after subscribing to authoritative publications.
 
 ```ts
-createKanbanEditorSession<TCard, TDraft>(options: KanbanEditorSessionOptions<TCard, TDraft>): Promise<KanbanEditorSession>
+createKanbanEditorSession<TCard, TDraft>(options: KanbanEditorSessionOptions<TCard, TDraft>): Promise<KanbanEditorSession<TDraft>>
 ```
 
 ## createKanbanExtensionId
@@ -7908,6 +8053,30 @@ Advances an older detached saved-view envelope through each registered version e
 
 ```ts
 migrateKanbanSavedView(input: unknown, options: KanbanSavedViewMigrationOptions = {}): KanbanSavedViewMigrationResult
+```
+
+## openKanbanCardCreateDialog
+
+Opens a centered create dialog using a provisional coordinator claim and no application resolver.
+
+```ts
+openKanbanCardCreateDialog<TCard, TDraft, TResult = never>(host: KanbanEditorDialogHost, options: OpenKanbanCardCreateDialogOptions<TCard, TDraft, TResult>): Promise<KanbanEditorDialogResult<TResult>>
+```
+
+## openKanbanCardEditDialog
+
+Opens a centered edit dialog over one application-owned record and request authority.
+
+```ts
+openKanbanCardEditDialog<TCard, TDraft, TResult = never>(host: KanbanEditorDialogHost, options: OpenKanbanCardEditDialogOptions<TCard, TDraft, TResult>): Promise<KanbanEditorDialogResult<TResult>>
+```
+
+## openKanbanCardViewDialog
+
+Opens a centered read-only card dialog with static field values and one Close path.
+
+```ts
+openKanbanCardViewDialog<TCard, TDraft>(host: KanbanEditorDialogHost, options: OpenKanbanCardViewDialogOptions<TCard, TDraft>): Promise<KanbanEditorDialogResult>
 ```
 
 ## parseKanbanSavedView

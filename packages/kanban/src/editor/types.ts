@@ -488,6 +488,18 @@ export type KanbanEditorSubmitResult =
   | KanbanEditorKindOutcome<'disposed'>
   | KanbanEditorKindOutcome<'failed'>;
 
+/** Result of validating and detaching a draft without invoking application request authority. */
+export type KanbanEditorPrepareResult<TDraft> =
+  | { readonly kind: 'prepared'; readonly result: KanbanEditorResult<TDraft> }
+  | KanbanEditorInvalidSubmitOutcome
+  | KanbanEditorKindOutcome<'read-only'>
+  | KanbanEditorKindOutcome<'stale'>
+  | KanbanEditorKindOutcome<'deleted'>
+  | KanbanEditorKindOutcome<'unavailable'>
+  | KanbanEditorKindOutcome<'sealed'>
+  | KanbanEditorKindOutcome<'disposed'>
+  | KanbanEditorKindOutcome<'failed'>;
+
 /** Explicit policy accepted by a stale-session reload. */
 export type KanbanEditorReloadPolicy = 'discard-draft';
 
@@ -517,7 +529,7 @@ export interface KanbanEditorSessionOptions<TCard, TDraft> {
 }
 
 /** Disposable actor-style session shared by standard, custom, and inspector presentations. */
-export interface KanbanEditorSession {
+export interface KanbanEditorSession<TDraft = unknown> {
   /** Returns one coherent immutable session snapshot. */
   snapshot(): KanbanEditorSessionSnapshot;
   /** Returns immutable state for one schema field or a safe absent placeholder. */
@@ -528,6 +540,8 @@ export interface KanbanEditorSession {
   focusField(fieldId: KanbanFieldId): boolean;
   /** Attempts one typed field mutation without coercing hostile values. */
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult;
+  /** Validates and returns a typed detached-result input without invoking request authority. */
+  prepare(): Promise<KanbanEditorPrepareResult<TDraft>>;
   /** Validates and submits one full detached draft through application authority. */
   submit(): Promise<KanbanEditorSubmitResult>;
   /** Explicitly discards a stale draft and reloads the latest authoritative record. */
@@ -550,13 +564,13 @@ export interface KanbanEditorCoordinatorOpenOptions<TCard, TDraft> extends Kanba
 }
 
 /** Successful identity-exclusive editor acquisition. */
-export interface KanbanEditorOpened {
+export interface KanbanEditorOpened<TDraft = unknown> {
   /** Acquisition discriminator. */
   readonly kind: 'opened';
   /** Claimed presentation family. */
   readonly editorKind: KanbanEditorKind;
   /** Session whose disposal releases this exact coordinator claim. */
-  readonly session: KanbanEditorSession;
+  readonly session: KanbanEditorSession<TDraft>;
 }
 
 /** Existing claim returned instead of creating a second draft for the same card. */
@@ -570,12 +584,15 @@ export interface KanbanEditorAlreadyOpen {
 }
 
 /** Complete result of attempting an identity-exclusive editor acquisition. */
-export type KanbanEditorOpenResult = KanbanEditorOpened | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>;
+export type KanbanEditorOpenResult<TDraft = unknown> =
+  KanbanEditorOpened<TDraft> | KanbanEditorAlreadyOpen | KanbanEditorKindOutcome<'disposed'>;
 
 /** Owns identity claims across package and application editor presentations. */
 export interface KanbanEditorCoordinator {
   /** Opens or returns the one session already claimed for the supplied card identity. */
-  open<TCard, TDraft>(options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>): Promise<KanbanEditorOpenResult>;
+  open<TCard, TDraft>(
+    options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>,
+  ): Promise<KanbanEditorOpenResult<TDraft>>;
   /** Disposes all resolved sessions and prevents later acquisition. */
   dispose(): void;
   /** Reports whether the coordinator has released its claim registry. */

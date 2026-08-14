@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 20:20 CEST
-> **Progress**: 49/125 tasks (39%)
+> **Last Updated**: 2026-08-14 20:36 CEST
+> **Progress**: 50/125 tasks (40%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -208,7 +208,7 @@ fixture, transform, or unrelated runtime failure masks the required behavior.
 
 - [x] 4.2.1 Implement standard control factories/bindings for every field kind — `packages/kanban/src/editor/controls.ts`, `standard-adapter.ts` ✅ (completed: 2026-08-14 20:14)
 - [x] 4.2.2 Implement DSL-first scrollable responsive dialog shell and measured actions — `packages/kanban/src/editor/dialog.ts`, `controls.ts` ✅ (completed: 2026-08-14 20:20)
-- [ ] 4.2.3 Implement create/view/edit/result-only modes and pending/rejection field mapping — `packages/kanban/src/editor/dialog.ts`, `session.ts`
+- [x] 4.2.3 Implement create/view/edit/result-only modes and pending/rejection field mapping — `packages/kanban/src/editor/dialog.ts`, `session.ts` ✅ (completed: 2026-08-14 20:36)
 - [ ] 4.2.4 Implement dirty/destructive confirmations and stale Reload/Cancel/application-policy actions — `packages/kanban/src/editor/confirmation.ts`, `dialog.ts`
 - [ ] 4.2.5 Implement custom editor replacement and application-owned modeless inspector contract — `packages/kanban/src/editor/inspector.ts`, `coordinator.ts`
 - [ ] 4.2.6 Bind board open/checklist actions through the application record resolver, editor coordinator, and existing authority — board editor binding and board

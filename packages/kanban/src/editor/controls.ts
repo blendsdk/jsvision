@@ -35,6 +35,8 @@ export interface KanbanEditorControlBindingOptions<TCard, TDraft> {
 
 /** One disposable view binding consumed by the responsive editor dialog. */
 export interface KanbanEditorControlBinding {
+  /** Stable schema field identity represented by this binding. */
+  readonly fieldId: KanbanEditorFieldState['fieldId'];
   /** Mounted field view. */
   readonly view: View;
   /** Returns terminal-cell geometry for the current available width. */
@@ -165,10 +167,14 @@ function bindFocusIdentity(view: View, session: KanbanEditorSession, fieldId: Ka
 }
 
 /** Creates a safe non-interactive replacement when a custom factory cannot be mounted. */
-function failedCustomBinding(i18n: I18n | undefined): KanbanEditorControlBinding {
+function failedCustomBinding(
+  fieldId: KanbanEditorFieldState['fieldId'],
+  i18n: I18n | undefined,
+): KanbanEditorControlBinding {
   const diagnostic = Object.freeze({ code: 'custom-control-failed', messageId: 'kanban.editor.controlUnavailable' });
   const diagnostics = Object.freeze([diagnostic]);
   return Object.freeze({
+    fieldId,
     view: new Text(translate(i18n, diagnostic.messageId, 'Control unavailable'), { severity: 'error' }),
     measure: (width: number) => Object.freeze({ minimumWidth: 8, preferredWidth: 24, rows: width < 16 ? 2 : 1 }),
     diagnostics: () => diagnostics,
@@ -182,7 +188,7 @@ function createCustomBinding<TCard, TDraft>(
 ): KanbanEditorControlBinding {
   const { field, session } = options;
   const registration = field.controlId === undefined ? undefined : options.controls?.control(field.controlId);
-  if (registration === undefined) return failedCustomBinding(options.i18n);
+  if (registration === undefined) return failedCustomBinding(field.fieldId, options.i18n);
   const lifetime = createBindingLifetime();
   const context: KanbanEditorControlContext = Object.freeze({
     fieldId: field.fieldId,
@@ -202,6 +208,7 @@ function createCustomBinding<TCard, TDraft>(
     });
     let disposed = false;
     return Object.freeze({
+      fieldId: field.fieldId,
       view: instance.view,
       measure: instance.measure,
       diagnostics: () => NO_DIAGNOSTICS,
@@ -215,7 +222,7 @@ function createCustomBinding<TCard, TDraft>(
     });
   } catch {
     lifetime.dispose();
-    return failedCustomBinding(options.i18n);
+    return failedCustomBinding(field.fieldId, options.i18n);
   }
 }
 
@@ -303,6 +310,7 @@ export function createKanbanEditorControlBinding<TCard, TDraft>(
   });
   let disposed = false;
   return Object.freeze({
+    fieldId: field.fieldId,
     view,
     measure: (width: number) => standardMeasurement(field, width),
     diagnostics: () => NO_DIAGNOSTICS,

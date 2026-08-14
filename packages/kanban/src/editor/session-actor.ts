@@ -1,8 +1,6 @@
-import { KanbanInvalidSemanticValueError } from '../contract/error.js';
 import { createKanbanCardKey, createKanbanFieldId } from '../contract/identity.js';
 import type { CardKey, KanbanFieldId } from '../contract/identity.js';
-import type { KanbanRequestProposal, KanbanRequestResult } from '../contract/request.js';
-import { snapshotKanbanRequestProposal } from '../contract/request-validation.js';
+import type { KanbanRequestResult } from '../contract/request.js';
 import { kanbanRevisionsEqual } from '../contract/revision.js';
 import type { KanbanRevision } from '../contract/revision.js';
 import type { KanbanSemanticValue } from '../contract/semantic-query.js';
@@ -28,10 +26,13 @@ import {
   validateKanbanEditorField,
 } from './session-field.js';
 import { KanbanEditorSessionNotifier } from './session-notifier.js';
+import { interruptedKanbanEditorPreparationResult, prepareKanbanEditorProposal } from './session-proposal.js';
+import type { KanbanEditorPreparation } from './session-proposal.js';
 import type {
   KanbanCardEditorField,
   KanbanEditorFieldState,
   KanbanEditorRecordState,
+  KanbanEditorPrepareResult,
   KanbanEditorReloadPolicy,
   KanbanEditorReloadResult,
   KanbanEditorResolveResult,
@@ -55,7 +56,7 @@ import type { BufferedKanbanEditorRecordPublication, MutableKanbanEditorFieldSta
  * The session behaves like a small actor: callers observe complete immutable snapshots rather than
  * independently changing signals, so submission, stale, and focus state cannot tear during render.
  */
-export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession {
+export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSession<TDraft> {
   readonly #options: KanbanEditorSessionOptions<TCard, TDraft>;
   readonly #cardKey: CardKey;
   readonly #lifetime = new AbortController();
@@ -86,9 +87,11 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     this.#card = initial.kind === 'record' ? initial.card : undefined;
     this.#baseRevision = initial.kind === 'record' ? initial.revision : undefined;
     this.#record =
-      initial.kind === 'record'
+      options.mode === 'create'
         ? Object.freeze({ kind: 'ready' })
-        : Object.freeze({ kind: 'unavailable', code: initial.code });
+        : initial.kind === 'record'
+          ? Object.freeze({ kind: 'ready' })
+          : Object.freeze({ kind: 'unavailable', code: initial.code });
     this.#draft = this.#createDraft(this.#card);
     this.#draftSnapshot = this.#snapshotDraft(this.#draft);
     for (const field of options.adapter.schema.fields) {
@@ -280,78 +283,24 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     return Object.freeze({ kind: 'accepted', settled });
   }
 
+  /** Validates and returns one typed result without invoking application request authority. */
+  async prepare(): Promise<KanbanEditorPrepareResult<TDraft>> {
+    const prepared = await this.#prepareSubmission();
+    if (prepared.kind !== 'ready') return prepared;
+    if (!this.#submissionIsCurrent(prepared.generation, prepared.controller)) {
+      return interruptedKanbanEditorPreparationResult(this.#disposed, this.#record);
+    }
+    this.#submission = Object.freeze({ kind: 'idle' });
+    this.#submissionController = undefined;
+    this.#notify();
+    return prepared.result;
+  }
+
   /** Validates the complete draft and submits one exact lifecycle-free proposal. */
   async submit(): Promise<KanbanEditorSubmitResult> {
-    if (this.#disposed) return Object.freeze({ kind: 'disposed' });
-    if (this.#options.mode === 'view') return Object.freeze({ kind: 'read-only' });
-    if (this.#record.kind === 'stale') return Object.freeze({ kind: 'stale' });
-    if (this.#record.kind === 'deleted') return Object.freeze({ kind: 'deleted' });
-    if (this.#record.kind === 'unavailable') return Object.freeze({ kind: 'unavailable' });
-    if (this.#submission.kind !== 'idle' && this.#submission.kind !== 'rejected') {
-      return Object.freeze({ kind: 'sealed' });
-    }
-    const generation = ++this.#submissionGeneration;
-    const submissionController = new AbortController();
-    this.#submissionController?.abort();
-    this.#submissionController = submissionController;
-    this.#dispatchPublication = undefined;
-    this.#submission = Object.freeze({ kind: 'validating' });
-    this.#notify();
-    for (const field of this.#options.adapter.schema.fields) {
-      const state = this.#fields.get(field.fieldId);
-      if (state === undefined) continue;
-      state.touched = true;
-      const controller = replaceKanbanEditorFieldGeneration(state);
-      await this.#validateField(field, state, controller);
-      if (!this.#submissionIsCurrent(generation, submissionController)) {
-        return this.#interruptedSubmissionResult();
-      }
-    }
-    const firstInvalid = this.#options.adapter.schema.fields.find((field) => {
-      const state = this.#fields.get(field.fieldId);
-      return (state?.presentationDiagnostics.length ?? 0) + (state?.validationDiagnostics.length ?? 0) > 0;
-    });
-    if (firstInvalid !== undefined) {
-      this.#focusedFieldId = firstInvalid.fieldId;
-      this.#submission = Object.freeze({ kind: 'idle' });
-      this.#submissionController = undefined;
-      this.#notify();
-      return Object.freeze({ kind: 'invalid', fieldId: firstInvalid.fieldId });
-    }
-
-    let proposal: KanbanRequestProposal;
-    try {
-      const result = Object.freeze({
-        draft: this.#draft,
-        snapshot: this.#draftSnapshot,
-        changedFieldIds: this.#changedFieldIds,
-        ...(this.#baseRevision === undefined ? {} : { baseRevision: this.#baseRevision }),
-      });
-      const proposed = this.#options.adapter.proposal(result);
-      proposal = snapshotKanbanRequestProposal(
-        proposed.kind === 'card-update' && this.#baseRevision !== undefined
-          ? {
-              ...proposed,
-              editor: {
-                kind: 'full-draft',
-                changedFieldIds: this.#changedFieldIds,
-                baseRevision: this.#baseRevision,
-              },
-            }
-          : proposed,
-      );
-      if (
-        (this.#options.mode === 'edit' &&
-          (proposal.kind !== 'card-update' || !Object.is(proposal.cardKey, this.#cardKey))) ||
-        (this.#options.mode === 'create' && proposal.kind !== 'card-create')
-      ) {
-        throw new KanbanInvalidSemanticValueError();
-      }
-    } catch {
-      return this.#submissionIsCurrent(generation, submissionController)
-        ? this.#failSubmission()
-        : this.#interruptedSubmissionResult();
-    }
+    const prepared = await this.#prepareSubmission();
+    if (prepared.kind !== 'ready') return prepared;
+    const { generation, controller: submissionController, proposal } = prepared;
     if (!this.#submissionIsCurrent(generation, submissionController)) return this.#interruptedSubmissionResult();
 
     let requested: Promise<KanbanRequestResult>;
@@ -380,6 +329,72 @@ export class KanbanEditorSessionActor<TCard, TDraft> implements KanbanEditorSess
     }
     this.#submissionController = undefined;
     return this.#settleSubmissionResult(result);
+  }
+
+  /** Runs the validation and proposal boundary shared by both completion policies. */
+  async #prepareSubmission(): Promise<KanbanEditorPreparation<TDraft>> {
+    if (this.#disposed) return Object.freeze({ kind: 'disposed' });
+    if (this.#options.mode === 'view') return Object.freeze({ kind: 'read-only' });
+    if (this.#record.kind === 'stale') return Object.freeze({ kind: 'stale' });
+    if (this.#record.kind === 'deleted') return Object.freeze({ kind: 'deleted' });
+    if (this.#record.kind === 'unavailable') return Object.freeze({ kind: 'unavailable' });
+    if (this.#submission.kind !== 'idle' && this.#submission.kind !== 'rejected') {
+      return Object.freeze({ kind: 'sealed' });
+    }
+    const generation = ++this.#submissionGeneration;
+    const submissionController = new AbortController();
+    this.#submissionController?.abort();
+    this.#submissionController = submissionController;
+    this.#dispatchPublication = undefined;
+    this.#submission = Object.freeze({ kind: 'validating' });
+    this.#notify();
+    for (const field of this.#options.adapter.schema.fields) {
+      const state = this.#fields.get(field.fieldId);
+      if (state === undefined) continue;
+      state.touched = true;
+      const controller = replaceKanbanEditorFieldGeneration(state);
+      await this.#validateField(field, state, controller);
+      if (!this.#submissionIsCurrent(generation, submissionController)) {
+        return interruptedKanbanEditorPreparationResult(this.#disposed, this.#record);
+      }
+    }
+    const firstInvalid = this.#options.adapter.schema.fields.find((field) => {
+      const state = this.#fields.get(field.fieldId);
+      return (state?.presentationDiagnostics.length ?? 0) + (state?.validationDiagnostics.length ?? 0) > 0;
+    });
+    if (firstInvalid !== undefined) {
+      this.#focusedFieldId = firstInvalid.fieldId;
+      this.#submission = Object.freeze({ kind: 'idle' });
+      this.#submissionController = undefined;
+      this.#notify();
+      return Object.freeze({ kind: 'invalid', fieldId: firstInvalid.fieldId });
+    }
+
+    let prepared;
+    try {
+      prepared = prepareKanbanEditorProposal({
+        adapter: this.#options.adapter,
+        draft: this.#draft,
+        snapshot: this.#draftSnapshot,
+        changedFieldIds: this.#changedFieldIds,
+        ...(this.#baseRevision === undefined ? {} : { baseRevision: this.#baseRevision }),
+        mode: this.#options.mode,
+        cardKey: this.#cardKey,
+      });
+    } catch {
+      if (this.#submissionIsCurrent(generation, submissionController)) this.#failSubmission();
+      return interruptedKanbanEditorPreparationResult(this.#disposed, this.#record);
+    }
+    if (!this.#submissionIsCurrent(generation, submissionController)) {
+      return interruptedKanbanEditorPreparationResult(this.#disposed, this.#record);
+    }
+    return Object.freeze({
+      kind: 'ready',
+      result: Object.freeze({ kind: 'prepared', result: prepared.result }),
+      proposal: prepared.proposal,
+      generation,
+      controller: submissionController,
+    });
   }
 
   /** Explicitly discards a stale draft and reloads the latest authoritative record. */

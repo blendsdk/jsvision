@@ -18,7 +18,7 @@ import type { KanbanEditorSession, KanbanEditorSessionOptions } from './types.js
  */
 export async function createKanbanEditorSession<TCard, TDraft>(
   options: KanbanEditorSessionOptions<TCard, TDraft>,
-): Promise<KanbanEditorSession> {
+): Promise<KanbanEditorSession<TDraft>> {
   const cardKey = createKanbanCardKey(options.cardKey);
   const resolutionController = new AbortController();
   let buffered: BufferedKanbanEditorRecordPublication<TCard> | undefined;

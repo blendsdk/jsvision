@@ -6,6 +6,7 @@ import type {
   KanbanEditorFieldState,
   KanbanEditorKind,
   KanbanEditorOpenResult,
+  KanbanEditorPrepareResult,
   KanbanEditorReloadPolicy,
   KanbanEditorReloadResult,
   KanbanEditorSession,
@@ -33,13 +34,13 @@ interface KanbanEditorClaim {
  * The wrapper avoids adding release callbacks to the generic session contract. It also ensures a
  * stale session can never delete a newer claim for the same application identity.
  */
-class CoordinatedKanbanEditorSession implements KanbanEditorSession {
-  readonly #session: KanbanEditorSession;
+class CoordinatedKanbanEditorSession<TDraft> implements KanbanEditorSession<TDraft> {
+  readonly #session: KanbanEditorSession<TDraft>;
   readonly #release: () => void;
   #disposed = false;
 
   /** Creates one release-aware view over an already resolved editor session. */
-  constructor(session: KanbanEditorSession, release: () => void) {
+  constructor(session: KanbanEditorSession<TDraft>, release: () => void) {
     this.#session = session;
     this.#release = release;
   }
@@ -67,6 +68,11 @@ class CoordinatedKanbanEditorSession implements KanbanEditorSession {
   /** Delegates one failure-contained field mutation. */
   setValue(fieldId: KanbanFieldId, value: unknown): KanbanEditorSetValueResult {
     return this.#session.setValue(fieldId, value);
+  }
+
+  /** Delegates result-only validation without invoking authority. */
+  prepare(): Promise<KanbanEditorPrepareResult<TDraft>> {
+    return this.#session.prepare();
   }
 
   /** Delegates one validation and authority submission. */
@@ -106,7 +112,7 @@ class KanbanEditorCoordinatorActor implements KanbanEditorCoordinator {
   /** Opens one session or converges on the exact existing identity claim. */
   async open<TCard, TDraft>(
     options: KanbanEditorCoordinatorOpenOptions<TCard, TDraft>,
-  ): Promise<KanbanEditorOpenResult> {
+  ): Promise<KanbanEditorOpenResult<TDraft>> {
     if (this.#disposed) return Object.freeze({ kind: 'disposed' });
     if (options.editorKind !== 'standard' && options.editorKind !== 'custom') {
       throw new TypeError('Invalid Kanban editor kind.');

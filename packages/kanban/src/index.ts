@@ -33,6 +33,22 @@ export {
   type KanbanEditorControlBinding,
   type KanbanEditorControlBindingOptions,
 } from './editor/controls.js';
+export {
+  openKanbanCardCreateDialog,
+  openKanbanCardEditDialog,
+  openKanbanCardViewDialog,
+  type KanbanEditorAuthorityCompletion,
+  type KanbanEditorDialogCompletion,
+  type KanbanEditorDialogHandlers,
+  type KanbanEditorDialogHost,
+  type KanbanEditorDialogOptions,
+  type KanbanEditorDialogResult,
+  type KanbanEditorDialogViewport,
+  type KanbanEditorResultOnlyCompletion,
+  type OpenKanbanCardCreateDialogOptions,
+  type OpenKanbanCardEditDialogOptions,
+  type OpenKanbanCardViewDialogOptions,
+} from './editor/dialog.js';
 export { createKanbanEditorControlRegistry } from './editor/registry.js';
 export { createKanbanCardEditorSchema, type KanbanCardEditorSchemaOptions } from './editor/schema.js';
 export { createKanbanEditorSession } from './editor/session.js';
