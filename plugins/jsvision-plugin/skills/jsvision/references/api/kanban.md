@@ -291,6 +291,22 @@ Fixed named-preset defaults, kept separate from caller-adjustable safety ceiling
 const KANBAN_PRESENTATION_PRESET_DEFAULTS: KanbanPresentationPresetDefaultManifest
 ```
 
+## KANBAN_SAVED_VIEW_KIND
+
+The current package-owned saved-view envelope discriminator.
+
+```ts
+const KANBAN_SAVED_VIEW_KIND: "jsvision-kanban-view"
+```
+
+## KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS
+
+The oldest and newest envelope versions understood directly by this package build.
+
+```ts
+const KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS: Readonly<{ readonly minimum: 1; readonly maximum: 1; }>
+```
+
 ## KANBAN_STANDARD_CARD_FIELD_IDS
 
 Stable field identities used by the standard-card presentation adapter.
@@ -1720,6 +1736,24 @@ Public bounded drag configuration shared by board-owned pointer gestures.
 
 ```ts
 type KanbanDragConfiguration = KanbanPointerRouterOptions
+```
+
+## KanbanDurableViewStateV1
+
+Complete version-1 view state that is safe to persist between sessions.
+
+```ts
+interface KanbanDurableViewStateV1 {
+  searchPolicy: KanbanSearchPolicy;   // Whether committed search text may be persisted.
+  search?: string;   // Committed search text, present only when the durable policy permits capture.
+  filters: readonly KanbanSavedFilterV1[];   // Ordered active field filters.
+  quickFilters: readonly KanbanSavedQuickFilterV1[];   // Ordered active named quick filters.
+  sort: readonly KanbanSavedSortV1[];   // Ordered stable sort directives.
+  grouping?: KanbanSavedGroupingV1;   // Optional single semantic grouping.
+  columns: { readonly items: readonly KanbanSavedColumnV1[] };   // Ordered workflow-column personalization.
+  swimlanes: { readonly items: readonly KanbanSavedSwimlaneV1[] };   // Ordered semantic-swimlane personalization.
+  presentation: KanbanSavedPresentationV1;   // Durable card presentation.
+}
 ```
 
 ## KanbanEligibility
@@ -3552,6 +3586,20 @@ interface KanbanRangeAnchor {
 }
 ```
 
+## KanbanReconciledSavedView
+
+Successfully reconciled raw envelope and current controller-ready state.
+
+```ts
+interface KanbanReconciledSavedView {
+  kind: 'reconciled';   // Result discriminator.
+  raw: KanbanSavedViewV1;   // Exact detached raw envelope retained for non-destructive capture.
+  resolved: KanbanViewState;   // Complete current state ready for one atomic controller replacement.
+  provenance: KanbanSavedViewProvenance;   // Facet provenance retained by the controller after apply.
+  diagnostics: readonly KanbanSavedViewDiagnostic[];   // Bounded non-fatal reconciliation diagnostics.
+}
+```
+
 ## KanbanReorderColumnOptions
 
 Options for reordering one workflow column among stable siblings.
@@ -3824,6 +3872,126 @@ interface KanbanSafeRenderOptions {
 }
 ```
 
+## KanbanSavedColumnV1
+
+Durable presentation overrides for one workflow column.
+
+```ts
+interface KanbanSavedColumnV1 {
+  columnId: KanbanColumnId;   // Stable workflow-column identity.
+  visible: boolean;   // Whether the column participates in the visible projection.
+  collapsed: boolean;   // Whether the visible column starts collapsed.
+  width?: number;   // Optional preferred terminal-cell width before current runtime clamping.
+  alignment?: 'start' | 'center';   // Optional header alignment preference.
+}
+```
+
+## KanbanSavedFilterV1
+
+One durable application-owned filter directive.
+
+```ts
+interface KanbanSavedFilterV1 {
+  fieldId: KanbanFieldId;   // Application field evaluated by the active data source.
+  operatorId: KanbanExtensionId;   // Registered source operator selected for the field.
+  value: KanbanSemanticValue;   // Detached JSON-like operand passed to the registered operator.
+}
+```
+
+## KanbanSavedGroupingV1
+
+One durable semantic grouping selection.
+
+```ts
+interface KanbanSavedGroupingV1 {
+  fieldId: KanbanFieldId;   // Registered source field used to derive swimlanes.
+  variantId?: KanbanExtensionId;   // Optional application-namespaced presentation variant.
+}
+```
+
+## KanbanSavedPresentationV1
+
+Durable card-presentation state independent of runtime descriptors and callbacks.
+
+```ts
+interface KanbanSavedPresentationV1 {
+  density: KanbanCardDensity;   // Named package card-density preset.
+  cardFieldIds: readonly KanbanFieldId[];   // Ordered application card fields retained on cards.
+  summaryIds: readonly KanbanFieldId[];   // Ordered application summary sections retained on cards.
+  checklist: 'hidden' | 'progress' | 'preview';   // Bounded checklist presentation mode.
+}
+```
+
+## KanbanSavedQuickFilterV1
+
+One durable named quick-filter selection.
+
+```ts
+interface KanbanSavedQuickFilterV1 {
+  id: KanbanExtensionId;   // Registered application-namespaced quick-filter identity.
+  value?: KanbanSemanticValue;   // Optional detached parameter accepted by the quick filter's registered codec.
+}
+```
+
+## KanbanSavedSortV1
+
+One durable sort directive.
+
+```ts
+interface KanbanSavedSortV1 {
+  fieldId: KanbanFieldId;   // Application field evaluated by the active data source.
+  comparatorId?: KanbanExtensionId;   // Optional registered comparator; omission selects the field's current default.
+  direction: 'ascending' | 'descending';   // Requested value order.
+}
+```
+
+## KanbanSavedSwimlaneV1
+
+Durable presentation overrides for one semantic swimlane.
+
+```ts
+interface KanbanSavedSwimlaneV1 {
+  swimlaneId: KanbanSwimlaneId;   // Stable semantic swimlane identity.
+  visible: boolean;   // Whether the swimlane participates in the visible projection.
+  collapsed: boolean;   // Whether the visible swimlane starts collapsed.
+}
+```
+
+## KanbanSavedViewCaptureMode
+
+Capture behavior for controller state with optional retained raw provenance.
+
+```ts
+type KanbanSavedViewCaptureMode = 'preserve' | 'resave'
+```
+
+## KanbanSavedViewCaptureOptions
+
+Options supplied when capturing one durable controller snapshot.
+
+```ts
+interface KanbanSavedViewCaptureOptions {
+  name?: string;   // Optional user-facing saved-view name.
+  extensions?: Readonly<Record<KanbanExtensionId, KanbanSemanticValue>>;   // Optional inert namespaced application extension data.
+  mode?: KanbanSavedViewCaptureMode;   // `resave` writes only current resolved values; the default preserves safe raw provenance.
+}
+```
+
+## KanbanSavedViewColumnDefinition
+
+Current defaults and width boundaries for one workflow column.
+
+```ts
+interface KanbanSavedViewColumnDefinition {
+  columnId: KanbanColumnId;   // Stable workflow-column identity.
+  visible: boolean;   // Current visibility used when a saved envelope does not mention the column.
+  collapsed: boolean;   // Current collapsed state used when a saved envelope does not mention the column.
+  minimumWidth: number;   // Inclusive minimum runtime width in terminal cells.
+  maximumWidth: number;   // Inclusive maximum runtime width in terminal cells.
+  alignment?: 'start' | 'center';   // Current header alignment used for a newly introduced column.
+}
+```
+
 ## KanbanSavedViewDeleteProposal
 
 Delete one application-owned saved view.
@@ -3832,6 +4000,187 @@ Delete one application-owned saved view.
 interface KanbanSavedViewDeleteProposal {
   kind: 'saved-view-delete';   // Request discriminator.
   viewId: KanbanViewId;   // Stable application-owned view identity.
+}
+```
+
+## KanbanSavedViewDiagnostic
+
+Bounded payload-free diagnostic that never includes saved values or raw exceptions.
+
+```ts
+interface KanbanSavedViewDiagnostic {
+  code: KanbanSavedViewDiagnosticCode;   // Stable machine-readable outcome code.
+  category?: KanbanSavedViewReferenceCategory;   // Reference category when reconciliation reached a missing identity.
+  id?: string;   // Stable missing identity; semantic operands and extension payloads are never included.
+}
+```
+
+## KanbanSavedViewDiagnosticCode
+
+Sanitized diagnostic codes returned by saved-view processing stages.
+
+```ts
+type KanbanSavedViewDiagnosticCode = 'invalid-view' | 'migration-failed' | 'missing-reference-dropped' | 'missing-required-reference'
+```
+
+## KanbanSavedViewFieldDefinition
+
+Current application metadata for one filterable or sortable field.
+
+```ts
+interface KanbanSavedViewFieldDefinition {
+  fieldId: KanbanFieldId;   // Stable application field identity.
+  operators: readonly KanbanExtensionId[];   // Registered operators currently valid for this field.
+  comparators: readonly KanbanExtensionId[];   // Registered comparators currently valid for this field.
+}
+```
+
+## KanbanSavedViewMigration
+
+One deterministic adapter that advances an older envelope by exactly one schema version.
+
+```ts
+interface KanbanSavedViewMigration {
+  fromVersion: number;   // Exact source version accepted by the adapter.
+  toVersion: number;   // Exact destination version produced by the adapter.
+  migrate: (value: KanbanSemanticValue) => unknown;   // Returns a new JSON-like envelope without mutating the detached source value.
+}
+```
+
+## KanbanSavedViewMigrationOptions
+
+Options supplied to one pure migration run.
+
+```ts
+interface KanbanSavedViewMigrationOptions {
+  registry?: KanbanSavedViewMigrationRegistry;   // Application migration adapters supplementing package-owned schema steps.
+}
+```
+
+## KanbanSavedViewMigrationRegistry
+
+Immutable lookup registry for application-provided saved-view migrations.
+
+```ts
+interface KanbanSavedViewMigrationRegistry {
+  migrations: readonly KanbanSavedViewMigration[];   // Detached ordered adapter metadata and callbacks.
+  migrationFrom(version: number): KanbanSavedViewMigration | undefined;   // Finds the single adapter registered for a source version.
+}
+```
+
+## KanbanSavedViewMigrationRegistryOptions
+
+Input accepted by the bounded migration-registry constructor.
+
+```ts
+interface KanbanSavedViewMigrationRegistryOptions {
+  migrations?: readonly KanbanSavedViewMigration[];   // Sequential one-version adapters keyed by their source version.
+}
+```
+
+## KanbanSavedViewMigrationResult
+
+Result of advancing one older envelope to the current saved-view schema.
+
+```ts
+type KanbanSavedViewMigrationResult = | {
+      readonly kind: 'migrated';
+      readonly fromVersion: number;
+      readonly toVersion: 1;
+      readonly value: KanbanSavedViewV1;
+    }
+  | { readonly kind: 'rejected'; readonly diagnostic: KanbanSavedViewDiagnostic }
+  | {
+      readonly kind: 'unsupported-version';
+      readonly version: number;
+      readonly supported: typeof KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS;
+    }
+```
+
+## KanbanSavedViewMissingPolicy
+
+Action taken when a durable reference no longer exists in the current board schema.
+
+```ts
+type KanbanSavedViewMissingPolicy = 'drop' | 'reject'
+```
+
+## KanbanSavedViewParseResult
+
+Result of exact current-envelope parsing.
+
+```ts
+type KanbanSavedViewParseResult = | { readonly kind: 'parsed'; readonly value: KanbanSavedViewV1 }
+  | { readonly kind: 'rejected'; readonly diagnostic: KanbanSavedViewDiagnostic }
+  | {
+      readonly kind: 'unsupported-version';
+      readonly version: number;
+      readonly supported: typeof KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS;
+    }
+```
+
+## KanbanSavedViewProvenance
+
+Raw durable facets retained after reconciliation for lossless ordinary capture.
+
+```ts
+interface KanbanSavedViewProvenance {
+  raw: KanbanSavedViewV1;   // Exact detached envelope that produced the resolved state.
+  resolved: KanbanViewState;   // Exact resolved baseline used to detect later facet edits during capture.
+}
+```
+
+## KanbanSavedViewReconciliationContext
+
+Current registries and structures used to resolve one raw saved view deterministically.
+
+```ts
+interface KanbanSavedViewReconciliationContext {
+  registry: KanbanViewRegistry;   // Immutable named-behavior registry.
+  fields?: readonly KanbanSavedViewFieldDefinition[];   // Current filterable and sortable application fields.
+  columns: readonly KanbanSavedViewColumnDefinition[];   // Current workflow columns in deterministic append order.
+  swimlanes: readonly KanbanSavedViewSwimlaneDefinition[];   // Current semantic swimlanes in deterministic append order.
+  cardFieldIds?: readonly KanbanFieldId[];   // Current card field identities available to presentation.
+  summaryIds?: readonly KanbanFieldId[];   // Current summary identities available to presentation.
+  groupingVariantIds?: readonly KanbanExtensionId[];   // Current grouping presentation variants available to saved views.
+}
+```
+
+## KanbanSavedViewReconciliationResult
+
+Deterministic reconciliation result that cannot partially mutate a live controller.
+
+```ts
+type KanbanSavedViewReconciliationResult = KanbanReconciledSavedView | { readonly kind: 'rejected'; readonly diagnostic: KanbanSavedViewDiagnostic }
+```
+
+## KanbanSavedViewReferenceCategory
+
+Stable reference categories used by reconciliation diagnostics and policy defaults.
+
+```ts
+type KanbanSavedViewReferenceCategory = | 'filter-field'
+  | 'operator'
+  | 'quick-filter'
+  | 'sort-field'
+  | 'comparator'
+  | 'grouping-field'
+  | 'grouping-variant'
+  | 'column'
+  | 'swimlane'
+  | 'card-field'
+  | 'summary'
+  | 'checklist'
+  | 'display-option'
+```
+
+## KanbanSavedViewReferencePolicy
+
+Optional missing-reference policy shared by saved directives.
+
+```ts
+interface KanbanSavedViewReferencePolicy {
+  onMissing?: KanbanSavedViewMissingPolicy;   // Explicit behavior when the directive's primary field or structure identity is unavailable.
 }
 ```
 
@@ -3864,6 +4213,64 @@ interface KanbanSavedViewSaveProposal {
   kind: 'saved-view-save';   // Request discriminator.
   viewId: KanbanViewId;   // Stable application-owned view identity.
   data: KanbanSemanticValue;   // Bounded semantic view definition.
+}
+```
+
+## KanbanSavedViewStore
+
+Disposable proposal helper for application-owned saved-view persistence.
+
+```ts
+interface KanbanSavedViewStore {
+  save(viewId: string, view: KanbanSavedViewV1): Promise<KanbanSavedViewStoreResult>;   // Saves or replaces one view through application authority.
+  rename(viewId: string, label: string): Promise<KanbanSavedViewStoreResult>;   // Renames one application-owned saved view.
+  delete(viewId: string): Promise<KanbanSavedViewStoreResult>;   // Deletes one application-owned saved view.
+  dispose(): void;   // Makes future calls unavailable without owning application persistence.
+}
+```
+
+## KanbanSavedViewStoreOptions
+
+Application authority seam used by the optional saved-view store helper.
+
+```ts
+interface KanbanSavedViewStoreOptions {
+  request: (proposal: KanbanRequestProposal) => KanbanRequestResult | Promise<KanbanRequestResult>;   // Dispatches one validated saved-view proposal through the owning board or application coordinator.
+}
+```
+
+## KanbanSavedViewStoreResult
+
+Store outcome including the package-owned disposed/unavailable state.
+
+```ts
+type KanbanSavedViewStoreResult = | KanbanRequestResult
+  | { readonly kind: 'unavailable'; readonly code: 'saved-view-store-disposed' | 'saved-view-store-request-failed' }
+```
+
+## KanbanSavedViewSwimlaneDefinition
+
+Current defaults for one semantic swimlane.
+
+```ts
+interface KanbanSavedViewSwimlaneDefinition {
+  swimlaneId: KanbanSwimlaneId;   // Stable semantic swimlane identity.
+  visible: boolean;   // Current visibility used when a saved envelope does not mention the swimlane.
+  collapsed: boolean;   // Current collapsed state used when a saved envelope does not mention the swimlane.
+}
+```
+
+## KanbanSavedViewV1
+
+Canonical version-1 application-stored saved-view envelope.
+
+```ts
+interface KanbanSavedViewV1 {
+  kind: typeof KANBAN_SAVED_VIEW_KIND;   // Package discriminator used before version-specific parsing.
+  version: 1;   // Exact envelope schema version.
+  name?: string;   // Optional user-facing view name.
+  view: KanbanDurableViewStateV1;   // Durable semantic and presentation state.
+  extensions?: Readonly<Record<KanbanExtensionId, KanbanSemanticValue>>;   // Inert namespaced application data preserved without package interpretation.
 }
 ```
 
@@ -6173,6 +6580,14 @@ Copy one pending projection into its accepted-but-unpublished lifecycle state.
 acceptKanbanPendingProjection(projection: KanbanPendingProjection): KanbanPendingProjection
 ```
 
+## applyKanbanSavedView
+
+Applies one reconciled artifact through a controller's single atomic replacement boundary.
+
+```ts
+applyKanbanSavedView(controller: KanbanViewController, reconciled: KanbanReconciledSavedView): KanbanViewTransitionResult
+```
+
 ## assertKanbanPlacementCurrent
 
 Rejects any placement derived from a different cursor revision.
@@ -6219,6 +6634,14 @@ Returns the deterministic JSON representation used by semantic fingerprints and 
 
 ```ts
 canonicalizeKanbanSemanticValue(value: unknown): string
+```
+
+## captureKanbanSavedView
+
+Captures one controller's durable semantic view without dispatching an application request.
+
+```ts
+captureKanbanSavedView(controller: KanbanViewController, options: KanbanSavedViewCaptureOptions = {}): KanbanSavedViewV1
 ```
 
 ## clampKanbanScroll
@@ -6371,6 +6794,22 @@ Create a coordinator-owned envelope or adopt one validated legacy extension enve
 
 ```ts
 createKanbanRequestEnvelope(proposal: unknown, lifecycle?: unknown): KanbanRequest
+```
+
+## createKanbanSavedViewMigrationRegistry
+
+Creates an immutable bounded registry of sequential application migration adapters.
+
+```ts
+createKanbanSavedViewMigrationRegistry(options: KanbanSavedViewMigrationRegistryOptions = {}): KanbanSavedViewMigrationRegistry
+```
+
+## createKanbanSavedViewStore
+
+Creates a disposable helper that routes persistence proposals through application authority.
+
+```ts
+createKanbanSavedViewStore(options: KanbanSavedViewStoreOptions): KanbanSavedViewStore
 ```
 
 ## createKanbanScrollAnchor
@@ -6541,6 +6980,22 @@ Compares revisions without ordering, coercion, or stringification.
 kanbanRevisionsEqual(left: KanbanRevision, right: KanbanRevision): boolean
 ```
 
+## migrateKanbanSavedView
+
+Advances an older detached saved-view envelope through each registered version exactly once.
+
+```ts
+migrateKanbanSavedView(input: unknown, options: KanbanSavedViewMigrationOptions = {}): KanbanSavedViewMigrationResult
+```
+
+## parseKanbanSavedView
+
+Parses unknown text or object input into an exact detached current saved-view envelope.
+
+```ts
+parseKanbanSavedView(input: unknown): KanbanSavedViewParseResult
+```
+
 ## projectKanbanMinimumGeometry
 
 Produces one atomic bounded minimum-size state with no partial inspection or action targets.
@@ -6587,6 +7042,14 @@ Clear publication metadata after matching or contradictory authoritative data ar
 
 ```ts
 reconcileKanbanPublication(pending: readonly KanbanPublicationExpectation[], notice: KanbanPublicationNotice): KanbanPublicationReconciliation
+```
+
+## reconcileKanbanSavedView
+
+Resolves one parsed raw envelope against current application registries and structures.
+
+```ts
+reconcileKanbanSavedView(input: KanbanSavedViewV1, context: KanbanSavedViewReconciliationContext): KanbanSavedViewReconciliationResult
 ```
 
 ## renderKanbanCardSafely
@@ -6699,6 +7162,14 @@ Resolves sparse vertical extent with an already validated presentation gap.
 
 ```ts
 resolveKanbanVerticalProjectionExtentWithGap(projection: KanbanVerticalHeightProjection, cardGap: number): KanbanVerticalProjectionExtent
+```
+
+## serializeKanbanSavedView
+
+Serializes one current saved-view envelope into deterministic canonical JSON.
+
+```ts
+serializeKanbanSavedView(value: unknown): string
 ```
 
 ## setKanbanViewportInteractionEvidenceListener

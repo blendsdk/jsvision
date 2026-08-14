@@ -59,6 +59,13 @@ function snapshotMigration(value: unknown): KanbanSavedViewMigration {
  * Creates an immutable bounded registry of sequential application migration adapters.
  *
  * Duplicate source versions and adapters that skip versions are rejected before any callback runs.
+ *
+ * @example
+ * ```ts
+ * const registry = createKanbanSavedViewMigrationRegistry({
+ *   migrations: [{ fromVersion: 0, toVersion: 1, migrate: migrateLegacyView }],
+ * });
+ * ```
  */
 export function createKanbanSavedViewMigrationRegistry(
   options: KanbanSavedViewMigrationRegistryOptions = {},
@@ -101,6 +108,12 @@ function envelopeVersion(value: KanbanSemanticValue): number {
  *
  * Adapter exceptions and invalid adapter output are converted to a payload-free diagnostic. The caller's
  * input and every intermediate generation remain detached from application-owned containers.
+ *
+ * @example
+ * ```ts
+ * const migrated = migrateKanbanSavedView(legacyEnvelope, { registry });
+ * if (migrated.kind === 'migrated') restore(migrated.value);
+ * ```
  */
 export function migrateKanbanSavedView(
   input: unknown,

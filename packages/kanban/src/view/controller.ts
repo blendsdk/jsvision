@@ -116,6 +116,8 @@ function initialState(options: KanbanViewControllerOptions): KanbanViewState {
 function queryFor(state: KanbanViewState, registry: KanbanViewRegistry | undefined): KanbanQuery {
   const visibleColumnIds = state.columns.items.filter((item) => item.visible).map((item) => item.columnId);
   const visibleSwimlaneIds = state.swimlanes.items.filter((item) => item.visible).map((item) => item.swimlaneId);
+  const columnsRestricted = visibleColumnIds.length !== state.columns.items.length;
+  const swimlanesRestricted = visibleSwimlaneIds.length !== state.swimlanes.items.length;
   const quickFilters = state.quickFilters.map((selection) => {
     const registration = registry?.quickFilter(selection.id);
     if (registration === undefined) throw new KanbanViewQueryError('unknown-quick-filter');
@@ -145,8 +147,8 @@ function queryFor(state: KanbanViewState, registry: KanbanViewRegistry | undefin
     filters: Object.freeze([...state.filters, ...quickFilters]),
     ...(state.grouping === undefined ? {} : { groupBy: state.grouping.fieldId }),
     sort: state.sort,
-    ...(state.columns.items.length === 0 ? {} : { visibleColumnIds: Object.freeze(visibleColumnIds) }),
-    ...(state.swimlanes.items.length === 0 ? {} : { visibleSwimlaneIds: Object.freeze(visibleSwimlaneIds) }),
+    ...(columnsRestricted ? { visibleColumnIds: Object.freeze(visibleColumnIds) } : {}),
+    ...(swimlanesRestricted ? { visibleSwimlaneIds: Object.freeze(visibleSwimlaneIds) } : {}),
     viewRevision: state.revision,
   });
 }

@@ -68,7 +68,9 @@ The same envelope plus registries/data/capabilities yields equal resolved state.
 
 Capture/apply remain pure/local. Save, rename, and delete use existing saved-view request variants and
 the board authority. Package dialogs may collect a view name and invoke those proposals; applications
-own IDs, storage, sharing, authorization, lists, and access errors (AR-D08).
+own IDs, storage, sharing, authorization, lists, and access errors (AR-D08). Delete retains the board's
+destructive-confirmation policy; neither the pure store helper nor its request proposal is evidence that
+the user already confirmed the operation.
 
 ## Limits and security
 

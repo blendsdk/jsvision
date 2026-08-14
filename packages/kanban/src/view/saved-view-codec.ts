@@ -332,6 +332,12 @@ function parseInput(input: unknown): KanbanSemanticValue {
  *
  * Rejected input is never echoed in the result, and accessors or executable-like values are never
  * invoked. Newer and older schema versions return a structured compatibility result.
+ *
+ * @example
+ * ```ts
+ * const parsed = parseKanbanSavedView(jsonText);
+ * if (parsed.kind === 'parsed') restore(parsed.value);
+ * ```
  */
 export function parseKanbanSavedView(input: unknown): KanbanSavedViewParseResult {
   try {
@@ -356,6 +362,11 @@ export function parseKanbanSavedView(input: unknown): KanbanSavedViewParseResult
  * Serializes one current saved-view envelope into deterministic canonical JSON.
  *
  * @throws {KanbanInvalidSavedViewError} when the input is not an exact current envelope.
+ *
+ * @example
+ * ```ts
+ * const jsonText = serializeKanbanSavedView(captureKanbanSavedView(controller));
+ * ```
  */
 export function serializeKanbanSavedView(value: unknown): string {
   try {

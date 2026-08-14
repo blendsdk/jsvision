@@ -116,6 +116,46 @@ export {
   type KanbanViewRegistry,
   type KanbanViewRegistryOptions,
 } from './view/registry.js';
+export { parseKanbanSavedView, serializeKanbanSavedView } from './view/saved-view-codec.js';
+export { createKanbanSavedViewMigrationRegistry, migrateKanbanSavedView } from './view/saved-view-migration.js';
+export { reconcileKanbanSavedView } from './view/saved-view-reconcile.js';
+export { applyKanbanSavedView, captureKanbanSavedView, createKanbanSavedViewStore } from './view/saved-view-store.js';
+export {
+  KANBAN_SAVED_VIEW_KIND,
+  KANBAN_SAVED_VIEW_SUPPORTED_VERSIONS,
+  type KanbanDurableViewStateV1,
+  type KanbanReconciledSavedView,
+  type KanbanSavedColumnV1,
+  type KanbanSavedFilterV1,
+  type KanbanSavedGroupingV1,
+  type KanbanSavedPresentationV1,
+  type KanbanSavedQuickFilterV1,
+  type KanbanSavedSortV1,
+  type KanbanSavedSwimlaneV1,
+  type KanbanSavedViewCaptureMode,
+  type KanbanSavedViewCaptureOptions,
+  type KanbanSavedViewColumnDefinition,
+  type KanbanSavedViewDiagnostic,
+  type KanbanSavedViewDiagnosticCode,
+  type KanbanSavedViewFieldDefinition,
+  type KanbanSavedViewMigration,
+  type KanbanSavedViewMigrationOptions,
+  type KanbanSavedViewMigrationRegistry,
+  type KanbanSavedViewMigrationRegistryOptions,
+  type KanbanSavedViewMigrationResult,
+  type KanbanSavedViewMissingPolicy,
+  type KanbanSavedViewParseResult,
+  type KanbanSavedViewProvenance,
+  type KanbanSavedViewReconciliationContext,
+  type KanbanSavedViewReconciliationResult,
+  type KanbanSavedViewReferenceCategory,
+  type KanbanSavedViewReferencePolicy,
+  type KanbanSavedViewStore,
+  type KanbanSavedViewStoreOptions,
+  type KanbanSavedViewStoreResult,
+  type KanbanSavedViewSwimlaneDefinition,
+  type KanbanSavedViewV1,
+} from './view/saved-view-types.js';
 export type { KanbanViewEmptyState, KanbanViewSummary } from './view/summary.js';
 export type {
   KanbanColumnViewItem,

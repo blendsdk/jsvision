@@ -172,6 +172,11 @@ function resavedDurableState(state: KanbanViewState): KanbanDurableViewStateV1 {
  *
  * Ordinary capture preserves safe unavailable IDs and raw width values from the last reconciled view.
  * Use `mode: 'resave'` only when the user explicitly chooses to replace those raw values.
+ *
+ * @example
+ * ```ts
+ * const view = captureKanbanSavedView(controller, { name: 'My work' });
+ * ```
  */
 export function captureKanbanSavedView(
   controller: KanbanViewController,
@@ -211,6 +216,11 @@ export function captureKanbanSavedView(
  * Applies one reconciled artifact through a controller's single atomic replacement boundary.
  *
  * Capture provenance is installed only when the controller accepted or already held the resolved state.
+ *
+ * @example
+ * ```ts
+ * if (reconciled.kind === 'reconciled') applyKanbanSavedView(controller, reconciled);
+ * ```
  */
 export function applyKanbanSavedView(
   controller: KanbanViewController,
@@ -251,6 +261,13 @@ async function requestStore(
  *
  * The helper owns no saved-view records. It only validates save, rename, and delete proposals before
  * forwarding them to the supplied board or application request seam.
+ *
+ * @example
+ * ```ts
+ * const store = createKanbanSavedViewStore({ request: (proposal) => board.request(proposal) });
+ * await store.save('daily', captureKanbanSavedView(controller));
+ * store.dispose();
+ * ```
  */
 export function createKanbanSavedViewStore(options: KanbanSavedViewStoreOptions): KanbanSavedViewStore {
   if (typeof options?.request !== 'function') throw new KanbanInvalidSavedViewError();

@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
-> **Status**: ✅ GATE PASSED — all 28 items resolved
-> **Last Updated**: 2026-08-14 14:49 CEST
+> **Status**: ✅ GATE PASSED — all 29 items resolved
+> **Last Updated**: 2026-08-14 16:38 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -45,6 +45,7 @@
 | AR-D26 | Technical · runtime · complex | What exact candidate boundary preserves the usable viewport when query projection fails after session open? | Stage only a query session publication / stage a complete isolated viewport source through current-geometry refresh / mutate the live viewport and roll back | Stage a complete isolated viewport source through synchronous publication validation and one current-geometry refresh, then install it non-reentrantly, retire the exact old generation, and notify subscribers afterward | ✅ Resolved |
 | AR-D27 | Quality review · runtime · complex | How should the seven accepted Phase 1 Major findings be corrected without widening source authority or the public query protocol? | Parallel quick-filter query directives / executable filter builders / declarative quick-filter mappings plus focused transaction, presentation, ordering, and geometry corrections | Map quick filters to existing source-owned filters declaratively; apply every remaining focused correction and require one fix-scoped re-review | ✅ Resolved |
 | AR-D28 | Security limits · runtime | Which safe/standard/absolute budgets bound saved-view parsing, migration, diagnostics, registries, and extensions? | Independent saved-view budgets / shared semantic budgets plus saved-view-specific count limits | Reuse the shared semantic rows exactly for JSON shape and bytes; add fixed saved-view migration, diagnostic, registered-ID, and extension count rows; untrusted parsing always uses the safe class | ✅ Resolved |
+| AR-D29 | Confirmation policy · runtime · reserved | Does public programmatic saved-view deletion require the existing destructive confirmation, or is the store API itself an already-authorized boundary? | Preserve confirmation and explicitly approve it in the store oracle / formally make store deletion an already-authorized public authority seam | Preserve destructive confirmation; the store oracle supplies an approving board confirmer explicitly | ✅ Resolved |
 
 ## Resolution notes
 
@@ -268,3 +269,22 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** A valid safe-class captured envelope exceeds the shared safe encoded budget, or
   saved-view canonicalization stops using the shared semantic-value validation path.
+
+### AR-D29 — Saved-view delete confirmation policy (runtime)
+
+- **Authority:** User — accepted the recommendation to preserve destructive confirmation.
+- **Conflict:** The existing request contract requires confirmation for every `saved-view-delete`, while
+  the new store oracle supplies no confirmer yet expects the delete to reach the dispatcher.
+- **Recommendation:** Preserve the existing destructive confirmation policy and revise the store oracle
+  to provide an approving confirmer. The store remains a proposal helper, not proof of user consent.
+- **Alternative:** Formally define public `store.delete()` as already authorized and add a visible typed
+  authority seam. This satisfies the new oracle but lets every programmatic store caller bypass the
+  existing confirmation rule.
+- **Rejected mechanism:** An internal WeakSet marker is neither confirmation evidence nor compatible with
+  structural request cloning/queueing, and a retained marked object could be replayed later.
+- **Hardening:** Independent security challenge classified the implicit bypass as Critical and the hidden
+  object-identity capability as Major.
+- **Decision:** The existing confirmation classification remains unchanged. Programmatic store deletion
+  follows the same board authority path, and callers or package dialogs provide explicit confirmation at
+  that boundary.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.

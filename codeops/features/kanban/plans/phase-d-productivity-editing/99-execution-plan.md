@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 15:10 CEST
-> **Progress**: 26/125 tasks (21%)
+> **Last Updated**: 2026-08-14 16:41 CEST
+> **Progress**: 27/125 tasks (22%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -125,7 +125,7 @@ capture/canonicalization/provenance, hostile input, migration/reconciliation, an
 - [x] 2.2.4 Implement bounded sequential package/application migrations — `packages/kanban/src/view/saved-view-migration.ts`, `saved-view-codec.ts` ✅ (completed: 2026-08-14 14:59)
 - [x] 2.2.5 Implement deterministic registry/data/capability reconciliation with exact missing policy and facet provenance — `packages/kanban/src/view/saved-view-reconcile.ts`, `registry.ts` ✅ (completed: 2026-08-14 15:05)
 - [x] 2.2.6 Implement provenance-aware capture/apply/invalidation and authority-backed save/rename/delete helpers — `packages/kanban/src/view/saved-view-store.ts`, `controller.ts` ✅ (completed: 2026-08-14 15:10)
-- [ ] 2.2.7 Export/document saved-view APIs and make focused specifications green — `packages/kanban/src/index.ts`
+- [x] 2.2.7 Export/document saved-view APIs and make focused specifications green — `packages/kanban/src/index.ts` ✅ (completed: 2026-08-14 16:41)
 
 ### Step 2.3: Implementation tests and hardening
 

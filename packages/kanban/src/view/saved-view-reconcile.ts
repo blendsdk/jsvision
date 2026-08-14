@@ -429,6 +429,17 @@ function invalidResult(): KanbanSavedViewReconciliationResult {
  * The function is pure: it retains the raw detached envelope for provenance and returns a separate
  * controller-ready state. Missing optional structures produce bounded diagnostics; missing executable
  * semantics reject the whole result before any live controller can observe it.
+ *
+ * @example
+ * ```ts
+ * const result = reconcileKanbanSavedView(parsed.value, {
+ *   registry,
+ *   fields,
+ *   columns,
+ *   swimlanes,
+ * });
+ * if (result.kind === 'reconciled') applyKanbanSavedView(controller, result);
+ * ```
  */
 export function reconcileKanbanSavedView(
   input: KanbanSavedViewV1,

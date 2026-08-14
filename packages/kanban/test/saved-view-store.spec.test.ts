@@ -31,6 +31,8 @@ describe('Kanban saved-view store ownership specification', () => {
         requests.push(request);
         return { kind: 'accepted', operationId: request.operationId };
       },
+      // Saved-view deletion remains destructive; this fixture models explicit user approval.
+      confirmOperation: () => true,
     });
     const store = createKanbanSavedViewStore({ request: (proposal) => board.request(proposal) });
 
