@@ -1,7 +1,9 @@
 import { createKanbanObservation } from '../contract/observation.js';
+import type { KanbanObservation } from '../contract/observation.js';
 import { KanbanInvalidLimitError } from '../contract/limits.js';
 import { KanbanInvalidSemanticValueError } from '../contract/error.js';
 import { createKanbanBoardId } from '../contract/identity.js';
+import { snapshotKanbanDataProperties, validateKanbanDataKeys } from '../contract/data-snapshot.js';
 import { snapshotKanbanEventInput } from './validation.js';
 import type {
   KanbanEvent,
@@ -23,27 +25,41 @@ const PUBLISHED: KanbanEventPublishOutcome = Object.freeze({ kind: 'published' }
 const QUEUE_OVERFLOW: KanbanEventPublishOutcome = Object.freeze({ kind: 'event-queue-overflow' });
 /** Shared immutable disposed-hub outcome. */
 const DISPOSED: KanbanEventPublishOutcome = Object.freeze({ kind: 'disposed' });
+/** Exact construction members accepted at the event boundary. */
+const HUB_OPTION_KEYS = new Set(['boardId', 'now', 'capacity', 'retained', 'observe']);
+/** Exact native Promise method used to consume asynchronous callback rejection. */
+const NATIVE_PROMISE_THEN = Promise.prototype.then;
 
 /** Validates one positive bounded event queue capacity. */
-function queueCapacity(value: number | undefined): number {
+function queueCapacity(value: unknown): number {
   const capacity = value ?? DEFAULT_EVENT_CAPACITY;
-  if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > MAX_EVENT_CAPACITY) {
+  if (
+    typeof capacity !== 'number' ||
+    !Number.isSafeInteger(capacity) ||
+    capacity < 1 ||
+    capacity > MAX_EVENT_CAPACITY
+  ) {
     throw new KanbanInvalidLimitError();
   }
   return capacity;
 }
 
 /** Validates one non-negative bounded retained-event capacity. */
-function retainedCapacity(value: number | undefined): number {
+function retainedCapacity(value: unknown): number {
   const retained = value ?? 0;
-  if (!Number.isSafeInteger(retained) || retained < 0 || retained > MAX_EVENT_CAPACITY) {
+  if (
+    typeof retained !== 'number' ||
+    !Number.isSafeInteger(retained) ||
+    retained < 0 ||
+    retained > MAX_EVENT_CAPACITY
+  ) {
     throw new KanbanInvalidLimitError();
   }
   return retained;
 }
 
 /** Reads an injected clock without exposing callback failures or invalid numbers. */
-function readClock(now: () => number): number {
+function readClock(now: () => unknown): number {
   try {
     const timestamp = now();
     return typeof timestamp === 'number' && Number.isFinite(timestamp) ? timestamp : 0;
@@ -52,13 +68,43 @@ function readClock(now: () => number): number {
   }
 }
 
-/** Calls one diagnostic sink without allowing diagnostics to alter event delivery. */
-function observe(options: KanbanEventHubOptions, code: string): void {
-  if (options.observe === undefined) return;
+/** Narrows the optional clock callback without invoking it. */
+function isClock(value: unknown): value is () => unknown {
+  return typeof value === 'function';
+}
+
+/** Narrows the optional observation sink without invoking it. */
+function isObservationSink(value: unknown): value is (observation: KanbanObservation) => unknown {
+  return typeof value === 'function';
+}
+
+/** Return true only for an unmodified same-realm native Promise. */
+function isExactNativePromise(value: unknown): value is Promise<unknown> {
   try {
-    options.observe(createKanbanObservation({ code, scope: 'board' }));
+    return (
+      value instanceof Promise &&
+      Object.getPrototypeOf(value) === Promise.prototype &&
+      Reflect.ownKeys(value).length === 0
+    );
   } catch {
-    // Diagnostics are deliberately one-way and never control event behavior.
+    return false;
+  }
+}
+
+/** Invokes one application callback and consumes exact-native asynchronous rejection. */
+function invokeIsolated<TValue>(callback: (value: TValue) => unknown, value: TValue, onFailure?: () => void): void {
+  let result: unknown;
+  try {
+    result = Reflect.apply(callback, undefined, [value]);
+  } catch {
+    onFailure?.();
+    return;
+  }
+  if (!isExactNativePromise(result)) return;
+  try {
+    NATIVE_PROMISE_THEN.call(result, undefined, () => onFailure?.());
+  } catch {
+    // Callback failure remains isolated even if Promise internals are unavailable.
   }
 }
 
@@ -77,23 +123,39 @@ function observe(options: KanbanEventHubOptions, code: string): void {
  * ```
  */
 export function createKanbanEventHub(options: KanbanEventHubOptions): KanbanEventHub {
-  const boardId = createKanbanBoardId(options.boardId);
-  const capacity = queueCapacity(options.capacity);
-  const retainedLimit = retainedCapacity(options.retained);
-  const now = options.now ?? Date.now;
+  const properties = snapshotKanbanDataProperties(options, HUB_OPTION_KEYS.size);
+  validateKanbanDataKeys(properties, HUB_OPTION_KEYS);
+  if (typeof properties.boardId !== 'string') throw new KanbanInvalidSemanticValueError();
+  if (properties.now !== undefined && !isClock(properties.now)) throw new KanbanInvalidSemanticValueError();
+  if (properties.observe !== undefined && !isObservationSink(properties.observe)) {
+    throw new KanbanInvalidSemanticValueError();
+  }
+  const boardId = createKanbanBoardId(properties.boardId);
+  const capacity = queueCapacity(properties.capacity);
+  const retainedLimit = retainedCapacity(properties.retained);
+  const now = isClock(properties.now) ? properties.now : Date.now;
+  const observer = isObservationSink(properties.observe) ? properties.observe : undefined;
   const queue: ReturnType<typeof snapshotKanbanEventInput>[] = [];
   const retained: KanbanEvent[] = [];
   const subscribers = new Set<KanbanEventSubscriber>();
   let sequence = 0;
   let draining = false;
   let overflowObserved = false;
+  let nestedAdmissions = 0;
   let isDisposed = false;
+
+  /** Emits one redacted diagnostic without exposing callback settlement. */
+  const observe = (code: string): void => {
+    if (observer === undefined) return;
+    invokeIsolated(observer, createKanbanObservation({ code, scope: 'board' }));
+  };
 
   /** Delivers queued events until empty or disposal interrupts the drain. */
   const drain = (): void => {
     if (draining || isDisposed) return;
     draining = true;
     overflowObserved = false;
+    nestedAdmissions = 0;
     try {
       while (!isDisposed && queue.length > 0) {
         const input = queue.shift();
@@ -102,7 +164,7 @@ export function createKanbanEventHub(options: KanbanEventHubOptions): KanbanEven
           queue.length = 0;
           if (!overflowObserved) {
             overflowObserved = true;
-            observe(options, 'event-sequence-exhausted');
+            observe('event-sequence-exhausted');
           }
           break;
         }
@@ -119,30 +181,29 @@ export function createKanbanEventHub(options: KanbanEventHubOptions): KanbanEven
         }
         for (const subscriber of [...subscribers]) {
           if (isDisposed) break;
-          try {
-            subscriber(event);
-          } catch {
-            observe(options, 'event-subscriber-failed');
-          }
+          invokeIsolated(subscriber, event, () => observe('event-subscriber-failed'));
         }
       }
     } finally {
       draining = false;
       overflowObserved = false;
+      nestedAdmissions = 0;
     }
   };
 
   const hub: KanbanEventHub = {
+    boardId,
     publish: (value) => {
       if (isDisposed) return DISPOSED;
       const input = snapshotKanbanEventInput(value);
-      if (queue.length >= capacity) {
+      if (queue.length >= capacity || (draining && nestedAdmissions >= capacity)) {
         if (!overflowObserved) {
           overflowObserved = true;
-          observe(options, 'event-queue-overflow');
+          observe('event-queue-overflow');
         }
         return QUEUE_OVERFLOW;
       }
+      if (draining) nestedAdmissions += 1;
       queue.push(input);
       drain();
       return PUBLISHED;

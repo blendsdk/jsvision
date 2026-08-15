@@ -156,6 +156,8 @@ export interface KanbanEventHubOptions {
 
 /** Bounded board-scoped public event stream. */
 export interface KanbanEventHub {
+  /** Exact board instance that owns every event published by this hub. */
+  readonly boardId: KanbanBoardId;
   /** Validates and publishes or queues one detached event input. */
   readonly publish: (input: KanbanEventInput) => KanbanEventPublishOutcome;
   /** Subscribes one isolated event listener. */

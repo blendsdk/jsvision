@@ -387,6 +387,7 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
   ): { readonly invocation: KanbanActionInvocation; readonly definition: KanbanActionDefinition } | undefined => {
     try {
       const invocation = snapshotInvocation(input);
+      if (options.events !== undefined && invocation.boardId !== options.events.boardId) return undefined;
       const definition = options.registry.action(invocation.actionId);
       return definition === undefined || !targetApplies(definition, invocation)
         ? undefined

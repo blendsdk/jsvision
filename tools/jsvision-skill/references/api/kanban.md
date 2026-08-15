@@ -3774,6 +3774,7 @@ Bounded board-scoped public event stream.
 
 ```ts
 interface KanbanEventHub {
+  boardId: KanbanBoardId;   // Exact board instance that owns every event published by this hub.
   publish: (input: KanbanEventInput) => KanbanEventPublishOutcome;   // Validates and publishes or queues one detached event input.
   subscribe: (subscriber: KanbanEventSubscriber) => () => void;   // Subscribes one isolated event listener.
   snapshot: () => readonly KanbanEvent[];   // Returns the bounded recent-event snapshot, if retention is enabled.

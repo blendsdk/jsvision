@@ -52,4 +52,35 @@ describe('Kanban event hub implementation', () => {
     expect(() => createKanbanEventHub({ boardId: 'board-main', capacity: 4_097 })).toThrow();
     expect(() => createKanbanEventHub({ boardId: 'board-main', retained: 4_097 })).toThrow();
   });
+
+  it('bounds one-for-one reentrant replacement and consumes asynchronous callback failures', async () => {
+    const observe = vi.fn(async () => {
+      throw new Error('private observation failure');
+    });
+    const hub = createKanbanEventHub({ boardId: 'board-main', capacity: 3, observe });
+    const delivered: number[] = [];
+    hub.subscribe(async () => {
+      throw new Error('private subscriber failure');
+    });
+    hub.subscribe((event) => {
+      delivered.push(event.sequence);
+      hub.publish({ kind: 'selection', count: event.sequence });
+    });
+
+    expect(hub.publish({ kind: 'selection', count: 0 })).toEqual({ kind: 'published' });
+    await Promise.resolve();
+
+    expect(delivered).toEqual([1, 2, 3, 4]);
+    expect(observe).toHaveBeenCalledTimes(5);
+  });
+
+  it('rejects accessor-based event options before retaining application callbacks', () => {
+    const options = Object.defineProperty({ boardId: 'board-main' }, 'observe', {
+      enumerable: true,
+      get: () => {
+        throw new Error('private observer getter');
+      },
+    });
+    expect(() => createKanbanEventHub(options)).toThrow();
+  });
 });

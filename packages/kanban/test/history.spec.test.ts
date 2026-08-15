@@ -101,4 +101,37 @@ describe('Kanban application-owned history', () => {
     binding.dispose();
     authority.dispose();
   });
+
+  it('does not dispatch a pending proposal after history availability changes', async () => {
+    let settle: ((proposal: { readonly kind: 'card-archive'; readonly cardKey: number }) => void) | undefined;
+    let availability: KanbanHistoryAvailability = {
+      revision: 'history-r2',
+      undo: { labelMessageId: 'acme.history.undo-last' },
+    };
+    const listeners = new Set<() => void>();
+    const provider = {
+      availability: () => availability,
+      subscribe(listener: () => void) {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      build: () =>
+        new Promise<{ readonly kind: 'card-archive'; readonly cardKey: number }>((resolve) => {
+          settle = resolve;
+        }),
+    };
+    const dispatcher = vi.fn(() => ({ kind: 'accepted' as const }));
+    const authority = new KanbanBoardAuthority(dispatcher, undefined);
+    const binding = createKanbanHistoryBinding({ authority, provider });
+    const pending = binding.invoke('undo');
+
+    availability = { revision: 'history-r3' };
+    for (const listener of [...listeners]) listener();
+    settle?.({ kind: 'card-archive', cardKey: 41 });
+
+    await expect(pending).resolves.toMatchObject({ kind: 'rejected', code: 'history-unavailable' });
+    expect(dispatcher).not.toHaveBeenCalled();
+    binding.dispose();
+    authority.dispose();
+  });
 });

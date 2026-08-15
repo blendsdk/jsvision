@@ -134,6 +134,9 @@ export function createKanbanHistoryBinding(options: KanbanHistoryBindingOptions)
     if (isDisposed) return;
     try {
       const next = snapshotAvailability(options.provider.availability());
+      if (next.revision !== snapshot.revision) {
+        for (const controller of controllers) controller.abort();
+      }
       snapshot = next;
       for (const subscriber of [...subscribers]) {
         try {
@@ -170,7 +173,14 @@ export function createKanbanHistoryBinding(options: KanbanHistoryBindingOptions)
         const settled = isExactNativePromise(candidate)
           ? await settleBuild(candidate, controller.signal)
           : Object.freeze({ kind: 'value' as const, value: candidate });
-        if (isDisposed || controller.signal.aborted) return rejected('history-unavailable');
+        if (
+          isDisposed ||
+          controller.signal.aborted ||
+          snapshot.revision !== admitted.revision ||
+          !available(snapshot, direction)
+        ) {
+          return rejected('history-unavailable');
+        }
         if (settled.kind === 'invalid') return rejected('history-failed');
         return await options.authority.request(settled.value);
       } catch {

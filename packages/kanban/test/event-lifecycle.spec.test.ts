@@ -121,4 +121,24 @@ describe('Kanban action event lifecycle', () => {
       { kind: 'action', state: 'disabled', actionId: 'acme.denied', code: 'application-denied' },
     ]);
   });
+
+  it('rejects an invocation whose board identity does not match the event stream', () => {
+    const handler = vi.fn(() => ({ kind: 'handled' as const }));
+    const registry = createKanbanActionRegistry({
+      executePackageAction: () => ({ kind: 'handled' }),
+      extensions: [extension('acme.cross-board', handler)],
+    });
+    const hub = createKanbanEventHub({ boardId: 'board-other' });
+    const events: KanbanEvent[] = [];
+    hub.subscribe((event) => events.push(event));
+    const router = createKanbanActionRouter({ registry, events: hub });
+
+    expect(router.invoke(invocation('acme.cross-board'))).toEqual({
+      kind: 'unavailable',
+      code: 'action-unavailable',
+    });
+    expect(router.affordance(invocation('acme.cross-board'))).toEqual({ visible: false, enabled: false });
+    expect(handler).not.toHaveBeenCalled();
+    expect(events).toEqual([]);
+  });
 });
