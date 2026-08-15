@@ -204,6 +204,47 @@ test('should keep card moves local and restore source data on refresh', async ()
   expect(showcase.localCards().find(({ key }) => key === 'item-1')?.columnId).toBe('todo');
 });
 
+// View, editor, and saved-view play must remain local while proving the integrated Phase D surface.
+test('should filter, save a view, and edit a card locally without mutating the imported project', async () => {
+  const showcase = createGitHubProjectKanbanApp(CAPS, {
+    viewport: { width: 80, height: 24 },
+    loader: () => Promise.resolve(projectSnapshot()),
+  });
+  disposeApps.push(() => showcase.app.loop.dispose());
+  await showcase.load(SOURCE_URL);
+  await settleBoard();
+
+  const applyView: unknown = Reflect.get(showcase, 'applyLocalView');
+  const saveView: unknown = Reflect.get(showcase, 'saveLocalView');
+  const savedViews: unknown = Reflect.get(showcase, 'localSavedViews');
+  const editCard: unknown = Reflect.get(showcase, 'editLocalCard');
+  expect([applyView, saveView, savedViews, editCard].every((method) => typeof method === 'function')).toBe(true);
+  if (
+    typeof applyView !== 'function' ||
+    typeof saveView !== 'function' ||
+    typeof savedViews !== 'function' ||
+    typeof editCard !== 'function'
+  ) {
+    throw new Error('Missing local-only GitHub showcase productivity controls.');
+  }
+
+  expect(
+    Reflect.apply(applyView, showcase, [
+      { kind: 'set-filters', filters: [{ fieldId: 'status', operatorId: 'github.equals', value: 'Todo' }] },
+    ]),
+  ).toMatchObject({ kind: expect.stringMatching(/changed|pending/u) });
+  Reflect.apply(saveView, showcase, ['Todo focus']);
+  expect(Reflect.apply(savedViews, showcase, [])).toMatchObject([{ name: 'Todo focus' }]);
+  expect(Reflect.apply(editCard, showcase, ['item-1', { title: 'Locally polished title' }])).toBe(true);
+  await settleBoard();
+  expect(showcase.localCards().find(({ key }) => key === 'item-1')?.title).toBe('Locally polished title');
+
+  await showcase.load(SOURCE_URL);
+  await settleBoard();
+  expect(showcase.localCards().find(({ key }) => key === 'item-1')?.title).toBe('Show labels and repository context');
+  expect(Reflect.apply(savedViews, showcase, [])).toMatchObject([{ name: 'Todo focus' }]);
+});
+
 test('should keep the deterministic 84-card showcase responsive through resize and theme changes', async () => {
   const showcase = createGitHubProjectKanbanApp(CAPS, {
     viewport: { width: 80, height: 24 },
