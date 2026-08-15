@@ -113,7 +113,7 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     }
     createRoot((dispose) => {
       disposeStory = dispose;
-      activeBuild = story.build({ caps });
+      activeBuild = story.build({ caps, app });
     });
     activeIndex = index;
     focusedStory.set(index);
@@ -126,6 +126,9 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     );
     storyHost.add(grow(activeBuild!.view));
     storyHost.invalidateLayout();
+    // Programmatic story selection is a public showcase seam. Flush the new responsive graph before
+    // returning so callers never observe the detached geometry of the story that was just replaced.
+    app.loop.renderRoot.flush();
     activeBuild!.phaseC?.bind({
       dispatch: (event) => app.loop.dispatch(event),
       origin: () => app.loop.renderRoot.originOf(activeBuild!.board.viewport),

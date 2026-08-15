@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-15 03:26 CEST
-> **Progress**: 75/125 tasks (60%)
+> **Last Updated**: 2026-08-15 03:38 CEST
+> **Progress**: 76/125 tasks (61%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -389,7 +389,7 @@ other 8 focused GitHub showcase behaviors remain green.
 - [x] 8.2.3 Synchronize all nine non-English locale modules with reviewed English fallback and accelerator manifests — `packages/kanban/src/locales/*.ts` ✅ (completed: 2026-08-15 03:07)
 - [x] 8.2.4 Add only required semantic theme roles/fallbacks and non-color/ASCII cues — `packages/kanban/src/card/theme.ts`, `theme-resolver.ts` ✅ (completed: 2026-08-15 03:13)
 - [x] 8.2.5 Add public testing fixtures for view/editor/config/action/event deterministic workflows — `packages/kanban/src/testing/phase-d-harness.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-15 03:26)
-- [ ] 8.2.6 Add four permanent Phase D stories and responsive shell integration — `packages/examples/kanban-showcase/stories/{productivity,editing,configuration,actions-history}.story.ts`
+- [x] 8.2.6 Add four permanent Phase D stories and responsive shell integration — `packages/examples/kanban-showcase/stories/{productivity,editing,configuration,actions-history}.story.ts` ✅ (completed: 2026-08-15 03:38)
 - [ ] 8.2.7 Upgrade GitHub showcase with local-only views/edit play, theme/status color, and unchanged drag authority — `packages/examples/github-project-kanban/shell.ts`, `local-board.ts`
 - [ ] 8.2.8 Build Kanban, then run focused integration/Examples specifications and make them green
 

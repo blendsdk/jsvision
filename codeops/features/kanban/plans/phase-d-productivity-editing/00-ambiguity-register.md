@@ -734,3 +734,23 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** A source consumer requires the initial fingerprint as public evidence or repeated reactive
   equivalent arrays no longer preserve their existing revision.
+
+### AR-D45 — Permanent story authority and synchronous mount evidence (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Example-only composition and public showcase observation inside the approved Phase D story scope.
+- **Objective:** Demonstrate complete workflows truthfully while keeping the kitchen sink deterministic, responsive,
+  and independent of remote persistence.
+- **Evidence:** Editor and configuration APIs already support explicit result-only completion, action/event APIs are
+  board-scoped, and programmatic story selection returned before the replacement story received layout geometry.
+- **Decision:** Keep example records application-owned and local: apply detached editor results to the story signal,
+  leave structural dialog output as a proposal, retain only bounded payload-free action events, and flush the newly
+  mounted responsive story graph before the public selection seam returns. Install the real board action surface on
+  every shared story fixture so keyboard, pointer, and programmatic routes use the same composition.
+- **Rejected alternatives:** Simulated persistence would overstate the demo's authority. Returning unlaid-out story
+  state makes headless consumers observe zero visible cards. Separate fake controls would not exercise public APIs.
+- **Confidence:** High — focused 80×24 specifications exercise all four mounted stories and their live action surface.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The showcase gains real persistence, story selection becomes asynchronous, or application hosts
+  can mount stories without a desktop.

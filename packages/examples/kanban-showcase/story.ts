@@ -1,5 +1,5 @@
 import type { CapabilityProfile, InputEvent } from '@jsvision/core';
-import type { Group, Point } from '@jsvision/ui';
+import type { Application, Group, Point } from '@jsvision/ui';
 import type { KanbanBoard } from '@jsvision/kanban';
 
 import type { ShowcaseCard } from './work-items.js';
@@ -8,6 +8,8 @@ import type { ShowcaseCard } from './work-items.js';
 export interface KanbanStoryContext {
   /** Resolved terminal capabilities used by the application render root. */
   readonly caps: CapabilityProfile;
+  /** Owning application used by stories that open package-provided modal workflows. */
+  readonly app?: Application;
 }
 
 /** Modern interaction scenarios exercised by the permanent kitchen-sink verification driver. */

@@ -1,8 +1,18 @@
 import { onCleanup, signal } from '@jsvision/ui';
-import { KanbanBoard, createEagerKanbanDataSource, createStandardKanbanCardAdapter } from '@jsvision/kanban';
+import {
+  KanbanBoard,
+  createEagerKanbanDataSource,
+  createKanbanBoardId,
+  createStandardKanbanCardAdapter,
+} from '@jsvision/kanban';
 import type {
+  KanbanBoardActionOptions,
+  KanbanBoardEditorBinding,
+  KanbanBoardViewOptions,
   KanbanCardDensity,
   KanbanColumnHeaderAlignment,
+  KanbanEventHub,
+  KanbanFilterField,
   KanbanInteractionIntent,
   KanbanPresentationInput,
   KanbanQuery,
@@ -17,6 +27,18 @@ import type {
 export interface ShowcaseCardData {
   /** Team used by the swimlane demonstration. */
   readonly team?: string;
+  /** Optional owner used by filtering and editing demonstrations. */
+  readonly owner?: string;
+}
+
+/** Mutable application services exposed only while assembling one showcase board. */
+export interface ShowcaseBoardServices {
+  /** Reads the current immutable application-owned card publication. */
+  readonly cards: () => readonly ShowcaseCard[];
+  /** Replaces one card and publishes a new immutable application array. */
+  readonly replaceCard: (card: ShowcaseCard) => boolean;
+  /** Publishes bounded visible feedback below the board. */
+  readonly setActivity: (message: string) => void;
 }
 
 /** Card shape owned by the showcase application rather than by the Kanban package. */
@@ -36,6 +58,16 @@ export interface ShowcaseBoardOptions {
   readonly headerAlignment?: KanbanColumnHeaderAlignment;
   /** Text displayed before an interaction intent is emitted. */
   readonly initialActivity: string;
+  /** Optional controller and package-owned view chrome. */
+  readonly view?: KanbanBoardViewOptions;
+  /** Optional board-scoped event stream. */
+  readonly events?: KanbanEventHub;
+  /** Optional action customization; a complete default action surface is always installed. */
+  readonly actions?: KanbanBoardActionOptions;
+  /** Optional registered eager-source filters used by productivity stories. */
+  readonly filterFields?: readonly KanbanFilterField<ShowcaseCard>[];
+  /** Optional editor factory with access to application-owned records and feedback. */
+  readonly editor?: (services: ShowcaseBoardServices) => KanbanBoardEditorBinding;
 }
 
 /** Shared ordered workflow columns used by every initial story. */
@@ -102,6 +134,7 @@ export const SHOWCASE_CARD_ADAPTER = createStandardKanbanCardAdapter<string, Sho
 });
 
 const BASE_QUERY: KanbanQuery = Object.freeze({ filters: [], sort: [] });
+let nextShowcaseBoardId = 1;
 
 /** Compares card identities without coercing numbers and strings into the same application key. */
 function sameCardKey(left: string | number, right: string | number): boolean {
@@ -190,10 +223,26 @@ function describeIntent(intent: KanbanInteractionIntent): string {
 export function createShowcaseBoard(options: ShowcaseBoardOptions): {
   readonly board: KanbanBoard<ShowcaseCard>;
   readonly activity: () => string;
+  readonly setActivity: (message: string) => void;
+  readonly cards: () => readonly ShowcaseCard[];
+  readonly replaceCard: (card: ShowcaseCard) => boolean;
 } {
   const activity = signal(options.initialActivity);
   const grouped = options.swimlanes !== undefined;
   const cards = signal(Object.freeze([...options.cards]));
+  const replaceCard = (replacement: ShowcaseCard): boolean => {
+    const index = cards().findIndex((card) => sameCardKey(card.key, replacement.key));
+    if (index < 0) return false;
+    const next = [...cards()];
+    next[index] = Object.freeze({ ...replacement });
+    cards.set(Object.freeze(next));
+    return true;
+  };
+  const services: ShowcaseBoardServices = Object.freeze({
+    cards,
+    replaceCard,
+    setActivity: (message: string) => activity.set(message),
+  });
   const source = createEagerKanbanDataSource(cards, {
     columns: () => SHOWCASE_COLUMNS,
     ...(grouped
@@ -211,6 +260,7 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     keyOf: (card) => card.key,
     columnOf: (card) => card.columnId,
     search: (card, term) => card.title.toLocaleLowerCase().includes(term.toLocaleLowerCase()),
+    ...(options.filterFields === undefined ? {} : { filterFields: options.filterFields }),
   });
   const structure: KanbanStructurePolicy<ShowcaseCard> = {
     revision: `${grouped ? `grouped-${String(options.swimlanes)}` : 'columns'}-${options.headerAlignment ?? 'start'}`,
@@ -258,6 +308,16 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     card: SHOWCASE_CARD_ADAPTER,
     structure: () => structure,
     dispatcher,
+    actions:
+      options.actions ??
+      Object.freeze({
+        boardId: createKanbanBoardId(`showcase-${String(nextShowcaseBoardId++)}`),
+        host: Object.freeze({ kind: 'terminal' as const, platform: 'linux' }),
+        executePackageAction: () => Object.freeze({ kind: 'handled' as const }),
+      }),
+    ...(options.events === undefined ? {} : { events: options.events }),
+    ...(options.view === undefined ? {} : { view: options.view }),
+    ...(options.editor === undefined ? {} : { editor: options.editor(services) }),
     ...(options.density === undefined ? {} : { density: () => options.density! }),
     ...(options.presentation === undefined ? {} : { presentation: () => options.presentation! }),
     onInteraction: (intent) => activity.set(describeIntent(intent)),
@@ -269,5 +329,5 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     queueMicrotask(() => board.reconcilePublication({ kind: 'confirmed', operationId: snapshot.operationId }));
   });
   onCleanup(unsubscribeOperations);
-  return { board, activity };
+  return { board, activity, setActivity: services.setActivity, cards, replaceCard };
 }
