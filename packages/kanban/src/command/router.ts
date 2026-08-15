@@ -11,6 +11,7 @@ import { snapshotKanbanRevision } from '../contract/revision.js';
 import { evaluateKanbanActionCapability } from './capability.js';
 import { publishKanbanActionIntent, publishKanbanActionOutcome } from '../event/publisher.js';
 import type { KanbanEventHub } from '../event/types.js';
+import type { KanbanHistoryBinding, KanbanHistoryDirection } from '../event/types.js';
 import type {
   KanbanActionAffordance,
   KanbanActionCapability,
@@ -36,6 +37,8 @@ export interface KanbanActionRouterOptions {
   readonly maxDepth?: number;
   /** Optional board-scoped public action event stream. */
   readonly events?: KanbanEventHub;
+  /** Optional application-owned history used by package undo/redo actions. */
+  readonly history?: KanbanHistoryBinding;
 }
 
 /** Exact native Promise method captured before application code can replace an instance method. */
@@ -272,6 +275,25 @@ function targetApplies(definition: KanbanActionDefinition, invocation: KanbanAct
   return definition.target === 'any' || definition.target === invocation.target.kind;
 }
 
+/** Resolves package history actions without treating application extensions as history. */
+function historyDirection(actionId: string): KanbanHistoryDirection | undefined {
+  if (actionId === 'kanban.history.undo') return 'undo';
+  if (actionId === 'kanban.history.redo') return 'redo';
+  return undefined;
+}
+
+/** Returns current discoverable history denial before capability and execution. */
+function historyDenied(
+  history: KanbanHistoryBinding | undefined,
+  actionId: string,
+): KanbanActionTerminalOutcome | undefined {
+  const direction = historyDirection(actionId);
+  if (direction === undefined) return undefined;
+  const availability = history?.snapshot();
+  const enabled = direction === 'undo' ? availability?.undo !== undefined : availability?.redo !== undefined;
+  return enabled ? undefined : Object.freeze({ kind: 'disabled', code: 'history-unavailable' });
+}
+
 /** Returns true only for a direct native Promise with its original `then` method. */
 function isExactNativePromise(value: unknown): value is Promise<KanbanActionTerminalOutcome> {
   try {
@@ -382,6 +404,13 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       if (depth >= maxDepth) return ACTION_DEPTH_EXCEEDED;
       if (activeActions.has(route.definition.id)) return ACTION_REENTRANT;
       if (options.events !== undefined) publishKanbanActionIntent(options.events, route.invocation);
+      const unavailableHistory = historyDenied(options.history, route.definition.id);
+      if (unavailableHistory !== undefined) {
+        if (options.events !== undefined) {
+          publishKanbanActionOutcome(options.events, route.invocation, unavailableHistory);
+        }
+        return unavailableHistory;
+      }
       const denied = deniedOutcome(eligibility(options.capability, route.definition, route.invocation));
       if (denied !== undefined) {
         if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, denied);
@@ -392,7 +421,17 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       depth += 1;
       const admittedGeneration = generation;
       try {
-        const result = route.definition.handler(route.invocation);
+        const direction = historyDirection(route.definition.id);
+        const result =
+          direction === undefined || options.history === undefined
+            ? route.definition.handler(route.invocation)
+            : options.history
+                .invoke(direction)
+                .then((historyResult) =>
+                  historyResult.kind === 'accepted'
+                    ? Object.freeze({ kind: 'handled' as const })
+                    : Object.freeze({ kind: 'disabled' as const, code: historyResult.code }),
+                );
         if (!isExactNativePromise(result)) {
           const outcome = snapshotTerminalOutcome(result);
           if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, outcome);
@@ -433,6 +472,9 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       if (isDisposed) return Object.freeze({ visible: false, enabled: false });
       const route = resolve(input);
       if (route === undefined) return Object.freeze({ visible: false, enabled: false });
+      if (historyDenied(options.history, route.definition.id) !== undefined) {
+        return Object.freeze({ visible: true, enabled: false });
+      }
       const capability = eligibility(options.capability, route.definition, route.invocation);
       return capability.state === 'hidden'
         ? Object.freeze({ visible: false, enabled: false })

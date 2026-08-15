@@ -465,6 +465,28 @@ interface KanbanActionDisabledOutcome {
 }
 ```
 
+## KanbanActionEventInput
+
+Payload-free action input accepted before sequence and timestamp allocation.
+
+```ts
+interface KanbanActionEventInput {
+  kind: 'action';   // Event discriminator.
+  actionId: string;   // Stable package or application action identity.
+  origin: KanbanActionOrigin;   // Origin that invoked the shared action route.
+  state: KanbanActionEventState;   // Current public action lifecycle state.
+  code?: string;   // Optional safe reason code for denied or unavailable outcomes.
+}
+```
+
+## KanbanActionEventState
+
+Action lifecycle states exposed without handler results or application payloads.
+
+```ts
+type KanbanActionEventState = 'intent' | 'pending' | 'handled' | 'disabled' | 'hidden' | 'unavailable'
+```
+
 ## KanbanActionHandledOutcome
 
 Successful synchronous or asynchronous action completion.
@@ -824,6 +846,7 @@ interface KanbanActionRouterOptions {
   capability?: KanbanCapabilityProvider;   // Optional synchronous UI capability policy.
   maxDepth?: number;   // Maximum distinct synchronous nesting depth; defaults to 16 and cannot exceed 64.
   events?: KanbanEventHub;   // Optional board-scoped public action event stream.
+  history?: KanbanHistoryBinding;   // Optional application-owned history used by package undo/redo actions.
 }
 ```
 
@@ -2833,6 +2856,18 @@ interface KanbanDefinitionOfDoneSnapshot {
 }
 ```
 
+## KanbanDegradationEventInput
+
+Safe capability or geometry degradation input.
+
+```ts
+interface KanbanDegradationEventInput {
+  kind: 'degradation';   // Event discriminator.
+  code: string;   // Stable safe reason code.
+  counts?: KanbanEventCounts;   // Optional bounded payload-free counters.
+}
+```
+
 ## KanbanDeletedColumnFocusInput
 
 Inputs required to reconcile focus without retaining a hidden or deleted view.
@@ -3693,6 +3728,105 @@ type KanbanErrorCode = | 'invalid-identity'
   | 'disposed-resource'
 ```
 
+## KanbanErrorEventInput
+
+Safe error input that never includes a thrown value or raw message.
+
+```ts
+interface KanbanErrorEventInput {
+  kind: 'error';   // Event discriminator.
+  code: string;   // Stable safe reason code.
+  counts?: KanbanEventCounts;   // Optional bounded payload-free counters.
+}
+```
+
+## KanbanEvent
+
+Immutable public event snapshot.
+
+```ts
+type KanbanEvent = KanbanEventInput & KanbanEventEnvelope
+```
+
+## KanbanEventCounts
+
+Bounded numeric counters available to error and degradation events.
+
+```ts
+type KanbanEventCounts = Readonly<Record<string, number>>
+```
+
+## KanbanEventEnvelope
+
+Hub-owned event envelope common to every public semantic event.
+
+```ts
+interface KanbanEventEnvelope {
+  sequence: number;   // Monotonic sequence allocated when the event leaves the queue.
+  timestamp: number;   // Finite timestamp returned by the injected clock.
+  boardId: KanbanBoardId;   // Exact board instance that owns the event stream.
+}
+```
+
+## KanbanEventHub
+
+Bounded board-scoped public event stream.
+
+```ts
+interface KanbanEventHub {
+  publish: (input: KanbanEventInput) => KanbanEventPublishOutcome;   // Validates and publishes or queues one detached event input.
+  subscribe: (subscriber: KanbanEventSubscriber) => () => void;   // Subscribes one isolated event listener.
+  snapshot: () => readonly KanbanEvent[];   // Returns the bounded recent-event snapshot, if retention is enabled.
+  dispose: () => void;   // Clears queued/retained events and subscribers and rejects future publication.
+  disposed: () => boolean;   // Reports whether all hub resources have been released.
+}
+```
+
+## KanbanEventHubOptions
+
+Options for one bounded board-scoped event hub.
+
+```ts
+interface KanbanEventHubOptions {
+  boardId: KanbanBoardId;   // Exact board instance published on every event.
+  now?: () => number;   // Injected finite clock, defaulting to wall time.
+  capacity?: number;   // Queue capacity from 1 through 4,096; defaults to 256.
+  retained?: number;   // Number of recent events retained by `snapshot`; defaults to 0.
+  observe?: (observation: KanbanObservation) => void;   // Optional payload-free observation sink for hub failures.
+}
+```
+
+## KanbanEventInput
+
+Closed input union accepted by the public event hub.
+
+```ts
+type KanbanEventInput = | KanbanActionEventInput
+  | KanbanRequestEventInput
+  | KanbanFocusEventInput
+  | KanbanSelectionEventInput
+  | KanbanViewEventInput
+  | KanbanSourceEventInput
+  | KanbanErrorEventInput
+  | KanbanDegradationEventInput
+```
+
+## KanbanEventPublishOutcome
+
+Result of one event publication attempt.
+
+```ts
+type KanbanEventPublishOutcome = { readonly kind: 'published' } | { readonly kind: 'event-queue-overflow' } | { readonly kind: 'disposed' }
+```
+
+## KanbanEventSubscriber
+
+One isolated public-event subscriber.
+
+```ts
+type KanbanEventSubscriber = (event: KanbanEvent) => void
+```
+
 ## KanbanExpectedCardRevision
 
 Captured card revision required by an application request.
@@ -3862,6 +3996,29 @@ One active registered field filter retained by view state.
 
 ```ts
 type KanbanFilterSelection = KanbanFilter
+```
+
+## KanbanFocusEventInput
+
+Focus input published only after public focus state changes.
+
+```ts
+interface KanbanFocusEventInput {
+  kind: 'focus';   // Event discriminator.
+  target: KanbanFocusEventTarget;   // New logical focus target.
+}
+```
+
+## KanbanFocusEventTarget
+
+Logical focus target retained by a public event.
+
+```ts
+type KanbanFocusEventTarget = | { readonly kind: 'board' }
+  | { readonly kind: 'card'; readonly cardKey: CardKey }
+  | { readonly kind: 'cell'; readonly columnId: KanbanColumnId; readonly swimlaneId?: KanbanSwimlaneId }
+  | { readonly kind: 'column'; readonly columnId: KanbanColumnId }
+  | { readonly kind: 'swimlane'; readonly swimlaneId: KanbanSwimlaneId }
 ```
 
 ## KanbanFocusTarget
@@ -4057,6 +4214,87 @@ Header metadata shared by columns and swimlanes.
 interface KanbanHeaderSummary {
   wip?: KanbanCount;   // Optional authoritative work-in-progress count.
   summaries?: Readonly<Record<KanbanFieldId, KanbanNumericSummary>>;   // Bounded honest numeric summaries keyed by application field identity.
+}
+```
+
+## KanbanHistoryActionAvailability
+
+Bounded discoverable history action without a token or stack entry.
+
+```ts
+interface KanbanHistoryActionAvailability {
+  labelMessageId: string;   // Translation message ID used for status, menu, and help presentation.
+}
+```
+
+## KanbanHistoryAvailability
+
+Reactive record-free application history availability.
+
+```ts
+interface KanbanHistoryAvailability {
+  revision: KanbanRevision;   // Equality-only revision of the application history state.
+  undo?: KanbanHistoryActionAvailability;   // Present only when the application currently offers undo.
+  redo?: KanbanHistoryActionAvailability;   // Present only when the application currently offers redo.
+}
+```
+
+## KanbanHistoryBinding
+
+Reactive application-owned history integration surface.
+
+```ts
+interface KanbanHistoryBinding {
+  snapshot: () => KanbanHistoryAvailability;   // Returns the current detached availability snapshot.
+  subscribe: (listener: (snapshot: KanbanHistoryAvailability) => void) => () => void;   // Observes successfully captured availability replacements.
+  invoke: (direction: KanbanHistoryDirection) => Promise<KanbanRequestResult>;   // Builds and dispatches one fresh undo or redo proposal.
+  dispose: () => void;   // Releases provider/subscriber/cancellation resources.
+  disposed: () => boolean;   // Reports whether the history integration has been released.
+}
+```
+
+## KanbanHistoryBindingOptions
+
+Construction options for application-owned history integration.
+
+```ts
+interface KanbanHistoryBindingOptions {
+  authority: KanbanBoardAuthority;   // Existing board request authority used for every fresh proposal.
+  provider: KanbanHistoryProvider;   // Application-owned availability and proposal builder.
+}
+```
+
+## KanbanHistoryBuildContext
+
+Detached context supplied whenever an application builds a fresh history proposal.
+
+```ts
+interface KanbanHistoryBuildContext {
+  revision: KanbanRevision;   // Availability revision that admitted the invocation.
+  signal: AbortSignal;   // Cancellation signal owned by the history binding.
+}
+```
+
+## KanbanHistoryDirection
+
+Application-owned history direction exposed by package commands.
+
+```ts
+type KanbanHistoryDirection = 'undo' | 'redo'
+```
+
+## KanbanHistoryProvider
+
+Application history provider that owns availability and proposal construction.
+
+```ts
+interface KanbanHistoryProvider {
+  availability: () => KanbanHistoryAvailability;   // Returns current bounded availability.
+  subscribe: (listener: () => void) => () => void;   // Notifies the binding that availability should be captured again.
+  build: (
+    direction: KanbanHistoryDirection,
+    context: KanbanHistoryBuildContext,
+  ) => KanbanRequestProposal | Promise<KanbanRequestProposal>;   // Builds one fresh proposal from current application history.
 }
 ```
 
@@ -5623,6 +5861,20 @@ type KanbanRequestDispatcher = (
 ) => KanbanRequestResult | Promise<KanbanRequestResult>
 ```
 
+## KanbanRequestEventInput
+
+Payload-free request lifecycle input derived from the existing operation lifecycle.
+
+```ts
+interface KanbanRequestEventInput {
+  kind: 'request';   // Event discriminator.
+  operationId: KanbanOperationId;   // Exact operation identity shared by every request transition.
+  requestKind: KanbanRequest['kind'];   // Standard or namespaced-extension request discriminator.
+  state: KanbanOperationState;   // Existing operation lifecycle state.
+  code?: string;   // Optional safe terminal reason code.
+}
+```
+
 ## KanbanRequestExpectedRevisions
 
 Equality-only revisions captured with an application request.
@@ -6582,6 +6834,17 @@ interface KanbanSelectionEntry {
 }
 ```
 
+## KanbanSelectionEventInput
+
+Record-free selection input published after selection changes.
+
+```ts
+interface KanbanSelectionEventInput {
+  kind: 'selection';   // Event discriminator.
+  count: number;   // Current selected-card count.
+}
+```
+
 ## KanbanSelectionOperation
 
 Selection operations owned by the interaction controller.
@@ -6699,6 +6962,19 @@ Application stable-order adapter used by the eager source.
 
 ```ts
 type KanbanSortField<TCard> = KanbanLegacySortField<TCard> | KanbanMultiComparatorSortField<TCard>
+```
+
+## KanbanSourceEventInput
+
+Source lifecycle input without records, queries, or errors.
+
+```ts
+interface KanbanSourceEventInput {
+  kind: 'source';   // Event discriminator.
+  state: 'loading' | 'ready' | 'refreshing' | 'partial' | 'empty' | 'error' | 'disposed';   // Current bounded source lifecycle state.
+  revision?: KanbanRevision;   // Optional equality-only source revision.
+  queryRevision?: KanbanRevision;   // Optional equality-only query projection revision.
+}
 ```
 
 ## KanbanSourceState
@@ -7796,6 +8072,17 @@ Semantic empty-state distinction derived from the active view and source publica
 
 ```ts
 type KanbanViewEmptyState = 'none' | 'true' | 'filtered' | 'loading' | 'partial' | 'error'
+```
+
+## KanbanViewEventInput
+
+Active-view input without filter/search values.
+
+```ts
+interface KanbanViewEventInput {
+  kind: 'view';   // Event discriminator.
+  revision: KanbanRevision;   // Equality-only active-view revision.
+}
 ```
 
 ## KanbanViewId
@@ -9219,6 +9506,14 @@ Opens one detached editor session after subscribing to authoritative publication
 createKanbanEditorSession<TCard, TDraft>(options: KanbanEditorSessionOptions<TCard, TDraft>): Promise<KanbanEditorSession<TDraft>>
 ```
 
+## createKanbanEventHub
+
+Creates one board-scoped bounded semantic event stream.
+
+```ts
+createKanbanEventHub(options: KanbanEventHubOptions): KanbanEventHub
+```
+
 ## createKanbanExtensionId
 
 Creates a validated application-extension identity.
@@ -9233,6 +9528,14 @@ Creates a validated application field identity.
 
 ```ts
 createKanbanFieldId(value: string): KanbanFieldId
+```
+
+## createKanbanHistoryBinding
+
+Creates a reactive application-owned history binding over existing board authority.
+
+```ts
+createKanbanHistoryBinding(options: KanbanHistoryBindingOptions): KanbanHistoryBinding
 ```
 
 ## createKanbanInteractionController
@@ -9643,6 +9946,14 @@ Projects sticky headers and a bounded source-ordered card stack into exact termi
 projectKanbanVerticalGeometry(options: ProjectKanbanVerticalGeometryOptions): KanbanVerticalGeometry
 ```
 
+## publishKanbanOperationEvent
+
+Publishes one existing operation lifecycle snapshot as a record-free public request event.
+
+```ts
+publishKanbanOperationEvent(events: KanbanEventHub, snapshot: KanbanOperationSnapshot): KanbanEventPublishOutcome
+```
+
 ## readKanbanCardAdapter
 
 Reads and validates one card through its adapter as one atomic presentation snapshot.
@@ -9937,6 +10248,14 @@ Validate and detach one result from a pure transition, DoD, WIP, or custom polic
 
 ```ts
 snapshotKanbanEligibility(value: unknown): KanbanEligibility
+```
+
+## snapshotKanbanEventInput
+
+Validates, detaches, and freezes one closed event input.
+
+```ts
+snapshotKanbanEventInput(value: unknown): KanbanEventInput
 ```
 
 ## snapshotKanbanGroupingPolicy

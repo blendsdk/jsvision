@@ -249,6 +249,22 @@ mutation pointer hit targets and disables mutation keyboard/menu routes while re
 selection, search, viewing, and help. This is a UX policy, not authorization: raw application requests
 still reach the application's normal authority boundary.
 
+## Events and application-owned history
+
+`createKanbanEventHub()` publishes bounded board-scoped action, request, focus, selection, view, and
+source events with dequeue-ordered sequence numbers. Nested publication is breadth-first; subscriber
+and diagnostic failures are isolated. Event snapshots contain IDs, revisions, states, codes, and
+counts only—never records, drafts, query values, placement tokens, undo tokens, or raw exceptions.
+
+Pass the same hub to a board, action router, or authority adapter. Disposal clears queued and retained
+events and prevents late asynchronous work from publishing. The optional retained snapshot is bounded
+and disabled by default.
+
+`createKanbanHistoryBinding()` observes application-owned undo/redo availability and asks the
+application to build a fresh proposal for every invocation. The proposal enters normal board authority
+with current revisions and a new operation ID. The package does not store history stacks or card
+snapshots, and rejection never changes authoritative data.
+
 ## Hosting and lifecycle
 
 `KanbanBoard` owns exactly one `KanbanViewport`. It does not create a window, dialog, shadow, or

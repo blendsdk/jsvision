@@ -122,6 +122,11 @@ export * from './command/keymap.js';
 export * from './command/registry.js';
 export * from './command/router.js';
 export * from './command/types.js';
+export * from './event/types.js';
+export * from './event/validation.js';
+export * from './event/hub.js';
+export * from './event/history.js';
+export * from './event/operation-events.js';
 export * from './i18n/catalog.js';
 export type {
   KanbanActivateOptions,

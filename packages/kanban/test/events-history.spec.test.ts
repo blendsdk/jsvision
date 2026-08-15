@@ -33,13 +33,9 @@ describe('Kanban public event ordering', () => {
     expect(events.map((event) => event.sequence)).toEqual([1, 2, 3, 4, 5]);
     expect(events.map((event) => event.timestamp)).toEqual([100, 101, 102, 103, 104]);
     expect(events.every((event) => event.boardId === 'board-main' && Object.isFrozen(event))).toBe(true);
-    expect(events.map((event) => (event.kind === 'request' ? event.state : event.state))).toEqual([
-      'intent',
-      'proposed',
-      'pending',
-      'accepted',
-      'committed',
-    ]);
+    expect(
+      events.map((event) => (event.kind === 'action' || event.kind === 'request' ? event.state : event.kind)),
+    ).toEqual(['intent', 'proposed', 'pending', 'accepted', 'committed']);
     expect(events.slice(1).every((event) => event.kind === 'request' && event.operationId === 'operation-move-1')).toBe(
       true,
     );

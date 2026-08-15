@@ -342,8 +342,8 @@ execute without unrelated import, harness, or existing-suite failures.
 - [x] 7.2.2 Implement breadth-first event queue with default 256/max 4096, dequeue sequence, typed overflow, isolation, and disposal — event hub ✅ (completed: 2026-08-15 02:00)
 - [x] 7.2.3 Derive request events from authority snapshots/publication without a second lifecycle — `packages/kanban/src/event/operation-events.ts`, `packages/kanban/src/board/board-authority.ts` ✅ (completed: 2026-08-15 02:03)
 - [x] 7.2.4 Publish focus/selection/view/action/source events after public state and keep observations separate — `packages/kanban/src/event/publisher.ts`, action router, and board ✅ (completed: 2026-08-15 02:08)
-- [ ] 7.2.5 Implement application-owned history availability and fresh request integration — `packages/kanban/src/event/history.ts`, `packages/kanban/src/command/router.ts`
-- [ ] 7.2.6 Export/document event/history APIs and make focused specifications plus deferred DA-09 lifecycle assertions green — Kanban barrel
+- [x] 7.2.5 Implement application-owned history availability and fresh request integration — `packages/kanban/src/event/history.ts`, `packages/kanban/src/command/router.ts` ✅ (completed: 2026-08-15 02:12)
+- [x] 7.2.6 Export/document event/history APIs and make focused specifications plus deferred DA-09 lifecycle assertions green — Kanban barrel and README ✅ (completed: 2026-08-15 02:15)
 
 ### Step 7.3: Implementation tests and hardening
 
