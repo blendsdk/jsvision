@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-15 07:42 CEST
-> **Progress**: 79/125 tasks (63%)
+> **Last Updated**: 2026-08-15 07:56 CEST
+> **Progress**: 82/125 tasks (66%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -413,7 +413,7 @@ AR-D49, and the complete corrected matrix passes. A third review is forbidden. P
 
 ## Phase 9: Documentation, plugin parity, quality, and acceptance
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `f58e79cd9c2975fa9c110a621d0baace0378083e`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: Phase D public support and acceptance only; no final component course or release claim.
 > **Expected modification set**: public JSDoc/source cleanup, Kanban README, technical architecture, examples evidence, generated plugin outputs, plan/roadmap/review evidence, and necessary test fixes.
@@ -423,9 +423,16 @@ AR-D49, and the complete corrected matrix passes. A third review is forbidden. P
 
 **Reference**: 03-07 §Documentation–Phase closure · ST-DI-03…DI-06 · AR-D14–D16
 
-- [ ] 9.1.1 `[spec-author]` Complete public API/export/JSDoc/exact dependency plus built generic/missing-peer/Zod-4 consumer oracles — public API, boundary, and consumer specs
-- [ ] 9.1.2 `[spec-author]` Complete plugin-impact/docs/example typecheck/import contract oracles — `packages/kanban/test/package-boundary.spec.test.ts`, `packages/examples/test/kanban-phase-d.spec.test.ts`
-- [ ] 9.1.3 Run focused closure specifications and record any expected red contract gaps
+- [x] 9.1.1 `[spec-author]` Complete public API/export/JSDoc/exact dependency plus built generic/missing-peer/Zod-4 consumer oracles — public API, boundary, and consumer specs ✅ (completed: 2026-08-15 07:55)
+- [x] 9.1.2 `[spec-author]` Complete plugin-impact/docs/example typecheck/import contract oracles — `packages/kanban/test/package-boundary.spec.test.ts`, `packages/examples/test/kanban-phase-d.spec.test.ts` ✅ (completed: 2026-08-15 07:55)
+- [x] 9.1.3 Run focused closure specifications and record any expected red contract gaps ✅ (completed: 2026-08-15 07:56)
+
+**Red evidence**: A fresh Kanban build and packed-consumer run pass the complete public export,
+generic-without-Zod, missing-peer diagnostic, and consumer-Zod-4 contracts. The focused Examples
+contract passes 7 tests. The package-boundary closure set has exactly five expected documentation/
+integration failures: incomplete Kanban plugin-impact paths, incomplete Phase D README coverage,
+stale Kanban architecture, stale API architecture, and missing data/security ownership coverage.
+The other 10 focused Kanban closure tests pass.
 
 ### Step 9.2: Documentation and generated integration
 

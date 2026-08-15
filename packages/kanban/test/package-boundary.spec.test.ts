@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { dirname, extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +11,19 @@ const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPOSITORY_ROOT = resolve(PACKAGE_ROOT, '../..');
 /** Absolute production source root used by bounded import traversal. */
 const SOURCE_ROOT = join(PACKAGE_ROOT, 'src');
+/** Canonical source-impact routing manifest used by the generated JSVision skill. */
+const PLUGIN_IMPACT_PATH = join(REPOSITORY_ROOT, 'tools', 'jsvision-plugin-impact.json');
+/** Public values that represent every Phase D productivity concern in generated API guidance. */
+const PHASE_D_API_VALUES = Object.freeze([
+  'createKanbanViewController',
+  'captureKanbanSavedView',
+  'createStandardKanbanEditorAdapter',
+  'openKanbanCardCreateDialog',
+  'openKanbanColumnConfigurationDialog',
+  'createKanbanActionRegistry',
+  'createKanbanEventHub',
+  'createKanbanHistoryBinding',
+]);
 /** Safety ceiling that turns accidental graph cycles or expansion into a clear failure. */
 const MAX_GRAPH_FILES = 512;
 /** Exact locale entry points promised by the first public package boundary. */
@@ -245,5 +259,119 @@ describe('Kanban package boundary', () => {
       );
       expect(selfImports, `${relative(PACKAGE_ROOT, path)} must import production leaf modules directly`).toEqual([]);
     }
+  });
+
+  // Public source documentation must stay usable without access to repository planning artifacts.
+  it('should pass the public JSDoc and example contract through the repository documentation guard', () => {
+    expect(() =>
+      execFileSync(process.execPath, [join(REPOSITORY_ROOT, 'scripts', 'check-jsdoc.mjs'), PACKAGE_ROOT, '--summary'], {
+        cwd: REPOSITORY_ROOT,
+        encoding: 'utf8',
+        timeout: 60_000,
+        maxBuffer: 1_048_576,
+        windowsHide: true,
+      }),
+    ).not.toThrow();
+  });
+
+  // Source, package, architecture, examples, and API changes must all report the Kanban guidance they affect.
+  it('should route the complete Kanban delivery surface through plugin impact', () => {
+    const impact = readJsonObject(PLUGIN_IMPACT_PATH);
+    const areas = impact.areas;
+    if (!Array.isArray(areas)) throw new Error('plugin impact manifest must define an areas array');
+    const kanbanArea = areas.find((area) => isJsonObject(area) && area.name === 'kanban');
+    if (!isJsonObject(kanbanArea) || !Array.isArray(kanbanArea.paths) || !Array.isArray(kanbanArea.references)) {
+      throw new Error('plugin impact manifest must define one complete Kanban area');
+    }
+
+    expect(kanbanArea.paths).toEqual(
+      expect.arrayContaining([
+        'packages/kanban/src',
+        'packages/kanban/package.json',
+        'packages/kanban/README.md',
+        'packages/examples/kanban-showcase',
+        'packages/examples/github-project-kanban',
+        'packages/docs-site/api/kanban',
+        'docs/architecture/kanban.md',
+        'docs/architecture/api-design.md',
+        'docs/architecture/data-model.md',
+        'docs/architecture/security.md',
+      ]),
+    );
+    expect(kanbanArea.references).toEqual(
+      expect.arrayContaining([
+        'references/architecture.md',
+        'references/component-catalog.md',
+        'references/api/kanban.md',
+      ]),
+    );
+  });
+
+  // Generated API lookup must expose each supported productivity layer from the canonical main entry.
+  it('should keep Phase D public exports present in canonical and generated plugin API references', () => {
+    const canonical = readFileSync(join(REPOSITORY_ROOT, 'tools/jsvision-skill/references/api/kanban.md'), 'utf8');
+    const generated = readFileSync(
+      join(REPOSITORY_ROOT, 'plugins/jsvision-plugin/skills/jsvision/references/api/kanban.md'),
+      'utf8',
+    );
+
+    expect(generated).toBe(canonical);
+    for (const publicValue of PHASE_D_API_VALUES) {
+      expect(canonical, `missing canonical API entry for ${publicValue}`).toContain(`## ${publicValue}`);
+    }
+  });
+
+  // The package README is the first consumer guide and must teach every supported productivity layer.
+  it('should document current view, editing, configuration, action, event, and history usage in the package README', () => {
+    const readme = readFileSync(join(PACKAGE_ROOT, 'README.md'), 'utf8');
+    for (const publicValue of PHASE_D_API_VALUES) {
+      expect(readme, `README must teach ${publicValue}`).toContain(publicValue);
+    }
+    expect(readme).toMatch(/application-owned[\s\S]*saved view/iu);
+    expect(readme).toMatch(/configuration[\s\S]*(?:column|swimlane)[\s\S]*dialog/iu);
+  });
+
+  // Architecture overview must describe the shipped composition and dependency topology, not an older phase boundary.
+  it('should describe the current Phase D package composition in Kanban architecture', () => {
+    const architecture = readFileSync(join(REPOSITORY_ROOT, 'docs/architecture/kanban.md'), 'utf8');
+
+    expect(architecture).toContain('@jsvision/forms');
+    expect(architecture).toContain('KanbanViewController');
+    expect(architecture).toContain('KanbanEventHub');
+    expect(architecture).toContain('KanbanHistoryBinding');
+    expect(architecture).toMatch(/editor[\s\S]*configuration[\s\S]*action/iu);
+    expect(architecture).not.toMatch(/editors, commands, and product documentation planned/iu);
+  });
+
+  // API design must present the exported productivity layers as current authority-safe surfaces.
+  it('should describe the current Phase D public topology in API architecture', () => {
+    const apiDesign = readFileSync(join(REPOSITORY_ROOT, 'docs/architecture/api-design.md'), 'utf8');
+
+    for (const concept of [
+      'KanbanViewController',
+      'KanbanCardEditorAdapter',
+      'KanbanConfigurationSession',
+      'KanbanActionRegistry',
+      'KanbanEventHub',
+      'KanbanHistoryBinding',
+    ]) {
+      expect(apiDesign, `API architecture must describe ${concept}`).toContain(concept);
+    }
+    expect(apiDesign).not.toMatch(/commands, editors, saved-view codecs[^\n]*planned/iu);
+    expect(apiDesign).not.toMatch(/commands and package-owned[\s\S]*dialogs remain deferred/iu);
+  });
+
+  // Data and security references must teach the ownership and redaction boundaries of current persisted and async state.
+  it('should document Phase D data ownership and security boundaries', () => {
+    const dataModel = readFileSync(join(REPOSITORY_ROOT, 'docs/architecture/data-model.md'), 'utf8');
+    const security = readFileSync(join(REPOSITORY_ROOT, 'docs/architecture/security.md'), 'utf8');
+
+    for (const concept of ['View state', 'Editor session', 'Configuration session', 'Event', 'History']) {
+      expect(dataModel, `data model must describe ${concept}`).toContain(concept);
+    }
+    expect(dataModel).not.toMatch(/saved-view codecs remain a later phase/iu);
+    expect(security).toMatch(/saved view[\s\S]*(?:bounded|limit|exact|validate)/iu);
+    expect(security).toMatch(/editor[\s\S]*(?:draft|field)[\s\S]*(?:redact|never|without)/iu);
+    expect(security).toMatch(/event[\s\S]*(?:record|draft|token)[\s\S]*(?:redact|never|without)/iu);
   });
 });

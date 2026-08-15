@@ -158,21 +158,30 @@ describe('packed Kanban public-entry contract', () => {
         run(tar, ['-xzf', join(work, pack.filename), '-C', installedPackage, '--strip-components=1'], work);
         expect(relative(consumer, installedPackage).split(sep)).toEqual(['node_modules', '@jsvision', 'kanban']);
 
-        // The packed root keeps old request APIs while exposing Phase C board/facade state without importing test code.
+        // The packed root keeps older request APIs while exposing Phase D productivity state without importing test code.
         const packageJson: unknown = JSON.parse(readFileSync(join(installedPackage, 'package.json'), 'utf8'));
         expect(packageJson).toMatchObject({
+          dependencies: {
+            '@jsvision/core': expect.any(String),
+            '@jsvision/forms': expect.any(String),
+            '@jsvision/i18n': expect.any(String),
+            '@jsvision/ui': expect.any(String),
+          },
+          peerDependencies: { zod: '^4' },
           exports: {
             '.': { types: './dist/index.d.ts', import: './dist/index.js' },
             './testing': { types: './dist/testing.d.ts', import: './dist/testing.js' },
           },
         });
         const productionEntry = readFileSync(join(installedPackage, 'dist', 'index.js'), 'utf8');
+        const genericEditorDeclarations = readFileSync(join(installedPackage, 'dist', 'editor', 'types.d.ts'), 'utf8');
         const boardDeclarations = readFileSync(join(installedPackage, 'dist', 'board', 'kanban-board.d.ts'), 'utf8');
         const facadeDeclarations = readFileSync(join(installedPackage, 'dist', 'interaction', 'facade.d.ts'), 'utf8');
         const operationDeclarations = readFileSync(join(installedPackage, 'dist', 'operation', 'types.d.ts'), 'utf8');
         const testingEntry = readFileSync(join(installedPackage, 'dist', 'testing.js'), 'utf8');
 
         expect(productionEntry).not.toMatch(/(?:from|export)\s+["'][^"']*testing/u);
+        expect(genericEditorDeclarations).not.toMatch(/(?:from|import)\s+["']zod["']/u);
         expect(testingEntry).toContain('./testing/');
         expect(boardDeclarations).toMatch(/readonly operationId\?: KanbanOperationIdFactory/u);
         expect(boardDeclarations).toMatch(/readonly confirmOperation\?: KanbanConfirmer/u);

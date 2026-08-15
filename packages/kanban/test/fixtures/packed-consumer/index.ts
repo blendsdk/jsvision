@@ -1,19 +1,33 @@
 import {
+  captureKanbanSavedView,
+  createKanbanActionRegistry,
   createKanbanColumnId,
+  createKanbanEditorCoordinator,
+  createKanbanEventHub,
+  createKanbanHistoryBinding,
   createKanbanInteractionController,
   createKanbanOperationIdRegistry,
   createKanbanRequestEnvelope,
+  createKanbanViewController,
   createStandardKanbanEditorAdapter,
+  openKanbanCardCreateDialog,
+  openKanbanColumnConfigurationDialog,
+  parseKanbanSavedView,
   resolveKanbanPresentation,
   snapshotKanbanRequestProposal,
 } from '@jsvision/kanban';
 import { z } from 'zod';
 import type {
+  KanbanActionRegistry,
+  KanbanConfigurationSession,
+  KanbanEventHub,
   KanbanExtensionRequest,
+  KanbanHistoryBinding,
   KanbanInteractionControllerFactory,
   KanbanInteractionFacade,
   KanbanInteractionInspection,
   KanbanViewportInteractionAdapter,
+  KanbanViewState,
 } from '@jsvision/kanban';
 import { KanbanPointerRouter, createWindowedKanbanFixture, routeKanbanKeyInput } from '@jsvision/kanban/testing';
 import { kanbanDe, kanbanPhaseBDe } from '@jsvision/kanban/locales/de';
@@ -36,8 +50,26 @@ void (defaultFactory satisfies KanbanInteractionControllerFactory);
 function acceptPublicInteractionTypes(
   _surface?: PublicInteractionSurface,
   _evidence?: PublicInteractionEvidence,
+  _view?: KanbanViewState,
+  _configuration?: KanbanConfigurationSession,
+  _actions?: KanbanActionRegistry,
+  _events?: KanbanEventHub,
+  _history?: KanbanHistoryBinding,
 ): void {}
 acceptPublicInteractionTypes();
+
+const phaseDPublicValues = [
+  createKanbanViewController,
+  captureKanbanSavedView,
+  parseKanbanSavedView,
+  createKanbanEditorCoordinator,
+  createStandardKanbanEditorAdapter,
+  openKanbanCardCreateDialog,
+  openKanbanColumnConfigurationDialog,
+  createKanbanActionRegistry,
+  createKanbanEventHub,
+  createKanbanHistoryBinding,
+] as const;
 
 const columnId = createKanbanColumnId('ready-for-review');
 const standardProposal = snapshotKanbanRequestProposal({ kind: 'card-delete', cardKey: 42 });
@@ -92,6 +124,7 @@ if (
   typeof createWindowedKanbanFixture !== 'function' ||
   typeof routeKanbanKeyInput !== 'function' ||
   typeof KanbanPointerRouter !== 'function' ||
+  phaseDPublicValues.some((value) => typeof value !== 'function') ||
   incompleteCatalog !== undefined ||
   incompleteOverlay !== undefined
 ) {
