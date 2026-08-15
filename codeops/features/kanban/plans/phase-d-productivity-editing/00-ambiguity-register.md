@@ -775,3 +775,23 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** The playground gains authenticated mutation, the standard chrome height changes, or saved views
   become durable outside the current application lifetime.
+
+### AR-D47 — Example replacement owns complete board teardown (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; this is a necessary lifecycle correction, not an optional feature.
+- **Eligibility:** Resource ownership and disposal inside the approved Phase D example hardening scope.
+- **Objective:** Ensure replacing one loaded GitHub snapshot cannot leave its board action router, interaction state, or
+  reactive subscriptions alive behind the newly mounted board.
+- **Evidence:** The local wrapper released its operation subscription and view controller but did not dispose the board.
+  The viewport cleanup already calls the wrapper disposer, so an idempotent wrapper can safely own complete teardown.
+- **Decision:** Mark the wrapper disposed first, then release its operation subscription, controller, and board. Verify
+  replacement by retaining the old public action surface and requiring `router-disposed`, while saved views remain owned
+  by the surrounding application.
+- **Rejected alternatives:** Relying on view removal does not express or prove board lifecycle ownership. Disposing saved
+  views with the imported snapshot would violate the application-owned refresh behavior.
+- **Confidence:** High — focused board and example lifecycle tests cover controller reflow, editor abort, repeated story
+  replacement, responsive resize, imported-board replacement, and saved-view retention.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** UI removal gains guaranteed recursive component disposal or the GitHub wrapper no longer owns the
+  board it creates.

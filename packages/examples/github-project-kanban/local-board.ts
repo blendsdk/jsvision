@@ -249,6 +249,7 @@ export function createLocalGitHubProjectBoard(
     disposed = true;
     unsubscribe();
     view.dispose();
+    board.dispose();
   };
   return {
     board,

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-15 03:45 CEST
-> **Progress**: 78/125 tasks (62%)
+> **Last Updated**: 2026-08-15 03:51 CEST
+> **Progress**: 79/125 tasks (63%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -395,7 +395,14 @@ other 8 focused GitHub showcase behaviors remain green.
 
 ### Step 8.3: Implementation tests and hardening
 
-- [ ] 8.3.1 Add board binding teardown/replacement/reflow and example story lifecycle tests — `packages/kanban/test/phase-d-lifecycle.impl.test.ts`, `packages/examples/test/kanban-phase-d.impl.test.ts`
+- [x] 8.3.1 Add board binding teardown/replacement/reflow and example story lifecycle tests — `packages/kanban/test/phase-d-lifecycle.impl.test.ts`, `packages/examples/test/kanban-phase-d.impl.test.ts` ✅ (completed: 2026-08-15 03:51)
+
+**Green evidence**: A fresh Kanban build precedes all example consumption. Eight focused Kanban
+composition, performance, and lifecycle tests pass; three mounted productivity E2E tests pass; and
+the focused Examples matrix passes 50 integration/showcase tests plus two replacement-lifecycle
+tests. Typecheck, dependency, documentation, plugin synchronization/integrity, and `verify:local`
+gates pass. Replacing a story or imported GitHub snapshot disposes the prior board action graph;
+controller changes stop reflowing a disposed board; and board disposal aborts editor acquisition.
 
 **Verify**: Kanban build immediately before focused Examples typecheck/unit/E2E/import-smoke; focused Kanban integration/performance/E2E; `yarn verify:local`
 
