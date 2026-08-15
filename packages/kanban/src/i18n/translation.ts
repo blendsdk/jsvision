@@ -6,9 +6,12 @@ import {
   KANBAN_PLACEHOLDER_MANIFEST,
   KANBAN_PHASE_B_PLACEHOLDER_MANIFEST,
   KANBAN_PHASE_C_PLACEHOLDER_MANIFEST,
+  KANBAN_PHASE_D_ACCELERATOR_MANIFEST,
+  KANBAN_PHASE_D_ENGLISH_MESSAGES,
   type KanbanMessageMap,
   type KanbanPhaseBMessageMap,
   type KanbanPhaseCMessageMap,
+  type KanbanPhaseDMessageMap,
 } from './catalog.js';
 
 /**
@@ -47,4 +50,17 @@ export function createKanbanPhaseCTranslationCatalog(locale: string, messages: K
       acceleratorManifest: KANBAN_ACCELERATOR_MANIFEST,
     },
   );
+}
+
+/**
+ * Builds one complete Phase D locale overlay from the reviewed English fallback vocabulary.
+ *
+ * Native Phase D translations replace this fallback in a later language-review phase. Keeping a
+ * locale-specific catalog now gives every supported locale identical keys and accelerator checks.
+ */
+export function createKanbanPhaseDTranslationCatalog(
+  locale: string,
+  messages: KanbanPhaseDMessageMap = KANBAN_PHASE_D_ENGLISH_MESSAGES,
+): Catalog {
+  return defineCatalog({ schema: 1, locale, messages }, { acceleratorManifest: KANBAN_PHASE_D_ACCELERATOR_MANIFEST });
 }

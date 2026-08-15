@@ -400,7 +400,7 @@ export const KANBAN_PHASE_D_UI_ENGLISH_MESSAGES = Object.freeze({
   'kanban.configuration.field.disambiguator': '~Q~ualifier',
   'kanban.configuration.field.done-summary': 'Done ~s~ummary',
   'kanban.configuration.field.done-details': 'Done de~t~ails',
-  'kanban.configuration.field.wip-minimum': 'WIP mi~n~',
+  'kanban.configuration.field.wip-minimum': 'WIP m~i~n',
   'kanban.configuration.field.wip-maximum': 'WIP ma~x~',
   'kanban.configuration.field.wip-mode': 'WIP m~o~de',
   'kanban.configuration.field.wip-count-done': 'Count ~d~one',
@@ -424,12 +424,44 @@ export const KANBAN_PHASE_D_ENGLISH_MESSAGES = Object.freeze({
   ...KANBAN_PHASE_D_UI_ENGLISH_MESSAGES,
 } satisfies KanbanPhaseDMessageMap);
 
-/** Immutable English overlay for Phase D productivity, editing, configuration, and action help. */
-export const KANBAN_PHASE_D_ENGLISH_CATALOG: Catalog = defineCatalog({
-  schema: 1,
-  locale: 'en',
-  messages: KANBAN_PHASE_D_ENGLISH_MESSAGES,
+/** Co-visible Phase D mnemonic scopes shared by English and fallback locale overlays. */
+export const KANBAN_PHASE_D_ACCELERATOR_MANIFEST: AcceleratorManifest = Object.freeze({
+  scopes: Object.freeze([
+    Object.freeze({
+      name: 'kanban-editor-actions',
+      keys: Object.freeze(['kanban.editor.action.save', 'kanban.editor.action.reload', 'kanban.editor.action.cancel']),
+    }),
+    Object.freeze({
+      name: 'kanban-configuration-actions',
+      keys: Object.freeze([
+        'kanban.configuration.action.apply',
+        'kanban.configuration.action.reload',
+        'kanban.configuration.action.cancel',
+      ]),
+    }),
+    Object.freeze({
+      name: 'kanban-configuration-fields',
+      keys: Object.freeze([
+        'kanban.configuration.field.name',
+        'kanban.configuration.field.disambiguator',
+        'kanban.configuration.field.done-summary',
+        'kanban.configuration.field.done-details',
+        'kanban.configuration.field.wip-minimum',
+        'kanban.configuration.field.wip-maximum',
+        'kanban.configuration.field.wip-mode',
+        'kanban.configuration.field.wip-count-done',
+        'kanban.configuration.field.style',
+        'kanban.configuration.field.data',
+      ]),
+    }),
+  ]),
 });
+
+/** Immutable English overlay for Phase D productivity, editing, configuration, and action help. */
+export const KANBAN_PHASE_D_ENGLISH_CATALOG: Catalog = defineCatalog(
+  { schema: 1, locale: 'en', messages: KANBAN_PHASE_D_ENGLISH_MESSAGES },
+  { acceleratorManifest: KANBAN_PHASE_D_ACCELERATOR_MANIFEST },
+);
 
 /** Complete immutable English fallback catalog for `@jsvision/kanban`. */
 export const KANBAN_ENGLISH_CATALOG: Catalog = defineCatalog(

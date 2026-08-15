@@ -1,8 +1,12 @@
 import {
   createKanbanPhaseBTranslationCatalog,
+  createKanbanPhaseDTranslationCatalog,
   createKanbanPhaseCTranslationCatalog,
   createKanbanTranslationCatalog,
 } from '../translation.js';
+
+/** Phase D es overlay using the reviewed English fallback until native language review. */
+export const kanbanPhaseDEs = createKanbanPhaseDTranslationCatalog('es');
 
 /** Official reviewed Spanish Kanban catalog. */
 export const kanbanEs = createKanbanTranslationCatalog('es', {
