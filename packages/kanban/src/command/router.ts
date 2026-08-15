@@ -404,17 +404,17 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       if (depth >= maxDepth) return ACTION_DEPTH_EXCEEDED;
       if (activeActions.has(route.definition.id)) return ACTION_REENTRANT;
       if (options.events !== undefined) publishKanbanActionIntent(options.events, route.invocation);
+      const denied = deniedOutcome(eligibility(options.capability, route.definition, route.invocation));
+      if (denied !== undefined) {
+        if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, denied);
+        return denied;
+      }
       const unavailableHistory = historyDenied(options.history, route.definition.id);
       if (unavailableHistory !== undefined) {
         if (options.events !== undefined) {
           publishKanbanActionOutcome(options.events, route.invocation, unavailableHistory);
         }
         return unavailableHistory;
-      }
-      const denied = deniedOutcome(eligibility(options.capability, route.definition, route.invocation));
-      if (denied !== undefined) {
-        if (options.events !== undefined) publishKanbanActionOutcome(options.events, route.invocation, denied);
-        return denied;
       }
 
       activeActions.add(route.definition.id);
@@ -472,13 +472,12 @@ export function createKanbanActionRouter(options: KanbanActionRouterOptions): Ka
       if (isDisposed) return Object.freeze({ visible: false, enabled: false });
       const route = resolve(input);
       if (route === undefined) return Object.freeze({ visible: false, enabled: false });
+      const capability = eligibility(options.capability, route.definition, route.invocation);
+      if (capability.state === 'hidden') return Object.freeze({ visible: false, enabled: false });
       if (historyDenied(options.history, route.definition.id) !== undefined) {
         return Object.freeze({ visible: true, enabled: false });
       }
-      const capability = eligibility(options.capability, route.definition, route.invocation);
-      return capability.state === 'hidden'
-        ? Object.freeze({ visible: false, enabled: false })
-        : Object.freeze({ visible: true, enabled: capability.state === 'allowed' });
+      return Object.freeze({ visible: true, enabled: capability.state === 'allowed' });
     },
     dispose: () => {
       if (isDisposed) return;

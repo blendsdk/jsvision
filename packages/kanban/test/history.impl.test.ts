@@ -10,7 +10,7 @@ describe('Kanban history binding implementation', () => {
       revision: 'history-r1',
       undo: { labelMessageId: 'acme.history.undo' },
     };
-    let notify = () => undefined;
+    let notify: () => void = () => undefined;
     const release = vi.fn();
     let buildSignal: AbortSignal | undefined;
     const authority = new KanbanBoardAuthority(undefined, undefined);
@@ -36,8 +36,8 @@ describe('Kanban history binding implementation', () => {
     binding.dispose();
     expect(release).toHaveBeenCalledOnce();
     expect(buildSignal?.aborted).toBe(true);
+    await expect(pending).resolves.toMatchObject({ code: 'history-unavailable' });
     await expect(binding.invoke('undo')).resolves.toMatchObject({ code: 'history-unavailable' });
-    void pending;
     authority.dispose();
   });
 

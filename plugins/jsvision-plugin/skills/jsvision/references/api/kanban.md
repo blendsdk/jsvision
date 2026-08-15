@@ -4227,6 +4227,16 @@ interface KanbanHistoryActionAvailability {
 }
 ```
 
+## KanbanHistoryAuthority
+
+Minimal request authority required by application-owned history integration.
+
+```ts
+interface KanbanHistoryAuthority {
+  request: (proposal: KanbanRequestProposal) => Promise<KanbanRequestResult>;   // Validates and dispatches one fresh history proposal through board authority.
+}
+```
+
 ## KanbanHistoryAvailability
 
 Reactive record-free application history availability.
@@ -4259,7 +4269,7 @@ Construction options for application-owned history integration.
 
 ```ts
 interface KanbanHistoryBindingOptions {
-  authority: KanbanBoardAuthority;   // Existing board request authority used for every fresh proposal.
+  authority: KanbanHistoryAuthority;   // Existing board request authority used for every fresh proposal.
   provider: KanbanHistoryProvider;   // Application-owned availability and proposal builder.
 }
 ```

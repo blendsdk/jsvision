@@ -348,7 +348,13 @@ execute without unrelated import, harness, or existing-suite failures.
 ### Step 7.3: Implementation tests and hardening
 
 - [x] 7.3.1 Add event queue/bounds/clock/subscriber/disposal and history generation implementation tests — `packages/kanban/test/event-hub.impl.test.ts`, `history.impl.test.ts` ✅ (completed: 2026-08-15 02:18)
-- [ ] 7.3.2 Run focused Kanban build/typecheck/tests/E2E/security/docs and `yarn verify:local`
+- [x] 7.3.2 Run focused Kanban build/typecheck/tests/E2E/security/docs and `yarn verify:local` ✅ (completed: 2026-08-15 02:14)
+
+**Green evidence**: Kanban build and typecheck pass; 128 functional files with 1,008 tests pass;
+the isolated performance specification passes; all 37 runnable E2E tests pass with 2 documented
+skips; package documentation/dependency checks, plugin synchronization/integrity, and
+`yarn verify:local` pass. Hardening also guarantees disposal settles builders that ignore
+cancellation and preserves read-only pointer hiding before history-availability presentation.
 
 **Verify**: focused event/history/security/lifecycle suites; Kanban package gates; `yarn verify:local`
 

@@ -208,6 +208,12 @@ export interface KanbanHistoryProvider {
   ) => KanbanRequestProposal | Promise<KanbanRequestProposal>;
 }
 
+/** Minimal request authority required by application-owned history integration. */
+export interface KanbanHistoryAuthority {
+  /** Validates and dispatches one fresh history proposal through board authority. */
+  readonly request: (proposal: KanbanRequestProposal) => Promise<KanbanRequestResult>;
+}
+
 /** Reactive application-owned history integration surface. */
 export interface KanbanHistoryBinding {
   /** Returns the current detached availability snapshot. */
