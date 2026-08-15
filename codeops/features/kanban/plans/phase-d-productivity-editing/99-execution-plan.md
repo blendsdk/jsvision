@@ -347,7 +347,7 @@ execute without unrelated import, harness, or existing-suite failures.
 
 ### Step 7.3: Implementation tests and hardening
 
-- [ ] 7.3.1 Add event queue/bounds/clock/subscriber/disposal and history generation implementation tests — `packages/kanban/test/event-hub.impl.test.ts`, `history.impl.test.ts`
+- [x] 7.3.1 Add event queue/bounds/clock/subscriber/disposal and history generation implementation tests — `packages/kanban/test/event-hub.impl.test.ts`, `history.impl.test.ts` ✅ (completed: 2026-08-15 02:18)
 - [ ] 7.3.2 Run focused Kanban build/typecheck/tests/E2E/security/docs and `yarn verify:local`
 
 **Verify**: focused event/history/security/lifecycle suites; Kanban package gates; `yarn verify:local`
