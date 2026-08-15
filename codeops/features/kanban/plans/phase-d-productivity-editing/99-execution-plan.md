@@ -360,7 +360,7 @@ cancellation and preserves read-only pointer hiding before history-availability 
 
 ## Phase 8: Board composition, i18n, and showcase integration
 
-> **Phase baseline tree**: _(record at execution start)_
+> **Phase baseline tree**: `a1fef1577`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: Integrate completed Phase D surfaces, messages/themes, permanent examples, and performance regressions without claiming RD-13/RD-15 completion.
 > **Expected modification set**: small board binders/composition, Kanban i18n/locales/theme, testing helpers, examples/showcases and tests, package manifest/scripts if required, and this plan.
@@ -370,7 +370,7 @@ cancellation and preserves read-only pointer hiding before history-availability 
 
 **Reference**: 03-07 §Board composition–Examples · ST-DI-01…DI-05 · AR-D02/D07/D12/D14
 
-- [ ] 8.1.1 `[spec-author]` Add board construction/facet precedence/legacy compatibility/`cardPresentation` preservation/disposal, board/query-context matching, producer-origin parity, read-only hit-target, and deferred DC-15 route oracles — `packages/kanban/test/phase-d-integration.spec.test.ts`
+- [x] 8.1.1 `[spec-author]` Add board construction/facet precedence/legacy compatibility/`cardPresentation` preservation/disposal, board/query-context matching, producer-origin parity, read-only hit-target, and deferred DC-15 route oracles — `packages/kanban/test/phase-d-integration.spec.test.ts` ✅ (completed: 2026-08-15 02:32)
 - [ ] 8.1.2 `[spec-author]` Add 80×24/narrow/resize/maximize/restore dialog/chrome, action reachability, localized labels, and no-clipping oracles — `packages/kanban/test/e2e/phase-d-productivity.e2e.test.ts`
 - [ ] 8.1.3 `[spec-author]` Add 2,000-card/8-column/4-swimlane/10-filter deterministic count budgets plus 20-warmup/200-iteration median ≤16 ms oracle — `packages/kanban/test/phase-d-performance.spec.test.ts`
 - [ ] 8.1.4 `[spec-author]` Add kitchen-sink and GitHub showcase typecheck/import/behavior smoke oracles — `packages/examples/test/kanban-phase-d.spec.test.ts`, `github-project-kanban-app.spec.test.ts`
