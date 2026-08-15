@@ -848,3 +848,59 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** The no-op search terms stop returning the same visual records, RenderRoot composition semantics
   change, the bounded fingerprint exceeds retained projection limits, or a changed-result 16 ms requirement is adopted.
+
+### AR-D50 — Preserve controlled wall-clock performance evidence (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; this resolves a verification-environment ambiguity discovered by the
+  exact Phase D closure matrix.
+- **Eligibility:** Test scheduling and performance-evidence reliability inside the approved Phase D acceptance boundary.
+- **Objective:** Preserve both 16 ms wall-clock oracles without mistaking unrelated sustained host saturation for Kanban
+  render work or weakening the accepted responsiveness contract.
+- **Evidence:** The first full run produced timing-only failures while all 1,031 functional assertions passed. Process
+  inspection found two orphaned `kanban-showcase/main.ts` instances from this workspace, without terminals and parented
+  by user systemd, each consuming about one complete CPU core since 07:25. After terminating those stale resources, both
+  unchanged single-worker oracles passed. The clean full parallel package run again failed only the timing assertions at
+  25–51 ms because both benchmarks competed with the other unit workers. Performance-first isolated retries then placed
+  the older mixed-height projection median at 16.1–16.6 ms; inspection found repeated contrast/fallback resolution for
+  identical theme/role/depth tuples on every rendered card span.
+- **Decision:** Keep the specifications, workload, package script, focused CLI behavior, 20 warmups, 200 iterations,
+  wall-clock measurement, and 16 ms thresholds unchanged. Gracefully terminate only the two exact orphaned showcase
+  processes. Use Vitest's sequencer to run the two performance files first in fixed order and serialize unit files so
+  sibling workers cannot contaminate them. Cache resolved draw styles by immutable theme identity, terminal color depth,
+  and allowlisted role, plus foreground/surface/bold composites, so repeated spans reuse equivalent frozen styles without
+  contrast work or per-frame style allocation.
+- **Rejected alternatives:** Replacing wall time with thread CPU time changes the user-visible latency contract. Excluding
+  performance specifications can omit them from repository verification. Serializing every unit file does not remove
+  external CPU saturation and would substantially lengthen the package gate.
+- **Strongest counterargument:** Serializing 133 unit files lengthens the complete local gate. Focused commands remain
+  unchanged and fast, CI already skips machine-specific timing assertions, and a built-in Vitest sequencer avoids a
+  package-owned launcher or altered script contract. The two terminated showcases had no controlling terminal, could not
+  be interacted with, and continuously consumed two cores.
+- **Confidence:** High — process identity, working directory, parent/lifecycle, start time, and sustained CPU usage were
+  inspected directly; the unchanged isolated oracles provide the decisive follow-up.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The performance-first full-package oracle fails on a controlled host, Vitest adds a native
+  per-file isolation phase, or the showcase intentionally adopts a headless background-service lifecycle.
+
+### AR-D51 — Advance the cumulative plugin-impact oracle (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; this resolves a direct conflict between an older cumulative
+  specification and the approved Phase D delivery surface.
+- **Eligibility:** Specification traceability and generated-integration verification inside the approved closure scope.
+- **Objective:** Keep one exact Examples oracle for the current Kanban plugin-impact surface without reverting required
+  Phase D source-impact coverage.
+- **Evidence:** The Phase D package closure oracle and integration plan require both showcase applications plus the
+  Kanban/API/data/security architecture pages. The older `ST-B-X-06` Examples assertion still expected the five-entry
+  Phase B list exactly, causing the only failure among 461 Examples unit assertions.
+- **Decision:** Advance the cumulative exact list in `api-reference.spec.test.ts` to include the five approved Phase D
+  paths while preserving the existing reference list and every earlier Phase B path.
+- **Rejected alternatives:** Removing the new impact paths violates the approved delivery plan and lets relevant changes
+  bypass plugin review. Weakening exact equality to partial membership would stop detecting accidental path removal or
+  unreviewed expansion.
+- **Confidence:** High — both owning artifacts enumerate the same additive paths, and the generated reference set itself
+  remains unchanged and byte-identical across canonical/distributed copies.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The plugin-impact schema changes or a later requirements phase deliberately adds/removes a Kanban
+  delivery path.

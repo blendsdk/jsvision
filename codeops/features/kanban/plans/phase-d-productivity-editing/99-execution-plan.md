@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-08-15 08:19 CEST
-> **Progress**: 88/125 tasks (70%)
+> **Progress**: 89/125 tasks (71%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -458,11 +458,20 @@ examples, and the VitePress technical architecture build completes successfully.
 
 ### Step 9.3: Complete verification and acceptance
 
-- [ ] 9.3.1 Run every exact automated command in 03-07 §Phase closure matrix with captured output
+- [x] 9.3.1 Run every exact automated command in 03-07 §Phase closure matrix with captured output ✅ (completed: 2026-08-15 09:11)
 - [ ] 9.3.2 Run native terminal manual matrix for responsive typing, dialogs, themes, repeat drag/drop, Window resize, cleanup, and GitHub showcase; record evidence
 - [ ] 9.3.3 Resolve independent correctness/security/performance/API/concurrency review critical/major findings, verify fixes, and perform the one allowed re-review
 
 **Verify**: complete 03-07 matrix, `yarn plugin:check`, `yarn verify:local`, and accepted native matrix
+
+**Automated closure evidence (2026-08-15 09:11 CEST):** prerequisite Core, UI, Forms, and Web
+typecheck/test/build gates pass. Kanban passes typecheck, build, dependency and JSDoc checks, 133 unit
+files with 1,033 assertions, and nine E2E files with 40 assertions plus two intentional skips. A fresh
+build immediately preceded the package-boundary and packed-consumer suites, which pass 15/15. Examples
+pass typecheck, 59 unit files with 461 assertions, 22 E2E files with 30 assertions, and the focused
+Phase D smoke suite 7/7. The VitePress architecture build, plugin update/integrity check, and
+`yarn verify:local` pass. AR-D50 records the controlled-host diagnosis and unchanged 16 ms wall-clock
+oracles; AR-D51 records the additive exact plugin-impact oracle correction.
 
 ## Dependencies
 

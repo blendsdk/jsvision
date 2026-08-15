@@ -161,8 +161,13 @@ test('ST-B-X-06: generated Kanban API and plugin impact mapping cover the curren
       'packages/kanban/src',
       'packages/kanban/package.json',
       'packages/kanban/README.md',
+      'packages/examples/kanban-showcase',
+      'packages/examples/github-project-kanban',
       'packages/docs-site/api/kanban',
       'docs/architecture/kanban.md',
+      'docs/architecture/api-design.md',
+      'docs/architecture/data-model.md',
+      'docs/architecture/security.md',
     ],
     references: ['references/architecture.md', 'references/component-catalog.md', 'references/api/kanban.md'],
   });

@@ -19,12 +19,34 @@ import {
 import type { KanbanViewportProjection } from './viewport-projector.js';
 import type { KanbanOverlayProjection } from './overlay-projector.js';
 
-/** Returns the already-resolved terminal style for one allowlisted semantic role. */
+/**
+ * Resolved draw styles indexed by immutable theme identity, terminal depth, and semantic role.
+ *
+ * A frame can paint the same content role hundreds of times. Theme resolution performs contrast and
+ * fallback work, but its result cannot change while these three inputs remain equal. Weak theme keys
+ * keep replacement reactive without retaining retired application palettes.
+ */
+const DRAW_STYLE_CACHE = new WeakMap<KanbanTheme, Map<string, ThemeRole>>();
+
+/** Reusable foreground/surface combinations keyed only by resolved immutable style identities. */
+const CARD_CONTENT_STYLE_CACHE = new WeakMap<ThemeRole, WeakMap<ThemeRole, { normal?: ThemeRole; bold?: ThemeRole }>>();
+
+/** Returns the cached terminal style for one allowlisted semantic role. */
 function style(ctx: DrawContext, theme: KanbanTheme, role: KanbanThemeRole) {
-  return resolveKanbanThemeRole(theme, role, 'card.normal', {
+  let themeCache = DRAW_STYLE_CACHE.get(theme);
+  if (themeCache === undefined) {
+    themeCache = new Map<string, ThemeRole>();
+    DRAW_STYLE_CACHE.set(theme, themeCache);
+  }
+  const key = `${ctx.caps.colorDepth}:${role}`;
+  const cached = themeCache.get(key);
+  if (cached !== undefined) return cached;
+  const resolved = resolveKanbanThemeRole(theme, role, 'card.normal', {
     colorDepth: ctx.caps.colorDepth,
     noColor: ctx.caps.colorDepth === 'mono',
   }).style;
+  themeCache.set(key, resolved);
+  return resolved;
 }
 
 /** Crops safe text by terminal cells without emitting a partial wide glyph. */
@@ -120,11 +142,26 @@ function cardFrameGlyphs(focused: boolean, boxDrawing: boolean): KanbanCardFrame
 
 /** Keeps a semantic text foreground and attributes over one coherent card-surface background. */
 function cardContentStyle(textStyle: ThemeRole, surfaceStyle: ThemeRole, bold = false): ThemeRole {
-  return {
+  let surfaces = CARD_CONTENT_STYLE_CACHE.get(textStyle);
+  if (surfaces === undefined) {
+    surfaces = new WeakMap<ThemeRole, { normal?: ThemeRole; bold?: ThemeRole }>();
+    CARD_CONTENT_STYLE_CACHE.set(textStyle, surfaces);
+  }
+  let variants = surfaces.get(surfaceStyle);
+  if (variants === undefined) {
+    variants = {};
+    surfaces.set(surfaceStyle, variants);
+  }
+  const cached = bold ? variants.bold : variants.normal;
+  if (cached !== undefined) return cached;
+  const resolved = Object.freeze({
     ...textStyle,
     bg: surfaceStyle.bg,
     ...(bold ? { attrs: (textStyle.attrs ?? Attr.none) | Attr.bold } : {}),
-  };
+  });
+  if (bold) variants.bold = resolved;
+  else variants.normal = resolved;
+  return resolved;
 }
 
 /** Returns the frame glyph at one complete-card coordinate, or nothing for an interior cell. */
