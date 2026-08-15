@@ -1,7 +1,7 @@
 # Kanban security architecture
 
-> **Last Updated**: 2026-08-12
-> **Status**: Phase C contract, source, interaction, request, operation, drag, host, and testing boundaries implemented
+> **Last Updated**: 2026-08-15
+> **Status**: Phase D board, productivity, editing, configuration, event, history, host, and testing boundaries implemented
 
 ## Trust boundary
 
@@ -28,6 +28,10 @@ application must authorize every dispatched request again.
 | Interaction extensions      | Hostile controller or handler corrupts state/leaks records  | Exact snapshots, exclusive ownership, serialized settlement, identity-only intents    | Interaction boundary implemented   |
 | Operation lifecycle         | Duplicate dispatch, conflict, late settlement, partial bulk | Subject reservations, exactly-once dispatch, generation checks, atomic reconciliation | Phase C implemented                |
 | Pointer capture and drag    | Stale capture/timer, wrong target, payload-bearing overlay  | Generation lease, semantic drop map, bounded overlay, synchronous cancellation        | Phase C implemented                |
+| View and saved-view input   | Hostile JSON, incompatible IDs, or partial projection       | Exact snapshots, byte/depth/count limits, migration, reconciliation, atomic apply     | Phase D implemented                |
+| Editor/configuration input  | Draft leakage, hostile controls, stale validation/result    | Detached bounded fields, callback isolation, generations, redacted diagnostics        | Phase D implemented                |
+| Actions and keymaps         | Collision, unreachable chord, or capability bypass          | Bounded registry, atomic conflict checks, host normalization, authority recheck       | Phase D implemented                |
+| Events and history          | Record/draft/token leakage or stale undo invocation         | Payload allowlist, bounded queue, fresh proposals, application-owned stacks           | Phase D implemented                |
 | Testing and host evidence   | Private input/result retention or fake PTY evidence         | Sanitized collector, semantic-only envelope, real PTY/ConPTY adapters                 | Phase C implemented                |
 
 ## Input and output rules
@@ -84,6 +88,33 @@ autoscroll timers, unknown-edge prefetch, collapsed-hover expansion, and inserti
 generation. Focus loss, replacement, resize, policy/source invalidation, Escape, release, unmount, stop,
 or disposal invalidates that generation before cleanup callbacks can affect newer state.
 
+Saved view input is untrusted even when it came from an earlier application session. Parsing snapshots
+only exact data properties and enforces bounded bytes, nesting depth, object keys, arrays, strings,
+filters, sorts, quick filters, columns, swimlanes, and extensions before migration. Unknown versions
+and malformed values return typed diagnostics. Reconciliation resolves semantic IDs against the
+current registry and structure before one atomic controller replacement; invalid input never partially
+changes the active board. Storage authorization and sharing policy remain application responsibilities.
+
+Editor and configuration boundaries never retain application records as mutable drafts. An editor
+session creates a detached, bounded field draft, rejects malformed schema/control graphs, isolates
+formatting and validation callbacks, and ties asynchronous validation/submission to abort generations.
+Diagnostics and events redact field values: they report only stable field IDs, bounded codes, states,
+and counts, without card titles, descriptions, checklist text, custom values, or raw exceptions.
+Configuration sessions apply the same exact-shape, text, identity, and cancellation rules to detached
+column and swimlane drafts.
+
+Action invocations are closed snapshots with bounded IDs and context. Keymap replacement validates the
+complete candidate atomically so a conflict or host-unreachable chord cannot partially publish. A
+capability snapshot affects discoverability and eligibility only; the application dispatcher still
+authorizes every resulting proposal.
+
+Event publication never carries a record, editor draft, query value, placement token, undo token, or
+raw exception. The hub copies allowlisted payload-free evidence, caps queued and retained snapshots,
+orders nested publication breadth-first, and isolates subscriber/diagnostic failures. History
+availability likewise contains only revisions and message IDs; each invocation asks the application to
+build a fresh proposal and never exposes or retains its stack, inverse closure, record snapshot, or
+token. Disposal prevents queued or late asynchronous work from publishing.
+
 The public testing collector accepts unknown input but retains only bounded normalized mouse/focus
 events; paste and key payloads are discarded. Browser evidence uses xterm input, and native evidence
 requires a real `node-pty` PTY or ConPTY child that emits a validated semantic-only result.
@@ -96,8 +127,9 @@ Transient board state must be released on disposal and must not be serialized in
 
 ## Verification obligations
 
-Specification tests cover hostile strings, malformed descriptors, oversized tokens/JSON, stale
-results, throwing callbacks/controllers/handlers, re-entrancy, bounded selection, navigation
-cancellation, mismatched pointer revisions, teardown order, and disposal. Host-level tests verify
-that capability visibility cannot bypass dispatcher authorization, post-disposal input is unhandled,
-and terminal output contains no untrusted escape sequences.
+Specification tests cover hostile strings, malformed descriptors/schema graphs, oversized tokens and
+saved-view JSON, accessor/proxy input, stale editor/configuration results, event redaction, keymap
+conflicts, fresh history proposals, throwing callbacks/controllers/handlers, re-entrancy, bounded
+selection, navigation cancellation, mismatched pointer revisions, teardown order, and disposal.
+Host-level tests verify that capability visibility cannot bypass dispatcher authorization,
+post-disposal input is unhandled, and terminal output contains no untrusted escape sequences.

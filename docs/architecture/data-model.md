@@ -1,7 +1,7 @@
 # Kanban data model
 
-> **Last Updated**: 2026-08-12
-> **Status**: Phase C read, presentation, scene, interaction, request, operation, and drag state implemented
+> **Last Updated**: 2026-08-15
+> **Status**: Phase D board, view, editing, configuration, action, event, and history state implemented
 
 ## Domain model
 
@@ -21,28 +21,38 @@ erDiagram
     BOARD ||--o{ OPERATION : coordinates
     OPERATION ||--o{ AFFECTED_SUBJECT : reserves
     OPERATION ||--o| PUBLICATION_EXPECTATION : reconciles
-    BOARD ||--o{ SAVED_VIEW : restores
+    BOARD ||--|| VIEW_STATE : projects
+    VIEW_STATE ||--o| SAVED_VIEW : captures
+    BOARD ||--o{ EDITOR_SESSION : coordinates
+    BOARD ||--o{ CONFIGURATION_SESSION : coordinates
+    BOARD ||--o{ EVENT : publishes
+    HISTORY ||--o{ OPERATION : proposes
     QUERY_SESSION ||--|{ CELL_CURSOR : exposes
     CELL_CURSOR ||--o{ CARD_PROJECTION : windows
 ```
 
 ## Entities and value objects
 
-| Entity             | Identity and key fields                                              | Ownership                                                  | Invariants                                                               |
-| ------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Board definition   | Board ID, ordered columns, optional swimlane dimension               | Application                                                | IDs are stable; column order is explicit                                 |
-| Column             | ID, name, order, workflow metadata, WIP/DoD policy                   | Application                                                | Deletion of non-empty columns requires atomic reassignment or rejection  |
-| Swimlane           | ID, label, order, visibility/collapse state                          | Application for structure; board for temporary hover lease | At most one grouping dimension; no nested swimlanes                      |
-| Card record        | Application-defined `TCard`                                          | Application                                                | Package never mutates or persists the record directly                    |
-| Card projection    | Stable ID, title/status descriptors, summaries, semantic styles      | Adapter/package                                            | Descriptor output is bounded and safe to render                          |
-| Cell cursor        | Column/swimlane coordinate, revision, loaded window, edge knowledge  | Query session                                              | Loaded boundaries are not assumed to be logical edges                    |
-| Placement          | Destination coordinate and opaque rank token                         | Source/dispatcher contract                                 | Token is semantic, bounded, and not interpreted by the view              |
-| Scene              | Revision, retained rows, clipped regions, semantic targets           | Viewport                                                   | Finite visible/overscan snapshot; no application record payloads         |
-| Interaction        | Revision, focus, ordered selected keys, range/pending/feedback state | Board-owned controller                                     | Detached immutable snapshot with finite selection                        |
-| Interaction intent | Kind, origin, closed scope, eligible selection snapshot              | Component to application handler                           | Identity-only evidence; never authorizes or performs mutation            |
-| Operation          | ID, request, affected subjects, lifecycle state, expectation         | Board coordinator                                          | Exactly one dispatcher call; bounded retention and conflict ownership    |
-| Drag overlay       | Generation, moved keys, source placeholders, target, ghost           | Viewport/controller                                        | Payload-free, clipped, capture-owned, and absent after cancellation      |
-| Saved view         | Version, query, grouping, order, density, visibility                 | Application storage                                        | Semantic configuration only; transient focus/drag/load state is excluded |
+| Entity                | Identity and key fields                                              | Ownership                                                  | Invariants                                                               |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Board definition      | Board ID, ordered columns, optional swimlane dimension               | Application                                                | IDs are stable; column order is explicit                                 |
+| Column                | ID, name, order, workflow metadata, WIP/DoD policy                   | Application                                                | Deletion of non-empty columns requires atomic reassignment or rejection  |
+| Swimlane              | ID, label, order, visibility/collapse state                          | Application for structure; board for temporary hover lease | At most one grouping dimension; no nested swimlanes                      |
+| Card record           | Application-defined `TCard`                                          | Application                                                | Package never mutates or persists the record directly                    |
+| Card projection       | Stable ID, title/status descriptors, summaries, semantic styles      | Adapter/package                                            | Descriptor output is bounded and safe to render                          |
+| Cell cursor           | Column/swimlane coordinate, revision, loaded window, edge knowledge  | Query session                                              | Loaded boundaries are not assumed to be logical edges                    |
+| Placement             | Destination coordinate and opaque rank token                         | Source/dispatcher contract                                 | Token is semantic, bounded, and not interpreted by the view              |
+| Scene                 | Revision, retained rows, clipped regions, semantic targets           | Viewport                                                   | Finite visible/overscan snapshot; no application record payloads         |
+| Interaction           | Revision, focus, ordered selected keys, range/pending/feedback state | Board-owned controller                                     | Detached immutable snapshot with finite selection                        |
+| Interaction intent    | Kind, origin, closed scope, eligible selection snapshot              | Component to application handler                           | Identity-only evidence; never authorizes or performs mutation            |
+| Operation             | ID, request, affected subjects, lifecycle state, expectation         | Board coordinator                                          | Exactly one dispatcher call; bounded retention and conflict ownership    |
+| Drag overlay          | Generation, moved keys, source placeholders, target, ghost           | Viewport/controller                                        | Payload-free, clipped, capture-owned, and absent after cancellation      |
+| View state            | Revision, search, filters, sort, grouping, structure, presentation   | `KanbanViewController`                                     | One immutable transactional projection; draft search is separate         |
+| Saved view            | Version, query, grouping, order, density, visibility                 | Value in package; storage in application                   | Semantic configuration only; transient focus/drag/load state is excluded |
+| Editor session        | Identity claim, detached draft, validation, focus, stale/submission  | Editor coordinator/session                                 | At most one edit claim per card; source record remains application-owned |
+| Configuration session | Operation, detached structure draft, validation, submission          | Configuration session                                      | One column/swimlane proposal; no direct structure mutation               |
+| Event                 | Board ID, sequence, kind, bounded IDs/revisions/states/counts        | `KanbanEventHub`                                           | Payload-free immutable snapshot; bounded queue and optional retention    |
+| History               | Availability revision, undo/redo message IDs                         | Application provider plus package binding                  | Stack and inverse semantics remain application-owned                     |
 
 ## State ownership
 
@@ -50,23 +60,48 @@ erDiagram
 | --------------------------------------------------------- | ------------------- | -------------------------------- |
 | Card records, workflow policy, authorization, persistence | Application         | Durable                          |
 | Saved-view JSON                                           | Application         | Durable and versioned            |
+| View state                                                | View controller     | Mounted board session            |
 | Query revision and loaded windows                         | Query session       | Until query replacement/disposal |
 | Focus, selection, scroll, hover, pending navigation       | Board/controller    | Mounted board session            |
 | Pending press, drag ghost, insertion marker               | Viewport/controller | One capture generation           |
 | Operation snapshots and undo descriptors                  | Board coordinator   | Bounded mounted-board retention  |
-| Open dialog                                               | Later dialog UI     | Not implemented in Phase C       |
+| Editor session and detached draft                         | Editor session      | One create/edit/view workflow    |
+| Configuration session and detached structure draft        | Config session      | One column/swimlane workflow     |
+| Event queue and optional retained snapshots               | Event hub           | Bounded board-scoped lifetime    |
+| History availability subscription                         | History binding     | Bound application provider       |
 
 ## Data flow
 
 1. The application supplies a `KanbanDataSource<TCard>` and opens a revisioned query session.
 2. The board asks sparse cell cursors only for visible and overscan ranges.
 3. Card adapters derive bounded presentation descriptors from application records.
-4. Mounted or programmatic interaction updates immutable focus/selection state, emits identity-only
+4. The view controller prepares and atomically commits query/presentation transitions across the board
+   binding, viewport, and source session; saved views capture only durable semantic state.
+5. Mounted or programmatic interaction updates immutable focus/selection state, emits identity-only
    semantic intents, or proposes a standard request through the board coordinator.
-5. The coordinator validates eligibility, reserves affected subjects, publishes pending visual state,
+6. Editor and configuration sessions collect detached validated drafts. Result-only workflows return
+   detached values; authority workflows propose one request without mutating application records.
+7. The coordinator validates eligibility, reserves affected subjects, publishes pending visual state,
    and invokes the application dispatcher exactly once.
-6. Accepted operations remain pending until authoritative source publication satisfies their exact
+8. Accepted operations remain pending until authoritative source publication satisfies their exact
    expectation; rejection, cancellation, contradiction, or disposal releases transient ownership.
+9. The event hub emits bounded state/identity evidence, while the history binding asks the application
+   for a fresh proposal against current availability and revision evidence.
+
+## Implemented productivity-state invariants
+
+- View state commits transactionally. Query preparation, board binding, viewport activation, and source
+  session verification either publish together or preserve the previous complete projection.
+- Saved-view input is detached, bounded, versioned, migrated, and reconciled against the current
+  registry and structure before apply. Storage and sharing remain application-owned.
+- An Editor session owns one detached draft, validation generation, focus/error state, and submission.
+  The coordinator prevents simultaneous edit claims, and stale publication requires explicit policy.
+- A Configuration session owns one detached column or swimlane operation. Programmatic and dialog
+  entry points create the same validated proposal and never mutate authoritative structure directly.
+- An Event contains bounded identifiers, revisions, states, reason codes, and counts, never records,
+  drafts, query values, placement tokens, undo tokens, or raw exceptions.
+- History exposes reactive availability only. Every invocation builds a fresh request through current
+  authority; the package stores no history stack, card snapshot, or inverse closure.
 
 ## Implemented source invariants
 
@@ -129,8 +164,8 @@ erDiagram
 
 ## Compatibility and migration
 
-Public TypeScript contracts, ten stable foundation catalogs, and ten additive Phase B and Phase C
-overlays follow package semantic versioning.
-Saved-view codecs remain a later phase governed by the accepted application-owned semantic storage
-decision; transient scene, focus, selection, press, and pending-navigation state is not a durable
-saved-view model.
+Public TypeScript contracts, ten stable foundation catalogs, and ten additive Phase B, Phase C, and
+Phase D overlays follow package semantic versioning. The versioned saved-view schema, migrations,
+action IDs, event discriminants, configuration/editor field kinds, and testing utilities are supported
+SDK surfaces. Transient scene, focus, selection, scroll, press, dialog, pending-operation, and
+pending-navigation state is not a durable saved-view model.
