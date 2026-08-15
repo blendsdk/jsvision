@@ -228,4 +228,23 @@ describe('Phase D board composition', () => {
       code: 'router-disposed',
     });
   });
+
+  it('delegates help to the configured application presenter instead of handling a no-op', () => {
+    const presentHelp = vi.fn(() => ({ kind: 'handled' as const }));
+    const board = boardWith({
+      actions: {
+        boardId: 'board-help',
+        host: { kind: 'terminal', platform: 'linux' },
+        executePackageAction: presentHelp,
+      },
+    });
+    mount(board);
+
+    expect(
+      invokeAction(actionSurface(board), 'invoke', ['kanban.help.open', 'programmatic', { kind: 'board' }]),
+    ).toEqual({ kind: 'handled' });
+    expect(presentHelp).toHaveBeenCalledWith(
+      expect.objectContaining({ actionId: 'kanban.help.open', origin: 'programmatic' }),
+    );
+  });
 });

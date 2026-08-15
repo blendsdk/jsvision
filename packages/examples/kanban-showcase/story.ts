@@ -10,6 +10,8 @@ export interface KanbanStoryContext {
   readonly caps: CapabilityProfile;
   /** Owning application used by stories that open package-provided modal workflows. */
   readonly app?: Application;
+  /** Shell-owned lifetime aborted before the story view is detached during navigation. */
+  readonly signal?: AbortSignal;
 }
 
 /** Modern interaction scenarios exercised by the permanent kitchen-sink verification driver. */

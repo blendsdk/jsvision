@@ -404,6 +404,10 @@ tests. Typecheck, dependency, documentation, plugin synchronization/integrity, a
 gates pass. Replacing a story or imported GitHub snapshot disposes the prior board action graph;
 controller changes stop reflowing a disposed board; and board disposal aborts editor acquisition.
 
+**Quality gate**: [Phase 8 quality review](15-phase-8-quality-review.md) — remediation in progress;
+six Major findings consolidated into five accepted corrections under `--auto-design`. Phase 9 is
+blocked until complete verification and the single permitted fix-scoped re-review pass.
+
 **Verify**: Kanban build immediately before focused Examples typecheck/unit/E2E/import-smoke; focused Kanban integration/performance/E2E; `yarn verify:local`
 
 ## Phase 9: Documentation, plugin parity, quality, and acceptance

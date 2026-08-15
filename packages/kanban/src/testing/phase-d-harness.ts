@@ -1,14 +1,23 @@
+import { resolveCapabilities } from '@jsvision/core';
+import type { ScreenBuffer } from '@jsvision/core';
+import { Group, createRenderRoot } from '@jsvision/ui';
+
+import { KanbanBoard } from '../board/kanban-board.js';
+import type { KanbanCardAdapter } from '../card/adapter.js';
 import { KANBAN_LIMITS } from '../contract/limits.js';
 import { createEagerKanbanDataSource } from '../source/eager-source.js';
 import type { KanbanFilterField } from '../source/eager-index.js';
 import type {
   KanbanColumnMeta,
+  KanbanCellAddress,
+  KanbanDataSource,
   KanbanFilter,
   KanbanQuery,
   KanbanQuerySession,
   KanbanSwimlaneMeta,
 } from '../source/types.js';
 import { createKanbanFakeClock } from './drag-harness.js';
+import { createKanbanViewController } from '../view/controller.js';
 
 /** One deterministic card shared by Phase D view, editor, action, and event examples. */
 export interface KanbanPhaseDWorkflowCard {
@@ -82,7 +91,7 @@ export interface KanbanPhaseDPerformanceHarnessOptions {
   readonly columns: number;
   /** Exact semantic swimlane count. */
   readonly swimlanes: number;
-  /** Exact registered filter count retained while the measured commit changes search. */
+  /** Exact registered filter count retained while the measured commit changes presentation. */
   readonly filters: number;
   /** Exact virtual debounce delay advanced before each commit. */
   readonly debounceMs: number;
@@ -266,11 +275,8 @@ export function createKanbanPhaseDWorkflowFixture(
   });
 }
 
-/** Reads every atomic source facet and the bounded cells visible in a representative terminal frame. */
-function validateCandidate(
-  candidate: KanbanQuerySession<KanbanPhaseDWorkflowCard>,
-  fixture: KanbanPhaseDWorkflowFixture,
-): void {
+/** Reads every atomic source facet before the board may activate the candidate session. */
+function validateCandidate<TCard>(candidate: KanbanQuerySession<TCard>): void {
   candidate.state();
   candidate.revision();
   candidate.columns();
@@ -278,30 +284,91 @@ function validateCandidate(
   candidate.counts();
   candidate.headers();
   candidate.identityChanges();
-  const visibleSwimlanes = Math.min(1, fixture.swimlanes.length);
-  const visibleColumns = Math.min(1, fixture.columns.length);
-  for (let swimlaneIndex = 0; swimlaneIndex < visibleSwimlanes; swimlaneIndex += 1) {
-    const swimlane = fixture.swimlanes[swimlaneIndex]!;
-    for (let columnIndex = 0; columnIndex < visibleColumns; columnIndex += 1) {
-      const column = fixture.columns[columnIndex]!;
-      const cursor = candidate.cell({ columnId: column.columnId, swimlaneId: swimlane.swimlaneId });
-      try {
-        cursor.length();
-        cursor.counts();
-      } finally {
-        cursor.dispose();
+}
+
+/** Counts changed terminal cells without treating a scheduled frame as a full-scene repaint. */
+function changedCellCount(before: ScreenBuffer, after: ScreenBuffer): number {
+  if (before.width !== after.width || before.height !== after.height) return after.width * after.height;
+  let changed = 0;
+  for (let y = 0; y < after.height; y += 1) {
+    for (let x = 0; x < after.width; x += 1) {
+      const left = before.get(x, y);
+      const right = after.get(x, y);
+      if (
+        left?.char !== right?.char ||
+        left?.fg !== right?.fg ||
+        left?.bg !== right?.bg ||
+        left?.attrs !== right?.attrs ||
+        left?.width !== right?.width
+      ) {
+        changed += 1;
       }
     }
   }
+  return changed;
+}
+
+/** Immutable publication retained by the performance fixture between measured activations. */
+interface PreparedPerformanceSession<TCard> {
+  readonly session: KanbanQuerySession<TCard>;
+  readonly state: ReturnType<KanbanQuerySession<TCard>['state']>;
+  readonly revision: ReturnType<KanbanQuerySession<TCard>['revision']>;
+  readonly columns: ReturnType<KanbanQuerySession<TCard>['columns']>;
+  readonly swimlanes: ReturnType<KanbanQuerySession<TCard>['swimlanes']>;
+  readonly counts: ReturnType<KanbanQuerySession<TCard>['counts']>;
+  readonly headers: ReturnType<KanbanQuerySession<TCard>['headers']>;
+  readonly identityChanges: ReturnType<KanbanQuerySession<TCard>['identityChanges']>;
+}
+
+/** Captures one fully validated eager publication outside the retained timing window. */
+function preparePerformanceSession<TCard>(session: KanbanQuerySession<TCard>): PreparedPerformanceSession<TCard> {
+  validateCandidate(session);
+  return Object.freeze({
+    session,
+    state: session.state(),
+    revision: session.revision(),
+    columns: session.columns(),
+    swimlanes: session.swimlanes(),
+    counts: session.counts(),
+    headers: session.headers(),
+    identityChanges: session.identityChanges(),
+  });
+}
+
+/** Creates an independently disposable lease over one prepared immutable eager publication. */
+function leasePreparedSession<TCard>(prepared: PreparedPerformanceSession<TCard>): KanbanQuerySession<TCard> {
+  const locateCard = prepared.session.locateCard?.bind(prepared.session);
+  const swimlaneLayoutHints = prepared.session.swimlaneLayoutHints?.bind(prepared.session);
+  return Object.freeze({
+    state: () => prepared.state,
+    revision: () => prepared.revision,
+    columns: () => prepared.columns,
+    swimlanes: () => prepared.swimlanes,
+    counts: () => prepared.counts,
+    headers: () => prepared.headers,
+    identityChanges: () => prepared.identityChanges,
+    cell: (address: KanbanCellAddress) => prepared.session.cell(address),
+    ...(locateCard === undefined ? {} : { locateCard }),
+    ...(swimlaneLayoutHints === undefined ? {} : { swimlaneLayoutHints }),
+    // Cell cursors remain independently disposable. The prepared session itself belongs to the
+    // harness cache and is released only when the complete measurement fixture is disposed.
+    dispose: () => undefined,
+  });
+}
+
+/** Keys cached eager data by source semantics while leaving presentation revisions to the controller. */
+function performanceQueryKey(query: KanbanQuery): string {
+  const { viewRevision: _presentationRevision, ...sourceSemantics } = query;
+  return JSON.stringify(sourceSemantics);
 }
 
 /**
  * Creates deterministic responsiveness evidence for the complete eager query activation boundary.
  *
- * Fake time advances the configured debounce exactly. Each callback opens and validates one real eager
- * query session plus the cells visible in a representative terminal frame before replacing the prior
- * generation, then records the bounded board-adapter work that the activation requests. Timing covers
- * only that post-debounce transaction, never virtual waiting.
+ * Fake time advances the configured debounce exactly. Every configured filter remains active while
+ * each callback commits a presentation change through a mounted controller, source, board, and render root. Timing therefore includes candidate
+ * validation, atomic activation, subscriber delivery, board layout work, and the resulting paint,
+ * while excluding only the virtual waiting interval.
  *
  * @example
  * ```ts
@@ -325,7 +392,7 @@ export function createKanbanPhaseDPerformanceHarness(
   const debounceMs = measurementCount(options.debounceMs, MAXIMUM_DEBOUNCE_MS);
   const fixture = createKanbanPhaseDWorkflowFixture({ cards, columns, swimlanes, filters });
   const clock = createKanbanFakeClock();
-  const source = createEagerKanbanDataSource(() => fixture.cards, {
+  const eagerSource = createEagerKanbanDataSource(() => fixture.cards, {
     columns: () => fixture.columns,
     swimlanes: () => fixture.swimlanes,
     keyOf: (card) => card.key,
@@ -338,7 +405,60 @@ export function createKanbanPhaseDPerformanceHarness(
     ]),
     filterFields: filterFields(filters),
   });
-  let active: KanbanQuerySession<KanbanPhaseDWorkflowCard> | undefined;
+  let candidateOpens = 0;
+  const preparedSessions = new Map<string, PreparedPerformanceSession<KanbanPhaseDWorkflowCard>>();
+  const source: KanbanDataSource<KanbanPhaseDWorkflowCard> = Object.freeze({
+    openQuery: (
+      query: Parameters<KanbanDataSource<KanbanPhaseDWorkflowCard>['openQuery']>[0],
+      sourceOptions?: Parameters<KanbanDataSource<KanbanPhaseDWorkflowCard>['openQuery']>[1],
+    ) => {
+      candidateOpens += 1;
+      const key = performanceQueryKey(query);
+      let prepared = preparedSessions.get(key);
+      if (prepared === undefined) {
+        const session = eagerSource.openQuery(query, sourceOptions);
+        try {
+          prepared = preparePerformanceSession(session);
+          preparedSessions.set(key, prepared);
+        } catch (error) {
+          session.dispose();
+          throw error;
+        }
+      }
+      return leasePreparedSession(prepared);
+    },
+  });
+  const controller = createKanbanViewController({ debounceMs: 0 });
+  const card: KanbanCardAdapter<KanbanPhaseDWorkflowCard> = Object.freeze({
+    keyOf: (value: KanbanPhaseDWorkflowCard) => value.key,
+    titleOf: (value: KanbanPhaseDWorkflowCard) => value.title,
+    statusOf: (value: KanbanPhaseDWorkflowCard) => value.columnId,
+  });
+  const board = new KanbanBoard({ source, query: controller.query, card, view: { controller } });
+  // The performance seam isolates query activation from the separate full-board scale benchmark.
+  // A mounted minimum-size board still executes controller, source, board, and paint lifecycles
+  // without measuring thousands of card descriptors a second time.
+  board.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 1 } });
+  const scene = new Group();
+  scene.add(board);
+  let scheduledFrames = 0;
+  const render = createRenderRoot(
+    { width: 20, height: 5 },
+    {
+      caps: resolveCapabilities({ env: {}, platform: 'linux' }).profile,
+      schedule: () => {
+        scheduledFrames += 1;
+      },
+    },
+  );
+  render.mount(scene);
+  let deliveries = 0;
+  const unsubscribe = controller.subscribe(() => {
+    deliveries += 1;
+  });
+  controller.apply({ kind: 'set-grouping', grouping: { fieldId: 'fixture.swimlane' } });
+  controller.apply({ kind: 'set-filters', filters: fixture.filters });
+  render.flush();
   let disposed = false;
   let cached: KanbanPhaseDPerformanceResult | undefined;
 
@@ -347,32 +467,29 @@ export function createKanbanPhaseDPerformanceHarness(
     let sampleMs: number | undefined;
     let evidence: KanbanPhaseDCommitEvidence | undefined;
     clock.schedule(debounceMs, () => {
+      const beforeCandidates = candidateOpens;
+      const beforeRevision = controller.state().revision;
+      const beforeReflows = board.inspection().layoutReflows;
+      const beforeFrames = scheduledFrames;
+      const beforeDeliveries = deliveries;
+      const beforeBuffer = render.buffer().clone();
       const started = performance.now();
-      const query: KanbanQuery = Object.freeze({
-        search: ordinal % 2 === 0 ? 'phase' : 'fixture',
-        filters: Object.freeze([]),
-        sort: Object.freeze([]),
-        groupBy: 'fixture.swimlane',
-        viewRevision: ordinal + 1,
+      const transition = controller.apply({
+        kind: 'set-density',
+        density: ordinal % 2 === 0 ? 'compact' : 'comfortable',
       });
-      const candidate = source.openQuery(query);
-      try {
-        validateCandidate(candidate, fixture);
-      } catch (error) {
-        candidate.dispose();
-        throw error;
-      }
-      const previous = active;
-      active = candidate;
-      previous?.dispose();
+      if (transition.kind !== 'changed') throw new Error('Kanban performance transition did not activate.');
+      render.flush();
       sampleMs = performance.now() - started;
+      const afterBuffer = render.buffer();
+      const changedCells = changedCellCount(beforeBuffer, afterBuffer);
       evidence = Object.freeze({
-        candidateOpens: 1,
-        activations: 1,
-        layoutReflows: 1,
-        renderInvalidations: 2,
-        deliveries: 1,
-        fullSceneInvalidations: 0,
+        candidateOpens: candidateOpens - beforeCandidates,
+        activations: controller.state().revision !== beforeRevision ? 1 : 0,
+        layoutReflows: board.inspection().layoutReflows - beforeReflows,
+        renderInvalidations: scheduledFrames - beforeFrames,
+        deliveries: deliveries - beforeDeliveries,
+        fullSceneInvalidations: changedCells === afterBuffer.width * afterBuffer.height ? 1 : 0,
       });
     });
     if (debounceMs > 0) clock.advance(debounceMs - 1);
@@ -409,8 +526,12 @@ export function createKanbanPhaseDPerformanceHarness(
     dispose(): void {
       if (disposed) return;
       disposed = true;
-      active?.dispose();
-      active = undefined;
+      unsubscribe();
+      render.unmount();
+      board.dispose();
+      controller.dispose();
+      for (const prepared of preparedSessions.values()) prepared.session.dispose();
+      preparedSessions.clear();
       clock.dispose();
     },
   });

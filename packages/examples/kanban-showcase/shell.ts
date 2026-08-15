@@ -2,6 +2,7 @@ import { createKeymap } from '@jsvision/core';
 import type { CapabilityProfile } from '@jsvision/core';
 import {
   Commands,
+  Desktop,
   ListBox,
   Text,
   col,
@@ -88,6 +89,7 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
   let activeIndex = -1;
   let activeBuild: KanbanStoryBuild | undefined;
   let disposeStory: (() => void) | undefined;
+  let abortStory: AbortController | undefined;
   let disposedStories = 0;
   let focusActiveStory = (): void => {};
   const focusedStory = signal(0);
@@ -105,6 +107,16 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     const story = KANBAN_STORIES[index];
     if (story === undefined) throw new RangeError('Kanban showcase story is unavailable.');
 
+    abortStory?.abort();
+    abortStory = undefined;
+    // Story dialogs live on the shared desktop rather than beneath the replaceable story view.
+    // Close the bounded modal stack and detach its windows before mounting the next owner.
+    for (let depth = 0; depth < 3; depth += 1) {
+      const storyWindow = app.desktop?.activeWindow();
+      if (storyWindow === undefined || storyWindow === null) break;
+      app.loop.endModal('story-replaced');
+      app.desktop?.removeWindow(storyWindow);
+    }
     for (const child of [...storyHost.children]) storyHost.remove(child);
     if (disposeStory !== undefined) {
       disposeStory();
@@ -113,7 +125,8 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     }
     createRoot((dispose) => {
       disposeStory = dispose;
-      activeBuild = story.build({ caps, app });
+      abortStory = new AbortController();
+      activeBuild = story.build({ caps, app, signal: abortStory.signal });
     });
     activeIndex = index;
     focusedStory.set(index);
@@ -154,9 +167,12 @@ export function createKanbanShowcase(caps: CapabilityProfile, viewport?: KanbanS
     fixed(new Text('Enter/click opens\nTab moves focus\nCtrl-←/→ changes story'), 3),
   );
   const content = row({ gap: 1 }, grow(sidebar, 2), grow(storyHost, 5, { min: 18 }));
-  const app = createApplication({
+  content.setLayout({ position: 'fill' });
+  const desktop = new Desktop();
+  desktop.add(content);
+  const app: Application = createApplication({
     caps,
-    content,
+    content: desktop,
     ...(viewport === undefined ? {} : { viewport }),
     menuBar: buildMenu(),
     statusLine: statusLine([

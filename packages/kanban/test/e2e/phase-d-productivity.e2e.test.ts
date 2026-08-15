@@ -58,7 +58,14 @@ function createBoard(controller: ReturnType<typeof createKanbanViewController>):
       query: () => QUERY,
       card: CARD,
       view: { controller, chrome: 'standard' },
-      actions: { boardId: 'phase-d-e2e', host: { kind: 'terminal', platform: 'linux' } },
+      actions: {
+        boardId: 'phase-d-e2e',
+        host: { kind: 'terminal', platform: 'linux' },
+        executePackageAction: (invocation: { readonly actionId: string }) =>
+          invocation.actionId === 'kanban.help.open'
+            ? Object.freeze({ kind: 'handled' as const })
+            : Object.freeze({ kind: 'unavailable' as const }),
+      },
     },
   ]);
 }

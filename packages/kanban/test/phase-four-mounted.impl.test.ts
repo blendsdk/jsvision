@@ -3,11 +3,18 @@ import { createApplication, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { KanbanBoard, createEagerKanbanDataSource, createKanbanOperationId } from '../src/index.js';
+import {
+  KanbanBoard,
+  createEagerKanbanDataSource,
+  createKanbanEventHub,
+  createKanbanOperationId,
+} from '../src/index.js';
 import { inspectKanbanDragFrame } from '../src/testing.js';
 import type {
   KanbanCardAdapter,
+  KanbanBoardActionOptions,
   KanbanEligibility,
+  KanbanEventHub,
   KanbanQuery,
   KanbanRequestDispatcher,
   KanbanRequestProposal,
@@ -44,6 +51,8 @@ function mountedBoard(
   options: {
     readonly records?: () => readonly Card[];
     readonly structure?: () => KanbanStructurePolicy<Card>;
+    readonly actions?: KanbanBoardActionOptions;
+    readonly events?: KanbanEventHub;
   } = {},
 ) {
   const records =
@@ -70,6 +79,8 @@ function mountedBoard(
     dispatcher,
     operationEligibility: eligibility,
     ...(options.structure === undefined ? {} : { structure: options.structure }),
+    ...(options.actions === undefined ? {} : { actions: options.actions }),
+    ...(options.events === undefined ? {} : { events: options.events }),
   });
   board.setLayout({ position: 'fill' });
   const application = createApplication({ content: board, viewport: { width: 60, height: 16 }, caps: CAPS });
@@ -249,6 +260,39 @@ describe('mounted card-drag authority integration', () => {
       moved: [{ cardKey: 1 }],
       target: { columnId: 'doing' },
     });
+  });
+
+  it('rechecks drop capability at release and emits denial without dispatching', async () => {
+    const dispatcher = vi.fn();
+    const events = createKanbanEventHub({ boardId: 'drop-capability', retained: 16 });
+    let denyDrop = false;
+    const { application, board } = mountedBoard(dispatcher, () => ({ kind: 'allowed' }), {
+      events,
+      actions: {
+        boardId: 'drop-capability',
+        host: { kind: 'terminal', platform: 'linux' },
+        capability: (context) =>
+          denyDrop && context.actionId === 'kanban.card.drop'
+            ? { state: 'disabled', reasonCode: 'drop-policy-changed' }
+            : { state: 'allowed' },
+      },
+    });
+    const target = dragToDoing(application, board, false);
+    denyDrop = true;
+
+    application.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, ...target });
+    await settle();
+
+    expect(dispatcher).not.toHaveBeenCalled();
+    expect(events.snapshot()).toContainEqual(
+      expect.objectContaining({
+        kind: 'action',
+        actionId: 'kanban.card.drop',
+        state: 'disabled',
+        code: 'drop-policy-changed',
+      }),
+    );
+    events.dispose();
   });
 
   it('shows current blocked policy to drag admission and never invokes the dispatcher', async () => {

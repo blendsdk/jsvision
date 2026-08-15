@@ -168,6 +168,10 @@ export interface OwnedKanbanBoardActionBinding {
   readonly canStartCardDrag: (scope: Extract<KanbanActionScope, { kind: 'card' }>) => boolean;
   /** Reports whether structural dragging may begin after the ordinary click threshold. */
   readonly canStartStructureDrag: (scope: Extract<KanbanActionScope, { kind: 'column' | 'swimlane' }>) => boolean;
+  /** Rechecks current drop capability immediately before a card proposal reaches authority. */
+  readonly canCommitCardDrop: (cardKey: CardKey) => boolean;
+  /** Rechecks current reorder capability immediately before a structure proposal reaches authority. */
+  readonly canCommitStructureReorder: (scope: Extract<KanbanActionScope, { kind: 'column' | 'swimlane' }>) => boolean;
   /** Releases router and optional history resources idempotently. */
   readonly dispose: () => void;
 }
@@ -344,6 +348,13 @@ function executePackageAction(
       return admission(
         scope?.kind === 'cell' && services.interaction.scopedAction('add-card', scope, invocation.origin),
       );
+    case 'kanban.card.grab':
+    case 'kanban.card.drop':
+    case 'kanban.column.reorder':
+    case 'kanban.swimlane.reorder':
+      // These actions authorize an interaction stage; the board still owns proposal construction
+      // and dispatch. Routing them here preserves capability checks and ordered event evidence.
+      return admission(true);
     case 'kanban.column.configure':
     case 'kanban.swimlane.configure':
       return admission(scope !== undefined && services.interaction.scopedAction('configure', scope, invocation.origin));
@@ -352,8 +363,9 @@ function executePackageAction(
     case 'kanban.search.focus':
       return admission(services.projection.focusSearch());
     case 'kanban.help.open':
-      // Help remains a reachable no-op until an application or the standard chrome supplies a presenter.
-      return admission(true);
+      // No package presenter exists yet. Returning unavailable lets the configured application
+      // fallback provide real visible help instead of reporting success for a no-op.
+      return admission(false);
     case 'kanban.card.cancel-move':
     case 'kanban.transient.cancel':
       return admission(services.interaction.cancelTransient());
@@ -404,8 +416,10 @@ export function createKanbanBoardActionBinding(
     invoke: input.invoke,
     pointerAffordance: input.pointerAffordance,
   });
-  const pointer = (actionId: string, scope: KanbanActionScope | undefined): boolean =>
-    binding.pointer(actionId, targetForScope(scope)).kind !== 'unavailable';
+  const pointer = (actionId: string, scope: KanbanActionScope | undefined): boolean => {
+    const outcome = binding.pointer(actionId, targetForScope(scope));
+    return outcome.kind === 'handled' || outcome.kind === 'pending';
+  };
   let disposed = false;
   const owned: OwnedKanbanBoardActionBinding = {
     binding,
@@ -436,6 +450,14 @@ export function createKanbanBoardActionBinding(
       const actionId = scope.kind === 'column' ? 'kanban.column.reorder' : 'kanban.swimlane.reorder';
       const affordance = binding.pointerAffordance(actionId, targetForScope(scope));
       return affordance.visible && affordance.enabled;
+    },
+    canCommitCardDrop: (cardKey) => {
+      const outcome = binding.pointer('kanban.card.drop', Object.freeze({ kind: 'card', cardKey }));
+      return outcome.kind === 'handled' || outcome.kind === 'pending';
+    },
+    canCommitStructureReorder: (scope) => {
+      const actionId = scope.kind === 'column' ? 'kanban.column.reorder' : 'kanban.swimlane.reorder';
+      return pointer(actionId, scope);
     },
     dispose: () => {
       if (disposed) return;

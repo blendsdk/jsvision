@@ -136,6 +136,28 @@ function adapter(control?: {
 const mounted = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('Kanban editor dialog implementation boundaries', () => {
+  it('should close an already mounted modal when its owning scope aborts', async () => {
+    const h = host();
+    const source = records();
+    const lifetime = new AbortController();
+    const pending = openKanbanCardEditDialog(h.value, {
+      cardKey: CARD.id,
+      adapter: adapter(),
+      resolver: source.resolver,
+      coordinator: createKanbanEditorCoordinator(),
+      completion: { kind: 'authority', authority: { request: vi.fn() } },
+      signal: lifetime.signal,
+    });
+    await mounted();
+    expect(h.added).toHaveLength(1);
+
+    lifetime.abort();
+
+    await expect(pending).resolves.toEqual({ kind: 'disposed' });
+    expect(h.removed).toEqual(h.added);
+    expect(source.unsubscribe).toHaveBeenCalledOnce();
+  });
+
   it('should release modal, resolver, custom-control, and abort ownership exactly once', async () => {
     const h = host();
     const source = records();
@@ -248,7 +270,7 @@ describe('Kanban editor dialog implementation boundaries', () => {
     const binding = createKanbanEditorControlBinding({ field, session });
 
     expect(binding.diagnostics()).toEqual([
-      { code: 'custom-control-failed', messageId: 'kanban.editor.controlUnavailable' },
+      { code: 'custom-control-failed', messageId: 'kanban.editor.control-unavailable' },
     ]);
     expect(JSON.stringify(binding.diagnostics())).not.toContain('private control payload');
     binding.dispose();

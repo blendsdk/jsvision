@@ -557,8 +557,21 @@ export class KanbanBoard<TCard> extends Group {
       routeKey: (event) => this.#actions?.routeKey(event),
       canStartCardDrag: (scope) => this.#actions?.canStartCardDrag(scope) ?? true,
       canStartStructureDrag: (scope) => this.#actions?.canStartStructureDrag(scope) ?? true,
-      commitCardMove: (proposal) => this.#authority.commitProposal(proposal),
-      commitStructureReorder: (proposal) => this.#authority.commitProposal(proposal),
+      commitCardMove: (proposal) => {
+        const cardKey = proposal.moved[0]?.cardKey;
+        if (cardKey === undefined || (this.#actions !== undefined && !this.#actions.canCommitCardDrop(cardKey))) {
+          return false;
+        }
+        return this.#authority.commitProposal(proposal);
+      },
+      commitStructureReorder: (proposal) => {
+        const scope =
+          proposal.kind === 'column-reorder'
+            ? Object.freeze({ kind: 'column' as const, columnId: proposal.columnId })
+            : Object.freeze({ kind: 'swimlane' as const, swimlaneId: proposal.swimlaneId });
+        if (this.#actions !== undefined && !this.#actions.canCommitStructureReorder(scope)) return false;
+        return this.#authority.commitProposal(proposal);
+      },
       evaluateCardMove: (proposal) => this.#authority.evaluateProposal(proposal),
       moveFocused: (direction) => this.#interactionFacade.acceptMoveFocused(direction),
       cancelTransient: () => this.#interactionFacade.cancel(),
@@ -625,8 +638,14 @@ export class KanbanBoard<TCard> extends Group {
             const reserveChanged = minimumReserveVisible !== this.#minimumReserveVisible.peek();
             if (navigatorChanged) this.#navigatorVisible.set(navigatorVisible);
             if (reserveChanged) this.#minimumReserveVisible.set(minimumReserveVisible);
-            if (layoutChanged || identityChanged || navigatorChanged || reserveChanged) this.#layoutReflows += 1;
-            this.invalidateLayout();
+            if (layoutChanged || identityChanged || navigatorChanged || reserveChanged) {
+              this.#layoutReflows += 1;
+              this.invalidateLayout();
+            } else {
+              // The viewport owns query-result geometry and schedules its own relayout. A board-wide
+              // reflow here would duplicate that work for every filter/search publication.
+              this.invalidate();
+            }
           });
           return dispose;
         }),

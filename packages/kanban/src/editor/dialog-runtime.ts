@@ -337,7 +337,9 @@ export async function runKanbanEditorDialog<TCard, TDraft, TResult>(
   }
   let unsubscribe: (() => void) | undefined;
   let mountAttempted = false;
+  const abortDialog = (): void => finish(Object.freeze({ kind: 'disposed' }), 'disposed');
   try {
+    options.signal?.addEventListener('abort', abortDialog, { once: true });
     unsubscribe = session.subscribe((snapshot) => {
       if (snapshot.submission.kind === 'committed') {
         finish(Object.freeze({ kind: 'committed', operationId: snapshot.submission.operationId }), 'committed');
@@ -353,6 +355,7 @@ export async function runKanbanEditorDialog<TCard, TDraft, TResult>(
   } catch {
     return Object.freeze({ kind: 'failed' });
   } finally {
+    options.signal?.removeEventListener('abort', abortDialog);
     try {
       unsubscribe?.();
     } catch {

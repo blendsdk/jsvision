@@ -63,6 +63,60 @@ describe('Phase D example lifecycle', () => {
     expect(showcase.disposedStoryCount()).toBe(phaseD.length);
   });
 
+  it('should exercise the permanent productivity, configuration, and action workflows through visible hotkeys', async () => {
+    const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+    disposers.push(() => showcase.app.loop.dispose());
+    const select = (id: string): void => {
+      const index = KANBAN_STORIES.findIndex((story) => story.id === id);
+      showcase.selectStory(index);
+    };
+    const hotkey = (key: string): void => {
+      showcase.app.loop.dispatch({ type: 'key', key, ctrl: false, alt: true, shift: false });
+      showcase.app.loop.renderRoot.flush();
+    };
+
+    select('kanban/productivity');
+    hotkey('q');
+    expect(showcase.activeActivity()).toContain('Two quick filters');
+    expect(showcase.activeBoard().inspection().visibleCards).toHaveLength(1);
+    hotkey('c');
+    expect(showcase.activeBoard().inspection().visibleCards).toHaveLength(4);
+
+    select('kanban/configuration');
+    hotkey('b');
+    expect(showcase.activeActivity()).toContain('column-add');
+    hotkey('b');
+    expect(showcase.activeActivity()).toContain('column-update');
+
+    select('kanban/actions-history');
+    hotkey('o');
+    expect(
+      showcase.activeBoard().actions()?.pointerAffordance('kanban.card.edit', { kind: 'card', cardKey: 801 }),
+    ).toEqual({ visible: true, enabled: false });
+    hotkey('k');
+    expect(showcase.activeActivity()).toContain('Ctrl+I route');
+    hotkey('u');
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+    expect(showcase.activeActivity()).toMatch(/history|History|request/u);
+  });
+
+  it('should close an open story editor before replacing its owner', async () => {
+    const showcase = createKanbanShowcase(CAPS, { width: 80, height: 24 });
+    disposers.push(() => showcase.app.loop.dispose());
+    const editing = KANBAN_STORIES.findIndex((story) => story.id === 'kanban/editing');
+    showcase.selectStory(editing);
+    showcase.app.loop.dispatch({ type: 'key', key: 'j', ctrl: false, alt: true, shift: false });
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+    const dialog = showcase.app.desktop?.activeWindow();
+    expect(dialog).not.toBeNull();
+
+    showcase.selectStory(0);
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    expect(dialog?.mounted).toBe(false);
+    expect(showcase.app.desktop?.activeWindow()).toBeNull();
+  });
+
   it('should dispose a replaced GitHub board while preserving application-owned saved views', async () => {
     let revision = 0;
     const showcase = createGitHubProjectKanbanApp(CAPS, {

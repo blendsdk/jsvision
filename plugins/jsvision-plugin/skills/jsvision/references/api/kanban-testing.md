@@ -622,7 +622,7 @@ interface KanbanPhaseDPerformanceHarnessOptions {
   cards: number;   // Exact resident card count.
   columns: number;   // Exact workflow-column count.
   swimlanes: number;   // Exact semantic swimlane count.
-  filters: number;   // Exact registered filter count retained while the measured commit changes search.
+  filters: number;   // Exact registered filter count retained while the measured commit changes presentation.
   debounceMs: number;   // Exact virtual debounce delay advanced before each commit.
   warmups: number;   // Discarded warmup commits.
   iterations: number;   // Retained measured commits.

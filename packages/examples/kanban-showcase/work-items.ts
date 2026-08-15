@@ -19,6 +19,7 @@ import type {
   KanbanRequest,
   KanbanRequestResult,
   KanbanStructurePolicy,
+  KanbanSortField,
   KanbanSwimlanePresentationInput,
   StandardCard,
 } from '@jsvision/kanban';
@@ -37,6 +38,10 @@ export interface ShowcaseBoardServices {
   readonly cards: () => readonly ShowcaseCard[];
   /** Replaces one card and publishes a new immutable application array. */
   readonly replaceCard: (card: ShowcaseCard) => boolean;
+  /** Appends one newly created card when its identity is not already present. */
+  readonly appendCard: (card: ShowcaseCard) => boolean;
+  /** Observes application-owned card publications for editor stale-state demonstrations. */
+  readonly subscribeCards: (listener: (cards: readonly ShowcaseCard[]) => void) => () => void;
   /** Publishes bounded visible feedback below the board. */
   readonly setActivity: (message: string) => void;
 }
@@ -66,6 +71,8 @@ export interface ShowcaseBoardOptions {
   readonly actions?: KanbanBoardActionOptions;
   /** Optional registered eager-source filters used by productivity stories. */
   readonly filterFields?: readonly KanbanFilterField<ShowcaseCard>[];
+  /** Optional registered eager-source sort fields used by productivity stories. */
+  readonly sortFields?: readonly KanbanSortField<ShowcaseCard>[];
   /** Optional editor factory with access to application-owned records and feedback. */
   readonly editor?: (services: ShowcaseBoardServices) => KanbanBoardEditorBinding;
 }
@@ -226,21 +233,39 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
   readonly setActivity: (message: string) => void;
   readonly cards: () => readonly ShowcaseCard[];
   readonly replaceCard: (card: ShowcaseCard) => boolean;
+  readonly appendCard: (card: ShowcaseCard) => boolean;
+  readonly subscribeCards: (listener: (cards: readonly ShowcaseCard[]) => void) => () => void;
 } {
   const activity = signal(options.initialActivity);
   const grouped = options.swimlanes !== undefined;
   const cards = signal(Object.freeze([...options.cards]));
+  const cardSubscribers = new Set<(cards: readonly ShowcaseCard[]) => void>();
+  onCleanup(() => cardSubscribers.clear());
+  const publishCards = (next: readonly ShowcaseCard[]): void => {
+    cards.set(next);
+    for (const subscriber of [...cardSubscribers]) subscriber(next);
+  };
   const replaceCard = (replacement: ShowcaseCard): boolean => {
     const index = cards().findIndex((card) => sameCardKey(card.key, replacement.key));
     if (index < 0) return false;
     const next = [...cards()];
     next[index] = Object.freeze({ ...replacement });
-    cards.set(Object.freeze(next));
+    publishCards(Object.freeze(next));
+    return true;
+  };
+  const appendCard = (candidate: ShowcaseCard): boolean => {
+    if (cards().some((card) => sameCardKey(card.key, candidate.key))) return false;
+    publishCards(Object.freeze([...cards(), Object.freeze({ ...candidate })]));
     return true;
   };
   const services: ShowcaseBoardServices = Object.freeze({
     cards,
     replaceCard,
+    appendCard,
+    subscribeCards: (listener: (cards: readonly ShowcaseCard[]) => void) => {
+      cardSubscribers.add(listener);
+      return () => cardSubscribers.delete(listener);
+    },
     setActivity: (message: string) => activity.set(message),
   });
   const source = createEagerKanbanDataSource(cards, {
@@ -261,6 +286,7 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     columnOf: (card) => card.columnId,
     search: (card, term) => card.title.toLocaleLowerCase().includes(term.toLocaleLowerCase()),
     ...(options.filterFields === undefined ? {} : { filterFields: options.filterFields }),
+    ...(options.sortFields === undefined ? {} : { sortFields: options.sortFields }),
   });
   const structure: KanbanStructurePolicy<ShowcaseCard> = {
     revision: `${grouped ? `grouped-${String(options.swimlanes)}` : 'columns'}-${options.headerAlignment ?? 'start'}`,
@@ -296,7 +322,7 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     if (request.kind !== 'card-move') {
       return Object.freeze({ kind: 'rejected', operationId: request.operationId, code: 'showcase-unsupported' });
     }
-    cards.set(applyCardMove(cards(), request, grouped));
+    publishCards(applyCardMove(cards(), request, grouped));
     activity.set(
       `Moved ${request.moved.length} card${request.moved.length === 1 ? '' : 's'} to ${request.target.columnId}`,
     );
@@ -329,5 +355,13 @@ export function createShowcaseBoard(options: ShowcaseBoardOptions): {
     queueMicrotask(() => board.reconcilePublication({ kind: 'confirmed', operationId: snapshot.operationId }));
   });
   onCleanup(unsubscribeOperations);
-  return { board, activity, setActivity: services.setActivity, cards, replaceCard };
+  return {
+    board,
+    activity,
+    setActivity: services.setActivity,
+    cards,
+    replaceCard,
+    appendCard,
+    subscribeCards: services.subscribeCards,
+  };
 }

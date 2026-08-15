@@ -795,3 +795,24 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** UI removal gains guaranteed recursive component disposal or the GitHub wrapper no longer owns the
   board it creates.
+
+### AR-D48 — Phase 8 quality remediation boundary (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; no Major finding is dismissed or waived.
+- **Eligibility:** Required correctness, lifecycle, performance-evidence, and example-completeness corrections inside the
+  confirmed Phase 8 scope.
+- **Objective:** Close every independent-review failure without changing application persistence authority or entering
+  Phase E certification work.
+- **Evidence:** Independent correctness/API and performance/concurrency reviews found six Major issues consolidated as
+  P8-Q01 through P8-Q05 in the Phase 8 quality report.
+- **Decision:** Accept all five consolidated corrections. Route final drops and help through the shared action fallback,
+  bind every story modal to story cleanup and repair post-mount editor abort, complete the already-promised permanent
+  story workflows with focused evidence, and replace fabricated performance counters with observed mounted work using
+  all ten active filters. Require one fix-scoped re-review after complete verification.
+- **Rejected alternatives:** Deferring these issues would leave false action success, modal/resource leaks, a showcase
+  below its committed contract, and a tautological performance gate. Waiving them is forbidden by the quality policy.
+- **Confidence:** High on correction scope; implementation details remain subject to focused red/green tests and re-review.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A correction requires remote persistence, a new public workflow family, or Phase E localization/
+  accessibility certification rather than the existing Phase D contract.
