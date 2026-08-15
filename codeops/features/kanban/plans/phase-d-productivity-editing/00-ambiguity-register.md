@@ -754,3 +754,24 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** The showcase gains real persistence, story selection becomes asynchronous, or application hosts
   can mount stories without a desktop.
+
+### AR-D46 — GitHub showcase local view and card-play ownership (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Example-local state composition and responsive layout inside the approved GitHub showcase upgrade.
+- **Objective:** Add genuine productivity chrome without regressing the stable drag viewport or implying GitHub writes.
+- **Evidence:** The imported board already owns a reactive local card copy and move dispatcher. The controller's standard
+  chrome consumes three rows, while the prior shell duplicated project identity and activity in three fixed content rows.
+- **Decision:** Bind a real view controller, status filter, action surface, saved-view capture, and sanitized title editing
+  to the local board. Retain saved views in the application across refresh while rebuilding imported cards from GitHub.
+  Move project identity into the existing window title and give the complete client area to the board so standard view
+  chrome replaces—not stacks on—the former fixed rows and preserves drag/scroll geometry.
+- **Rejected alternatives:** Remote mutation contradicts the playground boundary. Stacking view chrome below duplicate
+  headings reduces the card viewport and breaks established wide-terminal pointer targets. Fake filter controls would not
+  prove the public controller integration.
+- **Confidence:** High — all nine GitHub showcase specifications, including 84-card resize, monochrome, wide pointer,
+  scrolled drop, and edge-autoscroll regressions, pass with local view/edit state enabled.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The playground gains authenticated mutation, the standard chrome height changes, or saved views
+  become durable outside the current application lifetime.

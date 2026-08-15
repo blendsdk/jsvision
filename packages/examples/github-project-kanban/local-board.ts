@@ -1,12 +1,22 @@
 import { signal } from '@jsvision/ui';
-import { KanbanBoard, createEagerKanbanDataSource, createStandardKanbanCardAdapter } from '@jsvision/kanban';
+import {
+  KanbanBoard,
+  captureKanbanSavedView,
+  createEagerKanbanDataSource,
+  createKanbanBoardId,
+  createKanbanViewController,
+  createStandardKanbanCardAdapter,
+} from '@jsvision/kanban';
 import type {
   KanbanInteractionIntent,
   KanbanQuery,
   KanbanRequest,
   KanbanRequestResult,
+  KanbanSavedViewV1,
   KanbanStructurePolicy,
   KanbanTheme,
+  KanbanViewTransition,
+  KanbanViewTransitionResult,
 } from '@jsvision/kanban';
 
 import type {
@@ -28,8 +38,24 @@ export interface LocalGitHubProjectBoard {
   readonly activity: () => string;
   /** Replaces visible application feedback without changing board data. */
   readonly announce: (message: string) => void;
+  /** Applies one controller-owned local view transition. */
+  readonly applyView: (transition: KanbanViewTransition) => KanbanViewTransitionResult;
+  /** Captures the current controller state as a detached local saved view. */
+  readonly captureView: (name: string) => KanbanSavedViewV1;
+  /** Replaces one imported card title in local memory only. */
+  readonly editCard: (cardKey: string | number, patch: { readonly title: string }) => boolean;
   /** Releases the operation subscription owned by this board instance. */
   dispose(): void;
+}
+
+/** Normalizes one locally edited title without retaining terminal control input. */
+function localTitle(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const title = value
+    .replace(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
+  return title === '' ? undefined : title.slice(0, 500);
 }
 
 /** Maps GitHub's compact status palette to semantic roles that adapt to every JSVision theme. */
@@ -133,6 +159,7 @@ export function createLocalGitHubProjectBoard(
 ): LocalGitHubProjectBoard {
   const cards = signal(Object.freeze([...snapshot.cards]));
   const activity = signal('Drag a card or use Ctrl+Shift+Arrow · changes stay local');
+  const view = createKanbanViewController({ initial: { density: 'comfortable' } });
   const columns = Object.freeze(
     snapshot.columns.map(({ columnId, label, revision }) => Object.freeze({ columnId, label, revision })),
   );
@@ -143,6 +170,17 @@ export function createLocalGitHubProjectBoard(
     keyOf: (card) => card.key,
     columnOf: (card) => card.columnId,
     search: (card, term) => card.title.toLocaleLowerCase().includes(term.toLocaleLowerCase()),
+    filterFields: [
+      {
+        fieldId: 'status',
+        operators: [
+          {
+            operatorId: 'github.equals',
+            matches: (card, value) => typeof value === 'string' && card.status === value,
+          },
+        ],
+      },
+    ],
   });
   const structure: KanbanStructurePolicy<GitHubProjectCard> = Object.freeze({
     revision: `github-project-${snapshot.projectId}`,
@@ -164,6 +202,12 @@ export function createLocalGitHubProjectBoard(
     cardPresentation: () => ({ selection: { fieldIds: ['labels', 'assignees', 'type'] } }),
     structure: () => structure,
     dispatcher,
+    actions: {
+      boardId: createKanbanBoardId(`github-project-${snapshot.projectId}`),
+      host: { kind: 'terminal', platform: 'linux' },
+      executePackageAction: () => Object.freeze({ kind: 'handled' as const }),
+    },
+    view: { controller: view, chrome: 'standard' },
     operationEligibility: () => Object.freeze({ kind: 'allowed' }),
     ...(theme === undefined ? {} : { theme }),
     presentation: () => ({
@@ -183,10 +227,37 @@ export function createLocalGitHubProjectBoard(
     queueMicrotask(() => board.reconcilePublication({ kind: 'confirmed', operationId: operation.operationId }));
   });
   let disposed = false;
+  const editCard = (cardKey: string | number, patch: { readonly title: string }): boolean => {
+    const title = localTitle(patch.title);
+    if (title === undefined) return false;
+    const index = cards().findIndex(({ key }) => sameCardKey(key, cardKey));
+    if (index < 0) return false;
+    const next = [...cards()];
+    const card = next[index];
+    if (card === undefined) return false;
+    next[index] = Object.freeze({
+      ...card,
+      title,
+      presentationRevision: `${String(card.presentationRevision ?? card.key)}-local-edit`,
+    });
+    cards.set(Object.freeze(next));
+    activity.set('Edited locally · Refresh restores GitHub');
+    return true;
+  };
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
     unsubscribe();
+    view.dispose();
   };
-  return { board, cards, activity, announce: activity.set, dispose };
+  return {
+    board,
+    cards,
+    activity,
+    announce: activity.set,
+    applyView: (transition) => view.apply(transition),
+    captureView: (name) => captureKanbanSavedView(view, { name }),
+    editCard,
+    dispose,
+  };
 }

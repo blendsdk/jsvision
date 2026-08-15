@@ -34,7 +34,13 @@ import {
   subMenu,
 } from '@jsvision/ui';
 import type { DesktopApplication, Group } from '@jsvision/ui';
-import type { KanbanBoard, KanbanTheme } from '@jsvision/kanban';
+import type {
+  KanbanBoard,
+  KanbanSavedViewV1,
+  KanbanTheme,
+  KanbanViewTransition,
+  KanbanViewTransitionResult,
+} from '@jsvision/kanban';
 import { createKanbanTheme } from '@jsvision/kanban';
 
 import {
@@ -52,6 +58,10 @@ export const GITHUB_KANBAN_COMMANDS = Object.freeze({
   open: 'github-kanban.open',
   refresh: 'github-kanban.refresh',
   about: 'github-kanban.about',
+  filterFirstStatus: 'github-kanban.view.first-status',
+  clearView: 'github-kanban.view.clear',
+  saveView: 'github-kanban.view.save',
+  editFocused: 'github-kanban.card.edit-focused',
   themePrefix: 'github-kanban.theme.',
 });
 
@@ -87,6 +97,14 @@ export interface GitHubProjectKanbanApp {
   isMaximized(): boolean;
   /** Toggles the showcase window between its maximized and restored geometry. */
   toggleMaximize(): void;
+  /** Applies one local controller transition without changing GitHub. */
+  applyLocalView(transition: KanbanViewTransition): KanbanViewTransitionResult;
+  /** Captures the active controller state in the application-owned local view collection. */
+  saveLocalView(name: string): boolean;
+  /** Returns detached local saved views retained across project refreshes. */
+  localSavedViews(): readonly KanbanSavedViewV1[];
+  /** Applies one title patch to the imported in-memory card copy. */
+  editLocalCard(cardKey: string | number, patch: { readonly title: string }): boolean;
 }
 
 /** One named built-in theme exposed through the app's Theme menu. */
@@ -138,6 +156,12 @@ function buildMenu(): ReturnType<typeof menuBar> {
       '~T~heme',
       THEMES.map(({ id, label }) => item(label, `${GITHUB_KANBAN_COMMANDS.themePrefix}${id}`)),
     ),
+    subMenu('~V~iew', [
+      item('Filter ~f~irst status', GITHUB_KANBAN_COMMANDS.filterFirstStatus),
+      item('~C~lear filters', GITHUB_KANBAN_COMMANDS.clearView),
+      item('~S~ave current view…', GITHUB_KANBAN_COMMANDS.saveView),
+    ]),
+    subMenu('~C~ard', [item('~E~dit focused title…', GITHUB_KANBAN_COMMANDS.editFocused)]),
     subMenu('~H~elp', [item('~A~bout this playground', GITHUB_KANBAN_COMMANDS.about, 'F1')]),
   ]);
 }
@@ -148,6 +172,7 @@ function buildStatus(): ReturnType<typeof statusLine> {
     statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
     statusItem('~Ctrl-O~ Project', GITHUB_KANBAN_COMMANDS.open, 'Ctrl+O'),
     statusItem('~Ctrl-R~ Refresh', GITHUB_KANBAN_COMMANDS.refresh, 'Ctrl+R'),
+    statusItem('~Ctrl-F~ Search'),
     statusItem('~Drag~ Move locally'),
     statusItem('~Wheel~ Scroll'),
   ]);
@@ -184,6 +209,7 @@ export function createGitHubProjectKanbanApp(
   const loadedUrl = signal(options.initialUrl ?? DEFAULT_GITHUB_PROJECT_URL);
   const themeName = signal('Classic');
   const boardTheme = signal(githubKanbanTheme(classicTheme));
+  const savedViews = signal<readonly KanbanSavedViewV1[]>(Object.freeze([]));
   const host = col({ padding: 1, gap: 1, background: 'window' });
   const app = createApplication({
     caps,
@@ -211,18 +237,9 @@ export function createGitHubProjectKanbanApp(
     mounted?.dispose();
     mounted = createLocalGitHubProjectBoard(snapshot, boardTheme);
     clearHost(host);
-    const content = col(
-      {},
-      fixed(new Text(`◆ ${snapshot.title}`), 1),
-      fixed(
-        new Text(
-          `${snapshot.location.owner} · ${snapshot.cards.length} items · ${snapshot.columns.length} statuses · public GitHub data`,
-        ),
-        1,
-      ),
-      grow(mounted.board, 1, { min: 8 }),
-      fixed(new Text(mounted.activity), 1),
-    );
+    // The window title owns project identity and the board owns its three-row view chrome. Giving the
+    // remaining client area directly to the board preserves the card viewport used by drag/scroll play.
+    const content = col({}, grow(mounted.board, 1, { min: 8 }));
     host.add(grow(content));
     mounted.board.viewport.onCleanup(mounted.dispose);
     window.title.set(`◆ ${snapshot.title} · local playground`);
@@ -293,8 +310,68 @@ export function createGitHubProjectKanbanApp(
     await load(entered);
   }
 
+  /** Applies one local view transition and mirrors its outcome in visible feedback. */
+  function applyLocalView(transition: KanbanViewTransition): KanbanViewTransitionResult {
+    if (mounted === undefined) return Object.freeze({ kind: 'unavailable', code: 'project-not-loaded' });
+    const outcome = mounted.applyView(transition);
+    mounted.announce(`Local view · ${outcome.kind} · GitHub unchanged`);
+    return outcome;
+  }
+
+  /** Captures one named local view while preserving earlier captures across refresh. */
+  function saveLocalView(name: string): boolean {
+    if (mounted === undefined) return false;
+    try {
+      const saved = mounted.captureView(name);
+      savedViews.set(Object.freeze([...savedViews(), saved]));
+      mounted.announce(`Saved view · ${saved.name ?? 'Untitled'} · local only`);
+      return true;
+    } catch {
+      mounted.announce('Saved view name is unavailable');
+      return false;
+    }
+  }
+
+  /** Edits one imported card title without granting the board remote mutation authority. */
+  function editLocalCard(cardKey: string | number, patch: { readonly title: string }): boolean {
+    return mounted?.editCard(cardKey, patch) ?? false;
+  }
+
+  /** Prompts for a local saved-view name through the application dialog service. */
+  async function promptToSaveView(): Promise<void> {
+    if (mounted === undefined) return;
+    const name = signal('My GitHub view');
+    const entered = await inputBox(app, { title: 'Save local view', label: '~N~ame', value: name });
+    if (entered !== null) saveLocalView(entered);
+  }
+
+  /** Prompts for the focused card title and applies the detached text locally. */
+  async function promptToEditFocusedCard(): Promise<void> {
+    const focused = mounted?.board.inspection().interaction.focused;
+    if (mounted === undefined || focused?.kind !== 'card') {
+      mounted?.announce('Focus a card before editing');
+      return;
+    }
+    const card = mounted.cards().find(({ key }) => key === focused.cardKey);
+    if (card === undefined) return;
+    const title = signal(card.title);
+    const entered = await inputBox(app, { title: 'Edit local card title', label: '~T~itle', value: title });
+    if (entered !== null) editLocalCard(card.key, { title: entered });
+  }
+
   app.onCommand(GITHUB_KANBAN_COMMANDS.open, () => void promptForProject());
   app.onCommand(GITHUB_KANBAN_COMMANDS.refresh, () => void load(loadedUrl()));
+  app.onCommand(GITHUB_KANBAN_COMMANDS.filterFirstStatus, () => {
+    const status = mounted?.cards()[0]?.status;
+    if (status === undefined) return;
+    applyLocalView({
+      kind: 'set-filters',
+      filters: [{ fieldId: 'status', operatorId: 'github.equals', value: status }],
+    });
+  });
+  app.onCommand(GITHUB_KANBAN_COMMANDS.clearView, () => applyLocalView({ kind: 'clear-filters' }));
+  app.onCommand(GITHUB_KANBAN_COMMANDS.saveView, () => void promptToSaveView());
+  app.onCommand(GITHUB_KANBAN_COMMANDS.editFocused, () => void promptToEditFocusedCard());
   app.onCommand(GITHUB_KANBAN_COMMANDS.about, () => {
     void messageBox(app, {
       title: 'About GitHub Project Kanban',
@@ -325,5 +402,9 @@ export function createGitHubProjectKanbanApp(
       window.zoom();
       app.loop.renderRoot.flush();
     },
+    applyLocalView,
+    saveLocalView,
+    localSavedViews: savedViews,
+    editLocalCard,
   };
 }
