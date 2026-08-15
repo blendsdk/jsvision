@@ -397,7 +397,7 @@ const KANBAN_STRUCTURE_PRESENTATION_LIMITS: KanbanStructurePresentationLimits
 
 ## KANBAN_THEME_ROLES
 
-Closed ordered semantic-role inventory understood by Kanban descriptors and themes.
+Closed ordered semantic-role inventory understood by Kanban board descriptors and themes.
 
 ```ts
 const KANBAN_THEME_ROLES: readonly ["board.surface", "column.surface", "column.header", "column.header.focused", "column.separator", "swimlane.surface", "swimlane.header", "swimlane.header.focused", "swimlane.separator", "card.normal", "card.accent-1", "card.accent-2", "card.accent-3", "card.accent-4", "card.focused", "card.selected", "card.focused-selected", "card.read-only", "card.grabbed", "card.source-placeholder", "card.ghost", "drop-target.valid", "drop-target.warning", "drop-target.invalid", "operation.pending", "operation.rejected", "wip.warning", "wip.error", "dod.indicator", "state.loading", "state.refreshing", "state.partial", "state.empty", "state.error", "state.retry", "content.title", "content.status", "content.metadata", "content.label", "content.summary", "checklist.complete", "checklist.incomplete", "checklist.progress"]

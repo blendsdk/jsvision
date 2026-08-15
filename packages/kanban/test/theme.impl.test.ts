@@ -47,6 +47,19 @@ describe('Kanban theme resolver implementation', () => {
     }
   });
 
+  it('keeps every built-in textual non-color cue printable and ASCII-safe', () => {
+    const theme = createKanbanTheme(classicTheme);
+
+    for (const role of KANBAN_THEME_ROLES) {
+      const token = theme.roles[role];
+      if (token === undefined) throw new Error(`Expected generated token for ${role}.`);
+      for (const cue of token.cues) {
+        if (cue.kind === 'marker') expect(cue.glyph).toMatch(/^[\x20-\x7e]+$/u);
+        if (cue.kind === 'text') expect(cue.prefix).toMatch(/^[\x20-\x7e]+$/u);
+      }
+    }
+  });
+
   it.each(['16', '256', 'truecolor'] as const)('enforces readable effective contrast at %s depth', (colorDepth) => {
     const theme = createKanbanTheme(classicTheme, {
       'content.title': { fg: '#777777', bg: '#777777' },

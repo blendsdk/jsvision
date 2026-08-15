@@ -1,6 +1,12 @@
 import type { AttrMask, CapabilityProfile, ThemeRole } from '@jsvision/core';
 
-/** Closed ordered semantic-role inventory understood by Kanban descriptors and themes. */
+/**
+ * Closed ordered semantic-role inventory understood by Kanban board descriptors and themes.
+ *
+ * Package-owned dialogs continue to use Core's exact control roles, such as `buttonDisabled`,
+ * `warningText`, and `dangerText`. Keeping those roles out of this board palette avoids two
+ * independent theme identities for the same button or form state.
+ */
 export const KANBAN_THEME_ROLES = Object.freeze([
   'board.surface',
   'column.surface',
@@ -53,7 +59,12 @@ export type KanbanThemeRole = (typeof KANBAN_THEME_ROLES)[number];
 /** Optional additive card-accent roles introduced without invalidating existing complete theme literals. */
 export type KanbanCardAccentRole = Extract<KanbanThemeRole, `card.accent-${number}`>;
 
-/** One non-color distinction retained when terminal color is unavailable or insufficient. */
+/**
+ * One non-color distinction retained when terminal color is unavailable or insufficient.
+ *
+ * Built-in marker and text cues use printable ASCII so the same semantic evidence remains safe
+ * on Unicode-capable, reduced-capability, monochrome, and `NO_COLOR` terminals.
+ */
 export type KanbanNonColorCue =
   | { readonly kind: 'marker'; readonly glyph: string }
   | { readonly kind: 'border'; readonly style: 'single' | 'double' | 'heavy' | 'dashed' }

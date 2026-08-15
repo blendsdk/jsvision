@@ -53,6 +53,7 @@
 | AR-D34 | Control binding · runtime · complex | What boundary lets standard and registered custom controls share reactive field state without exposing the complete draft or session authority? | Complete draft / complete session / narrow semantic field context | Expose immutable field values and focus identity through a narrow field context; retain parsing, validation, submission, and disposal authority in the session | ✅ Resolved |
 | AR-D35 | Board integration · runtime · complex | How should whole-card and checklist activation open the editor through the existing board authority without spreading editor draft generics through `KanbanBoard`? | Add editor generics to board options / application-only intent handling / type-erased board binding with typed factory | Add a narrow `open(cardKey, authority)` board binding and typed factory; compose it at the existing `open-card` intent boundary for whole-card and standard editor actions while preserving unrelated application intents | ✅ Resolved |
 | AR-D36 | Phase 4 quality · runtime · complex | How should editor ownership, nested modality, authority-backed creation, and responsive progressive UI converge without creating new data authority? | Patch each symptom locally / separate claims, borrowed facades, exact-modal completion, application publication correlation, and retained responsive controls / defer advertised workflows | Use distinct provisional/persisted claims, non-owning repeat-open facades, exact target-bound modal completion, an application create-publication resolver, retained responsive controls, and one serialized terminal lifecycle | ✅ Resolved |
+| AR-D42 | Theme integration · runtime | Do Phase D dialog states require new Kanban board roles? | Duplicate Core control states in the board palette / retain the closed board palette and exact Core dialog roles | Retain the closed board palette; document the ownership boundary and verify every board cue remains printable ASCII or glyph-independent | ✅ Resolved |
 
 ## Resolution notes
 
@@ -664,3 +665,25 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** The request contract gains one atomic cross-authority structure-and-view transaction, or a
   future standard field cannot be represented by the typed structural draft plus bounded application metadata.
+
+### AR-D42 — Board palette and dialog-control theme ownership (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Additive documentation and verification of the existing theme boundary inside the approved
+  Phase D integration scope; no visual behavior or application authority changes.
+- **Objective:** Preserve truthful semantic styling without adding duplicate roles that no board renderer consumes.
+- **Evidence:** The closed Kanban role inventory already covers every board-drawn Phase D state. Standard editor and
+  configuration surfaces render through UI controls whose exact Core roles already distinguish disabled, warning,
+  and destructive states. Board non-color markers and prefixes are already printable ASCII.
+- **Decision:** Keep the version-1 board role inventory unchanged. Document that dialogs retain exact Core control
+  roles, and enforce printable ASCII for every built-in textual board cue while border and attribute cues remain
+  independent of glyph capability.
+- **Rejected alternatives:** Mirroring Core button/form states in `KanbanTheme` creates two theme authorities and
+  unused public tokens. Reusing board error or operation roles for stale/destructive controls would be semantically
+  misleading.
+- **Confidence:** High — source inspection confirms the dialogs use Core controls directly and every board theme
+  consumer is confined to descriptors and viewport rendering.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A package-owned Phase D control is drawn directly by the board renderer or UI controls gain
+  no truthful Core role for a required state.

@@ -29,7 +29,13 @@ type CoreThemeRoleName =
   | 'splitterDragging'
   | 'statusBar';
 
-/** Exact mapping from the closed Kanban vocabulary to existing Core semantics. */
+/**
+ * Exact mapping from the closed board vocabulary to existing Core semantics.
+ *
+ * Standard editors and configuration dialogs render with Core controls directly, so their disabled,
+ * stale, and destructive states retain the exact Core control roles instead of being approximated by
+ * board-specific tokens here.
+ */
 const CORE_ROLE_BY_KANBAN: Readonly<Record<KanbanThemeRole, CoreThemeRoleName>> = Object.freeze({
   'board.surface': 'listNormal',
   'column.surface': 'listNormal',
@@ -167,7 +173,12 @@ function safeReportPath(value: string): string {
   return cleaned.length > 0 ? cleaned : 'override';
 }
 
-/** Creates one role-specific redundant non-color cue. */
+/**
+ * Creates one role-specific redundant non-color cue.
+ *
+ * Every built-in marker and prefix is printable ASCII. Border and attribute cues do not depend on a
+ * glyph repertoire, which keeps the fallback geometry stable when Unicode box drawing is unavailable.
+ */
 function cueFor(role: KanbanThemeRole): readonly [KanbanNonColorCue, ...KanbanNonColorCue[]] {
   const cues: readonly KanbanNonColorCue[] =
     role === 'card.focused-selected'
