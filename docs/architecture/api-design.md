@@ -1,35 +1,42 @@
 # Kanban API design
 
-> **Last Updated**: 2026-08-12
-> **Status**: Phase C modern interaction API implemented; commands, editors, saved-view codecs, and consumer course planned
+> **Last Updated**: 2026-08-15
+> **Status**: Phase D board and productivity API implemented; consumer course remains later work
 
 ## API style
 
 `@jsvision/kanban` is a browser-neutral, typed in-process SDK. Its main barrel exposes models,
-adapters, presentation, scene, interaction, requests, operations, the board, and viewport. Locale catalogs use explicit
-locale subpaths, and deterministic fixtures use a `/testing` subpath. Commands and package-owned
-dialogs remain deferred; the design deliberately avoids separate `/model` or `/dialogs` subpaths.
+adapters, presentation, scene, interaction, view, editing, configuration, action, event, history,
+request, board, and viewport surfaces. Locale catalogs use explicit locale subpaths, and deterministic
+fixtures use a `/testing` subpath. The design deliberately avoids separate `/model` or `/dialogs`
+subpaths so related contracts share one supported production entry.
 
 ## Public topology
 
-| Surface                        | Purpose                                                | Authority                                       |
-| ------------------------------ | ------------------------------------------------------ | ----------------------------------------------- |
-| `KanbanBoard<TCard>`           | DSL-composed board component                           | Component session state                         |
-| `KanbanDataSource<TCard>`      | Open a coherent query session                          | Application/data adapter                        |
-| Query session and cell cursor  | Bounded lazy acquisition and edge/count knowledge      | Data adapter                                    |
-| Card adapter/descriptors       | Map arbitrary records to safe visual content           | Application/package adapter                     |
-| Structure/grouping policy      | Normalize columns and one optional swimlane axis       | Application policy; component projection        |
-| Workflow evaluators            | Report WIP, DoD, and transition eligibility            | Pure presentation logic; never authorization    |
-| Swimlane presentation          | Resolve bounded built-in or custom header chrome       | Component with validated application extension  |
-| Scene and hit-map contracts    | Project final clipped geometry and semantic targets    | Viewport; application extensions remain bounded |
-| `KanbanInteractionFacade`      | Programmatic focus, selection, activation, context     | Stable board session surface                    |
-| Interaction controller factory | Replace the mount-owned semantic state controller      | Ownership transfers to one board                |
-| Interaction intents            | Notify open-card, context, and scoped application UI   | Identity-only; never mutation authority         |
-| `KanbanRequest` dispatcher     | Carry every requested mutation atomically              | Application                                     |
-| Operation coordinator          | Validate, reserve, dispatch, reconcile, cancel, undo   | Board session; source remains authoritative     |
-| Drag controllers/drop map      | Card and structural pointer movement                   | Viewport-local semantic geometry                |
-| `/testing`                     | Fake clock, host trace, dispatcher/lifecycle harnesses | Development-only public SDK surface             |
-| Commands, dialogs, saved views | Planned application-facing layers                      | Deferred; not exported in Phase C               |
+| Surface                        | Purpose                                                | Authority                                        |
+| ------------------------------ | ------------------------------------------------------ | ------------------------------------------------ |
+| `KanbanBoard<TCard>`           | DSL-composed board component                           | Component session state                          |
+| `KanbanDataSource<TCard>`      | Open a coherent query session                          | Application/data adapter                         |
+| Query session and cell cursor  | Bounded lazy acquisition and edge/count knowledge      | Data adapter                                     |
+| Card adapter/descriptors       | Map arbitrary records to safe visual content           | Application/package adapter                      |
+| Structure/grouping policy      | Normalize columns and one optional swimlane axis       | Application policy; component projection         |
+| Workflow evaluators            | Report WIP, DoD, and transition eligibility            | Pure presentation logic; never authorization     |
+| Swimlane presentation          | Resolve bounded built-in or custom header chrome       | Component with validated application extension   |
+| Scene and hit-map contracts    | Project final clipped geometry and semantic targets    | Viewport; application extensions remain bounded  |
+| `KanbanInteractionFacade`      | Programmatic focus, selection, activation, context     | Stable board session surface                     |
+| Interaction controller factory | Replace the mount-owned semantic state controller      | Ownership transfers to one board                 |
+| Interaction intents            | Notify open-card, context, and scoped application UI   | Identity-only; never mutation authority          |
+| `KanbanRequest` dispatcher     | Carry every requested mutation atomically              | Application                                      |
+| Operation coordinator          | Validate, reserve, dispatch, reconcile, cancel, undo   | Board session; source remains authoritative      |
+| Drag controllers/drop map      | Card and structural pointer movement                   | Viewport-local semantic geometry                 |
+| `KanbanViewController`         | Own one transactional semantic view projection         | Component session state                          |
+| Saved-view codec/store helpers | Validate, migrate, reconcile, and propose persistence  | Values in package; storage in application        |
+| `KanbanCardEditorAdapter`      | Map records to detached typed drafts and proposals     | Application adapter; package session lifecycle   |
+| `KanbanConfigurationSession`   | Collect one validated column or swimlane operation     | Package draft; application structure authority   |
+| `KanbanActionRegistry`         | Unify package/application actions and capabilities     | Package vocabulary plus application extensions   |
+| `KanbanEventHub`               | Publish bounded payload-free board events              | Board-scoped transient observability             |
+| `KanbanHistoryBinding`         | Invoke fresh application-owned undo/redo proposals     | Availability and stacks remain application-owned |
+| `/testing`                     | Fake clock, host trace, dispatcher/lifecycle harnesses | Development-only public SDK surface              |
 
 ## Request protocol
 
@@ -56,8 +63,8 @@ sequenceDiagram
 ```
 
 Data-operation requests use this dispatcher. Card moves, selected-card moves, column/swimlane reorder,
-programmatic move, and undo proposals already preserve that boundary; future create/edit/configuration
-dialogs and commands must reuse it. A move uses destination column/swimlane identity plus a semantic
+programmatic movement, editor/configuration submission, saved-view persistence, actions, and history
+proposals preserve that boundary. A move uses destination column/swimlane identity plus a semantic
 placement snapshot or bounded opaque edge token. The component never writes rank fields or guesses
 persistence semantics.
 
@@ -67,6 +74,50 @@ operation-correlated result variants, bounded publication expectations, cancella
 undo, and pure reconciliation. Requests, contexts, results, and publication notices are
 copied through descriptor-only exact-shape validation before application data is retained or used.
 Capability descriptions control presentation only and are never treated as authorization.
+
+## View and saved-view protocol
+
+`KanbanViewController` exposes immutable state, draft and committed search, closed transitions,
+transactional replacement, subscription, and disposal. Board binding translates the controller's
+semantic projection into the legacy query/presentation channels without creating another state owner.
+A query-changing transition prepares a source session and viewport candidate before one batched commit;
+failure restores the previous controller state, query identity, and visible projection.
+
+Saved views are bounded versioned semantic values. `captureKanbanSavedView` excludes focus, scroll,
+loaded windows, pending operations, and dialog state. `parseKanbanSavedView`, migration, and
+reconciliation operate on detached input and return typed diagnostics rather than partially applying
+unknown data. Applying a reconciled view uses the controller's atomic replacement seam.
+`createKanbanSavedViewStore` owns no records: save, rename, and delete are validated proposals sent to
+application authority.
+
+## Editor and configuration protocol
+
+`KanbanCardEditorAdapter<TCard, TDraft>` separates application records from editable detached drafts.
+The schema registry validates bounded sections, fields, control factories, and callbacks before a
+session starts. Editor sessions own abort generations, field validation, first-error focus, dirty and
+stale state, and exact full-draft proposals. The coordinator provides identity exclusivity, while
+create/edit/view dialogs and the modeless inspector reuse the same lifecycle. The standard adapter is
+the only layer coupled to `@jsvision/forms` and the Zod 4 peer.
+
+`KanbanConfigurationSession` follows the same pattern for add, update, reorder, delete, and grouping
+operations. Programmatic builders and responsive column/swimlane dialogs produce the same proposal
+shapes. Result-only completion returns a detached value; authority completion enters the normal board
+request coordinator and waits for authoritative publication. Destructive confirmation and focus
+recovery stay explicit.
+
+## Action, event, and history protocol
+
+`KanbanActionRegistry` combines a bounded package inventory with namespaced application actions. The
+keymap normalizes host chords and rejects conflicts or unreachable bindings atomically; the router
+checks the current capability snapshot before invoking a handler. Menu, context, status, keyboard,
+pointer, and programmatic entry points therefore share one action identity. Read-only capability hides
+or disables mutation affordances but never replaces application authorization.
+
+`KanbanEventHub` snapshots only bounded identifiers, revisions, states, reason codes, and counts.
+Publication is dequeue-ordered, nested publication is breadth-first, and subscriber failures cannot
+stop later subscribers. Optional retention is bounded and off by default. `KanbanHistoryBinding`
+subscribes to application-provided availability and builds a fresh current-revision request for every
+undo or redo invocation; it never retains application stacks, records, drafts, or undo tokens.
 
 ## Interaction protocol
 
@@ -185,9 +236,10 @@ being silently reported as zero.
   application payloads through diagnostics.
 - Semantic Kanban theme roles resolve through mapped Core roles, family fallbacks, and emergency
   styles while retaining non-color cues.
-- The main entry exports the typed foundation, Phase B, and Phase C inventories plus isolated English
-  fallback services. Each explicit locale subpath preserves its foundation symbol and adds reviewed
-  `kanbanPhaseB*` and `kanbanPhaseC*` overlays; the locale helper composes them in deterministic order.
+- The main entry exports the typed foundation, Phase B, Phase C, and Phase D inventories plus isolated
+  English fallback services. Each explicit locale subpath preserves its foundation symbol and adds
+  reviewed `kanbanPhaseB*`, `kanbanPhaseC*`, and `kanbanPhaseD*` overlays; the locale helper composes
+  them in deterministic order.
 
 ## Error conventions
 

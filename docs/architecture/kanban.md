@@ -1,7 +1,7 @@
 # Kanban architecture
 
-> **Last Updated**: 2026-08-12
-> **Status**: Phase C modern interaction implemented; editors, commands, and product documentation planned
+> **Last Updated**: 2026-08-15
+> **Status**: Phase D productivity, editing, configuration, and observability implemented
 
 ## Boundary and ownership
 
@@ -22,6 +22,7 @@ same projection, input, and lifecycle path.
 graph LR
     App[Application records and policy] --> Kanban[@jsvision/kanban]
     Kanban --> Core[@jsvision/core]
+    Kanban --> Forms[@jsvision/forms]
     Kanban --> I18n[@jsvision/i18n]
     Kanban --> UI[@jsvision/ui]
     UI --> Core
@@ -29,14 +30,16 @@ graph LR
     Host --> Kanban
 ```
 
-| Public entry point                  | Purpose                                                               |
-| ----------------------------------- | --------------------------------------------------------------------- |
-| `@jsvision/kanban`                  | Production sources, presentation, scene, interaction, board, viewport |
-| `@jsvision/kanban/testing`          | Deterministic source, scene, input, and contract fixtures             |
-| `@jsvision/kanban/locales/{locale}` | Foundation plus reviewed Phase B and Phase C overlays per subpath     |
+| Public entry point                  | Purpose                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| `@jsvision/kanban`                  | Production board, productivity, editing, configuration, and event APIs |
+| `@jsvision/kanban/testing`          | Deterministic source, scene, input, workflow, and contract fixtures    |
+| `@jsvision/kanban/locales/{locale}` | Foundation plus reviewed Phase B, Phase C, and Phase D overlays        |
 
-The package depends only on the public Core, I18n, and UI packages. Testing helpers are isolated from
-the production module graph, and undeclared private subpaths are not part of the SDK surface.
+The package depends only on the public Core, Forms, I18n, and UI packages. Zod 4 is a peer dependency
+used only by the optional standard editor adapter; generic editor contracts remain Zod-free. Testing
+helpers are isolated from the production module graph, and undeclared private subpaths are not part of
+the SDK surface.
 
 ## Read lifecycle
 
@@ -109,6 +112,35 @@ drop targets. Its resolver cache keys every output-affecting semantic and geomet
 fixed FIFO bound. Collapsed-swimlane hover expansion is a temporary generation-owned lease: it does
 not mutate saved collapse state, and scheduler failure, cancellation, leave, or disposal safely
 restores the underlying projection.
+
+## Productivity composition
+
+One `KanbanViewController` owns a board's immutable search, filter, quick-filter, sort, grouping,
+column/swimlane, and presentation projection. A transition prepares a new source query and commits the
+controller, board binding, viewport, and query session together; prepare or verification failure rolls
+every participant back to the previous visible state. The optional standard view bar edits draft
+search separately from committed query state. Versioned saved-view codecs capture only durable
+semantics, reconcile IDs and geometry against the current application registry, and leave persistence
+to application authority as required by [ADR-012](/decisions/ADR-012-kanban-saved-views).
+
+Editor and configuration workflows are package-owned input collectors over application-owned data.
+A generic `KanbanCardEditorAdapter` defines detached drafts and exact proposals; the optional standard
+adapter composes `@jsvision/forms` and a consumer-supplied or generated Zod 4 schema. One editor
+coordinator prevents competing edit sessions for the same identity. `KanbanConfigurationSession`
+likewise snapshots one column or swimlane operation, validates responsive dialog input, and submits a
+single proposal. Card, column, and swimlane dialogs can run result-only or through the normal request
+authority and never mutate source records directly.
+
+`KanbanActionRegistry`, the keymap, router, capability provider, and input adapter give keyboard,
+pointer, menu, status, context, and programmatic producers one stable action vocabulary. A board may
+compose these services through its `actions` option, while destructive and configuration actions stay
+unbound by default. Read-only capability is discoverable presentation policy, not authorization.
+
+One optional `KanbanEventHub` publishes payload-free, board-scoped action, request, focus, selection,
+view, and source events in dequeue order. Nested publication is breadth-first and bounded; observer
+failures are isolated. `KanbanHistoryBinding` observes application-owned undo/redo availability and
+asks the application to build a fresh proposal for each invocation. It stores neither history stacks
+nor record snapshots and routes every proposal back through current request authority.
 
 ## Request authority
 
@@ -183,18 +215,19 @@ Teardown first quiesces mounted input, then releases facade/controller subscript
 viewport scene/session ownership, and finally board request authority. Disposal is idempotent, and a
 released board cannot remount.
 
-## Phase boundary
+## Current boundary
 
-| Implemented modern-interaction foundation                                 | Deliberately deferred                                     |
-| ------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Generic sources, bounded rendering, responsive layout, and one swimlane   | Nested grouping                                           |
-| Rich cards, themes, ten locales, keyboard, click, and capture-backed drag | Command registry and user-remappable keymap               |
-| Semantic card/structure placement and atomic selected-block movement      | Card and lane-configuration dialogs                       |
-| One coordinator, confirmation, lifecycle, publication, cancellation       | Application persistence and authorization implementations |
-| Direct, xterm, PTY/ConPTY evidence and permanent kitchen-sink story       | Full component teaching page and focused docs-site labs   |
+| Implemented Phase D surface                                                    | Deliberately external or deferred                         |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Bounded sources, rendering, responsive layout, and one swimlane dimension      | Nested grouping                                           |
+| Keyboard/mouse interaction, semantic drag, and atomic request coordination     | Application persistence and authorization implementations |
+| Transactional view state plus versioned, reconciled saved-view values          | Application-owned saved-view storage and sharing policy   |
+| Generic/standard editors and invocable card, column, and swimlane dialogs      | Application record schemas and mutation                   |
+| Actions/keymaps/capabilities, ordered events, and application history bindings | Application history stacks and undo semantics             |
+| Ten Phase D locale overlays, testing fixtures, kitchen sink, and GitHub demo   | Full component teaching page and focused docs-site labs   |
 
-The package remains a component foundation rather than a complete Kanban application. Later phases
-add package-owned input UI and command/documentation surfaces while preserving application authority,
+The package remains a component foundation rather than a complete Kanban application. Later delivery
+adds the consumer teaching course and release hardening while preserving application authority,
 bounded query/rendering, semantic placement, localization, and responsive layout.
 
 ## Related architecture

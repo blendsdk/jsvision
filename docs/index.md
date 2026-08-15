@@ -7,7 +7,7 @@ techdocs: true
 > **Project**: JSVision
 > **Type**: TypeScript library and SDK monorepo
 > **Tech Stack**: Node.js 22+, ESM TypeScript, Yarn workspaces, Turborepo, VitePress
-> **Last Updated**: 2026-08-12
+> **Last Updated**: 2026-08-15
 
 ## System purpose
 
@@ -17,12 +17,11 @@ components, web hosting, and examples so applications can depend only on the sur
 
 The `@jsvision/kanban` core board provides application-owned contracts, revisioned eager and windowed
 data sources, bounded configurable cards, workflow-column/swimlane policy, sparse canonical scene
-geometry, focus and selection, modern card and structural drag, semantic placement and eligibility,
-one application-authoritative operation lifecycle, and ten locale subpaths with Phase B and Phase C
-overlays. The shared UI event loop provides generation-bound pointer-capture leases. A real standalone
-Kanban showcase exercises responsive drag, warnings, blocked/unavailable outcomes, bulk movement,
-autoscroll, rejection, confirmation, and publication. Packaged editors, command registration,
-saved-view codecs, and the consumer component course remain later phases.
+geometry, modern interaction, transactional view state, versioned saved views, responsive editors and
+configuration dialogs, unified actions/keymaps, bounded events, and application-owned history
+bindings. Ten locale subpaths include additive Phase B–D catalogs. The shared UI event loop provides
+generation-bound pointer-capture leases. Standalone Kanban and GitHub-project showcases exercise the
+responsive board and productivity surfaces. The consumer component course remains later work.
 
 ## Architecture at a glance
 
@@ -31,6 +30,7 @@ graph TB
     App[Application state and policy] --> Kanban[@jsvision/kanban core board]
     Kanban --> UI[@jsvision/ui]
     Kanban --> I18n[@jsvision/i18n]
+    Kanban --> Forms[@jsvision/forms]
     UI --> Core[@jsvision/core]
     Docs[Docs site and live labs] --> Kanban
     Examples[Kitchen sink and showcase] --> Kanban
@@ -38,13 +38,13 @@ graph TB
 
 ## Key components
 
-| Component            | Status           | Purpose                                                                | Documentation                                    |
-| -------------------- | ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
-| JSVision core and UI | Implemented      | Rendering, reactivity, layout, windows, input, and controls            | [System overview](/architecture/system-overview) |
-| `@jsvision/kanban`   | Phase C complete | Sources, cards, structure, interaction, requests, operations, and drag | [Kanban architecture](/architecture/kanban)      |
-| Application adapter  | Consumer-owned   | Records, persistence, authorization, mutation, and saved views         | [Integrations](/reference/integrations)          |
-| Examples             | Phase C showcase | Responsive standalone Kanban kitchen sink and host evidence            | [Development workflow](/guides/development)      |
-| Consumer docs        | Later phase      | Component course and browser-hosted teaching labs                      | [Development workflow](/guides/development)      |
+| Component            | Status           | Purpose                                                                      | Documentation                                    |
+| -------------------- | ---------------- | ---------------------------------------------------------------------------- | ------------------------------------------------ |
+| JSVision core and UI | Implemented      | Rendering, reactivity, layout, windows, input, and controls                  | [System overview](/architecture/system-overview) |
+| `@jsvision/kanban`   | Phase D complete | Board plus view, editing, configuration, action, event, and history surfaces | [Kanban architecture](/architecture/kanban)      |
+| Application adapter  | Consumer-owned   | Records, persistence, authorization, mutation, saved views, and history      | [Integrations](/reference/integrations)          |
+| Examples             | Phase D showcase | Responsive kitchen sink, host evidence, and GitHub-project application       | [Development workflow](/guides/development)      |
+| Consumer docs        | Later phase      | Component course and browser-hosted teaching labs                            | [Development workflow](/guides/development)      |
 
 ## Technology decisions
 
