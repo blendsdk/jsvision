@@ -188,7 +188,7 @@ function failedCustomBinding(
   fieldId: KanbanEditorFieldState['fieldId'],
   i18n: I18n | undefined,
 ): KanbanEditorControlBinding {
-  const diagnostic = Object.freeze({ code: 'custom-control-failed', messageId: 'kanban.editor.controlUnavailable' });
+  const diagnostic = Object.freeze({ code: 'custom-control-failed', messageId: 'kanban.editor.control-unavailable' });
   const diagnostics = Object.freeze([diagnostic]);
   return Object.freeze({
     fieldId,

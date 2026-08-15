@@ -1,4 +1,9 @@
-import { KANBAN_ENGLISH_CATALOG, KANBAN_PHASE_B_ENGLISH_CATALOG, KANBAN_PHASE_C_ENGLISH_CATALOG } from './catalog.js';
+import {
+  KANBAN_ENGLISH_CATALOG,
+  KANBAN_PHASE_B_ENGLISH_CATALOG,
+  KANBAN_PHASE_C_ENGLISH_CATALOG,
+  KANBAN_PHASE_D_ENGLISH_CATALOG,
+} from './catalog.js';
 import { kanbanDe, kanbanPhaseBDe, kanbanPhaseCDe } from './translations/de.js';
 import { kanbanEs, kanbanPhaseBEs, kanbanPhaseCEs } from './translations/es.js';
 import { kanbanFr, kanbanPhaseBFr, kanbanPhaseCFr } from './translations/fr.js';
@@ -15,6 +20,8 @@ export const kanbanEn = KANBAN_ENGLISH_CATALOG;
 export const kanbanPhaseBEn = KANBAN_PHASE_B_ENGLISH_CATALOG;
 /** Authored English Phase C Kanban overlay. */
 export const kanbanPhaseCEn = KANBAN_PHASE_C_ENGLISH_CATALOG;
+/** Authored English Phase D Kanban overlay. */
+export const kanbanPhaseDEn = KANBAN_PHASE_D_ENGLISH_CATALOG;
 export {
   kanbanDe,
   kanbanEs,

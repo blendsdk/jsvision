@@ -138,6 +138,13 @@ function controlIdOf(fieldId: StandardKanbanEditorFieldId): string | undefined {
   }
 }
 
+/** Converts camel-cased standard field identities to the catalog's lowercase dotted-key grammar. */
+function fieldLabelId(fieldId: StandardKanbanEditorFieldId): string {
+  if (fieldId === 'startDate') return 'kanban.editor.field.start-date';
+  if (fieldId === 'dueDate') return 'kanban.editor.field.due-date';
+  return `kanban.editor.field.${fieldId}`;
+}
+
 /** Builds one package custom-control registration for a collection-oriented standard field. */
 function collectionControl(fieldId: keyof typeof CONTROL_IDS) {
   return Object.freeze({
@@ -170,7 +177,7 @@ function standardField(
     fieldId,
     sectionId: sectionOf(fieldId),
     kind: kindOf(fieldId),
-    labelId: `kanban.editor.field.${fieldId}`,
+    labelId: fieldLabelId(fieldId),
     order,
     read: (draft: StandardKanbanEditorDraft) => draft[fieldId],
     write: (draft: StandardKanbanEditorDraft, value: unknown) => Object.freeze({ ...draft, [fieldId]: value }),
