@@ -139,8 +139,13 @@
         "packages/kanban/src",
         "packages/kanban/package.json",
         "packages/kanban/README.md",
+        "packages/examples/kanban-showcase",
+        "packages/examples/github-project-kanban",
         "packages/docs-site/api/kanban",
-        "docs/architecture/kanban.md"
+        "docs/architecture/kanban.md",
+        "docs/architecture/api-design.md",
+        "docs/architecture/data-model.md",
+        "docs/architecture/security.md"
       ],
       "references": [
         "references/architecture.md",
@@ -169,7 +174,7 @@
     "files": "d5f740a487f4aba9c2711961a10ef08adf7038e10fa4832939129fed55838050",
     "web": "c530e980ed69cb2d878e93e90a249910213bcfedfa6691598cab59b8af57795e",
     "code-editor": "708252d08848b5f438e9fd0d2f8b6d3ca95890dc1a28a964e2cd769cf3bf076f",
-    "kanban": "ea1fb08ffb7a682c86dbfc806a330b2d1c8d63b568efebf1a5601383889bc212",
+    "kanban": "1190a7b7312b266f61b944676eb91f6f4e732b73539abcef28f2409d72e3b803",
     "executable-recipes": "ecfd0fd65917d99c5201237637e807d4f019af6294e57898556b9522eac8aad4"
   }
 }
