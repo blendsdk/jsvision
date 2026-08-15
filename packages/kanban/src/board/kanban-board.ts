@@ -77,6 +77,12 @@ import { KanbanViewBar } from '../view/view-bar.js';
 import type { KanbanViewController } from '../view/types.js';
 import { KanbanStateEventPublisher } from '../event/publisher.js';
 import type { KanbanEventHub } from '../event/types.js';
+import {
+  createKanbanBoardActionBinding,
+  type KanbanBoardActionBinding,
+  type KanbanBoardActionOptions,
+  type OwnedKanbanBoardActionBinding,
+} from './productivity-binding.js';
 
 /** Typed locale key assigned to each closed interaction feedback category. */
 const INTERACTION_FEEDBACK_MESSAGE_KEYS = Object.freeze({
@@ -113,6 +119,8 @@ export interface KanbanBoardViewOptions {
 export interface KanbanBoardOptions<TCard> extends Omit<KanbanViewportOptions<TCard>, 'interaction' | 'drag'> {
   /** Optional board-scoped public semantic event stream. */
   readonly events?: KanbanEventHub;
+  /** Optional board-owned registry, keymap, capability, event, and history action composition. */
+  readonly actions?: KanbanBoardActionOptions;
   /** Optional controller-owned view projection and package standard chrome. */
   readonly view?: KanbanBoardViewOptions;
   /**
@@ -337,6 +345,8 @@ export class KanbanBoard<TCard> extends Group {
   readonly #viewBinding: KanbanBoardViewBinding<TCard> | undefined;
   readonly #authority: KanbanBoardAuthority;
   readonly #stateEvents: KanbanStateEventPublisher | undefined;
+  readonly #actions: OwnedKanbanBoardActionBinding | undefined;
+  readonly #viewController: KanbanViewController | undefined;
   /** Cancels delayed or resolving editor opens when this board releases ownership. */
   readonly #editorLifetime = new AbortController();
   readonly #interactionFacade: KanbanInteractionFacadeOwner;
@@ -370,6 +380,7 @@ export class KanbanBoard<TCard> extends Group {
     this.focusable = true;
     const fallbackI18n = createEnglishKanbanI18n();
     this.#i18n = options.i18n ?? (() => fallbackI18n);
+    this.#viewController = options.view?.controller;
     this.#viewBinding =
       options.view === undefined
         ? undefined
@@ -453,6 +464,69 @@ export class KanbanBoard<TCard> extends Group {
         this.#viewBinding,
       ),
     );
+    this.#actions =
+      options.actions === undefined
+        ? undefined
+        : createKanbanBoardActionBinding(options.actions, {
+            authority: this.#authority,
+            ...(options.events === undefined ? {} : { events: options.events }),
+            state: {
+              disposed: () => this.#disposed,
+              sourceState: () => this.viewport.sourceState(),
+              revisions: () => this.viewport.interactionRevisions(),
+              viewRevision: () => this.#viewController?.state().revision,
+            },
+            interaction: {
+              snapshot: () => this.#interactionFacade.snapshot(),
+              accept: (command) => this.#interactionFacade.accept(command),
+              activate: (origin, scope) => this.#interactionFacade.acceptActivate({ origin, scope }),
+              openContext: (origin, scope) => this.#interactionFacade.acceptOpenContext({ origin, scope }),
+              scopedAction: (actionId, scope, origin) =>
+                this.#interactionFacade.acceptScopedAction(actionId, scope, origin),
+              cancelTransient: () =>
+                this.#interactionFacade.cancel() || this.#interactionFacade.accept({ kind: 'escape' }),
+            },
+            projection: {
+              focusedScope: () => {
+                const focused = this.#interactionFacade.snapshot().focused;
+                if (focused.kind === 'card') {
+                  return Object.freeze({
+                    kind: 'card' as const,
+                    cardKey: focused.cardKey,
+                    address: Object.freeze({ ...focused.address }),
+                  });
+                }
+                if (focused.kind === 'column-header') {
+                  return Object.freeze({ kind: 'column' as const, columnId: focused.columnId });
+                }
+                if (focused.kind === 'swimlane-header') {
+                  return Object.freeze({ kind: 'swimlane' as const, swimlaneId: focused.swimlaneId });
+                }
+                return Object.freeze({ kind: 'board' as const });
+              },
+              visibleCardScope: (cardKey) => {
+                const visible = this.viewport
+                  .inspection()
+                  .visibleCards.find((card) => typeof card.cardKey === typeof cardKey && card.cardKey === cardKey);
+                return visible === undefined
+                  ? undefined
+                  : Object.freeze({
+                      kind: 'card' as const,
+                      cardKey,
+                      address: Object.freeze({ ...visible.address }),
+                    });
+              },
+              firstCell: () => this.viewport.inspection().cells[0]?.address,
+              clearFilters: () => {
+                const result = this.#viewController?.clearFilters();
+                return result !== undefined && result.kind !== 'rejected' && result.kind !== 'unavailable';
+              },
+              focusSearch: () => {
+                this.viewBar?.focusSearch();
+                return this.viewBar !== undefined;
+              },
+            },
+          });
     this.#viewBinding?.connect({
       prepare: (candidate) => prepareKanbanViewportViewCandidate(this.viewport, candidate),
       summary: () => readKanbanViewportViewSummary(this.viewport),
@@ -465,11 +539,24 @@ export class KanbanBoard<TCard> extends Group {
     prepareKanbanViewportBoardInput(this.viewport, {
       accept: (command) => this.#interactionFacade.accept(command),
       acceptSelectionActivate: (command, activateOptions) =>
-        this.#interactionFacade.acceptSelectionActivate(command, activateOptions),
-      acceptActivate: (activateOptions) => this.#interactionFacade.acceptActivate(activateOptions),
-      acceptOpenContext: (contextOptions) => this.#interactionFacade.acceptOpenContext(contextOptions),
+        this.#actions === undefined
+          ? this.#interactionFacade.acceptSelectionActivate(command, activateOptions)
+          : this.#actions.selectThenPointer(command, 'kanban.card.activate', activateOptions.scope),
+      acceptActivate: (activateOptions) =>
+        this.#actions === undefined
+          ? this.#interactionFacade.acceptActivate(activateOptions)
+          : this.#actions.pointer(activateOptions.actionId ?? 'kanban.card.activate', activateOptions.scope),
+      acceptOpenContext: (contextOptions) =>
+        this.#actions === undefined
+          ? this.#interactionFacade.acceptOpenContext(contextOptions)
+          : this.#actions.pointer('kanban.context.open', contextOptions.scope),
       acceptScopedAction: (actionId, scope, origin) =>
-        this.#interactionFacade.acceptScopedAction(actionId, scope, origin),
+        this.#actions === undefined
+          ? this.#interactionFacade.acceptScopedAction(actionId, scope, origin)
+          : this.#actions.scopedPointer(actionId, scope, origin),
+      routeKey: (event) => this.#actions?.routeKey(event),
+      canStartCardDrag: (scope) => this.#actions?.canStartCardDrag(scope) ?? true,
+      canStartStructureDrag: (scope) => this.#actions?.canStartStructureDrag(scope) ?? true,
       commitCardMove: (proposal) => this.#authority.commitProposal(proposal),
       commitStructureReorder: (proposal) => this.#authority.commitProposal(proposal),
       evaluateCardMove: (proposal) => this.#authority.evaluateProposal(proposal),
@@ -603,6 +690,18 @@ export class KanbanBoard<TCard> extends Group {
     return this.#interactionFacade;
   }
 
+  /**
+   * Returns the optional board-owned shared action surface.
+   *
+   * @example
+   * ```ts
+   * board.actions()?.invoke('kanban.help.open', 'programmatic', { kind: 'board' });
+   * ```
+   */
+  actions(): KanbanBoardActionBinding | undefined {
+    return this.#actions?.binding;
+  }
+
   /** Dispatches one standard proposal or complete compatibility request without mutating records. */
   request(request: KanbanRequest | KanbanRequestProposal): Promise<KanbanRequestResult> {
     return this.#authority.request(request);
@@ -662,6 +761,7 @@ export class KanbanBoard<TCard> extends Group {
     quiesceKanbanViewportInput(this.viewport);
     setKanbanViewportInteractionEvidenceListener(this.viewport, undefined);
     disposeKanbanViewportOperations(this.viewport);
+    this.#actions?.dispose();
     this.#authority.dispose();
     this.#interactionFacade.dispose();
     this.#disposeInteractionChrome?.();

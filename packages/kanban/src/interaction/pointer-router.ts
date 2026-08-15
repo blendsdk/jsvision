@@ -110,6 +110,12 @@ export interface KanbanPointerRouterSink {
   readonly openContext: (target: KanbanActionTarget) => boolean;
   /** Resolve current revision evidence for an unselected pointer-origin card. */
   readonly snapshotCard?: (target: KanbanActionTarget) => KanbanSelectionEntry | undefined;
+  /** Checks card-drag capability only after ordinary click handling crosses the threshold. */
+  readonly canStartCardDrag?: (scope: Extract<KanbanActionScope, { readonly kind: 'card' }>) => boolean;
+  /** Checks structural-reorder capability only after a header press crosses the threshold. */
+  readonly canStartStructureDrag?: (
+    scope: Extract<KanbanActionScope, { readonly kind: 'column' | 'swimlane' }>,
+  ) => boolean;
   /** Adopt one captured threshold-crossing handoff. */
   readonly beginCardDrag?: (start: KanbanPointerDragStart) => boolean;
   /** Recompute the current semantic destination for one captured move report. */
@@ -356,6 +362,16 @@ export class KanbanPointerRouter {
       return false;
     }
     const structural = pending.target.kind === 'workflow-header' || pending.target.kind === 'swimlane-header';
+    if (
+      (!structural &&
+        pending.target.scope.kind === 'card' &&
+        this.#sink.canStartCardDrag?.(pending.target.scope) === false) ||
+      (structural &&
+        (pending.target.scope.kind === 'column' || pending.target.scope.kind === 'swimlane') &&
+        this.#sink.canStartStructureDrag?.(pending.target.scope) === false)
+    ) {
+      return false;
+    }
     const snapshotCard = this.#sink.snapshotCard;
     const dragged =
       structural || snapshotCard === undefined

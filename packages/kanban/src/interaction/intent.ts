@@ -4,7 +4,7 @@ import type { KanbanCellAddress } from '../source/types.js';
 import type { KanbanSelectionSnapshot } from './types.js';
 
 /** Input channel that initiated one semantic application interaction. */
-export type KanbanInteractionOrigin = 'keyboard' | 'pointer' | 'programmatic';
+export type KanbanInteractionOrigin = 'keyboard' | 'menu' | 'context-menu' | 'status' | 'pointer' | 'programmatic';
 
 /** Package-owned scoped actions with stable semantics across hosts. */
 export type KanbanBuiltInActionId = 'collapse' | 'clear-filters' | 'configure' | 'add-card';
@@ -24,6 +24,8 @@ export interface KanbanInteractionIntentBase {
 export interface KanbanOpenCardIntent extends KanbanInteractionIntentBase {
   /** Stable intent discriminator. */
   readonly kind: 'open-card';
+  /** Complete card scope retained for parity with context and scoped-action intents. */
+  readonly scope?: Extract<KanbanActionScope, { readonly kind: 'card' }>;
   /** Application-owned card identity without the application record payload. */
   readonly cardKey: CardKey;
   /** Semantic cell containing the card when the intent was captured. */

@@ -971,6 +971,7 @@ viewBar: KanbanViewBar | undefined
 runPendingMounts(): void
 inspection(): KanbanBoardInspection
 interaction(): KanbanInteractionFacade
+actions(): KanbanBoardActionBinding | undefined
 request(request: KanbanRequest | KanbanRequestProposal): Promise<KanbanRequestResult>
 reconcilePublication(notice: KanbanPublicationNotice): void
 operationSnapshot(): readonly KanbanOperationSnapshot[]
@@ -981,6 +982,34 @@ scrollTo(target: KanbanScrollTarget): void
 scrollBy(delta: KanbanScrollTarget): void
 revealCard(key: CardKey, alignment?: KanbanRevealAlignment, options?: { readonly signal?: AbortSignal }): Promise<KanbanRevealResult>
 dispose(): void
+```
+
+## KanbanBoardActionBinding
+
+Public board-owned action surface shared by keyboard, pointer, chrome, and application callers.
+
+```ts
+interface KanbanBoardActionBinding {
+  registry: KanbanActionRegistry;   // Immutable package-plus-application action inventory.
+  keymap: KanbanActionKeymap;   // Reactive conflict-validated semantic keymap.
+  router: KanbanActionRouter;   // Shared capability and lifecycle router.
+}
+```
+
+## KanbanBoardActionOptions
+
+Optional board-owned action composition requested by one Kanban board.
+
+```ts
+interface KanbanBoardActionOptions {
+  boardId: KanbanBoardId;   // Stable identity included in every invocation and required to match the optional event hub.
+  host: KanbanActionKeymapHost;   // Host facts used to resolve semantic Primary bindings.
+  capability?: KanbanCapabilityProvider;   // Optional pure presentation capability policy.
+  extensions?: readonly KanbanActionDefinition[];   // Optional namespaced application actions appended to the package inventory.
+  initialBindings?: KanbanActionKeymapReplacement;   // Optional atomic initial keymap replacement.
+  history?: KanbanHistoryProvider;   // Optional application-owned undo/redo availability and proposal builder.
+  executePackageAction?: KanbanActionHandler;   // Optional fallback for package actions whose application-specific UI is not configured.
+}
 ```
 
 ## KanbanBoardCounts
@@ -1063,6 +1092,7 @@ Construction options for the responsive board shell and application authority se
 ```ts
 interface KanbanBoardOptions<TCard> {
   events?: KanbanEventHub;   // Optional board-scoped public semantic event stream.
+  actions?: KanbanBoardActionOptions;   // Optional board-owned registry, keymap, capability, event, and history action composition.
   view?: KanbanBoardViewOptions;   // Optional controller-owned view projection and package standard chrome.
   identity?: () => KanbanIdentityInput;   // Optional compatibility seed captured once during construction for the default controller's mount.
   dispatcher?: KanbanRequestDispatcher;   // Optional application-owned request dispatcher; read projection never depends on it.
@@ -4553,7 +4583,7 @@ interface KanbanInteractionIntentBase {
 Input channel that initiated one semantic application interaction.
 
 ```ts
-type KanbanInteractionOrigin = 'keyboard' | 'pointer' | 'programmatic'
+type KanbanInteractionOrigin = 'keyboard' | 'menu' | 'context-menu' | 'status' | 'pointer' | 'programmatic'
 ```
 
 ## KanbanInteractionPendingResult
@@ -5050,7 +5080,7 @@ interface KanbanMoveCardOptions {
   target?: KanbanCellAddress;   // Explicit semantic destination; omission requires a scene-relative direction.
   position?: KanbanCardMovePositionInput;   // Semantic edge resolved through the current destination cursor.
   direction?: KanbanMoveDirection;   // Scene-relative destination used when an explicit position or target is omitted.
-  origin?: 'pointer' | 'keyboard' | 'programmatic';   // Input origin retained only for parity diagnostics; it never changes request semantics.
+  origin?: 'pointer' | 'keyboard' | 'menu' | 'context-menu' | 'status' | 'programmatic';   // Input origin retained only for parity diagnostics; it never changes request semantics.
 }
 ```
 
@@ -5347,6 +5377,7 @@ Requests that the application open or otherwise activate one card.
 ```ts
 interface KanbanOpenCardIntent {
   kind: 'open-card';   // Stable intent discriminator.
+  scope?: Extract<KanbanActionScope, { readonly kind: 'card' }>;   // Complete card scope retained for parity with context and scoped-action intents.
   cardKey: CardKey;   // Application-owned card identity without the application record payload.
   address: KanbanCellAddress;   // Semantic cell containing the card when the intent was captured.
   actionId?: KanbanExtensionId;   // Optional descriptor action that requested the activation.

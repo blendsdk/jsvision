@@ -55,9 +55,18 @@ function structureState(value: string): value is KanbanStructureStateCode {
   );
 }
 
-/** Accepts only the three public interaction-origin discriminators. */
+/** Accepts the complete public interaction-origin inventory shared with board actions. */
 function snapshotOrigin(origin: KanbanInteractionOrigin): KanbanInteractionOrigin {
-  if (origin === 'keyboard' || origin === 'pointer' || origin === 'programmatic') return origin;
+  if (
+    origin === 'keyboard' ||
+    origin === 'menu' ||
+    origin === 'context-menu' ||
+    origin === 'status' ||
+    origin === 'pointer' ||
+    origin === 'programmatic'
+  ) {
+    return origin;
+  }
   throw new TypeError('Invalid Kanban interaction origin.');
 }
 
@@ -137,6 +146,7 @@ function snapshotIntent(request: KanbanIntentRequest, selection: KanbanSelection
         kind: 'open-card',
         origin: snapshotOrigin(request.origin),
         selection: detachedSelection,
+        scope,
         cardKey: scope.cardKey,
         address: scope.address,
         ...(request.actionId === undefined ? {} : { actionId: snapshotActionId(request.actionId) }),

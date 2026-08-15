@@ -675,6 +675,10 @@ interface KanbanPointerRouterSink {
   completeRetry: (target: KanbanActionTarget) => boolean;   // Invokes only the source-owned retry seam for a retry target.
   openContext: (target: KanbanActionTarget) => boolean;   // Focuses and opens context for the newly targeted card selection.
   snapshotCard?: (target: KanbanActionTarget) => KanbanSelectionEntry | undefined;   // Resolve current revision evidence for an unselected pointer-origin card.
+  canStartCardDrag?: (scope: Extract<KanbanActionScope, { readonly kind: 'card' }>) => boolean;   // Checks card-drag capability only after ordinary click handling crosses the threshold.
+  canStartStructureDrag?: (
+    scope: Extract<KanbanActionScope, { readonly kind: 'column' | 'swimlane' }>,
+  ) => boolean;   // Checks structural-reorder capability only after a header press crosses the threshold.
   beginCardDrag?: (start: KanbanPointerDragStart) => boolean;   // Adopt one captured threshold-crossing handoff.
   updateCardDrag?: (
     generation: number,

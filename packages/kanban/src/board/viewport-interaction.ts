@@ -1,3 +1,5 @@
+import type { KeyEvent } from '@jsvision/core';
+
 import { KanbanDisposedResourceError, KanbanInvalidSourcePublicationError } from '../contract/error.js';
 import type { KanbanActionScope } from '../layout/hit-map.js';
 import type {
@@ -48,6 +50,8 @@ interface CapturedKanbanViewportInteractionAdapter {
 
 /** Board-owned facade methods required for mounted keyboard and pointer input. */
 export interface KanbanViewportInputAdapter {
+  /** Optional shared action-key route; undefined preserves the legacy keyboard fallback. */
+  readonly routeKey?: (event: KeyEvent) => boolean | undefined;
   /** Synchronously queues one controller transition. */
   readonly accept: (command: KanbanInteractionTransition) => boolean;
   /** Commits selection and activation in one ordered facade operation when supported. */
@@ -72,6 +76,12 @@ export interface KanbanViewportInputAdapter {
   readonly moveFocused?: (direction: KanbanMoveDirection) => boolean;
   /** Optional board-only cancellation of the most recent operation layer. */
   readonly cancelTransient?: () => boolean;
+  /** Optional capability gate checked only when a card press crosses the drag threshold. */
+  readonly canStartCardDrag?: (scope: Extract<KanbanActionScope, { readonly kind: 'card' }>) => boolean;
+  /** Optional capability gate checked only when a structural press crosses the drag threshold. */
+  readonly canStartStructureDrag?: (
+    scope: Extract<KanbanActionScope, { readonly kind: 'column' | 'swimlane' }>,
+  ) => boolean;
 }
 
 /** Captured input methods that cannot be replaced after board construction. */
@@ -90,6 +100,9 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
     const evaluateCardMove = Reflect.get(adapter, 'evaluateCardMove');
     const moveFocused = Reflect.get(adapter, 'moveFocused');
     const cancelTransient = Reflect.get(adapter, 'cancelTransient');
+    const routeKey = Reflect.get(adapter, 'routeKey');
+    const canStartCardDrag = Reflect.get(adapter, 'canStartCardDrag');
+    const canStartStructureDrag = Reflect.get(adapter, 'canStartStructureDrag');
     if (
       typeof accept !== 'function' ||
       typeof acceptActivate !== 'function' ||
@@ -99,6 +112,14 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
       throw new KanbanInvalidSourcePublicationError();
     }
     return Object.freeze({
+      ...(typeof routeKey === 'function'
+        ? {
+            routeKey: (event: KeyEvent) => {
+              const result: unknown = Reflect.apply(routeKey, adapter, [event]);
+              return typeof result === 'boolean' ? result : undefined;
+            },
+          }
+        : {}),
       accept: (command: KanbanInteractionTransition) => Reflect.apply(accept, adapter, [command]) === true,
       ...(typeof acceptSelectionActivate === 'function'
         ? {
@@ -136,6 +157,18 @@ function captureInputAdapter(adapter: KanbanViewportInputAdapter): CapturedKanba
         : {}),
       ...(typeof cancelTransient === 'function'
         ? { cancelTransient: () => Reflect.apply(cancelTransient, adapter, []) === true }
+        : {}),
+      ...(typeof canStartCardDrag === 'function'
+        ? {
+            canStartCardDrag: (scope: Extract<KanbanActionScope, { readonly kind: 'card' }>) =>
+              Reflect.apply(canStartCardDrag, adapter, [scope]) === true,
+          }
+        : {}),
+      ...(typeof canStartStructureDrag === 'function'
+        ? {
+            canStartStructureDrag: (scope: Extract<KanbanActionScope, { readonly kind: 'column' | 'swimlane' }>) =>
+              Reflect.apply(canStartStructureDrag, adapter, [scope]) === true,
+          }
         : {}),
     });
   } catch {

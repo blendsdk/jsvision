@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-14 23:20 CEST
-> **Progress**: 70/125 tasks (56%)
+> **Last Updated**: 2026-08-15 02:55 CEST
+> **Progress**: 71/125 tasks (57%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -384,7 +384,7 @@ other 8 focused GitHub showcase behaviors remain green.
 
 ### Step 8.2: Implementation
 
-- [ ] 8.2.1 Compose optional binders, board-owned action routing for every origin, contextual activate-as-open/drop dispatch, read-only hit-target policy, and one controller-precedence effective view getter layer around one viewport — board productivity binding and board
+- [x] 8.2.1 Compose optional binders, board-owned action routing for every origin, contextual activate-as-open/drop dispatch, read-only hit-target policy, and one controller-precedence effective view getter layer around one viewport — board productivity binding and board ✅ (completed: 2026-08-15 02:55)
 - [ ] 8.2.2 Add complete Phase D English message contract and typed catalog overlays without raw action-ID fallbacks in mounted UI — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/locales/en.ts`
 - [ ] 8.2.3 Synchronize all nine non-English locale modules with reviewed English fallback and accelerator manifests — `packages/kanban/src/locales/*.ts`
 - [ ] 8.2.4 Add only required semantic theme roles/fallbacks and non-color/ASCII cues — `packages/kanban/src/card/theme.ts`, `theme-resolver.ts`

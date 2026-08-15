@@ -21,10 +21,10 @@ interface WorkItem {
 const CAPS = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const QUERY: KanbanQuery = Object.freeze({ filters: [], sort: [], viewRevision: 'phase-d-e2e-r1' });
 const CARD: KanbanCardAdapter<WorkItem> = Object.freeze({
-  keyOf: (card) => card.id,
-  titleOf: (card) => card.title,
-  statusOf: (card) => card.columnId,
-  presentationRevisionOf: (card) => card.revision,
+  keyOf: (card: WorkItem) => card.id,
+  titleOf: (card: WorkItem) => card.title,
+  statusOf: (card: WorkItem) => card.columnId,
+  presentationRevisionOf: (card: WorkItem) => card.revision,
 });
 const applications: Application[] = [];
 

@@ -573,6 +573,8 @@ export class KanbanViewport<TCard> extends View {
         completeRetry: (target) => this.#completeRetry(target),
         openContext: (target) => this.#openContext(target),
         snapshotCard: (target) => this.#snapshotDragCard(target),
+        canStartCardDrag: (scope) => this.#interactionBinding.input()?.canStartCardDrag?.(scope) ?? true,
+        canStartStructureDrag: (scope) => this.#interactionBinding.input()?.canStartStructureDrag?.(scope) ?? true,
         beginCardDrag: (start) => this.#dragController.begin(start),
         updateCardDrag: (generation, point, target) => this.#dragController.update(generation, point, target),
         releaseCardDrag: (generation) => this.#dragController.release(generation),
@@ -1144,6 +1146,11 @@ export class KanbanViewport<TCard> extends View {
       const cancelledDrag = this.#pointerRouter.cancel(event.event.key === 'escape' ? 'escape' : 'explicit');
       const input = this.#interactionBinding.input();
       if (input === undefined || this.#metrics.mode === 'minimum-size') return;
+      const actionHandled = input.routeKey?.(event.event);
+      if (actionHandled !== undefined) {
+        event.handled = actionHandled;
+        return;
+      }
       event.handled = routeKanbanKeyInput(event.event, {
         snapshot: () => this.#interactionBinding.snapshot(),
         accept: (transition) => input.accept(transition),

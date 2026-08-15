@@ -36,7 +36,7 @@ export interface KanbanMoveCardOptions {
   /** Scene-relative destination used when an explicit position or target is omitted. */
   readonly direction?: KanbanMoveDirection;
   /** Input origin retained only for parity diagnostics; it never changes request semantics. */
-  readonly origin?: 'pointer' | 'keyboard' | 'programmatic';
+  readonly origin?: 'pointer' | 'keyboard' | 'menu' | 'context-menu' | 'status' | 'programmatic';
 }
 
 /** Options for moving the current bounded loaded selection atomically. */

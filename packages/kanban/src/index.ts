@@ -170,6 +170,7 @@ export {
 export * from './board/board-configuration-binding.js';
 export * from './board/kanban-viewport.js';
 export * from './board/kanban-board.js';
+export type { KanbanBoardActionBinding, KanbanBoardActionOptions } from './board/productivity-binding.js';
 export * from './board/scene-builder.js';
 export * from './board/scene-model.js';
 export { calculateKanbanSceneDamage } from './board/viewport-damage.js';
