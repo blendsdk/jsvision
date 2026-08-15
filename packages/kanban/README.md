@@ -70,6 +70,20 @@ Add `board` to an application content surface, a DSL-composed group, or a window
 projection and scroll behavior is used in every host. Changes published through `cards`, `columns`, or
 `query` are observed reactively after the board is mounted.
 
+For productivity features, construct one `createKanbanViewController()` per mounted board and pass it
+through the board's `view` option. The controller owns search, filters, quick filters, sorting,
+grouping, column/swimlane presentation, and density as one immutable projection. Its transitions are
+transactional: a rejected source query leaves both the visible board and controller state unchanged.
+
+```ts
+import { createKanbanViewController } from '@jsvision/kanban';
+
+const view = createKanbanViewController({ debounceMs: 150 });
+const board = new KanbanBoard({ source, query, card, view: { controller: view, chrome: 'standard' } });
+
+view.apply({ kind: 'set-search', search: 'release' });
+```
+
 ## Data ownership
 
 `@jsvision/kanban` does not own or rewrite application records. A `KanbanCardAdapter<TCard>` provides
@@ -79,6 +93,44 @@ convenience type for common fields; it is not a required base class or runtime s
 Use `createEagerKanbanDataSource` when the complete working set can reside in memory. Implement
 `KanbanDataSource<TCard>` for windowed or remote data. Sparse sources publish honest exact,
 lower-bound, or unknown extents and load only bounded visible and overscan ranges.
+
+## View state and application-owned saved views
+
+The view controller owns ephemeral board presentation, not application records. Register
+application-specific filter, sort, quick-filter, and grouping semantics with
+`createKanbanViewRegistry`; the package stores only their stable IDs and bounded parameters in view
+state. Draft search text is separate from the committed query so debounce and cancellation cannot
+expose a half-applied projection.
+
+`captureKanbanSavedView()` creates a versioned durable value from a controller. Validate unknown JSON
+with `parseKanbanSavedView()`, migrate supported older versions, reconcile saved IDs against the
+current application registry and board structure, and only then apply the reconciled result. Unknown
+or temporarily unavailable safe IDs remain diagnosable instead of silently changing meaning.
+
+```ts
+import {
+  applyKanbanSavedView,
+  captureKanbanSavedView,
+  parseKanbanSavedView,
+  reconcileKanbanSavedView,
+} from '@jsvision/kanban';
+
+const saved = captureKanbanSavedView(view, { name: 'My work' });
+const parsed = parseKanbanSavedView(saved);
+
+if (parsed.kind === 'parsed') {
+  const reconciled = reconcileKanbanSavedView(parsed.value, {
+    registry,
+    columns: currentColumns,
+    swimlanes: currentSwimlanes,
+  });
+  if (reconciled.kind === 'reconciled') applyKanbanSavedView(view, reconciled);
+}
+```
+
+Persistence remains application-owned. `createKanbanSavedViewStore()` validates save, rename, and
+delete proposals and forwards them through the normal request-authority seam; it never retains a
+saved-view database inside the component.
 
 ## Cards and presentation
 
@@ -121,6 +173,31 @@ One optional horizontal swimlane grouping level can partition cards by team, pro
 or another registered field. Swimlanes support application-owned ordering, visibility, collapse,
 summary, separator, background-role, and rail presentation. Nested grouping is deliberately absent:
 one horizontal level remains legible and navigable in constrained terminals.
+
+## Programmatic and dialog configuration
+
+Use the exported configuration builders and sessions to add, edit, reorder, or delete columns and to
+configure the single swimlane grouping level programmatically. They produce validated proposals;
+authoritative structure still comes from the application's source publication.
+
+Applications that want package-owned UI can invoke `openKanbanColumnConfigurationDialog()` or
+`openKanbanSwimlaneConfigurationDialog()` on demand. Both configuration dialogs are localized,
+theme-aware, responsive, keyboard/mouse reachable, and can either return a detached result or submit
+through the same application-authority path as programmatic configuration.
+
+```ts
+import { openKanbanColumnConfigurationDialog } from '@jsvision/kanban';
+
+const result = await openKanbanColumnConfigurationDialog(app, {
+  source: configurationSource,
+  operation: { kind: 'update', columnId: 'doing' },
+  completion: { kind: 'result-only' },
+});
+```
+
+Deletion requests may require application confirmation and deterministic focus recovery. Closing or
+aborting a dialog disposes its draft session and prevents late validation or authority results from
+changing visible state.
 
 ## Responsive layout and scrolling
 
@@ -275,12 +352,18 @@ A mounted board owns one source/session/cursor lifecycle. Unmounting or calling 
 those resources in cancellation-first order. A disposed instance cannot be remounted; create a new
 board for a new terminal lifecycle.
 
-## Card editor core
+## Card editors and dialogs
 
 Use `createKanbanCardEditorSchema` with a typed `KanbanCardEditorAdapter` when application records do
 not match `StandardCard`. One disposable `createKanbanEditorSession` owns a detached draft, abortable
 field validation, focus/error state, stale detection, and application-authorized submission. Subscribe
 to its aggregate immutable snapshot so dialog rendering never observes torn submission state.
+
+Share one `createKanbanEditorCoordinator()` across entry points that may address the same card. It
+prevents competing editor sessions while allowing view-only inspection. Invoke
+`openKanbanCardCreateDialog()`, `openKanbanCardEditDialog()`, or `openKanbanCardViewDialog()` when the
+application wants the package-owned responsive UI; custom replacements and a modeless inspector use
+the same adapter, resolver, coordinator, and authority contracts.
 
 `createStandardKanbanEditorAdapter` provides configured mainstream fields and stable-ID checklist
 groups/items. Its `createForm()` method returns a disposable `@jsvision/forms` store backed by a
@@ -301,6 +384,24 @@ const editor = createStandardKanbanEditorAdapter({
 });
 ```
 
+For create workflows, pass an adapter that implements the configured create contract and choose
+result-only or application-authority completion:
+
+```ts
+import { createKanbanEditorCoordinator, openKanbanCardCreateDialog } from '@jsvision/kanban';
+
+const coordinator = createKanbanEditorCoordinator();
+const result = await openKanbanCardCreateDialog(app, {
+  claimId: 'new-card-1',
+  adapter,
+  coordinator,
+  completion: {
+    kind: 'result-only',
+    detach: ({ draft }) => ({ ...draft }),
+  },
+});
+```
+
 The component never writes the source record. An adapter returns a normal `card-update` proposal with
 exact full-draft evidence; application authority returns the operation result, and the session commits
 only after the resolver publishes the expected card revision. Dirty external changes become stale and
@@ -313,16 +414,19 @@ can import only the catalogs they use:
 
 ```ts
 import { createI18n } from '@jsvision/i18n';
-import { kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl } from '@jsvision/kanban/locales/nl';
+import { kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl, kanbanPhaseDNl } from '@jsvision/kanban/locales/nl';
 
-const i18n = createI18n({ locale: 'nl', catalogs: [kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl] });
+const i18n = createI18n({
+  locale: 'nl',
+  catalogs: [kanbanNl, kanbanPhaseBNl, kanbanPhaseCNl, kanbanPhaseDNl],
+});
 const board = new KanbanBoard({ source, query, card, i18n: () => i18n });
 ```
 
 Available locale tags are `en`, `nl`, `de`, `fr`, `es`, `it`, `pt-PT`, `pl`, `ro`, and `sv`. Each
-subpath exports the stable foundation catalog plus additive `kanbanPhaseB*` and `kanbanPhaseC*`
-overlays. Passing all three preserves the original exact catalog contract while enabling the complete
-core-board and modern-interaction vocabulary.
+subpath exports the stable foundation catalog plus additive `kanbanPhaseB*`, `kanbanPhaseC*`, and
+`kanbanPhaseD*` overlays. Passing all four preserves the original exact catalog contract while
+enabling the complete board, interaction, productivity, editor, and configuration vocabulary.
 Applications may replace the `I18n` service reactively.
 
 ## Themes and terminal capabilities
@@ -413,11 +517,13 @@ status-driven surfaces remain visually coherent. Standard-card rows reserve the 
 left and one matching blank cell before the right frame; ellipsis never occupies that trailing padding.
 Checklist content is a bounded card presentation; checklist-item editing remains application-owned.
 
-Package-owned card/lane editor dialogs and the headless command/keymap layer are available. Direct
-board ownership of those productivity binders, complete action-message locale overlays, and the full
-docs-site component course remain integration work. Application persistence and authorization
-intentionally remain outside the package. Nested grouping remains excluded because it does not preserve
-a legible TUI interaction model.
+The Phase D productivity surface is available: transactional view state, validated application-owned
+saved views, generic and standard card editors, invocable card/column/swimlane dialogs, a unified
+action/keymap/capability layer, bounded ordered events, and application-owned history bindings. Board
+composition can bind these surfaces without becoming a second authority. Application records,
+persistence, authorization, history stacks, and host policy intentionally remain outside the package.
+Nested grouping remains excluded because it does not preserve a legible TUI interaction model. The
+full docs-site component course and release hardening remain later delivery work.
 
 ## License
 
