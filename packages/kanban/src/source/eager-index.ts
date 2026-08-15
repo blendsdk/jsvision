@@ -514,12 +514,12 @@ export function buildEagerKanbanIndex<TCard>(
   const summaryAdapters = adapterMap(options.sourceOptions.summaries, (entry) => entry.summaryId);
   const grouping = options.query.groupBy === undefined ? undefined : groupingFields.get(options.query.groupBy);
   if (options.query.groupBy !== undefined && grouping === undefined) throw new KanbanInvalidSourcePublicationError();
-  for (const filter of options.query.filters ?? []) {
+  const activeFilters = (options.query.filters ?? []).map((filter) => {
     const field = filterFields.get(filter.fieldId);
-    if (field === undefined || !field.operators.some((operator) => operator.operatorId === filter.operatorId)) {
-      throw new KanbanInvalidSourcePublicationError();
-    }
-  }
+    const operator = field?.operators.find((candidate) => candidate.operatorId === filter.operatorId);
+    if (operator === undefined) throw new KanbanInvalidSourcePublicationError();
+    return Object.freeze({ matches: operator.matches, value: filter.value });
+  });
   for (const sort of options.query.sort ?? []) {
     if (!sortFields.has(sort.fieldId)) throw new KanbanInvalidSourcePublicationError();
   }
@@ -532,6 +532,12 @@ export function buildEagerKanbanIndex<TCard>(
   const loadedColumns = new Map<KanbanColumnId, TCard[]>();
   const authoritativeSwimlanes = new Map<KanbanSwimlaneId, TCard[]>();
   const loadedSwimlanes = new Map<KanbanSwimlaneId, TCard[]>();
+  // Card addresses repeat heavily on a board. Canonical validation and JSON encoding are therefore
+  // performed once per occupied semantic cell instead of once per application record.
+  const cellAddresses = new Map<
+    KanbanColumnId,
+    Map<KanbanSwimlaneId | undefined, { readonly address: KanbanCellAddress; readonly key: string }>
+  >();
   for (const column of columns) {
     authoritativeColumns.set(column.columnId, []);
     loadedColumns.set(column.columnId, []);
@@ -543,7 +549,8 @@ export function buildEagerKanbanIndex<TCard>(
   const seenKeys = new Set<CardKey>();
   let matching = 0;
 
-  for (const [sourceIndex, card] of cards.entries()) {
+  for (let sourceIndex = 0; sourceIndex < cards.length; sourceIndex += 1) {
+    const card = cards[sourceIndex]!;
     const key = validateCardKey(options.sourceOptions.keyOf(card));
     if (seenKeys.has(key)) throw new KanbanInvalidSourcePublicationError();
     seenKeys.add(key);
@@ -553,10 +560,21 @@ export function buildEagerKanbanIndex<TCard>(
       grouping === undefined
         ? undefined
         : resolveGroupedSwimlane(card, grouping, swimlaneIds, options.sourceOptions.observe);
-    const address: KanbanCellAddress = Object.freeze(
-      swimlaneId === undefined ? { columnId } : { columnId, swimlaneId },
-    );
-    const addressKey = canonicalizeKanbanCellAddress(address);
+    let columnAddresses = cellAddresses.get(columnId);
+    if (columnAddresses === undefined) {
+      columnAddresses = new Map();
+      cellAddresses.set(columnId, columnAddresses);
+    }
+    let resolvedAddress = columnAddresses.get(swimlaneId);
+    if (resolvedAddress === undefined) {
+      const address: KanbanCellAddress = Object.freeze(
+        swimlaneId === undefined ? { columnId } : { columnId, swimlaneId },
+      );
+      resolvedAddress = Object.freeze({ address, key: canonicalizeKanbanCellAddress(address) });
+      columnAddresses.set(swimlaneId, resolvedAddress);
+    }
+    const address = resolvedAddress.address;
+    const addressKey = resolvedAddress.key;
     let authoritativeCell = authoritativeCells.get(addressKey);
     if (authoritativeCell === undefined) {
       authoritativeCell = [];
@@ -575,14 +593,15 @@ export function buildEagerKanbanIndex<TCard>(
       if (typeof result !== 'boolean') throw new KanbanInvalidSourcePublicationError();
       matchesSearch = result;
     }
-    const matchesFilters = (options.query.filters ?? []).every((filter) => {
-      const field = filterFields.get(filter.fieldId);
-      const operator = field?.operators.find((candidate) => candidate.operatorId === filter.operatorId);
-      if (operator === undefined) throw new KanbanInvalidSourcePublicationError();
-      const result = operator.matches(card, filter.value);
+    let matchesFilters = true;
+    for (const filter of activeFilters) {
+      const result = filter.matches(card, filter.value);
       if (typeof result !== 'boolean') throw new KanbanInvalidSourcePublicationError();
-      return result;
-    });
+      if (!result) {
+        matchesFilters = false;
+        break;
+      }
+    }
     if (!matchesSearch || !matchesFilters) continue;
     matching += 1;
     loadedColumns.get(columnId)?.push(card);

@@ -1,7 +1,7 @@
 # Ambiguity Register: Kanban Phase D Productivity and Editing
 
 > **Status**: ✅ GATE PASSED — all 35 items resolved
-> **Last Updated**: 2026-08-14 20:50 CEST
+> **Last Updated**: 2026-08-15 07:42 CEST
 > **Root Invocation ID**: `MP-PHASE-D-20260814T1058CEST`
 > **Mode**: Auto-design · policy version 1 · strict scope
 
@@ -816,3 +816,35 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** A correction requires remote persistence, a new public workflow family, or Phase E localization/
   accessibility certification rather than the existing Phase D contract.
+
+### AR-D49 — Representative projection performance evidence (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; this is the necessary correction selected after the single permitted
+  fix-scoped re-review, not an optional performance feature.
+- **Eligibility:** Performance engineering, internal rendering instrumentation, and transaction invalidation within the
+  confirmed Phase 8 acceptance boundary.
+- **Objective:** Make the 16 ms oracle measure a fresh 2,000-card eager query and the actual mounted 80×24 board/render
+  transaction without hiding work behind cached sessions, reduced geometry, or inferred paint counters.
+- **Evidence:** The independent correctness reviewer and performance auditor converged on the same Major defect: the
+  first remediation cached eager publications, mounted a 1×1 board, and inferred full-scene work from changed cells.
+  Fresh-session profiling also showed repeated filter lookup/address canonicalization and controller-wide presentation/
+  structure invalidation on search-only changes.
+- **Decision:** Open a fresh eager session for every measured activation, mount the real 80×24 board with all ten active
+  filters, observe actual RenderRoot composition mode, pre-resolve eager filters and occupied addresses, isolate semantic
+  view facets, and retain a completed projection only when bounded card identities, presentation revisions, chrome, and
+  ranges are visually equal. Preserve ordinary source-change repaint, drag cancellation, and scroll-anchor reconciliation.
+- **Rejected alternatives:** Cached sessions do not measure query activation; a minimum board omits representative
+  projection; changed-cell inference cannot prove composition mode; unconditional repaint misses the frame budget; and
+  suppressing all source revisions breaks card updates, drag cancellation, and relocation.
+- **Strongest counterargument:** The alternating search terms intentionally produce the same visible result, so this
+  oracle measures activation plus a damage-aware no-op scene rather than a changed-result redraw. The separate existing
+  mixed-height projection/pointer benchmark covers visible redraw work; this decision must be reopened if acceptance
+  later requires every changed-result query to meet the same 16 ms ceiling.
+- **Confidence:** High — 200 measured iterations pass the unchanged median budget, full UI and Kanban matrices pass, and
+  the previously failing rich-card, drag-revision, relocation, sorted-move, and 100,000-card scale regressions are green.
+- **Hardening:** Independent reviewer and performance-auditor conclusions converged. Their rejected design was removed;
+  the policy forbids a third review, so closure relies on the complete corrected verification matrix.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** The no-op search terms stop returning the same visual records, RenderRoot composition semantics
+  change, the bounded fingerprint exceeds retained projection limits, or a changed-result 16 ms requirement is adopted.

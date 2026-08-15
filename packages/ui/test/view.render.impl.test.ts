@@ -82,3 +82,25 @@ test('resize reflows and recomposes to the new viewport', () => {
   expect(a.bounds.width).toBe(8); // reflowed to the new viewport
   expect(rr.buffer().get(7, 0)?.char).toBe('#'); // recomposed across the wider buffer
 });
+
+test('a throwing frame observer is isolated after composition', () => {
+  const logger = createLogger({ sink: 'ring' });
+  const view = new PaintView('S');
+  view.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  const root = new Group();
+  root.add(view);
+  const rr = createRenderRoot(
+    { width: 2, height: 1 },
+    {
+      caps,
+      logger,
+      observeFrame: () => {
+        throw new Error('observer failure');
+      },
+    },
+  );
+
+  expect(() => rr.mount(root)).not.toThrow();
+  expect(rr.buffer().get(0, 0)?.char).toBe('S');
+  expect(logger.entries()).toHaveLength(1);
+});

@@ -1,6 +1,6 @@
 import { classicTheme } from '@jsvision/core';
 import type { I18n } from '@jsvision/i18n';
-import { View, signal } from '@jsvision/ui';
+import { View, effect, runWithOwner, signal } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext, Rect, Signal, Size2D } from '@jsvision/ui';
 
 import type { KanbanCardPresentationAdapter } from '../card/adapter.js';
@@ -42,7 +42,7 @@ import type {
 } from '../interaction/types.js';
 import { KANBAN_NEUTRAL_INTERACTION_SNAPSHOT } from '../interaction/types.js';
 import type { KanbanActionTarget, KanbanDamageRegion } from '../layout/hit-map.js';
-import type { KanbanViewportMetrics, KanbanViewportPoint } from '../layout/metrics.js';
+import type { KanbanViewportMetrics, KanbanViewportPoint, KanbanVisibleCardRange } from '../layout/metrics.js';
 import type { KanbanSceneCustomChromeInput } from '../layout/swimlane-custom.js';
 import { createKanbanSparseHeightIndex } from '../layout/sparse-height-index.js';
 import type { KanbanSparseHeightIndex } from '../layout/sparse-height-index.js';
@@ -185,6 +185,81 @@ function residentValueIdentity(value: unknown): string | number {
     return projectionInputIdentity(value);
   }
   return `${typeof value}:${String(value)}`;
+}
+
+/** Captures bounded visual inputs while excluding source lifecycle revisions that cannot change the scene. */
+function sourceSnapshotVisualFingerprint<TCard>(
+  snapshot: KanbanViewportSourceSnapshot<TCard>,
+  presentationRevisionOf: KanbanCardPresentationAdapter<TCard>['presentationRevisionOf'],
+): string | undefined {
+  try {
+    const residents: Array<readonly [string, number, string | number, KanbanRevision | null]> = [];
+    for (const cell of snapshot.cells) {
+      const address = canonicalizeKanbanCellAddress(cell.address);
+      for (let index = cell.range.start; index < cell.range.end; index += 1) {
+        const card = cell.cursor.cardAt(index);
+        residents.push(
+          Object.freeze([
+            address,
+            index,
+            residentValueIdentity(card),
+            card === undefined ? null : (presentationRevisionOf?.(card) ?? null),
+          ]),
+        );
+      }
+    }
+    return sourceSnapshotVisualFingerprintFromResidents(snapshot, residents);
+  } catch {
+    // An unreadable candidate must repaint through the normal containment path rather than reuse.
+    return undefined;
+  }
+}
+
+/** Serializes source chrome and already-read resident identities without opening cursors again. */
+function sourceSnapshotVisualFingerprintFromResidents<TCard>(
+  snapshot: KanbanViewportSourceSnapshot<TCard>,
+  residents: readonly (readonly [string, number, string | number, KanbanRevision | null])[],
+): string | undefined {
+  try {
+    return JSON.stringify([
+      snapshot.mode,
+      snapshot.widths,
+      snapshot.visibleColumns.map((column) => [column.columnId, column.label]),
+      snapshot.visibleSwimlanes.map((swimlane) => [swimlane.swimlaneId, swimlane.label]),
+      snapshot.filtered,
+      snapshot.knownColumnCounts,
+      snapshot.collapsedSwimlaneIds,
+      snapshot.publication.counts,
+      snapshot.publication.headers.columns,
+      snapshot.publication.headers.swimlanes,
+      snapshot.cells.map((cell) => [cell.address, cell.state, cell.cursor.length()]),
+      residents,
+    ]);
+  } catch {
+    // An unreadable candidate must repaint through the normal containment path rather than reuse.
+    return undefined;
+  }
+}
+
+/** Reconstructs the exact bounded windows represented by already-read resident identities. */
+function sourceSnapshotVisualRanges<TCard>(
+  snapshot: KanbanViewportSourceSnapshot<TCard>,
+  residents: readonly (readonly [string, number, string | number, KanbanRevision | null])[],
+): readonly KanbanVisibleCardRange[] {
+  const indexesByAddress = new Map<string, number[]>();
+  for (const [address, index] of residents) {
+    const indexes = indexesByAddress.get(address) ?? [];
+    indexes.push(index);
+    indexesByAddress.set(address, indexes);
+  }
+  return Object.freeze(
+    snapshot.cells.map((cell) => {
+      const indexes = indexesByAddress.get(canonicalizeKanbanCellAddress(cell.address));
+      const start = indexes === undefined ? cell.range.start : Math.min(...indexes);
+      const end = indexes === undefined ? start : Math.max(...indexes) + 1;
+      return Object.freeze({ address: Object.freeze({ ...cell.address }), start, end });
+    }),
+  );
 }
 
 /** Counts the union of clipped semantic damage cells without double-counting overlapping rectangles. */
@@ -388,12 +463,17 @@ export class KanbanViewport<TCard> extends View {
   readonly #limits: KanbanResolvedLimits;
   #source: KanbanViewportSource<TCard> | undefined;
   #snapshot: KanbanViewportSourceSnapshot<TCard> | undefined;
+  /** Visual state captured before a reactive source can mutate an older cursor in place. */
+  #snapshotVisualFingerprint: string | undefined;
+  /** Exact source windows represented by the last completed projection. */
+  #snapshotVisualRanges: readonly KanbanVisibleCardRange[] | undefined;
   /** One prepared activation consumed by the reactive effect without reopening its source query. */
   #preparedActivation:
     | {
         readonly source: KanbanViewportSource<TCard>;
         readonly query: KanbanQuery;
         readonly snapshot: KanbanViewportSourceSnapshot<TCard>;
+        readonly visualFingerprint: string | undefined;
         readonly presentationRevision: KanbanRevision;
         consumed: boolean;
       }
@@ -654,8 +734,8 @@ export class KanbanViewport<TCard> extends View {
         this.dispose();
         throw error;
       }
-      this.bind(
-        () => {
+      runWithOwner(this.scope, () =>
+        effect(() => {
           const queryInput = options.query();
           const query = snapshotKanbanQuery(queryInput);
           this.#queryViewRevision = query.viewRevision;
@@ -681,16 +761,25 @@ export class KanbanViewport<TCard> extends View {
             ) {
               prepared.consumed = true;
             }
-            return prepared.snapshot;
+            const previousFingerprint = this.#snapshotVisualFingerprint;
+            const nextFingerprint = prepared.visualFingerprint;
+            this.#snapshot = prepared.snapshot;
+            this.#updateMetrics(prepared.snapshot);
+            if (
+              previousFingerprint === undefined ||
+              nextFingerprint === undefined ||
+              previousFingerprint !== nextFingerprint
+            ) {
+              this.invalidate();
+            }
+            return;
           }
           this.#source?.replaceQuery(query);
-          return this.#refresh(collapsedColumnIds, identity.focusedColumnId, density, structure);
-        },
-        (snapshot) => {
-          this.#snapshot = snapshot;
-          this.#updateMetrics(snapshot);
-        },
-        { relayout: true },
+          const next = this.#refresh(collapsedColumnIds, identity.focusedColumnId, density, structure);
+          this.#snapshot = next;
+          this.#updateMetrics(next);
+          this.invalidate();
+        }),
       );
       this.onCleanup(() => this.dispose());
     });
@@ -1002,6 +1091,8 @@ export class KanbanViewport<TCard> extends View {
     drawKanbanViewport(ctx, composedProjection, theme, (key, params) =>
       i18n.t(key, params === undefined ? undefined : { params }),
     );
+    this.#snapshotVisualFingerprint = sourceSnapshotVisualFingerprintFromResidents(snapshot, residentIdentity.values);
+    this.#snapshotVisualRanges = sourceSnapshotVisualRanges(snapshot, residentIdentity.values);
     this.#updateMetrics(snapshot, projection);
     try {
       INTERACTION_EVIDENCE_LISTENERS.get(this)?.();
@@ -1013,7 +1104,7 @@ export class KanbanViewport<TCard> extends View {
   /** Builds a complete equality fingerprint for authoritative geometry reuse. */
   #projectionFingerprint(
     snapshot: KanbanViewportSourceSnapshot<TCard>,
-    residentIdentity: readonly (readonly [string, number, string | number])[],
+    residentIdentity: readonly (readonly [string, number, string | number, KanbanRevision | null])[],
     presentation: ResolvedKanbanPresentationBudget,
     theme: KanbanTheme,
     i18n: I18n,
@@ -1055,15 +1146,23 @@ export class KanbanViewport<TCard> extends View {
    */
   #residentProjectionIdentity(snapshot: KanbanViewportSourceSnapshot<TCard>): Readonly<{
     readonly reusable: boolean;
-    readonly values: readonly (readonly [string, number, string | number])[];
+    readonly values: readonly (readonly [string, number, string | number, KanbanRevision | null])[];
   }> {
-    const values: Array<readonly [string, number, string | number]> = [];
+    const values: Array<readonly [string, number, string | number, KanbanRevision | null]> = [];
     let reusable = true;
     for (const cell of snapshot.cells) {
       const address = canonicalizeKanbanCellAddress(cell.address);
       for (let index = cell.range.start; index < cell.range.end; index += 1) {
         try {
-          values.push(Object.freeze([address, index, residentValueIdentity(cell.cursor.cardAt(index))]));
+          const card = cell.cursor.cardAt(index);
+          values.push(
+            Object.freeze([
+              address,
+              index,
+              residentValueIdentity(card),
+              card === undefined ? null : (this.#options.card.presentationRevisionOf?.(card) ?? null),
+            ]),
+          );
         } catch {
           reusable = false;
         }
@@ -1570,6 +1669,8 @@ export class KanbanViewport<TCard> extends View {
     this.#source?.dispose();
     this.#source = undefined;
     this.#snapshot = undefined;
+    this.#snapshotVisualFingerprint = undefined;
+    this.#snapshotVisualRanges = undefined;
     this.#projection = undefined;
     this.#projectionCandidate = undefined;
     this.#completedAuthoritativeProjection = undefined;
@@ -1814,6 +1915,7 @@ export class KanbanViewport<TCard> extends View {
     structure: KanbanStructurePolicy<TCard> | undefined,
     useLearnedWindows: boolean,
     presentationInput?: KanbanPresentationInput,
+    reuseWindowGeometry = false,
   ) {
     const presentation = resolveKanbanPresentation(
       presentationInput ?? this.#options.presentation?.() ?? density,
@@ -1822,6 +1924,7 @@ export class KanbanViewport<TCard> extends View {
     const groupedAxis = useLearnedWindows ? this.#groupedAxisProjection(presentation, structure) : undefined;
     const rangeWindow =
       useLearnedWindows && groupedAxis === undefined ? this.#cardRangeWindow(presentation) : undefined;
+    const retainedRanges = reuseWindowGeometry ? this.#snapshotVisualRanges : undefined;
     return source?.refresh({
       width: this.bounds.width,
       height: this.bounds.height,
@@ -1835,8 +1938,10 @@ export class KanbanViewport<TCard> extends View {
         : { sceneWindowLayoutHint: groupedAxis.hint, groupedAxisWindow: groupedAxis.window }),
       ...(structure === undefined ? {} : { structure }),
       ...(rangeWindow === undefined ? {} : { cardRangeWindow: rangeWindow }),
+      ...(retainedRanges === undefined ? {} : { retainedRanges: Object.freeze(retainedRanges) }),
       ...(collapsedColumnIds === undefined ? {} : { collapsedColumnIds }),
       ...(focusedColumnId === undefined ? {} : { focusedColumnId }),
+      reuseWindowGeometry,
     });
   }
 
@@ -1855,6 +1960,7 @@ export class KanbanViewport<TCard> extends View {
     }
     let stagedSource: KanbanViewportSource<TCard> | undefined;
     let stagedSnapshot: KanbanViewportSourceSnapshot<TCard>;
+    let stagedVisualFingerprint: string | undefined;
     try {
       stagedSource = new KanbanViewportSource({
         source: this.#options.source,
@@ -1875,12 +1981,17 @@ export class KanbanViewport<TCard> extends View {
         this.#imperativeFocusedColumnAnchor ?? this.#lastApplicationFocusedColumnId ?? this.#focusedColumnAnchor,
         candidate.density,
         candidate.structure,
-        false,
+        true,
         candidate.presentation,
+        true,
       );
       if (refreshed === undefined) throw new KanbanInvalidSourcePublicationError();
       if (refreshed.publication.state.kind === 'error') throw new KanbanInvalidSourcePublicationError();
       stagedSnapshot = refreshed;
+      stagedVisualFingerprint = sourceSnapshotVisualFingerprint(
+        stagedSnapshot,
+        this.#options.card.presentationRevisionOf,
+      );
     } catch (error) {
       stagedSource?.dispose();
       try {
@@ -1896,6 +2007,8 @@ export class KanbanViewport<TCard> extends View {
     }
     const preparedSource = stagedSource;
     const previousSnapshot = this.#snapshot;
+    const previousSnapshotVisualFingerprint = this.#snapshotVisualFingerprint;
+    const previousSnapshotVisualRanges = this.#snapshotVisualRanges;
     const previousProjection = this.#projection;
     const previousQueryViewRevision = this.#queryViewRevision;
     const previousPreparedActivation = this.#preparedActivation;
@@ -1910,16 +2023,22 @@ export class KanbanViewport<TCard> extends View {
     return Object.freeze({
       summary: this.#viewSummaryEvidence(stagedSnapshot, undefined),
       commit: () => {
+        const preservesProjectedScene =
+          this.#projection !== undefined &&
+          this.#snapshotVisualFingerprint !== undefined &&
+          stagedVisualFingerprint !== undefined &&
+          this.#snapshotVisualFingerprint === stagedVisualFingerprint;
         this.#source = preparedSource;
         this.#snapshot = stagedSnapshot;
         this.#preparedActivation = {
           source: preparedSource,
           query: candidate.query,
           snapshot: stagedSnapshot,
+          visualFingerprint: stagedVisualFingerprint,
           presentationRevision: resolveKanbanPresentation(candidate.presentation, this.#limits).revision,
           consumed: false,
         };
-        this.#projection = undefined;
+        if (!preservesProjectedScene) this.#projection = undefined;
         this.#queryViewRevision = candidate.query.viewRevision;
         this.#completedProjectionFingerprint = undefined;
         this.#completedAuthoritativeProjection = undefined;
@@ -1940,6 +2059,8 @@ export class KanbanViewport<TCard> extends View {
         if (!installed) return;
         this.#source = activeSource;
         this.#snapshot = previousSnapshot;
+        this.#snapshotVisualFingerprint = previousSnapshotVisualFingerprint;
+        this.#snapshotVisualRanges = previousSnapshotVisualRanges;
         this.#projection = previousProjection;
         this.#queryViewRevision = previousQueryViewRevision;
         this.#preparedActivation = previousPreparedActivation;

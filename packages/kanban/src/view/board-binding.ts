@@ -126,10 +126,20 @@ function composeStructure<TCard>(
   ]);
   const grouping = composeGrouping(base?.grouping, state);
   return Object.freeze({
-    revision: composeKanbanViewRevision(base?.revision, state.revision),
+    revision: composeKanbanViewRevision(base?.revision, structureFacetKey(state)),
     columns,
     ...(grouping === undefined ? {} : { grouping }),
   });
+}
+
+/** Returns the semantic key that owns descriptor presentation, independent of search/filter revisions. */
+function presentationFacetKey(state: KanbanViewState): string {
+  return JSON.stringify(state.presentation);
+}
+
+/** Returns the semantic key that owns board structure, independent of search/filter revisions. */
+function structureFacetKey(state: KanbanViewState): string {
+  return JSON.stringify([state.columns, state.swimlanes, state.grouping ?? null]);
 }
 
 /**
@@ -142,18 +152,27 @@ function composeStructure<TCard>(
 export class KanbanBoardViewBinding<TCard> {
   readonly #legacy: KanbanBoardViewLegacyChannels<TCard>;
   readonly #state: Signal<KanbanViewState>;
+  readonly #presentationState: Signal<KanbanViewState>;
+  readonly #structureState: Signal<KanbanViewState>;
   readonly #query: Signal<KanbanQuery>;
   readonly #summary: Signal<KanbanViewSummary>;
   readonly #controller: KanbanViewController;
   #bridge: KanbanBoardViewProjectionBridge<TCard> | undefined;
   #detachParticipant: (() => void) | undefined;
   #disposed = false;
+  #presentationKey: string;
+  #structureKey: string;
 
   /** Captures the initial pair without retaining external lifecycle resources. */
   constructor(controller: KanbanViewController, legacy: KanbanBoardViewLegacyChannels<TCard>) {
     this.#controller = controller;
     this.#legacy = legacy;
-    this.#state = signal(controller.state());
+    const initial = controller.state();
+    this.#state = signal(initial);
+    this.#presentationState = signal(initial);
+    this.#structureState = signal(initial);
+    this.#presentationKey = presentationFacetKey(initial);
+    this.#structureKey = structureFacetKey(initial);
     this.#query = signal(controller.query());
     this.#summary = signal(createUnboundKanbanViewSummary());
   }
@@ -167,7 +186,12 @@ export class KanbanBoardViewBinding<TCard> {
   /** Synchronizes the latest pair and acquires one exclusive controller participant lease. */
   activate(): void {
     if (this.#disposed || this.#detachParticipant !== undefined) return;
-    this.#state.set(this.#controller.state());
+    const current = this.#controller.state();
+    this.#state.set(current);
+    this.#presentationState.set(current);
+    this.#structureState.set(current);
+    this.#presentationKey = presentationFacetKey(current);
+    this.#structureKey = structureFacetKey(current);
     this.#query.set(this.#controller.query());
     this.#detachParticipant = attachKanbanViewProjectionParticipant(this.#controller, {
       prepare: (state, query) => this.#prepare(state, query),
@@ -189,12 +213,12 @@ export class KanbanBoardViewBinding<TCard> {
 
   /** Returns the controller-owned density from the same committed state revision. */
   density(): KanbanCardDensity {
-    return this.#state().presentation.density;
+    return this.#presentationState().presentation.density;
   }
 
   /** Returns the effective bounded card budget with controller-owned checklist detail. */
   presentation(): KanbanPresentationInput {
-    return this.#presentationFor(this.#state());
+    return this.#presentationFor(this.#presentationState());
   }
 
   /** Composes one prospective state with the application budget before candidate source preparation. */
@@ -203,7 +227,7 @@ export class KanbanBoardViewBinding<TCard> {
     const base = resolveKanbanPresentation(this.#legacy.presentation?.() ?? state.presentation.density, limits);
     const previewItems = state.presentation.checklist === 'preview' ? Math.min(2, limits.checklistItemsPerGroup) : 0;
     return Object.freeze({
-      revision: composeKanbanViewRevision(base.revision, state.revision),
+      revision: composeKanbanViewRevision(base.revision, presentationFacetKey(state)),
       cardRows: base.cardRows,
       cardGap: base.cardGap,
       metadataFields: base.metadataFields,
@@ -218,7 +242,7 @@ export class KanbanBoardViewBinding<TCard> {
   /** Composes controller-owned ordered subsets with record-local checklist and visual state. */
   cardPresentation(card: TCard): KanbanViewportCardPresentation | undefined {
     const base = this.#legacy.cardPresentation?.(card);
-    const presentation = this.#state().presentation;
+    const presentation = this.#presentationState().presentation;
     const fieldIds = presentation.cardFieldIds.length === 0 ? base?.selection?.fieldIds : presentation.cardFieldIds;
     const summaryIds = presentation.summaryIds.length === 0 ? base?.selection?.summaryIds : presentation.summaryIds;
     if (base === undefined && fieldIds === undefined && summaryIds === undefined) return undefined;
@@ -234,7 +258,7 @@ export class KanbanBoardViewBinding<TCard> {
 
   /** Returns application workflow semantics overlaid by the complete controller view facets. */
   structure(): KanbanStructurePolicy<TCard> {
-    return composeStructure(this.#legacy.structure?.(), this.#state());
+    return composeStructure(this.#legacy.structure?.(), this.#structureState());
   }
 
   /**
@@ -244,7 +268,7 @@ export class KanbanBoardViewBinding<TCard> {
    * the older collapse getter suppresses the complete column and therefore cannot represent it.
    */
   collapsedColumnIds(): readonly string[] | undefined {
-    return this.#collapsedColumnIdsFor(this.#state());
+    return this.#collapsedColumnIdsFor(this.#structureState());
   }
 
   /** Releases controller observation while freezing the last committed effective snapshot. */
@@ -260,6 +284,10 @@ export class KanbanBoardViewBinding<TCard> {
   #prepare(state: KanbanViewState, query: KanbanQuery): KanbanPreparedViewProjection {
     const bridge = this.#bridge;
     const previousState = this.#state.peek();
+    const previousPresentationState = this.#presentationState.peek();
+    const previousStructureState = this.#structureState.peek();
+    const previousPresentationKey = this.#presentationKey;
+    const previousStructureKey = this.#structureKey;
     const previousQuery = this.#query.peek();
     const previousSummary = this.#summary.peek();
     const structure = composeStructure(this.#legacy.structure?.(), state);
@@ -277,6 +305,16 @@ export class KanbanBoardViewBinding<TCard> {
       commit: () => {
         viewport?.commit();
         this.#state.set(state);
+        const nextPresentationKey = presentationFacetKey(state);
+        if (nextPresentationKey !== this.#presentationKey) {
+          this.#presentationKey = nextPresentationKey;
+          this.#presentationState.set(state);
+        }
+        const nextStructureKey = structureFacetKey(state);
+        if (nextStructureKey !== this.#structureKey) {
+          this.#structureKey = nextStructureKey;
+          this.#structureState.set(state);
+        }
         this.#query.set(query);
         if (candidateSummary !== undefined) this.#summary.set(candidateSummary);
         installed = true;
@@ -286,6 +324,10 @@ export class KanbanBoardViewBinding<TCard> {
       rollback: () => {
         viewport?.rollback();
         this.#state.set(previousState);
+        this.#presentationKey = previousPresentationKey;
+        this.#structureKey = previousStructureKey;
+        this.#presentationState.set(previousPresentationState);
+        this.#structureState.set(previousStructureState);
         this.#query.set(previousQuery);
         this.#summary.set(previousSummary);
         installed = false;

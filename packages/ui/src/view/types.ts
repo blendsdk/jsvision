@@ -90,6 +90,13 @@ export interface RenderRootOptions {
    */
   schedule?: (flush: () => void) => void;
   /**
+   * @internal Observes whether a completed frame used full or partial composition.
+   *
+   * Deterministic performance fixtures use this seam to distinguish a genuine full-scene repaint
+   * from an ordinary damage-aware frame. Observer failures are isolated from rendering.
+   */
+  observeFrame?: (frame: Readonly<{ composition: 'full' | 'partial' }>) => void;
+  /**
    * @internal Runs timer-owned view work inside the attached event loop's synchronous paint boundary.
    * Standalone render roots omit this seam and execute such work directly through their view host.
    */

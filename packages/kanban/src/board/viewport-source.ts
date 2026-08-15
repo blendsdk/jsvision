@@ -380,6 +380,10 @@ export interface KanbanViewportSourceRequest<TCard> {
   readonly groupedAxisWindow?: KanbanGroupedAxisWindow;
   /** Optional revision-bound per-cell logical ranges for an ungrouped projection. */
   readonly cardRangeWindow?: KanbanCardRangeWindow;
+  /** Whether a newly staged query may reuse old-generation ranges only as bounded geometry hints. */
+  readonly reuseWindowGeometry?: boolean;
+  /** Exact retained ranges from the live viewport, used only to stage a replacement query. */
+  readonly retainedRanges?: readonly KanbanVisibleCardRange[];
 }
 
 /** Safe retained state for one sparse source cell. */
@@ -735,15 +739,19 @@ export class KanbanViewportSource<TCard> {
     let sceneWindow: KanbanSceneWindowResult | undefined;
     let retainedAddresses: readonly KanbanCellAddress[];
     const compatibleAxis =
-      axisWindow?.queryGeneration === this.#session.generation() &&
-      kanbanRevisionsEqual(axisWindow.sessionRevision, publication.revision) &&
-      kanbanRevisionsEqual(axisWindow.presentationRevision, presentationRevision)
+      axisWindow !== undefined &&
+      (request.reuseWindowGeometry === true ||
+        (axisWindow.queryGeneration === this.#session.generation() &&
+          kanbanRevisionsEqual(axisWindow.sessionRevision, publication.revision) &&
+          kanbanRevisionsEqual(axisWindow.presentationRevision, presentationRevision)))
         ? axisWindow
         : undefined;
     const compatibleRanges =
-      rangeWindow?.queryGeneration === this.#session.generation() &&
-      kanbanRevisionsEqual(rangeWindow.sessionRevision, publication.revision) &&
-      kanbanRevisionsEqual(rangeWindow.presentationRevision, presentationRevision)
+      rangeWindow !== undefined &&
+      (request.reuseWindowGeometry === true ||
+        (rangeWindow.queryGeneration === this.#session.generation() &&
+          kanbanRevisionsEqual(rangeWindow.sessionRevision, publication.revision) &&
+          kanbanRevisionsEqual(rangeWindow.presentationRevision, presentationRevision)))
         ? rangeWindow
         : undefined;
     if (this.#query.groupBy === undefined || swimlanes.visible.length === 0) {
@@ -775,6 +783,17 @@ export class KanbanViewportSource<TCard> {
       });
       retainedAddresses = Object.freeze(addresses);
     }
+    if (request.reuseWindowGeometry === true && request.retainedRanges !== undefined) {
+      const visibleSwimlaneIds = new Set(swimlanes.visible.map((swimlane) => swimlane.swimlaneId));
+      retainedAddresses = Object.freeze(
+        request.retainedRanges.flatMap((range) =>
+          retainedColumnIds.includes(range.address.columnId) &&
+          (range.address.swimlaneId === undefined || visibleSwimlaneIds.has(range.address.swimlaneId))
+            ? [range.address]
+            : [],
+        ),
+      );
+    }
     this.#reconcileCells(retainedAddresses, new Set(indexes.visible.map((index) => widths.columns[index]?.columnId)));
 
     const visibleRows = Math.max(1, height - KANBAN_WORKFLOW_HEADER_ROWS);
@@ -789,7 +808,11 @@ export class KanbanViewportSource<TCard> {
       const retained = this.#cells.get(canonicalizeKanbanCellAddress(address));
       if (retained === undefined) continue;
       const knownLength = retained.cursor.length();
-      const selectedRange = (compatibleAxis?.cardRanges ?? compatibleRanges?.ranges)?.find(
+      const selectedRange = (
+        request.reuseWindowGeometry === true && request.retainedRanges !== undefined
+          ? request.retainedRanges
+          : (compatibleAxis?.cardRanges ?? compatibleRanges?.ranges)
+      )?.find(
         (candidate) => canonicalizeKanbanCellAddress(candidate.address) === canonicalizeKanbanCellAddress(address),
       );
       const cellRangeStart = selectedRange?.start ?? rangeStart;

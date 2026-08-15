@@ -121,3 +121,25 @@ test('a reflow refreshes the compose cache so later frames use the new bounds', 
 
   expect(rr.buffer().get(0, 0)?.char).toBe('B'); // b moved to x0 (cache refreshed to new bounds)
 });
+
+test('frame observation distinguishes full layout composition from a partial repaint', () => {
+  const frames: Array<'full' | 'partial'> = [];
+  const view = new Counter('V');
+  const root = new Group();
+  root.add(view);
+  const sched = capturing();
+  const rr = createRenderRoot(
+    { width: 4, height: 1 },
+    {
+      caps,
+      schedule: sched.schedule,
+      observeFrame: (frame) => frames.push(frame.composition),
+    },
+  );
+
+  rr.mount(root);
+  view.invalidate();
+  sched.run();
+
+  expect(frames).toEqual(['full', 'partial']);
+});

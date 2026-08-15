@@ -252,6 +252,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private readonly caps: CapabilityProfile;
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
+  private readonly observeFrame?: RenderRootOptions['observeFrame'];
   private readonly runTaskSeam?: (work: () => void) => void;
   private readonly healFocusSeam?: (group: View) => void;
   private readonly onViewUnmountingSeam?: (view: View) => void | (() => void);
@@ -274,6 +275,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.theme = opts.theme ?? defaultTheme;
     this.logger = opts.logger ?? createLogger();
     this.scheduler = opts.schedule ?? ((flush): void => queueMicrotask(flush));
+    this.observeFrame = opts.observeFrame;
     this.runTaskSeam = opts.runTask;
     this.healFocusSeam = opts.healFocus;
     this.onViewUnmountingSeam = opts.onViewUnmounting;
@@ -406,10 +408,12 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     const dirtyViews = topmostDirty(this.dirty);
     this.dirty.clear();
 
+    let composition: 'full' | 'partial';
     if (wasReflow) {
       // Layout changed, so every view's cached position may be stale → recompose the whole tree.
       reflow(this.rootView, this.viewport);
       this.fullCompose();
+      composition = 'full';
     } else {
       // Repaint only the changed subtrees from their cached positions — but a partial repaint draws a
       // subtree in isolation, which is only correct when nothing paints over it. If a changed view is
@@ -418,7 +422,9 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       // recompose for this frame. The fast path holds for non-overlapping UIs.
       if (this.anyOccluded(dirtyViews)) {
         this.fullCompose();
+        composition = 'full';
       } else {
+        composition = 'partial';
         const reveal: RevealState = { on: this.revealAccelerators, scope: this.revealScope };
         for (const view of dirtyViews) {
           const ctx = this.cache.get(view);
@@ -441,6 +447,15 @@ class RenderRootImpl implements RenderRoot, ViewHost {
             );
           }
         }
+      }
+    }
+    try {
+      this.observeFrame?.(Object.freeze({ composition }));
+    } catch {
+      try {
+        this.logger.error('view', 'render frame observer threw');
+      } catch {
+        // A diagnostic observer and logger are both injected seams; neither may break rendering.
       }
     }
     this.lastFrame = serialize(this.current, previous, { caps: this.caps });

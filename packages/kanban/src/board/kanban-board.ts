@@ -641,10 +641,6 @@ export class KanbanBoard<TCard> extends Group {
             if (layoutChanged || identityChanged || navigatorChanged || reserveChanged) {
               this.#layoutReflows += 1;
               this.invalidateLayout();
-            } else {
-              // The viewport owns query-result geometry and schedules its own relayout. A board-wide
-              // reflow here would duplicate that work for every filter/search publication.
-              this.invalidate();
             }
           });
           return dispose;
