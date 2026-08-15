@@ -374,7 +374,13 @@ cancellation and preserves read-only pointer hiding before history-availability 
 - [x] 8.1.2 `[spec-author]` Add 80×24/narrow/resize/maximize/restore dialog/chrome, action reachability, localized labels, and no-clipping oracles — `packages/kanban/test/e2e/phase-d-productivity.e2e.test.ts` ✅ (completed: 2026-08-15 02:34)
 - [x] 8.1.3 `[spec-author]` Add 2,000-card/8-column/4-swimlane/10-filter deterministic count budgets plus 20-warmup/200-iteration median ≤16 ms oracle — `packages/kanban/test/phase-d-performance.spec.test.ts` ✅ (completed: 2026-08-15 02:35)
 - [x] 8.1.4 `[spec-author]` Add kitchen-sink and GitHub showcase typecheck/import/behavior smoke oracles — `packages/examples/test/kanban-phase-d.spec.test.ts`, `github-project-kanban-app.spec.test.ts` ✅ (completed: 2026-08-15 02:37)
-- [ ] 8.1.5 Run the focused specifications and record expected red failures
+- [x] 8.1.5 Run the focused specifications and record expected red failures ✅ (completed: 2026-08-15 02:38)
+
+**Red evidence**: the complete Phase 8 set has 15 expected failures: 9 Kanban integration,
+performance, and mounted-productivity cases fail only at the absent board-owned action surface or
+performance harness; 5 story cases fail only because the four permanent Phase D stories are not yet
+registered; and 1 GitHub showcase case fails only at the absent local view/save/edit controls. The
+other 8 focused GitHub showcase behaviors remain green.
 
 ### Step 8.2: Implementation
 
