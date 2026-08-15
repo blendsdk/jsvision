@@ -587,6 +587,125 @@ interface KanbanPendingRange {
 }
 ```
 
+## KanbanPhaseDCommitEvidence
+
+Payload-free work evidence for one committed query projection.
+
+```ts
+interface KanbanPhaseDCommitEvidence {
+  candidateOpens: number;   // Candidate eager query sessions opened.
+  activations: number;   // Valid candidates installed as the active session.
+  layoutReflows: number;   // Semantic layout passes requested by the fixture adapter.
+  renderInvalidations: number;   // Damage-aware board/chrome invalidations requested by the fixture adapter.
+  deliveries: number;   // Post-activation subscriber deliveries.
+  fullSceneInvalidations: number;   // Full-scene invalidations, which this transaction must never request.
+}
+```
+
+## KanbanPhaseDPerformanceHarness
+
+Disposable deterministic performance fixture.
+
+```ts
+interface KanbanPhaseDPerformanceHarness {
+  run(): KanbanPhaseDPerformanceResult;   // Runs the configured warmup and measurement transaction once and reuses its frozen result.
+  dispose(): void;   // Releases the active query session and virtual clock idempotently.
+}
+```
+
+## KanbanPhaseDPerformanceHarnessOptions
+
+Options for the deterministic Phase D projection performance harness.
+
+```ts
+interface KanbanPhaseDPerformanceHarnessOptions {
+  cards: number;   // Exact resident card count.
+  columns: number;   // Exact workflow-column count.
+  swimlanes: number;   // Exact semantic swimlane count.
+  filters: number;   // Exact registered filter count retained while the measured commit changes search.
+  debounceMs: number;   // Exact virtual debounce delay advanced before each commit.
+  warmups: number;   // Discarded warmup commits.
+  iterations: number;   // Retained measured commits.
+}
+```
+
+## KanbanPhaseDPerformanceResult
+
+Complete detached result from one deterministic performance run.
+
+```ts
+interface KanbanPhaseDPerformanceResult {
+  cards: number;   // Resident cards evaluated by every candidate query.
+  columns: number;   // Ordered workflow columns in the fixture.
+  swimlanes: number;   // Ordered semantic swimlanes in the fixture.
+  filters: number;   // Registered filter operators available to the measured workflow.
+  warmups: number;   // Discarded warmup commit count.
+  iterations: number;   // Retained measured commit count.
+  samplesMs: readonly number[];   // Local elapsed time for each post-debounce eager-source transaction.
+  commits: readonly KanbanPhaseDCommitEvidence[];   // Deterministic work counters for every retained commit.
+}
+```
+
+## KanbanPhaseDWorkflowAnchors
+
+Stable anchors used by editor, configuration, action, and event workflow tests.
+
+```ts
+interface KanbanPhaseDWorkflowAnchors {
+  editorCardKey: number;   // Card with a representative checklist and editable fields.
+  configurationColumnId: string;   // Column selected by configuration examples.
+  configurationSwimlaneId: string;   // Swimlane selected by grouping/configuration examples.
+  actionCardKey: number;   // Card selected by action-origin and event-order examples.
+  actionIds: readonly string[];   // Stable package actions exercised by the example family.
+  eventKinds: readonly ('action' | 'request' | 'focus' | 'selection' | 'view' | 'source')[];   // Stable payload-free event kinds expected across the complete example family.
+}
+```
+
+## KanbanPhaseDWorkflowCard
+
+One deterministic card shared by Phase D view, editor, action, and event examples.
+
+```ts
+interface KanbanPhaseDWorkflowCard {
+  key: number;   // Stable numeric identity.
+  title: string;   // Searchable display title.
+  searchText: string;   // Pre-normalized application search text, keeping locale policy outside component timing.
+  columnId: string;   // Authoritative workflow column.
+  swimlaneId: string;   // Authoritative single-level grouping identity.
+  owner: string;   // Application-owned assignee identity used by example filters.
+  revision: string;   // Equality-only record revision.
+  filterFlags: readonly boolean[];   // Fixed filter flags used by the registered eager-source operators.
+  checklist: readonly Readonly<{ itemId: string; text: string; completed: boolean }>[];   // Bounded checklist rows used by the standard editor story.
+}
+```
+
+## KanbanPhaseDWorkflowFixture
+
+Complete immutable data shared by deterministic Phase D workflow tests and examples.
+
+```ts
+interface KanbanPhaseDWorkflowFixture {
+  cards: readonly KanbanPhaseDWorkflowCard[];   // Ordered resident cards.
+  columns: readonly KanbanColumnMeta[];   // Ordered workflow-column metadata.
+  swimlanes: readonly KanbanSwimlaneMeta[];   // Ordered semantic swimlane metadata.
+  filters: readonly KanbanFilter[];   // Query filters matching the fixture's registered source operators.
+  anchors: KanbanPhaseDWorkflowAnchors;   // Stable workflow identities that avoid tests depending on array positions.
+}
+```
+
+## KanbanPhaseDWorkflowFixtureOptions
+
+Construction limits for one deterministic cross-surface Phase D fixture.
+
+```ts
+interface KanbanPhaseDWorkflowFixtureOptions {
+  cards?: number;   // Number of resident cards. Defaults to 24.
+  columns?: number;   // Number of ordered workflow columns. Defaults to 4.
+  swimlanes?: number;   // Number of ordered semantic swimlanes. Defaults to 3.
+  filters?: number;   // Number of registered filters available to view workflows. Defaults to 2.
+}
+```
+
 ## KanbanPlacementInspection
 
 Safe placement inspection with every opaque token value removed.
@@ -1189,6 +1308,22 @@ Creates a payload-free operation lifecycle recorder.
 
 ```ts
 createKanbanOperationLifecycleHarness(maximumRecords = 2_048): KanbanOperationLifecycleHarness
+```
+
+## createKanbanPhaseDPerformanceHarness
+
+Creates deterministic responsiveness evidence for the complete eager query activation boundary.
+
+```ts
+createKanbanPhaseDPerformanceHarness(options: KanbanPhaseDPerformanceHarnessOptions): KanbanPhaseDPerformanceHarness
+```
+
+## createKanbanPhaseDWorkflowFixture
+
+Creates one bounded, network-free fixture for Phase D workflow tests and showcases.
+
+```ts
+createKanbanPhaseDWorkflowFixture(options: KanbanPhaseDWorkflowFixtureOptions = {}): KanbanPhaseDWorkflowFixture
 ```
 
 ## createKanbanQueryLifecycleHarness

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-08-15 03:13 CEST
-> **Progress**: 74/125 tasks (59%)
+> **Last Updated**: 2026-08-15 03:26 CEST
+> **Progress**: 75/125 tasks (60%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -363,7 +363,7 @@ cancellation and preserves read-only pointer hiding before history-availability 
 > **Phase baseline tree**: `a1fef1577`
 > **Scope mode**: strict
 > **Confirmed scope baseline**: Integrate completed Phase D surfaces, messages/themes, permanent examples, and performance regressions without claiming RD-13/RD-15 completion.
-> **Expected modification set**: small board binders/composition, Kanban i18n/locales/theme, testing helpers, examples/showcases and tests, package manifest/scripts if required, and this plan.
+> **Expected modification set**: small board binders/composition, Kanban i18n/locales/theme, testing helpers, necessary eager-source hot-path correction, examples/showcases and tests, package manifest/scripts if required, and this plan.
 > **Lenses**: performance, api-surface, concurrency
 
 ### Step 8.1: Specification tests
@@ -388,7 +388,7 @@ other 8 focused GitHub showcase behaviors remain green.
 - [x] 8.2.2 Add complete Phase D English message contract and typed catalog overlays without raw action-ID fallbacks in mounted UI — `packages/kanban/src/i18n/catalog.ts`, `packages/kanban/src/locales/en.ts` ✅ (completed: 2026-08-15 03:02)
 - [x] 8.2.3 Synchronize all nine non-English locale modules with reviewed English fallback and accelerator manifests — `packages/kanban/src/locales/*.ts` ✅ (completed: 2026-08-15 03:07)
 - [x] 8.2.4 Add only required semantic theme roles/fallbacks and non-color/ASCII cues — `packages/kanban/src/card/theme.ts`, `theme-resolver.ts` ✅ (completed: 2026-08-15 03:13)
-- [ ] 8.2.5 Add public testing fixtures for view/editor/config/action/event deterministic workflows — `packages/kanban/src/testing/phase-d-harness.ts`, `packages/kanban/src/testing.ts`
+- [x] 8.2.5 Add public testing fixtures for view/editor/config/action/event deterministic workflows — `packages/kanban/src/testing/phase-d-harness.ts`, `packages/kanban/src/testing.ts` ✅ (completed: 2026-08-15 03:26)
 - [ ] 8.2.6 Add four permanent Phase D stories and responsive shell integration — `packages/examples/kanban-showcase/stories/{productivity,editing,configuration,actions-history}.story.ts`
 - [ ] 8.2.7 Upgrade GitHub showcase with local-only views/edit play, theme/status color, and unchanged drag authority — `packages/examples/github-project-kanban/shell.ts`, `local-board.ts`
 - [ ] 8.2.8 Build Kanban, then run focused integration/Examples specifications and make them green

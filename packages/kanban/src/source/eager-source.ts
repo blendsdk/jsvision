@@ -494,11 +494,20 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
         sourceOptions: this.#options,
         limits: this.#limits,
       });
-      const semanticFingerprint = eagerIndexSemanticFingerprint(candidateIndex);
+      // A newly opened query session has no predecessor to compare, so serializing its complete
+      // index here only adds activation latency. Defer both fingerprints until a later reactive
+      // publication actually needs semantic equality evidence.
+      const previousFingerprint =
+        this.#last === undefined
+          ? undefined
+          : (this.#lastSemanticFingerprint ?? eagerIndexSemanticFingerprint(this.#last.index));
+      const semanticFingerprint =
+        previousFingerprint === undefined ? undefined : eagerIndexSemanticFingerprint(candidateIndex);
       const index =
         this.#last !== undefined &&
         Object.is(applicationRevision, this.#lastApplicationRevision) &&
-        semanticFingerprint === this.#lastSemanticFingerprint
+        semanticFingerprint !== undefined &&
+        semanticFingerprint === previousFingerprint
           ? Object.freeze({ ...candidateIndex, revision: this.#last.index.revision })
           : candidateIndex;
       const next = Object.freeze({ index, identityChanges: deriveIdentityChanges(this.#last?.index, index) });
@@ -507,7 +516,7 @@ class EagerKanbanSession<TCard> implements KanbanQuerySession<TCard> {
       this.#lastColumnsSnapshot = columnSnapshots;
       this.#lastSwimlanesSnapshot = swimlaneSnapshots;
       this.#lastApplicationRevision = applicationRevision;
-      this.#lastSemanticFingerprint = semanticFingerprint;
+      this.#lastSemanticFingerprint = semanticFingerprint ?? previousFingerprint;
       this.#failed = false;
       this.#hasValidPublication = true;
       return next;

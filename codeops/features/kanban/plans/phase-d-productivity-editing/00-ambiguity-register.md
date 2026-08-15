@@ -54,6 +54,8 @@
 | AR-D35 | Board integration · runtime · complex | How should whole-card and checklist activation open the editor through the existing board authority without spreading editor draft generics through `KanbanBoard`? | Add editor generics to board options / application-only intent handling / type-erased board binding with typed factory | Add a narrow `open(cardKey, authority)` board binding and typed factory; compose it at the existing `open-card` intent boundary for whole-card and standard editor actions while preserving unrelated application intents | ✅ Resolved |
 | AR-D36 | Phase 4 quality · runtime · complex | How should editor ownership, nested modality, authority-backed creation, and responsive progressive UI converge without creating new data authority? | Patch each symptom locally / separate claims, borrowed facades, exact-modal completion, application publication correlation, and retained responsive controls / defer advertised workflows | Use distinct provisional/persisted claims, non-owning repeat-open facades, exact target-bound modal completion, an application create-publication resolver, retained responsive controls, and one serialized terminal lifecycle | ✅ Resolved |
 | AR-D42 | Theme integration · runtime | Do Phase D dialog states require new Kanban board roles? | Duplicate Core control states in the board palette / retain the closed board palette and exact Core dialog roles | Retain the closed board palette; document the ownership boundary and verify every board cue remains printable ASCII or glyph-independent | ✅ Resolved |
+| AR-D43 | Testing API · runtime | How should permanent stories and responsiveness tests share deterministic Phase D data without exposing private owners? | Separate ad hoc fixtures / one immutable workflow fixture plus a bounded real-source performance harness | Export one stable cross-surface fixture with semantic anchors and one fake-clock harness that validates real eager query sessions before recording payload-free activation work | ✅ Resolved |
+| AR-D44 | Performance · runtime | May a new eager query session compute a complete semantic fingerprint before it has a predecessor? | Eager fingerprint on every first publication / lazy fingerprint on the first real semantic comparison | Defer fingerprint serialization until the same session receives a second distinct publication; retain exact revision preservation when that comparison occurs | ✅ Resolved |
 
 ## Resolution notes
 
@@ -687,3 +689,48 @@
 - **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
 - **Reopen triggers:** A package-owned Phase D control is drawn directly by the board renderer or UI controls gain
   no truthful Core role for a required state.
+
+### AR-D43 — Shared Phase D workflow and performance fixtures (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Public testing-helper composition inside the approved existing testing subpath; production
+  behavior, application ownership, and package entry points remain unchanged.
+- **Objective:** Keep example data and responsiveness evidence deterministic without granting tests access to
+  private board owners or duplicating different fixtures for every story.
+- **Evidence:** The testing subpath already exports immutable source, clock, operation, and lifecycle helpers. The
+  Phase D performance oracle requires a synchronous fake-clock runner, while the four permanent stories need
+  stable editor/configuration/action/event subjects.
+- **Decision:** Export one bounded immutable workflow fixture with stable semantic anchors. Build the performance
+  harness from that fixture, retain ten registered filters while measuring the debounced search commit, advance
+  virtual debounce time exactly, open and validate a real eager-source candidate plus the bounded cells visible
+  in a representative terminal frame, activate one session, and expose only detached timing and work counters.
+- **Rejected alternatives:** Four unrelated story fixtures drift and make comparative tests brittle. Exposing
+  private viewport/controller counters through the production barrel expands the supported runtime surface.
+- **Confidence:** High — the design reuses established testing-only boundaries and exercises the public source
+  transaction rather than timing a synthetic card loop.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A later fixture requires application-sensitive records, asynchronous source readiness, or
+  exact renderer counters that cannot be represented by the existing testing-only inspection seams.
+
+### AR-D44 — Lazy eager-session semantic fingerprinting (runtime)
+
+- **Authority:** AI — delegated by `--auto-design`; this is a necessary correction for the approved responsiveness
+  gate, not an optional source feature.
+- **Eligibility:** Internal performance mechanism preserving the existing eager-source query/publication contract.
+- **Objective:** Remove work that cannot affect the first publication of a newly opened candidate session.
+- **Evidence:** Every Phase D view commit opens a new isolated query session. Its first index has no predecessor, but
+  the eager source serialized that entire index before activation only to cache evidence for a hypothetical later
+  in-session reactive publication. The 2,000-card performance oracle remained above 16 ms after application-policy
+  work was removed.
+- **Decision:** Publish the first valid index without fingerprint serialization. If a later distinct application
+  publication needs semantic comparison, compute the retained and candidate fingerprints then and preserve the
+  prior revision exactly when they match.
+- **Rejected alternatives:** Reporting timing that excludes source activation would hide user-visible work. Removing
+  semantic comparison entirely would manufacture revisions for equivalent reactive publications.
+- **Confidence:** High — the branch is internal, deterministic, and existing eager-source revision tests cover the
+  delayed comparison path.
+- **Policy version:** 1.
+- **Root invocation ID:** `EP-PHASE-D-20260814T1443CEST`.
+- **Reopen triggers:** A source consumer requires the initial fingerprint as public evidence or repeated reactive
+  equivalent arrays no longer preserve their existing revision.
