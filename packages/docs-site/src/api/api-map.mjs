@@ -78,6 +78,12 @@ export const API_MAP = [
   },
   { symbol: 'Dialog', pkg: 'ui', apiPath: '/api/ui/classes/Dialog', componentPage: '/components/containers/dialog' },
   {
+    symbol: 'GroupBox',
+    pkg: 'ui',
+    apiPath: '/api/ui/classes/GroupBox',
+    componentPage: '/components/containers/group-box',
+  },
+  {
     symbol: 'ListBox',
     pkg: 'ui',
     apiPath: '/api/ui/classes/ListBox',

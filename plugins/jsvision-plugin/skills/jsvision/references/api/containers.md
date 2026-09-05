@@ -64,6 +64,36 @@ interface DialogOptions {
 }
 ```
 
+## GroupBox
+
+A passive framed container for visually grouping related views.
+
+```ts
+new GroupBox(options: GroupBoxOptions = {})   // extends Group
+```
+
+## GroupBoxOptions
+
+Construction options for a GroupBox.
+
+```ts
+interface GroupBoxOptions {
+  title?: string | (() => string);   // A fixed caption, or a reactive getter whose signal dependencies repaint the box.
+  titleAlignment?: GroupBoxTitleAlignment;   // Caption placement within the top-border interior. Defaults to `'start'`.
+  padding?: number | Padding;   // Initial content inset in terminal cells. A number applies to every side. Defaults to `1`.
+  role?: ThemeRoleName;   // Theme role used for the border, caption, and opaque interior. Defaults to `'staticText'`.
+  shadow?: boolean;   // Whether the renderer adds its standard drop shadow. Defaults to `false`.
+}
+```
+
+## GroupBoxTitleAlignment
+
+Horizontal placement of a GroupBox caption within its top border.
+
+```ts
+type GroupBoxTitleAlignment = 'start' | 'center' | 'end'
+```
+
 ## HISTORY_MAX_ENTRIES
 
 The default per-id entry cap.
