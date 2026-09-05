@@ -26,6 +26,12 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 - **Group** — the container primitive: holds children and arranges them (see `layout.md`). Every
   composite you build is a `Group`.
+- **GroupBox** — a passive framed `Group` for a visible section boundary. Choose plain `Group` when
+  structure needs no frame; use `TabView` for selectable pages, or `Window` / `Dialog` for window
+  behavior. The `title` default is empty; `titleAlignment` defaults to `'start'`, `padding` to `1`,
+  the role to `staticText`, and `shadow` to `false`. A reactive title getter repaints the caption;
+  children keep ordinary focus and event behavior. When enabling the shadow, reserve two columns on
+  the right and one row below because the shadow is outside the GroupBox layout bounds.
 - **ScrollBar** — a standalone scroll bar bound to a value `Signal`; arrows, page track, thumb drag.
 - **Scroller** — a focusable viewport that scrolls oversized content and owns its scroll bars.
 - **ListView** — a single-column, virtual-scroll list `[rows | scrollbar]`; focus its `rows`.

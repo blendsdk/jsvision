@@ -88,6 +88,7 @@ test('ST-A6: exports route to the expected category', () => {
   expect(categoryFor('code-editor', 'packages/code-editor/src/index.ts')).toBe('code-editor');
   expect(categoryFor('core', 'packages/core/src/engine/color/theme.ts')).toBe('core-essentials');
   expect(categoryFor('ui', 'packages/ui/src/table/columns.ts')).toBe('data-views');
+  expect(categoryFor('ui', 'packages/ui/src/group-box/group-box.ts')).toBe('containers');
   expect(categoryFor('ui', 'packages/core/dist/engine/color/theme.d.ts')).toBe('core-essentials');
 });
 

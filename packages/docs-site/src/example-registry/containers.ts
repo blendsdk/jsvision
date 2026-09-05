@@ -10,6 +10,13 @@ export const CONTAINER_EXAMPLES = [
     load: () => import('../../examples/containers/dialog.js'),
   },
   {
+    id: 'containers/group-box',
+    category: 'containers',
+    kind: 'app',
+    sourcePath: 'examples/containers/group-box.ts',
+    load: () => import('../../examples/containers/group-box.js'),
+  },
+  {
     id: 'containers/list-view',
     category: 'containers',
     kind: 'app',

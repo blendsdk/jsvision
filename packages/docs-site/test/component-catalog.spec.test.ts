@@ -129,6 +129,7 @@ const EXPECTED_COMPONENTS = [
   { id: 'controls/slider', package: 'ui', symbols: ['Slider'] },
   { id: 'controls/switch', package: 'ui', symbols: ['Switch'] },
   { id: 'containers/dialog', package: 'ui', symbols: ['Dialog'] },
+  { id: 'containers/group-box', package: 'ui', symbols: ['GroupBox'] },
   { id: 'containers/list-view', package: 'ui', symbols: ['ListView'] },
   { id: 'containers/list-box', package: 'ui', symbols: ['ListBox'] },
   { id: 'containers/scroller', package: 'ui', symbols: ['Scroller'] },

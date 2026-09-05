@@ -52,6 +52,10 @@ export * from './reactive/index.js';
 export { View, Group, intersect, translate, contains, createRenderRoot } from './view/index.js';
 export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRootOptions } from './view/index.js';
 
+// Passive framed container — ordinary Group layout/focus traversal with an optional caption.
+export { GroupBox } from './group-box/index.js';
+export type { GroupBoxOptions, GroupBoxTitleAlignment } from './group-box/index.js';
+
 // Declarative layout builders — compose a screen as one nested expression (`col`/`row` containers,
 // `grow`/`fixed` size shorthands, `spacer` gaps, a `stack` z-overlay with `place`/`centered`/corner
 // helpers, and the absolute `at`/`cover`/`center` escape hatch) instead of imperative

@@ -119,6 +119,7 @@ const UI_SEGMENT_CATEGORY = {
   list: 'containers',
   dropdown: 'containers',
   dialog: 'containers',
+  'group-box': 'containers',
   tabs: 'containers',
   split: 'containers',
   table: 'data-views',
