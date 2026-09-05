@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-09-05
+
+## Added
+- Introduced a passive GroupBox container with reactive display-cell-aware captions, alignment, padding, theme roles, and optional shadow.
+
+## Changed
+- Enhanced documentation with kitchen-sink and template1 labs providing complete component guidance.
+- Updated multiple files related to the GroupBox feature, including plans for ambiguity registration, phase reviews, and testing strategy.
+
 ## [Unreleased]
 
 ### Added

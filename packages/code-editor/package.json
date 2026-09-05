@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/code-editor",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "A terminal-native source code editor for JSVision applications.",
   "keywords": [
     "tui",
@@ -109,9 +109,9 @@
   },
   "dependencies": {
     "@codemirror/state": "^6.7.1",
-    "@jsvision/core": "1.6.0",
-    "@jsvision/i18n": "1.6.0",
-    "@jsvision/ui": "1.6.0",
+    "@jsvision/core": "1.7.0",
+    "@jsvision/i18n": "1.7.0",
+    "@jsvision/ui": "1.7.0",
     "@lezer/common": "^1.5.2",
     "@lezer/highlight": "^1.2.3",
     "@lezer/javascript": "^1.5.4",

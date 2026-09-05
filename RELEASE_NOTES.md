@@ -1,21 +1,15 @@
-# Release Notes — v1.6.0
+# Release Notes — v1.7.0
 
-**Released**: 2026-08-08
+**Released**: 2026-09-05
 
-Release Notes for Version 1.6.0
+We are excited to announce the release of version 1.7.0 of our software, which includes several important updates aimed at enhancing your experience and making our platform even more user-friendly. This version brings new features and improvements across our documentation, examples, and user interface components, designed to streamline workflows and improve accessibility.
 
-We are excited to announce the release of version 1.6.0, which brings significant enhancements to our data management capabilities. This update focuses on improving how users recover and revert data in our software, making these processes more reliable and user-friendly. 
+### Highlights:
 
-Key Highlights:
+- **Updated Documentation Site**: We've made updates to the documentation site to ensure that the information is more up-to-date and relevant. This will help users find the guidance they need quickly and easily, enhancing the overall learning and onboarding experience.
 
-1. **Enhanced Data Recovery Processes**: We have introduced new features that allow users to efficiently recover data within our grid system. This means that if something goes wrong, you can get back to where you were with minimal hassle. 
+- **Improved Examples**: We have refreshed the examples shared on our platform. These updates aim to provide clearer and more practical applications of our features, allowing users to better understand how to leverage the software to meet their specific needs.
 
-2. **Improved User Guidance**: With updated documentation and support resources, users will now have clearer instructions on how to navigate data recovery. This includes practical examples and a dedicated validation lab to practice these functionalities. 
+- **New GroupBox Container**: The introduction of a passive GroupBox container in the user interface adds a new layer of organization to your layouts. This feature allows you to group related content more effectively, making your interface more intuitive and visually appealing.
 
-3. **Strengthened Data Reversion**: We are proud to announce that the ability to revert data changes has been significantly improved. This feature will now be more robust, allowing users to undo changes with confidence, ensuring that all data manipulations can be handled seamlessly.
-
-4. **Localization of Features**: We have added translations for the data reversion features, making it easier for non-English speaking users to utilize these important tools, fostering a more inclusive user experience.
-
-5. **Quality Improvements**: This version addresses past quality findings, ensuring that the updates are not only effective but also reliable. Users can expect fewer issues and a smoother experience as they work with data.
-
-Overall, these enhancements are designed to improve your workflow and increase your confidence in managing data. We appreciate your feedback and support as we continue to refine our software.
+These enhancements not only improve the usability of our software but also reflect our commitment to continuously evolving based on user feedback. We believe that this latest version will provide a more seamless and productive experience for all users. Thank you for your continued support!

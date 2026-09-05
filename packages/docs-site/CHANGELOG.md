@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-09-05
+
+Changed:
+- Updated component documentation for Group Box in `containers/group-box.md`.
+- Enhanced the example for Group Box in `examples/containers/group-box.ts`.
+- Improved API mapping in `src/api/api-map.mjs`.
+- Refined container component tests in `test/container-components.spec.test.ts`.
+- Expanded testing for Group Box component in `test/group-box-component.spec.test.ts`.
+
 ## [Unreleased]
 
 ### Added

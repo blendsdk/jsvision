@@ -1,6 +1,6 @@
 {
   "name": "jsvision-plugin",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Build, diagnose, render, and verify professional JSVision terminal applications.",
   "author": {
     "name": "JSVision"
