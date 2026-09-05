@@ -54,6 +54,38 @@ export const DIALOG_CONTRACT = defineBehaviorContract<
   ],
 });
 
+/** GroupBox behavior covers passive framing, reactive captions, nesting, and descendant focus. */
+export const GROUP_BOX_CONTRACT = defineBehaviorContract<
+  'caption-alignment' | 'reactive-caption' | 'nesting' | 'descendant-focus',
+  ContainerProbe
+>({
+  exampleId: 'containers/group-box',
+  capabilities: ['caption-alignment', 'reactive-caption', 'nesting', 'descendant-focus'],
+  cases: [
+    {
+      id: 'update-reactive-caption',
+      covers: ['caption-alignment', 'reactive-caption', 'nesting'],
+      initial: [{ probe: 'rendered-text', operator: 'contains', value: 'Modules: 2' }],
+      actions: [{ kind: 'key', key: 'a', modifiers: ['Alt'] }],
+      expected: [
+        { probe: 'rendered-text', operator: 'contains', value: 'Modules: 3' },
+        { probe: 'rendered-text', operator: 'contains', value: 'Status: Added module 3' },
+      ],
+      reset: 'rebuild-example',
+      dispose: 'after-case',
+    },
+    {
+      id: 'focus-descendant',
+      covers: ['descendant-focus'],
+      initial: [{ probe: 'focused-view', operator: 'equals', value: 'Button' }],
+      actions: [{ kind: 'key', key: 'tab', modifiers: [] }],
+      expected: [{ probe: 'focused-view', operator: 'equals', value: 'Button' }],
+      reset: 'rebuild-example',
+      dispose: 'after-case',
+    },
+  ],
+});
+
 /** Generic ListView behavior covers navigation, activation, sorting, and type-ahead. */
 export const LIST_VIEW_CONTRACT = defineBehaviorContract<
   'keyboard-navigation' | 'selection' | 'sorting' | 'type-ahead',
@@ -384,6 +416,7 @@ export const HISTORY_CONTRACT = defineBehaviorContract<
 /** Exact container/dropdown catalog population delivered by this family wave. */
 export const CONTAINER_CATALOG_ENTRY_IDS = [
   'containers/dialog',
+  'containers/group-box',
   'containers/list-view',
   'containers/list-box',
   'containers/scroller',
@@ -401,6 +434,7 @@ export const CONTAINER_EXAMPLE_IDS = [...CONTAINER_CATALOG_ENTRY_IDS] as const;
 /** Exact behavior-contract population, in catalog order. */
 export const CONTAINER_CONTRACTS = [
   DIALOG_CONTRACT,
+  GROUP_BOX_CONTRACT,
   LIST_VIEW_CONTRACT,
   LIST_BOX_CONTRACT,
   SCROLLER_CONTRACT,

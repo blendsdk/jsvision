@@ -48,6 +48,14 @@ const CONTAINER_PAGES = [
     roles: ['dialog', 'windowInactive'],
   },
   {
+    id: 'containers/group-box',
+    filePath: 'components/containers/group-box.md',
+    exampleId: 'containers/group-box',
+    headings: ['Caption behavior', 'Passivity and focus', 'Composition and nesting'],
+    symbols: ['GroupBox', 'GroupBoxOptions', 'GroupBoxTitleAlignment'],
+    roles: ['staticText', 'shadow'],
+  },
+  {
     id: 'containers/list-view',
     filePath: 'components/containers/list-view.md',
     exampleId: 'containers/list-view',
@@ -134,6 +142,14 @@ const CONTAINER_VISIBLE_LINES = [
   {
     exampleId: 'containers/dialog',
     lines: ['Alt+V OK gate · Alt+C Cancel · Alt+A age', 'Edit 17 to 18, then test validation again.'],
+  },
+  {
+    exampleId: 'containers/group-box',
+    lines: [
+      'Start, center, and end captions share one passive workspace.',
+      'Click Add module · Tab focuses it · Alt+A/Space updates caption',
+      'Status: 2 modules · GroupBox stays out of the Tab order',
+    ],
   },
   {
     exampleId: 'containers/list-view',

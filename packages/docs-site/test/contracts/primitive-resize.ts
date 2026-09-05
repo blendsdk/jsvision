@@ -38,6 +38,7 @@ export const FIXED_HEIGHT_EXAMPLE_IDS = [
 /** Standard examples paired with the single direct content pane that grows vertically. */
 export const MIXED_HEIGHT_EXAMPLES = [
   ['controls/slider', 'Slider'],
+  ['containers/group-box', 'GroupBox'],
   ['containers/list-view', 'ListView'],
   ['containers/list-box', 'ListBox'],
   ['containers/scroller', 'Scroller'],
