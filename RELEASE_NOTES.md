@@ -1,15 +1,13 @@
-# Release Notes — v1.7.0
+# Release Notes — v1.7.1
 
-**Released**: 2026-09-05
+**Released**: 2026-09-08
 
-We are excited to announce the release of version 1.7.0 of our software, which includes several important updates aimed at enhancing your experience and making our platform even more user-friendly. This version brings new features and improvements across our documentation, examples, and user interface components, designed to streamline workflows and improve accessibility.
+We are excited to announce the release of version 1.7.1, which brings important updates aimed at enhancing your experience with our application. In this release, we focused on improving the consistency of our examples and refining the functionality of user interface components, ensuring a smoother and more intuitive interaction.
 
-### Highlights:
+Highlights of this release include:
 
-- **Updated Documentation Site**: We've made updates to the documentation site to ensure that the information is more up-to-date and relevant. This will help users find the guidance they need quickly and easily, enhancing the overall learning and onboarding experience.
+- **Updated Examples**: We have pinned the GroupBox notes to a released version. This means that the examples you refer to will now better reflect the current functionality of the application, ensuring you are not working with outdated or inconsistent information.
 
-- **Improved Examples**: We have refreshed the examples shared on our platform. These updates aim to provide clearer and more practical applications of our features, allowing users to better understand how to leverage the software to meet their specific needs.
+- **Improved UI Functionality**: The way popups behave inside modal windows has been enhanced. Now, when you encounter popups, they will anchor appropriately within modals, providing a more user-friendly experience and improving navigation. This change helps reduce confusion and keeps your focus on the task at hand.
 
-- **New GroupBox Container**: The introduction of a passive GroupBox container in the user interface adds a new layer of organization to your layouts. This feature allows you to group related content more effectively, making your interface more intuitive and visually appealing.
-
-These enhancements not only improve the usability of our software but also reflect our commitment to continuously evolving based on user feedback. We believe that this latest version will provide a more seamless and productive experience for all users. Thank you for your continued support!
+These enhancements are part of our ongoing commitment to provide a reliable and efficient user experience. We appreciate your feedback and look forward to continuing to improve our application for you. Thank you for your support!
