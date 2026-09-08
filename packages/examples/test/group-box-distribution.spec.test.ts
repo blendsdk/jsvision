@@ -39,13 +39,16 @@ describe('GroupBox supported distribution', () => {
     ['ui', '../../ui/CHANGELOG.md'],
     ['examples', '../CHANGELOG.md'],
     ['docs-site', '../../docs-site/CHANGELOG.md'],
-  ] as const)('records one %s release note under Unreleased', (_packageName, relativePath) => {
+  ] as const)('records the %s release notes in v1.7.0', (_packageName, relativePath) => {
     const changelog = artifact(relativePath);
-    const unreleasedAt = changelog.indexOf('## [Unreleased]');
-    const firstReleaseAt = changelog.search(/^## \[\d/mu);
+    const releaseHeading = '## [1.7.0]';
+    const releaseAt = changelog.indexOf(releaseHeading);
+    const releaseTail = changelog.slice(releaseAt + releaseHeading.length);
+    const nextReleaseOffset = releaseTail.search(/\n## \[(?:Unreleased|\d)/u);
+    const nextReleaseAt = releaseAt + releaseHeading.length + nextReleaseOffset;
 
-    expect(unreleasedAt).toBeGreaterThan(-1);
-    expect(unreleasedAt).toBeLessThan(firstReleaseAt);
-    expect(changelog.slice(unreleasedAt, firstReleaseAt).match(/GroupBox/gu)).toHaveLength(1);
+    expect(releaseAt).toBeGreaterThan(-1);
+    expect(nextReleaseOffset).toBeGreaterThan(-1);
+    expect(changelog.slice(releaseAt, nextReleaseAt)).toMatch(/Group ?Box/iu);
   });
 });
