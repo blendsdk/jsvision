@@ -12,7 +12,7 @@ import { boundPasteText, createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile, Theme } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot, View } from '../view/index.js';
-import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
+import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost, PopupInputSession } from '../view/index.js';
 import type { ClipboardTextReader, ClipboardTextWriter, EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { buildKeymap } from './default-keymap.js';
 import { normalizeFunctionKey } from './function-key-fallback.js';
@@ -76,6 +76,16 @@ interface QuitValidatable {
 function isQuitVetoed(view: View, command: string): boolean {
   const candidate = view as Partial<QuitValidatable>;
   return typeof candidate.valid === 'function' && !candidate.valid(command);
+}
+
+/** Whether `view` is `ancestor` or one of its descendants. */
+function isWithin(view: View, ancestor: View): boolean {
+  let node: View | null = view;
+  while (node !== null) {
+    if (node === ancestor) return true;
+    node = node.parent;
+  }
+  return false;
 }
 
 /**
@@ -173,6 +183,8 @@ class EventLoopImpl implements EventLoop {
   private draining = false;
   /** The pointer-capture target: while set, all mouse/wheel events go here. */
   private captureTarget: View | null = null;
+  /** The one mounted anchored popup currently registered through this loop's popup host. */
+  private activePopupSession: PopupInputSession | null = null;
   /**
    * The app-local clipboard buffer: the last text copied or cut within the app. Filled by the
    * dual-sink `setClipboard` and read back by `readClipboard`, so in-app paste works on every terminal
@@ -240,8 +252,28 @@ class EventLoopImpl implements EventLoop {
   }
   /** Called on resize after reflow; wired by the app. See {@link EventLoop.onResize}. */
   onResize?: (size: Size2D) => void;
-  /** Host for anchored dropdown popups; wired by the app. See {@link EventLoop.popupHost}. */
-  popupHost?: PopupHost;
+  /** Backing value for the popup host accessor. */
+  private popupHostValue?: PopupHost;
+
+  /** Host for anchored dropdown popups; assigning one adds the loop-owned input-session seam. */
+  get popupHost(): PopupHost | undefined {
+    return this.popupHostValue;
+  }
+
+  set popupHost(host: PopupHost | undefined) {
+    this.dismissActivePopup();
+    if (host === undefined) {
+      this.popupHostValue = undefined;
+      return;
+    }
+    // Wrap rather than mutate a caller-owned host, which may be frozen or implemented by a class.
+    this.popupHostValue = {
+      overlay: host.overlay,
+      focusView: (view) => host.focusView(view),
+      getFocused: () => host.getFocused(),
+      registerInputSession: (session) => this.registerPopupSession(session),
+    };
+  }
 
   constructor(viewport: Size2D, opts: EventLoopOptions) {
     this.logger = opts.logger ?? createLogger();
@@ -335,6 +367,7 @@ class EventLoopImpl implements EventLoop {
     // Clearing the root also makes every later dispatch inert because there is no routing scope.
     this.root = null;
     this.captureTarget = null;
+    this.activePopupSession = null;
     this.commandSink.clear();
     this.writeClipboardText = undefined;
     this.readClipboardText = undefined;
@@ -391,15 +424,15 @@ class EventLoopImpl implements EventLoop {
   }
 
   viewAt(point: Point): View | null {
-    return hitTestViewAt(this.scopeRoot(), point);
+    return hitTestViewAt(this.pointerScopeRoot(), point);
   }
 
   focusNext(): void {
-    this.runTick(() => this.focus.focusNext(this.scopeRoot()));
+    this.runTick(() => this.focus.focusNext(this.inputScopeRoot()));
   }
 
   focusPrev(): void {
-    this.runTick(() => this.focus.focusPrev(this.scopeRoot()));
+    this.runTick(() => this.focus.focusPrev(this.inputScopeRoot()));
   }
 
   focusView(view: View): void {
@@ -458,6 +491,9 @@ class EventLoopImpl implements EventLoop {
   execView<R>(view: View): Promise<R | undefined> {
     // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
     // frame on open; the returned promise resolves later, when endModal is called.
+    // A popup belongs to the current scope. Close it before changing the modal stack so its focus is
+    // restored inside the old scope and cannot survive above a newly-opened nested modal.
+    this.dismissActivePopup();
     this.captureTarget = null; // drop any in-flight drag so it cannot capture across the modal boundary
     // If the view opts into closing itself (a Dialog does), hand it the modal-host handle before it
     // opens so it can resolve this execView from its own event handling. Other views are untouched.
@@ -473,6 +509,9 @@ class EventLoopImpl implements EventLoop {
   }
 
   endModal<R>(result: R): void {
+    // Restore the popup's origin before the owning modal is popped; the modal manager then restores
+    // the focus that preceded that modal. This preserves the two nested restoration steps.
+    this.dismissActivePopup();
     this.captureTarget = null; // release any capture as the modal boundary changes
     this.runTick(() => this.modal.end(result));
   }
@@ -499,7 +538,7 @@ class EventLoopImpl implements EventLoop {
   private applyAcceleratorMode(on: boolean): void {
     if (this.revealKey === null) return; // feature disabled — nothing to do
     this.acceleratorMode = on;
-    this.renderRoot.setRevealAccelerators(on, on ? this.scopeRoot() : null);
+    this.renderRoot.setRevealAccelerators(on, on ? this.inputScopeRoot() : null);
   }
 
   /**
@@ -565,7 +604,7 @@ class EventLoopImpl implements EventLoop {
     // Read the caret position after the frame, from the focused view's requested caret plus its
     // persisted screen origin — never during compose — so it stays correct even on a partial repaint
     // that skipped the focused view. `null` when nothing is focused or the view wants no caret.
-    const leaf = this.focus.focusedLeafIn(this.scopeRoot());
+    const leaf = this.focus.focusedLeafIn(this.inputScopeRoot());
     const local = leaf?.desiredCaret() ?? null;
     const origin = leaf !== null && local !== null ? this.renderRoot.originOf(leaf) : null;
     this.onCaret(origin === null || local === null ? null : { x: origin.x + local.x, y: origin.y + local.y });
@@ -602,12 +641,60 @@ class EventLoopImpl implements EventLoop {
     route(ev, this.routeContext());
   }
 
-  /**
-   * The subtree input is confined to: the top modal's subtree while a modal is open, otherwise the
-   * mounted root. Confining every phase here keeps the tree outside an open modal inert.
-   */
-  private scopeRoot(): View | null {
+  /** Return the top modal as the base input scope, or the mounted root when no modal is active. */
+  private baseScopeRoot(): View | null {
     return this.modal.isActive() ? this.modal.topView() : this.root;
+  }
+
+  /**
+   * Return the registered popup only when its saved origin belongs to the current top modal.
+   * Checking ancestry on every route prevents a stale outer-modal popup from bypassing a nested
+   * modal, even if user code changes focus or lifecycle state unexpectedly.
+   */
+  private modalPopupSession(): PopupInputSession | null {
+    const session = this.activePopupSession;
+    const ownerModal = this.modal.topView();
+    if (
+      session === null ||
+      ownerModal === null ||
+      session.owner === null ||
+      !session.root.mounted ||
+      !isWithin(session.owner, ownerModal)
+    ) {
+      return null;
+    }
+    return session;
+  }
+
+  /** Keyboard, paste, commands, and Tab use the popup frame before the owning modal. */
+  private inputScopeRoot(): View | null {
+    return this.modalPopupSession()?.root ?? this.baseScopeRoot();
+  }
+
+  /** Pointer routing uses the full overlay so the popup's outside-click catcher consumes the event. */
+  private pointerScopeRoot(): View | null {
+    return this.modalPopupSession() !== null ? (this.popupHostValue?.overlay ?? null) : this.baseScopeRoot();
+  }
+
+  /** Register one popup, dismissing any prior popup, and return an idempotent ownership release. */
+  private registerPopupSession(session: PopupInputSession): () => void {
+    this.dismissActivePopup();
+    this.captureTarget = null; // a prior drag must never bypass the new popup's catcher
+    this.activePopupSession = session;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      if (this.activePopupSession === session) this.activePopupSession = null;
+    };
+  }
+
+  /** Dismiss the current popup without depending on its release callback to clear loop ownership. */
+  private dismissActivePopup(): void {
+    const session = this.activePopupSession;
+    if (session === null) return;
+    this.activePopupSession = null;
+    session.dismiss();
   }
 
   /** Build the {@link RouteContext} of operations the dispatch machine needs from this loop. */
@@ -616,7 +703,7 @@ class EventLoopImpl implements EventLoop {
     if (this.captureTarget !== null && !this.captureTarget.mounted) {
       this.captureTarget = null;
     }
-    const scope = this.scopeRoot();
+    const scope = this.inputScopeRoot();
     return {
       scopeRoot: scope,
       keymap: this.keymap,
@@ -662,7 +749,7 @@ class EventLoopImpl implements EventLoop {
       focusPrev: () => this.focus.focusPrev(scope),
       hitTestRoute: (ev) =>
         hitTestRoute(ev, {
-          scopeRoot: scope,
+          scopeRoot: this.pointerScopeRoot(),
           captureTarget: this.captureTarget, // when set, mouse events short-circuit to it
           isFocusable: (view) => this.focus.isFocusable(view),
           focusInto: (view) => this.focus.focusInto(view),
@@ -709,7 +796,7 @@ class EventLoopImpl implements EventLoop {
   /** Capture the exact currently focused route, or return `null` when paste has no eligible target. */
   private captureNativePasteRequest(): CapturedPasteRequest | null {
     if (this.stopped) return null;
-    const scopeRoot = this.scopeRoot();
+    const scopeRoot = this.inputScopeRoot();
     const focusedLeaf = this.focus.focusedLeafIn(scopeRoot);
     if (scopeRoot === null || focusedLeaf === null || !this.focus.isFocusable(focusedLeaf)) return null;
 
@@ -860,7 +947,7 @@ class EventLoopImpl implements EventLoop {
       this.lifecycleGeneration !== request.lifecycleGeneration ||
       this.focus.version() !== request.focusGeneration ||
       this.modal.version() !== request.modalGeneration ||
-      this.scopeRoot() !== request.scopeRoot ||
+      this.inputScopeRoot() !== request.scopeRoot ||
       this.focus.focusedLeafIn(request.scopeRoot) !== request.focusedLeaf ||
       !this.focus.isFocusable(request.focusedLeaf)
     ) {

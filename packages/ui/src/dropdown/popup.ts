@@ -220,6 +220,9 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
     function dismiss(): void {
       if (dismissed) return;
       dismissed = true;
+      // Release routing before unmounting or restoring focus. A queued command emitted by the popup
+      // must see the owning modal as its next scope, never this now-closing frame.
+      releaseInputSession?.();
       overlay.remove(frame);
       overlay.remove(catcher);
       syncOverlayVisible(overlay);
@@ -254,6 +257,11 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
     overlay.add(catcher);
     overlay.add(frame);
     syncOverlayVisible(overlay);
+
+    // A modeless popup needs no special route: the application root already contains both its frame
+    // and catcher. Inside a modal, the loop uses this session to admit only this popup before falling
+    // back to the owning modal; custom standalone hosts may omit the optional registration seam.
+    const releaseInputSession = host.registerInputSession?.({ root: frame, owner: savedFocus, dismiss });
 
     host.focusView(target); // the focus target receives focus on open (prior focus saved above)
 

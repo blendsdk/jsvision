@@ -197,7 +197,7 @@ export {
   HISTORY_MAX_ENTRIES,
 } from './dropdown/index.js';
 export type { HistoryOptions, ComboBoxOptions } from './dropdown/index.js';
-export type { PopupHost } from './view/index.js';
+export type { PopupHost, PopupInputSession } from './view/index.js';
 
 // Tree / outline — an expandable, scrollable outline view for hierarchical data
 // (file trees, nested records, and the like).

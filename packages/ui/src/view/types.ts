@@ -193,6 +193,22 @@ export interface DispatchEvent {
 }
 
 /**
+ * One anchored popup's input boundary while it is mounted in a shared application overlay.
+ *
+ * The popup remains visually outside its originating control's retained subtree. The event loop
+ * uses this record only when the origin belongs to the active modal, routing popup input before it
+ * falls back to that modal. Modeless popups keep the application's ordinary root routing.
+ */
+export interface PopupInputSession {
+  /** The framed popup subtree that receives keyboard, paste, command, and focus-traversal input. */
+  readonly root: View;
+  /** The control that held focus before the popup opened, used to prove active-modal ownership. */
+  readonly owner: View | null;
+  /** Dismiss the popup and restore its saved focus. Must be idempotent. */
+  dismiss(): void;
+}
+
+/**
  * The overlay + focus host an anchored popup needs to mount and focus itself. Supplied by the app
  * shell (or a bare `Dialog`) and reached by a leaf control through `ev.popupHost`. It exposes the
  * overlay to mount into plus focus save/restore.
@@ -204,4 +220,9 @@ export interface PopupHost {
   focusView(view: View): void;
   /** The currently-focused view (saved before the popup opens, restored on dismiss), or `null`. */
   getFocused(): View | null;
+  /**
+   * Register the popup's input boundary until the returned release function is called. Event loops
+   * add this seam when a host is assigned to `loop.popupHost`; a standalone host may omit it.
+   */
+  readonly registerInputSession?: (session: PopupInputSession) => () => void;
 }

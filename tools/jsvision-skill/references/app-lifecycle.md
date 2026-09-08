@@ -60,6 +60,12 @@ Built-in quit is already wired: a `Commands.quit` (e.g. from an `Alt-X` status i
 `raise(win)`, and cycle focus. Windows are movable/resizable/zoomable by default; set their initial
 place with `win.setLayout({ rect: { x, y, width, height } })`.
 
+Anchored controls such as `ComboBox`, `History`, `DatePicker`, and `ColorPicker` use the shell's
+shared popup overlay automatically. When one opens inside the top modal, its popup receives input
+first while every background window remains inert. Escape or an outside click dismisses the popup
+before the dialog can react, and focus returns to the originating control. Assigning a custom
+`PopupHost` to an `EventLoop` adds the same loop-owned routing session automatically.
+
 ## Runtime theme change
 
 `app.setTheme(nordTheme)` swaps the palette and repaints every view in one frame — safe to call from
