@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add the public passive `GroupBox` container with aligned reactive captions, padding, theme-role styling, and optional standard shadow.
 
+### Fixed
+
+- Route anchored control popups through their owning modal while preserving background isolation, dismissal, and focus restoration.
+
 ## [1.4.0] - 2026-07-31
 
 Added:

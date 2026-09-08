@@ -211,6 +211,19 @@ interface PopupHost {
   overlay: Group;   // The full-viewport, top-most overlay `Group` to mount the popup (and its outside-click catcher) into.
   focusView(view: View): void;   // Focus a view — the popup focuses its list on open; a non-focusable target is a no-op.
   getFocused(): View | null;   // The currently-focused view (saved before the popup opens, restored on dismiss), or `null`.
+  registerInputSession?: (session: PopupInputSession) => () => void;   // Register the popup's input boundary until the returned release function is called. Event loops add this seam when a host is assigned to `loop.popupHost`; a standalone host may omit it.
+}
+```
+
+## PopupInputSession
+
+One anchored popup's input boundary while it is mounted in a shared application overlay.
+
+```ts
+interface PopupInputSession {
+  root: View;   // The framed popup subtree that receives keyboard, paste, command, and focus-traversal input.
+  owner: View | null;   // The control that held focus before the popup opened, used to prove active-modal ownership.
+  dismiss(): void;   // Dismiss the popup and restore its saved focus. Must be idempotent.
 }
 ```
 

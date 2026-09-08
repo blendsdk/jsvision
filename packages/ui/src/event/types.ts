@@ -394,7 +394,8 @@ export interface EventLoop {
   /**
    * The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into.
    * `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a
-   * dropdown is a safe no-op; a standalone `Dialog` can supply its own.
+   * dropdown is a safe no-op; a standalone `Dialog` can supply its own. Assigning a host decorates it
+   * with the loop-owned input-session seam that keeps an anchored popup interactive above a modal.
    */
   popupHost?: PopupHost;
 }
