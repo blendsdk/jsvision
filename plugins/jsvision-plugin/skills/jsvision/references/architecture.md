@@ -6,6 +6,11 @@ Use four layers: domain invariants; injectable services; reactive state/actions;
 
 Use one command vocabulary across menus, status items, buttons, and accelerators. Use explicit route parameters, focus restoration, and lifecycle ownership. Place long-lived state above screens, screen state in an owner disposed with the screen, and ephemeral state in its widget. Derive with `computed`; reserve `effect` for side effects.
 
+Keep transient popup ownership in the application event loop. An anchored popup opened from the top
+modal is routed before that modal, then releases its session before restoring focus. This preserves
+outside-click consumption and prevents a popup owned by an outer dialog from bypassing a nested
+modal. Modeless popups continue to use the ordinary application root.
+
 ## Asynchronous work
 
 Model idle/loading/success/error explicitly. Prevent stale completions with cancellation or request identity. Inject filesystem, transport, clock, and process seams. Serialize unsafe mutations.
